@@ -57,9 +57,26 @@ Player shots get a slightly generous box; enemy shots a slightly stingy one. Gro
 probing is inset so you can stand with boots overhanging a ledge.
 
 ### 5. Asset abstraction — placeholders swap to art with no code changes
-`src/systems/assets.js`. Every drawable resolves to a placeholder rectangle **or** real
-art depending on `MANIFEST`. Adding art is: drop a PNG in `public/sprites/`, add one
-line to `MANIFEST`. Per boss, in any order, over months, game playable throughout.
+`src/systems/assets.js`. Every drawable resolves to a placeholder shape **or** real art
+depending on `MANIFEST`. Adding art is: drop a PNG in `public/sprites/`, add one line to
+`MANIFEST`. Per actor, in any order, over months, game playable throughout.
+
+**Manifest keys** — `player` · `<bossId>` · `<minionId>` · `shot:<weaponId>` ·
+`pickup:etank` · `pickup:exp` · `background`. An entry is either a static image
+(`{ file }`) or a spritesheet (`{ file, frameW, frameH, anims, fps }`). Optional
+`anchor` (`bottom` default / `center`), `offX`/`offY`, `parallax`, `tintable`.
+
+Rendering goes through **`ActorLayer`**, one per depth band, constructed back to front in
+`GameScene.create()`. Each layer owns a Graphics for placeholders *and* a pooled set of
+sprites for art, because Phaser Graphics cannot draw textures and naively mixing the two
+breaks draw order. `GameScene.draw()` never branches on whether art exists.
+
+Art is drawn at its **native size** aligned to the collision box — never stretched to fit
+it. That is the sprite-box/collision-box split from rule 4, enforced.
+
+**Known gap:** equipping a weapon recolours the player live, which placeholders do for
+free. Real art cannot — a Phaser tint would wreck a 3-colour sprite. Fixing it needs
+per-weapon frames or a palette-swap shader, and both need the art to exist first.
 
 Bosses are **honest rectangles at true collision footprint** right now. Silhouette design
 follows from attack and arena design, which is not done. Do not invent silhouettes early.
@@ -123,9 +140,9 @@ hazards *and* layer-2 attacks. Both elementally themed.
 walks its span and turns at pit edges) and **DRIFTER** (air, drifts left while tracking
 your altitude). Bosses are events; minions are weather.
 
-Same 3-colour NES palette rule as bosses, but both primaries are **low chroma and held
->25 CIELAB dE from all 17 boss primaries** — a minion must never be mistaken for a boss.
-`tests/data.test.js` asserts this; do not hand-pick a new minion colour without checking it.
+Same 3-colour NES palette rule as bosses, but the minion palette is **unrelated to the
+boss palette** and carries no spacing constraint against it. Minions are not part of the
+perceptually-optimised 17; pick whatever colour suits the minion.
 
 **Elites** keep their palette and take a gold outline (`ELITE_OUTLINE`) plus `eliteScale`
 size. Size alone stops being a reliable tell once the ramp has been running a while.

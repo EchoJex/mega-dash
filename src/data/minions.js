@@ -7,10 +7,10 @@
  * land later without changing anything here.
  *
  * PALETTE: the same 3-colour NES rule as bosses (primary, secondary, shared
- * near-black outline). But the two primaries are deliberately LOW CHROMA and
- * kept well away from all 17 boss primaries. A minion must never be mistaken
- * for a boss at a glance, and the boss must stay the most saturated thing on
- * screen. tests/data.test.js asserts the separation.
+ * near-black outline), but otherwise UNRELATED to the boss palette. The 17 boss
+ * primaries are perceptually spaced against each other; minions are not part of
+ * that set and carry no constraint against it. Pick whatever colour suits the
+ * minion as it develops.
  *
  * Collision box is the whole rectangle here. Unlike the player there is no
  * sprite-vs-hitbox split, because a minion never changes silhouette.

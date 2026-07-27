@@ -23,7 +23,7 @@ import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
 import {
-  drawPlaceholder, drawProjectile, drawPickup, projectileHalfHeight,
+  ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
 } from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
@@ -37,7 +37,19 @@ export default class GameScene extends Phaser.Scene {
     this.timeScale = 1;
     this.tsTarget = 1;
     this.tsStep = 0;
-    this.g = this.add.graphics();
+
+    // Depth bands, back to front. Each owns a Graphics for placeholders AND a
+    // sprite pool for real art, so ordering stays correct no matter which
+    // actors have art yet — see the ActorLayer note in systems/assets.js.
+    this.layers = {
+      bg: new ActorLayer(this),
+      world: new ActorLayer(this),
+      pickups: new ActorLayer(this),
+      minions: new ActorLayer(this),
+      bullets: new ActorLayer(this),
+      boss: new ActorLayer(this),
+      player: new ActorLayer(this),
+    };
     this.nextBoss = makeBossBag();
     this.startRun();
 
@@ -279,6 +291,7 @@ export default class GameScene extends Phaser.Scene {
           vx: w.speed * r.projSpeedMult * p.facing,
           vy: spread,
           radius: rad, damage: dmg, color: w.color, shape: w.shape,
+          weapon: w.id, // resolves art as 'shot:<weaponId>' once it exists
           life: 180, charged, enemy: false,
         });
       }
@@ -464,15 +477,19 @@ export default class GameScene extends Phaser.Scene {
   selectWeapon(id) { if (this.run.unlocked.has(id)) this.run.activeWeapon = id; }
 
   // ── Render ──────────────────────────────────────────────────────────
+  /**
+   * Everything is drawn through ActorLayers, which resolve each actor to a
+   * placeholder shape or to real art from MANIFEST without this file knowing or
+   * caring which. Adding art never touches this method.
+   */
   draw() {
-    const g = this.g, cam = this.cam.x, r = this.run;
-    g.clear();
+    const cam = this.cam.x, r = this.run;
+    const L = this.layers;
+    for (const l of Object.values(L)) l.begin();
 
-    // background
-    g.fillStyle(0x060614, 1);
-    g.fillRect(0, 0, this.viewW, VIEW_H);
+    L.bg.drawBackground(this.viewW, VIEW_H, cam, 0x060614);
 
-    g.translateCanvas?.(0, 0);
+    const g = L.world.g;
     const sx = (wx) => wx - cam; // world -> screen
 
     // ground spans; the gaps between them are the pits
@@ -503,12 +520,18 @@ export default class GameScene extends Phaser.Scene {
     }
 
     for (const p of this.pickups) {
-      drawPickup(g, { ...p, x: sx(p.x) }, Pickups.PICKUP_STYLE[p.type], r.frame);
+      const style = Pickups.PICKUP_STYLE[p.type];
+      L.pickups.draw(
+        { ...p, id: `pickup:${p.type}`, x: sx(p.x), palette: style },
+        (gg, a) => drawPickup(gg, a, style, r.frame),
+      );
     }
 
     for (const e of this.minions) {
-      drawPlaceholder(g, {
+      L.minions.draw({
         id: e.id, x: sx(e.x), y: e.y, w: e.w, h: e.h,
+        facing: Math.sign(e.vx) || 1,
+        clip: e.def.kind === 'ground' ? 'walk' : 'fly',
         palette: {
           primary: e.def.primary,
           secondary: e.def.secondary,
@@ -519,27 +542,42 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    for (const b of this.bullets) drawProjectile(g, { ...b, x: sx(b.x) }, r.frame);
+    for (const b of this.bullets) {
+      const cx = sx(b.x);
+      L.bullets.draw(
+        {
+          ...b, id: `shot:${b.weapon}`,
+          x: cx - b.radius, y: b.y - b.radius, w: b.radius * 2, h: b.radius * 2,
+          facing: Math.sign(b.vx) || 1,
+          palette: { primary: b.color, secondary: b.color },
+        },
+        (gg, a) => drawProjectile(gg, { ...a, x: cx, y: b.y }, r.frame),
+      );
+    }
 
     if (this.boss) {
-      drawPlaceholder(g, {
-        id: this.boss.id, x: sx(this.boss.x), y: this.boss.y,
-        w: this.boss.w, h: this.boss.h,
-        palette: { primary: this.boss.primary, secondary: this.boss.secondary, outline: this.boss.outline },
+      const b = this.boss;
+      L.boss.draw({
+        id: b.id, x: sx(b.x), y: b.y, w: b.w, h: b.h,
+        facing: -1, clip: b.state,
+        palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
       });
     }
 
     // player — flashes while invulnerable
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {
-      const w = WEAPON_BY_ID[r.activeWeapon];
-      const hb = this.player.sliding ? FEEL.playerHitboxSlide : FEEL.playerHitbox;
-      drawPlaceholder(g, {
+      const p = this.player;
+      L.player.draw({
         id: 'player',
-        x: sx(this.player.x), y: this.player.y + (this.player.sliding ? 12 : 0),
-        w: 24, h: this.player.sliding ? 12 : 24,
+        x: sx(p.x), y: p.y + (p.sliding ? 12 : 0),
+        w: 24, h: p.sliding ? 12 : 24,
+        facing: p.facing,
+        clip: p.sliding ? 'slide' : !p.onGround ? 'jump' : p.vx !== 0 ? 'run' : 'idle',
         // live palette swap: the suit takes the equipped weapon's colours
-        palette: w.palette,
+        palette: WEAPON_BY_ID[r.activeWeapon].palette,
       });
     }
+
+    for (const l of Object.values(L)) l.end();
   }
 }
