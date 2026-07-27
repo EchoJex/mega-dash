@@ -241,7 +241,10 @@ Three palette entries are flagged `warn` as **recommended changes** pending owne
 | — | **Port to Phaser** (this repo) | ✅ |
 | — | **Tuning pass** — motion constants set to classic NES values | ✅ |
 | — | Minions, time-keyed difficulty ramp, pickups | ✅ |
-| 4 | VS-style level-up cards; weapons unlock only via their boss | ⬜ |
+| — | **RE-QUIP wheel** — replaces Phase 1's weapon-select screen | ✅ |
+| — | **Sprite path** — MANIFEST art swaps in, unblocks Phases 9–11 | ✅ |
+| — | **In-app updater** + per-branch CI releases (the dev loop) | ✅ |
+| 4 | VS-style level-up cards; weapons unlock only via their boss | ⬅ **next** |
 | 5 | Boss defeat animations + weapon acquisition popups | ⏭ deferred (cosmetic) |
 | 6–8 | Boss attacks + arena hazards, in thirds | ⬜ |
 | 9–11 | Weapon visuals, in thirds | ⬜ |
