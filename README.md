@@ -1,10 +1,10 @@
 # Mega Dash
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**Mega Man 2 aesthetics · Risk of Rain meta progression · Vampire Survivors levelling.**
+**Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
 
-17 elemental robot masters, each dropping a special weapon. Procedurally generated
-platforming between boss doors. Bosses you have beaten return harder, permanently.
+17 elemental robot masters, each  unlocking a special weapon. Procedurally generated
+platforming, hazards, and minion spawning between boss doors whose difficulty scales with time to prevent camping. Bosses you have beaten return harder, permanently. 
 
 Built with Phaser 3 + Vite. One codebase ships a browser build and an Android APK.
 

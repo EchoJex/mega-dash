@@ -1,7 +1,7 @@
 # MEGA DASH — Project Context
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**Mega Man 2 aesthetics · Risk of Rain meta progression · Vampire Survivors levelling.**
+**Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
 
 Stack: **Phaser 3 + Vite**, wrapped by **Capacitor** for Android. One codebase ships
 both a browser build and an APK.
@@ -149,7 +149,7 @@ Gaps: Core Man (6), Torrent Man (10), and Strike / Swarm / Granite / Wraith / Dr
 Three palette entries are flagged `warn` as **recommended changes** pending owner review
 (Torrent, Volt, Venom) where perceptual spacing conflicts with the original prose.
 
-**Do not invent boss content that the tracker marks missing — ask.**
+**Do not modify boss content that the tracker marks  complete**
 
 ---
 
