@@ -9,7 +9,8 @@ import assert from 'node:assert/strict';
 import { MINIONS, ELITE_OUTLINE } from '../src/data/minions.js';
 import { BOSSES } from '../src/data/bosses.js';
 import { UPGRADES } from '../src/data/upgrades.js';
-import { WEAPONS } from '../src/data/weapons.js';
+import { WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER } from '../src/data/weapons.js';
+import { SPRITE_CLASS, DEPTH, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
 import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
 
 // NOTE: minion colours are deliberately UNCONSTRAINED against the boss
@@ -51,6 +52,59 @@ test('every upgrade describes itself at every rank it can reach', () => {
       assert.equal(typeof u.desc(l), 'string', `${u.id} rank ${l}`);
     }
   }
+});
+
+test('every actor fits inside its class sprite grid', () => {
+  // The grid is the authoring contract for art — anything that outgrows it
+  // would have to be drawn outside its own frame.
+  for (const m of MINIONS) {
+    assert.ok(m.w <= SPRITE_CLASS.minion.w && m.h <= SPRITE_CLASS.minion.h,
+      `${m.id} is ${m.w}x${m.h}, over the ${SPRITE_CLASS.minion.w}x${SPRITE_CLASS.minion.h} minion grid`);
+  }
+  for (const b of BOSSES) {
+    const h = Math.round(24 * b.scale), w = Math.round(h * 0.75);
+    assert.ok(w <= SPRITE_CLASS.boss.w && h <= SPRITE_CLASS.boss.h,
+      `${b.id} is ${w}x${h}, over the ${SPRITE_CLASS.boss.w}x${SPRITE_CLASS.boss.h} boss grid`);
+  }
+  assert.equal(SPRITE_CLASS.player.w, PLAYER_SPRITE_W);
+  assert.equal(SPRITE_CLASS.player.h, PLAYER_SPRITE_H);
+});
+
+test('sprite grids escalate minion < player < miniboss < boss', () => {
+  const order = ['minion', 'player', 'miniboss', 'boss'];
+  for (let i = 1; i < order.length; i++) {
+    assert.ok(SPRITE_CLASS[order[i]].h > SPRITE_CLASS[order[i - 1]].h,
+      `${order[i]} must be taller than ${order[i - 1]}`);
+  }
+});
+
+test('the player draws above every world actor', () => {
+  const world = Object.entries(DEPTH).filter(([k]) => k !== 'player');
+  for (const [name, d] of world) {
+    assert.ok(DEPTH.player > d, `player must draw above ${name}`);
+  }
+});
+
+test('the null weapon is an outline-only silhouette that fires nothing', () => {
+  assert.equal(NULL_WEAPON.palette.primary, null);
+  assert.equal(NULL_WEAPON.palette.secondary, null);
+  assert.ok(NULL_WEAPON.palette.outline, 'the silhouette itself must still be drawn');
+  assert.equal(NULL_WEAPON.projectiles, 0);
+  // an unknown id must degrade to it rather than throw
+  assert.equal(weaponOf('does_not_exist'), NULL_WEAPON);
+  assert.equal(weaponOf(undefined), NULL_WEAPON);
+  assert.equal(weaponOf('buster').id, 'buster');
+});
+
+test('the buster is a normal weapon with a dark body and light accent', () => {
+  const buster = weaponOf('buster');
+  const lum = (h) => {
+    const n = parseInt(h.slice(1), 16);
+    return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
+  };
+  assert.ok(lum(buster.palette.secondary) > lum(buster.palette.primary),
+    'the accent must be lighter than the body');
+  assert.ok(WHEEL_ORDER.includes('buster'), 'the buster occupies a wheel slot like any other');
 });
 
 test('every weapon shape has an explicit drawn half-height', () => {

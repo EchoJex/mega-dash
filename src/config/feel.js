@@ -125,7 +125,9 @@ export const FEEL = {
   eliteChanceBase: 0.03,
   eliteChanceMax: 0.16,
   eliteHpMult: 4.5,
-  eliteScale: 1.9,
+  // NOTE: elites are deliberately the SAME SIZE as their base minion — they
+  // share the minion sprite grid (see SPRITE_CLASS in config/display.js) and are
+  // told apart by a gold rim. There is no eliteScale.
 
   // ── Minions ──────────────────────────────────────────────────────────
   // Spawned off the right edge, pruned behind. The interval shortens with the

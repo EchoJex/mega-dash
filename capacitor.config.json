@@ -2,8 +2,10 @@
   "appId": "com.megadash.game",
   "appName": "Mega Dash",
   "webDir": "dist",
-  "android": { "allowMixedContent": true },
   "plugins": {
-    "SplashScreen": { "launchAutoHide": true, "backgroundColor": "#060614" }
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#060614"
+    }
   }
 }

@@ -53,8 +53,8 @@ export function recordBossKill(id) {
 }
 
 /**
- * FULL RESET — wipes every kind of client-side persistence this page could
- * have touched, then hard-reloads with a cache-busting param.
+ * FULL RESET — wipes every kind of local persistence this build could have
+ * touched, then hard-reloads.
  *
  * Kept because iterative development regularly leaves stale save shapes behind
  * and "is this a bug or is it my old save?" is expensive to debug.
@@ -68,18 +68,10 @@ export async function fullReset() {
       if (n) document.cookie = `${n}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
     });
   } catch { /* ignore */ }
-  try {
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map((r) => r.unregister()));
-    }
-  } catch { /* ignore */ }
-  try {
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((k) => caches.delete(k)));
-    }
-  } catch { /* ignore */ }
+  // NOTE: service-worker unregistration and Cache Storage clearing used to live
+  // here. Both were removed with the rest of the networked-distribution code —
+  // nothing in this project ever registered a service worker, and the game ships
+  // as a bundled APK with no remote content to cache.
   try {
     if (indexedDB.databases) {
       const dbs = await indexedDB.databases();

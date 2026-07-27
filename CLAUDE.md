@@ -4,7 +4,7 @@ A mobile-first, landscape-only 2D side-scrolling platformer.
 **Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
 
 Stack: **Phaser 3 + Vite**, wrapped by **Capacitor** for Android. One codebase ships
-both a browser build and an APK.
+the Android APK. The browser is a development surface only.
 
 The project owner directs; Claude writes the code. Assume the owner will not hand-edit
 source. Explain decisions in plain language, not code walkthroughs.
@@ -20,7 +20,12 @@ npm test         # balance + data-integrity tests — run before every commit
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
-CI builds the APK and deploys the web build on every push to `main`.
+CI builds the APK on every push to `main` and attaches it to the run as an artifact.
+
+**No networked distribution.** There is no Pages deploy, no service worker, no remote
+content of any kind — the APK bundles everything and runs offline. Distribution is an
+end-stage question, deliberately unanswered. `npm run dev` / `npm run preview` bind to the
+LAN so a phone can reach them; that is development tooling, not shipping.
 
 ---
 
@@ -73,6 +78,22 @@ breaks draw order. `GameScene.draw()` never branches on whether art exists.
 
 Art is drawn at its **native size** aligned to the collision box — never stretched to fit
 it. That is the sprite-box/collision-box split from rule 4, enforced.
+
+**Sprite grid per class** — `SPRITE_CLASS` in `config/display.js`. Art is authored at
+exactly its class's grid and uses transparency to carve the real silhouette:
+`minion 16×16` · `player 24×24` (the NES reference) · `miniboss 32×32` (reserved) ·
+`boss 48×48`. Elites share the minion grid. These are ceilings, not collision boxes;
+collision gets tuned against the final art.
+
+**Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
+construction order. **The player is always above every world actor** — hazards, pickups,
+minions, projectiles, bosses — because losing sight of the player is losing the run. Only
+UI overlays go above, and those live in UIScene, a whole scene above this one.
+
+**Palette:** the buster is just another weapon (dark blue body, light blue accent), and
+`NULL_WEAPON` is the no-weapon starting point — a palette with no primary and no
+secondary, so the player renders as an **outline-only silhouette with every interior cell
+transparent**. Fill belongs to the weapon; silhouette belongs to the player.
 
 **Known gap:** equipping a weapon recolours the player live, which placeholders do for
 free. Real art cannot — a Phaser tint would wreck a 3-colour sprite. Fixing it needs
@@ -144,8 +165,9 @@ Same 3-colour NES palette rule as bosses, but the minion palette is **unrelated 
 boss palette** and carries no spacing constraint against it. Minions are not part of the
 perceptually-optimised 17; pick whatever colour suits the minion.
 
-**Elites** keep their palette and take a gold outline (`ELITE_OUTLINE`) plus `eliteScale`
-size. Size alone stops being a reliable tell once the ramp has been running a while.
+**Elites are the same size as their base minion** — same sprite grid, same silhouette,
+told apart by a gold outline (`ELITE_OUTLINE`). Size would be a weak tell once the ramp
+has been running, and sharing the grid means one piece of art covers both forms.
 
 Spawn cadence and HP scale off `difficultyStep()` in `systems/minions.js`, which reads
 **elapsed sim time**. Slow motion slows the ramp too — that is intended.

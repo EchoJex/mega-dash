@@ -126,9 +126,11 @@ export function createAnims(scene) {
  * frame must not allocate. Usage per frame is begin() -> draw()... -> end().
  */
 export class ActorLayer {
-  constructor(scene) {
+  constructor(scene, depth = 0) {
     this.scene = scene;
     this.root = scene.add.container(0, 0);
+    this.root.setDepth?.(depth);
+    this.depth = depth;
     this.g = scene.add.graphics();
     this.root.add(this.g);
     this.pools = new Map();   // manifest id -> Sprite[]
@@ -220,13 +222,20 @@ export class ActorLayer {
  */
 export function drawPlaceholder(g, actor) {
   const { x, y, w, h, palette } = actor;
-  g.fillStyle(hexNum(palette.primary), 1);
-  g.fillRect(x, y, w, h);
 
-  // accent band across the upper third — reads as a "head" and shows which
-  // colour is the secondary without needing real art
-  g.fillStyle(hexNum(palette.secondary), 1);
-  g.fillRect(x, y, w, Math.max(2, Math.round(h * 0.28)));
+  // A null colour means "transparent cell", not black. That is what makes the
+  // NULL_WEAPON player render as a bare silhouette: no body fill, no accent,
+  // just the outline. Art will express the same thing with alpha.
+  if (palette.primary) {
+    g.fillStyle(hexNum(palette.primary), 1);
+    g.fillRect(x, y, w, h);
+  }
+  if (palette.secondary) {
+    // accent band across the upper third — reads as a "head" and shows which
+    // colour is the secondary without needing real art
+    g.fillStyle(hexNum(palette.secondary), 1);
+    g.fillRect(x, y, w, Math.max(2, Math.round(h * 0.28)));
+  }
 
   g.lineStyle(1, hexNum(palette.outline || '#0A0A12'), 1);
   g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);

@@ -51,3 +51,52 @@ export const MAX_STEPS_PER_FRAME = 5; // spiral-of-death guard after tab-out
 export const TILE = 8;
 export const PLAYER_SPRITE_W = 24;
 export const PLAYER_SPRITE_H = 24;
+
+/**
+ * MAXIMUM SPRITE GRID PER CLASS — the authoring contract for art.
+ *
+ * Every actor of a class is drawn inside its class's grid, and art is authored
+ * at exactly that size using transparency to carve the real silhouette. Sizes
+ * are multiples of TILE and anchored on the player matching the classic NES
+ * Mega Man sprite, with the rest scaled around it:
+ *
+ *   minion    smaller than the player — reads instantly as chaff
+ *   player    the reference, 24x24, same as the original
+ *   miniboss  bigger than a minion, smaller than a boss (reserved, unused)
+ *   boss      significantly larger; covers the 2.0x tallest boss (Granite)
+ *
+ * ELITES SHARE THE MINION GRID. An elite is not a bigger minion — it is the
+ * same silhouette with a gold rim. Size would be a poor tell anyway once the
+ * ramp has been running, and reusing the grid means one piece of art per minion
+ * covers both forms.
+ *
+ * These are CEILINGS, not the collision box. Collision stays separate (see the
+ * hitbox note in config/feel.js) and gets tuned against the final art.
+ */
+export const SPRITE_CLASS = {
+  minion:   { w: 16, h: 16 },
+  player:   { w: PLAYER_SPRITE_W, h: PLAYER_SPRITE_H },
+  miniboss: { w: 32, h: 32 },
+  boss:     { w: 48, h: 48 },
+};
+
+/**
+ * DRAW ORDER — explicit, because construction order alone is too easy to break
+ * by reordering a literal.
+ *
+ * The PLAYER IS ALWAYS ON TOP of every world actor: hazards, pickups, minions,
+ * projectiles and bosses. The player is the one thing that must never be
+ * occluded, because losing track of it is losing the run. Only UI overlays go
+ * above, and those live in UIScene, which renders as a whole scene above this
+ * one. The gap between `boss` and `player` is deliberate headroom for future
+ * world layers that still belong beneath the player.
+ */
+export const DEPTH = {
+  background: 10,
+  world: 20,   // terrain, spikes, platforms, boss doors
+  pickups: 30,
+  minions: 40,
+  bullets: 50,
+  boss: 60,
+  player: 100,
+};

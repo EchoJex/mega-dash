@@ -40,10 +40,39 @@ export function weaponDamage(cooldownFrames, projectiles = 1) {
   return +(FEEL.dpsTarget * (cooldownFrames / 60) / projectiles).toFixed(3);
 }
 
+/**
+ * The buster is just another weapon — same palette structure, same slot on the
+ * re-quip wheel, same DPS invariant. Nothing about it is special-cased. Dark
+ * blue body, light blue accent.
+ */
 const BUSTER_PALETTE = {
-  primary: '#4A90D9',
-  secondary: '#1565C0',
+  primary: '#1565C0',
+  secondary: '#5CC8F0',
   outline: '#0A0A12',
+};
+
+/**
+ * NULL WEAPON — the "no weapon equipped" starting point.
+ *
+ * Its palette has no primary and no secondary, so the player renders as an
+ * OUTLINE ONLY with every interior cell transparent. That is deliberate: the
+ * silhouette is the part that belongs to the player, and the fill is the part
+ * that belongs to whatever weapon is equipped. It also means any code path that
+ * fails to resolve a weapon degrades to a visible, obviously-wrong silhouette
+ * rather than throwing.
+ */
+export const NULL_WEAPON = {
+  id: null,
+  name: 'NO WEAPON',
+  cooldown: 8,
+  projectiles: 0,   // fires nothing
+  shape: 'bolt',
+  speed: 0,
+  radius: 0,
+  damage: 0,
+  desc: 'No weapon equipped.',
+  palette: { primary: null, secondary: null, outline: '#0A0A12' },
+  color: '#0A0A12',
 };
 
 /**
@@ -124,6 +153,13 @@ export const WEAPONS = DEFS.map((d) => {
 
 export const WEAPON_BY_ID = Object.fromEntries(WEAPONS.map((w) => [w.id, w]));
 export const BUSTER_ID = 'buster';
+
+/**
+ * Resolve a weapon id, falling back to the outline-only NULL_WEAPON. Always use
+ * this rather than indexing WEAPON_BY_ID directly, so an unknown or missing id
+ * shows as a silhouette instead of crashing the frame.
+ */
+export const weaponOf = (id) => WEAPON_BY_ID[id] || NULL_WEAPON;
 
 /**
  * RE-QUIP WHEEL slot order — fixed, and deliberately NOT filtered by unlock

@@ -31,7 +31,7 @@
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
 import { FEEL } from '../config/feel.js';
-import { WEAPON_BY_ID, WHEEL_ORDER } from '../data/weapons.js';
+import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
 import { hexNum } from '../systems/assets.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
@@ -52,6 +52,7 @@ const IDLE_ALPHA = 0.5; // the button's resting transparency
  * illegible on roughly half the wheel.
  */
 function inkFor(hex) {
+  if (!hex) return '#E0F0FF'; // transparent cell (NULL_WEAPON) — light ink on the void
   const n = hexNum(hex);
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
@@ -202,7 +203,7 @@ export default class UIScene extends Phaser.Scene {
       const angle = -Math.PI / 2 + (i / n) * Math.PI * 2; // slot 0 at 12 o'clock
       const x = cx + Math.cos(angle) * WHEEL_R;
       const y = cy + Math.sin(angle) * WHEEL_R;
-      const wd = WEAPON_BY_ID[id];
+      const wd = weaponOf(id);
       const ink = inkFor(wd.palette.primary);
 
       const disc = this.add.circle(x, y, SLOT_R, hexNum(wd.palette.primary))
@@ -277,7 +278,7 @@ export default class UIScene extends Phaser.Scene {
     this.lockG.clear();
     for (const s of this.slots) {
       const unlocked = r.unlocked.has(s.id);
-      const wd = WEAPON_BY_ID[s.id];
+      const wd = weaponOf(s.id);
       s.locked = !unlocked;
       s.disc.setFillStyle(unlocked ? hexNum(wd.palette.primary) : LOCKED_FILL);
       s.disc.setAlpha(unlocked ? 1 : LOCKED_ALPHA);
@@ -375,7 +376,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   setReadout(id) {
-    const wd = WEAPON_BY_ID[id], r = this.game_.run;
+    const wd = weaponOf(id), r = this.game_.run;
     this.readName.setText(wd.name);
     this.readLv.setText(r.unlocked.has(id) ? `Lv ${r.wpLevels[id] || 1}` : 'LOCKED');
   }
@@ -413,7 +414,7 @@ export default class UIScene extends Phaser.Scene {
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
-    const r = gm.run, w = WEAPON_BY_ID[r.activeWeapon];
+    const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     this.hud.setText(
       `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}\n` +

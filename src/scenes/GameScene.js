@@ -11,10 +11,10 @@
  */
 
 import Phaser from 'phaser';
-import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H } from '../config/display.js';
+import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH } from '../config/display.js';
 import { FEEL } from '../config/feel.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
-import { WEAPONS, WEAPON_BY_ID, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
+import { WEAPONS, NULL_WEAPON, weaponOf, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsForRun } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
@@ -38,17 +38,19 @@ export default class GameScene extends Phaser.Scene {
     this.tsTarget = 1;
     this.tsStep = 0;
 
-    // Depth bands, back to front. Each owns a Graphics for placeholders AND a
-    // sprite pool for real art, so ordering stays correct no matter which
-    // actors have art yet — see the ActorLayer note in systems/assets.js.
+    // Depth bands. Each owns a Graphics for placeholders AND a sprite pool for
+    // real art, so ordering stays correct no matter which actors have art yet —
+    // see the ActorLayer note in systems/assets.js. Depths are explicit (see
+    // DEPTH in config/display.js) so the player stays above every world actor
+    // even if this literal is reordered.
     this.layers = {
-      bg: new ActorLayer(this),
-      world: new ActorLayer(this),
-      pickups: new ActorLayer(this),
-      minions: new ActorLayer(this),
-      bullets: new ActorLayer(this),
-      boss: new ActorLayer(this),
-      player: new ActorLayer(this),
+      bg: new ActorLayer(this, DEPTH.background),
+      world: new ActorLayer(this, DEPTH.world),
+      pickups: new ActorLayer(this, DEPTH.pickups),
+      minions: new ActorLayer(this, DEPTH.minions),
+      bullets: new ActorLayer(this, DEPTH.bullets),
+      boss: new ActorLayer(this, DEPTH.boss),
+      player: new ActorLayer(this, DEPTH.player),
     };
     this.nextBoss = makeBossBag();
     this.startRun();
@@ -264,7 +266,9 @@ export default class GameScene extends Phaser.Scene {
   fire(charged) {
     const r = this.run, p = this.player;
     if (r.cooldown > 0) return;
-    const w = WEAPON_BY_ID[r.activeWeapon];
+    const w = weaponOf(r.activeWeapon);
+    // No weapon equipped: the player is a bare silhouette and fires nothing.
+    if (w === NULL_WEAPON || w.projectiles < 1) return;
     const lv = r.wpLevels[w.id] || 1;
     let dmg = damageAtLevel(w, lv) * r.dmgMult;
     let rad = w.radius * r.bulletSizeMult;
@@ -574,7 +578,7 @@ export default class GameScene extends Phaser.Scene {
         facing: p.facing,
         clip: p.sliding ? 'slide' : !p.onGround ? 'jump' : p.vx !== 0 ? 'run' : 'idle',
         // live palette swap: the suit takes the equipped weapon's colours
-        palette: WEAPON_BY_ID[r.activeWeapon].palette,
+        palette: weaponOf(r.activeWeapon).palette,
       });
     }
 

@@ -45,9 +45,10 @@ export function trySpawn(world, camX, viewW, frames, groundY) {
   const step = difficultyStep(frames);
   const ground = Math.random() < 0.6;
   const def = MINIONS.find((m) => (ground ? m.kind === 'ground' : m.kind === 'air'));
+  // An elite is the same silhouette at the same size, wearing a gold rim — not
+  // a bigger minion. It shares one piece of art with its base form.
   const elite = Math.random() < eliteChance(step);
-  const scale = elite ? FEEL.eliteScale : 1;
-  const w = Math.round(def.w * scale), h = Math.round(def.h * scale);
+  const w = def.w, h = def.h;
 
   let x = camX + viewW + 16;
   let y;
