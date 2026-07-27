@@ -1,0 +1,50 @@
+# Builds a debug APK on every push to main, and attaches it to the run.
+# Download from: repo -> Actions -> the run -> Artifacts -> mega-dash-apk
+#
+# No signing keys needed for a debug APK. Your friends install it by enabling
+# "install from unknown sources" on their phone.
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # lets you trigger a build manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Create Android project
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Assemble debug APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mega-dash-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30

@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MEGA DASH — Phase 3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{width:100%;height:100%;overflow:hidden;background:#060614;font-family:'Courier New',monospace;color:#fff}
+#c{display:block;position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+
+/* ── HUD ── */
+#hud{position:fixed;top:0;left:0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:5;gap:8px;padding:8px 12px}
+.hud-col{display:flex;flex-direction:column;gap:2px}
+.hud-label{font-size:8px;letter-spacing:2px;color:#4a90d9;text-transform:uppercase}
+.hud-val{font-size:16px;font-weight:700;letter-spacing:1px;color:#e0f0ff;text-shadow:0 0 8px #4a90d9}
+#hp-row{display:flex;gap:2px;flex-wrap:wrap;max-width:120px}
+.pip{width:9px;height:13px;border:1px solid #e8553e}
+.pip.on{background:#e8553e}
+
+/* ── Weapon selector HUD ── */
+#wp-hud{display:flex;flex-direction:column;gap:3px;align-items:center;pointer-events:all}
+#wp-slots{display:flex;gap:5px;align-items:center;flex-wrap:wrap;max-width:230px;justify-content:center}
+.ws{width:30px;height:30px;border:2px solid #333;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;letter-spacing:.5px;color:#888;position:relative;transition:border-color .1s,background .1s;pointer-events:all}
+.ws.unlocked{border-color:#555;color:#aaa;cursor:pointer}
+.ws.active{border-color:var(--wc,#4a90d9);background:rgba(74,144,217,.18);color:#fff}
+.ws.locked{opacity:.3}
+.ws .wkey{position:absolute;top:-1px;right:1px;font-size:5px;color:#555}
+.ws .wlv{position:absolute;bottom:-1px;left:2px;font-size:6px;font-weight:700;color:#ffcc44}
+#wp-name{font-size:8px;letter-spacing:1px;margin-top:1px;min-height:10px}
+
+/* ── Pause (zone 2) ── */
+#pause-btn{position:fixed;top:8px;right:10px;z-index:12;pointer-events:all;background:rgba(10,10,26,.6);border:1.5px solid #4a90d9;color:#4a90d9;font-size:13px;width:34px;height:30px;border-radius:5px;cursor:pointer;font-family:inherit}
+#pause-btn:active{background:#4a90d9;color:#060614}
+#pause-ov{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,6,20,.85);z-index:26;gap:16px}
+#pause-title{font-size:22px;letter-spacing:6px;color:#4a90d9;text-shadow:0 0 14px #4a90d9}
+
+/* ── Boss bar ── */
+#boss-bar-wrap{position:fixed;top:0;left:0;right:0;height:6px;display:none;z-index:6;pointer-events:none}
+#boss-bar-bg{width:100%;height:100%;background:#1a0a0a}
+#boss-bar-fill{height:100%;background:#ff4081;transition:width .1s}
+#boss-name-disp{position:fixed;top:6px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;pointer-events:none;z-index:6;display:none;text-align:center;white-space:nowrap}
+
+/* ── Telegraph flash ── */
+#tele-flash{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .05s}
+
+/* ── Weapon unlock popup ── */
+#wp-unlock{position:fixed;left:50%;transform:translateX(-50%);background:#060614;border:2px solid #ffcc44;padding:12px 20px;z-index:25;display:none;pointer-events:none;text-align:center;top:20%}
+#wp-unlock h4{font-size:9px;letter-spacing:2px;color:#ffcc44;margin-bottom:6px}
+#wp-unlock .wname{font-size:14px;font-weight:700;letter-spacing:2px}
+#wp-unlock .wdesc{font-size:9px;color:#aaa;margin-top:4px;letter-spacing:1px}
+
+/* ── Overlay ── */
+#ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,6,20,.93);z-index:30;gap:0}
+#ov.hidden{display:none}
+#ov-icon{font-size:40px;margin-bottom:8px}
+#ov-title{font-size:30px;letter-spacing:6px;color:#4a90d9;text-shadow:0 0 18px #4a90d9,0 0 36px #4a90d966;margin-bottom:4px;text-align:center}
+#ov-sub{font-size:10px;letter-spacing:3px;color:#7ab0e0;margin-bottom:24px;text-align:center}
+#ov-scores{display:none;flex-direction:row;gap:28px;margin-bottom:22px;flex-wrap:wrap;justify-content:center}
+.ov-sb{text-align:center}
+.ov-sl{font-size:9px;letter-spacing:2px;color:#4a90d9;margin-bottom:3px}
+.ov-sn{font-size:24px;font-weight:700;color:#e0f0ff}
+#ov-stats2{display:none;grid-template-columns:repeat(2,1fr);gap:8px 24px;margin-bottom:18px;width:min(84vw,300px)}
+.st2{text-align:left;border-bottom:1px solid #1a2a44;padding-bottom:3px}
+.st2-l{font-size:8px;letter-spacing:1px;color:#7ab0e0}
+.st2-v{font-size:13px;color:#ffcc44;font-weight:700}
+#ov-wait{font-size:9px;letter-spacing:2px;color:#4a90d966;margin-bottom:16px}
+.btn{pointer-events:all;background:transparent;border:2px solid #4a90d9;color:#4a90d9;font-family:inherit;font-size:12px;letter-spacing:4px;padding:12px 30px;cursor:pointer;transition:background .12s,color .12s,transform .1s;margin:5px;text-transform:uppercase;touch-action:manipulation}
+.btn:hover,.btn:active{background:#4a90d9;color:#060614;transform:scale(.97)}
+#ov-note{font-size:8px;letter-spacing:2px;color:#4a90d966;margin-top:14px}
+#ov-hi{font-size:10px;letter-spacing:1px;color:#e0f0ff;margin-top:3px}
+#ov-bosses{font-size:9px;letter-spacing:1px;color:#7ab0e0;margin-top:6px;text-align:center}
+
+/* ── Hub / Shop ── */
+#hub{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#060614;border:2px solid #ffcc44;padding:16px 18px;width:min(92vw,360px);display:none;z-index:50;pointer-events:all;max-height:88vh;overflow-y:auto}
+#hub h3{font-size:11px;letter-spacing:3px;color:#ffcc44;margin-bottom:2px;text-align:center}
+#hub-chips{font-size:9px;letter-spacing:2px;color:#e0f0ff;text-align:center;margin-bottom:12px}
+#hub-chips b{color:#ffcc44}
+.upg{border:1px solid #333;border-radius:4px;padding:8px 10px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px}
+.upg-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.upg-name{font-size:10px;letter-spacing:1px;color:#e0f0ff}
+.upg-lvl{font-size:8px;letter-spacing:1px;color:#7ab0e0}
+.upg-desc{font-size:8px;color:#888;letter-spacing:.5px;line-height:1.5}
+.upg-pips{display:flex;gap:3px;margin:2px 0}
+.upg-pip{width:10px;height:6px;border:1px solid #555;border-radius:1px}
+.upg-pip.on{background:#ffcc44;border-color:#ffcc44}
+.upg-buy{pointer-events:all;background:transparent;border:1px solid #ffcc44;color:#ffcc44;font-family:inherit;font-size:9px;letter-spacing:1px;padding:6px 10px;cursor:pointer;text-transform:uppercase;transition:background .12s,color .12s}
+.upg-buy:hover{background:#ffcc44;color:#060614}
+.upg-buy:disabled{opacity:.3;border-color:#666;color:#666;cursor:default;background:none}
+.upg-buy.maxed{opacity:.5;border-color:#3a8040;color:#3a8040}
+#hub .btn{width:100%;margin-top:6px;padding:8px;font-size:10px}
+#hub-reset{font-size:7px;letter-spacing:1px;color:#4a90d966;text-align:center;margin-top:10px;text-decoration:underline;cursor:pointer;pointer-events:all}
+#full-reset{font-size:7px;letter-spacing:1px;color:#e8553e99;text-align:center;margin-top:14px;text-decoration:underline;cursor:pointer;pointer-events:all}
+#full-reset:active{color:#e8553e}
+
+/* ── How to play ── */
+#how{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#060614;border:2px solid #4a90d9;padding:18px 22px;width:min(90vw,320px);display:none;z-index:51;pointer-events:all;max-height:85vh;overflow-y:auto}
+#how h3{font-size:10px;letter-spacing:3px;color:#4a90d9;margin-bottom:10px}
+#how ul{list-style:none;font-size:10px;line-height:2;color:#7ab0e0}
+#how ul li::before{content:"▸ ";color:#4a90d9}
+#how .btn{width:100%;margin-top:12px;padding:8px;font-size:10px}
+#how-x{position:sticky;top:-18px;float:right;margin:-18px -22px 0 0;width:34px;height:34px;background:#060614;border:2px solid #4a90d9;border-top:none;border-right:none;border-radius:0 0 0 6px;color:#4a90d9;font-size:16px;line-height:1;cursor:pointer;z-index:2}
+#how-x:active{background:#4a90d9;color:#060614}
+#how-backdrop{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5)}
+
+/* ── Speed panel ── */
+#spd{position:fixed;bottom:0;left:50%;transform:translateX(-50%);background:rgba(6,6,20,.92);border:1px solid #4a90d9;border-bottom:none;padding:7px 16px 9px;display:none;z-index:20;pointer-events:all;text-align:center;min-width:180px}
+#spd label{font-size:8px;letter-spacing:2px;color:#4a90d9;display:block;margin-bottom:5px}
+#spd-range{width:150px;accent-color:#4a90d9}
+#spd-val{font-size:11px;color:#e0f0ff;margin-top:3px;display:block}
+
+/* ── Controls hint ── */
+#hint{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:5px 12px;pointer-events:none;opacity:.5;z-index:11}
+.hnt{font-size:8px;letter-spacing:1px;color:#4a90d9;text-align:center;line-height:1.6}
+
+/* ── Touch zones ── */
+#tz-l{position:fixed;left:0;bottom:0;width:clamp(180px,46vw,260px);height:clamp(90px,24vh,140px);pointer-events:all;opacity:0;z-index:10}
+#tz-r{position:fixed;right:0;bottom:0;width:clamp(150px,36vw,210px);height:clamp(90px,24vh,140px);pointer-events:all;opacity:0;z-index:10}
+
+/* ── Zone 3 directional glyphs (40% opacity, purely visual) ── */
+#zone3-icons{position:fixed;left:0;bottom:0;width:clamp(180px,46vw,260px);height:clamp(90px,24vh,140px);display:flex;align-items:flex-end;justify-content:flex-start;gap:2px;pointer-events:none;z-index:11;padding:0 0 8px 8px}
+#zone3-icons span{font-size:clamp(32px,8vw,50px);opacity:.4;filter:drop-shadow(0 0 4px #000)}
+
+/* ── Zone 4 action glyphs (jump square / shoot circle) ── */
+#zone4-icons{position:fixed;right:0;bottom:0;width:clamp(150px,36vw,210px);height:clamp(90px,24vh,140px);display:flex;align-items:flex-end;justify-content:flex-end;gap:4px;pointer-events:none;z-index:11;padding:0 8px 18px 0}
+#zone4-icons span{font-size:clamp(38px,9.5vw,60px);opacity:.45;filter:drop-shadow(0 0 4px #000)}
+#zone4-icons .z4-label{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:8px;letter-spacing:2px;color:#4a90d9;opacity:.7}
+
+/* ── Weapon select (between zone 3 and zone 4) ──
+   A trigger button sits bottom-center, in the gap between the movement
+   cluster (zone 3, bottom-left) and action cluster (zone 4, bottom-right).
+   Tapping it pauses the game and opens the weapon-select drawer. */
+#wsel-btn{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:12;pointer-events:all;background:rgba(10,10,26,.7);border:1.5px solid #4a90d9;border-radius:6px;color:#4a90d9;font-family:inherit;font-size:9px;letter-spacing:1px;padding:7px 12px;cursor:pointer;display:none;text-transform:uppercase}
+#wsel-btn:active{background:#4a90d9;color:#060614}
+#wsel-btn .wsel-cur{display:block;font-size:11px;font-weight:700;margin-top:2px}
+#wsel-ov{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,6,20,.88);z-index:27;gap:14px}
+#wsel-title{font-size:14px;letter-spacing:5px;color:#4a90d9;text-shadow:0 0 12px #4a90d9}
+#wsel-grid{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:min(94vw,620px);max-height:62vh;overflow-y:auto;padding:4px}
+.wsel-slot{width:62px;height:62px;border:2px solid #444;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#aaa;cursor:pointer;pointer-events:all;background:rgba(10,10,26,.6);transition:border-color .1s,background .1s}
+.wsel-slot .wsel-ab{font-size:13px;font-weight:700;letter-spacing:1px}
+.wsel-slot .wsel-nm{font-size:6px;letter-spacing:.5px;text-align:center;line-height:1.3;max-width:58px}
+.wsel-slot .wsel-lv{font-size:7px;font-weight:700;letter-spacing:.5px}
+.wsel-slot.active{border-width:3px;box-shadow:0 0 12px var(--wc,#4a90d9)}
+.wsel-slot:active{transform:scale(.95)}
+#wsel-close{margin-top:4px}
+
+/* ── Landscape-only lock ── */
+#rotate-warn{display:none;position:fixed;inset:0;z-index:100;background:#060614;color:#e0f0ff;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:20px}
+#rotate-warn .ri{font-size:44px;animation:rot 1.6s ease-in-out infinite}
+#rotate-warn .rt{font-size:12px;letter-spacing:3px;color:#4a90d9}
+@keyframes rot{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}
+@media (orientation:portrait){ #rotate-warn{display:flex} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div class="hud-col" id="zone1">
+    <div class="hud-label" style="color:#e8553e">Energy</div>
+    <div id="hp-row"></div>
+    <div class="hud-label" style="margin-top:4px">Score</div>
+    <div class="hud-val" id="h-score" style="font-size:12px">000000</div>
+    <div class="hud-label" style="margin-top:4px;color:#ffcc44">Lv <span id="h-level">1</span></div>
+    <div id="exp-bar-bg" style="width:100px;height:5px;background:#1a1a2e;border:1px solid #4a3000"><div id="exp-bar-fill" style="width:0%;height:100%;background:#ffcc44"></div></div>
+  </div>
+  <div class="hud-col" id="wp-hud" style="align-items:center">
+    <div class="hud-label">Weapons  <span style="color:#555;font-size:7px">Q ◀ ▶ W</span></div>
+    <div id="wp-slots"></div>
+    <div id="wp-name" style="color:#4a90d9"></div>
+  </div>
+  <div class="hud-col" style="align-items:flex-end">
+  </div>
+</div>
+<button id="pause-btn" aria-label="Pause">❙❙</button>
+
+<div id="boss-bar-wrap"><div id="boss-bar-bg"><div id="boss-bar-fill"></div></div></div>
+<div id="boss-name-disp"></div>
+<div id="tele-flash"></div>
+<div id="wp-unlock"><h4>WEAPON ACQUIRED!</h4><div class="wname" id="wpu-name"></div><div class="wdesc" id="wpu-desc"></div></div>
+
+<div id="pause-ov">
+  <div id="pause-title">PAUSED</div>
+  <button class="btn" id="btn-resume">▶ RESUME</button>
+</div>
+
+<div id="ov">
+  <div id="ov-icon">🤖</div>
+  <div id="ov-title">MEGA DASH</div>
+  <div id="ov-sub">SIDE-SCROLLER</div>
+  <div id="ov-scores">
+    <div class="ov-sb"><div class="ov-sl">Score</div><div class="ov-sn" id="ov-last">0</div></div>
+    <div class="ov-sb"><div class="ov-sl">Best</div><div class="ov-sn" id="ov-best">0</div></div>
+    <div class="ov-sb"><div class="ov-sl">Dist</div><div class="ov-sn" id="ov-dist">0m</div></div>
+  </div>
+  <div id="ov-stats2"></div>
+  <div id="ov-chips-earned" style="display:none;font-size:10px;letter-spacing:2px;color:#ffcc44;margin-bottom:14px">+0 CHIPS EARNED</div>
+  <div id="ov-wait" style="display:none"></div>
+  <div id="ov-actions">
+    <button class="btn" id="btn-start">▶ START GAME</button>
+    <button class="btn" id="btn-hub" style="font-size:9px;padding:9px 22px;border-color:#ffcc44;color:#ffcc44">⚙ HUB</button>
+    <button class="btn" id="btn-how" style="font-size:9px;padding:9px 22px">HOW TO PLAY</button>
+    <div id="ov-note">HIGH SCORE SAVES LOCALLY</div>
+    <div id="ov-hi"></div>
+    <div id="ov-chips" style="font-size:10px;letter-spacing:1px;color:#ffcc44;margin-top:3px"></div>
+    <div id="ov-bosses"></div>
+    <div id="full-reset">⚠ full reset (wipe all data &amp; reload)</div>
+  </div>
+</div>
+
+<div id="hub">
+  <h3>DR. LIGHT'S LAB</h3>
+  <div id="hub-chips">CHIPS: <b id="hub-chips-val">0</b></div>
+  <div id="hub-list"></div>
+  <button class="btn" id="btn-hub-close">CLOSE</button>
+  <div id="hub-reset">reset upgrades &amp; refund chips</div>
+</div>
+
+<div id="how-backdrop" onclick="closeHow()"></div>
+<div id="how">
+  <div id="how-x" onclick="closeHow()">✕</div>
+  <h3>HOW TO PLAY</h3>
+  <ul>
+    <li>Zone 1 (top-left): Energy, Score, Level/EXP</li>
+    <li>Zone 2 (top-right): Pause button</li>
+    <li>Zone 3 (bottom-left): Movement — 4 columns</li>
+    <li>&nbsp;&nbsp;⬅️ Left · ↖️ Left (diagonal, reserved) · ↗️ Right (diagonal, reserved) · ➡️ Right</li>
+    <li>&nbsp;&nbsp;Drag your touch DOWN past a small deadzone = Slide</li>
+    <li>&nbsp;&nbsp;Quick tap while sliding = Cancel</li>
+    <li>Zone 4 (bottom-right): Actions</li>
+    <li>&nbsp;&nbsp;⏹️ (left half) = Jump · again mid-air = Air Dash</li>
+    <li>&nbsp;&nbsp;⏺️ (right half) = Shoot · Hold = Charge shot</li>
+    <li>WEAPON button (bottom-center) = pause &amp; open Weapon Select</li>
+    <li>&nbsp;&nbsp;Tap a weapon in the grid to equip it (also recolors your suit)</li>
+    <li>&nbsp;&nbsp;Keyboard: TAB toggles Weapon Select · Q/W cycle</li>
+    <li>Tap a weapon icon (top HUD) to select it directly</li>
+    <li>Each weapon levels 1→10 separately; levelling up ranks up your equipped weapon</li>
+    <li>All weapons are tuned to the same damage-per-second at Lv 1</li>
+    <li>Keyboard: Arrows/AD move, Space jump, hold Z to charge, X slide, Q/W cycle</li>
+    <li>Walking left of screen-center never scrolls the camera back</li>
+    <li>A glowing BOSS DOOR appears every 60s — walk in to fight</li>
+    <li>17 robot masters, one per element — none repeat until all are seen</li>
+    <li>Beating a boss makes it return at a higher LAYER (1→2→3) in future runs</li>
+    <li>Pits and spikes are instant death — jump/dash over them</li>
+    <li>EXP (this run only) comes from distance + kills — level up for in-run bonuses</li>
+    <li>CHIPS (persistent) are earned per run — spend in the HUB on permanent Upgrades</li>
+    <li>Kill combos multiply score</li>
+    <li>E-Tanks = full heal</li>
+  </ul>
+  <button class="btn" onclick="closeHow()">CLOSE</button>
+</div>
+
+<div id="spd">
+  <label for="spd-range">PLAYER SPEED</label>
+  <input type="range" id="spd-range" min="25" max="100" step="25" value="100">
+  <span id="spd-val">1.00×</span>
+</div>
+
+<div id="hint">
+  <div class="hnt">⬅️↖️↗️➡️ MOVE<br>DRAG DOWN = SLIDE</div>
+  <div class="hnt">⏹️ JUMP&nbsp;&nbsp;⏺️ SHOOT<br>HOLD ⏺️ = CHARGE</div>
+</div>
+
+<div id="tz-l"></div>
+<div id="tz-r"></div>
+<div id="zone3-icons">
+  <span>⬅️</span><span>↖️</span><span>↗️</span><span>➡️</span>
+</div>
+<div id="zone4-icons">
+  <div style="position:relative"><span>⏹️</span><div class="z4-label">JUMP</div></div>
+  <div style="position:relative"><span>⏺️</span><div class="z4-label">SHOOT</div></div>
+</div>
+<button id="wsel-btn" aria-label="Weapon select">WEAPON<span class="wsel-cur" id="wsel-cur">BUSTER</span></button>
+<div id="wsel-ov">
+  <div id="wsel-title">WEAPON SELECT</div>
+  <div id="wsel-grid"></div>
+  <button class="btn" id="wsel-close">▶ RESUME</button>
+</div>
+<div id="rotate-warn">
+  <div class="ri">📱</div>
+  <div class="rt">ROTATE TO LANDSCAPE<br>TO PLAY</div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+//  MEGA DASH — Phase 3
+//  17 special weapons (placeholder) + per-weapon level system
+// ═══════════════════════════════════════════════════════════
+
+// ── DOM ─────────────────────────────────────────────────
+const canvas      = document.getElementById('c');
+const ctx         = canvas.getContext('2d');
+const hud         = document.getElementById('hud');
+const ovEl        = document.getElementById('ov');
+const ovTitle     = document.getElementById('ov-title');
+const ovSub       = document.getElementById('ov-sub');
+const ovScores    = document.getElementById('ov-scores');
+const ovLast      = document.getElementById('ov-last');
+const ovBest      = document.getElementById('ov-best');
+const ovDist      = document.getElementById('ov-dist');
+const ovHi        = document.getElementById('ov-hi');
+const ovIcon      = document.getElementById('ov-icon');
+const ovBosses    = document.getElementById('ov-bosses');
+const hScore      = document.getElementById('h-score');
+const hpRow       = document.getElementById('hp-row');
+const wpSlots     = document.getElementById('wp-slots');
+const wpName      = document.getElementById('wp-name');
+const spdPanel    = document.getElementById('spd');
+const spdRange    = document.getElementById('spd-range');
+const spdVal      = document.getElementById('spd-val');
+const hintEl      = document.getElementById('hint');
+const tzL         = document.getElementById('tz-l');
+const tzR         = document.getElementById('tz-r');
+const bossBarWrap = document.getElementById('boss-bar-wrap');
+const bossBarFill = document.getElementById('boss-bar-fill');
+const bossNameDisp= document.getElementById('boss-name-disp');
+const teleFlash   = document.getElementById('tele-flash');
+const wpUnlock    = document.getElementById('wp-unlock');
+const wpuName     = document.getElementById('wpu-name');
+const wpuDesc     = document.getElementById('wpu-desc');
+
+// ── Utilities ────────────────────────────────────────────
+const pad6  = n => String(Math.floor(n)).padStart(6,'0');
+const lerp  = (a,b,t) => a+(b-a)*t;
+const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+const rand  = (lo,hi) => lo+Math.random()*(hi-lo);
+
+// ── Save / Load ──────────────────────────────────────────
+const SAVE_KEY = 'megadash_p3';
+let save = {hi:0, runs:0, dist:0, bossKills:{}, chips:0, upgrades:{}};
+try{ const s=localStorage.getItem(SAVE_KEY); if(s) save={...save,...JSON.parse(s)}; }catch(_){}
+if(!save.upgrades) save.upgrades={};
+if(typeof save.chips!=='number') save.chips=save.bolts||0;
+const persist = ()=>{ try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(_){} };
+if(save.hi>0) ovHi.textContent='BEST: '+pad6(save.hi);
+
+// ═══════════════════════════════════════════════════════════
+//  META PROGRESSION — HUB / SHOP
+//  Chips are earned each run from score + boss kills, spent
+//  here on permanent (persistent) upgrades applied in mkState().
+// ═══════════════════════════════════════════════════════════
+const UPGRADE_DEFS=[
+  { id:'energy_tank', name:'ENERGY TANK', color:'#e8553e', maxLv:4,
+    baseCost:120, costMult:1.7,
+    desc:lv=>'+'+lv+' max energy pip'+(lv===1?'':'s')+' every run',
+    apply:(gs,lv)=>{ gs.hpMaxBonus=lv; } },
+  { id:'quick_charge', name:'QUICK CHARGE', color:'#4a90d9', maxLv:5,
+    baseCost:150, costMult:1.6,
+    desc:lv=>'Weapon cooldowns -'+(lv*8)+'%',
+    apply:(gs,lv)=>{ gs.cdMult=1-lv*.08; } },
+  { id:'combo_master', name:'COMBO CHIP', color:'#ffcc44', maxLv:4,
+    baseCost:140, costMult:1.55,
+    desc:lv=>'Combo lasts +'+(lv*25)+'% longer',
+    apply:(gs,lv)=>{ gs.comboDecayMult=1+lv*.25; } },
+  { id:'magnet', name:'ITEM MAGNET', color:'#80deea', maxLv:3,
+    baseCost:100, costMult:1.6,
+    desc:lv=>'Pickup range +'+(lv*35)+'%',
+    apply:(gs,lv)=>{ gs.magnetMult=1+lv*.35; } },
+  { id:'starter_arsenal', name:'STARTER ARSENAL', color:'#8bc34a', maxLv:1,
+    baseCost:600, costMult:1,
+    desc:()=>'Begin each run with a random boss weapon already unlocked',
+    apply:(gs,lv)=>{ gs.starterArsenal=lv>0; } },
+  { id:'rush_revive', name:'RUSH RESCUE', color:'#ce93d8', maxLv:3,
+    baseCost:900, costMult:2.0,
+    desc:lv=>'Survive '+lv+' fatal hit'+(lv===1?'':'s')+' per run at 3 energy',
+    apply:(gs,lv)=>{ gs.revives=lv; } },
+  { id:'might', name:'MIGHT CORE', color:'#ff6b35', maxLv:6,
+    baseCost:160, costMult:1.45,
+    desc:lv=>'All weapon damage +'+(lv*10)+'%',
+    apply:(gs,lv)=>{ gs.dmgMult=1+lv*.10; } },
+  { id:'overclock', name:'OVERCLOCK', color:'#ff88ff', maxLv:4,
+    baseCost:170, costMult:1.5,
+    desc:lv=>'Projectile speed +'+(lv*12)+'%',
+    apply:(gs,lv)=>{ gs.projSpeedMult=1+lv*.12; } },
+  { id:'payload', name:'PAYLOAD FRAME', color:'#bf8040', maxLv:3,
+    baseCost:180, costMult:1.5,
+    desc:lv=>'Projectile size +'+(lv*15)+'%',
+    apply:(gs,lv)=>{ gs.bulletSizeMult=1+lv*.15; } },
+  { id:'duplicator', name:'DUPLICATOR', color:'#c030b0', maxLv:2,
+    baseCost:800, costMult:2.2,
+    desc:lv=>'Fire '+lv+' extra echo volley'+(lv===1?'':'s')+' per shot',
+    apply:(gs,lv)=>{ gs.extraShots=lv; } },
+  { id:'armor_plate', name:'ARMOR PLATE', color:'#607d8b', maxLv:4,
+    baseCost:130, costMult:1.5,
+    desc:lv=>'+'+(lv*15)+' bonus invuln frames per hit',
+    apply:(gs,lv)=>{ gs.armorBonus=lv*15; } },
+  { id:'greed', name:'GREED CIRCUIT', color:'#ffd700', maxLv:5,
+    baseCost:130, costMult:1.5,
+    desc:lv=>'Score gain +'+(lv*12)+'%',
+    apply:(gs,lv)=>{ gs.scoreMult=1+lv*.12; } },
+  { id:'growth', name:'GROWTH MODULE', color:'#8bc34a', maxLv:5,
+    baseCost:150, costMult:1.5,
+    desc:lv=>'Chips earned per run +'+(lv*15)+'%',
+    apply:(gs,lv)=>{ gs.chipGainMult=1+lv*.15; } },
+  { id:'luck', name:'LUCK CHIP', color:'#00e5ff', maxLv:4,
+    baseCost:140, costMult:1.5,
+    desc:lv=>'Pickup drop rate +'+(lv*20)+'%',
+    apply:(gs,lv)=>{ gs.luckMult=1+lv*.20; } },
+  { id:'twin_arsenal', name:'TWIN ARSENAL', color:'#3a8040', maxLv:1,
+    baseCost:1400, costMult:1,
+    desc:()=>'Begin each run with TWO random boss weapons unlocked',
+    apply:(gs,lv)=>{ gs.twinArsenal=lv>0; } },
+  { id:'slide_mastery', name:'SLIDE MASTERY', color:'#aaddff', maxLv:4,
+    baseCost:140, costMult:1.5,
+    desc:lv=>'Slide duration +'+(lv*25)+'% (base 3s)',
+    apply:(gs,lv)=>{ gs.slideDurMult=1+lv*.25; } },
+];
+function upgLevel(id){ return save.upgrades[id]||0; }
+function upgCost(def,lv){ return Math.round(def.baseCost*Math.pow(def.costMult,lv)); }
+function applyMetaUpgrades(gs){
+  for(const def of UPGRADE_DEFS) def.apply(gs, upgLevel(def.id));
+}
+function chipsForRun(score,bossesDefeated,mult){ return Math.round((Math.floor(score/50)+bossesDefeated.length*40)*(mult||1)); }
+
+function renderHub(){
+  document.getElementById('hub-chips-val').textContent=save.chips;
+  const list=document.getElementById('hub-list'); list.innerHTML='';
+  for(const def of UPGRADE_DEFS){
+    const lv=upgLevel(def.id), maxed=lv>=def.maxLv, cost=maxed?0:upgCost(def,lv);
+    const row=document.createElement('div'); row.className='upg';
+    const pips=Array.from({length:def.maxLv},(_,i)=>`<div class="upg-pip${i<lv?' on':''}" style="${i<lv?'background:'+def.color+';border-color:'+def.color:''}"></div>`).join('');
+    row.innerHTML=`
+      <div class="upg-top">
+        <div><div class="upg-name" style="color:${def.color}">${def.name}</div><div class="upg-lvl">LV ${lv}/${def.maxLv}</div></div>
+        <button class="upg-buy${maxed?' maxed':''}" ${maxed||save.chips<cost?'disabled':''} data-id="${def.id}">${maxed?'MAXED':cost+' ⚙'}</button>
+      </div>
+      <div class="upg-pips">${pips}</div>
+      <div class="upg-desc">${def.desc(Math.max(1,lv+ (maxed?0:1)))}</div>`;
+    list.appendChild(row);
+  }
+  list.querySelectorAll('.upg-buy:not(:disabled)').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.id, def=UPGRADE_DEFS.find(d=>d.id===id), lv=upgLevel(id);
+      if(lv>=def.maxLv) return;
+      const cost=upgCost(def,lv);
+      if(save.chips<cost) return;
+      save.chips-=cost; save.upgrades[id]=lv+1; persist();
+      renderHub();
+      if(document.getElementById('ov').classList.contains('hidden')===false) ovChipsSync();
+    });
+  });
+}
+function ovChipsSync(){ document.getElementById('ov-chips').textContent='⚙ CHIPS: '+save.chips; }
+document.getElementById('btn-hub').addEventListener('click',()=>{ renderHub(); document.getElementById('hub').style.display='block'; });
+document.getElementById('btn-hub-close').addEventListener('click',()=>{ document.getElementById('hub').style.display='none'; });
+document.getElementById('hub-reset').addEventListener('click',()=>{
+  let refund=0;
+  for(const def of UPGRADE_DEFS){ const lv=upgLevel(def.id); for(let i=0;i<lv;i++) refund+=upgCost(def,i); }
+  if(refund>0&&confirm('Refund '+refund+' chips and reset all upgrades?')){ save.chips+=refund; save.upgrades={}; persist(); renderHub(); ovChipsSync(); }
+});
+ovChipsSync();
+
+// ── Full reset — dev/safety utility for iterative testing ──
+// Wipes every kind of client-side persistence this page could possibly have
+// touched (localStorage/sessionStorage, cookies, Service Worker registrations,
+// Cache Storage, IndexedDB) then force-relaunches the file bypassing cache,
+// so a stale prior build can never keep bleeding into the current one.
+async function fullReset(){
+  try{ localStorage.clear(); }catch(_){}
+  try{ sessionStorage.clear(); }catch(_){}
+  try{
+    document.cookie.split(';').forEach(c=>{
+      const name=c.split('=')[0].trim();
+      if(!name) return;
+      document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path='+location.pathname;
+    });
+  }catch(_){}
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs) await r.unregister();
+    }
+  }catch(_){}
+  try{
+    if('caches' in window){
+      const keys=await caches.keys();
+      for(const k of keys) await caches.delete(k);
+    }
+  }catch(_){}
+  try{
+    if('indexedDB' in window && indexedDB.databases){
+      const dbs=await indexedDB.databases();
+      for(const db of dbs) if(db.name) indexedDB.deleteDatabase(db.name);
+    }
+  }catch(_){}
+  const url=location.href.split('#')[0].split('?')[0];
+  location.replace(url+'?reset='+Date.now());
+}
+document.getElementById('full-reset').addEventListener('click',()=>{
+  if(confirm('This wipes ALL saved data — high score, chips, upgrades, and any cached/offline files for this page — then reloads fresh. This cannot be undone. Continue?')){
+    document.getElementById('full-reset').textContent='wiping everything…';
+    fullReset();
+  }
+});
+
+// ── Speed slider ─────────────────────────────────────────
+let speedMult=1.0;
+spdRange.addEventListener('input',()=>{ speedMult=parseInt(spdRange.value)/100; spdVal.textContent=speedMult.toFixed(2)+'×'; });
+
+// ── Dynamic canvas ───────────────────────────────────────
+let W=390, H=700, GROUND=620, SP=24, PLAYER_X=72, UNIT=6;
+function resize(){
+  W=window.innerWidth; H=window.innerHeight;
+  canvas.width=W; canvas.height=H;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  SP=clamp(Math.round(H/26),18,30);
+  UNIT=SP/4;
+  const inputZoneH=clamp(H*0.24,90,140); // matches the CSS clamp() sizing the zone3/zone4 button clusters
+  GROUND=H-inputZoneH; PLAYER_X=Math.round(W*0.5);
+  hud.style.width=W+'px';
+}
+resize();
+window.addEventListener('resize',resize);
+
+// ═══════════════════════════════════════════════════════════
+//  PROPORTIONAL SIZE GRID
+//  Every actor's footprint is expressed in UNIT multiples so
+//  minions / elites / bosses all scale consistently off the
+//  same 8×4 player grid.
+// ═══════════════════════════════════════════════════════════
+const PLAYER_UNITS = {w:4, h:8};      // player is 4 units wide × 8 units tall
+const BOSS_UNITS    = {w:13, h:15};   // ~3.25× the player's footprint
+const ELITE_SCALE    = 1.9;           // miniboss/elite size multiplier over base minion
+
+// ── Physics ──────────────────────────────────────────────
+const GRAVITY=0.55, JUMP_FORCE=-9.55, MAX_JUMP_HOLD=14, DJ_FORCE=-7.6, AIRDASH_HANG_FRAMES=13, AIRDASH_GRAVITY_MULT=0.16;
+const HP_MAX=8, COMBO_DECAY=180, SLIDE_BASE_FRAMES=180;
+const PLAYER_MOVE_SPEED=3.4;      // world units/frame while holding a direction
+const CAM_DEADZONE=0.5;            // camera follows once player passes this fraction of screen width
+const DOOR_INTERVAL_FRAMES=3600;   // 60s @60fps — spawn a boss door on this cadence
+const EXP_BASE=90, EXP_GROWTH=38;  // level N needs EXP_BASE+(N-1)*EXP_GROWTH
+const EXP_PER_DIST=0.6, EXP_MINION=15, EXP_MINIBOSS=60, EXP_BOSS=220;
+const FLINCH_FRAMES=16, KNOCKBACK_SPD=7.5;
+
+// ═══════════════════════════════════════════════════════════
+//  WEAPON CATALOGUE — buster + 17 boss special weapons.
+//  PHASE 3: placeholder mechanics & visuals only. Each weapon
+//  fires a visually distinct projectile so it can be told apart
+//  in the weapon-select screen and on-screen; the real per-weapon
+//  behaviors land in Phases 12-14 and the real visuals in 9-11.
+//
+//  BALANCE: every weapon is tuned to the SAME ~7.5 damage/sec at
+//  level 1 (dmg = DPS_TARGET * cd / 60 / projectiles), so a slow
+//  heavy weapon and a fast light one trade blows evenly. Weapon
+//  level adds a flat +12%/level placeholder until Phases 12-14
+//  replace it with each weapon's real Lv1/3/6/10 feature ladder.
+//
+//  `palette` recolors the player suit live while equipped.
+// ═══════════════════════════════════════════════════════════
+const DPS_TARGET=7.5, WP_MAX_LEVEL=10, WP_DMG_PER_LEVEL=0.12;
+function wpDmg(cd,proj){ return +(DPS_TARGET*cd/60/(proj||1)).toFixed(2); }
+
+const ALL_WEAPONS = [
+  { id:'buster', name:'MEGA BUSTER', color:'#4a90d9', boss:false, shape:'bolt',
+    palette:{primary:'#4a90d9',torso:'#3579c3',trim:'#2a5a94',dark:'#1565c0'},
+    cd:8, proj:1, desc:'Standard arm cannon' },
+
+  { id:'core_blaster', name:'CORE BLASTER', color:'#b9c2cc', boss:true, bossId:'core', shape:'bolt',
+    palette:{primary:'#b9c2cc',torso:'#8f98a3',trim:'#6b7280',dark:'#4b5259'},
+    cd:15, proj:1, desc:'Neutral bullet, scalable fire rate' },
+  { id:'blaze_wheel', name:'BLAZE WHEEL', color:'#e02020', boss:true, bossId:'blaze', shape:'wheel',
+    palette:{primary:'#e02020',torso:'#a81818',trim:'#1a1a1a',dark:'#7a1010'},
+    cd:30, proj:1, desc:'Bouncing fireball, leaves Hot' },
+  { id:'torrent_cannon', name:'TORRENT CANNON', color:'#5fb8e8', boss:true, bossId:'torrent', shape:'stream',
+    palette:{primary:'#5fb8e8',torso:'#a8845c',trim:'#7a5e3a',dark:'#3d8ab8'},
+    cd:4, proj:1, desc:'Continuous stream, pushes enemies' },
+  { id:'volt_spark', name:'VOLT SPARK', color:'#22d3ee', boss:true, bossId:'volt', shape:'spark',
+    palette:{primary:'#22d3ee',torso:'#0e9bb5',trim:'#5b21b6',dark:'#075e6e'},
+    cd:12, proj:1, desc:'Electric burst, chains + stuns' },
+  { id:'thorn_lash', name:'THORN LASH', color:'#4ade50', boss:true, bossId:'thorn', shape:'lash',
+    palette:{primary:'#4ade50',torso:'#33a83c',trim:'#5c4033',dark:'#256b2a'},
+    cd:36, proj:1, desc:'Whip-vine, reels and throws' },
+  { id:'frost_guard', name:'FROST GUARD', color:'#8fe3ff', boss:true, bossId:'frost', shape:'shield',
+    palette:{primary:'#8fe3ff',torso:'#63b8d6',trim:'#dceeff',dark:'#3d8ba8'},
+    cd:40, proj:1, desc:'Ice shield, releases icicles' },
+  { id:'strike_gauntlet', name:'STRIKE GAUNTLET', color:'#ff9d3d', boss:true, bossId:'strike', shape:'punch',
+    palette:{primary:'#ff9d3d',torso:'#d67a24',trim:'#7c2d12',dark:'#9c5416'},
+    cd:20, proj:1, desc:'Close-range punch with knockback' },
+  { id:'venom_spray', name:'VENOM SPRAY', color:'#84cc16', boss:true, bossId:'venom', shape:'spray',
+    palette:{primary:'#84cc16',torso:'#639b10',trim:'#5b21b6',dark:'#40660b'},
+    cd:6, proj:1, desc:'Poison cone, leaves Toxic clouds' },
+  { id:'quake_hammer', name:'QUAKE HAMMER', color:'#a16207', boss:true, bossId:'quake', shape:'wave',
+    palette:{primary:'#a16207',torso:'#7d4c06',trim:'#ea580c',dark:'#563304'},
+    cd:40, proj:1, desc:'Ground pound, shockwaves' },
+  { id:'gale_vortex', name:'GALE VORTEX', color:'#7dd3fc', boss:true, bossId:'gale', shape:'tornado',
+    palette:{primary:'#7dd3fc',torso:'#54a8d1',trim:'#f8fafc',dark:'#357a9c'},
+    cd:45, proj:1, desc:'Controllable mini-tornado' },
+  { id:'psi_orb', name:'PSI ORB', color:'#a855f7', boss:true, bossId:'psi', shape:'orb',
+    palette:{primary:'#a855f7',torso:'#8236c9',trim:'#f9a8d4',dark:'#5c2391'},
+    cd:30, proj:1, desc:'Steerable homing psychic orb' },
+  { id:'swarm_caller', name:'SWARM CALLER', color:'#b8d64a', boss:true, bossId:'swarm', shape:'swarm',
+    palette:{primary:'#b8d64a',torso:'#8fa838',trim:'#4d5c1a',dark:'#5f7024'},
+    cd:24, proj:3, desc:'Releases a pursuing insect swarm' },
+  { id:'rock_buster', name:'ROCK BUSTER', color:'#a8a8a0', boss:true, bossId:'granite', shape:'rock',
+    palette:{primary:'#a8a8a0',torso:'#82827b',trim:'#57534e',dark:'#5c5c56'},
+    cd:20, proj:1, desc:'Heavy stone shot, shatters on hit' },
+  { id:'wraith_cloak', name:'WRAITH CLOAK', color:'#bfa8e8', boss:true, bossId:'wraith', shape:'wisp',
+    palette:{primary:'#bfa8e8',torso:'#9781c4',trim:'#3b2a5c',dark:'#6b5794'},
+    cd:30, proj:1, desc:'Phasing spectral bolt' },
+  { id:'drake_breath', name:'DRAKE BREATH', color:'#e85a5a', boss:true, bossId:'drake', shape:'breath',
+    palette:{primary:'#e85a5a',torso:'#c23e3e',trim:'#7f1d1d',dark:'#8f2727'},
+    cd:6, proj:1, desc:'Sustained draconic flame breath' },
+  { id:'eclipse_blade', name:'ECLIPSE BLADE', color:'#7a6ae8', boss:true, bossId:'eclipse', shape:'boomerang',
+    palette:{primary:'#2a2a35',torso:'#3d3d4d',trim:'#dc2626',dark:'#1a1a22'},
+    cd:24, proj:1, desc:'Dark boomerang, steals health' },
+  { id:'alloy_blade', name:'ALLOY BLADE', color:'#c8d0d8', boss:true, bossId:'alloy', shape:'blade',
+    palette:{primary:'#c8d0d8',torso:'#9aa3ab',trim:'#4b5563',dark:'#6e767d'},
+    cd:20, proj:1, desc:'Ricocheting piercing metal blade' },
+].map(w=>{
+  w.dmg=wpDmg(w.cd,w.proj);                       // equalized ~7.5 DPS at Lv1
+  w.r=w.shape==='stream'||w.shape==='spray'?3:4.5;
+  // PHASE 3 placeholder firing: one shaped projectile per `proj`, tagged so the
+  // renderer can tell them apart. Phases 12-14 replace each with real behavior.
+  w.fire=function(px,py){
+    const lv=wpLevel(this.id), dmg=this.dmg*(1+(lv-1)*WP_DMG_PER_LEVEL);
+    const spd=this.shape==='wave'?7:this.shape==='orb'?6:11;
+    for(let i=0;i<this.proj;i++){
+      const spread=this.proj>1?(i-(this.proj-1)/2)*2.2:0;
+      shoot(px,py,spd,spread,this.r,this.color,dmg,{special:this.id!=='buster',shape:this.shape});
+    }
+  };
+  return w;
+});
+
+// Lookup by id
+const WP_BY_ID = Object.fromEntries(ALL_WEAPONS.map(w=>[w.id,w]));
+const BASE_WP_IDS = ALL_WEAPONS.filter(w=>!w.boss).map(w=>w.id);
+const BOSS_WP_IDS  = ALL_WEAPONS.filter(w=> w.boss).map(w=>w.id);
+
+// ── Bullet factory helpers ───────────────────────────────
+function mkBullet(x,y,vx,vy,r,color,dmg,enemy,extra={}){
+  let charged=false;
+  if(!enemy&&gs){
+    dmg*=(gs.dmgMult||1)*(1+(gs.runDmgBonus||0)); r*=(gs.bulletSizeMult||1); const pm=gs.projSpeedMult||1;
+    vx*=pm*(gs.player?.facing||1); vy*=pm;
+    if(gs.chargeBoostActive){ dmg*=2; r*=1.5; charged=true; }
+  }
+  return {x,y,vx,vy,r,color,dmg,enemy:!!enemy,charged,
+    life:Math.ceil((W+80)/Math.max(Math.abs(vx)+.01,1))+20,...extra};
+}
+function shoot(x,y,vx,vy,r,color,dmg,extra={}){
+  gs.bullets.push(mkBullet(x,y,vx,vy,r,color,dmg,false,extra));
+}
+function enemyShoot(x,y,vx,vy,r,color,dmg,extra={}){
+  gs.bullets.push(mkBullet(x,y,vx,vy,r,color,dmg,true,extra));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOSS CATALOGUE — 17 robot masters, one per element.
+//  PHASE 2: placeholder presences — distinct silhouettes and
+//  palettes, correct names/weapons/attack labels from the design
+//  tracker, but NO attacks or arena hazards yet (Phases 6-8).
+//
+//  `layer` (1-3) is META progression: derived from lifetime
+//  clears of that specific boss (save.bossKills), so a boss you
+//  have beaten before shows up harder in every future run.
+//  Layers 2/3 content is not written yet, so all three layers
+//  currently resolve to the same (empty) behavior.
+// ═══════════════════════════════════════════════════════════
+const BOSS_DEFS=[
+  { id:'core',    name:'CORE MAN',    element:'Typeless', motif:'orb',
+    color:'#b9c2cc', accent:'#6b7280', eyeColor:'#ffffff', hp:30,
+    attackName:'Core Pulse',      dropId:'core_blaster' },
+  { id:'blaze',   name:'BLAZE MAN',   element:'Fire', motif:'flame',
+    color:'#e02020', accent:'#1a1a1a', eyeColor:'#ffcc44', hp:32,
+    attackName:'Inferno Wheel',   dropId:'blaze_wheel' },
+  { id:'torrent', name:'TORRENT MAN', element:'Water', motif:'fin',
+    color:'#a8845c', accent:'#5fb8e8', eyeColor:'#d0f0ff', hp:32,
+    attackName:'Aqua Torrent',    dropId:'torrent_cannon' },
+  { id:'volt',    name:'VOLT MAN',    element:'Electric', motif:'bolt',
+    color:'#22d3ee', accent:'#5b21b6', eyeColor:'#fef08a', hp:30,
+    attackName:'Chain Spark',     dropId:'volt_spark' },
+  { id:'thorn',   name:'THORN MAN',   element:'Grass', motif:'leaf',
+    color:'#4ade50', accent:'#5c4033', eyeColor:'#d9f99d', hp:34,
+    attackName:'Vine Lash',       dropId:'thorn_lash' },
+  { id:'frost',   name:'FROST MAN',   element:'Ice', motif:'icicle',
+    color:'#8fe3ff', accent:'#dceeff', eyeColor:'#ffffff', hp:34,
+    attackName:'Glacier Spike',   dropId:'frost_guard' },
+  { id:'strike',  name:'STRIKE MAN',  element:'Fighting', motif:'fist',
+    color:'#ff9d3d', accent:'#7c2d12', eyeColor:'#ffffff', hp:36,
+    attackName:'Rush Combo',      dropId:'strike_gauntlet' },
+  { id:'venom',   name:'VENOM MAN',   element:'Poison', motif:'drip',
+    color:'#84cc16', accent:'#5b21b6', eyeColor:'#d8b4fe', hp:30,
+    attackName:'Toxic Cloud',     dropId:'venom_spray' },
+  { id:'quake',   name:'QUAKE MAN',   element:'Ground', motif:'rock',
+    color:'#a16207', accent:'#ea580c', eyeColor:'#fed7aa', hp:38,
+    attackName:'Seismic Stomp',   dropId:'quake_hammer' },
+  { id:'gale',    name:'GALE MAN',    element:'Flying', motif:'wing',
+    color:'#7dd3fc', accent:'#f8fafc', eyeColor:'#ffffff', hp:28,
+    attackName:'Wind Vortex',     dropId:'gale_vortex' },
+  { id:'psi',     name:'PSI MAN',     element:'Psychic', motif:'halo',
+    color:'#a855f7', accent:'#f9a8d4', eyeColor:'#fce7f3', hp:30,
+    attackName:'Mind Lift',       dropId:'psi_orb' },
+  { id:'swarm',   name:'SWARM MAN',   element:'Bug', motif:'antenna',
+    color:'#b8d64a', accent:'#4d5c1a', eyeColor:'#eab308', hp:30,
+    attackName:'Infestation',     dropId:'swarm_caller' },
+  { id:'granite', name:'GRANITE MAN', element:'Rock', motif:'jagged',
+    color:'#a8a8a0', accent:'#57534e', eyeColor:'#d6d3d1', hp:40,
+    attackName:'Boulder Roll',    dropId:'rock_buster' },
+  { id:'wraith',  name:'WRAITH MAN',  element:'Ghost', motif:'wisp',
+    color:'#bfa8e8', accent:'#3b2a5c', eyeColor:'#e9d5ff', hp:28,
+    attackName:'Spectral Shift',  dropId:'wraith_cloak' },
+  { id:'drake',   name:'DRAKE MAN',   element:'Dragon', motif:'horn',
+    color:'#e85a5a', accent:'#7f1d1d', eyeColor:'#fbbf24', hp:38,
+    attackName:'Dragon Breath',   dropId:'drake_breath' },
+  { id:'eclipse', name:'ECLIPSE MAN', element:'Dark', motif:'ring',
+    color:'#2a2a35', accent:'#dc2626', eyeColor:'#ff4444', hp:34,
+    attackName:'Shadow Bind',     dropId:'eclipse_blade' },
+  { id:'alloy',   name:'ALLOY MAN',   element:'Steel', motif:'blade',
+    color:'#c8d0d8', accent:'#4b5563', eyeColor:'#e5e7eb', hp:38,
+    attackName:'Metal Barrage',   dropId:'alloy_blade' },
+];
+const BOSS_BY_ID=Object.fromEntries(BOSS_DEFS.map(b=>[b.id,b]));
+
+// Encounter bag: no boss repeats until all 17 have been seen this run.
+let bossQueue=[];
+function nextBossDef(){ if(!bossQueue.length) bossQueue=[...BOSS_DEFS].sort(()=>Math.random()-.5); return bossQueue.shift(); }
+
+// META layer: lifetime clears of THIS boss decide how hard it fights,
+// persisting across runs. 0 clears => layer 1, 1 => layer 2, 2+ => layer 3.
+function bossLayer(id){ return clamp((save.bossKills[id]||0)+1,1,3); }
+
+// ── State factory ────────────────────────────────────────
+function mkState(){
+  const st={
+    running:false, phase:'title',
+    score:0, dist:0, combo:1, comboTimer:0,
+    frame:0, camX:0, genX:0,
+    hp:HP_MAX, invFrames:0,
+    // Meta-upgrade-derived fields (set by applyMetaUpgrades below)
+    hpMaxBonus:0, cdMult:1, comboDecayMult:1, magnetMult:1, starterArsenal:false, revives:0, revivesLeft:0,
+    // Weapon state — ids, not indices into raw array
+    unlockedIds: new Set(BASE_WP_IDS),   // ids available this run
+    wpLevels:{},                         // per-weapon level this run (1..10)
+    activeWpId: 'buster',                // currently equipped
+    weaponCooldown:0,
+    player:{
+      x:PLAYER_X, y:GROUND, vy:0, vx:0, moveDir:0, facing:1, diagInput:null,
+      w:PLAYER_UNITS.w*UNIT|0, h:PLAYER_UNITS.h*UNIT|0,
+      onGround:true, jumpCount:0, jumpHold:0, airDashTimer:0,
+      shootAnim:0, hitAnim:0, flinchTimer:0, knockbackVx:0,
+      sliding:false, slideTimer:0,
+    },
+    bullets:[], enemies:[], particles:[], pickups:[],
+    platforms:[], boss:null, doors:[],
+    groundSegments:[], spikes:[],
+    nextDoorAt:3600,   // frames until the next boss-door spawns (60s @60fps)
+    floatTexts:[], paused:false,
+    shakeX:0, shakeY:0, shakeDur:0,
+    bossesDefeated:[],   // ids defeated this run
+    kills:0, maxCombo:1,
+    // Run-only EXP/Level system — separate currency from meta Chips, resets every run
+    exp:0, level:1, expToNext:EXP_BASE,
+    runDmgBonus:0, runHpBonus:0,
+  };
+  // PHASE 3 ONLY: every special weapon starts unlocked so the full set is
+  // testable in the weapon-select screen. PHASE 4 removes this and gates each
+  // weapon behind defeating its corresponding boss.
+  for(const w of ALL_WEAPONS){ st.unlockedIds.add(w.id); st.wpLevels[w.id]=1; }
+  applyMetaUpgrades(st);
+  st.hp=HP_MAX+st.hpMaxBonus;
+  st.revivesLeft=st.revives;
+  // PHASE 1: no boss-dropped weapons exist yet (BOSS_WP_IDS is empty), so these
+  // two Hub upgrades are inert for now — they'll do their real job again once
+  // Phase 4 reintroduces boss-unlocked weapons.
+  if(st.twinArsenal&&BOSS_WP_IDS.length>=2){
+    const pool=[...BOSS_WP_IDS].sort(()=>Math.random()-.5);
+    st.unlockedIds.add(pool[0]); st.unlockedIds.add(pool[1]);
+  } else if(st.starterArsenal&&BOSS_WP_IDS.length>=1){
+    const pick=BOSS_WP_IDS[Math.floor(Math.random()*BOSS_WP_IDS.length)];
+    st.unlockedIds.add(pick);
+  }
+  return st;
+}
+let gs=null;
+
+// ═══════════════════════════════════════════════════════════
+//  WEAPON LEVELS — run-only, per weapon, 1..10. Separate from
+//  the player's own EXP level and from meta Chips/Upgrades.
+//  PHASE 3: levelling is a flat +12% damage placeholder and is
+//  granted automatically on player level-up. PHASE 4 replaces
+//  that with the Vampire-Survivors-style pick-a-card screen.
+// ═══════════════════════════════════════════════════════════
+function wpLevel(id){ return (gs&&gs.wpLevels&&gs.wpLevels[id])||1; }
+function wpLevelUp(id){
+  if(!gs) return false;
+  const cur=wpLevel(id);
+  if(cur>=WP_MAX_LEVEL) return false;
+  gs.wpLevels[id]=cur+1;
+  const w=WP_BY_ID[id];
+  floatText(gs.player.x+gs.player.w/2,gs.player.y-34,'\u25b2 '+w.name+' Lv'+(cur+1),w.color,true);
+  burst(gs.player.x+gs.player.w/2,gs.player.y+gs.player.h/2,w.color,16,'explode');
+  updateHUD(); if(typeof syncWselBtn==='function') syncWselBtn();
+  return true;
+}
+
+// ── Weapon accessors ─────────────────────────────────────
+function activeWeapon(){ return WP_BY_ID[gs.activeWpId]||WP_BY_ID['buster']; }
+function unlockedList(){ return ALL_WEAPONS.filter(w=>gs.unlockedIds.has(w.id)); }
+function cycleWeapon(dir){
+  if(!gs?.running) return;
+  const list=unlockedList();
+  const idx=list.findIndex(w=>w.id===gs.activeWpId);
+  gs.activeWpId=list[(idx+list.length+dir)%list.length].id;
+  updateHUD(); if(typeof syncWselBtn==='function') syncWselBtn();
+}
+function unlockWeapon(id){
+  if(gs.unlockedIds.has(id)) return; // already have it
+  gs.unlockedIds.add(id);
+  const w=WP_BY_ID[id];
+  // Show unlock popup
+  wpuName.textContent=w.name; wpuName.style.color=w.color;
+  wpuDesc.textContent=w.desc;
+  wpUnlock.style.display='block';
+  setTimeout(()=>wpUnlock.style.display='none',3000);
+  floatText(W/2,H/3,'★ '+w.name+' UNLOCKED!',w.color,true);
+  updateHUD();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXP / LEVEL — current-run-only progression. Deliberately
+//  separate from the persistent meta Chips/Upgrades system.
+//  Gained from rightward distance travelled, plus flat bonuses
+//  for minion (medium) and miniboss/elite (large) kills.
+// ═══════════════════════════════════════════════════════════
+function gainExp(amount){
+  if(!gs?.running||amount<=0) return;
+  gs.exp+=amount;
+  while(gs.exp>=gs.expToNext){
+    gs.exp-=gs.expToNext;
+    gs.level++;
+    gs.expToNext=EXP_BASE+(gs.level-1)*EXP_GROWTH;
+    gs.runDmgBonus+=0.05;
+    gs.hp=Math.min(HP_MAX+(gs.hpMaxBonus||0)+gs.runHpBonus,gs.hp+1);
+    if(gs.level%4===0){ gs.runHpBonus++; gs.hp=Math.min(HP_MAX+(gs.hpMaxBonus||0)+gs.runHpBonus,gs.hp+1); }
+    // PHASE 3 placeholder: a player level-up also ranks up the equipped weapon.
+    // PHASE 4 swaps this for the pick-one-of-N card screen.
+    wpLevelUp(gs.activeWpId);
+    floatText(gs.player.x+gs.player.w/2,gs.player.y-20,'\u2605 LEVEL '+gs.level+'!','#ffcc44',true);
+    burst(gs.player.x+gs.player.w/2,gs.player.y+gs.player.h/2,'#ffcc44',18,'explode');
+    screenShake(6,2); updateHUD();
+  }
+}
+
+// ── Visibility pause ──────────────────────────────────────
+document.addEventListener('visibilitychange',()=>{ if(gs) gs.paused=document.hidden&&gs.running; });
+
+// ── Input ─────────────────────────────────────────────────
+const KEY={};
+let tzStartX=0, tzStartY=0, tzStartT=0, tzSlideFired=false;
+const SLIDE_DEADZONE_PX=34;
+window.addEventListener('keydown',e=>{
+  KEY[e.code]=true;
+  if(gs?.paused) return;
+  if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); gs?.running?doJump():startGame(); }
+  if(e.code==='ArrowLeft'||e.code==='KeyA'){ if(gs?.player) gs.player.moveDir=-1; }
+  if(e.code==='ArrowRight'||e.code==='KeyD'){ if(gs?.player) gs.player.moveDir=1; }
+  if((e.code==='KeyZ'||e.code==='ShiftRight')&&!chargeKeyDown){ chargeKeyDown=true; beginCharge(0,0); }
+  if(e.code==='KeyX'||e.code==='ShiftLeft')  { gs?.player?.sliding?cancelSlide():doSlide(); }
+  if(e.code==='KeyQ') cycleWeapon(-1);
+  if(e.code==='KeyW') cycleWeapon(+1);
+  // number keys 1-9 select weapon slot directly
+  const n=parseInt(e.key); if(n>=1&&n<=9){ const l=unlockedList(); if(l[n-1]) { gs.activeWpId=l[n-1].id; updateHUD(); } }
+});
+window.addEventListener('keyup',e=>{
+  KEY[e.code]=false;
+  if((e.code==='ArrowLeft'||e.code==='KeyA')&&gs?.player?.moveDir===-1) gs.player.moveDir=0;
+  if((e.code==='ArrowRight'||e.code==='KeyD')&&gs?.player?.moveDir===1) gs.player.moveDir=0;
+  if((e.code==='KeyZ'||e.code==='ShiftRight')&&chargeKeyDown){ chargeKeyDown=false; endCharge(); }
+});
+
+// ── Zone 3 — movement: 4 directional touch columns (⬅️↖️↗️➡️) + drag-down-past-deadzone = slide ──
+// ↖️ / ↗️ set moveDir like their neighbor but also flag a diagonal input reserved for future special moves.
+function zone3Dir(clientX,rect){
+  const t=(clientX-rect.left)/rect.width; // 0..1 across zone 3
+  if(t<0.25)  return {dir:-1, diag:null};
+  if(t<0.5)   return {dir:-1, diag:'ul'};
+  if(t<0.75)  return {dir: 1, diag:'ur'};
+  return        {dir: 1, diag:null};
+}
+tzL.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(!gs?.running){ startGame(); return; }
+  if(gs.paused) return;
+  const t=e.changedTouches[0], rect=tzL.getBoundingClientRect();
+  tzStartX=t.clientX; tzStartY=t.clientY; tzStartT=performance.now(); tzSlideFired=false;
+  const d=zone3Dir(t.clientX,rect);
+  gs.player.moveDir=d.dir; gs.player.diagInput=d.diag; gs.player.facing=d.dir;
+},{passive:false});
+tzL.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!gs?.running||gs.paused) return;
+  const t=e.changedTouches[0], rect=tzL.getBoundingClientRect();
+  const d=zone3Dir(t.clientX,rect);
+  gs.player.moveDir=d.dir; gs.player.diagInput=d.diag; gs.player.facing=d.dir;
+  const dy=t.clientY-tzStartY;
+  if(!tzSlideFired&&dy>SLIDE_DEADZONE_PX&&!gs.player.sliding){ tzSlideFired=true; doSlide(); }
+},{passive:false});
+tzL.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(gs){ gs.player.moveDir=0; gs.player.diagInput=null; }
+  if(!gs?.running||gs.paused) return;
+  const heldMs=performance.now()-tzStartT;
+  if(!tzSlideFired&&heldMs<150&&gs.player.sliding) cancelSlide();
+},{passive:false});
+tzL.addEventListener('touchcancel',()=>{ if(gs){ gs.player.moveDir=0; gs.player.diagInput=null; } },{passive:true});
+
+// ── Zone 4 — split into two buttons: ⏹️ (left half) = jump, ⏺️ (right half) = shoot/hold-charge/swipe-cycle ──
+let tzRTouchMode=null; // 'jump' | 'shoot'
+tzR.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(!gs?.running){ startGame(); return; }
+  if(gs.paused) return;
+  const t=e.changedTouches[0], rect=tzR.getBoundingClientRect();
+  if(t.clientX-rect.left < rect.width/2){ tzRTouchMode='jump'; doJump(); }
+  else { tzRTouchMode='shoot'; beginCharge(t.clientX,t.clientY); }
+},{passive:false});
+tzR.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!gs?.running||gs.paused||tzRTouchMode!=='shoot') return;
+  const t=e.changedTouches[0];
+  moveCharge(t.clientX,t.clientY);
+},{passive:false});
+tzR.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(gs?.running&&!gs.paused&&tzRTouchMode==='shoot') endCharge();
+  tzRTouchMode=null;
+},{passive:false});
+tzR.addEventListener('touchcancel',()=>{ tzRTouchMode=null; },{passive:true});
+
+document.getElementById('btn-start').addEventListener('click',startGame);
+document.getElementById('btn-how').addEventListener('click',()=>{ document.getElementById('how').style.display='block'; document.getElementById('how-backdrop').style.display='block'; });
+function closeHow(){ document.getElementById('how').style.display='none'; document.getElementById('how-backdrop').style.display='none'; }
+window.addEventListener('keydown',e=>{ if(e.code==='Escape') closeHow(); });
+
+// Swipe left/right anywhere on the weapon HUD also cycles weapons.
+(function(){
+  const zone=document.getElementById('wp-hud');
+  let sx=0,sy=0,resolved=false;
+  zone.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; resolved=false; },{passive:true});
+  zone.addEventListener('touchend',e=>{
+    if(resolved||!gs?.running) return;
+    const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Math.abs(dx)>30&&Math.abs(dx)>Math.abs(dy)) cycleWeapon(dx>0?1:-1);
+  },{passive:true});
+})();
+
+// ── Pause button (zone 2) ─────────────────────────────────
+const pauseBtn=document.getElementById('pause-btn');
+function togglePause(){
+  if(!gs?.running) return;
+  gs.paused=!gs.paused;
+  document.getElementById('pause-ov').style.display=gs.paused?'flex':'none';
+  pauseBtn.textContent=gs.paused?'▶':'❙❙';
+}
+pauseBtn.addEventListener('click',togglePause);
+document.getElementById('btn-resume').addEventListener('click',togglePause);
+
+// ═══════════════════════════════════════════════════════════
+//  WEAPON SELECT — pause screen between zone 3 and zone 4.
+//  Tapping the bottom-center trigger pauses the sim and opens a
+//  grid of this run's unlocked weapons. Selecting one equips it
+//  (which also drives the live player palette swap) and resumes.
+//  Phase 3 will extend each slot with weapon level display.
+// ═══════════════════════════════════════════════════════════
+const wselBtn=document.getElementById('wsel-btn');
+const wselOv=document.getElementById('wsel-ov');
+const wselGrid=document.getElementById('wsel-grid');
+const wselCur=document.getElementById('wsel-cur');
+let wselOpen=false;
+
+function renderWeaponSelect(){
+  wselGrid.innerHTML='';
+  for(const w of unlockedList()){
+    const slot=document.createElement('div');
+    slot.className='wsel-slot'+(w.id===gs.activeWpId?' active':'');
+    slot.style.setProperty('--wc',w.color);
+    slot.style.borderColor=w.id===gs.activeWpId?w.color:'#444';
+    slot.style.color=w.id===gs.activeWpId?w.color:'#aaa';
+    const parts=w.name.split(' ');
+    const lv=wpLevel(w.id);
+    slot.innerHTML=`<div class="wsel-ab">${parts.map(p=>p[0]).join('').slice(0,3)}</div>`+
+      `<div class="wsel-nm">${w.name}</div>`+
+      `<div class="wsel-lv" style="color:${lv>=WP_MAX_LEVEL?'#ffcc44':'#7ab0e0'}">`+
+      `${lv>=WP_MAX_LEVEL?'MAX':'Lv '+lv}</div>`;
+    slot.addEventListener('click',()=>{
+      gs.activeWpId=w.id; updateHUD(); syncWselBtn();
+      renderWeaponSelect(); // refresh highlight
+    });
+    wselGrid.appendChild(slot);
+  }
+}
+function syncWselBtn(){
+  if(!gs){ wselBtn.style.display='none'; return; }
+  wselBtn.style.display=gs.running||wselOpen?'block':'none';
+  wselCur.textContent=activeWeapon().name.split(' ').pop()+' L'+wpLevel(gs.activeWpId);
+  wselCur.style.color=activeWeapon().color;
+}
+function openWeaponSelect(){
+  if(!gs?.running&&!gs?.paused) return;
+  if(wselOpen) return;
+  wselOpen=true;
+  gs.paused=true;
+  renderWeaponSelect();
+  wselOv.style.display='flex';
+}
+function closeWeaponSelect(){
+  if(!wselOpen) return;
+  wselOpen=false;
+  wselOv.style.display='none';
+  // Only unpause if the regular pause menu isn't the thing holding us paused
+  if(document.getElementById('pause-ov').style.display!=='flex') gs.paused=false;
+  syncWselBtn();
+}
+wselBtn.addEventListener('click',openWeaponSelect);
+document.getElementById('wsel-close').addEventListener('click',closeWeaponSelect);
+// Keyboard: Tab opens/closes weapon select mid-run
+window.addEventListener('keydown',e=>{
+  if(e.code==='Tab'&&gs?.running){ e.preventDefault(); wselOpen?closeWeaponSelect():openWeaponSelect(); }
+});
+
+// ── Player actions ────────────────────────────────────────
+function doJump(){
+  if(!gs?.running||gs.paused) return;
+  const p=gs.player;
+  if(p.onGround){ p.vy=JUMP_FORCE; p.onGround=false; p.jumpCount=1; p.airDashTimer=0; burst(p.x+p.w/2,p.y+p.h,'#4a90d9',6,'jump'); }
+  else if(p.jumpCount<2){
+    // Air dash: quick upward burst then a brief weightless hang before gravity resumes (Mega Man X-style)
+    p.vy=DJ_FORCE; p.jumpCount=2; p.airDashTimer=AIRDASH_HANG_FRAMES;
+    burst(p.x+p.w/2,p.y+p.h/2,'#80deea',10,'djump');
+    floatText(p.x+p.w/2,p.y,'⚡DASH','#80deea');
+  }
+}
+const CHARGE_FULL_MS=550;
+let chargeKeyDown=false, isCharging=false, chargeSwiped=false, chargeStartX=0, chargeStartY=0, chargeStartTime=0;
+function beginCharge(x,y){
+  if(!gs?.running||gs.paused) return;
+  isCharging=true; chargeSwiped=false; chargeStartX=x; chargeStartY=y; chargeStartTime=performance.now();
+  gs.charging=true; gs.chargeStartTime=chargeStartTime;
+}
+function moveCharge(x,y){
+  if(!isCharging||chargeSwiped) return;
+  const dx=x-chargeStartX, dy=y-chargeStartY;
+  if(Math.abs(dx)>30&&Math.abs(dx)>Math.abs(dy)){
+    chargeSwiped=true; isCharging=false; gs.charging=false;
+    cycleWeapon(dx>0?1:-1);
+  }
+}
+function endCharge(){
+  if(!isCharging) return;
+  isCharging=false; gs.charging=false;
+  if(chargeSwiped) return;
+  const held=performance.now()-chargeStartTime;
+  if(held>=CHARGE_FULL_MS) doChargedShot(); else doShoot();
+}
+function doShoot(){
+  if(!gs?.running||gs.paused||gs.weaponCooldown>0) return;
+  const p=gs.player, w=activeWeapon(), ox=p.facing>=0?p.x+p.w:p.x;
+  w.fire(ox, p.y+p.h/2);
+  for(let i=0;i<(gs.extraShots||0);i++) setTimeout(()=>{ if(gs?.running){ const p2=gs.player; w.fire(p2.facing>=0?p2.x+p2.w:p2.x,p2.y+p2.h/2+rand(-6,6)); } },(i+1)*45);
+  gs.weaponCooldown=Math.max(1,Math.round(w.cd*(gs.cdMult||1))); p.shootAnim=10;
+  burst(ox+4*p.facing,p.y+p.h/2,w.color,3,'bullet');
+}
+function doChargedShot(){
+  if(!gs?.running||gs.paused||gs.weaponCooldown>0) return;
+  const p=gs.player, w=activeWeapon(), ox=p.facing>=0?p.x+p.w:p.x;
+  gs.chargeBoostActive=true;
+  w.fire(ox, p.y+p.h/2);
+  for(let i=0;i<(gs.extraShots||0);i++) setTimeout(()=>{ if(gs?.running){ const p2=gs.player; gs.chargeBoostActive=true; w.fire(p2.facing>=0?p2.x+p2.w:p2.x,p2.y+p2.h/2+rand(-6,6)); gs.chargeBoostActive=false; } },(i+1)*45);
+  gs.chargeBoostActive=false;
+  gs.weaponCooldown=Math.max(1,Math.round(w.cd*1.6*(gs.cdMult||1))); p.shootAnim=14;
+  burst(ox+4*p.facing,p.y+p.h/2,'#fff',10,'explode');
+  floatText(p.x+p.w/2,p.y-8,'CHARGED!',w.color,true);
+  screenShake(5,2);
+}
+function doSlide(){
+  if(!gs?.running||gs.paused) return;
+  const p=gs.player;
+  if(p.onGround&&!p.sliding){
+    p.sliding=true;
+    p.slideTimer=Math.round(SLIDE_BASE_FRAMES*(gs.slideDurMult||1));
+    burst(p.x+p.w/2,p.y+p.h,'#aaa',6,'slide');
+  }
+}
+function cancelSlide(){
+  if(!gs?.running) return;
+  const p=gs.player;
+  if(!p.sliding) return;
+  p.sliding=false; p.slideTimer=0;
+  burst(p.x+p.w/2,p.y+p.h,'#aaa',4,'slide');
+}
+function screenShake(dur,mag){ if(!gs) return; gs.shakeDur=dur; gs.shakeX=rand(-mag,mag); gs.shakeY=rand(-mag,mag); }
+
+// ── Particles / float text ────────────────────────────────
+function burst(x,y,color,n,type){
+  for(let i=0;i<n;i++){
+    let vx,vy,life,r;
+    switch(type){
+      case 'jump':    vx=rand(-2,2);  vy=-rand(0,3);   life=20; r=3; break;
+      case 'djump':   vx=rand(-3,3);  vy=rand(-3,3);   life=25; r=4; break;
+      case 'bullet':  vx=-rand(0,3);  vy=rand(-1.5,1.5);life=12;r=2; break;
+      case 'hit':     vx=rand(-4,4);  vy=-rand(0,6);   life=30; r=4; break;
+      case 'explode': vx=rand(-6,6);  vy=-rand(2,10);  life=40; r=5; break;
+      case 'slide':   vx=rand(-2,2);  vy=-rand(0,2);   life=18; r=3; break;
+      case 'flame':   vx=rand(-1,1);  vy=-rand(1,4);   life=35; r=rand(3,7); break;
+      case 'rock':    vx=rand(-1.5,1.5);vy=-rand(1,5); life=30; r=rand(2,6); break;
+      case 'bomb':    vx=rand(-8,8);  vy=-rand(3,12);  life=45; r=rand(4,8); break;
+      default:        vx=rand(-2,2);  vy=-rand(0,3);   life=20; r=3;
+    }
+    gs.particles.push({x,y,vx,vy,life,max:life,r,color});
+  }
+}
+function floatText(x,y,text,color,big=false){ gs.floatTexts.push({x,y,text,color,life:big?90:60,max:big?90:60,big}); }
+
+// ── Spawn helpers ─────────────────────────────────────────
+const ENEMY_TYPES=[
+  {type:'runner', w:0.87,h:1.44,hp:1,color:'#e8553e',pts:100, flies:false, chaseRange:9,  chaseSpd:3.4},
+  {type:'jumper', w:0.73,h:1.56,hp:2,color:'#ff9800',pts:200, flies:false, chaseRange:7,  chaseSpd:2.2},
+  {type:'turret', w:1.00,h:1.78,hp:3,color:'#9c27b0',pts:300, flies:false, chaseRange:0,  chaseSpd:0},
+  {type:'spiky',  w:0.67,h:1.11,hp:1,color:'#ff5722',pts:150, flies:false, chaseRange:11, chaseSpd:4.6},
+  {type:'walker', w:1.07,h:2.00,hp:2,color:'#607d8b',pts:250, flies:false, chaseRange:6,  chaseSpd:1.8},
+  {type:'buzzer',    w:0.75,h:0.75,hp:1,color:'#ff4081',pts:180, flies:true},
+  {type:'skyturret', w:1.15,h:1.05,hp:2,color:'#7c4dff',pts:280, flies:true},
+];
+// Flyers (buzzer + skyturret) make up 40% of spawns — a deliberate increase in aerial threats.
+const ENEMY_WEIGHTS=[18,12,10,12,8,22,18];
+function spawnEnemyAt(worldX,forceFly=false){
+  const pool = forceFly ? ENEMY_TYPES.filter(t=>t.flies) : ENEMY_TYPES;
+  const weights = forceFly ? pool.map(()=>1) : ENEMY_WEIGHTS;
+  const total=weights.reduce((a,b)=>a+b,0);
+  let roll=Math.random()*total,acc=0,idx=0;
+  for(let i=0;i<weights.length;i++){ acc+=weights[i]; if(roll<acc){idx=i;break;} }
+  const t=pool[idx];
+  // Elite (miniboss-tier) minions: rarer buffed variant, scales with distance travelled, gold rim
+  const eliteChance=clamp(.03+gs.dist/1400,.03,.16);
+  const elite=Math.random()<eliteChance;
+  const es=elite?ELITE_SCALE:1, ehp=elite?Math.round(t.hp*4.5+gs.dist/45):t.hp;
+  const homeY = t.flies ? GROUND-SP*(3+Math.random()*6.5) : GROUND;
+  const range = t.flies ? rand(SP*2,SP*5) : rand(SP*.3,SP*2);
+  gs.enemies.push({
+    x:worldX,y:homeY,vy:0,
+    w:Math.round(SP*t.w*es),h:Math.round(SP*t.h*es),
+    hp:ehp,maxHp:ehp,type:t.type,color:t.color,pts:elite?t.pts*6:t.pts,
+    alive:true,anim:0,shootTimer:60+Math.floor(Math.random()*50),
+    flies:!!t.flies,homeX:worldX,homeY,range,phase:rand(0,Math.PI*2),
+    chaseRange:(t.chaseRange||0)*SP,chaseSpd:(t.chaseSpd||0)*(elite?0.85:1),
+    elite,
+  });
+}
+function spawnPickupAt(worldX,worldY,type){
+  const t=type||(Math.random()<.5?'energy':Math.random()<.6?'score':'etank');
+  gs.pickups.push({x:worldX,y:worldY,type:t,vx:rand(-1,1),vy:-rand(1,3),r:t==='etank'?SP*.55:SP*.42,anim:0,alive:true});
+}
+function spawnWeaponCapsule(bossId,x,y){
+  const def=BOSS_DEFS.find(b=>b.id===bossId);
+  if(!def||!WP_BY_ID[def.dropId]) return; // inert until Phase 4 reconnects boss weapon drops
+  const w=WP_BY_ID[def.dropId];
+  gs.pickups.push({x,y,type:'weapon_capsule',vx:0,vy:-5,r:SP*.6,anim:0,alive:true,weaponId:def.dropId,color:w.color,wpName:w.name});
+}
+function spawnPlatformAt(worldX,worldY,width,moving){
+  gs.platforms.push({x:worldX,y:worldY,w:width,h:SP*.55|0,alive:true,
+    moving,homeX:worldX,range:moving?rand(SP*3,SP*7):0,phase:rand(0,Math.PI*2)});
+}
+function spawnSpikesAt(worldX,width){
+  gs.spikes.push({x:worldX,y:GROUND-SP*.85,w:width,h:SP*.85});
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TERRAIN GENERATION — procedurally lays ground segments (with
+//  pit gaps), spikes, platforms, pickups and enemy spawns ahead
+//  of the camera as the player advances. Old segments/actors are
+//  pruned once safely behind the camera.
+// ═══════════════════════════════════════════════════════════
+const TERRAIN_LOOKAHEAD=SP*18, PIT_MIN=2.6, PIT_MAX=4.4, GROUND_MIN=5, GROUND_MAX=11;
+function isOverGround(wx){ return gs.groundSegments.some(s=>wx>=s.x1&&wx<=s.x2); }
+function generateTerrain(){
+  const target=gs.camX+W+TERRAIN_LOOKAHEAD;
+  let guard=0;
+  while(gs.genX<target&&guard++<40){
+    // Occasional pit — a gap with no ground segment (fall through = instant death)
+    if(gs.genX>SP*22&&Math.random()<0.30){
+      gs.genX+=rand(SP*PIT_MIN,SP*PIT_MAX);
+      continue;
+    }
+    const stretchW=rand(SP*GROUND_MIN,SP*GROUND_MAX);
+    const x1=gs.genX, x2=gs.genX+stretchW;
+    gs.groundSegments.push({x1,x2});
+
+    // Spikes on some stretches — classic instant-death hazard, must be jumped/dashed over
+    if(stretchW>SP*6&&Math.random()<0.38){
+      const spikeW=rand(SP*1.6,SP*3);
+      spawnSpikesAt(x1+rand(SP*2,Math.max(SP*2,stretchW-spikeW-SP*2)),spikeW);
+    }
+    // Floating platform — sometimes moving, MM2-style
+    if(Math.random()<0.42){
+      const platW=rand(SP*3,SP*6);
+      const platX=x1+rand(0,Math.max(1,stretchW-platW));
+      spawnPlatformAt(platX,GROUND-(SP*2.4+Math.random()*SP*6.5),platW,Math.random()<0.3);
+    }
+    // Ground-based minion
+    if(Math.random()<0.5) spawnEnemyAt(x1+rand(SP*1.5,Math.max(SP*1.5,stretchW-SP*1.5)));
+    // Extra roaming flyer — independent of ground, patrols above
+    if(Math.random()<0.3) spawnEnemyAt(x1+rand(0,stretchW),true);
+    // Pickup
+    if(Math.random()<0.22*(gs.luckMult||1)) spawnPickupAt(x1+rand(SP,Math.max(SP,stretchW-SP)),GROUND-(SP+Math.random()*SP*4));
+
+    gs.genX=x2;
+  }
+}
+function pruneWorld(){
+  const behind=gs.camX-SP*14;
+  gs.groundSegments=gs.groundSegments.filter(s=>s.x2>behind);
+  gs.spikes=gs.spikes.filter(s=>s.x+s.w>behind);
+  gs.platforms=gs.platforms.filter(pl=>pl.x+pl.w>behind&&pl.alive);
+  gs.enemies=gs.enemies.filter(e=>e.alive&&e.homeX>behind-SP*10);
+  gs.pickups=gs.pickups.filter(pk=>pk.alive&&pk.x>behind);
+  gs.bullets=gs.bullets.filter(b=>b.x>behind-100&&b.x<gs.camX+W+400);
+}
+
+// ── Boss spawn ────────────────────────────────────────────
+// ── Boss doors ────────────────────────────────────────────
+// Every 60 seconds a glowing door spawns ahead of the camera. Walking
+// into it warps the player straight into the next boss arena.
+function updateDoors(){
+  if(!gs.boss&&!gs.doors.length){
+    if(--gs.nextDoorAt<=0){
+      gs.nextDoorAt=DOOR_INTERVAL_FRAMES;
+      const dx=gs.camX+W+SP*8, dw=SP*1.6, dh=SP*3.2;
+      gs.groundSegments.push({x1:dx-SP*3,x2:dx+dw+SP*3}); // guarantee solid footing at the door
+      gs.doors.push({x:dx,y:GROUND,w:dw,h:dh,alive:true});
+      floatText(gs.camX+W/2,SP*3,'⚠ BOSS DOOR AHEAD ⚠','#ffcc44',true);
+    }
+  }
+  const p=gs.player;
+  for(const d of gs.doors){
+    if(d.alive&&rectHit(p.x,p.y,p.w,p.h,d.x,d.y-d.h,d.w,d.h)){
+      d.alive=false;
+      floatText(p.x+p.w/2,p.y-20,'ENTERING ARENA...','#ffcc44',true);
+      burst(p.x+p.w/2,p.y,'#4a90d9',20,'explode');
+      spawnBoss();
+    }
+  }
+  gs.doors=gs.doors.filter(d=>d.alive&&d.x>gs.camX-200);
+}
+
+function spawnBoss(){
+  const def=nextBossDef();
+  const layer=bossLayer(def.id);                      // META: harder on re-encounter
+  const bw=BOSS_UNITS.w*UNIT|0,bh=BOSS_UNITS.h*UNIT|0;
+  // Guarantee solid ground under the arena, even if a pit was generated here
+  gs.groundSegments.push({x1:gs.camX-SP*4,x2:gs.camX+W+SP*4});
+  const hp=Math.round(def.hp*(1+(layer-1)*0.35));      // layer 2 = +35% hp, layer 3 = +70%
+  gs.boss={ ...def, layer, x:gs.camX+W+bw, y:GROUND-bh, w:bw, h:bh,
+    hp, maxHp:hp, alive:true,
+    vy:0, anim:0, aiState:'enter', aiTimer:0, moveTimer:240,
+    chargeGlow:0, flickerTimer:0 };
+  floatText(gs.camX+W/2,SP*4,'⚠  '+def.name+'  ⚠',def.color,true);
+  floatText(gs.camX+W/2,SP*6,def.element.toUpperCase()+' · LAYER '+layer+'/3',def.accent);
+  bossBarWrap.style.display='block';
+  bossNameDisp.style.display='block';
+  bossNameDisp.textContent=def.name+'  —  '+def.element+'  ·  L'+layer;
+  bossNameDisp.style.color=def.color;
+  updateBossBar();
+}
+function updateBossBar(){
+  if(!gs?.boss){ bossBarWrap.style.display='none'; bossNameDisp.style.display='none'; return; }
+  bossBarFill.style.width=(gs.boss.hp/gs.boss.maxHp*100)+'%';
+  bossBarFill.style.background=gs.boss.color;
+}
+
+// ── Collision ─────────────────────────────────────────────
+const rectHit=(ax,ay,aw,ah,bx,by,bw,bh)=>ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;
+function circHit(cx,cy,cr,rx,ry,rw,rh){ const nx=clamp(cx,rx,rx+rw),ny=clamp(cy,ry,ry+rh); return (cx-nx)**2+(cy-ny)**2<cr*cr; }
+
+
+// ═══════════════════════════════════════════════════════════
+//  BOSS AI
+// ═══════════════════════════════════════════════════════════
+function updateBoss(){
+  if(!gs.boss) return;
+  const b=gs.boss, p=gs.player;
+  b.anim++;
+  b.vy+=GRAVITY; b.y+=b.vy;
+  if(b.y+b.h>=GROUND){ b.y=GROUND-b.h; b.vy=0; }
+
+  if(b.aiState==='enter'){
+    const tx=gs.camX+W*.55-b.w/2;
+    b.x+=lerp(0,tx-b.x,.055);
+    if(Math.abs(b.x-tx)<3){ b.x=tx; b.aiState='idle'; b.aiTimer=60; }
+    return;
+  }
+
+  const drift=Math.sin(b.anim*.018)*SP*.14;
+  b.x=clamp(b.x+drift,gs.camX+W*.35-b.w/2,gs.camX+W*.75-b.w/2);
+
+  // PHASE 1: attack/hazard state machine gutted — bosses are placeholder,
+  // non-attacking presences for now (Phase 2 gives them real 17-boss visuals;
+  // Phases 6-8 rebuild this as a dual loop: an ambient arena-hazard timer
+  // running concurrently with the boss's own layered signature-attack cycle,
+  // both scaled together by the boss's current encounter "layer" 1-3).
+  // idle: no-op, just drifts/bobs forever.
+
+  // player bullets → boss
+  for(const bul of gs.bullets){
+    if(bul.enemy) continue;
+    if(circHit(bul.x,bul.y,bul.r,b.x,b.y,b.w,b.h)){
+      b.hp-=bul.dmg; bul.life=-1;
+      burst(bul.x,bul.y,b.color,5,'hit'); floatText(bul.x,bul.y,'-'+bul.dmg,b.color);
+      updateBossBar(); screenShake(6,3);
+      if(b.hp<=0){
+        b.alive=false; gs.kills++;
+        const pts=Math.round((5000+gs.combo*500)*(gs.scoreMult||1)); gs.score+=pts;
+        gs.bossesDefeated.push(b.id); gainExp(EXP_BOSS);
+        save.bossKills[b.id]=(save.bossKills[b.id]||0)+1; persist();
+        const nextL=bossLayer(b.id);
+        if(nextL>b.layer) floatText(b.x+b.w/2,b.y-SP*4,'▲ '+b.name+' WILL RETURN AT LAYER '+nextL,b.accent,true);
+        floatText(b.x+b.w/2,b.y-SP*2,'★ '+b.name+' DOWN! +'+pts,'#ffcc44',true);
+        burst(b.x+b.w/2,b.y+b.h/2,b.color,40,'explode'); screenShake(25,6);
+        // Drop E-tank + score. (Weapon capsule drop is disabled in Phase 1 —
+        // dropId targets don't exist yet; Phase 4 reconnects this.)
+        spawnPickupAt(b.x+b.w*.3,b.y+b.h/3,'etank'); spawnPickupAt(b.x+b.w*.7,b.y+b.h/3,'score');
+        gs.boss=null; updateBossBar();
+        return;
+      }
+    }
+  }
+  // hyper bomb AOE check against boss — handled in update loop
+  if(gs.boss?.alive&&gs.invFrames===0&&rectHit(p.x+4,p.y+4,p.w-8,p.h-8,b.x,b.y,b.w,b.h)) takeDamage(b.x+b.w/2);
+}
+
+// PHASE 1: signature-move implementations removed entirely (the old
+// single-move-per-boss system doesn't fit the confirmed 17-boss design
+// anyway — each real boss needs a concurrent ambient hazard loop *and*
+// a layered attack loop, both switched by encounter "layer" 1-3, elementally
+// themed, always in sync). Left as inert hooks; unreachable until Phases 6-8
+// restore the telegraph→attack transition with the real per-boss content.
+function executeSigMove(b,p){ /* Phase 6-8: real per-boss attack layers go here */ }
+function tickSigMove(b,p){ /* Phase 6-8: real per-boss attack layers go here */ }
+
+// ═══════════════════════════════════════════════════════════
+//  UPDATE — special bullet tick. PHASE 1: emptied. All the old
+//  boss-weapon behaviors (hyper bomb, rolling cutter, air shooter,
+//  fire wave) are gone with their weapons. This hook stays in the
+//  frame loop so Phases 12-14 can drop the 17 real special-weapon
+//  bullet behaviors straight in.
+// ═══════════════════════════════════════════════════════════
+function updateSpecialBullets(){ /* Phase 12-14: special weapon bullet mechanics */ }
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+function drawPlayer(p){
+  ctx.save();
+  if(gs.invFrames>0&&Math.floor(gs.frame/3)%2===0){ctx.restore();return;}
+  ctx.translate(p.x+(p.facing<0?p.w:0),p.y);
+  if(p.facing<0) ctx.scale(-1,1);
+  const u=UNIT,sl=p.sliding,wp=activeWeapon(),wc=wp.color;
+  const pal=wp.palette||ALL_WEAPONS[0].palette; // live palette swap: follows whichever weapon is active
+  const dark=pal.dark, mid=pal.primary, light=pal.torso, acc=pal.trim;
+  if(!sl){
+    // ── Standing: 4 wide × 8 tall unit grid ──
+    // Helmet
+    ctx.fillStyle=mid; ctx.fillRect(u*.3,0,u*3.4,u*1.9);
+    ctx.fillStyle=acc; ctx.fillRect(u*.3,u*1.5,u*3.4,u*.5);
+    ctx.fillStyle='#0a0f1e'; ctx.fillRect(u*2.0,u*.4,u*1.5,u*1.1);
+    ctx.fillStyle='#80b8f8'; ctx.fillRect(u*2.15,u*.55,u*.55,u*.5);
+    // Torso
+    ctx.fillStyle=light; ctx.fillRect(u*.25,u*1.9,u*3.5,u*3.3);
+    ctx.fillStyle=acc; ctx.fillRect(u*.25,u*3.6,u*3.5,u*.5);
+    // Arm cannon
+    ctx.fillStyle=mid; ctx.fillRect(u*3.2,u*2.6,u*1.15,u*1.3);
+    ctx.fillStyle=wc; ctx.fillRect(u*4.05,u*2.75,u*.85,u*1.0);
+    if(p.shootAnim>0){ ctx.globalAlpha=p.shootAnim/10; ctx.fillStyle=wc; ctx.fillRect(u*4.75,u*2.7,u*1.3,u*1.1); ctx.globalAlpha=1; }
+    if(gs.charging){
+      const pct=clamp((performance.now()-gs.chargeStartTime)/CHARGE_FULL_MS,0,1);
+      ctx.save(); ctx.globalAlpha=.55+.35*Math.sin(gs.frame*.4);
+      ctx.fillStyle=pct>=1?'#fff':wc;
+      ctx.beginPath(); ctx.arc(u*4.5,u*3.25,u*(.5+pct*.9),0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    // Off-arm
+    ctx.fillStyle=acc; ctx.fillRect(u*-.55,u*2.7,u*.85,u*1.15);
+    // Legs (walk cycle)
+    const lk=Math.sin(gs.frame*.25)*u*.6*(p.onGround?1:0);
+    ctx.fillStyle=dark;
+    ctx.fillRect(u*.4,u*5.2,u*1.35,u*2.3);
+    ctx.fillRect(u*2.25,u*5.2,u*1.35,u*2.3+lk);
+    // Boots
+    ctx.fillStyle=mid;
+    ctx.fillRect(u*.2,u*7.3,u*1.7,u*.7);
+    ctx.fillRect(u*2.1,u*7.3+lk,u*1.7,u*.7);
+    if(p.hitAnim>0){ ctx.fillStyle='rgba(255,80,80,.45)'; ctx.fillRect(0,0,u*4,u*8); }
+  } else {
+    // ── Sliding: compact crouched pod, still 4 wide, ~3.76 tall ──
+    const h=p.h;
+    ctx.fillStyle=light; ctx.fillRect(u*.2,h*.05,u*3.6,h*.55);
+    ctx.fillStyle=mid; ctx.fillRect(u*.1,h*.5,u*3.8,h*.4);
+    ctx.fillStyle='#0a0f1e'; ctx.fillRect(u*2.1,h*.1,u*1.3,h*.35);
+    ctx.fillStyle='#80b8f8'; ctx.fillRect(u*2.25,h*.16,u*.5,h*.16);
+    ctx.fillStyle=wc; ctx.fillRect(u*3.7,h*.35,u*.9,h*.35);
+    if(p.hitAnim>0){ ctx.fillStyle='rgba(255,80,80,.45)'; ctx.fillRect(0,0,u*4,h); }
+  }
+  ctx.restore();
+}
+
+function drawEnemy(e){
+  ctx.save(); ctx.translate(e.x,e.y);
+  const{w,h,type,color,hp,maxHp,anim,elite}=e,pct=hp/maxHp,s=SP;
+  if(elite){ ctx.save(); ctx.globalAlpha=.5+.2*Math.sin(gs.frame*.15); ctx.strokeStyle='#ffcc44'; ctx.lineWidth=Math.max(2,s*.12); ctx.strokeRect(-s*.1,-s*.1,w+s*.2,h+s*.2); ctx.restore(); }
+  if(type==='runner'){ ctx.fillStyle=color; ctx.fillRect(0,0,w,h-s*.3); ctx.fillStyle='#b71c1c'; ctx.fillRect(s*.08,s*.08,w-s*.16,s*.3); ctx.fillStyle='#ffcc44'; ctx.fillRect(w-s*.4,s*.22,s*.24,s*.24); ctx.fillStyle='#222'; ctx.fillRect(0,h-s*.3,s*.46,s*.3); ctx.fillRect(w-s*.5,h-s*.3+(Math.sin(anim*.3)>0?s*.08:0),s*.46,s*.3); }
+  else if(type==='jumper'){ ctx.fillStyle=color; ctx.fillRect(s*.15,0,w-s*.3,h-s*.4); ctx.fillStyle='#e65100'; ctx.fillRect(w-s*.4,s*.15,s*.3,s*.24); ctx.fillStyle='#f44336'; ctx.fillRect(0,h-s*.4,s*.38,s*.4); ctx.fillRect(w-s*.38,h-s*.4,s*.38,s*.4); }
+  else if(type==='turret'){ ctx.fillStyle=color; ctx.fillRect(s*.15,s*.3,w-s*.3,h-s*.6); ctx.fillStyle='#7b1fa2'; ctx.fillRect(0,0,w,s*.38); ctx.fillStyle='#ce93d8'; ctx.fillRect(w-s*.55,s*.55,s*.7,s*.28); ctx.fillStyle='#4a148c'; ctx.fillRect(0,h-s*.3,w,s*.3); }
+  else if(type==='spiky'){ ctx.fillStyle=color; ctx.fillRect(s*.15,s*.15,w-s*.3,h-s*.3); ctx.fillStyle='#bf360c'; for(const[ox,oy]of[[s*.15,0],[w*.5-s*.15,0],[s*.15,h-s*.3],[w*.5-s*.15,h-s*.3]]) ctx.fillRect(ox,oy,s*.3,s*.3); }
+  else if(type==='walker'){ ctx.fillStyle=color; ctx.fillRect(s*.15,0,w-s*.3,h-s*.55); ctx.fillStyle='#37474f'; ctx.fillRect(0,0,s*.46,h-s*.55); ctx.fillStyle='#546e7a'; ctx.fillRect(0,h-s*.55,s*.55,s*.55); ctx.fillRect(w-s*.55,h-s*.55+(Math.sin(anim*.2)>0?s*.12:0),s*.55,s*.55); }
+  else if(type==='buzzer'){
+    const wing=Math.sin(anim*.5)*s*.32;
+    ctx.fillStyle='rgba(255,64,129,.35)'; ctx.fillRect(-s*.35,h*.3-wing,s*.5,s*.16); ctx.fillRect(w-s*.15,h*.3+wing,s*.5,s*.16);
+    ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w,h*.5); ctx.lineTo(w/2,h); ctx.lineTo(0,h*.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.fillRect(w*.35,h*.35,w*.3,h*.2);
+  }
+  else if(type==='skyturret'){
+    ctx.fillStyle='rgba(124,77,255,.3)'; ctx.beginPath(); ctx.ellipse(w/2,-s*.1,w*.55,s*.18,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=color; ctx.beginPath(); ctx.ellipse(w/2,h*.42,w/2,h*.42,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2a1a80'; ctx.fillRect(w*.3,h*.7,w*.4,h*.35);
+    ctx.fillStyle='#e0d0ff'; ctx.beginPath(); ctx.arc(w/2,h*.4,s*.2,0,Math.PI*2); ctx.fill();
+  }
+  if(maxHp>1){ ctx.fillStyle='#222'; ctx.fillRect(0,-s*.4,w,s*.2); ctx.fillStyle=pct>.5?'#8bc34a':'#f44336'; ctx.fillRect(0,-s*.4,w*pct,s*.2); }
+  if(elite){ ctx.font=`bold ${s*.3|0}px Courier New`; ctx.fillStyle='#ffcc44'; ctx.textAlign='center'; ctx.fillText('★ ELITE',w/2,-s*.55); }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOSS RENDERER — one shared MM2-style robot-master chassis
+//  (helmet / visor / torso / shoulders / boots) recolored from
+//  each boss's palette, plus a per-boss MOTIF drawn on the crest
+//  and shoulders so all 17 read as distinct silhouettes without
+//  needing 17 bespoke sprite routines at placeholder stage.
+// ═══════════════════════════════════════════════════════════
+function drawBossMotif(b,s,w,h,bob){
+  const a=b.anim, acc=b.accent, eye=b.eyeColor;
+  ctx.fillStyle=acc;
+  switch(b.motif){
+    case 'orb': // Core — antenna with a pulsing sphere
+      ctx.fillRect(w/2-s*.05,bob-s*1.5,s*.1,s*.8);
+      ctx.fillStyle=eye; ctx.beginPath();
+      ctx.arc(w/2,bob-s*1.6,s*.22+Math.sin(a*.12)*s*.05,0,Math.PI*2); ctx.fill();
+      break;
+    case 'flame': // Blaze — flickering crest of flames
+      for(let i=0;i<5;i++){ const fx=s*.3+i/4*(w-s*.6), fh=s*(.5+.4*Math.sin(a*.11+i));
+        ctx.fillStyle=i%2?'#ffcc00':'#ff6b00'; ctx.fillRect(fx-s*.12,bob-s*.7-fh,s*.24,fh); }
+      break;
+    case 'fin': // Torrent — swept dorsal fin + gill slits
+      ctx.beginPath(); ctx.moveTo(w/2,bob-s*1.7); ctx.lineTo(w/2+s*.7,bob-s*.5);
+      ctx.lineTo(w/2-s*.7,bob-s*.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=eye; for(let i=0;i<3;i++) ctx.fillRect(s*.25,bob+s*(1.1+i*.45),s*.5,s*.14);
+      break;
+    case 'bolt': // Volt — zigzag lightning horns
+      for(const dir of[-1,1]){ ctx.beginPath();
+        ctx.moveTo(w/2+dir*s*.3,bob-s*.6); ctx.lineTo(w/2+dir*s*.75,bob-s*1.15);
+        ctx.lineTo(w/2+dir*s*.5,bob-s*1.15); ctx.lineTo(w/2+dir*s*.95,bob-s*1.8);
+        ctx.lineWidth=s*.16; ctx.strokeStyle=Math.floor(a/6)%2?eye:acc; ctx.stroke(); }
+      break;
+    case 'leaf': // Thorn — leaf crest with thorn spikes
+      ctx.beginPath(); ctx.ellipse(w/2,bob-s*1.0,s*.85,s*.4,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=b.color; for(let i=0;i<4;i++) ctx.fillRect(s*.4+i*(w-s*.8)/3,bob-s*1.5,s*.1,s*.45);
+      break;
+    case 'icicle': // Frost — downward icicle crown
+      for(let i=0;i<5;i++){ const ix=s*.3+i/4*(w-s*.6); ctx.beginPath();
+        ctx.moveTo(ix-s*.16,bob-s*.7); ctx.lineTo(ix+s*.16,bob-s*.7);
+        ctx.lineTo(ix,bob-s*1.5-(i%2)*s*.3); ctx.closePath(); ctx.fill(); }
+      break;
+    case 'fist': // Strike — oversized knuckle pauldrons
+      for(const dir of[0,1]){ const bx=dir?w-s*.9:-s*.1;
+        ctx.fillRect(bx,bob+s*.4,s*1.0,s*.9);
+        ctx.fillStyle=b.color; for(let i=0;i<3;i++) ctx.fillRect(bx+s*.12+i*s*.28,bob+s*.55,s*.18,s*.28);
+        ctx.fillStyle=acc; }
+      break;
+    case 'drip': // Venom — bubbling ooze crest that drips
+      for(let i=0;i<4;i++){ const dx=s*.4+i*(w-s*.8)/3, dy=bob-s*.85+Math.sin(a*.08+i*1.7)*s*.18;
+        ctx.beginPath(); ctx.arc(dx,dy,s*.26,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=eye; ctx.beginPath();
+      ctx.arc(w/2,bob-s*.6+((a*.6)%(s*2)),s*.12,0,Math.PI*2); ctx.fill();
+      break;
+    case 'rock': // Quake — chunky boulder shoulders
+      for(const dir of[0,1]){ const bx=dir?w-s*1.0:0;
+        ctx.beginPath(); ctx.moveTo(bx,bob+s*.3); ctx.lineTo(bx+s*1.0,bob+s*.15);
+        ctx.lineTo(bx+s*.85,bob+s*1.3); ctx.lineTo(bx+s*.1,bob+s*1.15); ctx.closePath(); ctx.fill(); }
+      break;
+    case 'wing': // Gale — feathered wings that beat
+      { const flap=Math.sin(a*.09)*s*.35;
+        for(const dir of[-1,1]){ ctx.save(); ctx.translate(dir<0?0:w,bob+s*1.2); ctx.scale(dir,1);
+          ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-s*1.5,-s*.5-flap);
+          ctx.lineTo(-s*1.2,s*.5+flap); ctx.closePath(); ctx.fill(); ctx.restore(); } }
+      break;
+    case 'halo': // Psi — orbiting psychic halo
+      ctx.strokeStyle=acc; ctx.lineWidth=s*.14;
+      ctx.beginPath(); ctx.ellipse(w/2,bob-s*1.2,s*1.0,s*.3,Math.sin(a*.03)*.4,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle=eye;
+      for(let i=0;i<3;i++){ const t=a*.05+i*2.09;
+        ctx.beginPath(); ctx.arc(w/2+Math.cos(t)*s,bob-s*1.2+Math.sin(t)*s*.3,s*.14,0,Math.PI*2); ctx.fill(); }
+      break;
+    case 'antenna': // Swarm — insect antennae + mandibles
+      for(const dir of[-1,1]){ ctx.beginPath();
+        ctx.moveTo(w/2+dir*s*.25,bob-s*.6);
+        ctx.quadraticCurveTo(w/2+dir*s*.9,bob-s*1.5,w/2+dir*s*.5,bob-s*1.9);
+        ctx.lineWidth=s*.12; ctx.strokeStyle=acc; ctx.stroke();
+        ctx.fillStyle=eye; ctx.beginPath(); ctx.arc(w/2+dir*s*.5,bob-s*1.9,s*.13,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=acc;
+      for(const dir of[-1,1]) ctx.fillRect(w/2+dir*s*.5-s*.08,bob+s*.5,s*.16,s*.5);
+      break;
+    case 'jagged': // Granite — irregular stone shard crown
+      ctx.beginPath(); ctx.moveTo(s*.2,bob-s*.6);
+      for(let i=0;i<6;i++) ctx.lineTo(s*.2+i*(w-s*.4)/5,bob-s*(.7+(i%2?1.0:.45)));
+      ctx.lineTo(w-s*.2,bob-s*.6); ctx.closePath(); ctx.fill();
+      break;
+    case 'wisp': // Wraith — no legs, dissipating spectral tail
+      ctx.globalAlpha=.45;
+      for(let i=0;i<4;i++){ const ty=h-s*.4+i*s*.4, tw2=(w-s*.4)*(1-i*.22);
+        ctx.fillRect(w/2-tw2/2+Math.sin(a*.06+i)*s*.3,ty+bob,tw2,s*.35); }
+      ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(w/2,bob-s*1.1,s*.5,Math.PI,0); ctx.fill();
+      break;
+    case 'horn': // Drake — swept dragon horns
+      for(const dir of[-1,1]){ ctx.beginPath();
+        ctx.moveTo(w/2+dir*s*.35,bob-s*.65);
+        ctx.quadraticCurveTo(w/2+dir*s*1.3,bob-s*1.3,w/2+dir*s*.85,bob-s*2.0);
+        ctx.quadraticCurveTo(w/2+dir*s*.95,bob-s*1.2,w/2+dir*s*.6,bob-s*.65);
+        ctx.closePath(); ctx.fill(); }
+      break;
+    case 'ring': // Eclipse — corona ring behind the head
+      ctx.beginPath(); ctx.arc(w/2,bob-s*.3,s*1.5,0,Math.PI*2);
+      ctx.lineWidth=s*.22; ctx.strokeStyle=acc; ctx.stroke();
+      ctx.globalAlpha=.35+.25*Math.sin(a*.07);
+      ctx.beginPath(); ctx.arc(w/2,bob-s*.3,s*1.5,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=1;
+      break;
+    case 'blade': // Alloy — blade fin crest + shoulder plates
+      ctx.beginPath(); ctx.moveTo(w/2-s*.12,bob-s*.7); ctx.lineTo(w/2+s*.12,bob-s*.7);
+      ctx.lineTo(w/2+s*.3,bob-s*2.0); ctx.lineTo(w/2-s*.3,bob-s*2.0); ctx.closePath(); ctx.fill();
+      for(const dir of[0,1]) ctx.fillRect(dir?w-s*.75:-s*.05,bob+s*.35,s*.8,s*.35);
+      break;
+  }
+}
+
+function drawBoss(b){
+  ctx.save();
+  const s=SP,glow=b.chargeGlow||0,{w,h,hp,maxHp,color,accent,eyeColor,anim}=b,pct=hp/maxHp;
+  if(glow>0){ ctx.save(); ctx.globalAlpha=glow*.55; ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(b.x+w/2,b.y+h/2,w/2+s*glow*.8,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+  ctx.translate(b.x,b.y);
+  const bob=Math.sin(anim*.035)*s*.18;
+  const ghost=b.motif==='wisp';
+
+  // ── Shared chassis ──
+  ctx.fillStyle=color; ctx.fillRect(s*.18,bob,w-s*.36,h-(ghost?s*1.6:s*.6)+bob);      // torso
+  ctx.fillStyle=accent; ctx.fillRect(0,s*.35+bob,s*.5,h-s*1.3+bob);                    // L arm
+  ctx.fillRect(w-s*.5,s*.35+bob,s*.5,h-s*1.3+bob);                                     // R arm
+  ctx.fillStyle=color; ctx.fillRect(s*.32,bob-s*.72,w-s*.64,s*.78);                    // helmet
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(s*.5,bob-s*.6,w-s*1.0,s*.42);                  // visor slot
+  ctx.fillStyle=eyeColor;                                                              // eyes
+  ctx.fillRect(s*.62,bob-s*.52,s*.3,s*.24); ctx.fillRect(w-s*.92,bob-s*.52,s*.3,s*.24);
+  if(!ghost){ ctx.fillStyle=accent;                                                    // boots
+    ctx.fillRect(s*.2,h-s*.7+bob,s*.45,s*.7);
+    ctx.fillRect(w-s*.65,h-s*.7+bob+(Math.sin(anim*.08)>0?s*.12:0),s*.45,s*.7); }
+
+  drawBossMotif(b,s,w,h,bob);
+
+  // ── Nameplate + HP + encounter layer ──
+  ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(-s*.4,-s*2.6,w+s*.8,s*.6);
+  ctx.fillStyle=color; ctx.fillRect(-s*.4,-s*2.6,(w+s*.8)*pct,s*.6);
+  ctx.font=`bold ${s*.34|0}px Courier New`; ctx.fillStyle='#fff'; ctx.textAlign='center';
+  ctx.fillText(b.name,w/2,-s*2.2);
+  ctx.font=`${s*.26|0}px Courier New`; ctx.fillStyle=accent;
+  ctx.fillText(b.element.toUpperCase()+'  ·  LAYER '+(b.layer||1)+'/3',w/2,-s*2.85);
+  ctx.restore();
+}
+
+// PHASE 3: placeholder projectile visuals — one distinct shape per weapon so
+// all 17 read differently on screen. Phases 9-11 replace these with the real
+// per-weapon art and effects.
+function drawSpecialBullet(b){
+  const r=b.r, t=gs.frame;
+  ctx.save(); ctx.translate(b.x,b.y); ctx.fillStyle=b.color;
+  switch(b.shape){
+    case 'wheel':                                       // spinning fire wheel
+      ctx.rotate(t*.35);
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ffcc00';
+      for(let i=0;i<4;i++){ ctx.rotate(Math.PI/2); ctx.fillRect(r*.35,-r*.18,r*.75,r*.36); }
+      break;
+    case 'stream':                                      // flat water jet
+      ctx.globalAlpha=.85; ctx.fillRect(-r*2,-r*.55,r*4,r*1.1);
+      ctx.globalAlpha=.4;  ctx.fillRect(-r*2.6,-r*.28,r*5,r*.56);
+      break;
+    case 'spark':                                       // crackling electric arc
+      ctx.strokeStyle=b.color; ctx.lineWidth=r*.5; ctx.beginPath();
+      ctx.moveTo(-r*1.4,0);
+      for(let i=1;i<=4;i++) ctx.lineTo(-r*1.4+i*r*.7,(i%2?-1:1)*r*.75);
+      ctx.stroke();
+      break;
+    case 'lash':                                        // barbed vine segment
+      ctx.fillRect(-r*1.8,-r*.28,r*3.6,r*.56);
+      ctx.fillStyle='#2a5a1a';
+      for(let i=-1;i<=1;i+=2) ctx.fillRect(-r*.4,i*r*.5,r*.8,r*.34);
+      break;
+    case 'shield':                                      // ice shard
+      ctx.beginPath(); ctx.moveTo(r*1.3,0); ctx.lineTo(0,-r*.85);
+      ctx.lineTo(-r*.6,0); ctx.lineTo(0,r*.85); ctx.closePath(); ctx.fill();
+      break;
+    case 'punch':                                       // impact fist burst
+      ctx.beginPath(); ctx.arc(0,0,r*1.1,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=r*.22;
+      ctx.beginPath(); ctx.arc(0,0,r*1.5,-0.7,0.7); ctx.stroke();
+      break;
+    case 'spray':                                       // poison droplet cluster
+      ctx.globalAlpha=.8;
+      for(let i=0;i<3;i++){ const a=t*.1+i*2.1;
+        ctx.beginPath(); ctx.arc(Math.cos(a)*r*.6,Math.sin(a)*r*.6,r*.6,0,Math.PI*2); ctx.fill(); }
+      break;
+    case 'wave':                                        // ground shockwave arc
+      ctx.globalAlpha=.9; ctx.strokeStyle=b.color; ctx.lineWidth=r*.5;
+      ctx.beginPath(); ctx.arc(0,r*.4,r*1.5,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,r*.4,r*.9,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+      break;
+    case 'tornado':                                     // spinning funnel
+      { const g=ctx.createRadialGradient(0,0,0,0,0,r*1.6);
+        g.addColorStop(0,b.color); g.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=g; ctx.beginPath();
+        ctx.ellipse(0,0,r*.7,r*1.7,Math.sin(t*.2)*.5,0,Math.PI*2); ctx.fill(); }
+      break;
+    case 'orb':                                         // pulsing psychic sphere
+      ctx.globalAlpha=.35; ctx.beginPath(); ctx.arc(0,0,r*1.7+Math.sin(t*.15)*r*.3,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;   ctx.beginPath(); ctx.arc(0,0,r*.85,0,Math.PI*2); ctx.fill();
+      break;
+    case 'swarm':                                       // jittering insect cluster
+      for(let i=0;i<4;i++){ const a=t*.4+i*1.6;
+        ctx.fillRect(Math.cos(a)*r*.9-r*.2,Math.sin(a)*r*.9-r*.2,r*.42,r*.42); }
+      break;
+    case 'rock':                                        // chunky stone
+      ctx.beginPath(); ctx.moveTo(-r,-r*.5); ctx.lineTo(r*.3,-r);
+      ctx.lineTo(r,r*.2); ctx.lineTo(r*.1,r); ctx.lineTo(-r*.9,r*.5);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'wisp':                                        // phasing spectral trail
+      ctx.globalAlpha=.5+.3*Math.sin(t*.25);
+      for(let i=0;i<3;i++){ ctx.beginPath();
+        ctx.arc(-i*r*.75,Math.sin(t*.2+i)*r*.4,r*(1-i*.25),0,Math.PI*2); ctx.fill(); }
+      break;
+    case 'breath':                                      // flame cone puff
+      ctx.globalAlpha=.85; ctx.beginPath();
+      ctx.moveTo(-r*1.4,-r*.7); ctx.lineTo(r*1.2,0); ctx.lineTo(-r*1.4,r*.7);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'boomerang':                                   // dark crescent
+      ctx.rotate(t*.3); ctx.lineWidth=r*.55; ctx.strokeStyle=b.color;
+      ctx.beginPath(); ctx.arc(0,0,r,Math.PI*.25,Math.PI*1.55); ctx.stroke();
+      break;
+    case 'blade':                                       // spinning metal blade
+      ctx.rotate(t*.45);
+      ctx.fillRect(-r*1.3,-r*.22,r*2.6,r*.44);
+      ctx.fillRect(-r*.22,-r*1.3,r*.44,r*2.6);
+      break;
+    default:                                            // bolt (buster / core)
+      ctx.fillRect(-r,-r*.5,r*2,r);
+  }
+  ctx.restore();
+}
+
+function drawPickup(pk){
+  ctx.save();
+  ctx.translate(pk.x,pk.y+Math.sin(gs.frame*.07+pk.x*.05)*SP*.12);
+  const r=pk.r,s=SP;
+  if(pk.type==='weapon_capsule'){
+    // Glowing star-burst weapon capsule
+    const pulse=.7+.3*Math.sin(gs.frame*.1);
+    ctx.globalAlpha=pulse;
+    ctx.fillStyle=pk.color; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=.35;
+    ctx.beginPath(); ctx.arc(0,0,r*1.5,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    // W label
+    ctx.fillStyle='#fff'; ctx.font=`bold ${s*.4|0}px Courier New`; ctx.textAlign='center'; ctx.fillText('W',0,s*.15);
+    // Name below
+    ctx.fillStyle=pk.color; ctx.font=`${s*.22|0}px Courier New`;
+    ctx.fillText(pk.wpName.split(' ')[0],0,r+s*.3);
+  } else if(pk.type==='energy'){
+    ctx.fillStyle='#e8553e'; ctx.fillRect(-r,-r*1.5,r*2,r*3);
+    ctx.fillStyle='#ffcc44'; ctx.fillRect(-r*.4,-r*.4,r*.8,r*.8);
+    ctx.fillStyle='#fff'; ctx.font=`bold ${s*.36|0}px Courier New`; ctx.textAlign='center'; ctx.fillText('E',0,r*.32);
+  } else if(pk.type==='score'){
+    ctx.fillStyle='#ffcc44';
+    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,a,a+Math.PI/6); ctx.fill(); }
+  } else if(pk.type==='etank'){
+    ctx.fillStyle='#00bcd4'; ctx.fillRect(-r,-r*1.2,r*2,r*2.4);
+    ctx.fillStyle='#fff'; ctx.font=`bold ${s*.44|0}px Courier New`; ctx.textAlign='center'; ctx.fillText('E',0,r*.32);
+    ctx.font=`${s*.28|0}px Courier New`; ctx.fillText('TANK',0,r*.9);
+  }
+  ctx.restore();
+}
+
+function drawBackground(){
+  ctx.fillStyle='#060614'; ctx.fillRect(0,0,W,H);
+  const camX=gs.camX;
+  const nS=Math.ceil(W/390*40); ctx.fillStyle='rgba(255,255,255,.7)';
+  for(let i=0;i<nS;i++){ const sx=(i*137.5-camX*.1)%W,sy=(i*73.1)%(GROUND-SP*4),sr=i%3===0?1.5:.7; ctx.beginPath(); ctx.arc(((sx%W)+W)%W,sy,sr,0,Math.PI*2); ctx.fill(); }
+  const nF=Math.ceil(W/390*8); ctx.fillStyle='#0d0d2e';
+  for(let i=0;i<nF;i++){ const bx=((i*(W/nF)-camX*.25)%W+W)%W,bh=SP*2.4+i*SP*.7; ctx.fillRect(bx,GROUND-bh,SP*2+i*SP*.32,bh); }
+  const nM=Math.ceil(W/390*5); ctx.fillStyle='#111128';
+  for(let i=0;i<nM;i++){
+    const bx=((i*(W/nM*1.1)-camX*.5)%W+W)%W,bh=SP*3.5+i*SP*.6;
+    ctx.fillRect(bx,GROUND-bh,SP*2.8,bh);
+    for(let wy=GROUND-bh+SP*.32;wy<GROUND-SP*.4;wy+=SP*.64) for(let wx=bx+SP*.24;wx<bx+SP*2.4;wx+=SP*.56) if(Math.sin(wx*wy*.001+gs.frame*.01)>.3){ ctx.fillStyle='rgba(100,160,255,.4)'; ctx.fillRect(wx,wy,SP*.32,SP*.32); ctx.fillStyle='#111128'; }
+  }
+  // The void behind pits — a dim chasm color, so gaps in the ground read as bottomless drops
+  ctx.fillStyle='#020208'; ctx.fillRect(0,GROUND,W,H-GROUND);
+}
+function drawGroundAndSpikes(){
+  const camX=gs.camX;
+  for(const s of gs.groundSegments){
+    if(s.x2<camX-10||s.x1>camX+W+10) continue;
+    ctx.fillStyle='#0a1628'; ctx.fillRect(s.x1,GROUND,s.x2-s.x1,H-GROUND);
+    ctx.fillStyle='#1a3050'; ctx.fillRect(s.x1,GROUND,s.x2-s.x1,SP*.24);
+  }
+  for(const sp of gs.spikes){
+    if(sp.x+sp.w<camX-10||sp.x>camX+W+10) continue;
+    ctx.fillStyle='#c0c0c8';
+    const n=Math.max(1,Math.round(sp.w/(SP*.55)));
+    for(let i=0;i<n;i++){
+      const tx=sp.x+i*(sp.w/n), tw2=sp.w/n;
+      ctx.beginPath(); ctx.moveTo(tx,sp.y+sp.h); ctx.lineTo(tx+tw2/2,sp.y); ctx.lineTo(tx+tw2,sp.y+sp.h); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='#5a5a66'; ctx.fillRect(sp.x,sp.y+sp.h-2,sp.w,3);
+  }
+}
+function drawDoors(){
+  for(const d of gs.doors){
+    const pulse=.6+.4*Math.sin(gs.frame*.08);
+    ctx.save(); ctx.globalAlpha=pulse; ctx.fillStyle='#ffcc44';
+    ctx.fillRect(d.x-3,d.y-d.h-3,d.w+6,d.h+6);
+    ctx.restore();
+    const grd=ctx.createLinearGradient(d.x,d.y-d.h,d.x+d.w,d.y);
+    grd.addColorStop(0,'#4a90d9'); grd.addColorStop(.5,'#80deea'); grd.addColorStop(1,'#4a90d9');
+    ctx.fillStyle=grd; ctx.fillRect(d.x,d.y-d.h,d.w,d.h);
+    ctx.fillStyle='rgba(255,255,255,.5)';
+    for(let i=0;i<3;i++) ctx.fillRect(d.x+d.w*.2+i*d.w*.25,d.y-d.h+((gs.frame*3+i*40)%d.h),d.w*.1,d.h*.12);
+    ctx.font=`bold ${SP*.32|0}px Courier New`; ctx.fillStyle='#ffcc44'; ctx.textAlign='center';
+    ctx.fillText('BOSS DOOR',d.x+d.w/2,d.y-d.h-SP*.4);
+  }
+}
+
+// ── HUD ──────────────────────────────────────────────────
+let _lHp=-1,_lWep='',_lScore=-1,_lUnlocked=0,_lLvl=-1;
+function updateHUD(){
+  if(!gs) return;
+  const sc=Math.floor(gs.score);
+  if(sc!==_lScore){ hScore.textContent=pad6(sc); _lScore=sc; }
+  if(gs.hp!==_lHp){ hpRow.innerHTML=''; const maxHp=HP_MAX+(gs.hpMaxBonus||0)+(gs.runHpBonus||0); for(let i=0;i<maxHp;i++){ const d=document.createElement('div'); d.className='pip'+(i<gs.hp?' on':''); hpRow.appendChild(d); } _lHp=gs.hp; }
+  if(gs.level!==_lLvl){ document.getElementById('h-level').textContent=gs.level; _lLvl=gs.level; }
+  document.getElementById('exp-bar-fill').style.width=clamp(gs.exp/gs.expToNext*100,0,100)+'%';
+  const unlocked=unlockedList();
+  const uid=unlocked.map(w=>w.id+':'+wpLevel(w.id)).join(',');
+  if(gs.activeWpId!==_lWep||uid!==String(_lUnlocked)){
+    _lWep=gs.activeWpId; _lUnlocked=uid;
+    wpSlots.innerHTML='';
+    unlocked.forEach((w,i)=>{
+      const div=document.createElement('div');
+      div.className='ws unlocked'+(w.id===gs.activeWpId?' active':'');
+      div.style.setProperty('--wc',w.color);
+      div.style.borderColor=w.id===gs.activeWpId?w.color:'#444';
+      div.style.background=w.id===gs.activeWpId?w.color+'28':'';
+      div.style.color=w.id===gs.activeWpId?w.color:'#888';
+      // Abbreviation: first letter + first letter of second word
+      const parts=w.name.split(' ');
+      div.textContent=parts.map(p=>p[0]).join('').slice(0,3);
+      div.title=w.name;
+      // key hint
+      const key=document.createElement('span'); key.className='wkey'; key.textContent=i+1; div.appendChild(key);
+      const lvb=document.createElement('span'); lvb.className='wlv'; lvb.textContent=wpLevel(w.id); div.appendChild(lvb);
+      div.addEventListener('click',()=>{ gs.activeWpId=w.id; updateHUD(); });
+      wpSlots.appendChild(div);
+    });
+    const aw=activeWeapon();
+    wpName.textContent=aw.name; wpName.style.color=aw.color;
+  }
+}
+
+// ── Overlay ───────────────────────────────────────────────
+function showOverlay(){ ovEl.classList.remove('hidden'); spdPanel.style.display='block'; hintEl.style.display='none'; }
+function hideOverlay(){ ovEl.classList.add('hidden');    spdPanel.style.display='none';  hintEl.style.display='flex'; }
+
+// ── Start / Game Over ────────────────────────────────────
+function startGame(){
+  try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(_){}
+  cancelAnimationFrame(rafId); rafId=0;
+  resize(); gs=mkState();
+  gs.player.w=PLAYER_UNITS.w*UNIT|0; gs.player.h=PLAYER_UNITS.h*UNIT|0;
+  gs.player.x=PLAYER_X; gs.player.y=GROUND-gs.player.h;
+  gs.groundSegments=[{x1:-SP*30,x2:PLAYER_X+SP*22}];
+  gs.genX=PLAYER_X+SP*22;
+  generateTerrain();
+  gs.running=true; gs.phase='playing';
+  _lHp=-1; _lWep=''; _lScore=-1; _lUnlocked=0; _lLvl=-1;
+  bossBarWrap.style.display='none'; bossNameDisp.style.display='none';
+  wpUnlock.style.display='none';
+  document.getElementById('pause-ov').style.display='none';
+  document.getElementById('pause-btn').textContent='❙❙';
+  wselOpen=false; wselOv.style.display='none';
+  hideOverlay(); updateHUD(); syncWselBtn(); loop();
+}
+
+const DEATH_ANIM_FRAMES=60; // ~1s @60fps — extended slightly with a finale flash
+function drawDeathAnim(){
+  // Classic Mega Man 2 robot-master death: a staggered cascade of small
+  // expanding explosion puffs zig-zagging upward from the death point,
+  // capped by a brighter finale flash, then nothing.
+  const f=gs.deathFrame++, cx=gs.deathX, cy=gs.deathY, s=SP;
+  const PUFFS=[[0,0,0,1],[6,-1.1,-0.9,1],[12,1.1,-1.8,1],[18,-0.9,-2.7,1],[24,0.8,-3.5,1],[30,0,-4.1,1],[40,0,-2,1.9]];
+  for(const [t,dx,dy,scale] of PUFFS){
+    const age=f-t; if(age<0||age>20) continue;
+    const pct=age/20, r=s*(0.3+pct*1.1)*scale, alpha=1-pct;
+    ctx.save(); ctx.globalAlpha=alpha;
+    ctx.fillStyle=age<5?'#fff':(scale>1?'#fff':'#4a90d9');
+    ctx.beginPath(); ctx.arc(cx+dx*s,cy+dy*s,r,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+function triggerDeath(){
+  if(gs.dying) return;
+  gs.dying=true; gs.running=false; gs.deathFrame=0;
+  gs.deathX=gs.player.x+gs.player.w/2; gs.deathY=gs.player.y+gs.player.h/2;
+  screenShake(24,7);
+  setTimeout(finalizeGameOver,DEATH_ANIM_FRAMES/60*1000);
+}
+function gateActions(seconds){
+  const actions=document.getElementById('ov-actions'), wait=document.getElementById('ov-wait');
+  actions.style.visibility='hidden'; wait.style.display='block';
+  let remain=seconds;
+  wait.textContent='RETURN TO MENU IN '+remain+'s...';
+  const iv=setInterval(()=>{
+    remain--;
+    if(remain<=0){ clearInterval(iv); wait.style.display='none'; actions.style.visibility='visible'; }
+    else wait.textContent='RETURN TO MENU IN '+remain+'s...';
+  },1000);
+}
+function finalizeGameOver(){
+  gs.running=false; gs.phase='dead'; gs.dying=false;
+  save.runs++; save.dist+=Math.floor(gs.dist);
+  if(gs.score>save.hi) save.hi=gs.score;
+  const earned=chipsForRun(gs.score,gs.bossesDefeated,gs.chipGainMult);
+  save.chips+=earned;
+  persist();
+  ovIcon.textContent='💀'; ovTitle.textContent='GAME OVER'; ovSub.textContent='';
+  ovLast.textContent=pad6(gs.score); ovBest.textContent=pad6(save.hi); ovDist.textContent=Math.floor(gs.dist)+'m';
+  ovScores.style.display='flex';
+
+  // Vampire Survivors-style run stats
+  const timeSec=Math.floor(gs.frame/60), mm=Math.floor(timeSec/60), ss=timeSec%60;
+  const stats=[
+    ['Time Survived', mm+':'+String(ss).padStart(2,'0')],
+    ['Level Reached', gs.level],
+    ['Enemies Slain', gs.kills],
+    ['Bosses Defeated', gs.bossesDefeated.length],
+    ['Best Combo', '×'+gs.maxCombo],
+    ['Weapon Used', activeWeapon().name+' Lv'+wpLevel(gs.activeWpId)],
+    ['Weapons Unlocked', unlockedList().length],
+  ];
+  const grid=document.getElementById('ov-stats2');
+  grid.innerHTML=stats.map(([l,v])=>`<div class="st2"><div class="st2-l">${l}</div><div class="st2-v">${v}</div></div>`).join('');
+  grid.style.display='grid';
+
+  document.getElementById('btn-start').textContent='▶ TRY AGAIN';
+  ovHi.textContent='RUNS: '+save.runs+' | DIST: '+Math.floor(save.dist)+'m';
+  const chipsEl=document.getElementById('ov-chips-earned');
+  chipsEl.style.display='block'; chipsEl.textContent='⚙ +'+earned+' CHIPS EARNED';
+  ovChipsSync();
+  const killed=gs.bossesDefeated;
+  ovBosses.textContent=killed.length?'Bosses defeated: '+killed.map(id=>BOSS_BY_ID[id]?.name||id).join(', '):'No bosses defeated';
+  bossBarWrap.style.display='none'; bossNameDisp.style.display='none';
+  wselOpen=false; wselOv.style.display='none'; wselBtn.style.display='none';
+  showOverlay();
+  gateActions(5);
+}
+
+// ── Main Update ───────────────────────────────────────────
+function update(){
+  if(!gs?.running||gs.paused) return;
+  gs.frame++;
+  const p=gs.player;
+
+  p.w=PLAYER_UNITS.w*UNIT|0; p.h=p.sliding?(PLAYER_UNITS.h*UNIT*.47|0):(PLAYER_UNITS.h*UNIT|0);
+  if(p.sliding){ p.slideTimer--; if(p.slideTimer<=0) p.sliding=false; }
+
+  // Horizontal movement — held direction, boosted while sliding; overridden by knockback flinch
+  if(p.flinchTimer>0){
+    p.flinchTimer--; p.x+=p.knockbackVx; p.knockbackVx*=0.86; p.vx=p.knockbackVx;
+  } else {
+    const moveSpd=PLAYER_MOVE_SPEED*speedMult*(p.sliding?1.3:1);
+    p.vx = p.moveDir*moveSpd;
+    p.x += p.vx;
+    if(p.moveDir!==0) p.facing=p.moveDir;
+  }
+
+  // Vertical physics — air-dash hang on the double jump
+  const gNow = p.airDashTimer>0 ? GRAVITY*AIRDASH_GRAVITY_MULT : GRAVITY;
+  if(p.airDashTimer>0) p.airDashTimer--;
+  p.vy+=gNow; p.y+=p.vy;
+
+  p.onGround=false;
+  for(const pl of gs.platforms){
+    if(p.vy>=0&&rectHit(p.x,p.y,p.w,p.h,pl.x,pl.y,pl.w,pl.h)){
+      if(p.y+p.h-p.vy<=pl.y+4){ p.y=pl.y-p.h; p.vy=0; p.onGround=true; p.jumpCount=0; p.airDashTimer=0; }
+    }
+  }
+  const footX=p.x+p.w/2;
+  if(!p.onGround&&isOverGround(footX)&&p.y+p.h>=GROUND){ p.y=GROUND-p.h; p.vy=0; p.onGround=true; p.jumpCount=0; p.airDashTimer=0; }
+  if(p.y<0){ p.y=0; p.vy=0; }
+
+  // Camera — follows once the player passes screen-center; walking back left never scrolls it backward.
+  if(!gs.boss){
+    gs.camX=Math.max(gs.camX,p.x-W*CAM_DEADZONE);
+  }
+  const leftWall=gs.camX;
+  if(p.x<leftWall){ p.x=leftWall; }
+
+  // Distance travelled (world position, not time) — drives stats + difficulty scaling
+  const prevDist=gs.dist;
+  gs.dist=Math.max(gs.dist,(p.x-PLAYER_X)/SP);
+  if(gs.dist>prevDist) gainExp((gs.dist-prevDist)*EXP_PER_DIST);
+
+  // Pit fall / spike contact — both instant death (classic Mega Man hazards)
+  if(!gs.dying&&p.y>H+SP*3) triggerDeath();
+  if(!gs.dying) for(const sp of gs.spikes){ if(rectHit(p.x+3,p.y+3,p.w-6,p.h-6,sp.x,sp.y,sp.w,sp.h)){ triggerDeath(); break; } }
+
+  generateTerrain();
+
+  p.shootAnim=Math.max(0,p.shootAnim-1); p.hitAnim=Math.max(0,p.hitAnim-1);
+  if(gs.invFrames>0) gs.invFrames--;
+  if(gs.weaponCooldown>0) gs.weaponCooldown--;
+  if(gs.comboTimer>0){ gs.comboTimer--; if(!gs.comboTimer) gs.combo=1; }
+  if(gs.shakeDur>0){ gs.shakeDur--; gs.shakeX*=.7; gs.shakeY*=.7; } else { gs.shakeX=0; gs.shakeY=0; }
+
+  // Update special player bullets first (hyper bomb gravity etc.)
+  updateSpecialBullets();
+
+  // Standard bullet movement
+  for(const b of gs.bullets){
+    if(!b.customMove){ b.x+=b.vx; b.y+=b.vy; } // customMove bullets are moved in updateSpecialBullets
+    b.life--;
+  }
+  gs.bullets=gs.bullets.filter(b=>b.life>0&&b.y<H+80);
+
+  // Moving platforms patrol around their spawn point
+  for(const pl of gs.platforms){ if(pl.moving) pl.x=pl.homeX+Math.sin((gs.frame+pl.phase)*.012)*pl.range; }
+
+  for(const e of gs.enemies){
+    e.anim++;
+    if(e.flies){
+      e.x=e.homeX+Math.sin((e.anim+e.phase)*.02)*e.range;
+      e.y=e.homeY+Math.sin((e.anim+e.phase)*.035)*SP*1.2+(e.type==='buzzer'?Math.sin(e.anim*.11)*SP*.18:0);
+      if(e.type==='skyturret'&&--e.shootTimer<=0){
+        e.shootTimer=110; const dx=p.x+p.w/2-e.x,dy=p.y+p.h/2-e.y,d=Math.hypot(dx,dy)||1;
+        enemyShoot(e.x,e.y,dx/d*6,dy/d*6,SP*.22,e.color,1);
+      }
+    } else {
+      e.vy+=GRAVITY; e.y+=e.vy;
+      if(e.y+e.h>=GROUND){ e.y=GROUND-e.h; e.vy=0; }
+      const dx=p.x-e.x;
+      if(e.chaseRange&&Math.abs(dx)<e.chaseRange) e.x+=Math.sign(dx)*e.chaseSpd;
+      else e.x=e.homeX+Math.sin((e.anim+e.phase)*.015)*e.range;
+      if(e.type==='jumper'&&e.y+e.h>=GROUND&&e.anim%80===0) e.vy=-10;
+      if(e.type==='turret'&&--e.shootTimer<=0){ e.shootTimer=70; enemyShoot(e.x+(dx<0?e.w:0),e.y+e.h/2,dx<0?-6:6,0,SP*.2,'#ce93d8',1); }
+    }
+    for(const b of gs.bullets){
+      if(b.enemy||b.noContactHit) continue; // noContactHit bullets damage via their own logic (Phase 12-14)
+      if(circHit(b.x,b.y,b.r,e.x,e.y,e.w,e.h)){
+        e.hp-=b.dmg; b.life=-1; burst(b.x,b.y,e.color,5,'hit');
+        if(e.hp<=0){ e.alive=false; gs.kills++; gs.score+=e.pts*gs.combo*(gs.scoreMult||1); gs.combo=Math.min(8,gs.combo+1); gs.maxCombo=Math.max(gs.maxCombo,gs.combo); gs.comboTimer=Math.round(COMBO_DECAY*(gs.comboDecayMult||1)); gainExp(e.elite?EXP_MINIBOSS:EXP_MINION); floatText(e.x+e.w/2,e.y,'+'+e.pts+(gs.combo>1?'×'+gs.combo:''),'#ffcc44'); burst(e.x+e.w/2,e.y+e.h/2,e.color,12,'explode'); }
+      }
+    }
+    if(e.alive&&gs.invFrames===0&&!gs.dying&&rectHit(p.x+4,p.y+4,p.w-8,p.h-8,e.x,e.y,e.w,e.h)) takeDamage(e.x+e.w/2);
+  }
+  gs.enemies=gs.enemies.filter(e=>e.alive);
+  for(const b of gs.bullets){ if(!b.enemy) continue; if(gs.invFrames===0&&!gs.dying&&circHit(b.x,b.y,b.r,p.x,p.y,p.w,p.h)){ b.life=-1; takeDamage(b.x); } }
+
+  // Pickups — including weapon capsules — settle in place with light friction, then bob
+  for(const pk of gs.pickups){
+    pk.anim++; pk.x+=pk.vx; pk.vx*=0.9; pk.vy=(pk.vy||0)+.1; pk.y+=pk.vy;
+    if(pk.y+pk.r>GROUND){ pk.y=GROUND-pk.r; pk.vy*=-.4; }
+    if(circHit(p.x+p.w/2,p.y+p.h/2,SP*.65*(gs.magnetMult||1),pk.x-pk.r,pk.y-pk.r,pk.r*2,pk.r*2)){
+      pk.alive=false;
+      if(pk.type==='energy'){ gs.hp=Math.min(HP_MAX+(gs.hpMaxBonus||0)+(gs.runHpBonus||0),gs.hp+1); floatText(pk.x,pk.y,'+ ENERGY','#e8553e'); }
+      else if(pk.type==='score'){ const pts=500*gs.combo; gs.score+=pts; floatText(pk.x,pk.y,'★ +'+pts,'#ffcc44'); }
+      else if(pk.type==='etank'){ gs.hp=HP_MAX+(gs.hpMaxBonus||0)+(gs.runHpBonus||0); floatText(pk.x,pk.y,'E-TANK!','#00bcd4'); }
+      else if(pk.type==='weapon_capsule'){ unlockWeapon(pk.weaponId); }
+      burst(pk.x,pk.y,'#ffcc44',8,'explode'); updateHUD();
+    }
+  }
+  gs.pickups=gs.pickups.filter(pk=>pk.alive);
+
+  updateDoors();
+  if(gs.boss) updateBoss();
+
+  pruneWorld();
+
+  for(const ft of gs.floatTexts){ ft.life--; ft.y-=.5; }
+  gs.floatTexts=gs.floatTexts.filter(ft=>ft.life>0);
+  for(const pt of gs.particles){ pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.15; pt.life--; }
+  gs.particles=gs.particles.filter(pt=>pt.life>0);
+}
+
+function takeDamage(sourceX){
+  if(gs.invFrames>0) return;
+  const p=gs.player;
+  gs.hp--; gs.invFrames=90+(gs.armorBonus||0); p.hitAnim=20; gs.combo=1; gs.comboTimer=0;
+  // Flinch + knockback: brief stun, pushed away from the damage source
+  p.flinchTimer=FLINCH_FRAMES;
+  const src=(typeof sourceX==='number')?sourceX:(p.x-p.facing*10);
+  const pushDir=Math.sign(p.x+p.w/2-src)||-p.facing||1;
+  p.knockbackVx=pushDir*KNOCKBACK_SPD;
+  p.vy=Math.min(p.vy,-4.5);
+  burst(p.x+p.w/2,p.y+p.h/2,'#ff4444',10,'hit');
+  floatText(p.x+p.w/2,p.y-10,'OUCH!','#ff4444');
+  screenShake(8,3); updateHUD();
+  if(gs.hp<=0){
+    if(gs.revivesLeft>0){
+      gs.revivesLeft--; gs.hp=3; gs.invFrames=150;
+      floatText(p.x+p.w/2,p.y-30,'★ RUSH SAVED YOU!','#ce93d8',true);
+      burst(p.x+p.w/2,p.y+p.h/2,'#ce93d8',24,'explode');
+      updateHUD();
+    } else triggerDeath();
+  }
+}
+
+// ── Render ────────────────────────────────────────────────
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(!gs) return;
+  updateHUD();
+  if(gs.shakeX||gs.shakeY){ ctx.save(); ctx.translate(gs.shakeX|0,gs.shakeY|0); }
+  drawBackground();
+
+  ctx.save();
+  ctx.translate(-gs.camX,0);
+
+  drawGroundAndSpikes();
+  drawDoors();
+
+  for(const pl of gs.platforms){
+    ctx.fillStyle='#1a3a60'; ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+    ctx.fillStyle='#2a5080'; ctx.fillRect(pl.x,pl.y,pl.w,SP*.16);
+    const tw2=SP*.96;
+    for(let tx=pl.x;tx<pl.x+pl.w-2;tx+=tw2){ ctx.fillStyle='#1e4a70'; ctx.fillRect(tx+1,pl.y+SP*.16,tw2-2,pl.h-SP*.16); }
+  }
+
+  // Player bullets
+  for(const b of gs.bullets){
+    if(b.enemy) continue;
+    if(b.shape&&b.shape!=='bolt'){ drawSpecialBullet(b); continue; }
+    if(b.charged){ ctx.save(); ctx.globalAlpha=.4; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.4,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle=b.color; ctx.fillRect(b.x-b.r,b.y-b.r*.5,b.r*2,b.r);
+  }
+  // Enemy bullets
+  for(const b of gs.bullets){
+    if(!b.enemy) continue;
+    if(b.special){ drawSpecialBullet(b); continue; } // Phase 6-8: boss projectile visuals
+    ctx.save(); ctx.fillStyle=b.color;
+    ctx.globalAlpha=.85; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=.25; ctx.beginPath(); ctx.arc(b.x,b.y,b.r+SP*.16,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  for(const pk of gs.pickups) drawPickup(pk);
+  for(const e of gs.enemies) drawEnemy(e);
+  if(gs.boss?.alive) drawBoss(gs.boss);
+
+  for(const pt of gs.particles){ ctx.globalAlpha=pt.life/pt.max; ctx.fillStyle=pt.color; ctx.fillRect(pt.x-pt.r/2,pt.y-pt.r/2,pt.r,pt.r); }
+  ctx.globalAlpha=1;
+  if(gs.dying) drawDeathAnim(); else drawPlayer(gs.player);
+
+  for(const ft of gs.floatTexts){ ctx.globalAlpha=ft.life/ft.max; ctx.font=`bold ${ft.big?SP*.64|0:SP*.52|0}px Courier New`; ctx.fillStyle=ft.color; ctx.textAlign='center'; ctx.fillText(ft.text,ft.x,ft.y); }
+  ctx.globalAlpha=1;
+  ctx.restore(); // end camera translate — everything below is screen-space HUD text
+
+  const fs=SP*.36|0;
+  if(gs.combo>1){ ctx.font=`bold ${fs+gs.combo}px Courier New`; ctx.fillStyle=`hsl(${gs.combo*20},100%,70%)`; ctx.textAlign='left'; ctx.fillText('COMBO ×'+gs.combo,SP*.5,GROUND-SP*.6); }
+  ctx.font=`${fs*.8|0}px Courier New`;
+  const aw=activeWeapon();
+  ctx.fillStyle=aw.color; ctx.textAlign='left'; ctx.fillText(aw.name,SP*.5,GROUND-SP*.22);
+  ctx.fillStyle='rgba(74,144,217,.5)'; ctx.textAlign='right'; ctx.fillText('DIST:'+Math.floor(gs.dist)+'m',W-SP*.3,GROUND-SP*.22);
+
+  if(gs.shakeX||gs.shakeY) ctx.restore();
+}
+
+// ── Loop ─────────────────────────────────────────────────
+let rafId=0,lastT=0;
+const TARGET_DT=1000/60;
+function loop(t=0){
+  rafId=requestAnimationFrame(loop);
+  const dt=t-lastT; if(dt<TARGET_DT*.8) return;
+  lastT=t; update(); render();
+}
+
+// ── Title ─────────────────────────────────────────────────
+let titleActive=true;
+showOverlay();
+function titleLoop(t=0){
+  if(!titleActive) return;
+  requestAnimationFrame(titleLoop);
+  if(gs?.running){ titleActive=false; return; }
+  ctx.fillStyle='#060614'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  for(let i=0;i<50;i++){ const sx=(i*137.5+t*.018)%W,sy=(i*73.1)%(H*.8); ctx.beginPath(); ctx.arc(sx,sy,.7+i%2*.55,0,Math.PI*2); ctx.fill(); }
+  const grd=ctx.createLinearGradient(W/2-140,0,W/2+140,0);
+  grd.addColorStop(0,'#4a90d9'); grd.addColorStop(.5,'#80deea'); grd.addColorStop(1,'#4a90d9');
+  ctx.fillStyle=grd; ctx.font=`bold ${SP*1.55|0}px Courier New`; ctx.textAlign='center';
+  ctx.fillText('MEGA DASH',W/2,H/2-SP*.5);
+  ctx.fillStyle='rgba(74,144,217,.4)'; ctx.font=`${SP*.44|0}px Courier New`;
+  ctx.fillText('SIDE-SCROLLER',W/2,H/2+SP*.25);
+  ctx.fillStyle='rgba(74,144,217,.25)'; ctx.font=`${SP*.3|0}px Courier New`;
+  ctx.fillText('FIND THE DOOR. BEAT THE BOSS.',W/2,H/2+SP*1.1);
+}
+titleLoop();
+</script>
+</body>
+</html>

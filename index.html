@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#060614" />
+<title>Mega Dash</title>
+<style>
+  html,body{margin:0;height:100%;background:#060614;overflow:hidden;
+    -webkit-tap-highlight-color:transparent;touch-action:none;
+    font-family:monospace;color:#e0f0ff}
+  #app{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+  /* Landscape only — the whole control layout assumes it. */
+  #rotate{display:none;position:fixed;inset:0;z-index:100;background:#060614;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+  #rotate .i{font-size:44px;animation:r 1.6s ease-in-out infinite}
+  @keyframes r{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+  @media (orientation:portrait){#rotate{display:flex}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="rotate"><div class="i">📱</div><div>ROTATE TO LANDSCAPE</div></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
