@@ -1,8 +1,11 @@
 node_modules/
 dist/
-android/
 ios/
 .DS_Store
 *.log
 .env
 .vite/
+
+# The android/ project IS committed — it carries the in-app updater's native
+# code and the debug keystore that lets each build install over the last.
+# Its own android/.gitignore excludes build output and the copied web assets.

@@ -1,14 +1,23 @@
-# Builds a debug APK on every push to main, and attaches it to the run.
-# Download from: repo -> Actions -> the run -> Artifacts -> mega-dash-apk
+# Builds the APK and publishes it as a GitHub Release, which is where the game's
+# in-app UPDATE button pulls from.
 #
-# No signing keys needed for a debug APK. Your friends install it by enabling
-# "install from unknown sources" on their phone.
+# Two kinds of release come out of this:
+#   ch-<branch>  every branch gets one, so the long-press channel picker can
+#                install a work-in-progress build straight onto the phone
+#   latest       the rolling default, published from main ONLY, so a feature
+#                branch can never become everyone's default update
+#
+# The release notes carry "versionCode=NNNN"; the updater compares that against
+# the installed build. The committed debug keystore (android/app/debug.keystore)
+# is what lets each build install over the last instead of demanding an
+# uninstall — see the note in android/app/build.gradle.
 name: Build APK
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:      # lets you trigger a build manually from the Actions tab
+on: [push, workflow_dispatch]
+
+# Needed to publish releases.
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -35,16 +44,48 @@ jobs:
       - name: Build web bundle
         run: npm run build
 
-      - name: Create Android project
-        run: |
-          npx cap add android || true
-          npx cap sync android
+      # android/ is committed (it carries the updater's native code), so this
+      # only copies the fresh web build in and refreshes the plugin wiring.
+      - name: Sync web assets into the Android project
+        run: npx cap sync android
 
       - name: Assemble debug APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+        run: |
+          cd android
+          chmod +x gradlew
+          # Unique, increasing versionCode per run so the updater can order builds.
+          ./gradlew assembleDebug --no-daemon \
+            -PversionCodeOverride=$((1000 + GITHUB_RUN_NUMBER))
 
       - uses: actions/upload-artifact@v4
         with:
           name: mega-dash-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Publish releases (rolling 'latest' + per-branch channel)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CODE=$((1000 + GITHUB_RUN_NUMBER))
+          BRANCH="$GITHUB_REF_NAME"
+          SLUG=$(printf '%s' "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9-')
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          cp "$APK" "MegaDash-$CODE.apk"
+          NOTES="versionCode=$CODE"$'\n'"branch=$BRANCH"$'\n'"$GITHUB_SHA"
+
+          # Per-branch channel for the long-press picker — every branch.
+          gh release delete "ch-$SLUG" --cleanup-tag --yes || true
+          gh release create "ch-$SLUG" "MegaDash-$CODE.apk" \
+            --title "$BRANCH — build $CODE" \
+            --notes "$NOTES" \
+            --latest=false
+
+          # Rolling 'latest' (the plain-tap target) only from main.
+          if [ "$BRANCH" = "main" ]; then
+            gh release delete latest --cleanup-tag --yes || true
+            gh release create latest "MegaDash-$CODE.apk" \
+              --title "latest — main build $CODE" \
+              --notes "$NOTES" \
+              --latest
+          fi

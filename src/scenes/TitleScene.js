@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
 import { save, fullReset } from '../systems/save.js';
+import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
+
+const LONG_PRESS_MS = 500;
 
 /**
  * Title + results. Doubles as the game-over screen (pass { died, run }).
@@ -33,9 +36,53 @@ export default class TitleScene extends Phaser.Scene {
 
     this.btn(cx, 136, this.died ? 'TRY AGAIN' : 'START', () => this.scene.start('Game'));
     this.btn(cx, 158, `HUB   (${save.chips} chips)`, () => this.scene.start('Hub'));
+    this.updateBtn(cx, 176);
+
+    this.note = this.add.text(cx, VIEW_H - 22, '',
+      { fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+
     this.add.text(cx, VIEW_H - 12, 'full reset', { fontFamily: 'monospace', fontSize: '6px', color: '#804040' })
       .setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => confirm('Wipe ALL saved data and reload?') && fullReset());
+  }
+
+  /**
+   * UPDATE — tap for main's newest build, long-press to pick a branch channel.
+   *
+   * This is how builds reach the phone during development, so it lives on the
+   * title screen rather than behind a menu. The button renders in the browser
+   * too and explains itself there instead of silently doing nothing.
+   */
+  updateBtn(x, y) {
+    const t = this.add.text(x, y, 'UPDATE', {
+      fontFamily: 'monospace', fontSize: '8px',
+      color: canUpdate() ? '#2AAB1C' : '#3A6A8A',
+      backgroundColor: '#0d1420', padding: { x: 8, y: 3 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    let timer = null, fired = false;
+    t.on('pointerdown', () => {
+      fired = false;
+      timer = this.time.delayedCall(LONG_PRESS_MS, () => {
+        fired = true;                       // long-press wins; the tap is cancelled
+        this.say(pickChannel() || 'Pick a build channel…');
+      });
+    });
+    const release = () => {
+      if (timer) { timer.remove(); timer = null; }
+      if (!fired) this.say(checkForUpdate() || 'Checking main for a newer build…');
+    };
+    t.on('pointerup', release);
+    t.on('pointerout', () => { if (timer) { timer.remove(); timer = null; } });
+
+    this.add.text(x, y + 13, 'tap: main · hold: pick branch',
+      { fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+    return t;
+  }
+
+  /** Native builds report via toasts; the browser has nowhere else to put this. */
+  say(msg) {
+    this.note?.setText(msg);
   }
 
   btn(x, y, label, fn) {

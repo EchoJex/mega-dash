@@ -20,12 +20,30 @@ npm test         # balance + data-integrity tests — run before every commit
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
-CI builds the APK on every push to `main` and attaches it to the run as an artifact.
+### The dev loop is the in-app updater, not a local server
 
-**No networked distribution.** There is no Pages deploy, no service worker, no remote
-content of any kind — the APK bundles everything and runs offline. Distribution is an
-end-stage question, deliberately unanswered. `npm run dev` / `npm run preview` bind to the
-LAN so a phone can reach them; that is development tooling, not shipping.
+CI builds the APK on **every push to every branch** and publishes it as a GitHub Release.
+Install the APK on the phone once; every later build arrives from inside the game:
+
+- **tap UPDATE** → newest build of `main`
+- **long-press UPDATE** → pick a channel: `main`, or any branch with a live CI build
+
+That exists so iterating never requires a dev server on a PC with a phone pointed at it
+over wifi. `npm run dev` still works and is fine for quick checks in a desktop browser,
+but it is **optional** — pushing a branch and pulling it into the app is the primary loop.
+
+CI publishes `ch-<branch>` for every branch, and the rolling `latest` **only from `main`**,
+so a feature branch can never become the default update. Release notes carry
+`versionCode=NNNN`, which is what the updater compares against the installed build.
+
+**`android/` is committed** — it holds the updater's native code (`Updater.java`,
+`UpdaterPlugin.java`) and `debug.keystore`. That keystore is deliberately in the repo: without
+one stable signing key, every CI run would sign differently and no build could ever install
+over the last. It signs debug builds of an unreleased game and protects nothing.
+
+**The game itself is entirely offline.** It bundles every asset and fetches nothing. There
+is no Pages deploy, no service worker, no remote content. `INTERNET` exists solely for the
+updater.
 
 ---
 

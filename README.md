@@ -10,14 +10,25 @@ Built with Phaser 3 + Vite, wrapped by Capacitor. **The Android APK is the deliv
 target** — shipping inside a known WebView rather than whatever browser a player happens
 to open keeps the experience consistent. The browser only ever runs the dev server.
 
-## Quick start
+## Quick start — no PC setup required
+
+1. Open the repo's **Actions** tab, pick the newest run, download `mega-dash-apk`.
+2. Install it on the phone (allow "install from unknown sources" once).
+3. From then on, **never download an APK by hand again**:
+   - **tap UPDATE** on the title screen → newest build of `main`
+   - **long-press UPDATE** → pick a channel: `main`, or any branch being worked on
+
+Every push to every branch produces an installable build, so testing a work-in-progress
+branch is: push it, open the game, long-press UPDATE, pick the branch.
+
+### Optional: run it on a desktop browser
+
+Only needed for quick checks — the phone loop above does not require it.
 
 ```bash
 npm install
-npm run dev        # then open the printed Network URL on your phone
+npm run dev
 ```
-
-New here? Read **[MIGRATION.md](MIGRATION.md)** — step-by-step setup, no code required.
 
 ## Commands
 
