@@ -117,6 +117,27 @@ hazards *and* layer-2 attacks. Both elementally themed.
 
 ---
 
+## Minions
+
+`src/data/minions.js` — exactly two, one per plane of movement: **SCRAPPER** (ground,
+walks its span and turns at pit edges) and **DRIFTER** (air, drifts left while tracking
+your altitude). Bosses are events; minions are weather.
+
+Same 3-colour NES palette rule as bosses, but both primaries are **low chroma and held
+>25 CIELAB dE from all 17 boss primaries** — a minion must never be mistaken for a boss.
+`tests/data.test.js` asserts this; do not hand-pick a new minion colour without checking it.
+
+**Elites** keep their palette and take a gold outline (`ELITE_OUTLINE`) plus `eliteScale`
+size. Size alone stops being a reliable tell once the ramp has been running a while.
+
+Spawn cadence and HP scale off `difficultyStep()` in `systems/minions.js`, which reads
+**elapsed sim time**. Slow motion slows the ramp too — that is intended.
+
+Kills drive the combo counter and roll for a pickup (`systems/pickups.js`): one roll at
+`FEEL.pickupChance`, then a coin flip between an E-Tank and an EXP boost.
+
+---
+
 ## Weapons
 
 `src/data/weapons.js` — buster + 17 specials.
@@ -161,18 +182,25 @@ Three palette entries are flagged `warn` as **recommended changes** pending owne
 | 2 | 17 placeholder bosses (visuals + presence, no attacks) | ✅ |
 | 3 | 17 placeholder weapons + per-weapon level system | ✅ |
 | — | **Port to Phaser** (this repo) | ✅ |
-| — | **Tuning pass** — `feel.js` values are untested placeholders | ⬅ **next** |
+| — | **Tuning pass** — motion constants set to classic NES values | ✅ |
+| — | Minions, time-keyed difficulty ramp, pickups | ✅ |
 | 4 | VS-style level-up cards; weapons unlock only via their boss | ⬜ |
 | 5 | Boss defeat animations + weapon acquisition popups | ⏭ deferred (cosmetic) |
 | 6–8 | Boss attacks + arena hazards, in thirds | ⬜ |
 | 9–11 | Weapon visuals, in thirds | ⬜ |
 | 12–14 | Weapon mechanics, in thirds | ⬜ |
 
-### Tuning pass (immediate next)
-Every value in `config/feel.js` came from the HTML prototype where they were
-**off-the-cuff numbers to get iteration moving**. They are not playtested. Treat them as
-a starting point, not as precious. A debug overlay for live tuning is the natural first
-task.
+### Tuning pass
+The core **motion** constants in `config/feel.js` (walk, jump, gravity, terminal
+velocity, slide speed and duration) are now the **classic NES Mega Man values**, converted
+from that game's 8.8 fixed-point. They are a known-good reference feel to tune *away
+from*, not a finished tune.
+
+Everything else in that file is still an off-the-cuff prototype number and is not
+playtested. Treat those as a starting point, not as precious.
+
+A live in-game tuning overlay is **deliberately deferred to late in development**.
+`FEEL_GROUPS` exists to drive it when that time comes — do not build it early.
 
 ### Phase 4 spec
 - Delete the two lines in `GameScene.startRun()` that unlock all weapons; gate unlocks on

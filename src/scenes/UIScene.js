@@ -81,7 +81,8 @@ export default class UIScene extends Phaser.Scene {
     this.z3 = { x: 0, y: VIEW_H - this.zoneH, w: Math.min(w * 0.46, 120), h: this.zoneH };
     this.z4 = { x: w - Math.min(w * 0.36, 96), y: VIEW_H - this.zoneH, w: Math.min(w * 0.36, 96), h: this.zoneH };
 
-    this.hud = this.add.text(4, 3, '', { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
+    // HP is drawn as pips in this.g; the text picks up below it
+    this.hud = this.add.text(4, 15, '', { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
@@ -168,7 +169,11 @@ export default class UIScene extends Phaser.Scene {
       if (p.x - z.x < z.w / 2) { mode = 'jump'; this.game_.doJump(); }
       else { mode = 'fire'; this.game_.beginFire(); }
     });
-    const up = () => { if (mode === 'fire') this.game_.endFire(); mode = null; };
+    const up = () => {
+      if (mode === 'fire') this.game_.endFire();
+      if (mode === 'jump') this.game_.endJump(); // releasing early cuts the rise
+      mode = null;
+    };
     zone.on('pointerup', up);
     zone.on('pointerout', up);
   }
@@ -383,13 +388,34 @@ export default class UIScene extends Phaser.Scene {
     this.closeWheel();
   }
 
+  /**
+   * Trace `t` of a rectangle's perimeter clockwise from the top-left, over a
+   * dim full-perimeter track. Used for the EXP ring around the energy bar.
+   */
+  strokeProgress(g, x, y, w, h, t) {
+    g.fillStyle(0x33301a, 1);
+    g.fillRect(x, y, w, 1); g.fillRect(x + w - 1, y, 1, h);
+    g.fillRect(x, y + h - 1, w, 1); g.fillRect(x, y, 1, h);
+
+    let left = Math.max(0, Math.min(1, t)) * ((w + h) * 2);
+    g.fillStyle(0xf5d328, 1);
+    const seg = (len, draw) => {
+      const d = Math.min(left, len);
+      if (d > 0) draw(d);
+      left -= d;
+    };
+    seg(w, (d) => g.fillRect(x, y, d, 1));                     // top, L->R
+    seg(h, (d) => g.fillRect(x + w - 1, y, 1, d));             // right, T->B
+    seg(w, (d) => g.fillRect(x + w - d, y + h - 1, d, 1));     // bottom, R->L
+    seg(h, (d) => g.fillRect(x, y + h - d, 1, d));             // left, B->T
+  }
+
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
     const r = gm.run, w = WEAPON_BY_ID[r.activeWeapon];
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     this.hud.setText(
-      `HP ${'|'.repeat(Math.max(0, r.hp))}${'.'.repeat(Math.max(0, maxHp - r.hp))}\n` +
       `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}\n` +
       `${w.name} L${r.wpLevels[r.activeWeapon] || 1}`,
     );
@@ -405,8 +431,15 @@ export default class UIScene extends Phaser.Scene {
     const z4 = this.z4;
     g.fillRect(z4.x + z4.w * 0.16, z4.y + z4.h - 20, 14, 14);       // [] jump
     g.fillCircle(z4.x + z4.w * 0.74, z4.y + z4.h - 13, 8);          // () shoot
-    // EXP bar
-    g.fillStyle(0x1a1a2e, 1); g.fillRect(4, 26, 60, 3);
-    g.fillStyle(0xf5d328, 1); g.fillRect(4, 26, 60 * Math.min(1, r.exp / r.expToNext), 3);
+    // Energy pips, one per point of max HP, with EXP as a yellow outline around
+    // the whole bar. Tying EXP to the bar's perimeter means it rescales for free
+    // when an Energy Tank widens the bar.
+    const pipW = 4, pipH = 6, gap = 1, bx = 5, by = 5;
+    for (let i = 0; i < maxHp; i++) {
+      g.fillStyle(i < r.hp ? 0x5cadd5 : 0x14243a, 1);
+      g.fillRect(bx + i * (pipW + gap), by, pipW, pipH);
+    }
+    const barW = maxHp * (pipW + gap) - gap;
+    this.strokeProgress(g, bx - 2, by - 2, barW + 4, pipH + 4, r.exp / r.expToNext);
   }
 }

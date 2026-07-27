@@ -1,13 +1,19 @@
 /**
  * FEEL — every constant that decides how the game *plays*.
  *
- * IMPORTANT CONTEXT: these numbers came across from the HTML prototype, where
- * they were off-the-cuff values chosen to get iteration moving. They are NOT
- * playtested and should not be treated as precious. This file exists so they
- * can be tuned as a group, live, without hunting through gameplay code.
+ * IMPORTANT CONTEXT: the core MOTION constants (walk, jump, gravity, terminal
+ * velocity, slide) are now the classic NES Mega Man values, converted from that
+ * game's 8.8 fixed-point. They are a deliberate known-good reference point, not
+ * a finished tune.
  *
- * Every value here is exposed in the in-game debug overlay (` key / 3-finger
- * tap) so it can be dialled in by feel while playing rather than guessed at.
+ * Everything else here still came across from the HTML prototype, where the
+ * numbers were off-the-cuff values chosen to get iteration moving. Those are NOT
+ * playtested and should not be treated as precious. This file exists so they can
+ * be tuned as a group without hunting through gameplay code.
+ *
+ * A live in-game tuning overlay is planned but deliberately deferred until late
+ * in development — FEEL_GROUPS at the bottom of this file exists to drive it
+ * when that time comes.
  *
  * All units are per-1/60s-step, in VIRTUAL pixels (see config/display.js).
  * Physics never scale with screen size.
@@ -19,20 +25,34 @@ export const FEEL = {
   // 1 and stopped on release. That instant response is a large part of why the
   // platforming reads as precise. Keep accel/friction at 1.0 unless you
   // deliberately want a more modern, weightier feel.
-  moveSpeed: 1.35,
-  slideSpeedMult: 1.3,
+  // CLASSIC VALUES: the motion constants below are the NES Mega Man ones,
+  // converted from the game's 8.8 fixed-point into px per 1/60s frame. They
+  // replace the prototype's off-the-cuff numbers as a known-good starting point
+  // — a real reference feel to tune away from rather than toward.
+  moveSpeed: 1.375,        // 0x0160 — walk speed
+  slideSpeedMult: 1.68,    // -> 2.31 px/frame, the classic slide speed
   accel: 1.0,     // 1.0 = instant to full speed
   friction: 1.0,  // 1.0 = instant stop
 
   // ── Gravity & jumping ────────────────────────────────────────────────
-  gravity: 0.42,
-  maxFallSpeed: 6.5,
-  jumpVelocity: -6.2,
+  // Classic values give a noticeably FLOATIER arc than the prototype had: about
+  // the same peak height, reached over ~39 frames of airtime instead of ~29.
+  // That long hang is a big part of why the original reads as Mega Man, and why
+  // its jumps feel controllable rather than twitchy.
+  gravity: 0.25,           // 0x0040
+  maxFallSpeed: 7.0,       // 0x0700 — terminal velocity
+  jumpVelocity: -4.875,    // 0x04E5
 
   // VARIABLE JUMP HEIGHT — a genre signature. Releasing the jump button early
   // cuts upward velocity, giving a short hop; holding gives full height. This
   // is what makes precise platforming possible. Do not remove it.
-  jumpCutMult: 0.45,      // vy *= this when jump released while still rising
+  // Classic Mega Man KILLS upward velocity outright on release rather than
+  // scaling it, which is what makes its short hop so crisp. Hence 0, not 0.45.
+  jumpCutMult: 0,         // vy *= this when jump released while still rising
+
+  // NOT classic: the NES game has neither of these. They are kept because they
+  // only ever rescue an input the player already meant, and removing them would
+  // be reproducing a limitation rather than a feel. Zero them if you disagree.
   jumpBufferFrames: 6,    // press registered this early before landing
   coyoteFrames: 5,        // jump still allowed this soon after leaving a ledge
 
@@ -45,7 +65,12 @@ export const FEEL = {
   maxAirActions: 1,       // air dashes available per jump
 
   // ── Slide ────────────────────────────────────────────────────────────
-  slideDurationFrames: 180, // 3s base; extended by the Slide Mastery upgrade
+  // The slide is META-GATED: at Slide Mastery rank 0 the player cannot slide at
+  // all. These are the rank-1 baseline; ranks 2 and 3 scale them (see
+  // data/upgrades.js, which owns the ladder itself).
+  // 26 frames is the classic slide length — a sharp dash, not the 3-second
+  // hold the prototype inherited from its endless-runner era.
+  slideDurationFrames: 26,
   slideHeightMult: 0.47,    // collision box shrinks, letting you pass low gaps
 
   // ── Combat ───────────────────────────────────────────────────────────
@@ -88,14 +113,39 @@ export const FEEL = {
   // Keyed to ELAPSED TIME, not distance. The prototype used rightward distance
   // (a holdover from when the screen force-scrolled), which meant a player who
   // stopped moving froze the ramp. Time-based keeps pressure honest.
-  rampSeconds: 60,          // one "difficulty step" per this many seconds
-  rampEnemyHp: 0.18,        // +18% enemy HP per step
-  rampEnemyCount: 0.12,     // +12% spawn density per step
-  rampEliteChance: 0.02,    // +2% elite chance per step
+  //
+  // PLACEHOLDER CURVE: one step every 5 minutes, +5% per step across the board.
+  // Deliberately gentle and uniform — a flat 5% makes the SHAPE of the ramp easy
+  // to read while playing, which is what you want from a number you intend to
+  // replace. Do not mistake the uniformity for a balance decision.
+  rampSeconds: 300,         // one "difficulty step" per this many seconds
+  rampEnemyHp: 0.05,        // +5% minion HP per step
+  rampEnemyCount: 0.05,     // +5% spawn density per step
+  rampEliteChance: 0.05,    // +5pp elite chance per step
   eliteChanceBase: 0.03,
   eliteChanceMax: 0.16,
   eliteHpMult: 4.5,
   eliteScale: 1.9,
+
+  // ── Minions ──────────────────────────────────────────────────────────
+  // Spawned off the right edge, pruned behind. The interval shortens with the
+  // difficulty step; the cap exists so a long run cannot degenerate into a wall
+  // of bodies the player physically cannot shoot through.
+  spawnIntervalSeconds: 2.5,
+  maxMinions: 12,
+  scoreMinion: 20,
+  scoreElite: 90,
+  scoreComboStep: 10,       // extra score per combo tier on a minion kill
+
+  // ── Pickups ──────────────────────────────────────────────────────────
+  // One roll per minion killed. On a hit it is a coin flip between the two
+  // types, so each is effectively half of pickupChance.
+  pickupChance: 0.10,
+  pickupHeal: 1,            // energy pips restored by an E-Tank
+  pickupExp: 60,
+  pickupMagnetRange: 18,    // base attract radius, widened by the Item Magnet
+  pickupMagnetSpeed: 1.4,
+  pickupLifeFrames: 600,
 
   // ── Run progression ──────────────────────────────────────────────────
   hpMax: 8,
@@ -149,5 +199,7 @@ export const FEEL_GROUPS = {
   Combat: ['invulnFrames', 'flinchFrames', 'knockbackSpeed', 'chargeFullMs'],
   Camera: ['camDeadzone', 'camLerp'],
   Difficulty: ['rampSeconds', 'rampEnemyHp', 'rampEnemyCount', 'rampEliteChance'],
+  Minions: ['spawnIntervalSeconds', 'maxMinions', 'eliteChanceBase', 'eliteHpMult'],
+  Pickups: ['pickupChance', 'pickupHeal', 'pickupExp', 'pickupMagnetRange'],
   Requip: ['requipSlowScale', 'requipSlowInFrames', 'requipSlowOutFrames'],
 };

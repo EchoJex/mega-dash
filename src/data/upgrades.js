@@ -56,9 +56,29 @@ export const UPGRADES = [
   { id: 'twin_arsenal', name: 'TWIN ARSENAL', color: '#2AAB1C', maxLv: 1, cost: 1400, mult: 1,
     desc: () => 'Begin each run with TWO random boss weapons unlocked',
     apply: (r, l) => { r.twinArsenal = l > 0; } },
-  { id: 'slide_mastery', name: 'SLIDE MASTERY', color: '#A0EFE7', maxLv: 4, cost: 140, mult: 1.5,
-    desc: (l) => `Slide duration +${l * 25}% (base 3s)`,
-    apply: (r, l) => { r.slideDurMult = 1 + l * 0.25; } },
+  /**
+   * SLIDE MASTERY — the slide is not a starting ability, it is meta progression.
+   *
+   * Rank 0 means you genuinely cannot slide. That makes the first rank one of
+   * the most valuable purchases in the Hub and gives a new save an obvious first
+   * goal, rather than handing over the full moveset before the player has earned
+   * any of it. Each rank adds a feature rather than another percentage:
+   *
+   *   1  unlock — the slide exists, at the feel.js baseline
+   *   2  reach  — +50% duration and +15% speed, so it crosses real distance
+   *   3  dodge  — i-frames on the opening of the slide, making it defensive
+   *
+   * Rank 1 is priced low on purpose; the later ranks are where the cost is.
+   */
+  { id: 'slide_mastery', name: 'SLIDE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 80, mult: 2.2,
+    desc: (l) => ['No slide — rank 1 unlocks it', 'Slide unlocked',
+      'Slide +50% duration and +15% speed', 'Slide grants 24 invulnerable frames'][l],
+    apply: (r, l) => {
+      r.slideRank = l;
+      r.slideDurMult = l >= 2 ? 1.5 : 1;
+      r.slideSpeedBonus = l >= 2 ? 1.15 : 1;
+      r.slideIframes = l >= 3 ? 24 : 0;
+    } },
 ];
 
 export const upgradeLevel = (save, id) => save.upgrades[id] || 0;

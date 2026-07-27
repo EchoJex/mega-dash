@@ -35,7 +35,10 @@ New here? Read **[MIGRATION.md](MIGRATION.md)** — step-by-step setup, no code 
 | bottom-centre | RE-QUIP — **tap** to pause and open the weapon wheel · **swipe** for a slow-motion directional switch |
 | top-right | pause |
 
-Keyboard: arrows/AD move · Space jump · hold Z charge · X slide
+Keyboard: arrows/AD move · Space jump (hold for height) · hold Z charge · X slide
+
+The slide is **meta progression** — it is locked at Slide Mastery rank 0 and unlocked by
+buying rank 1 in the Hub.
 
 ## Documentation
 

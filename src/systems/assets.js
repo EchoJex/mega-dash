@@ -174,6 +174,52 @@ export function drawProjectile(g, b, frame) {
   }
 }
 
+/**
+ * Vertical half-extent of each projectile shape, as a multiple of its radius.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * The Duplicator upgrade stacks echo volleys above and below the real shot, and
+ * they have to sit CLOSE without overlapping. That is only possible if the
+ * spacing is derived from how tall each shape actually draws — and the shapes
+ * vary wildly. A 'lash' is a thin bar at 0.35r; a 'spray' is a ring of orbiting
+ * blobs reaching 1.6r. Spacing them all by `radius` would leave the lash with a
+ * visible gap and still overlap the spray.
+ *
+ * These numbers are read straight off drawProjectile() below. If you change a
+ * shape's drawing, change its entry here in the same edit — this file owns both
+ * halves of that contract deliberately, and the same will be true when real art
+ * replaces the placeholders in Phases 9-11.
+ */
+export const SHAPE_HALF_H = {
+  wheel: 1, stream: 0.5, spark: 1.1, lash: 0.35, shard: 1,
+  punch: 1.2, spray: 1.6, wave: 1, tornado: 1.2, orb: 1,
+  swarm: 1.2, rock: 0.8, wisp: 1, breath: 0.7, boomerang: 1,
+  blade: 1.2, bolt: 0.5,
+};
+
+/** Drawn half-height of a projectile in px, for spacing duplicate volleys. */
+export const projectileHalfHeight = (shape, radius) =>
+  radius * (SHAPE_HALF_H[shape] ?? SHAPE_HALF_H.bolt);
+
+/** Pickups: a bright core in a dark shell so they read against any terrain. */
+export function drawPickup(g, p, style, frame) {
+  const bob = Math.sin(frame * 0.12 + p.anim * 0.05) * 0.8;
+  const y = p.y + bob;
+  g.fillStyle(hexNum('#0A0A12'), 1);
+  g.fillRect(p.x - 1, y - 1, p.w + 2, p.h + 2);
+  g.fillStyle(hexNum(style.primary), 1);
+  g.fillRect(p.x, y, p.w, p.h);
+  g.fillStyle(hexNum(style.secondary), 1);
+  // E-Tanks get a cross, EXP gets a bar — distinguishable without colour alone
+  if (p.type === 'etank') {
+    g.fillRect(p.x + 3, y + 1, 1, 5);
+    g.fillRect(p.x + 1, y + 3, 5, 1);
+  } else {
+    g.fillRect(p.x + 1, y + 3, 5, 1);
+  }
+}
+
 /** '#RRGGBB' -> 0xRRGGBB */
 export const hexNum = (s) => parseInt(String(s).replace('#', ''), 16);
 

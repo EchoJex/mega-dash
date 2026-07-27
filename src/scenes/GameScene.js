@@ -17,9 +17,14 @@ import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
 import { WEAPONS, WEAPON_BY_ID, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsForRun } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
+import { ELITE_OUTLINE } from '../data/minions.js';
 import * as Terrain from '../systems/terrain.js';
 import * as Phys from '../systems/physics.js';
-import { drawPlaceholder, drawProjectile, hexNum } from '../systems/assets.js';
+import * as Minions from '../systems/minions.js';
+import * as Pickups from '../systems/pickups.js';
+import {
+  drawPlaceholder, drawProjectile, drawPickup, projectileHalfHeight,
+} from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
 
@@ -37,11 +42,19 @@ export default class GameScene extends Phaser.Scene {
     this.startRun();
 
     // Input intent is filled by UIScene (touch) and keyboard here.
-    this.input.keyboard.on('keydown-SPACE', () => this.doJump());
-    this.input.keyboard.on('keydown-UP', () => this.doJump());
+    // The `if (!jumpHeld)` guards matter: browsers repeat keydown while a key is
+    // held, and without them a held jump would burn the air dash instantly.
+    this.input.keyboard.on('keydown-SPACE', () => { if (!this.intent.jumpHeld) this.doJump(); });
+    this.input.keyboard.on('keyup-SPACE', () => this.endJump());
+    this.input.keyboard.on('keydown-UP', () => { if (!this.intent.jumpHeld) this.doJump(); });
+    this.input.keyboard.on('keyup-UP', () => this.endJump());
     this.input.keyboard.on('keydown-X', () => this.toggleSlide());
-    this.input.keyboard.on('keydown-Z', () => { this.intent.fireHeld = true; });
-    this.input.keyboard.on('keyup-Z', () => { this.intent.fireHeld = false; this.releaseFire(); });
+    // Routed through the same beginFire/endFire the touch pad uses so charging
+    // works identically on both. The guard matters: browsers repeat keydown
+    // while a key is held, and re-stamping fireStart would make a charged shot
+    // impossible to reach.
+    this.input.keyboard.on('keydown-Z', () => { if (!this.intent.fireHeld) this.beginFire(); });
+    this.input.keyboard.on('keyup-Z', () => this.endFire());
     this.keys = this.input.keyboard.addKeys('A,D,LEFT,RIGHT');
 
     this.scene.launch('UI', { game: this });
@@ -58,8 +71,10 @@ export default class GameScene extends Phaser.Scene {
       // meta-upgrade derived fields (applyUpgrades fills these)
       cdMult: 1, comboDecayMult: 1, magnetMult: 1, dmgMult: 1, projSpeedMult: 1,
       bulletSizeMult: 1, extraShots: 0, armorBonus: 0, scoreMult: 1,
-      chipGainMult: 1, luckMult: 1, slideDurMult: 1, revives: 0, revivesLeft: 0,
+      chipGainMult: 1, luckMult: 1, revives: 0, revivesLeft: 0,
       starterArsenal: false, twinArsenal: false,
+      // slide is meta-gated: rank 0 means the player cannot slide at all
+      slideRank: 0, slideDurMult: 1, slideSpeedBonus: 1, slideIframes: 0,
       // weapons
       unlocked: new Set([BUSTER_ID]),
       wpLevels: { [BUSTER_ID]: 1 },
@@ -85,7 +100,9 @@ export default class GameScene extends Phaser.Scene {
       flinchTimer: 0, knockbackVx: 0, hitAnim: 0,
     };
     this.bullets = [];
-    this.enemies = [];
+    this.minions = [];
+    this.pickups = [];
+    this.spawnTimer = 0;
     this.boss = null;
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
     Terrain.generate(this.world, 0, this.viewW);
@@ -171,8 +188,64 @@ export default class GameScene extends Phaser.Scene {
     // held fire auto-repeats; hold long enough and release for a charged shot
     if (this.intent.fireHeld && r.cooldown === 0) this.fire(false);
 
+    this.stepMinions(box);
+    this.stepPickups(box);
     this.stepBullets();
     this.stepBoss();
+  }
+
+  // ── Minions ─────────────────────────────────────────────────────────
+  stepMinions(box) {
+    const r = this.run;
+
+    // Spawn cadence tightens with the difficulty step, which is keyed to
+    // elapsed time — camping does not slow this down.
+    if (--this.spawnTimer <= 0) {
+      this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
+      if (this.minions.length < FEEL.maxMinions) {
+        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y);
+        if (m) this.minions.push(m);
+      }
+    }
+
+    Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y);
+
+    for (const e of this.minions) {
+      if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
+        this.hurt(e.x + e.w / 2);
+      }
+    }
+    this.minions = Minions.pruneMinions(this.minions, this.cam.x);
+  }
+
+  killMinion(e) {
+    const r = this.run;
+    r.kills++;
+    r.combo = Math.min(r.combo + 1, FEEL.comboMax);
+    r.maxCombo = Math.max(r.maxCombo, r.combo);
+    r.comboTimer = Math.round(FEEL.comboDecayFrames * r.comboDecayMult);
+    const base = e.elite ? FEEL.scoreElite : FEEL.scoreMinion;
+    r.score += Math.round((base + r.combo * FEEL.scoreComboStep) * r.scoreMult);
+    this.gainExp(e.elite ? FEEL.expElite : FEEL.expMinion);
+    const drop = Pickups.maybeDrop(e.x + e.w / 2 - 3, e.y + e.h / 2, r.luckMult);
+    if (drop) this.pickups.push(drop);
+    e.hp = 0; // pruned at the end of the step
+  }
+
+  // ── Pickups ─────────────────────────────────────────────────────────
+  stepPickups(box) {
+    const r = this.run;
+    const got = Pickups.stepPickups(
+      this.pickups, this.player, box, GROUND_Y, this.world, r.magnetMult,
+    );
+    for (const p of got) {
+      if (p.type === 'etank') {
+        r.hp = Math.min(FEEL.hpMax + r.hpBonus + r.runHpBonus, r.hp + FEEL.pickupHeal);
+      } else {
+        this.gainExp(FEEL.pickupExp);
+      }
+    }
+    this.pickups = Pickups.prunePickups(this.pickups, this.cam.x);
   }
 
   // ── Weapons ─────────────────────────────────────────────────────────
@@ -186,17 +259,41 @@ export default class GameScene extends Phaser.Scene {
     if (charged) { dmg *= FEEL.chargedDamageMult; rad *= FEEL.chargedSizeMult; }
 
     const ox = p.facing > 0 ? p.x + 20 : p.x + 4;
-    for (let i = 0; i < w.projectiles; i++) {
-      const spread = w.projectiles > 1 ? (i - (w.projectiles - 1) / 2) * 0.5 : 0;
-      this.bullets.push({
-        x: ox, y: p.y + 12,
-        vx: w.speed * r.projSpeedMult * p.facing,
-        vy: spread,
-        radius: rad, damage: dmg, color: w.color, shape: w.shape,
-        life: 180, charged, enemy: false,
-      });
+    const oy = p.y + 12;
+
+    // DUPLICATOR: each rank adds one echo of the whole volley, stacked
+    // perpendicular to travel. Spacing comes from the shape's ACTUAL drawn
+    // half-height rather than a constant, because the 18 placeholder shapes
+    // range from a thin 0.35r bar to a 1.6r orbiting ring — and radius itself
+    // moves with Payload Frame and with charged shots. Deriving it keeps the
+    // echoes just clear of the real shot for every weapon in every state.
+    const step = projectileHalfHeight(w.shape, rad) * 2 + 1;
+
+    for (let v = 0; v <= r.extraShots; v++) {
+      const tier = Math.ceil(v / 2);
+      const dy = (v % 2 === 1 ? -1 : 1) * tier * step;
+      for (let i = 0; i < w.projectiles; i++) {
+        const spread = w.projectiles > 1 ? (i - (w.projectiles - 1) / 2) * 0.5 : 0;
+        this.bullets.push({
+          x: ox, y: oy + dy,
+          vx: w.speed * r.projSpeedMult * p.facing,
+          vy: spread,
+          radius: rad, damage: dmg, color: w.color, shape: w.shape,
+          life: 180, charged, enemy: false,
+        });
+      }
     }
     r.cooldown = Math.max(1, Math.round(w.cooldown * r.cdMult));
+  }
+
+  /**
+   * Collision box for a shot. Player shots get a slightly GENEROUS box so hits
+   * connect when they look close; enemy shots get a stingy one, inverted for the
+   * same reason. Both pads are declared in feel.js.
+   */
+  bulletBox(b) {
+    const r = b.radius + (b.enemy ? FEEL.enemyBulletPad : FEEL.playerBulletPad);
+    return { x: b.x - r, y: b.y - r, w: r * 2, h: r * 2 };
   }
 
   releaseFire() {
@@ -206,12 +303,28 @@ export default class GameScene extends Phaser.Scene {
 
   stepBullets() {
     for (const b of this.bullets) { b.x += b.vx; b.y += b.vy; b.life--; }
+
+    // minion damage
+    for (const b of this.bullets) {
+      if (b.enemy || b.life <= 0) continue;
+      const box = this.bulletBox(b);
+      for (const e of this.minions) {
+        if (e.hp <= 0) continue;
+        if (Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
+          e.hp -= b.damage;
+          b.life = -1;
+          if (e.hp <= 0) this.killMinion(e);
+          break;
+        }
+      }
+    }
+
     // boss damage
     if (this.boss) {
       const bb = { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h };
       for (const b of this.bullets) {
         if (b.enemy || b.life <= 0) continue;
-        if (Phys.overlaps({ x: b.x - b.radius, y: b.y - b.radius, w: b.radius * 2, h: b.radius * 2 }, bb)) {
+        if (Phys.overlaps(this.bulletBox(b), bb)) {
           this.boss.hp -= b.damage;
           b.life = -1;
           if (this.boss.hp <= 0) this.killBoss();
@@ -324,10 +437,26 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ── Player actions (called by UIScene and keyboard) ─────────────────
-  doJump() { Phys.requestJump(this.player); }
+  /**
+   * Jump is a HELD input, not a tap: physics reads `jumpHeld` every step to
+   * decide whether to cut the rise short. Nothing used to set it, which meant
+   * the cut fired on literally every jump and variable jump height — the genre
+   * signature this engine is built around — never actually worked.
+   */
+  doJump() { this.intent.jumpHeld = true; Phys.requestJump(this.player); }
+  endJump() { this.intent.jumpHeld = false; }
+
   toggleSlide() {
-    if (this.player.sliding) Phys.cancelSlide(this.player);
-    else Phys.startSlide(this.player, this.run.slideDurMult);
+    const r = this.run;
+    if (this.player.sliding) { Phys.cancelSlide(this.player); return; }
+    const started = Phys.startSlide(this.player, {
+      rank: r.slideRank,             // rank 0 refuses outright — no slide yet
+      durMult: r.slideDurMult,
+      speedBonus: r.slideSpeedBonus,
+    });
+    // Rank 3 turns the slide into a dodge. Granted on the opening frames only,
+    // so it rewards sliding INTO danger on purpose rather than parking in one.
+    if (started && r.slideIframes > 0) r.invuln = Math.max(r.invuln, r.slideIframes);
   }
   setMove(dir) { this.intent.moveDir = dir; }
   beginFire() { this.intent.fireHeld = true; this.intent.fireStart = performance.now(); }
@@ -371,6 +500,23 @@ export default class GameScene extends Phaser.Scene {
       g.fillRect(sx(d.x) - 2, d.y - d.h - 2, d.w + 4, d.h + 4);
       g.fillStyle(0x5cadd5, 1);
       g.fillRect(sx(d.x), d.y - d.h, d.w, d.h);
+    }
+
+    for (const p of this.pickups) {
+      drawPickup(g, { ...p, x: sx(p.x) }, Pickups.PICKUP_STYLE[p.type], r.frame);
+    }
+
+    for (const e of this.minions) {
+      drawPlaceholder(g, {
+        id: e.id, x: sx(e.x), y: e.y, w: e.w, h: e.h,
+        palette: {
+          primary: e.def.primary,
+          secondary: e.def.secondary,
+          // elites keep their palette but take a gold rim — size alone is not a
+          // reliable tell once the ramp has been running for a while
+          outline: e.elite ? ELITE_OUTLINE : e.def.outline,
+        },
+      });
     }
 
     for (const b of this.bullets) drawProjectile(g, { ...b, x: sx(b.x) }, r.frame);

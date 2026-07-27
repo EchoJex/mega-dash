@@ -52,7 +52,8 @@ export function stepPlayer(p, world, input, groundY) {
   } else {
     // Instant-response horizontal movement. accel/friction default to 1.0,
     // i.e. no ramp at all — that snap is a genre signature.
-    const target = input.moveDir * FEEL.moveSpeed * (p.sliding ? FEEL.slideSpeedMult : 1);
+    const slideMult = FEEL.slideSpeedMult * (p.slideSpeedBonus || 1);
+    const target = input.moveDir * FEEL.moveSpeed * (p.sliding ? slideMult : 1);
     p.vx = target === 0
       ? p.vx * (1 - FEEL.friction)
       : p.vx + (target - p.vx) * FEEL.accel;
@@ -156,10 +157,20 @@ export function requestJump(p) {
   return 'jump';
 }
 
-export function startSlide(p) {
+/**
+ * Begin a slide, taking its properties from the player's Slide Mastery rank.
+ *
+ * The rank's modifiers are captured ONTO the player at slide start rather than
+ * read live each frame, so a slide already in progress keeps the shape it began
+ * with. Returns false if the slide is unavailable — including rank 0, where the
+ * ability is not yet unlocked at all.
+ */
+export function startSlide(p, opts = {}) {
   if (!p.onGround || p.sliding) return false;
+  if ((opts.rank ?? 1) < 1) return false;
   p.sliding = true;
-  p.slideTimer = FEEL.slideDurationFrames;
+  p.slideTimer = Math.round(FEEL.slideDurationFrames * (opts.durMult ?? 1));
+  p.slideSpeedBonus = opts.speedBonus ?? 1;
   return true;
 }
 
