@@ -4,22 +4,70 @@
  * ZONES (see docs/control-zones.md for the full spec)
  *   1 top-left      energy pips, score, level + EXP bar
  *   2 top-right     pause
- *   3 bottom-left   movement: 4 columns  <-  <^  ^>  ->
- *   4 bottom-right  [] jump   () shoot / hold to charge / swipe to cycle
- *   bottom-centre   WEAPON — pauses and opens weapon select
+ *   3 bottom-left   movement: 4 columns  <-  <^  ^>  ->  · drag down = slide
+ *   4 bottom-right  [] jump   () shoot, hold to charge
+ *   bottom-centre   RE-QUIP — the radial weapon wheel
  *
  * Zone 3's diagonal columns move identically to their neighbour today but set
  * `diagInput` on the player. Nothing consumes it yet — it is reserved for
  * special moves that have not been designed.
+ *
+ * THE RE-QUIP WHEEL
+ * -----------------
+ * One button, two ways in, deliberately priced differently:
+ *
+ *   TAP    hard pause. Gameplay dims, the wheel and every unlocked weapon come
+ *          up to full opacity. The safe read-everything-and-choose route.
+ *   SWIPE  no pause. Time collapses to a crawl, a ghosted wheel appears, and
+ *          the DIRECTION of the swipe picks the weapon. Fast, but it costs real
+ *          seconds and you are still being shot at.
+ *
+ * Slot positions are fixed (WHEEL_ORDER in data/weapons.js) whether or not a
+ * weapon is unlocked. Locked slots stay in place under a padlock rather than
+ * being skipped, so the wheel never reshuffles under your thumb as bosses fall
+ * and the swipe can become muscle memory.
  */
 
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
 import { FEEL } from '../config/feel.js';
-import { WEAPON_BY_ID } from '../data/weapons.js';
+import { WEAPON_BY_ID, WHEEL_ORDER } from '../data/weapons.js';
 import { hexNum } from '../systems/assets.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
+const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
+
+// Wheel geometry. Sized to clear the HUD above and both thumb pads below on the
+// narrowest supported virtual width (320).
+const WHEEL_CY = 100;
+const WHEEL_R = 64;
+const SLOT_R = 9;
+const LOCKED_FILL = 0x3a3f4a;
+const LOCKED_ALPHA = 0.45;
+const IDLE_ALPHA = 0.5; // the button's resting transparency
+
+/**
+ * Readable label colour for a given fill. The 17 primaries deliberately span
+ * near-white (Frost) to near-black (Eclipse), so a single fixed ink colour is
+ * illegible on roughly half the wheel.
+ */
+function inkFor(hex) {
+  const n = hexNum(hex);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
+}
+
+/** Padlock glyph for a locked slot: shackle arch over a body with a keyhole. */
+function drawPadlock(g, x, y, s) {
+  g.lineStyle(Math.max(1, s * 0.15), 0xc8ceda, 1);
+  g.beginPath();
+  g.arc(x, y - s * 0.2, s * 0.3, Math.PI, Math.PI * 2, false);
+  g.strokePath();
+  g.fillStyle(0xc8ceda, 1);
+  g.fillRect(x - s * 0.42, y - s * 0.04, s * 0.84, s * 0.6);
+  g.fillStyle(0x2a2e3a, 1);
+  g.fillRect(x - s * 0.08, y + s * 0.14, s * 0.16, s * 0.24);
+}
 
 export default class UIScene extends Phaser.Scene {
   constructor() { super('UI'); }
@@ -37,11 +85,21 @@ export default class UIScene extends Phaser.Scene {
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
-    // bottom-centre — weapon select
-    this.wsel = this.mkTap(w / 2 - 26, VIEW_H - 14, 52, 12, 'WEAPON', () => this.openWeaponSelect());
 
     this.bindZone3();
     this.bindZone4();
+
+    // Creation order IS draw order: the scrim goes in after the HUD and the
+    // control glyphs so it dims them too, and before the wheel and the button
+    // so both stay at full strength on top of it.
+    this.scrim = this.add.rectangle(0, 0, w, VIEW_H, 0x2a2e3a, 0.55)
+      .setOrigin(0).setVisible(false).setInteractive();
+
+    this.mode = null;   // null | 'open' (paused) | 'swipe' (slow motion)
+    this.aimIndex = -1;
+    this.press = null;
+    this.buildWheel();
+    this.buildRequip();
   }
 
   mkTap(x, y, w, h, label, fn) {
@@ -93,85 +151,236 @@ export default class UIScene extends Phaser.Scene {
     zone.on('pointerout', up);
   }
 
-  /** Zone 4 — [] jump on the left half, () shoot/charge/swipe on the right. */
+  /**
+   * Zone 4 — [] jump on the left half, () shoot/charge on the right.
+   *
+   * Swipe-to-cycle used to live here. It is gone: cycling blind through 18
+   * weapons was never a real choice, and the re-quip wheel replaces it with a
+   * directional pick you can actually aim.
+   */
   bindZone4() {
     const z = this.z4;
     const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
       .setInteractive({ useHandCursor: true });
-    let mode = null, sx = 0;
+    let mode = null;
 
     zone.on('pointerdown', (p) => {
       if (p.x - z.x < z.w / 2) { mode = 'jump'; this.game_.doJump(); }
-      else { mode = 'fire'; sx = p.x; this.game_.beginFire(); }
-    });
-    zone.on('pointermove', (p) => {
-      if (mode !== 'fire' || !p.isDown) return;
-      const dx = p.x - sx;
-      if (Math.abs(dx) > 18) { this.cycleWeapon(dx > 0 ? 1 : -1); sx = p.x; }
+      else { mode = 'fire'; this.game_.beginFire(); }
     });
     const up = () => { if (mode === 'fire') this.game_.endFire(); mode = null; };
     zone.on('pointerup', up);
     zone.on('pointerout', up);
   }
 
-  cycleWeapon(dir) {
-    const r = this.game_.run;
-    const list = [...r.unlocked];
-    const i = list.indexOf(r.activeWeapon);
-    this.game_.selectWeapon(list[(i + dir + list.length) % list.length]);
-  }
-
   togglePause() {
     this.game_.paused = !this.game_.paused;
   }
 
-  /**
-   * Weapon select — pauses and lists every unlocked weapon with its level.
-   * Selecting one equips it, which also recolours the player sprite live.
-   */
-  openWeaponSelect() {
-    if (this.panel) return this.closeWeaponSelect();
-    this.game_.paused = true;
-    const r = this.game_.run;
-    const list = [...r.unlocked];
-    this.panel = this.add.container(0, 0);
-    this.panel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.92).setOrigin(0));
-    this.panel.add(this.add.text(this.w / 2, 8, 'WEAPON SELECT',
-      { fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5' }).setOrigin(0.5));
+  // ── Re-quip wheel ───────────────────────────────────────────────────
 
-    const cols = Math.floor((this.w - 12) / 46);
-    list.forEach((id, i) => {
-      const wdef = WEAPON_BY_ID[id];
-      const lv = r.wpLevels[id] || 1;
-      const x = 6 + (i % cols) * 46;
-      const y = 22 + Math.floor(i / cols) * 30;
-      const sel = id === r.activeWeapon;
-      const box = this.add.rectangle(x, y, 42, 26, hexNum(wdef.palette.primary), sel ? 0.5 : 0.18)
-        .setOrigin(0).setStrokeStyle(1, hexNum(wdef.palette.primary), sel ? 1 : 0.4)
+  /**
+   * Built once and then only shown/hidden. The swipe route pops this up mid
+   * combat, so tearing down and rebuilding ~40 game objects every time it
+   * appeared would be wasteful for no gain.
+   */
+  buildWheel() {
+    const cx = this.w / 2, cy = WHEEL_CY;
+    const n = WHEEL_ORDER.length;
+    this.wheel = this.add.container(0, 0).setVisible(false);
+
+    // rim + aim line, under the slots
+    this.aimG = this.add.graphics();
+    this.wheel.add(this.aimG);
+
+    this.slots = WHEEL_ORDER.map((id, i) => {
+      const angle = -Math.PI / 2 + (i / n) * Math.PI * 2; // slot 0 at 12 o'clock
+      const x = cx + Math.cos(angle) * WHEEL_R;
+      const y = cy + Math.sin(angle) * WHEEL_R;
+      const wd = WEAPON_BY_ID[id];
+      const ink = inkFor(wd.palette.primary);
+
+      const disc = this.add.circle(x, y, SLOT_R, hexNum(wd.palette.primary))
+        .setStrokeStyle(1, hexNum(wd.palette.outline || '#0A0A12'))
         .setInteractive({ useHandCursor: true });
-      box.on('pointerdown', () => { this.game_.selectWeapon(id); this.closeWeaponSelect(); this.openWeaponSelect(); });
-      const abbr = wdef.name.split(' ').map((s) => s[0]).join('').slice(0, 3);
-      this.panel.add(box);
-      this.panel.add(this.add.text(x + 21, y + 8, abbr,
-        { fontFamily: 'monospace', fontSize: '8px', color: '#fff' }).setOrigin(0.5));
-      this.panel.add(this.add.text(x + 21, y + 18, `Lv ${lv}`,
-        { fontFamily: 'monospace', fontSize: '6px', color: lv >= FEEL.weaponMaxLevel ? '#F5D328' : '#8AB' })
-        .setOrigin(0.5));
+      disc.on('pointerdown', () => this.pick(id));
+      disc.on('pointerover', () => { if (this.mode === 'open') this.setReadout(id); });
+
+      // first three letters of the leading word — unique across all 18, and the
+      // only label that fits inside an 18px slot
+      const abbr = this.add.text(x, y - 2, wd.name.split(' ')[0].slice(0, 3),
+        { fontFamily: 'monospace', fontSize: '6px', color: ink }).setOrigin(0.5);
+      const lvl = this.add.text(x, y + 4, '',
+        { fontFamily: 'monospace', fontSize: '5px', color: ink }).setOrigin(0.5);
+
+      this.wheel.add([disc, abbr, lvl]);
+      return { id, x, y, angle, disc, abbr, lvl, locked: false };
     });
 
-    const close = this.add.text(this.w / 2, VIEW_H - 14, 'RESUME', {
-      fontFamily: 'monospace', fontSize: '8px', color: '#5CADD5',
-      backgroundColor: '#0d1420', padding: { x: 6, y: 3 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    close.on('pointerdown', () => this.closeWeaponSelect());
-    this.panel.add(close);
+    // padlocks sit ON TOP of their greyed slot, so added after every disc
+    this.lockG = this.add.graphics();
+    this.wheel.add(this.lockG);
+
+    this.readName = this.add.text(cx, cy - 5, '',
+      { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' }).setOrigin(0.5);
+    this.readLv = this.add.text(cx, cy + 5, '',
+      { fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5);
+    this.wheel.add([this.readName, this.readLv]);
   }
 
-  closeWeaponSelect() {
-    if (!this.panel) return;
-    this.panel.destroy(true);
-    this.panel = null;
+  buildRequip() {
+    const bw = 60, bh = 20;
+    const x = this.w / 2 - bw / 2, y = VIEW_H - 24;
+    this.reqBox = this.add.rectangle(x, y, bw, bh, 0x0d1420).setOrigin(0)
+      .setStrokeStyle(1, 0x5cadd5)
+      .setAlpha(IDLE_ALPHA)
+      .setInteractive({ useHandCursor: true });
+    this.reqTxt = this.add.text(x + bw / 2, y + bh / 2, 'RE-QUIP',
+      { fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' })
+      .setOrigin(0.5).setAlpha(IDLE_ALPHA);
+
+    this.reqBox.on('pointerdown', (p) => { this.press = { x: p.x, y: p.y, swiping: false }; });
+
+    // Move and release are tracked at SCENE level, not on the button: a swipe
+    // leaves a 60x20 button within a few pixels, and the button stops seeing
+    // its own pointer the moment it does.
+    this.input.on('pointermove', (p) => {
+      const pr = this.press;
+      if (!pr || !p.isDown) return;
+      const dx = p.x - pr.x, dy = p.y - pr.y;
+      if (!pr.swiping) {
+        if (this.mode === 'open') return; // already tapped open — ignore drags
+        if (Math.hypot(dx, dy) < SWIPE_DEADZONE) return;
+        pr.swiping = true;
+        this.beginSwipe();
+      }
+      this.aimSwipe(dx, dy);
+    });
+    this.input.on('pointerup', () => {
+      const pr = this.press;
+      if (!pr) return;
+      this.press = null;
+      if (pr.swiping) this.endSwipe();
+      else if (this.mode === 'open') this.closeWheel(); // tapping again backs out
+      else this.openWheel();
+    });
+  }
+
+  /** Sync every slot to current unlock state and weapon levels. */
+  refreshWheel() {
+    const r = this.game_.run;
+    this.lockG.clear();
+    for (const s of this.slots) {
+      const unlocked = r.unlocked.has(s.id);
+      const wd = WEAPON_BY_ID[s.id];
+      s.locked = !unlocked;
+      s.disc.setFillStyle(unlocked ? hexNum(wd.palette.primary) : LOCKED_FILL);
+      s.disc.setAlpha(unlocked ? 1 : LOCKED_ALPHA);
+      s.disc.setScale(1);
+      s.abbr.setVisible(unlocked);
+      s.lvl.setVisible(unlocked).setText(String(r.wpLevels[s.id] || 1));
+      if (!unlocked) drawPadlock(this.lockG, s.x, s.y, SLOT_R * 1.6);
+    }
+  }
+
+  /** TAP route — hard pause, everything unlocked comes up to full opacity. */
+  openWheel() {
+    this.mode = 'open';
+    this.game_.paused = true;
+    this.refreshWheel();
+    this.aimIndex = -1;
+    this.scrim.setVisible(true);
+    this.wheel.setVisible(true).setAlpha(1);
+    this.reqBox.setAlpha(1);
+    this.reqTxt.setAlpha(1);
+    this.setReadout(this.game_.run.activeWeapon);
+    this.drawAim();
+  }
+
+  closeWheel() {
+    this.mode = null;
     this.game_.paused = false;
+    this.scrim.setVisible(false);
+    this.wheel.setVisible(false);
+    this.reqBox.setAlpha(IDLE_ALPHA);
+    this.reqTxt.setAlpha(IDLE_ALPHA);
+  }
+
+  /** SWIPE route — no pause, ghosted wheel, time drops to a crawl. */
+  beginSwipe() {
+    this.mode = 'swipe';
+    this.refreshWheel();
+    this.aimIndex = -1;
+    this.wheel.setVisible(true).setAlpha(IDLE_ALPHA);
+    this.game_.setTimeScale(FEEL.requipSlowScale, FEEL.requipSlowInFrames);
+  }
+
+  endSwipe() {
+    if (this.aimIndex >= 0) this.game_.selectWeapon(this.slots[this.aimIndex].id);
+    this.mode = null;
+    this.wheel.setVisible(false);
+    this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
+  }
+
+  /** Swipe vector -> the slot lying in that direction, snapped to an unlocked one. */
+  aimSwipe(dx, dy) {
+    const a = Math.atan2(dy, dx);
+    let best = 0, bestD = Infinity;
+    this.slots.forEach((s, i) => {
+      const d = Math.abs(((a - s.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    this.aimIndex = this.nearestUnlocked(best);
+    this.highlight(this.aimIndex);
+  }
+
+  /**
+   * Walk outward from a slot to the closest unlocked one. Aiming at a padlock
+   * should still give you a weapon — a swipe that silently does nothing reads
+   * as a dropped input, not as a rule.
+   */
+  nearestUnlocked(i) {
+    const n = this.slots.length, un = this.game_.run.unlocked;
+    for (let d = 0; d <= n / 2; d++) {
+      for (const k of d === 0 ? [i] : [i + d, i - d]) {
+        const j = ((k % n) + n) % n;
+        if (un.has(this.slots[j].id)) return j;
+      }
+    }
+    return 0;
+  }
+
+  highlight(i) {
+    this.slots.forEach((s, k) => s.disc.setScale(k === i ? 1.35 : 1));
+    if (i >= 0) this.setReadout(this.slots[i].id);
+    this.drawAim();
+  }
+
+  drawAim() {
+    const g = this.aimG, cx = this.w / 2, cy = WHEEL_CY;
+    g.clear();
+    g.lineStyle(1, 0x5cadd5, 0.3);
+    g.strokeCircle(cx, cy, WHEEL_R);
+    if (this.aimIndex >= 0) {
+      const s = this.slots[this.aimIndex];
+      // starts outside the centre readout so the line never crosses the text
+      g.lineStyle(1, 0xf5d328, 0.9);
+      g.lineBetween(cx + Math.cos(s.angle) * 26, cy + Math.sin(s.angle) * 26, s.x, s.y);
+    }
+  }
+
+  setReadout(id) {
+    const wd = WEAPON_BY_ID[id], r = this.game_.run;
+    this.readName.setText(wd.name);
+    this.readLv.setText(r.unlocked.has(id) ? `Lv ${r.wpLevels[id] || 1}` : 'LOCKED');
+  }
+
+  /** Tapping a slot while paused equips it and resumes. Padlocks are inert. */
+  pick(id) {
+    if (this.mode !== 'open') return;
+    if (!this.game_.run.unlocked.has(id)) return;
+    this.game_.selectWeapon(id);
+    this.closeWheel();
   }
 
   update() {

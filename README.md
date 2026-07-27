@@ -31,8 +31,8 @@ New here? Read **[MIGRATION.md](MIGRATION.md)** — step-by-step setup, no code 
 | Zone | |
 |---|---|
 | bottom-left | 4 columns — move left / right, diagonals reserved; drag down = slide |
-| bottom-right | `[]` jump (again mid-air = air dash) · `()` shoot, hold = charge, swipe = cycle |
-| bottom-centre | WEAPON — pause and open weapon select |
+| bottom-right | `[]` jump (again mid-air = air dash) · `()` shoot, hold = charge |
+| bottom-centre | RE-QUIP — **tap** to pause and open the weapon wheel · **swipe** for a slow-motion directional switch |
 | top-right | pause |
 
 Keyboard: arrows/AD move · Space jump · hold Z charge · X slide

@@ -29,6 +29,9 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.viewW = this.scale.gameSize.width;
     this.acc = 0;
+    this.timeScale = 1;
+    this.tsTarget = 1;
+    this.tsStep = 0;
     this.g = this.add.graphics();
     this.nextBoss = makeBossBag();
     this.startRun();
@@ -88,10 +91,31 @@ export default class GameScene extends Phaser.Scene {
     Terrain.generate(this.world, 0, this.viewW);
   }
 
+  /**
+   * Slow motion, used by the re-quip swipe.
+   *
+   * The fixed timestep is untouched — we simply bank real milliseconds more
+   * slowly, so the sim still advances in whole 1/60s steps and not one line of
+   * movement code changes. That is the only way to add slow-mo here without
+   * breaking the determinism the whole engine is built around.
+   */
+  setTimeScale(target, frames) {
+    this.tsTarget = target;
+    this.tsStep = Math.abs(target - this.timeScale) / Math.max(1, frames);
+  }
+
   // ── Fixed-timestep driver ───────────────────────────────────────────
   update(_time, delta) {
+    // The ramp runs on RAW delta, not scaled: the whoosh in and out should take
+    // the same wall-clock time however slowly the game itself is running.
+    if (this.timeScale !== this.tsTarget) {
+      const d = this.tsStep * (delta / FIXED_DT);
+      this.timeScale = this.timeScale < this.tsTarget
+        ? Math.min(this.tsTarget, this.timeScale + d)
+        : Math.max(this.tsTarget, this.timeScale - d);
+    }
     if (this.paused) return;
-    this.acc += delta;
+    this.acc += delta * this.timeScale;
     let steps = 0;
     while (this.acc >= FIXED_DT && steps < MAX_STEPS_PER_FRAME) {
       this.step();

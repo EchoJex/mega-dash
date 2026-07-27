@@ -112,6 +112,18 @@ export const FEEL = {
   doorIntervalSeconds: 60,
   bossLayerHpMult: 0.35, // +35% HP per layer above 1
 
+  // ── Re-quip wheel ────────────────────────────────────────────────────
+  // Swiping from the RE-QUIP button drops into slow motion rather than a hard
+  // pause, so switching weapons mid-fight costs real seconds and stays a
+  // decision instead of a free menu. Tapping the button still pauses outright —
+  // the two routes are meant to trade speed against safety.
+  //
+  // The ramp in is deliberately faster than the ramp out: the drop should feel
+  // like a snap, the recovery like being shoved back into the fight.
+  requipSlowScale: 0.18,   // time multiplier held while a swipe is in progress
+  requipSlowInFrames: 4,
+  requipSlowOutFrames: 16,
+
   // ── Weapon balance ───────────────────────────────────────────────────
   // INVARIANT: every weapon deals the same damage-per-second at level 1, so a
   // slow-heavy weapon and a fast-light one trade blows evenly and weapon choice
@@ -137,4 +149,5 @@ export const FEEL_GROUPS = {
   Combat: ['invulnFrames', 'flinchFrames', 'knockbackSpeed', 'chargeFullMs'],
   Camera: ['camDeadzone', 'camLerp'],
   Difficulty: ['rampSeconds', 'rampEnemyHp', 'rampEnemyCount', 'rampEliteChance'],
+  Requip: ['requipSlowScale', 'requipSlowInFrames', 'requipSlowOutFrames'],
 };

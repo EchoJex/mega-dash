@@ -125,6 +125,20 @@ export const WEAPONS = DEFS.map((d) => {
 export const WEAPON_BY_ID = Object.fromEntries(WEAPONS.map((w) => [w.id, w]));
 export const BUSTER_ID = 'buster';
 
+/**
+ * RE-QUIP WHEEL slot order — fixed, and deliberately NOT filtered by unlock
+ * state.
+ *
+ * A weapon sits at the same clock position for the life of the save, so
+ * switching becomes muscle memory rather than a reading exercise — which is the
+ * whole point of a radial menu, and the only way the slow-motion swipe is
+ * usable under fire. Locked weapons keep their slot (drawn as a padlock) so the
+ * wheel never reshuffles under your thumb as bosses fall.
+ *
+ * Slot 0 sits at 12 o'clock and is always the buster.
+ */
+export const WHEEL_ORDER = WEAPONS.map((w) => w.id);
+
 /** Damage at a given weapon level. Placeholder curve until Phases 12-14. */
 export function damageAtLevel(weapon, level) {
   return weapon.damage * (1 + (level - 1) * FEEL.weaponDamagePerLevel);
