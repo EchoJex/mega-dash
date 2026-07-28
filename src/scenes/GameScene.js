@@ -19,6 +19,7 @@ import { WEAPONS, NULL_WEAPON, weaponOf, BUSTER_ID, damageAtLevel } from '../dat
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
+import { fightFor } from '../data/bossFights.js';
 import * as Terrain from '../systems/terrain.js';
 import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
@@ -279,7 +280,55 @@ export default class GameScene extends Phaser.Scene {
   }
 
   stepBullets() {
-    for (const b of this.bullets) { b.x += b.vx; b.y += b.vy; b.life--; }
+    const r = this.run;
+    const pcx = this.player.x + 12, pcy = this.player.y + 12;
+    const spawned = [];
+
+    for (const b of this.bullets) {
+      // Mild auto-aim: steer the velocity toward the player rather than
+      // snapping to them, so a homing shot can still be out-manoeuvred.
+      if (b.homing) {
+        const dx = pcx - b.x, dy = pcy - b.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const sp = Math.hypot(b.vx, b.vy) || 1;
+        b.vx += (dx / d) * sp * b.homing;
+        b.vy += (dy / d) * sp * b.homing;
+        const ns = Math.hypot(b.vx, b.vy) || 1;
+        b.vx = (b.vx / ns) * sp;
+        b.vy = (b.vy / ns) * sp;
+      }
+      b.x += b.vx; b.y += b.vy; b.life--;
+
+      // Split after a delay into a fan of smaller, mildly homing fragments.
+      if (b.splitIn !== undefined && --b.splitIn <= 0) {
+        b.life = -1;
+        const n = b.splitCount || 3;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+          spawned.push({
+            ...b,
+            x: b.x, y: b.y,
+            vx: Math.cos(a) * (b.splitSpeed || 1.5),
+            vy: Math.sin(a) * (b.splitSpeed || 1.5),
+            radius: b.splitRadius || 2.5,
+            homing: b.splitHoming || 0,
+            splitIn: undefined, life: 240,
+          });
+        }
+      }
+    }
+    if (spawned.length) this.bullets.push(...spawned);
+
+    // enemy shots hitting the player — nothing did this before, so a boss
+    // could not actually land a hit no matter what it fired
+    const pbox = Phys.hitboxOf(this.player);
+    for (const b of this.bullets) {
+      if (!b.enemy || b.life <= 0) continue;
+      if (Phys.overlaps(this.bulletBox(b), pbox)) {
+        b.life = -1;
+        if (r.invuln === 0) this.hurt(b.x);
+      }
+    }
 
     // minion damage
     for (const b of this.bullets) {
@@ -376,10 +425,16 @@ export default class GameScene extends Phaser.Scene {
     const hp = Math.round(def.baseHp * (1 + (layer - 1) * FEEL.bossLayerHpMult));
     // guarantee footing for the arena even if a pit generated here
     this.world.groundSpans.push({ x1: this.cam.x - 40, x2: this.cam.x + this.viewW + 40 });
+    const fight = fightFor(def.id, layer);
     this.boss = {
       ...def, layer, hp, maxHp: hp,
       x: this.cam.x + this.viewW + w, y: GROUND_Y - h, w, h,
       anim: 0, state: 'enter',
+      fight,
+      // Stagger the two loops so the first attack and the first hazard do not
+      // land on the same frame.
+      attackTimer: fight.attack ? Math.round(fight.attack.cooldown[0] * 0.6) : 0,
+      hazardTimer: fight.hazard ? Math.round(fight.hazard.cooldown[0] * 1.2) : 0,
     };
   }
 
@@ -393,21 +448,49 @@ export default class GameScene extends Phaser.Scene {
       if (Math.abs(b.x - tx) < 1) { b.x = tx; b.state = 'idle'; }
       return;
     }
-    // PHASE 2/3: bosses are placeholder presences — they enter, drift, and can
-    // be damaged, but do not attack.
-    //
-    // PHASES 6-8 fill this in as TWO CONCURRENT LOOPS that are always
-    // layer-synced (a layer-2 boss uses layer-2 hazards AND layer-2 attacks):
-    //   1. an ambient ARENA HAZARD timer, elementally themed
-    //   2. the boss's own ATTACK state machine
-    // Read design/boss-design-tracker.html before implementing either.
     b.x += Math.sin(b.anim * 0.018) * 0.2;
+
+    // TWO CONCURRENT LOOPS, always layer-synced. They run independently on
+    // their own timers — the hazard loop keeps firing no matter what the boss
+    // itself is doing, which is the whole point of having both.
+    this.runFightLoop(b, 'attack');
+    this.runFightLoop(b, 'hazard');
 
     // contact damage
     const box = Phys.hitboxOf(this.player);
     if (this.run.invuln === 0 && Phys.overlaps(box, { x: b.x, y: b.y, w: b.w, h: b.h })) {
       this.hurt(b.x + b.w / 2);
     }
+  }
+
+  /**
+   * Advance one of the boss's two loops. Each has its own semi-variable
+   * cooldown so the pattern is learnable without being metronomic. A loop with
+   * no behaviour defined for this layer simply never fires — see the null
+   * entries in data/bossFights.js.
+   */
+  runFightLoop(b, kind) {
+    const beh = b.fight?.[kind];
+    if (!beh) return;
+    const t = kind === 'attack' ? 'attackTimer' : 'hazardTimer';
+    if (--b[t] > 0) return;
+    const [lo, hi] = beh.cooldown;
+    b[t] = Math.round(lo + Math.random() * (hi - lo));
+    beh.run({
+      boss: b,
+      player: this.player,
+      layer: b.layer,
+      shoot: (spec) => this.spawnEnemyShot(spec),
+    });
+  }
+
+  /** A projectile owned by a boss or hazard. Enemy shots use the stingy pad. */
+  spawnEnemyShot(spec) {
+    this.bullets.push({
+      vy: 0, life: 300, charged: false, weapon: null,
+      ...spec,
+      enemy: true,
+    });
   }
 
   killBoss() {
