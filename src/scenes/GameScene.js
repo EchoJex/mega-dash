@@ -366,6 +366,12 @@ export default class GameScene extends Phaser.Scene {
   stepMinions(box) {
     const r = this.run;
 
+    // NO AMBIENT MINIONS DURING A BOSS FIGHT. A boss arena is sealed: the only
+    // enemies in it are the boss and anything its own moveset summons (which
+    // comes from data/bossFights.js, not from here). The ambient stream resumes
+    // when the fight ends.
+    if (this.boss) return;
+
     // Spawn cadence tightens with the difficulty step, which is keyed to
     // elapsed time — camping does not slow this down.
     if (--this.spawnTimer <= 0) {
@@ -425,6 +431,9 @@ export default class GameScene extends Phaser.Scene {
     const hp = Math.round(def.baseHp * (1 + (layer - 1) * FEEL.bossLayerHpMult));
     // guarantee footing for the arena even if a pit generated here
     this.world.groundSpans.push({ x1: this.cam.x - 40, x2: this.cam.x + this.viewW + 40 });
+    // Minions do not follow you into the fight. Once the door becomes a real
+    // teleport into a sealed arena this is what being somewhere else means.
+    this.minions = [];
     const fight = fightFor(def.id, layer);
     this.boss = {
       ...def, layer, hp, maxHp: hp,

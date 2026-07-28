@@ -190,8 +190,13 @@ has been running, and sharing the grid means one piece of art covers both forms.
 Spawn cadence and HP scale off `difficultyStep()` in `systems/minions.js`, which reads
 **elapsed sim time**. Slow motion slows the ramp too — that is intended.
 
-Kills drive the combo counter and roll for a pickup (`systems/pickups.js`): one roll at
-`FEEL.pickupChance`, then a coin flip between an E-Tank and an EXP boost.
+Kills drive the combo counter and drop EXP (`systems/pickups.js`), plus a separate
+`FEEL.pickupChance` roll for an E-Tank.
+
+**No ambient minions during a boss fight.** A boss arena is sealed — the only enemies in
+it are the boss and whatever its own moveset summons, which comes from
+`data/bossFights.js`, never from the ambient spawner. Existing minions are cleared when
+the fight starts and the stream resumes when it ends.
 
 ---
 
