@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
+import { TEXT_RES } from '../systems/text.js';
 import { UPGRADES, upgradeLevel, upgradeCost } from '../data/upgrades.js';
 import { save, persist } from '../systems/save.js';
 
@@ -11,21 +12,21 @@ export default class HubScene extends Phaser.Scene {
     const w = this.scale.gameSize.width;
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
     this.add.text(w / 2, 10, "DR. LIGHT'S LAB",
-      { fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5);
-    this.chipText = this.add.text(w / 2, 22, '', { fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' })
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5);
+    this.chipText = this.add.text(w / 2, 22, '', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' })
       .setOrigin(0.5);
 
     this.rows = [];
     UPGRADES.forEach((u, i) => {
       const y = 38 + i * 10;
-      const t = this.add.text(6, y, '', { fontFamily: 'monospace', fontSize: '7px' })
+      const t = this.add.text(6, y, '', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px' })
         .setInteractive({ useHandCursor: true });
       t.on('pointerdown', () => this.buy(u));
       this.rows.push({ u, t });
     });
 
     this.add.text(w / 2, VIEW_H - 10, 'BACK', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5',
+      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5',
       backgroundColor: '#0d1420', padding: { x: 8, y: 3 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.scene.start('Title'));

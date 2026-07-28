@@ -184,6 +184,10 @@ the beam cannot eat your i-frames.
 Beaming rather than nudging is also what stops spikes becoming walkable: you cannot stroll
 across a spike bed on i-frames, because the first contact removes you from it.
 
+Spikes beam you only when the hit actually **lands**, or when you are **grounded** in them.
+Clipping a spike mid-jump while already invulnerable does not stop you — you are passing
+through, not stuck. A pit always beams: there is no floor to return to.
+
 ---
 
 ## Areas and arenas
@@ -363,6 +367,12 @@ misread as "balanced" while invincible is worse than no playtest.
 
 ## Conventions
 
+- **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
+  thumb drifting outside a 44px pad is normal on a phone; cancelling on it made movement
+  die in mid-air. A held input ends when the finger lifts, not when it wanders.
+- **HUD text sets `resolution: TEXT_RES`** (`systems/text.js`). Phaser rasterises text at
+  its layout size, so a 7px label becomes a 7px bitmap magnified 4-5x by the integer
+  scale. Raising the texture resolution keeps the layout identical and the glyphs sharp.
 - Comments explain **why**, not what. Phase-boundary and deliberate-stub comments exist
   so future sessions don't "fix" intentional placeholders — keep that habit.
 - Boss/weapon ids are lowercase snake (`eclipse_blade`); display names UPPERCASE.

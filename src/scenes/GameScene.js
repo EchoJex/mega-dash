@@ -293,8 +293,14 @@ export default class GameScene extends Phaser.Scene {
     } else {
       for (const s of this.world.spikes) {
         if (Phys.overlaps(box, s)) {
+          // Check BEFORE hurt(), which sets the i-frames itself.
+          const landed = r.invuln === 0;
           this.hurt(s.x + s.w / 2, FEEL.hazardDamage);
-          this.beamOut();
+          // Beam only if the hit actually registered, or if you are standing in
+          // them. Clipping a spike mid-jump while already invulnerable should
+          // not stop you dead — you are passing through, not stuck, and killing
+          // the jump there reads as the game eating your input.
+          if (landed || p.onGround) this.beamOut();
           break;
         }
       }

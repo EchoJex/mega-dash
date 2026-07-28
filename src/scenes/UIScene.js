@@ -30,6 +30,7 @@
 
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
+import { TEXT_RES } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
 import { dev, DEV } from '../config/dev.js';
@@ -85,7 +86,7 @@ export default class UIScene extends Phaser.Scene {
     this.z4 = { x: w - Math.min(w * 0.36, 96), y: VIEW_H - this.zoneH, w: Math.min(w * 0.36, 96), h: this.zoneH };
 
     // HP is drawn as pips in this.g; the text picks up below it
-    this.hud = this.add.text(4, 15, '', { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
+    this.hud = this.add.text(4, 15, '', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
@@ -115,19 +116,24 @@ export default class UIScene extends Phaser.Scene {
     const r = this.add.rectangle(x, y, w, h, 0x0d1420, 0.7).setOrigin(0)
       .setInteractive({ useHandCursor: true });
     const t = this.add.text(x + w / 2, y + h / 2, label,
-      { fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' }).setOrigin(0.5);
     r.on('pointerdown', fn);
     return { r, t };
   }
 
-  /** Zone 3 — four directional columns plus drag-down-to-slide. */
+  /**
+   * Zone 3 — four directional columns plus drag-down-to-slide.
+   *
+   * TRACKED AT SCENE LEVEL ON PURPOSE. A zone is claimed by the finger that
+   * pressed it and released only when that finger actually lifts. Binding to the
+   * zone's own `pointerout` used to cancel movement the moment a thumb drifted
+   * outside a 44px band — which happens constantly mid-jump as your grip shifts,
+   * and read as the player's forward momentum dying in mid-air.
+   */
   bindZone3() {
     const z = this.z3;
     const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
       .setInteractive({ useHandCursor: true });
-    // MULTI-TOUCH: a zone is owned by the finger that pressed it. Without this,
-    // a second finger merely crossing zone 3 fires its pointerout and cancels
-    // the movement the first finger is still holding.
     let owner = null, startY = 0, slid = false, tapT = 0;
 
     const dirFor = (px) => {
@@ -146,15 +152,18 @@ export default class UIScene extends Phaser.Scene {
       this.game_.setMove(d.dir);
       this.game_.player.diagInput = d.diag;
     });
-    zone.on('pointermove', (p) => {
+    // Scene-level: the finger keeps steering even outside the pad. The x is
+    // clamped, so dragging off the left edge keeps holding left.
+    this.input.on('pointermove', (p) => {
       if (p.id !== owner || !p.isDown) return;
-      const d = dirFor(p.x);
+      const cx = Math.max(z.x, Math.min(z.x + z.w - 1, p.x));
+      const d = dirFor(cx);
       this.game_.setMove(d.dir);
       this.game_.player.diagInput = d.diag;
       if (!slid && p.y - startY > SLIDE_DEADZONE) { slid = true; this.game_.toggleSlide(); }
     });
-    const up = (p) => {
-      if (p && p.id !== owner) return;
+    this.input.on('pointerup', (p) => {
+      if (owner === null || p.id !== owner) return;
       owner = null;
       this.game_.setMove(0);
       this.game_.player.diagInput = null;
@@ -162,9 +171,7 @@ export default class UIScene extends Phaser.Scene {
       if (!slid && performance.now() - tapT < 150 && this.game_.player.sliding) {
         this.game_.toggleSlide();
       }
-    };
-    zone.on('pointerup', up);
-    zone.on('pointerout', up);
+    });
   }
 
   /**
@@ -187,15 +194,15 @@ export default class UIScene extends Phaser.Scene {
       if (p.x - z.x < z.w / 2) { held.set(p.id, 'jump'); this.game_.doJump(); }
       else { held.set(p.id, 'fire'); this.game_.beginFire(); }
     });
-    const up = (p) => {
+    // Scene-level for the same reason as zone 3: drifting off the pad must not
+    // drop a held jump (which would cut the rise) or a held fire.
+    this.input.on('pointerup', (p) => {
       const mode = held.get(p.id);
       if (!mode) return;
       held.delete(p.id);
       if (mode === 'fire') this.game_.endFire();
       if (mode === 'jump') this.game_.endJump(); // releasing early cuts the rise
-    };
-    zone.on('pointerup', up);
-    zone.on('pointerout', up);
+    });
   }
 
   // ── Pause ───────────────────────────────────────────────────────────
@@ -219,11 +226,11 @@ export default class UIScene extends Phaser.Scene {
     this.pausePanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.9)
       .setOrigin(0).setInteractive());
     this.pausePanel.add(this.add.text(cx, 60, 'PAUSED',
-      { fontFamily: 'monospace', fontSize: '14px', color: '#5CADD5' }).setOrigin(0.5));
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '14px', color: '#5CADD5' }).setOrigin(0.5));
 
     const btn = (y, label, colour, fn) => {
       const t = this.add.text(cx, y, label, {
-        fontFamily: 'monospace', fontSize: '9px', color: colour,
+        resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: colour,
         backgroundColor: '#0d1420', padding: { x: 10, y: 4 },
       }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       t.on('pointerdown', fn);
@@ -232,7 +239,7 @@ export default class UIScene extends Phaser.Scene {
     btn(104, 'RESUME', '#5CADD5', () => this.closePause());
     btn(132, 'ABORT RUN', '#C04040', () => this.abortRun());
     this.pausePanel.add(this.add.text(cx, 150, 'ends the run and banks your Chips',
-      { fontFamily: 'monospace', fontSize: '6px', color: '#6A5A5A' }).setOrigin(0.5));
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#6A5A5A' }).setOrigin(0.5));
   }
 
   closePause() {
@@ -281,9 +288,9 @@ export default class UIScene extends Phaser.Scene {
       // first three letters of the leading word — unique across all 18, and the
       // only label that fits inside an 18px slot
       const abbr = this.add.text(x, y - 2, wd.name.split(' ')[0].slice(0, 3),
-        { fontFamily: 'monospace', fontSize: '6px', color: ink }).setOrigin(0.5);
+        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: ink }).setOrigin(0.5);
       const lvl = this.add.text(x, y + 4, '',
-        { fontFamily: 'monospace', fontSize: '5px', color: ink }).setOrigin(0.5);
+        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '5px', color: ink }).setOrigin(0.5);
 
       this.wheel.add([disc, abbr, lvl]);
       return { id, x, y, angle, disc, abbr, lvl, locked: false };
@@ -294,9 +301,9 @@ export default class UIScene extends Phaser.Scene {
     this.wheel.add(this.lockG);
 
     this.readName = this.add.text(cx, cy - 5, '',
-      { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' }).setOrigin(0.5);
     this.readLv = this.add.text(cx, cy + 5, '',
-      { fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5);
     this.wheel.add([this.readName, this.readLv]);
   }
 
@@ -308,7 +315,7 @@ export default class UIScene extends Phaser.Scene {
       .setAlpha(IDLE_ALPHA)
       .setInteractive({ useHandCursor: true });
     this.reqTxt = this.add.text(x + bw / 2, y + bh / 2, 'RE-QUIP',
-      { fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' })
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' })
       .setOrigin(0.5).setAlpha(IDLE_ALPHA);
 
     this.reqBox.on('pointerdown', (p) => {
@@ -533,9 +540,9 @@ export default class UIScene extends Phaser.Scene {
     this.cards.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.93).setOrigin(0)
       .setInteractive());
     this.cards.add(this.add.text(this.w / 2, 14, `LEVEL ${level}`,
-      { fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5));
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5));
     this.cards.add(this.add.text(this.w / 2, 26, 'CHOOSE ONE',
-      { fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5));
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5));
 
     const n = cards.length;
     const cw = Math.min(64, (this.w - 16) / n - 4);
@@ -550,10 +557,10 @@ export default class UIScene extends Phaser.Scene {
       box.on('pointerdown', () => { c.take(); this.closeCards(); });
       this.cards.add(box);
       this.cards.add(this.add.text(x + cw / 2, y + 26, c.title,
-        { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF',
+        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF',
           align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
       this.cards.add(this.add.text(x + cw / 2, y + 52, c.sub,
-        { fontFamily: 'monospace', fontSize: '6px', color: '#8AB',
+        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#8AB',
           align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
     });
   }

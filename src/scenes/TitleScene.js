@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
+import { TEXT_RES } from '../systems/text.js';
 import { save, fullReset } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
 
@@ -18,10 +19,10 @@ export default class TitleScene extends Phaser.Scene {
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
 
     const title = this.died ? 'GAME OVER' : 'MEGA DASH';
-    this.add.text(cx, 46, title, { fontFamily: 'monospace', fontSize: '20px', color: '#5CADD5' })
+    this.add.text(cx, 46, title, { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '20px', color: '#5CADD5' })
       .setOrigin(0.5);
     this.add.text(cx, 66, this.died ? '' : 'FIND THE DOOR · BEAT THE BOSS',
-      { fontFamily: 'monospace', fontSize: '7px', color: '#3A6A8A' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#3A6A8A' }).setOrigin(0.5);
 
     if (this.died && this.run) {
       const s = this.run;
@@ -31,7 +32,7 @@ export default class TitleScene extends Phaser.Scene {
         `KILLS ${s.kills}   BOSSES ${s.bossesDefeated.length}`,
       ];
       stats.forEach((t, i) => this.add.text(cx, 78 + i * 10, t,
-        { fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' }).setOrigin(0.5));
+        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' }).setOrigin(0.5));
 
       // The conversion, itemised. Score alone earns Chips, so even a run that
       // never reaches a boss still buys something in the Hub.
@@ -41,9 +42,9 @@ export default class TitleScene extends Phaser.Scene {
         if (c.fromBosses) parts.push(`bosses ${c.fromBosses}`);
         if (c.mult !== 1) parts.push(`x${c.mult.toFixed(2)}`);
         this.add.text(cx, 112, `+${c.total} CHIPS`,
-          { fontFamily: 'monospace', fontSize: '9px', color: '#F5D328' }).setOrigin(0.5);
+          { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: '#F5D328' }).setOrigin(0.5);
         this.add.text(cx, 122, parts.join('  ·  '),
-          { fontFamily: 'monospace', fontSize: '6px', color: '#8A7A30' }).setOrigin(0.5);
+          { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#8A7A30' }).setOrigin(0.5);
       }
     }
 
@@ -52,9 +53,9 @@ export default class TitleScene extends Phaser.Scene {
     this.updateBtn(cx, 176);
 
     this.note = this.add.text(cx, VIEW_H - 22, '',
-      { fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
 
-    this.add.text(cx, VIEW_H - 12, 'full reset', { fontFamily: 'monospace', fontSize: '6px', color: '#804040' })
+    this.add.text(cx, VIEW_H - 12, 'full reset', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#804040' })
       .setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => confirm('Wipe ALL saved data and reload?') && fullReset());
   }
@@ -68,7 +69,7 @@ export default class TitleScene extends Phaser.Scene {
    */
   updateBtn(x, y) {
     const t = this.add.text(x, y, 'UPDATE', {
-      fontFamily: 'monospace', fontSize: '8px',
+      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '8px',
       color: canUpdate() ? '#2AAB1C' : '#3A6A8A',
       backgroundColor: '#0d1420', padding: { x: 8, y: 3 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -89,7 +90,7 @@ export default class TitleScene extends Phaser.Scene {
     t.on('pointerout', () => { if (timer) { timer.remove(); timer = null; } });
 
     this.add.text(x, y + 13, 'tap: main · hold: pick branch',
-      { fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
     return t;
   }
 
@@ -100,7 +101,7 @@ export default class TitleScene extends Phaser.Scene {
 
   btn(x, y, label, fn) {
     const t = this.add.text(x, y, label, {
-      fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5',
+      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5',
       backgroundColor: '#0d1420', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     t.on('pointerdown', fn);
