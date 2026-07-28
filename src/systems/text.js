@@ -24,17 +24,26 @@
  * drawn first, so this is the right fix until then.
  */
 
-import { VIEW_H } from '../config/display.js';
+import { VIEW_H, RENDER_SCALE } from '../config/display.js';
 
 /**
  * Match the texture resolution to how far the canvas is actually being scaled,
  * including device pixel ratio. Capped: past ~8x the textures get large for no
  * visible gain, and floored at 2 so even a small window is legible.
  */
-export function textResolution() {
-  const dpr = globalThis.devicePixelRatio || 1;
-  const h = globalThis.innerHeight || VIEW_H;
-  return Math.min(8, Math.max(2, Math.round((h / VIEW_H) * dpr)));
-}
+/**
+ * Match the glyph texture exactly to the canvas density. Anything higher gets
+ * point-sampled down and fragments; anything lower is upscaled and blurs.
+ */
+export const TEXT_RES = RENDER_SCALE;
 
-export const TEXT_RES = textResolution();
+/**
+ * Zoom a scene's camera so the dense canvas shows exactly the virtual playfield.
+ * Every scene calls this once; without it the extra backing-store pixels would
+ * simply reveal more world instead of drawing the same world more finely.
+ */
+export function fitCamera(scene, viewW) {
+  const cam = scene.cameras.main;
+  cam.setZoom(RENDER_SCALE);
+  cam.centerOn(viewW / 2, VIEW_H / 2);
+}

@@ -37,6 +37,42 @@ export function computeViewWidth(screenW, screenH) {
 }
 
 /**
+ * RENDER SCALE — real pixels per virtual pixel.
+ *
+ * The virtual coordinate system stays exactly 224 tall; this only changes how
+ * DENSELY it is rasterised. The canvas backing store becomes RENDER_SCALE times
+ * larger and every camera zooms by the same amount, so one virtual pixel is
+ * always an exact RENDER_SCALE-by-RENDER_SCALE block. Sprites stay perfectly
+ * crisp, and gameplay is untouched — nothing reads this but the renderer.
+ *
+ * WHY: at 1x the canvas held only 224 real vertical pixels, so a 7px label was
+ * a 7px bitmap and there was physically nowhere for a legible glyph to live.
+ * Text `resolution` cannot help there — it renders a larger glyph and then
+ * point-samples it back down into the same 224 pixels, which deletes strokes
+ * and visibly fragments letters. Density is the only lever that adds detail.
+ *
+ * This is NOT a violation of the fixed-resolution rule: no gameplay value comes
+ * from it, and the playfield is the same 224 virtual pixels on every device.
+ */
+function pickRenderScale() {
+  // Node (tests) has no window; any value works there since nothing renders.
+  const h = globalThis.innerHeight;
+  if (!h) return 3;
+  const physical = h * (globalThis.devicePixelRatio || 1);
+  // Aim for roughly one real device pixel per rasterised pixel, so the browser's
+  // final scale is close to 1:1 and neither blurs nor drops detail. Clamped:
+  // below 2 there is nothing to gain, above 5 the buffer grows for no visible
+  // benefit on any phone.
+  return Math.max(2, Math.min(5, Math.round(physical / VIEW_H)));
+}
+
+export const RENDER_SCALE = pickRenderScale();
+
+/** Virtual view width, independent of how densely the canvas is rasterised. */
+export const viewWidthOf = (scaleManager) =>
+  Math.round(scaleManager.gameSize.width / RENDER_SCALE);
+
+/**
  * FIXED TIMESTEP.
  *
  * The sim always advances in whole 1/60s steps regardless of display refresh,

@@ -57,6 +57,14 @@ device aspect, then integer-scales to fill the screen.
 prototype scaled physics off screen height, so it literally played differently per
 device. That is fixed and must stay fixed. Use `VIEW_W` / `VIEW_H`.
 
+**`RENDER_SCALE` is render density, not resolution.** The canvas backing store is that
+many real pixels per virtual pixel and every scene camera zooms by the same factor, so
+the playfield is still exactly 224 virtual pixels tall everywhere. It is chosen from the
+device's physical pixel height so the browser's final scale lands near 1:1. **This is not
+an exception to the rule above** — no gameplay value reads it. Scenes must take their
+width from `viewWidthOf(this.scale)`, never `scale.gameSize.width`, which is now the
+denser backing size.
+
 ### 2. Fixed timestep, decoupled rendering
 `GameScene.update()` banks variable delta and runs whole 1/60s steps. Identical
 behaviour on 60Hz and 120Hz screens. Never multiply movement by a variable delta.
@@ -370,9 +378,13 @@ misread as "balanced" while invincible is worse than no playtest.
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
   thumb drifting outside a 44px pad is normal on a phone; cancelling on it made movement
   die in mid-air. A held input ends when the finger lifts, not when it wanders.
-- **HUD text sets `resolution: TEXT_RES`** (`systems/text.js`). Phaser rasterises text at
-  its layout size, so a 7px label becomes a 7px bitmap magnified 4-5x by the integer
-  scale. Raising the texture resolution keeps the layout identical and the glyphs sharp.
+- **HUD text sets `resolution: TEXT_RES`** and every scene calls `fitCamera()`
+  (`systems/text.js`). Text legibility comes from RENDER_SCALE giving the canvas real
+  pixels to draw into; `TEXT_RES` just matches the glyph texture to that density. Raising
+  `TEXT_RES` alone makes things WORSE — a larger glyph point-sampled back down into a
+  small buffer loses strokes and visibly fragments letters.
+- A hand-authored **bitmap font** is the eventual answer for a pixel game and is on the
+  art list. The density fix holds until it lands.
 - Comments explain **why**, not what. Phase-boundary and deliberate-stub comments exist
   so future sessions don't "fix" intentional placeholders — keep that habit.
 - Boss/weapon ids are lowercase snake (`eclipse_blade`); display names UPPERCASE.

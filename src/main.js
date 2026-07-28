@@ -3,7 +3,7 @@
  * Gameplay physics are hand-rolled in systems/physics.js — see that file for why.
  */
 import Phaser from 'phaser';
-import { VIEW_H, computeViewWidth } from './config/display.js';
+import { VIEW_H, RENDER_SCALE, computeViewWidth } from './config/display.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import GameScene from './scenes/GameScene.js';
@@ -20,8 +20,10 @@ try { screen.orientation?.lock?.('landscape').catch(() => {}); } catch { /* unsu
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
-  width: viewW,
-  height: VIEW_H,
+  // Backing store is RENDER_SCALE times the virtual size; every scene camera
+  // zooms by the same factor, so world coordinates stay 400x224.
+  width: viewW * RENDER_SCALE,
+  height: VIEW_H * RENDER_SCALE,
   backgroundColor: '#060614',
   // pixelArt + FIT + integer zoom = crisp square pixels at every screen size
   pixelArt: true,

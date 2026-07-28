@@ -11,7 +11,8 @@
  */
 
 import Phaser from 'phaser';
-import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH } from '../config/display.js';
+import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH, viewWidthOf } from '../config/display.js';
+import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { dev } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
@@ -38,7 +39,8 @@ export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
 
   create() {
-    this.viewW = this.scale.gameSize.width;
+    this.viewW = viewWidthOf(this.scale);
+    fitCamera(this, this.viewW);
     this.acc = 0;
     // Phaser reuses the scene instance across scene.start, so a run that ended
     // while paused would leave the NEXT run frozen on its first frame.

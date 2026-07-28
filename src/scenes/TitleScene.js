@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { VIEW_H } from '../config/display.js';
-import { TEXT_RES } from '../systems/text.js';
+import { VIEW_H, viewWidthOf } from '../config/display.js';
+import { TEXT_RES, fitCamera } from '../systems/text.js';
 import { save, fullReset } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
 
@@ -15,7 +15,8 @@ export default class TitleScene extends Phaser.Scene {
   init(data) { this.died = data?.died; this.run = data?.run; }
 
   create() {
-    const w = this.scale.gameSize.width, cx = w / 2;
+    const w = viewWidthOf(this.scale), cx = w / 2;
+    fitCamera(this, w);
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
 
     const title = this.died ? 'GAME OVER' : 'MEGA DASH';

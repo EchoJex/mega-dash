@@ -29,8 +29,8 @@
  */
 
 import Phaser from 'phaser';
-import { VIEW_H } from '../config/display.js';
-import { TEXT_RES } from '../systems/text.js';
+import { VIEW_H, viewWidthOf } from '../config/display.js';
+import { TEXT_RES, fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
 import { dev, DEV } from '../config/dev.js';
@@ -78,7 +78,8 @@ export default class UIScene extends Phaser.Scene {
   init(data) { this.game_ = data.game; }
 
   create() {
-    const w = this.scale.gameSize.width;
+    const w = viewWidthOf(this.scale);
+    fitCamera(this, w);
     this.w = w;
     this.g = this.add.graphics();
     this.zoneH = 44;

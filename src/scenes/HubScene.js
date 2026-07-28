@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { VIEW_H } from '../config/display.js';
-import { TEXT_RES } from '../systems/text.js';
+import { VIEW_H, viewWidthOf } from '../config/display.js';
+import { TEXT_RES, fitCamera } from '../systems/text.js';
 import { UPGRADES, upgradeLevel, upgradeCost } from '../data/upgrades.js';
 import { save, persist } from '../systems/save.js';
 
@@ -9,7 +9,8 @@ export default class HubScene extends Phaser.Scene {
   constructor() { super('Hub'); }
 
   create() {
-    const w = this.scale.gameSize.width;
+    const w = viewWidthOf(this.scale);
+    fitCamera(this, w);
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
     this.add.text(w / 2, 10, "DR. LIGHT'S LAB",
       { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5);
