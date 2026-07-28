@@ -79,6 +79,11 @@ export const FEEL = {
   // Falling in a pit also throws you back onto solid ground — the damage is the
   // punishment, the fall is not. Placeholder value.
   hazardDamage: 6,
+  // Hazard contact beams you out: straight up past the top of the screen, then
+  // back down at the leftmost safe spot. Whole-screen travel at this speed is
+  // roughly a third of a second each way — long enough to read as a teleport,
+  // short enough not to feel like a cutscene.
+  beamSpeed: 8,
   invulnFrames: 90,
   flinchFrames: 16,
   knockbackSpeed: 2.4,

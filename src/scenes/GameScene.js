@@ -267,10 +267,14 @@ export default class GameScene extends Phaser.Scene {
     if (k.D.isDown || k.RIGHT.isDown) kb = 1;
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
 
-    Phys.stepPlayer(p, this.world, { moveDir, jumpHeld: this.intent.jumpHeld }, GROUND_Y);
-    if (!this.arena) {
-      this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
-      if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
+    if (p.beam) {
+      this.stepBeam();
+    } else {
+      Phys.stepPlayer(p, this.world, { moveDir, jumpHeld: this.intent.jumpHeld }, GROUND_Y);
+      if (!this.arena) {
+        this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
+        if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
+      }
     }
 
     // distance is real rightward progress, used for EXP and stats
@@ -278,24 +282,30 @@ export default class GameScene extends Phaser.Scene {
     // on its own, you have to kill things and go pick up what they drop.
     r.dist = Math.max(r.dist, (p.x - 80) / 8);
 
-    // hazards: pits and spikes are instant death
-    // A pit is massive damage plus a throw back onto solid ground, not an
-    // instant kill. Repositioning happens even during i-frames — otherwise you
-    // would keep falling with nothing to land on.
+    // HAZARDS. Pits and spikes deal the same massive damage and then beam you
+    // out — never an instant kill. The beam fires even during i-frames: a hit
+    // may be ignored, but you still cannot be left inside a pit or standing on
+    // spikes.
+    const box = Phys.hitboxOf(p);
     if (p.y > VIEW_H + 24) {
       this.hurt(p.x, FEEL.hazardDamage);
-      this.respawnOnGround();
-    }
-    const box = Phys.hitboxOf(p);
-    for (const s of this.world.spikes) {
-      if (Phys.overlaps(box, s)) { this.hurt(s.x + s.w / 2, FEEL.hazardDamage); break; }
+      this.beamOut();
+    } else {
+      for (const s of this.world.spikes) {
+        if (Phys.overlaps(box, s)) {
+          this.hurt(s.x + s.w / 2, FEEL.hazardDamage);
+          this.beamOut();
+          break;
+        }
+      }
     }
 
     Arena.stepShake(this.shake);
 
     if (this.arena) {
-      // Sealed room: no streaming, no camera, walls hold you in.
-      Arena.clampToArena(this.arena, p);
+      // Sealed room: no streaming, no camera, walls hold you in. The beam is
+      // exempt — it deliberately travels above the ceiling.
+      if (!p.beam) Arena.clampToArena(this.arena, p);
       // The wrap door only exists once the boss is down.
       for (const d of this.world.doors) {
         if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
@@ -320,7 +330,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    if (r.invuln > 0) r.invuln--;
+    if (r.invuln > 0 && !p.beam) r.invuln--; // the beam must not eat the i-frames
     if (r.cooldown > 0) r.cooldown--;
     if (p.hitAnim > 0) p.hitAnim--;
     if (r.comboTimer > 0 && --r.comboTimer === 0) r.combo = 1;
@@ -650,22 +660,73 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Drop the player back onto the nearest solid ground ahead of the camera. */
-  respawnOnGround() {
+  /**
+   * Begin the hazard beam: straight up and off the top of the screen, then back
+   * down at the leftmost safe spot on screen. Control is suspended throughout.
+   */
+  beamOut() {
     const p = this.player;
-    for (let x = this.cam.x + 40; x < this.cam.x + this.viewW + 200; x += 8) {
-      if (Phys.isOverGround(this.world, x)) {
-        p.x = x;
-        p.y = GROUND_Y - 24;
-        p.vx = 0; p.vy = 0;
-        return;
-      }
-    }
-    // No ground generated yet — guarantee some rather than falling forever.
-    this.world.groundSpans.push({ x1: this.cam.x + 40, x2: this.cam.x + 140 });
-    p.x = this.cam.x + 60;
-    p.y = GROUND_Y - 24;
+    if (p.beam) return;                       // already going
+    p.beam = { phase: 'up' };
     p.vx = 0; p.vy = 0;
+    p.sliding = false;
+    p.flinchTimer = 0; p.knockbackVx = 0;     // the beam overrides the hit reaction
+    this.intent.moveDir = 0;
+    this.intent.jumpHeld = false;
+    this.intent.fireHeld = false;
+  }
+
+  stepBeam() {
+    const p = this.player;
+    if (p.beam.phase === 'up') {
+      p.y -= FEEL.beamSpeed;
+      if (p.y < -32) {
+        p.beam.phase = 'down';
+        p.x = this.findBeamSpot();
+        p.y = -32;
+      }
+      return;
+    }
+    p.y += FEEL.beamSpeed;
+    const rest = GROUND_Y - 24;
+    if (p.y >= rest) {                        // touchdown
+      p.y = rest;
+      p.vx = 0; p.vy = 0;
+      p.onGround = true;
+      p.beam = null;
+    }
+  }
+
+  /**
+   * Leftmost on-screen spot where the player would stand clear of a wall, a
+   * spike and a pit. Scans from the left edge rightward and takes the first
+   * that works, so you are always put back as far behind as is survivable
+   * rather than skipped past the hazard you just failed.
+   */
+  findBeamSpot() {
+    const x0 = this.arena ? this.arena.x0 + 4 : this.cam.x + 4;
+    const x1 = (this.arena ? this.arena.x1 : this.cam.x + this.viewW) - 28;
+    for (let x = x0; x <= x1; x += 4) if (this.isSafeSpot(x)) return x;
+
+    // Nothing on screen is safe. Rather than beam into a pit, lay down footing.
+    const fallback = Math.max(x0, this.cam.x + 40);
+    this.world.groundSpans.push({ x1: fallback - 16, x2: fallback + 64 });
+    this.world.spikes = this.world.spikes.filter(
+      (s) => s.x + s.w < fallback - 16 || s.x > fallback + 64,
+    );
+    return fallback;
+  }
+
+  /** Would the player standing at this x be clear of ground gaps and spikes? */
+  isSafeSpot(x) {
+    const hb = FEEL.playerHitbox;
+    const box = { x: x + hb.offX, y: GROUND_Y - 24 + hb.offY, w: hb.w, h: hb.h };
+    const inset = FEEL.groundProbeInset;
+    if (!Phys.isOverGround(this.world, box.x + inset)) return false;
+    if (!Phys.isOverGround(this.world, box.x + box.w - inset)) return false;
+    if (!Phys.isOverGround(this.world, x + 12)) return false;
+    for (const s of this.world.spikes) if (Phys.overlaps(box, s)) return false;
+    return true;
   }
 
   die() {

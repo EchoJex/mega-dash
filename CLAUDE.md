@@ -173,6 +173,19 @@ hazards *and* layer-2 attacks. Both elementally themed.
 
 ---
 
+## Hazards
+
+Pits and spikes deal the same **massive damage** (`FEEL.hazardDamage`), never an instant
+kill, and then **beam** you out: straight up past the top of the screen, then back down at
+the leftmost on-screen spot clear of walls, spikes and pits. The 90-frame invulnerability
+flicker is preserved in full — its countdown is frozen while the beam is travelling, so
+the beam cannot eat your i-frames.
+
+Beaming rather than nudging is also what stops spikes becoming walkable: you cannot stroll
+across a spike bed on i-frames, because the first contact removes you from it.
+
+---
+
 ## Areas and arenas
 
 A run alternates between two spaces:
