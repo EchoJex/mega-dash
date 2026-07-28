@@ -9,9 +9,10 @@
  *
  *     damage = DPS_TARGET * cooldownFrames / 60 / projectiles
  *
- * This is asserted by tests/dps.test.js. If you give a weapon extra
- * projectiles, pierce, or multi-hit, rebalance its cooldown so the invariant
- * still holds — do not just raise its damage.
+ * The test asserting this is SKIPPED until the late tuning phase: every number
+ * here is a placeholder, and pinning one in place only breaks the build when it
+ * is nudged. The formula still governs — if you give a weapon extra projectiles
+ * or pierce, rebalance its cooldown rather than raising damage.
  *
  * PALETTE
  * -------

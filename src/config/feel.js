@@ -179,8 +179,8 @@ export const FEEL = {
   // ── Weapon balance ───────────────────────────────────────────────────
   // INVARIANT: every weapon deals the same damage-per-second at level 1, so a
   // slow-heavy weapon and a fast-light one trade blows evenly and weapon choice
-  // is about *utility*, not raw power. Enforced by weaponDamage() in
-  // data/weapons.js and asserted by a unit test.
+  // is about *utility*, not raw power. Derived by weaponDamage() in
+  // data/weapons.js; the unit test asserting it is skipped until late tuning.
   // If you add projectiles or pierce to a weapon, rebalance its cooldown.
   dpsTarget: 7.5,
   weaponMaxLevel: 10,

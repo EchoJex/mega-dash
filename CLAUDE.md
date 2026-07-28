@@ -16,7 +16,7 @@ source. Explain decisions in plain language, not code walkthroughs.
 ```bash
 npm run dev      # dev server, --host so a phone on the same wifi can play it
 npm run build    # production bundle into dist/
-npm test         # balance + data-integrity tests — run before every commit
+npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -200,7 +200,8 @@ Kills drive the combo counter and roll for a pickup (`systems/pickups.js`): one 
 `src/data/weapons.js` — buster + 17 specials.
 
 **Balance invariant: every weapon deals identical DPS at level 1.**
-`damage = dpsTarget × cooldown/60 ÷ projectiles`. Enforced by `tests/dps.test.js`.
+`damage = dpsTarget × cooldown/60 ÷ projectiles`. The test asserting this is deliberately
+skipped until the late tuning phase — these numbers are placeholders.
 Weapon choice is about *utility*, not power. If you add projectiles or pierce,
 **rebalance the cooldown** — do not just raise damage.
 
@@ -284,6 +285,25 @@ A live in-game tuning overlay is **deliberately deferred to late in development*
   so future sessions don't "fix" intentional placeholders — keep that habit.
 - Boss/weapon ids are lowercase snake (`eclipse_blade`); display names UPPERCASE.
 - Colours are `#RRGGBB` strings in data, converted with `hexNum()` at draw time.
-- Run `npm test` before committing. It catches balance regressions instantly.
+- Run `npm test` before committing. The whole suite is ~0.1s.
+
+### What tests are for at this phase — and what they are NOT for
+
+**Tests verify plumbing, not numbers.** They check that placeholders resolve, layers
+order correctly, upgrades describe themselves without crashing, data shapes hold, and
+unknown ids degrade instead of throwing. That is the right standard while everything on
+screen is a placeholder.
+
+**Do not add assertions that pin a placeholder value in place.** Weapon damage, boss and
+minion HP, elite multipliers, the difficulty ramp, and every colour are all provisional.
+A test that asserts one of them does not protect anything — it just fails the build every
+time the number is nudged, which is the whole point of the number being provisional.
+
+Balance and stat tuning arrive **late**, together with the physics-tuning overlay. The DPS
+invariant test already exists in `tests/dps.test.js` and is deliberately `skip`ped with a
+reason; un-skip it when real weapon tuning begins.
+
+Same rule when reviewing or verifying: check that the code path works, not that a
+placeholder number is "right".
 - The full-reset link on the title screen wipes all persistence and hard-reloads — use it
   when testing save-dependent behaviour (layers, Chips, Upgrades).

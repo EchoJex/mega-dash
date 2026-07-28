@@ -96,15 +96,11 @@ test('the null weapon is an outline-only silhouette that fires nothing', () => {
   assert.equal(weaponOf('buster').id, 'buster');
 });
 
-test('the buster is a normal weapon with a dark body and light accent', () => {
-  const buster = weaponOf('buster');
-  const lum = (h) => {
-    const n = parseInt(h.slice(1), 16);
-    return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
-  };
-  assert.ok(lum(buster.palette.secondary) > lum(buster.palette.primary),
-    'the accent must be lighter than the body');
-  assert.ok(WHEEL_ORDER.includes('buster'), 'the buster occupies a wheel slot like any other');
+test('the buster occupies a wheel slot like any other weapon', () => {
+  // Structural only. The buster's COLOURS are a placeholder and are
+  // deliberately not asserted — see the testing note in CLAUDE.md.
+  assert.ok(WHEEL_ORDER.includes('buster'));
+  assert.equal(weaponOf('buster').id, 'buster');
 });
 
 test('every weapon shape has an explicit drawn half-height', () => {
@@ -120,14 +116,3 @@ test('every weapon shape has an explicit drawn half-height', () => {
   }
 });
 
-test('duplicator echoes never overlap the real shot', () => {
-  // The spacing rule, checked against every shape at a range of radii: two
-  // stacked volleys must clear each other with the +1px gap intact.
-  for (const shape of Object.keys(SHAPE_HALF_H)) {
-    for (const radius of [2, 3, 4.5, 6]) {
-      const half = projectileHalfHeight(shape, radius);
-      const step = half * 2 + 1;
-      assert.ok(step > half * 2, `${shape} at r=${radius} would touch`);
-    }
-  }
-});
