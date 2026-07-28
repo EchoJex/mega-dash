@@ -41,7 +41,8 @@ export const BOSSES = [
     silhouette: null,
   },
   {
-    id: 'torrent', name: 'TORRENT MAN', element: 'Water',
+    // renamed in the tracker; the id stays 'torrent' so save.bossKills survives
+    id: 'torrent', name: 'TEMPEST MAN', element: 'Water',
     primary: '#145DBD', secondary: '#C09060', outline: '#0A0A12',
     scale: 1.75, baseHp: 32,
     attackName: 'Aqua Torrent', dropWeapon: 'torrent_cannon',

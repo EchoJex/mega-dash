@@ -431,10 +431,8 @@ export default class GameScene extends Phaser.Scene {
       x: this.cam.x + this.viewW + w, y: GROUND_Y - h, w, h,
       anim: 0, state: 'enter',
       fight,
-      // Stagger the two loops so the first attack and the first hazard do not
-      // land on the same frame.
-      attackTimer: fight.attack ? Math.round(fight.attack.cooldown[0] * 0.6) : 0,
-      hazardTimer: fight.hazard ? Math.round(fight.hazard.cooldown[0] * 1.2) : 0,
+      fs: null, // attack-loop state, owned by data/bossFights.js
+      hs: null, // hazard-loop state
     };
   }
 
@@ -448,13 +446,13 @@ export default class GameScene extends Phaser.Scene {
       if (Math.abs(b.x - tx) < 1) { b.x = tx; b.state = 'idle'; }
       return;
     }
-    b.x += Math.sin(b.anim * 0.018) * 0.2;
+    if (!b.fight?.attack) b.x += Math.sin(b.anim * 0.018) * 0.2; // idle drift only
 
     // TWO CONCURRENT LOOPS, always layer-synced. They run independently on
     // their own timers — the hazard loop keeps firing no matter what the boss
     // itself is doing, which is the whole point of having both.
-    this.runFightLoop(b, 'attack');
-    this.runFightLoop(b, 'hazard');
+    this.stepFight(b, 'attack');
+    this.stepFight(b, 'hazard');
 
     // contact damage
     const box = Phys.hitboxOf(this.player);
@@ -464,23 +462,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Advance one of the boss's two loops. Each has its own semi-variable
-   * cooldown so the pattern is learnable without being metronomic. A loop with
-   * no behaviour defined for this layer simply never fires — see the null
-   * entries in data/bossFights.js.
+   * Advance one of the boss's two loops. Called every frame so a boss can
+   * patrol, telegraph and fire in sequence rather than teleporting between
+   * cooldowns. A loop with no behaviour for this layer simply does nothing —
+   * see the null entries in data/bossFights.js.
    */
-  runFightLoop(b, kind) {
+  stepFight(b, kind) {
     const beh = b.fight?.[kind];
     if (!beh) return;
-    const t = kind === 'attack' ? 'attackTimer' : 'hazardTimer';
-    if (--b[t] > 0) return;
-    const [lo, hi] = beh.cooldown;
-    b[t] = Math.round(lo + Math.random() * (hi - lo));
-    beh.run({
+    beh.step({
       boss: b,
       player: this.player,
       layer: b.layer,
       shoot: (spec) => this.spawnEnemyShot(spec),
+      // The walkable span. The camera view today; the sealed arena's inner
+      // walls once arenas land, with no change needed here.
+      bounds: { x0: this.cam.x + 16, x1: this.cam.x + this.viewW - 16 },
     });
   }
 

@@ -214,7 +214,12 @@ are damage-only. Currently all levels use a flat placeholder step.
 
 ## Design source of truth
 
-**`design/boss-design-tracker.html`** — a standalone app: 17 bosses × 24 fields
+**`design/boss-design-tracker.json`** — the machine-readable export, and what code
+should read. **Do NOT parse the `const BOSSES = [...]` array inside the HTML** — "Save
+edited copy" preserves edits in the rendered DOM, not in that array, so it is stale and
+will silently give you old content.
+
+**`design/boss-design-tracker.html`** — the editable app: 17 bosses × 24 fields
 (identity, elemental attributes, arena theme, hazard layers 1–3, attack layers 1–3,
 sprite/palette block, weapon + Lv1/3/6/10 ladder). Each field flagged
 `ok` / `warn` / `miss` / `na`.
