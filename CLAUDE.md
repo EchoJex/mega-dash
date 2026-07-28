@@ -126,7 +126,7 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 
 | Term | Scope | Earned from | Spent on |
 |---|---|---|---|
-| **EXP** / **Level** | run only | rightward distance + kills | levelling weapons |
+| **EXP** / **Level** | run only | **collected** from enemy drops | levelling weapons |
 | **Chips** | persistent | score + boss kills at run end | **Upgrades** |
 | **Upgrades** | persistent | bought with Chips | permanent stat boosts (16) |
 | **Weapon Level** | run only, per weapon, 1→10 | level-up choices | that weapon's feature ladder |
@@ -245,9 +245,9 @@ Three palette entries are flagged `warn` as **recommended changes** pending owne
 | — | **RE-QUIP wheel** — replaces Phase 1's weapon-select screen | ✅ |
 | — | **Sprite path** — MANIFEST art swaps in, unblocks Phases 9–11 | ✅ |
 | — | **In-app updater** + per-branch CI releases (the dev loop) | ✅ |
-| 4 | VS-style level-up cards; weapons unlock only via their boss | ⬅ **next** |
+| 4 | VS-style level-up cards; weapons unlock only via their boss | ✅ |
 | 5 | Boss defeat animations + weapon acquisition popups | ⏭ deferred (cosmetic) |
-| 6–8 | Boss attacks + arena hazards, in thirds | ⬜ |
+| 6–8 | **Boss attacks + arena hazards** — the next real work | ⬅ **next** |
 | 9–11 | Weapon visuals, in thirds | ⬜ |
 | 12–14 | Weapon mechanics, in thirds | ⬜ |
 
@@ -263,13 +263,31 @@ playtested. Treat those as a starting point, not as precious.
 A live in-game tuning overlay is **deliberately deferred to late in development**.
 `FEEL_GROUPS` exists to drive it when that time comes — do not build it early.
 
-### Phase 4 spec
-- Delete the two lines in `GameScene.startRun()` that unlock all weapons; gate unlocks on
-  defeating each boss (`BOSSES[].dropWeapon`)
-- Replace the placeholder auto-levelup in `gainExp()` with a **pick-a-card screen**:
-  always a Chip bonus card and an E-Tank card, **plus** up to 3 weapon level-up cards
-  drawn from unlocked non-maxed weapons — 2 to 5 cards total
-- Re-enable `starter_arsenal` / `twin_arsenal` upgrades
+### Phase 4 — as built
+
+**Weapons are earned.** You start with the buster only. A special unlocks by killing the
+boss that carries it (`BOSSES[].dropWeapon`). `starter_arsenal` / `twin_arsenal` are the
+only head start and they cost Chips — they unlock 1 / 2 random specials at run start.
+
+**EXP is collected, never granted.** A level is a flat `FEEL.expPerLevel` (100). Distance
+grants nothing. Every enemy DROPS EXP on death and the player has to walk over it — so
+levelling is something you do, not something that happens while you hold right. Drop size
+is weighted `random ** FEEL.expDropBias`, which makes small drops common and big ones
+rare; the minimum scales with the enemy's tier (`FEEL.expDrop`). Bosses split their drop
+across several orbs so one bad pit does not eat the whole reward.
+
+**Level-up pauses for a card screen** — `FEEL.cardWeaponChoices` weapon level-ups drawn
+from unlocked non-maxed weapons, plus an always-present E-Tank (refill) and Chips
+(`FEEL.cardChips`). Levels queue: one big orb can grant several, and each gets its own
+choice.
+
+### Dev mode — `src/config/dev.js`
+
+Playtest perks: unlimited HP, spike immunity, pit respawn, equipping padlocked weapons,
+and cards drawn from locked weapons. **The game logic is written as if none of it exists** —
+weapons are genuinely gated, spikes genuinely kill. Set `enabled: false` to ship; that one
+switch disables everything. The HUD shows `[DEV]` whenever it is on, because a playtest
+misread as "balanced" while invincible is worse than no playtest.
 
 ### Hooks left deliberately empty — fill, don't delete
 - `GameScene.stepBoss()` → the dual hazard + attack loops (Phases 6–8)

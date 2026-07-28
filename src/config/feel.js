@@ -142,23 +142,45 @@ export const FEEL = {
   // ── Pickups ──────────────────────────────────────────────────────────
   // One roll per minion killed. On a hit it is a coin flip between the two
   // types, so each is effectively half of pickupChance.
-  pickupChance: 0.10,
-  pickupHeal: 1,            // energy pips restored by an E-Tank
-  pickupExp: 60,
+  pickupChance: 0.10,       // E-Tank drop chance; EXP always drops
+  pickupHeal: 1,            // energy pips restored by a field E-Tank
   pickupMagnetRange: 18,    // base attract radius, widened by the Item Magnet
   pickupMagnetSpeed: 1.4,
   pickupLifeFrames: 600,
 
   // ── Run progression ──────────────────────────────────────────────────
   hpMax: 8,
-  expBase: 90,
-  expGrowth: 38,
-  expPerDistance: 0.6,
-  expMinion: 15,
-  expElite: 60,
-  expBoss: 220,
   comboDecayFrames: 180,
   comboMax: 8,
+
+  // ── EXP ──────────────────────────────────────────────────────────────
+  // A level is a flat 100 points, always. No escalating curve — the pressure
+  // comes from the difficulty ramp, not from levels getting further apart.
+  //
+  // EXP is NEVER granted directly. Every enemy DROPS it on death and the player
+  // has to go and collect it, so levelling is something you do rather than
+  // something that happens to you while you walk right. Distance grants nothing.
+  expPerLevel: 100,
+
+  // Drop size is weighted so small drops are common and large ones are rare:
+  //     t = random^expDropBias ;  amount = min + t * (max - min)
+  // A bias above 1 pushes t toward 0, which is what makes the big drops scarce.
+  // Minimums scale with the enemy's tier. Every number here is a placeholder.
+  expDropBias: 2.5,
+  expDrop: {
+    minion: { min: 20, max: 50 },
+    elite:  { min: 50, max: 120 },
+    boss:   { min: 150, max: 400 },
+  },
+  // A boss splits its drop across several orbs — one orb worth three levels is
+  // anticlimactic, and easy to lose down a pit.
+  expOrbsBoss: 5,
+
+  // ── Level-up cards ───────────────────────────────────────────────────
+  // Every level-up pauses and offers: this many weapon level-ups, plus an
+  // always-present E-Tank card and Chips card.
+  cardWeaponChoices: 2,
+  cardChips: 50,
 
   // ── Boss encounters ──────────────────────────────────────────────────
   doorIntervalSeconds: 60,

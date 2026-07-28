@@ -22,20 +22,44 @@ export const PICKUP_STYLE = {
   exp:   { primary: '#F5D328', secondary: '#5C4A0A' },
 };
 
+const orb = (type, x, y, extra = {}) => ({
+  type, x, y,
+  vx: (Math.random() - 0.5) * 1.2,  // small scatter so a pile is collectable
+  vy: -1.2 - Math.random() * 0.6,
+  w: 7, h: 7,
+  life: FEEL.pickupLifeFrames,
+  anim: 0,
+  ...extra,
+});
+
 /**
- * Roll for a drop at a dead minion's position. Returns the pickup or null.
- * One roll, then a coin flip for the type — so each type is effectively half
- * of FEEL.pickupChance.
+ * How much EXP one drop from this tier is worth.
+ *
+ * The amount is inverse to its likelihood: `random ** bias` skews toward 0, so
+ * most drops sit near the tier's minimum and the top of the range is genuinely
+ * rare. The minimum is what scales with tier, so a better enemy is never worse
+ * than a worse one even on an unlucky roll.
  */
-export function maybeDrop(x, y, luckMult = 1) {
-  if (Math.random() >= FEEL.pickupChance * luckMult) return null;
-  return {
-    type: Math.random() < 0.5 ? 'etank' : 'exp',
-    x, y, vx: 0, vy: -1.2,       // small pop so it separates from the corpse
-    w: 7, h: 7,
-    life: FEEL.pickupLifeFrames,
-    anim: 0,
-  };
+export function rollExpAmount(tier) {
+  const r = FEEL.expDrop[tier] || FEEL.expDrop.minion;
+  const t = Math.random() ** FEEL.expDropBias;
+  return Math.max(1, Math.round(r.min + t * (r.max - r.min)));
+}
+
+/**
+ * Everything an enemy leaves behind. EXP always drops — it is the whole
+ * progression loop, so it can never be denied by a bad roll. The E-Tank is the
+ * only thing still gated on FEEL.pickupChance.
+ */
+export function dropsFor(tier, x, y, luckMult = 1) {
+  const out = [];
+  const orbs = tier === 'boss' ? FEEL.expOrbsBoss : 1;
+  const total = rollExpAmount(tier);
+  const each = Math.max(1, Math.round(total / orbs));
+  for (let i = 0; i < orbs; i++) out.push(orb('exp', x, y, { amount: each }));
+
+  if (Math.random() < FEEL.pickupChance * luckMult) out.push(orb('etank', x, y));
+  return out;
 }
 
 /**

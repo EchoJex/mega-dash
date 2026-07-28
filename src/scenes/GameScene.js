@@ -13,6 +13,7 @@
 import Phaser from 'phaser';
 import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH } from '../config/display.js';
 import { FEEL } from '../config/feel.js';
+import { dev } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
 import { WEAPONS, NULL_WEAPON, weaponOf, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsForRun } from '../data/upgrades.js';
@@ -27,6 +28,9 @@ import {
 } from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
+
+/** Copy of an array in random order. Used for the arsenal head start. */
+const shuffled = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -78,7 +82,7 @@ export default class GameScene extends Phaser.Scene {
   startRun() {
     const run = {
       frame: 0, score: 0, dist: 0, combo: 1, comboTimer: 0,
-      exp: 0, level: 1, expToNext: FEEL.expBase,
+      exp: 0, level: 1, expToNext: FEEL.expPerLevel, pendingLevelUps: 0,
       hp: FEEL.hpMax, hpBonus: 0, runHpBonus: 0,
       invuln: 0, kills: 0, maxCombo: 1,
       bossesDefeated: [],
@@ -99,9 +103,15 @@ export default class GameScene extends Phaser.Scene {
     run.hp = FEEL.hpMax + run.hpBonus;
     run.revivesLeft = run.revives;
 
-    // PHASE 3 ONLY — every special starts unlocked so all 17 are testable.
-    // PHASE 4 deletes these two lines and gates unlocks on defeating each boss.
-    for (const w of WEAPONS) { run.unlocked.add(w.id); run.wpLevels[w.id] = 1; }
+    // Weapons are EARNED: you start with the buster and unlock a special by
+    // beating the boss that carries it (killBoss below). The two arsenal
+    // upgrades are the only head start, and they cost Chips.
+    const specials = WEAPONS.filter((w) => w.id !== BUSTER_ID);
+    const headStart = run.twinArsenal ? 2 : run.starterArsenal ? 1 : 0;
+    for (const w of shuffled(specials).slice(0, headStart)) {
+      run.unlocked.add(w.id);
+      run.wpLevels[w.id] = 1;
+    }
 
     this.run = run;
     this.world = Terrain.makeWorld(80, GROUND_Y);
@@ -173,14 +183,19 @@ export default class GameScene extends Phaser.Scene {
     if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
 
     // distance is real rightward progress, used for EXP and stats
-    const prev = r.dist;
+    // Distance is a stat only. It grants no EXP — walking right is not progress
+    // on its own, you have to kill things and go pick up what they drop.
     r.dist = Math.max(r.dist, (p.x - 80) / 8);
-    if (r.dist > prev) this.gainExp((r.dist - prev) * FEEL.expPerDistance);
 
     // hazards: pits and spikes are instant death
-    if (p.y > VIEW_H + 24) return this.die();
+    if (p.y > VIEW_H + 24) {
+      if (!dev('pitImmunity')) return this.die();
+      this.respawnOnGround();
+    }
     const box = Phys.hitboxOf(p);
-    for (const s of this.world.spikes) if (Phys.overlaps(box, s)) return this.die();
+    if (!dev('spikeImmunity')) {
+      for (const s of this.world.spikes) if (Phys.overlaps(box, s)) return this.die();
+    }
 
     Terrain.generate(this.world, this.cam.x, this.viewW);
     Terrain.maybeSpawnDoor(this.world, this.cam.x, this.viewW, r.frame);
@@ -208,60 +223,6 @@ export default class GameScene extends Phaser.Scene {
     this.stepBoss();
   }
 
-  // ── Minions ─────────────────────────────────────────────────────────
-  stepMinions(box) {
-    const r = this.run;
-
-    // Spawn cadence tightens with the difficulty step, which is keyed to
-    // elapsed time — camping does not slow this down.
-    if (--this.spawnTimer <= 0) {
-      this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
-      if (this.minions.length < FEEL.maxMinions) {
-        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y);
-        if (m) this.minions.push(m);
-      }
-    }
-
-    Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y);
-
-    for (const e of this.minions) {
-      if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
-        this.hurt(e.x + e.w / 2);
-      }
-    }
-    this.minions = Minions.pruneMinions(this.minions, this.cam.x);
-  }
-
-  killMinion(e) {
-    const r = this.run;
-    r.kills++;
-    r.combo = Math.min(r.combo + 1, FEEL.comboMax);
-    r.maxCombo = Math.max(r.maxCombo, r.combo);
-    r.comboTimer = Math.round(FEEL.comboDecayFrames * r.comboDecayMult);
-    const base = e.elite ? FEEL.scoreElite : FEEL.scoreMinion;
-    r.score += Math.round((base + r.combo * FEEL.scoreComboStep) * r.scoreMult);
-    this.gainExp(e.elite ? FEEL.expElite : FEEL.expMinion);
-    const drop = Pickups.maybeDrop(e.x + e.w / 2 - 3, e.y + e.h / 2, r.luckMult);
-    if (drop) this.pickups.push(drop);
-    e.hp = 0; // pruned at the end of the step
-  }
-
-  // ── Pickups ─────────────────────────────────────────────────────────
-  stepPickups(box) {
-    const r = this.run;
-    const got = Pickups.stepPickups(
-      this.pickups, this.player, box, GROUND_Y, this.world, r.magnetMult,
-    );
-    for (const p of got) {
-      if (p.type === 'etank') {
-        r.hp = Math.min(FEEL.hpMax + r.hpBonus + r.runHpBonus, r.hp + FEEL.pickupHeal);
-      } else {
-        this.gainExp(FEEL.pickupExp);
-      }
-    }
-    this.pickups = Pickups.prunePickups(this.pickups, this.cam.x);
-  }
-
   // ── Weapons ─────────────────────────────────────────────────────────
   fire(charged) {
     const r = this.run, p = this.player;
@@ -281,13 +242,12 @@ export default class GameScene extends Phaser.Scene {
     // perpendicular to travel. Spacing comes from the shape's ACTUAL drawn
     // half-height rather than a constant, because the 18 placeholder shapes
     // range from a thin 0.35r bar to a 1.6r orbiting ring — and radius itself
-    // moves with Payload Frame and with charged shots. Deriving it keeps the
-    // echoes just clear of the real shot for every weapon in every state.
-    const step = projectileHalfHeight(w.shape, rad) * 2 + 1;
+    // moves with Payload Frame and with charged shots.
+    const gap = projectileHalfHeight(w.shape, rad) * 2 + 1;
 
     for (let v = 0; v <= r.extraShots; v++) {
       const tier = Math.ceil(v / 2);
-      const dy = (v % 2 === 1 ? -1 : 1) * tier * step;
+      const dy = (v % 2 === 1 ? -1 : 1) * tier * gap;
       for (let i = 0; i < w.projectiles; i++) {
         const spread = w.projectiles > 1 ? (i - (w.projectiles - 1) / 2) * 0.5 : 0;
         this.bullets.push({
@@ -353,6 +313,60 @@ export default class GameScene extends Phaser.Scene {
     );
   }
 
+  // ── Minions ─────────────────────────────────────────────────────────
+  stepMinions(box) {
+    const r = this.run;
+
+    // Spawn cadence tightens with the difficulty step, which is keyed to
+    // elapsed time — camping does not slow this down.
+    if (--this.spawnTimer <= 0) {
+      this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
+      if (this.minions.length < FEEL.maxMinions) {
+        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y);
+        if (m) this.minions.push(m);
+      }
+    }
+
+    Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y);
+
+    for (const e of this.minions) {
+      if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
+        this.hurt(e.x + e.w / 2);
+      }
+    }
+    this.minions = Minions.pruneMinions(this.minions, this.cam.x);
+  }
+
+  killMinion(e) {
+    const r = this.run;
+    r.kills++;
+    r.combo = Math.min(r.combo + 1, FEEL.comboMax);
+    r.maxCombo = Math.max(r.maxCombo, r.combo);
+    r.comboTimer = Math.round(FEEL.comboDecayFrames * r.comboDecayMult);
+    const base = e.elite ? FEEL.scoreElite : FEEL.scoreMinion;
+    r.score += Math.round((base + r.combo * FEEL.scoreComboStep) * r.scoreMult);
+    this.pickups.push(...Pickups.dropsFor(
+      e.elite ? 'elite' : 'minion', e.x + e.w / 2 - 3, e.y + e.h / 2, r.luckMult,
+    ));
+    e.hp = 0; // pruned at the end of the step
+  }
+
+  // ── Pickups ─────────────────────────────────────────────────────────
+  stepPickups(box) {
+    const r = this.run;
+    const got = Pickups.stepPickups(
+      this.pickups, this.player, box, GROUND_Y, this.world, r.magnetMult,
+    );
+    for (const p of got) {
+      if (p.type === 'etank') {
+        r.hp = Math.min(FEEL.hpMax + r.hpBonus + r.runHpBonus, r.hp + FEEL.pickupHeal);
+      } else {
+        this.gainExp(p.amount || 0);
+      }
+    }
+    this.pickups = Pickups.prunePickups(this.pickups, this.cam.x);
+  }
+
   // ── Bosses ──────────────────────────────────────────────────────────
   spawnBoss() {
     const def = this.nextBoss();
@@ -401,9 +415,16 @@ export default class GameScene extends Phaser.Scene {
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);
     this.run.bossesDefeated.push(b.id);
-    this.gainExp(FEEL.expBoss);
+    this.pickups.push(...Pickups.dropsFor(
+      'boss', b.x + b.w / 2 - 3, b.y + b.h / 2, this.run.luckMult,
+    ));
     recordBossKill(b.id);
-    // PHASE 4 hooks the weapon unlock in here (b.dropWeapon).
+    // THE weapon unlock: this is the only way a special enters the run.
+    if (b.dropWeapon && !this.run.unlocked.has(b.dropWeapon)) {
+      this.run.unlocked.add(b.dropWeapon);
+      this.run.wpLevels[b.dropWeapon] = 1;
+      this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
+    }
     // PHASE 5 adds the elemental death animation, fade, palette-swap reveal.
     this.boss = null;
   }
@@ -412,6 +433,7 @@ export default class GameScene extends Phaser.Scene {
   hurt(sourceX) {
     const r = this.run, p = this.player;
     if (r.invuln > 0) return;
+    if (dev('unlimitedHp')) return;
     r.hp--;
     r.invuln = FEEL.invulnFrames + r.armorBonus;
     r.combo = 1; r.comboTimer = 0;
@@ -424,6 +446,24 @@ export default class GameScene extends Phaser.Scene {
       if (r.revivesLeft > 0) { r.revivesLeft--; r.hp = 3; r.invuln = 150; }
       else this.die();
     }
+  }
+
+  /** DEV ONLY — drop the player back onto the nearest ground ahead of the camera. */
+  respawnOnGround() {
+    const p = this.player;
+    for (let x = this.cam.x + 40; x < this.cam.x + this.viewW + 200; x += 8) {
+      if (Phys.isOverGround(this.world, x)) {
+        p.x = x;
+        p.y = GROUND_Y - 24;
+        p.vx = 0; p.vy = 0;
+        return;
+      }
+    }
+    // No ground generated yet — guarantee some rather than falling forever.
+    this.world.groundSpans.push({ x1: this.cam.x + 40, x2: this.cam.x + 140 });
+    p.x = this.cam.x + 60;
+    p.y = GROUND_Y - 24;
+    p.vx = 0; p.vy = 0;
   }
 
   die() {
@@ -444,13 +484,12 @@ export default class GameScene extends Phaser.Scene {
     while (r.exp >= r.expToNext) {
       r.exp -= r.expToNext;
       r.level++;
-      r.expToNext = FEEL.expBase + (r.level - 1) * FEEL.expGrowth;
-      // PHASE 3 placeholder: a level-up silently ranks up the equipped weapon.
-      // PHASE 4 replaces this with the pick-a-card screen — always a Chip bonus
-      // card and an E-Tank card, plus up to 3 weapon level-up cards.
-      const id = r.activeWeapon;
-      if ((r.wpLevels[id] || 1) < FEEL.weaponMaxLevel) r.wpLevels[id]++;
+      r.expToNext = FEEL.expPerLevel;
+      // Queue a card screen rather than showing it here: a single big orb can
+      // grant several levels at once, and each one deserves its own choice.
+      r.pendingLevelUps++;
     }
+    if (r.pendingLevelUps > 0) this.paused = true;
   }
 
   // ── Player actions (called by UIScene and keyboard) ─────────────────
@@ -478,7 +517,9 @@ export default class GameScene extends Phaser.Scene {
   setMove(dir) { this.intent.moveDir = dir; }
   beginFire() { this.intent.fireHeld = true; this.intent.fireStart = performance.now(); }
   endFire() { this.intent.fireHeld = false; this.releaseFire(); }
-  selectWeapon(id) { if (this.run.unlocked.has(id)) this.run.activeWeapon = id; }
+  selectWeapon(id) {
+    if (this.run.unlocked.has(id) || dev('unlockAnyWeapon')) this.run.activeWeapon = id;
+  }
 
   // ── Render ──────────────────────────────────────────────────────────
   /**

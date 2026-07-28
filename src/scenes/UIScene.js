@@ -32,6 +32,8 @@ import Phaser from 'phaser';
 import { VIEW_H } from '../config/display.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
+import { dev, DEV } from '../config/dev.js';
+import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
@@ -384,7 +386,8 @@ export default class UIScene extends Phaser.Scene {
   /** Tapping a slot while paused equips it and resumes. Padlocks are inert. */
   pick(id) {
     if (this.mode !== 'open') return;
-    if (!this.game_.run.unlocked.has(id)) return;
+    // Dev mode equips through the padlock; otherwise a locked slot is inert.
+    if (!this.game_.run.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
     this.game_.selectWeapon(id);
     this.closeWheel();
   }
@@ -411,15 +414,124 @@ export default class UIScene extends Phaser.Scene {
     seg(h, (d) => g.fillRect(x, y + h - d, 1, d));             // left, B->T
   }
 
+  // ── Level-up cards ──────────────────────────────────────────────────
+
+  /**
+   * Offer the level-up choice. Always an E-Tank and a Chips card, plus up to
+   * FEEL.cardWeaponChoices weapon level-ups drawn from unlocked, non-maxed
+   * weapons — or from every weapon when dev mode says so.
+   *
+   * The screen is rebuilt per level because a single large EXP orb can grant
+   * several levels at once, and each one is its own decision.
+   */
+  openCards() {
+    const r = this.game_.run;
+    this.game_.paused = true;
+
+    const pool = WHEEL_ORDER.filter((id) => {
+      const unlocked = r.unlocked.has(id) || dev('cardsFromAllWeapons');
+      return unlocked && (r.wpLevels[id] || 1) < FEEL.weaponMaxLevel;
+    });
+    const picks = [...pool].sort(() => Math.random() - 0.5)
+      .slice(0, FEEL.cardWeaponChoices);
+
+    const cards = picks.map((id) => {
+      const wd = weaponOf(id);
+      const lv = r.wpLevels[id] || 1;
+      return {
+        title: wd.name.split(' ')[0],
+        sub: r.unlocked.has(id) ? `Lv ${lv} -> ${lv + 1}` : `LOCKED  Lv ${lv}->${lv + 1}`,
+        tint: wd.palette.primary || '#5CADD5',
+        take: () => {
+          r.wpLevels[id] = (r.wpLevels[id] || 1) + 1;
+          if (!r.unlocked.has(id)) r.unlocked.add(id); // dev-mode pick
+        },
+      };
+    });
+
+    cards.push({
+      title: 'E-TANK', sub: 'Refill energy', tint: '#E11416',
+      take: () => { r.hp = FEEL.hpMax + r.hpBonus + r.runHpBonus; },
+    });
+    cards.push({
+      title: 'CHIPS', sub: `+${FEEL.cardChips}`, tint: '#F5D328',
+      take: () => { save.chips += FEEL.cardChips; persist(); },
+    });
+
+    this.buildCardPanel(cards, r.level);
+  }
+
+  buildCardPanel(cards, level) {
+    this.cards = this.add.container(0, 0).setDepth(50);
+    this.cards.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.93).setOrigin(0)
+      .setInteractive());
+    this.cards.add(this.add.text(this.w / 2, 14, `LEVEL ${level}`,
+      { fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5));
+    this.cards.add(this.add.text(this.w / 2, 26, 'CHOOSE ONE',
+      { fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5));
+
+    const n = cards.length;
+    const cw = Math.min(64, (this.w - 16) / n - 4);
+    const total = n * cw + (n - 1) * 4;
+    const x0 = (this.w - total) / 2;
+
+    cards.forEach((c, i) => {
+      const x = x0 + i * (cw + 4), y = 44, h = 74;
+      const col = hexNum(c.tint);
+      const box = this.add.rectangle(x, y, cw, h, col, 0.22).setOrigin(0)
+        .setStrokeStyle(1, col, 1).setInteractive({ useHandCursor: true });
+      box.on('pointerdown', () => { c.take(); this.closeCards(); });
+      this.cards.add(box);
+      this.cards.add(this.add.text(x + cw / 2, y + 26, c.title,
+        { fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF',
+          align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
+      this.cards.add(this.add.text(x + cw / 2, y + 52, c.sub,
+        { fontFamily: 'monospace', fontSize: '6px', color: '#8AB',
+          align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
+    });
+  }
+
+  closeCards() {
+    this.cards?.destroy(true);
+    this.cards = null;
+    const r = this.game_.run;
+    r.pendingLevelUps = Math.max(0, r.pendingLevelUps - 1);
+    // More levels banked (one big orb can grant several) — straight into the next.
+    if (r.pendingLevelUps > 0) this.openCards();
+    else this.game_.paused = false;
+  }
+
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
+    // Card screen takes priority over every other overlay.
+    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.panel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
+    // A DEV marker whenever perks are active — a playtest you misread as
+    // "balanced" while invincible is worse than no playtest at all.
     this.hud.setText(
-      `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}\n` +
+      `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}` +
+        (DEV.enabled ? '  [DEV]' : '') + '\n' +
       `${w.name} L${r.wpLevels[r.activeWeapon] || 1}`,
     );
+
+    // Stand-in for Phase 5's proper acquisition popup — just enough to confirm
+    // a boss actually handed over its weapon.
+    if (r.justUnlocked) {
+      if (!this.unlockMsg) {
+        this.unlockMsg = this.add.text(this.w / 2, 44, '', {
+          fontFamily: 'monospace', fontSize: '8px', color: '#F5D328',
+        }).setOrigin(0.5);
+        this.unlockAt = performance.now();
+      }
+      this.unlockMsg.setText(`${weaponOf(r.justUnlocked).name} ACQUIRED`);
+      if (performance.now() - this.unlockAt > 2500) {
+        this.unlockMsg.destroy();
+        this.unlockMsg = null;
+        r.justUnlocked = null;
+      }
+    }
 
     // control glyphs, drawn at 40% so they never fight the gameplay for attention
     const g = this.g;
