@@ -12,6 +12,11 @@ import UIScene from './scenes/UIScene.js';
 
 const viewW = computeViewWidth(window.innerWidth, window.innerHeight);
 
+// The APK pins landscape in AndroidManifest.xml; this is the browser's
+// best effort at the same thing. It only succeeds in fullscreen on most
+// browsers, hence the silent catch — the game is playable either way.
+try { screen.orientation?.lock?.('landscape').catch(() => {}); } catch { /* unsupported */ }
+
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
@@ -26,5 +31,11 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  // MULTI-TOUCH. Phaser tracks ONE active pointer by default, which silently
+  // makes this game unplayable on a phone: you cannot hold left and jump, or
+  // move and shoot, because the second finger is simply never reported. The
+  // control layout assumes at least three fingers (move + jump + fire), so
+  // four gives a margin for a stray palm.
+  input: { activePointers: 4 },
   scene: [BootScene, TitleScene, GameScene, HubScene, UIScene],
 });

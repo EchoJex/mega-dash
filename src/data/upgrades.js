@@ -88,5 +88,25 @@ export function applyUpgrades(save, run) {
   for (const u of UPGRADES) u.apply(run, upgradeLevel(save, u.id));
 }
 
+/**
+ * Score -> Chips at the end of a run, itemised so the results screen can show
+ * the player where each Chip came from.
+ *
+ * Score converting at all is what lets meta progression start before the first
+ * boss ever falls: a run that ends badly still buys something, so the Hub is
+ * never gated behind a win.
+ */
+export const CHIPS_PER_SCORE = 50;   // score needed for one Chip
+export const CHIPS_PER_BOSS = 40;
+
+export function chipsBreakdown(score, bossCount, mult = 1) {
+  const fromScore = Math.floor(score / CHIPS_PER_SCORE);
+  const fromBosses = bossCount * CHIPS_PER_BOSS;
+  return {
+    fromScore, fromBosses, mult,
+    total: Math.round((fromScore + fromBosses) * mult),
+  };
+}
+
 export const chipsForRun = (score, bossCount, mult = 1) =>
-  Math.round((Math.floor(score / 50) + bossCount * 40) * mult);
+  chipsBreakdown(score, bossCount, mult).total;

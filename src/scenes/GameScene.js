@@ -16,7 +16,7 @@ import { FEEL } from '../config/feel.js';
 import { dev } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
 import { WEAPONS, NULL_WEAPON, weaponOf, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
-import { UPGRADES, applyUpgrades, chipsForRun } from '../data/upgrades.js';
+import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
 import * as Terrain from '../systems/terrain.js';
@@ -471,7 +471,13 @@ export default class GameScene extends Phaser.Scene {
     save.runs++;
     save.dist += Math.floor(this.run.dist);
     if (this.run.score > save.hi) save.hi = this.run.score;
-    save.chips += chipsForRun(this.run.score, this.run.bossesDefeated.length, this.run.chipGainMult);
+    // Itemised so the results screen can show the conversion rather than just
+    // a number that appeared from nowhere.
+    const earned = chipsBreakdown(
+      this.run.score, this.run.bossesDefeated.length, this.run.chipGainMult,
+    );
+    this.run.chipsEarned = earned;
+    save.chips += earned.total;
     persist();
     this.scene.stop('UI');
     this.scene.start('Title', { died: true, run: this.run });

@@ -120,7 +120,10 @@ export default class UIScene extends Phaser.Scene {
     const z = this.z3;
     const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
       .setInteractive({ useHandCursor: true });
-    let startY = 0, slid = false, tapT = 0;
+    // MULTI-TOUCH: a zone is owned by the finger that pressed it. Without this,
+    // a second finger merely crossing zone 3 fires its pointerout and cancels
+    // the movement the first finger is still holding.
+    let owner = null, startY = 0, slid = false, tapT = 0;
 
     const dirFor = (px) => {
       const t = (px - z.x) / z.w;
@@ -131,19 +134,23 @@ export default class UIScene extends Phaser.Scene {
     };
 
     zone.on('pointerdown', (p) => {
+      if (owner !== null) return;               // already held by another finger
+      owner = p.id;
       startY = p.y; slid = false; tapT = performance.now();
       const d = dirFor(p.x);
       this.game_.setMove(d.dir);
       this.game_.player.diagInput = d.diag;
     });
     zone.on('pointermove', (p) => {
-      if (!p.isDown) return;
+      if (p.id !== owner || !p.isDown) return;
       const d = dirFor(p.x);
       this.game_.setMove(d.dir);
       this.game_.player.diagInput = d.diag;
       if (!slid && p.y - startY > SLIDE_DEADZONE) { slid = true; this.game_.toggleSlide(); }
     });
-    const up = () => {
+    const up = (p) => {
+      if (p && p.id !== owner) return;
+      owner = null;
       this.game_.setMove(0);
       this.game_.player.diagInput = null;
       // a quick tap while sliding cancels the slide
@@ -166,16 +173,21 @@ export default class UIScene extends Phaser.Scene {
     const z = this.z4;
     const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
       .setInteractive({ useHandCursor: true });
-    let mode = null;
+    // Jump and fire are tracked as SEPARATE pointers so they can be held at the
+    // same time — the whole point of the split pad.
+    const held = new Map(); // pointer id -> 'jump' | 'fire'
 
     zone.on('pointerdown', (p) => {
-      if (p.x - z.x < z.w / 2) { mode = 'jump'; this.game_.doJump(); }
-      else { mode = 'fire'; this.game_.beginFire(); }
+      if (held.has(p.id)) return;
+      if (p.x - z.x < z.w / 2) { held.set(p.id, 'jump'); this.game_.doJump(); }
+      else { held.set(p.id, 'fire'); this.game_.beginFire(); }
     });
-    const up = () => {
+    const up = (p) => {
+      const mode = held.get(p.id);
+      if (!mode) return;
+      held.delete(p.id);
       if (mode === 'fire') this.game_.endFire();
       if (mode === 'jump') this.game_.endJump(); // releasing early cuts the rise
-      mode = null;
     };
     zone.on('pointerup', up);
     zone.on('pointerout', up);
@@ -247,14 +259,17 @@ export default class UIScene extends Phaser.Scene {
       { fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' })
       .setOrigin(0.5).setAlpha(IDLE_ALPHA);
 
-    this.reqBox.on('pointerdown', (p) => { this.press = { x: p.x, y: p.y, swiping: false }; });
+    this.reqBox.on('pointerdown', (p) => {
+      if (this.press) return;
+      this.press = { id: p.id, x: p.x, y: p.y, swiping: false };
+    });
 
     // Move and release are tracked at SCENE level, not on the button: a swipe
     // leaves a 60x20 button within a few pixels, and the button stops seeing
     // its own pointer the moment it does.
     this.input.on('pointermove', (p) => {
       const pr = this.press;
-      if (!pr || !p.isDown) return;
+      if (!pr || p.id !== pr.id || !p.isDown) return;
       const dx = p.x - pr.x, dy = p.y - pr.y;
       if (!pr.swiping) {
         if (this.mode === 'open') return; // already tapped open — ignore drags
@@ -264,9 +279,9 @@ export default class UIScene extends Phaser.Scene {
       }
       this.aimSwipe(dx, dy);
     });
-    this.input.on('pointerup', () => {
+    this.input.on('pointerup', (p) => {
       const pr = this.press;
-      if (!pr) return;
+      if (!pr || p.id !== pr.id) return;
       this.press = null;
       if (pr.swiping) this.endSwipe();
       else if (this.mode === 'open') this.closeWheel(); // tapping again backs out

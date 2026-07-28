@@ -30,8 +30,21 @@ export default class TitleScene extends Phaser.Scene {
         `LEVEL ${s.level}   DIST ${Math.floor(s.dist)}m`,
         `KILLS ${s.kills}   BOSSES ${s.bossesDefeated.length}`,
       ];
-      stats.forEach((t, i) => this.add.text(cx, 86 + i * 11, t,
+      stats.forEach((t, i) => this.add.text(cx, 78 + i * 10, t,
         { fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' }).setOrigin(0.5));
+
+      // The conversion, itemised. Score alone earns Chips, so even a run that
+      // never reaches a boss still buys something in the Hub.
+      const c = s.chipsEarned;
+      if (c) {
+        const parts = [`score ${c.fromScore}`];
+        if (c.fromBosses) parts.push(`bosses ${c.fromBosses}`);
+        if (c.mult !== 1) parts.push(`x${c.mult.toFixed(2)}`);
+        this.add.text(cx, 112, `+${c.total} CHIPS`,
+          { fontFamily: 'monospace', fontSize: '9px', color: '#F5D328' }).setOrigin(0.5);
+        this.add.text(cx, 122, parts.join('  ·  '),
+          { fontFamily: 'monospace', fontSize: '6px', color: '#8A7A30' }).setOrigin(0.5);
+      }
     }
 
     this.btn(cx, 136, this.died ? 'TRY AGAIN' : 'START', () => this.scene.start('Game'));
