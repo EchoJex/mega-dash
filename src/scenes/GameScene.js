@@ -24,6 +24,7 @@ import * as Terrain from '../systems/terrain.js';
 import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
+import * as Arena from '../systems/arena.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
 } from '../systems/assets.js';
@@ -39,6 +40,9 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.viewW = this.scale.gameSize.width;
     this.acc = 0;
+    // Phaser reuses the scene instance across scene.start, so a run that ended
+    // while paused would leave the NEXT run frozen on its first frame.
+    this.paused = false;
     this.timeScale = 1;
     this.tsTarget = 1;
     this.tsStep = 0;
@@ -129,8 +133,90 @@ export default class GameScene extends Phaser.Scene {
     this.pickups = [];
     this.spawnTimer = 0;
     this.boss = null;
+    this.arena = null;
+    this.warp = null;
+    this.shake = null;
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
+    this.startArea();
+  }
+
+  /**
+   * Begin a fresh scrolling area. Draws the NEXT boss from the bag immediately
+   * so the backdrop can foreshadow which arena the door leads to — you should
+   * be able to tell Blaze Man is coming because the world ahead is going red.
+   */
+  startArea() {
+    this.upcoming = this.nextBoss();
+    this.areaTheme = Arena.themeFor(this.upcoming);
+    this.world = Terrain.makeWorld(80, GROUND_Y);
+    this.cam = { x: 0 };
+    this.player.x = 80;
+    this.player.y = GROUND_Y - 24;
+    this.player.vx = 0; this.player.vy = 0;
+    this.bullets = [];
+    this.minions = [];
+    this.pickups = [];
+    this.arena = null;
+    this.areaFrame = 0;
     Terrain.generate(this.world, 0, this.viewW);
+  }
+
+  // ── Warp ────────────────────────────────────────────────────────────
+  /**
+   * Freeze everything and fade to black; build on the far side of the fade;
+   * fade back in and resume. Nothing is ever seen half-constructed.
+   *
+   * The warp advances on REAL time, not sim time, because the sim is stopped
+   * for its duration.
+   */
+  beginWarp(build) {
+    if (this.warp) return;
+    this.warp = { phase: 'out', t: Arena.WARP.out, alpha: 0, build };
+    this.intent.moveDir = 0;
+    this.intent.fireHeld = false;
+    this.intent.jumpHeld = false;
+  }
+
+  stepWarp(delta) {
+    const w = this.warp;
+    const step = delta / FIXED_DT;
+    w.t -= step;
+    if (w.phase === 'out') {
+      w.alpha = Math.min(1, 1 - w.t / Arena.WARP.out);
+      if (w.t <= 0) { w.phase = 'hold'; w.t = Arena.WARP.hold; w.alpha = 1; }
+    } else if (w.phase === 'hold') {
+      w.alpha = 1;
+      if (w.t <= 0) {
+        w.build();                       // everything loads behind full black
+        w.phase = 'in';
+        w.t = Arena.WARP.in;
+      }
+    } else {
+      w.alpha = Math.max(0, w.t / Arena.WARP.in);
+      if (w.t <= 0) this.warp = null;    // time resumes
+    }
+  }
+
+  /** Door contact -> the boss's sealed arena. */
+  warpToArena(def) {
+    this.beginWarp(() => {
+      const layer = bossLayer(save, def.id);
+      this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
+      this.cam = { x: 0 };
+      this.minions = [];   // nothing follows you in
+      this.bullets = [];
+      this.pickups = [];
+      this.world.doors = [];
+      this.player.x = 24;
+      this.player.y = GROUND_Y - 24;
+      this.player.vx = 0; this.player.vy = 0;
+      this.spawnBoss(def, layer);
+    });
+  }
+
+  /** Wrap door contact -> out of the arena into a fresh area. */
+  warpToNextArea() {
+    this.beginWarp(() => this.startArea());
   }
 
   /**
@@ -157,6 +243,8 @@ export default class GameScene extends Phaser.Scene {
         : Math.max(this.tsTarget, this.timeScale - d);
     }
     if (this.paused) return;
+    // A warp freezes the simulation entirely and advances on real time.
+    if (this.warp) { this.stepWarp(delta); this.draw(); return; }
     this.acc += delta * this.timeScale;
     let steps = 0;
     while (this.acc >= FIXED_DT && steps < MAX_STEPS_PER_FRAME) {
@@ -180,8 +268,10 @@ export default class GameScene extends Phaser.Scene {
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
 
     Phys.stepPlayer(p, this.world, { moveDir, jumpHeld: this.intent.jumpHeld }, GROUND_Y);
-    this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
-    if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
+    if (!this.arena) {
+      this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
+      if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
+    }
 
     // distance is real rightward progress, used for EXP and stats
     // Distance is a stat only. It grants no EXP — walking right is not progress
@@ -189,24 +279,44 @@ export default class GameScene extends Phaser.Scene {
     r.dist = Math.max(r.dist, (p.x - 80) / 8);
 
     // hazards: pits and spikes are instant death
+    // A pit is massive damage plus a throw back onto solid ground, not an
+    // instant kill. Repositioning happens even during i-frames — otherwise you
+    // would keep falling with nothing to land on.
     if (p.y > VIEW_H + 24) {
-      if (!dev('pitImmunity')) return this.die();
+      this.hurt(p.x, FEEL.hazardDamage);
       this.respawnOnGround();
     }
     const box = Phys.hitboxOf(p);
-    if (!dev('spikeImmunity')) {
-      for (const s of this.world.spikes) if (Phys.overlaps(box, s)) return this.die();
+    for (const s of this.world.spikes) {
+      if (Phys.overlaps(box, s)) { this.hurt(s.x + s.w / 2, FEEL.hazardDamage); break; }
     }
 
-    Terrain.generate(this.world, this.cam.x, this.viewW);
-    Terrain.maybeSpawnDoor(this.world, this.cam.x, this.viewW, r.frame);
-    Terrain.prune(this.world, this.cam.x);
+    Arena.stepShake(this.shake);
 
-    // walking into a door starts the boss fight
-    for (const d of this.world.doors) {
-      if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
-        d.alive = false;
-        this.spawnBoss();
+    if (this.arena) {
+      // Sealed room: no streaming, no camera, walls hold you in.
+      Arena.clampToArena(this.arena, p);
+      // The wrap door only exists once the boss is down.
+      for (const d of this.world.doors) {
+        if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
+          d.alive = false;
+          this.warpToNextArea();
+          return;
+        }
+      }
+    } else {
+      this.areaFrame++;
+      Terrain.generate(this.world, this.cam.x, this.viewW);
+      Terrain.maybeSpawnDoor(this.world, this.cam.x, this.viewW, this.areaFrame);
+      Terrain.prune(this.world, this.cam.x);
+
+      // walking into the boss door warps you to its arena
+      for (const d of this.world.doors) {
+        if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
+          d.alive = false;
+          this.warpToArena(this.upcoming);
+          return;
+        }
       }
     }
 
@@ -423,21 +533,18 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ── Bosses ──────────────────────────────────────────────────────────
-  spawnBoss() {
-    const def = this.nextBoss();
-    const layer = bossLayer(save, def.id);
+  spawnBoss(def, layer) {
     const h = Math.round(24 * def.scale);
     const w = Math.round(h * 0.75);
     const hp = Math.round(def.baseHp * (1 + (layer - 1) * FEEL.bossLayerHpMult));
-    // guarantee footing for the arena even if a pit generated here
-    this.world.groundSpans.push({ x1: this.cam.x - 40, x2: this.cam.x + this.viewW + 40 });
-    // Minions do not follow you into the fight. Once the door becomes a real
-    // teleport into a sealed arena this is what being somewhere else means.
-    this.minions = [];
+    // The arena floor is solid wall to wall — no pits in a boss room.
+    this.world.groundSpans = [{ x1: -40, x2: this.viewW + 40 }];
+    this.world.spikes = [];
+    this.world.platforms = [];
     const fight = fightFor(def.id, layer);
     this.boss = {
       ...def, layer, hp, maxHp: hp,
-      x: this.cam.x + this.viewW + w, y: GROUND_Y - h, w, h,
+      x: this.viewW - w - 24, y: GROUND_Y - h, w, h,
       anim: 0, state: 'enter',
       fight,
       fs: null, // attack-loop state, owned by data/bossFights.js
@@ -515,15 +622,21 @@ export default class GameScene extends Phaser.Scene {
       this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
     }
     // PHASE 5 adds the elemental death animation, fade, palette-swap reveal.
+    // The WRAP DOOR out only exists once the boss is down.
+    this.world.doors = [{
+      x: this.viewW / 2 - 8, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
+    }];
     this.boss = null;
   }
 
   // ── Damage / death ──────────────────────────────────────────────────
-  hurt(sourceX) {
+  hurt(sourceX, amount = 1) {
     const r = this.run, p = this.player;
     if (r.invuln > 0) return;
-    if (dev('unlimitedHp')) return;
-    r.hp--;
+    r.hp -= amount;
+    // DEV: the hit lands in full — flinch, knockback and i-frames all apply —
+    // it just cannot finish you.
+    if (dev('hpFloor')) r.hp = Math.max(1, r.hp);
     r.invuln = FEEL.invulnFrames + r.armorBonus;
     r.combo = 1; r.comboTimer = 0;
     p.hitAnim = 20;
@@ -537,7 +650,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  /** DEV ONLY — drop the player back onto the nearest ground ahead of the camera. */
+  /** Drop the player back onto the nearest solid ground ahead of the camera. */
   respawnOnGround() {
     const p = this.player;
     for (let x = this.cam.x + 40; x < this.cam.x + this.viewW + 200; x += 8) {
@@ -627,11 +740,18 @@ export default class GameScene extends Phaser.Scene {
     const L = this.layers;
     for (const l of Object.values(L)) l.begin();
 
-    L.bg.drawBackground(this.viewW, VIEW_H, cam, 0x060614);
+    // Screen shake offsets the WORLD, never the HUD. Whole pixels only — the
+    // render is integer-scaled, so a fractional offset would shimmer.
+    const sh = Arena.shakeOffset(this.shake);
+    const theme = this.arena ? this.arena.theme : this.areaTheme;
+    L.bg.drawBackground(this.viewW, VIEW_H, cam, theme?.fill ?? 0x060614);
 
     const g = L.world.g;
-    const sx = (wx) => wx - cam; // world -> screen
+    const sx = (wx) => wx - cam + sh.x; // world -> screen, shaken
 
+    if (this.arena) {
+      Arena.drawArena(g, this.arena, this.viewW, sh);
+    } else {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
       if (s.x2 < cam - 8 || s.x1 > cam + this.viewW + 8) continue;
@@ -652,11 +772,15 @@ export default class GameScene extends Phaser.Scene {
       g.fillStyle(0x1a3a60, 1);
       g.fillRect(sx(p.x), p.y, p.w, p.h);
     }
+    }
+
+    // Doors exist in both spaces: the boss door in an area, the wrap door out
+    // of an arena. The wrap door is gold-cored to read as an exit, not a threat.
     for (const d of this.world.doors) {
       g.fillStyle(0xf5d328, 0.6 + 0.4 * Math.sin(r.frame * 0.08));
-      g.fillRect(sx(d.x) - 2, d.y - d.h - 2, d.w + 4, d.h + 4);
-      g.fillStyle(0x5cadd5, 1);
-      g.fillRect(sx(d.x), d.y - d.h, d.w, d.h);
+      g.fillRect(sx(d.x) - 2, d.y - d.h - 2 + sh.y, d.w + 4, d.h + 4);
+      g.fillStyle(d.wrap ? 0xf5d328 : 0x5cadd5, 1);
+      g.fillRect(sx(d.x), d.y - d.h + sh.y, d.w, d.h);
     }
 
     for (const p of this.pickups) {

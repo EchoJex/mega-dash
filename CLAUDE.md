@@ -173,6 +173,47 @@ hazards *and* layer-2 attacks. Both elementally themed.
 
 ---
 
+## Areas and arenas
+
+A run alternates between two spaces:
+
+**AREA** — the endless procedural stream. Its background is themed to the boss whose
+door is coming, so the arena is **foreshadowed** before you reach it.
+
+**ARENA** — exactly one screen, walled left and right, floored and ceilinged, camera
+locked, no ambient minions. One screen wide matches the NES boss rooms, means the camera
+never has to decide anything, and guarantees the whole fight stays visible.
+
+The door does not open into the arena, it **warps** you there: contact freezes everything,
+fades to black, builds the room behind full black, then fades back in and resumes. Nothing
+is ever seen half-constructed. On the boss's death a **wrap door** appears and warps you
+out to a fresh area themed to the next boss in the bag.
+
+`src/systems/arena.js` owns the room, the placeholder backdrop (a darkened wash of the
+boss's own primary until `background:<bossId>` art exists), and **screen shake** — whole
+virtual pixels only, because the render is integer-scaled and a fractional offset would
+shimmer. Shake moves the world, never the HUD.
+
+---
+
+## Elemental attributes
+
+Attributes belong to **player special weapons** and to **bosses inside their own arena**.
+Nothing else has them — minions carry none (elementally themed minions are a possible
+much later addition), and ordinary terrain outside an arena carries none.
+
+Each attribute has a terrain form and a character form, e.g. **Hot** (terrain) /
+**Burn** (character), **Soaked** / **Wet**, **Corrosive** / **Poisoned**,
+**Electrified** / **Stunned**. Several will end up sharing identical underlying
+behaviour with a different coloured tint — stun, constrict and freeze already do.
+
+**Flinch and knockback are NOT attributes.** They are basic hitbox interaction, present
+on every hit regardless of element. Do not model them as status effects.
+
+See `design/boss-design-tracker.json` for the per-attribute definitions.
+
+---
+
 ## Minions
 
 `src/data/minions.js` — exactly two, one per plane of movement: **SCRAPPER** (ground,

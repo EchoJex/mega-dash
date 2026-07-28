@@ -104,6 +104,11 @@ export default class UIScene extends Phaser.Scene {
     this.press = null;
     this.buildWheel();
     this.buildRequip();
+
+    // Warp fade — above every other overlay, including the HUD, so a transition
+    // is a clean cut to black rather than a dimmed-but-still-readable screen.
+    this.fade = this.add.rectangle(0, 0, w, VIEW_H, 0x000000, 0)
+      .setOrigin(0).setDepth(100).setVisible(false);
   }
 
   mkTap(x, y, w, h, label, fn) {
@@ -193,8 +198,55 @@ export default class UIScene extends Phaser.Scene {
     zone.on('pointerout', up);
   }
 
+  // ── Pause ───────────────────────────────────────────────────────────
+
+  /**
+   * The pause button owns a real panel rather than silently freezing the sim.
+   * It refuses to open on top of the card screen or the re-quip wheel — those
+   * already own `paused`, and toggling it underneath them would resume the game
+   * while their overlay stayed up.
+   */
   togglePause() {
-    this.game_.paused = !this.game_.paused;
+    if (this.pausePanel) return this.closePause();
+    if (this.cards || this.panel || this.mode === 'open') return;
+    this.openPause();
+  }
+
+  openPause() {
+    this.game_.paused = true;
+    const cx = this.w / 2;
+    this.pausePanel = this.add.container(0, 0).setDepth(60);
+    this.pausePanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.9)
+      .setOrigin(0).setInteractive());
+    this.pausePanel.add(this.add.text(cx, 60, 'PAUSED',
+      { fontFamily: 'monospace', fontSize: '14px', color: '#5CADD5' }).setOrigin(0.5));
+
+    const btn = (y, label, colour, fn) => {
+      const t = this.add.text(cx, y, label, {
+        fontFamily: 'monospace', fontSize: '9px', color: colour,
+        backgroundColor: '#0d1420', padding: { x: 10, y: 4 },
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      t.on('pointerdown', fn);
+      this.pausePanel.add(t);
+    };
+    btn(104, 'RESUME', '#5CADD5', () => this.closePause());
+    btn(132, 'ABORT RUN', '#C04040', () => this.abortRun());
+    this.pausePanel.add(this.add.text(cx, 150, 'ends the run and banks your Chips',
+      { fontFamily: 'monospace', fontSize: '6px', color: '#6A5A5A' }).setOrigin(0.5));
+  }
+
+  closePause() {
+    this.pausePanel?.destroy(true);
+    this.pausePanel = null;
+    this.game_.paused = false;
+  }
+
+  /** End the run deliberately — straight to the normal results screen. */
+  abortRun() {
+    this.pausePanel?.destroy(true);
+    this.pausePanel = null;
+    this.game_.paused = false;
+    this.game_.die();
   }
 
   // ── Re-quip wheel ───────────────────────────────────────────────────
@@ -519,6 +571,9 @@ export default class UIScene extends Phaser.Scene {
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
+
+    const wa = gm.warp?.alpha ?? 0;
+    this.fade.setVisible(wa > 0).setAlpha(wa);
     // Card screen takes priority over every other overlay.
     if (gm.run.pendingLevelUps > 0 && !this.cards && !this.panel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);

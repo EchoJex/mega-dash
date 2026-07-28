@@ -74,6 +74,11 @@ export const FEEL = {
   slideHeightMult: 0.47,    // collision box shrinks, letting you pass low gaps
 
   // ── Combat ───────────────────────────────────────────────────────────
+  // Pits and spikes deal the SAME massive damage rather than an instant kill.
+  // A mistake should be brutal and recoverable, not a run ended by one pixel.
+  // Falling in a pit also throws you back onto solid ground — the damage is the
+  // punishment, the fall is not. Placeholder value.
+  hazardDamage: 6,
   invulnFrames: 90,
   flinchFrames: 16,
   knockbackSpeed: 2.4,
