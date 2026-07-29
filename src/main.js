@@ -4,6 +4,7 @@
  */
 import Phaser from 'phaser';
 import { VIEW_H, RENDER_SCALE, computeViewWidth } from './config/display.js';
+import { DEV } from './config/dev.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import GameScene from './scenes/GameScene.js';
@@ -17,7 +18,7 @@ const viewW = computeViewWidth(window.innerWidth, window.innerHeight);
 // browsers, hence the silent catch — the game is playable either way.
 try { screen.orientation?.lock?.('landscape').catch(() => {}); } catch { /* unsupported */ }
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
   // Backing store is RENDER_SCALE times the virtual size; every scene camera
@@ -41,3 +42,13 @@ new Phaser.Game({
   input: { activePointers: 4 },
   scene: [BootScene, TitleScene, GameScene, HubScene, UIScene],
 });
+
+/**
+ * DEV-ONLY handle, so an automated playtest can drive a real build: reach into
+ * a scene, read player state, jump straight to a boss. There is no other way to
+ * verify touch controls or a boss fight without a human holding the phone.
+ *
+ * Gated on the same single switch as every other dev perk — shipping means
+ * DEV.enabled = false, and this vanishes with the rest.
+ */
+if (DEV.enabled) globalThis.__game = game;

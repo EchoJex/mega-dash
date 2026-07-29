@@ -1,16 +1,21 @@
 /**
  * UIScene — HUD and the four-zone touch layout, drawn above GameScene.
  *
- * ZONES (see docs/control-zones.md for the full spec)
+ * LAYOUT
  *   1 top-left      energy pips, score, level + EXP bar
  *   2 top-right     pause
- *   3 bottom-left   movement: 4 columns  <-  <^  ^>  ->  · drag down = slide
+ *   3 bottom-left   movement: four buttons  ◀  ◸  ◹  ▶  · drag down = slide
  *   4 bottom-right  [] jump   () shoot, hold to charge
- *   bottom-centre   RE-QUIP — the radial weapon wheel
+ *   between them    RE-QUIP — the radial weapon wheel
  *
- * Zone 3's diagonal columns move identically to their neighbour today but set
- * `diagInput` on the player. Nothing consumes it yet — it is reserved for
- * special moves that have not been designed.
+ * Every control is a REAL BUTTON you can see, not an invisible band split by
+ * arithmetic. What is pressable is exactly what is drawn, which is the only way
+ * a touch layout is honest on a phone.
+ *
+ * The two diagonal buttons walk like their outer neighbour today and set
+ * `diagInput` on the player. Nothing consumes it yet — it exists because several
+ * special weapons are planned to fire from a standing diagonal, and the input
+ * has to be a distinct press before a weapon can read it.
  *
  * THE RE-QUIP WHEEL
  * -----------------
@@ -39,6 +44,34 @@ import { hexNum } from '../systems/assets.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
 const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
+
+/**
+ * TOUCH COORDINATES — always convert, never use pointer.x directly.
+ *
+ * `pointer.x/y` are CANVAS pixels. Every control here is laid out in VIRTUAL
+ * pixels, and the camera zooms by RENDER_SCALE (2-5x), so the two spaces differ
+ * by that factor. Reading pointer.x raw made every touch land 2-5x too far
+ * right: the movement strip always resolved to its rightmost column and the
+ * jump/fire split always resolved to fire, which presented as "I can only walk
+ * right and shoot". Route every pointer through here.
+ */
+const vpt = (scene, p) => scene.cameras.main.getWorldPoint(p.x, p.y);
+
+/**
+ * How far a finger may slide off a button before the hold drops.
+ *
+ * Deliberately MILD. An unlimited grip (tracking the finger anywhere on screen
+ * until it lifts) stops a control ever releasing when you roll your thumb onto
+ * a neighbour; zero grip drops a held jump the instant your thumb shifts, which
+ * cuts the rise mid-flight. A few pixels covers normal thumb roll and nothing
+ * more.
+ */
+const GRACE = 8;
+
+// Controls are visible but recede: solid enough to aim at, faint enough not to
+// cover the playfield. They brighten on press so a touch is confirmed on screen.
+const PAD_ALPHA = 0.30;
+const PAD_ALPHA_ON = 0.62;
 
 // Wheel geometry. Sized to clear the HUD above and both thumb pads below on the
 // narrowest supported virtual width (320).
@@ -82,9 +115,40 @@ export default class UIScene extends Phaser.Scene {
     fitCamera(this, w);
     this.w = w;
     this.g = this.add.graphics();
-    this.zoneH = 44;
-    this.z3 = { x: 0, y: VIEW_H - this.zoneH, w: Math.min(w * 0.46, 120), h: this.zoneH };
-    this.z4 = { x: w - Math.min(w * 0.36, 96), y: VIEW_H - this.zoneH, w: Math.min(w * 0.36, 96), h: this.zoneH };
+
+    /**
+     * CONTROL LAYOUT — bigger pads, and each one is a real button.
+     *
+     * The movement strip is four adjacent buttons rather than an invisible band
+     * split by arithmetic, so what you can press is exactly what you can see.
+     * The two diagonals are their own buttons, not decorations: several special
+     * weapons are planned to fire from a standing diagonal, so the input has to
+     * exist as a distinct press before the weapons can use it.
+     */
+    this.padH = 54;
+    const padY = VIEW_H - this.padH;
+    // Sized proportionally then clamped, so all three clusters plus the gap
+    // between them still fit at the narrowest supported virtual width (320) and
+    // do not sprawl at the widest (480).
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.floor(v)));
+    const colW = clamp(w * 0.115, 36, 48);
+    this.z3 = { x: 0, y: padY, w: colW * 4, h: this.padH };
+
+    // dir is what movement does now; diag is recorded for the weapons that will
+    // read it later. The two inner buttons walk like their outer neighbour.
+    this.moveBtns = [
+      { x: 0,        w: colW, dir: -1, diag: null, glyph: '◀' },
+      { x: colW,     w: colW, dir: -1, diag: 'ul', glyph: '◸' },
+      { x: colW * 2, w: colW, dir: 1,  diag: 'ur', glyph: '◹' },
+      { x: colW * 3, w: colW, dir: 1,  diag: null, glyph: '▶' },
+    ].map((b) => ({ ...b, y: padY, h: this.padH }));
+
+    const actW = clamp(w * 0.17, 52, 78);
+    this.z4 = { x: w - actW * 2, y: padY, w: actW * 2, h: this.padH };
+    this.actBtns = [
+      { id: 'jump', x: w - actW * 2, y: padY, w: actW, h: this.padH, glyph: '[ ]' },
+      { id: 'fire', x: w - actW,     y: padY, w: actW, h: this.padH, glyph: '( )' },
+    ];
 
     // HP is drawn as pips in this.g; the text picks up below it
     this.hud = this.add.text(4, 15, '', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
@@ -122,88 +186,128 @@ export default class UIScene extends Phaser.Scene {
     return { r, t };
   }
 
+  /** A visible pad: translucent body, glyph, and a brighter state while held. */
+  mkPad(b, glyph) {
+    const r = this.add.rectangle(b.x, b.y, b.w, b.h, 0x0d1420, PAD_ALPHA).setOrigin(0)
+      .setStrokeStyle(1, 0x5cadd5, PAD_ALPHA)
+      .setInteractive({ useHandCursor: true });
+    const t = this.add.text(b.x + b.w / 2, b.y + b.h / 2, glyph, {
+      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '11px', color: '#5CADD5',
+    }).setOrigin(0.5).setAlpha(PAD_ALPHA + 0.25);
+    b.rect = r; b.txt = t;
+    return b;
+  }
+
+  /** Light a pad up while it is being held, so a touch is visibly acknowledged. */
+  litPad(b, on) {
+    b.rect.setAlpha(on ? PAD_ALPHA_ON : PAD_ALPHA);
+    b.rect.setStrokeStyle(1, 0x5cadd5, on ? 0.9 : PAD_ALPHA);
+    b.txt.setAlpha(on ? 1 : PAD_ALPHA + 0.25);
+  }
+
+  /** Is this virtual point inside b, allowing GRACE px of thumb roll? */
+  static within(b, v, pad = GRACE) {
+    return v.x >= b.x - pad && v.x <= b.x + b.w + pad
+        && v.y >= b.y - pad && v.y <= b.y + b.h + pad;
+  }
+
   /**
-   * Zone 3 — four directional columns plus drag-down-to-slide.
+   * Zone 3 — four directional buttons plus drag-down-to-slide.
    *
-   * TRACKED AT SCENE LEVEL ON PURPOSE. A zone is claimed by the finger that
-   * pressed it and released only when that finger actually lifts. Binding to the
-   * zone's own `pointerout` used to cancel movement the moment a thumb drifted
-   * outside a 44px band — which happens constantly mid-jump as your grip shifts,
-   * and read as the player's forward momentum dying in mid-air.
+   * The finger may slide BETWEEN the four movement buttons freely: they are one
+   * control drawn as four keys, and re-aiming without lifting is how you turn
+   * around mid-fight. Leaving the strip (plus GRACE) releases. That is the
+   * middle ground between the two failure modes — an unlimited grip that never
+   * lets go, and a per-button `pointerout` that dropped movement whenever a
+   * thumb drifted, which read as momentum dying in mid-air.
+   *
+   * Downward drag is exempt from the release check, because the slide gesture is
+   * a deliberate drag toward the bottom edge of the screen.
    */
   bindZone3() {
     const z = this.z3;
-    const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
-      .setInteractive({ useHandCursor: true });
-    let owner = null, startY = 0, slid = false, tapT = 0;
+    this.moveBtns.forEach((b) => this.mkPad(b, b.glyph));
+    let owner = null, startY = 0, slid = false, tapT = 0, active = null;
 
-    const dirFor = (px) => {
-      const t = (px - z.x) / z.w;
-      if (t < 0.25) return { dir: -1, diag: null };
-      if (t < 0.5) return { dir: -1, diag: 'ul' };
-      if (t < 0.75) return { dir: 1, diag: 'ur' };
-      return { dir: 1, diag: null };
+    const btnAt = (v) => this.moveBtns.find((b) => v.x >= b.x && v.x < b.x + b.w)
+      || (v.x < z.x ? this.moveBtns[0] : this.moveBtns[this.moveBtns.length - 1]);
+
+    const aim = (b) => {
+      if (active && active !== b) this.litPad(active, false);
+      active = b;
+      this.litPad(b, true);
+      this.game_.setMove(b.dir);
+      this.game_.player.diagInput = b.diag;
     };
 
-    zone.on('pointerdown', (p) => {
-      if (owner !== null) return;               // already held by another finger
-      owner = p.id;
-      startY = p.y; slid = false; tapT = performance.now();
-      const d = dirFor(p.x);
-      this.game_.setMove(d.dir);
-      this.game_.player.diagInput = d.diag;
-    });
-    // Scene-level: the finger keeps steering even outside the pad. The x is
-    // clamped, so dragging off the left edge keeps holding left.
-    this.input.on('pointermove', (p) => {
-      if (p.id !== owner || !p.isDown) return;
-      const cx = Math.max(z.x, Math.min(z.x + z.w - 1, p.x));
-      const d = dirFor(cx);
-      this.game_.setMove(d.dir);
-      this.game_.player.diagInput = d.diag;
-      if (!slid && p.y - startY > SLIDE_DEADZONE) { slid = true; this.game_.toggleSlide(); }
-    });
-    this.input.on('pointerup', (p) => {
-      if (owner === null || p.id !== owner) return;
+    const release = () => {
       owner = null;
+      if (active) this.litPad(active, false);
+      active = null;
       this.game_.setMove(0);
       this.game_.player.diagInput = null;
+    };
+
+    this.moveBtns.forEach((b) => b.rect.on('pointerdown', (p) => {
+      if (owner !== null) return;                 // already held by another finger
+      owner = p.id; slid = false; tapT = performance.now();
+      startY = vpt(this, p).y;
+      aim(b);
+    }));
+
+    this.input.on('pointermove', (p) => {
+      if (p.id !== owner || !p.isDown) return;
+      const v = vpt(this, p);
+      if (!slid && v.y - startY > SLIDE_DEADZONE) { slid = true; this.game_.toggleSlide(); }
+      // Sliding down toward the screen edge must not count as leaving the strip.
+      const left = v.x < z.x - GRACE || v.x > z.x + z.w + GRACE || v.y < z.y - GRACE;
+      if (left) { release(); return; }
+      aim(btnAt(v));
+    });
+
+    this.input.on('pointerup', (p) => {
+      if (owner === null || p.id !== owner) return;
+      const quick = !slid && performance.now() - tapT < 150;
+      release();
       // a quick tap while sliding cancels the slide
-      if (!slid && performance.now() - tapT < 150 && this.game_.player.sliding) {
-        this.game_.toggleSlide();
-      }
+      if (quick && this.game_.player.sliding) this.game_.toggleSlide();
     });
   }
 
   /**
-   * Zone 4 — [] jump on the left half, () shoot/charge on the right.
+   * Zone 4 — [] jump and () shoot/charge, as two separate buttons.
    *
-   * Swipe-to-cycle used to live here. It is gone: cycling blind through 18
-   * weapons was never a real choice, and the re-quip wheel replaces it with a
-   * directional pick you can actually aim.
+   * Each is claimed by its own pointer so both can be held at once — the whole
+   * point of the split pad. Unlike the movement strip these do NOT re-target: a
+   * finger sliding off jump releases jump rather than becoming a shot, because
+   * turning a held jump into a held shot mid-air is never what you meant.
    */
   bindZone4() {
-    const z = this.z4;
-    const zone = this.add.rectangle(z.x, z.y, z.w, z.h, 0x000000, 0.001).setOrigin(0)
-      .setInteractive({ useHandCursor: true });
-    // Jump and fire are tracked as SEPARATE pointers so they can be held at the
-    // same time — the whole point of the split pad.
-    const held = new Map(); // pointer id -> 'jump' | 'fire'
+    const held = new Map(); // pointer id -> button
+    this.actBtns.forEach((b) => this.mkPad(b, b.glyph));
 
-    zone.on('pointerdown', (p) => {
-      if (held.has(p.id)) return;
-      if (p.x - z.x < z.w / 2) { held.set(p.id, 'jump'); this.game_.doJump(); }
-      else { held.set(p.id, 'fire'); this.game_.beginFire(); }
+    const start = (b, p) => {
+      if (held.has(p.id) || b.owner != null) return;
+      held.set(p.id, b); b.owner = p.id;
+      this.litPad(b, true);
+      if (b.id === 'jump') this.game_.doJump(); else this.game_.beginFire();
+    };
+
+    const stop = (p) => {
+      const b = held.get(p.id);
+      if (!b) return;
+      held.delete(p.id); b.owner = null;
+      this.litPad(b, false);
+      // releasing jump early cuts the rise — that is variable jump height
+      if (b.id === 'jump') this.game_.endJump(); else this.game_.endFire();
+    };
+
+    this.actBtns.forEach((b) => b.rect.on('pointerdown', (p) => start(b, p)));
+    this.input.on('pointermove', (p) => {
+      const b = held.get(p.id);
+      if (b && p.isDown && !UIScene.within(b, vpt(this, p))) stop(p);
     });
-    // Scene-level for the same reason as zone 3: drifting off the pad must not
-    // drop a held jump (which would cut the rise) or a held fire.
-    this.input.on('pointerup', (p) => {
-      const mode = held.get(p.id);
-      if (!mode) return;
-      held.delete(p.id);
-      if (mode === 'fire') this.game_.endFire();
-      if (mode === 'jump') this.game_.endJump(); // releasing early cuts the rise
-    });
+    this.input.on('pointerup', stop);
   }
 
   // ── Pause ───────────────────────────────────────────────────────────
@@ -309,8 +413,11 @@ export default class UIScene extends Phaser.Scene {
   }
 
   buildRequip() {
-    const bw = 60, bh = 20;
-    const x = this.w / 2 - bw / 2, y = VIEW_H - 24;
+    // Sits in the gap between the movement strip and the action pads, so no
+    // control overlaps another and the middle of the screen stays clear.
+    const gapL = this.z3.x + this.z3.w, gapR = this.z4.x;
+    const bw = Math.max(44, Math.min(64, gapR - gapL - 6)), bh = 24;
+    const x = Math.round((gapL + gapR) / 2 - bw / 2), y = VIEW_H - this.padH + 15;
     this.reqBox = this.add.rectangle(x, y, bw, bh, 0x0d1420).setOrigin(0)
       .setStrokeStyle(1, 0x5cadd5)
       .setAlpha(IDLE_ALPHA)
@@ -321,7 +428,8 @@ export default class UIScene extends Phaser.Scene {
 
     this.reqBox.on('pointerdown', (p) => {
       if (this.press) return;
-      this.press = { id: p.id, x: p.x, y: p.y, swiping: false };
+      const v = vpt(this, p);
+      this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
     });
 
     // Move and release are tracked at SCENE level, not on the button: a swipe
@@ -330,7 +438,8 @@ export default class UIScene extends Phaser.Scene {
     this.input.on('pointermove', (p) => {
       const pr = this.press;
       if (!pr || p.id !== pr.id || !p.isDown) return;
-      const dx = p.x - pr.x, dy = p.y - pr.y;
+      const v = vpt(this, p);
+      const dx = v.x - pr.x, dy = v.y - pr.y;
       if (!pr.swiping) {
         if (this.mode === 'open') return; // already tapped open — ignore drags
         if (Math.hypot(dx, dy) < SWIPE_DEADZONE) return;
@@ -611,17 +720,10 @@ export default class UIScene extends Phaser.Scene {
       }
     }
 
-    // control glyphs, drawn at 40% so they never fight the gameplay for attention
+    // The pads draw themselves now (real rectangles with glyphs, lit while held),
+    // so there are no control glyphs to paint here.
     const g = this.g;
     g.clear();
-    g.fillStyle(0x5cadd5, 0.4);
-    const z3 = this.z3, cw = z3.w / 4;
-    for (let i = 0; i < 4; i++) {
-      g.fillRect(z3.x + i * cw + cw * 0.3, z3.y + z3.h - 16, cw * 0.4, 10);
-    }
-    const z4 = this.z4;
-    g.fillRect(z4.x + z4.w * 0.16, z4.y + z4.h - 20, 14, 14);       // [] jump
-    g.fillCircle(z4.x + z4.w * 0.74, z4.y + z4.h - 13, 8);          // () shoot
     // Energy pips, one per point of max HP, with EXP as a yellow outline around
     // the whole bar. Tying EXP to the bar's perimeter means it rescales for free
     // when an Energy Tank widens the bar.
