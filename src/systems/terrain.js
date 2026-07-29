@@ -35,7 +35,8 @@ export function generate(world, camX, viewW) {
   const target = camX + viewW + LOOKAHEAD;
   let guard = 0;
   while (world.genX < target && guard++ < 40) {
-    // A pit is simply the absence of a ground span. Falling into one is death.
+    // A pit is simply the absence of a ground span. Falling in is not fatal —
+    // it deals FEEL.hazardDamage and beams the player back onto solid ground.
     if (Math.random() < PIT_CHANCE) {
       world.genX += rand(PIT_MIN, PIT_MAX);
       continue;

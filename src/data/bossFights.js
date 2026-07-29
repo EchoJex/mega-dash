@@ -13,8 +13,8 @@
  * `boss.fs` (attack) and `boss.hs` (hazard).
  *
  * ctx = { boss, player, layer, shoot, bounds }
- *   bounds  the walkable span — the camera view today, the sealed arena once
- *           arenas land. Written against bounds so it needs no rework then.
+ *   bounds  the walkable span — the sealed arena's inner walls during a fight,
+ *           the camera view otherwise. Never read the camera directly.
  *
  * SOURCE OF TRUTH: design/boss-design-tracker.json (exported from the HTML
  * tracker). Do NOT read the `const BOSSES` array inside the HTML — it is stale.

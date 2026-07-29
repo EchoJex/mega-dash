@@ -609,9 +609,12 @@ export default class GameScene extends Phaser.Scene {
       player: this.player,
       layer: b.layer,
       shoot: (spec) => this.spawnEnemyShot(spec),
-      // The walkable span. The camera view today; the sealed arena's inner
-      // walls once arenas land, with no change needed here.
-      bounds: { x0: this.cam.x + 16, x1: this.cam.x + this.viewW - 16 },
+      // The walkable span: the sealed arena's inner walls during a fight, the
+      // camera view otherwise (a boss met outside an arena still has somewhere
+      // to patrol). Every behaviour is written against bounds, never the camera.
+      bounds: this.arena
+        ? { x0: this.arena.x0 + 16, x1: this.arena.x1 - 16 }
+        : { x0: this.cam.x + 16, x1: this.cam.x + this.viewW - 16 },
     });
   }
 

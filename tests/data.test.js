@@ -12,6 +12,35 @@ import { UPGRADES } from '../src/data/upgrades.js';
 import { WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER } from '../src/data/weapons.js';
 import { SPRITE_CLASS, DEPTH, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
 import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
+import { readFileSync } from 'node:fs';
+
+const TRACKER = JSON.parse(
+  readFileSync(new URL('../design/boss-design-tracker.json', import.meta.url), 'utf8'),
+);
+
+/**
+ * The tracker is the design source of truth, so `bosses.js` is downstream of it.
+ * There is no codegen step — this test is what makes "downstream" real. It only
+ * checks the fields the tracker actually owns definitively (the palette hexes,
+ * the scale and the names); prose stays prose.
+ *
+ * A failure here means somebody edited one side without the other. Fix the
+ * TRACKER first, then bring the code to match — not the reverse.
+ */
+test('bosses.js matches the design tracker', () => {
+  assert.equal(BOSSES.length, TRACKER.bosses.length);
+  BOSSES.forEach((b, i) => {
+    const t = TRACKER.bosses[i];
+    const hex = (f) => t[f].text.trim().split(/\s+/)[0];
+    assert.equal(b.primary.toUpperCase(), hex('primaryHex').toUpperCase(), `${b.id} primary`);
+    assert.equal(b.secondary.toUpperCase(), hex('secondaryHex').toUpperCase(), `${b.id} secondary`);
+    assert.equal(b.outline.toUpperCase(), hex('outlineHex').toUpperCase(), `${b.id} outline`);
+    assert.equal(b.scale, parseFloat(t.spriteScale.text), `${b.id} scale`);
+    // Display names are UPPERCASE in code, title case in the tracker.
+    assert.equal(b.name, t.name.toUpperCase(), `${b.id} name`);
+    assert.equal(b.attackName, t.attackName, `${b.id} attack name`);
+  });
+});
 
 // NOTE: minion colours are deliberately UNCONSTRAINED against the boss
 // palette. The 17 boss primaries are perceptually spaced against each other;

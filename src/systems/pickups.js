@@ -5,9 +5,11 @@
  *   etank  energy, the resource you lose to mistakes
  *   exp    progress, the resource you lose to playing slowly
  *
- * Both are rolled from a single chance so the drop rate is one number to tune
- * rather than two that interact. The Luck Chip upgrade widens the roll; the
- * Item Magnet upgrade widens the collection radius.
+ * Each has its OWN drop chance. They are separate knobs on purpose: the E-Tank
+ * is a rare bailout and the EXP orb is the progression loop, so they want very
+ * different rates and tying them to one number would mean tuning one by
+ * breaking the other. The Luck Chip upgrade widens both; the Item Magnet
+ * upgrade widens the collection radius.
  *
  * Collection does NOT happen here — step() returns what was picked up and
  * GameScene applies it, because granting EXP is a progression concern that
@@ -47,16 +49,26 @@ export function rollExpAmount(tier) {
 }
 
 /**
- * Everything an enemy leaves behind. EXP always drops — it is the whole
- * progression loop, so it can never be denied by a bad roll. The E-Tank is the
- * only thing still gated on FEEL.pickupChance.
+ * Everything an enemy leaves behind.
+ *
+ * EXP is NOT a guaranteed drop from ordinary enemies. Making every kill pay out
+ * turned levelling into a function of how many bodies you walked past; gating it
+ * means a level is something the run gives you unevenly, and a dry streak is a
+ * real thing you feel. Bosses are exempt — a fight that long ending in nothing
+ * would read as a bug, not as variance.
+ *
+ * Both rates are placeholders and both scale with the Luck Chip.
  */
 export function dropsFor(tier, x, y, luckMult = 1) {
   const out = [];
-  const orbs = tier === 'boss' ? FEEL.expOrbsBoss : 1;
-  const total = rollExpAmount(tier);
-  const each = Math.max(1, Math.round(total / orbs));
-  for (let i = 0; i < orbs; i++) out.push(orb('exp', x, y, { amount: each }));
+  const isBoss = tier === 'boss';
+
+  if (isBoss || Math.random() < FEEL.expDropChance * luckMult) {
+    const orbs = isBoss ? FEEL.expOrbsBoss : 1;
+    const total = rollExpAmount(tier);
+    const each = Math.max(1, Math.round(total / orbs));
+    for (let i = 0; i < orbs; i++) out.push(orb('exp', x, y, { amount: each }));
+  }
 
   if (Math.random() < FEEL.pickupChance * luckMult) out.push(orb('etank', x, y));
   return out;

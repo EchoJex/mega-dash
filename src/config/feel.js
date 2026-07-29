@@ -150,9 +150,11 @@ export const FEEL = {
   scoreComboStep: 10,       // extra score per combo tier on a minion kill
 
   // ── Pickups ──────────────────────────────────────────────────────────
-  // One roll per minion killed. On a hit it is a coin flip between the two
-  // types, so each is effectively half of pickupChance.
-  pickupChance: 0.10,       // E-Tank drop chance; EXP always drops
+  // Two independent rolls per enemy killed, one per drop type. Neither is
+  // guaranteed. Bosses always drop EXP regardless of expDropChance — see
+  // dropsFor() in systems/pickups.js.
+  pickupChance: 0.10,       // E-Tank
+  expDropChance: 0.5,       // EXP orb from minions and elites
   pickupHeal: 1,            // energy pips restored by a field E-Tank
   pickupMagnetRange: 18,    // base attract radius, widened by the Item Magnet
   pickupMagnetSpeed: 1.4,
@@ -167,9 +169,10 @@ export const FEEL = {
   // A level is a flat 100 points, always. No escalating curve — the pressure
   // comes from the difficulty ramp, not from levels getting further apart.
   //
-  // EXP is NEVER granted directly. Every enemy DROPS it on death and the player
+  // EXP is NEVER granted directly. An enemy may DROP it on death and the player
   // has to go and collect it, so levelling is something you do rather than
-  // something that happens to you while you walk right. Distance grants nothing.
+  // something that happens to you while you walk right. Distance grants nothing,
+  // and the drop itself is a roll (expDropChance) rather than a certainty.
   expPerLevel: 100,
 
   // Drop size is weighted so small drops are common and large ones are rare:
@@ -234,6 +237,12 @@ export const FEEL_GROUPS = {
   Camera: ['camDeadzone', 'camLerp'],
   Difficulty: ['rampSeconds', 'rampEnemyHp', 'rampEnemyCount', 'rampEliteChance'],
   Minions: ['spawnIntervalSeconds', 'maxMinions', 'eliteChanceBase', 'eliteHpMult'],
-  Pickups: ['pickupChance', 'pickupHeal', 'pickupExp', 'pickupMagnetRange'],
+  // `pickupExp` used to be listed here and has never existed in FEEL — a dead
+  // key the overlay would have silently rendered as undefined.
+  Pickups: ['pickupChance', 'expDropChance', 'pickupHeal', 'pickupMagnetRange', 'pickupMagnetSpeed'],
+  Hazards: ['hazardDamage', 'beamSpeed'],
+  Exp: ['expPerLevel', 'expDropBias', 'expOrbsBoss'],
+  Run: ['hpMax', 'comboDecayFrames', 'comboMax'],
+  Bosses: ['doorIntervalSeconds', 'bossLayerHpMult'],
   Requip: ['requipSlowScale', 'requipSlowInFrames', 'requipSlowOutFrames'],
 };

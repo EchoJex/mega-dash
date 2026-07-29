@@ -285,26 +285,30 @@ are damage-only. Currently all levels use a flat placeholder step.
 
 ## Design source of truth
 
-**`design/boss-design-tracker.json`** — the machine-readable export, and what code
-should read. **Do NOT parse the `const BOSSES = [...]` array inside the HTML** — "Save
-edited copy" preserves edits in the rendered DOM, not in that array, so it is stale and
-will silently give you old content.
+**`design/boss-design-tracker.html` is canonical.** It is the editable app: 17 bosses ×
+24 fields (sprite/palette block, identity, elemental attributes, arena theme, hazard
+layers 1–3, attack layers 1–3, weapon + Lv1/3/6/10 ladder), each flagged
+`ok` / `warn` / `miss` / `na`. Open it in any browser, edit, hit **Save edited copy**.
 
-**`design/boss-design-tracker.html`** — the editable app: 17 bosses × 24 fields
-(identity, elemental attributes, arena theme, hazard layers 1–3, attack layers 1–3,
-sprite/palette block, weapon + Lv1/3/6/10 ladder). Each field flagged
-`ok` / `warn` / `miss` / `na`.
+**`design/boss-design-tracker.json` is GENERATED from it** — never hand-edit the JSON,
+and never paraphrase the owner's wording into it. It is what code reads.
+
+> **The old stale-array trap is fixed.** Saving used to write only the DOM, leaving
+> `const BOSSES` frozen at first-generation content, and `boot()` skips `render()` on a
+> saved copy so nobody noticed. The save path now serialises the DOM back into the source
+> arrays, so array and DOM cannot diverge. Either half is safe to read.
 
 **Read the tracker before implementing any boss or weapon.** It is more current than any
-code comment. ~77% complete.
+code comment.
 
-Gaps: Core Man (6), Torrent Man (10), and Strike / Swarm / Granite / Wraith / Drake
-(14 each — essentially identity-only). Silhouettes deliberately empty everywhere.
+Completeness is not tracked here — it goes stale on every edit. The app shows live
+`defined / partial / missing / n/a` totals in its header; read those instead.
+Silhouettes are deliberately empty everywhere.
 
-Three palette entries are flagged `warn` as **recommended changes** pending owner review
-(Torrent, Volt, Venom) where perceptual spacing conflicts with the original prose.
+The palette hexes in the tracker's sprite block and the ones in `data/bosses.js` must
+agree; `tests/data.test.js` enforces it.
 
-**Do not modify boss content that the tracker marks  complete**
+**Do not modify boss content that the tracker marks complete.**
 
 ---
 
@@ -323,7 +327,7 @@ Three palette entries are flagged `warn` as **recommended changes** pending owne
 | — | **In-app updater** + per-branch CI releases (the dev loop) | ✅ |
 | 4 | VS-style level-up cards; weapons unlock only via their boss | ✅ |
 | 5 | Boss defeat animations + weapon acquisition popups | ⏭ deferred (cosmetic) |
-| 6–8 | **Boss attacks + arena hazards** — the next real work | ⬅ **next** |
+| 6–8 | **Boss attacks + arena hazards** | 🔶 in progress |
 | 9–11 | Weapon visuals, in thirds | ⬜ |
 | 12–14 | Weapon mechanics, in thirds | ⬜ |
 
@@ -365,8 +369,20 @@ weapons are genuinely gated, spikes genuinely kill. Set `enabled: false` to ship
 switch disables everything. The HUD shows `[DEV]` whenever it is on, because a playtest
 misread as "balanced" while invincible is worse than no playtest.
 
+### Phase 6–8 — what is actually built
+
+The dual-loop plumbing is live: `GameScene.stepBoss()` drives an attack loop and an
+ambient hazard loop side by side every frame, both layer-synced, both fed from
+`data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
+work.
+
+What is missing is **content**. Core Man has all three attack layers; every other boss's
+`attack` and every boss's `hazard` entry is `null`, which the loop treats as "do nothing".
+No arena hazard exists yet anywhere, and the elemental attribute system (Hot/Burn, Wet,
+Poisoned, Stun, Constrict, Freeze) is unbuilt — which is what gates Blaze Man.
+
 ### Hooks left deliberately empty — fill, don't delete
-- `GameScene.stepBoss()` → the dual hazard + attack loops (Phases 6–8)
+- `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content
 - `player.diagInput` (`'ul'` / `'ur'`) → reserved diagonal special moves
 - `MANIFEST` in `systems/assets.js` → real art
 - `silhouette: null` in `bosses.js` → deferred by design

@@ -1,7 +1,7 @@
 {
-  "schema": "megaman-boss-tracker-v1",
-  "exported": "2026-07-28T05:57:08.976Z",
-  "_note": "CANONICAL machine-readable export of design/boss-design-tracker.html. The HTML file's inline `const BOSSES = [...]` array is STALE - 'Save edited copy' preserves edits in the rendered DOM, not in that array. Parse THIS file, or the DOM, never that array.",
+  "schema": "megaman-boss-tracker-v2",
+  "generated": "2026-07-29",
+  "_note": "GENERATED from design/boss-design-tracker.html. The HTML is canonical: edit it in a browser, hit \"Save edited copy\", then regenerate this file. Do not hand-edit this file — the next regeneration overwrites it. Its array and DOM now carry identical content, so the old stale-array trap no longer applies.",
   "statusKey": {
     "ok": "defined",
     "warn": "partial",
@@ -10,8 +10,8 @@
   },
   "bosses": [
     {
-      "name": "Core Man",
       "type": "Typeless",
+      "name": "Core Man",
       "palette": {
         "status": "ok",
         "text": "Light grey / dark grey"
@@ -30,15 +30,15 @@
       },
       "hazardsLayer1": {
         "status": "ok",
-        "text": "Turrets aim at player to nearest 45 deg, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown."
+        "text": "Turrets aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown."
       },
       "hazardsLayer2": {
         "status": "ok",
-        "text": "Same number of turrets; aim within nearest 22.5 deg; slightly reduced cooldown."
+        "text": "Same number of turrets; aim within nearest 22.5°; slightly reduced cooldown."
       },
       "hazardsLayer3": {
         "status": "ok",
-        "text": "Same number of turrets; aim within nearest 11.25 deg; further reduced cooldown."
+        "text": "Same number of turrets; aim within nearest 11.25°; further reduced cooldown."
       },
       "attackName": "Core Pulse",
       "attackLayer1": {
@@ -72,23 +72,43 @@
       },
       "lv10": {
         "status": "ok",
-        "text": "full-auto with high fire rate, does not split; strong auto-aim. 0.125 cooldown"
+        "text": "full-auto with high fire rate,  does not split; strong auto-aim. 0.125 cooldown"
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#687380"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#2E3338"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.7x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Blaze Man",
       "type": "Fire",
+      "name": "Blaze Man",
       "palette": {
         "status": "ok",
         "text": "Red / black (shared boss + weapon palette)"
       },
       "bossAppliedAttribute": {
         "status": "ok",
-        "text": "Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. Low transparency red hue becoming more transparent as it diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Lasts 5s after the source concludes. Burn: the player is on fire. Very mild damage very rapidly, rapidly diminishing. No flinch or knockback."
+        "text": "Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Hot affect shall last for 5s after the source that applied it has concluded.\nBurn: the player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback."
       },
       "weaponAppliedAttribute": {
         "status": "ok",
-        "text": "Hot: environment only, as above; does not affect the player in any way. Burn: the enemy is on fire, very mild damage very rapidly, rapidly diminishing. No flinch or knockback."
+        "text": "Hot: applies only to environment; area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Hot affect shall last for 5s after the source that applied it has concluded. Does not affect player in any way.\nBurn: the enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback."
       },
       "arenaTheme": {
         "status": "ok",
@@ -96,15 +116,15 @@
       },
       "hazardsLayer1": {
         "status": "ok",
-        "text": "Brief screen shake -> occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so."
+        "text": "Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so."
       },
       "hazardsLayer2": {
         "status": "ok",
-        "text": "Slightly more overt screen shake -> slightly more rocks on screen, falling slightly faster, plus a couple of pits full of lava."
+        "text": "Slightly more overt screen shake → slightly more rocks on screen, falling slightly faster, plus a couple of pits full of lava."
       },
       "hazardsLayer3": {
         "status": "ok",
-        "text": "Very overt screen shake -> a cascade of falling rocks fall nearly all at once"
+        "text": "Very overt screen shake → a cascade of falling rocks fall nearly all at once"
       },
       "attackName": "Inferno Wheel",
       "attackLayer1": {
@@ -117,12 +137,12 @@
       },
       "attackLayer3": {
         "status": "ok",
-        "text": "Same as Layer 2; additionally, synchronized with the stage hazard, the boss jumps to a small platform just for himself a few seconds before the screen shakes, the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; lava subsides below floor level after 6-10s, leaving Hot on the ground."
+        "text": "Same as Layer 2; additionally, synchronized with the stage hazard, the boss jumps to a small platform just for himself a few seconds before the screen shakes, the Red pixels of the background ebb rapidly, then entire floor fills with lava, slowly, up to about one default player height; lava subsides below floor level after 6–10s, leaving Hot on the ground."
       },
       "weaponName": "Blaze Wheel",
       "weaponDescription": {
         "status": "ok",
-        "text": "Throws a small low-apogee bouncing fireball along the ground; applies Hot to ground or Burn to enemy on contact for a scalable time. High fireball contact damage, separate from Burn DPS. Player immune to player-created Hot and Burn. Hot/Burn do not stack with themselves but reset their durations."
+        "text": "Throws a small low-apogee bouncing fireball along the ground; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS. Player immune to player created hot and burn. Hot or burn do not stack with itself, but resets their respective durations."
       },
       "lv1": {
         "status": "ok",
@@ -134,20 +154,39 @@
       },
       "lv6": {
         "status": "ok",
-        "text": "Adds a second fireball on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal travel. Up to 2 on screen; Hot does not stack."
+        "text": "Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal travel distance. Up to 2 on screen; Hot does not stack."
       },
       "lv10": {
         "status": "ok",
-        "text": "Combined effective travel = full screen (half each); fireballs pierce all enemies, applying 2s Burn to each; up to 2 wheels on screen; player leaves a trail of Hot for 1s on any surface contacted"
+        "text": "Combined effective travel shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 wheels on screen; player leaves a trail of Hot attribute for 1s on any surface contacted"
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#E11416"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#141414"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.75x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Tempest Man",
-      "_renamedFrom": "Torrent Man",
       "type": "Water",
+      "name": "Tempest Man",
       "palette": {
-        "status": "warn",
-        "text": "Light brown / light blue"
+        "status": "ok",
+        "text": "Blue primary; light brown secondary. Blue reads as Water and keeps clear of Quake and Granite, which the original light-brown primary collided with."
       },
       "bossAppliedAttribute": {
         "status": "ok",
@@ -155,7 +194,7 @@
       },
       "weaponAppliedAttribute": {
         "status": "ok",
-        "text": "Wet: the surface or enemy has been soaked in water, reducing contact friction, shown by an initially low transparency blue hue that fades until expiry. Lasts 10 seconds."
+        "text": "Wet: the surface or enemy has been soaked in water, reducing contact friction and visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds."
       },
       "arenaTheme": {
         "status": "warn",
@@ -163,11 +202,11 @@
       },
       "hazardsLayer1": {
         "status": "ok",
-        "text": "Heavy rain pouring straight down applies a continuous directional force pushing the player in the direction of the rain. Steady, powerful water flows from portholes in the upper left and upper right corners, cascading down the walls and across the floor toward a grate-covered central drain/pit. Floor water knee-deep with strong inward currents pulling toward the centre; the flow drags the player toward the drain (stronger on the ground, weaker in the air). A damaging spike ball sits on top of the grate."
+        "text": "Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.\nSteady, powerful water flows from portholes in the upper left and upper right corners of the stage. The water cascades down the walls and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center.\nImplement appropriate 2D physics: the flowing water applies a moderate continuous directional force / velocity bias that drags Mega Man toward the central drain (stronger on the ground, weaker in the air). a damaging spike ball sits on top the grate that the player should avoid. Combine with the diagonal storm rain push for layered pressing pressure the player must resist.\""
       },
       "hazardsLayer2": {
         "status": "ok",
-        "text": "Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force. Same porthole/drain setup; touching the grate pit deals damage."
+        "text": "Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain.\nSteady, powerful water flows from portholes in the upper left and upper right corners of the stage. The water cascades down the walls and across the floor toward a grate-covered deadly central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center.\nImplement appropriate 2D physics: the flowing water applies a moderate continuous directional force / velocity bias that drags Mega Man toward the central drain (stronger on the ground, weaker in the air). Touching the grate pit deals damage."
       },
       "hazardsLayer3": {
         "status": "miss",
@@ -176,7 +215,7 @@
       "attackName": "Aqua Torrent",
       "attackLayer1": {
         "status": "ok",
-        "text": "Slow-moving high-pressure water cannons fire water in discrete angled arcs at random times; no damage on contact, but pushes the player in the direction of the water's travel and blocks player bullets. Once it reaches the ground it continues travelling until it reaches a drain, pushing the player back; no damage."
+        "text": "Slow-moving high-pressure water cannons fire water in discrete angled arcs at random times; no damage on contact, but pushes the player in the direction of the water's travel and blocks player bullets. Once the attack reaches the ground it continues it's travel until it reaches a drain, pushes the player back; no damage."
       },
       "attackLayer2": {
         "status": "miss",
@@ -189,7 +228,7 @@
       "weaponName": "Torrent Cannon",
       "weaponDescription": {
         "status": "ok",
-        "text": "Stand still firing a continuous water stream dealing very low but highly frequent damage. Pushes the enemy; faster enemies slightly push through, slower enemies get pushed backwards."
+        "text": "Stand still firing a continuous water stream dealing very low but highly frequent damage. Pushes the enemy with faster enemies slightly pushing through, and slower enemies getting pushed backwards"
       },
       "lv1": {
         "status": "ok",
@@ -206,14 +245,34 @@
       "lv10": {
         "status": "ok",
         "text": "Stream replaced with a semi-rapid water balloon style grenade launcher with small water-based explosions on contact with any enemy."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#145DBD"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#C09060"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.75x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Volt Man",
       "type": "Electric",
+      "name": "Volt Man",
       "palette": {
-        "status": "miss",
-        "text": ""
+        "status": "ok",
+        "text": "Yellow primary; deep purple secondary. Yellow is the classic electric read; the original cyan collided with Frost, Gale and Tempest."
       },
       "bossAppliedAttribute": {
         "status": "miss",
@@ -272,11 +331,31 @@
       "lv10": {
         "status": "ok",
         "text": "Chain damage hits all enemies near the first enemy contacted; all stunned 4s."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#F5D328"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#5B21B6"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.65x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Thorn Man",
       "type": "Grass",
+      "name": "Thorn Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -308,7 +387,7 @@
       "attackName": "Vine Lash",
       "attackLayer1": {
         "status": "ok",
-        "text": "Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall - heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown."
+        "text": "Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown."
       },
       "attackLayer2": {
         "status": "miss",
@@ -338,18 +417,38 @@
       "lv10": {
         "status": "ok",
         "text": "Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#2AAB1C"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#5C4033"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.8x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Frost Man",
       "type": "Ice",
+      "name": "Frost Man",
       "palette": {
         "status": "miss",
         "text": ""
       },
       "bossAppliedAttribute": {
         "status": "warn",
-        "text": "Slippery - blizzard freezes all surfaces, making them slippery."
+        "text": "Slippery — blizzard freezes all surfaces, making them slippery."
       },
       "weaponAppliedAttribute": {
         "status": "warn",
@@ -404,11 +503,31 @@
       "lv10": {
         "status": "ok",
         "text": "Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#A0EFE7"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#FFFFFF"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.85x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Strike Man",
       "type": "Fighting",
+      "name": "Strike Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -470,14 +589,34 @@
       "lv10": {
         "status": "miss",
         "text": ""
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#EA6A34"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#7C2D12"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.85x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Venom Man",
       "type": "Poison",
+      "name": "Venom Man",
       "palette": {
-        "status": "miss",
-        "text": ""
+        "status": "ok",
+        "text": "Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn."
       },
       "bossAppliedAttribute": {
         "status": "warn",
@@ -536,11 +675,31 @@
       "lv10": {
         "status": "warn",
         "text": "Poisoned enemies drop health pickups when killed."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#A926D9"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#84CC16"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.7x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Quake Man",
       "type": "Ground",
+      "name": "Quake Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -602,11 +761,31 @@
       "lv10": {
         "status": "warn",
         "text": "Max: super stomp that causes falling debris from the ceiling."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#A76625"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#EA580C"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.95x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Gale Man",
       "type": "Flying",
+      "name": "Gale Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -668,11 +847,31 @@
       "lv10": {
         "status": "miss",
         "text": ""
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#5CADD5"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#F8FAFC"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.5x player height (petite build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Psi Man",
       "type": "Psychic",
+      "name": "Psi Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -734,11 +933,31 @@
       "lv10": {
         "status": "warn",
         "text": "Ultimate: brief mind control on weak enemies."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#EA43BD"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#F9A8D4"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.55x player height (petite build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Swarm Man",
       "type": "Bug",
+      "name": "Swarm Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -800,11 +1019,31 @@
       "lv10": {
         "status": "warn",
         "text": "Lv9: bugs form a temporary shield or kamikaze explosion wave."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#B8DC28"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#4D5C1A"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.6x player height (petite build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Granite Man",
       "type": "Rock",
+      "name": "Granite Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -866,11 +1105,31 @@
       "lv10": {
         "status": "miss",
         "text": ""
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#5F443A"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#A8A296"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "2.0x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Wraith Man",
       "type": "Ghost",
+      "name": "Wraith Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -932,11 +1191,31 @@
       "lv10": {
         "status": "warn",
         "text": "Max: leaves damaging ghost copies that mimic your movement."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#A68DD8"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#2A1F4A"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.6x player height (petite build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Drake Man",
       "type": "Dragon",
+      "name": "Drake Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -998,11 +1277,31 @@
       "lv10": {
         "status": "warn",
         "text": "Lv8+: charge for a massive dragon-head projectile."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#C3225D"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#6B1220"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.9x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Eclipse Man",
       "type": "Dark",
+      "name": "Eclipse Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -1063,12 +1362,32 @@
       },
       "lv10": {
         "status": "warn",
-        "text": "Ultimate: temporary 'Dark Mode' with increased damage and lifesteal."
+        "text": "Ultimate: temporary “Dark Mode” with increased damage and lifesteal."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#2A273F"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#DC2626"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.75x player height (average build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     },
     {
-      "name": "Alloy Man",
       "type": "Steel",
+      "name": "Alloy Man",
       "palette": {
         "status": "miss",
         "text": ""
@@ -1130,16 +1449,35 @@
       "lv10": {
         "status": "ok",
         "text": "Temporary steel armor mode that greatly reduces damage taken."
+      },
+      "primaryHex": {
+        "status": "ok",
+        "text": "#B2BABD"
+      },
+      "secondaryHex": {
+        "status": "ok",
+        "text": "#4B5563"
+      },
+      "outlineHex": {
+        "status": "ok",
+        "text": "#0A0A12  — shared near-black outline on every sprite; the 3rd of 3 colours + transparency (NES constraint)"
+      },
+      "spriteScale": {
+        "status": "ok",
+        "text": "1.9x player height (bulky build)"
+      },
+      "silhouette": {
+        "status": "miss",
+        "text": "Deferred — silhouette follows from attack + arena design, not before it."
       }
     }
   ],
   "attributes": [
     {
       "name": "Hot",
-      "applies": "environment",
       "shared": {
         "status": "ok",
-        "text": "Faint red hue that fades until the attribute subsides. Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides."
+        "text": "Faint red hue that gets more faint until the attribute subsides. Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides."
       },
       "bossVariant": {
         "status": "ok",
@@ -1152,10 +1490,9 @@
     },
     {
       "name": "Burn",
-      "applies": "character",
       "shared": {
         "status": "ok",
-        "text": "Faint red hue that fades until the attribute subsides. Target is on fire: rapid but weak DPS, no flinch or knockback, scaling down until the duration concludes."
+        "text": "Faint red hue that gets more faint until the attribute subsides. Target is on fire: rapid but weak Hot DPS, no flinch or knockback, scaling down until the duration concludes."
       },
       "bossVariant": {
         "status": "miss",
@@ -1168,10 +1505,9 @@
     },
     {
       "name": "Wet",
-      "applies": "both",
       "shared": {
         "status": "warn",
-        "text": "The specified object has gotten soaked. Reduces contact friction; low transparency blue hue fading until expiry."
+        "text": "The specified object has gotten soaked."
       },
       "bossVariant": {
         "status": "miss",
@@ -1184,7 +1520,6 @@
     },
     {
       "name": "Poisoned",
-      "applies": "character",
       "shared": {
         "status": "ok",
         "text": "Faint purple hue. DPS applied much less often (~once every 3 seconds); causes flinch."
@@ -1200,10 +1535,9 @@
     },
     {
       "name": "Stun",
-      "applies": "character",
       "shared": {
         "status": "warn",
-        "text": "Functionally the same as constrict/freeze; elementally correct colours flash while the target has this attribute. NOTE: distinct from FLINCH, which is the neutral hit reaction present on every hit."
+        "text": "Functionally the same as constrict/freeze; elementally correct colors flash while the target has this attribute."
       },
       "bossVariant": {
         "status": "miss",
@@ -1211,15 +1545,14 @@
       },
       "weaponVariant": {
         "status": "warn",
-        "text": "Volt Spark (1s / 2s / 0.5s chained / 4s per level); Quake Hammer (nearby enemies). NOTE: this entry still credits Core Blaster, but Core Man's weapon attribute is now 'None' - tracker inconsistency, confirm which is right."
+        "text": "Volt Spark (1s / 2s / 0.5s chained / 4s per level); Quake Hammer (nearby enemies)."
       }
     },
     {
       "name": "Constrict",
-      "applies": "character",
       "shared": {
         "status": "warn",
-        "text": "Functionally the same as stun/freeze; elementally correct colours flash."
+        "text": "Functionally the same as stun/freeze; elementally correct colors flash while the target has this attribute."
       },
       "bossVariant": {
         "status": "warn",
@@ -1232,10 +1565,9 @@
     },
     {
       "name": "Freeze",
-      "applies": "character",
       "shared": {
         "status": "warn",
-        "text": "Functionally the same as stun/constrict; elementally correct colours flash."
+        "text": "Functionally the same as stun/constrict; elementally correct colors flash while the target has this attribute."
       },
       "bossVariant": {
         "status": "miss",
