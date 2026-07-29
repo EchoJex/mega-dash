@@ -376,10 +376,24 @@ ambient hazard loop side by side every frame, both layer-synced, both fed from
 `data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
 work.
 
-What is missing is **content**. Core Man has all three attack layers; every other boss's
-`attack` and every boss's `hazard` entry is `null`, which the loop treats as "do nothing".
-No arena hazard exists yet anywhere, and the elemental attribute system (Hot/Burn, Wet,
-Poisoned, Stun, Constrict, Freeze) is unbuilt — which is what gates Blaze Man.
+**Three bosses are built from the tracker** — Core Man, Blaze Man and Tempest Man, every
+layer the tracker actually defines:
+
+| | attack | hazard | arena furniture |
+|---|---|---|---|
+| Core Man | L1–3 | L1–3 ceiling turrets, snapping to 45° / 22.5° / 11.25° | gear backdrop, 2 turrets |
+| Blaze Man | L1–3 incl. the L3 lava flood | L1–3 falling rocks, +lava pools at L2 | volcano, 3 phasing platforms, floodable floor |
+| Tempest Man | L1 water cannon | L1–2 rain, current, drain | high seas, portholes, grate + spike ball, floor water |
+
+The remaining 14 bosses are `null` at every layer, and Tempest's attack L2/L3 and hazard
+L3 are `null` because the tracker leaves them blank. **Do not invent content there** — the
+owner specifies which dataset to implement, and seed-draft prose is not the same thing as
+their hand-authored content.
+
+`systems/attributes.js` implements the elemental attribute layer: Hot (terrain) / Burn
+(character) are live and used by Blaze Man; Wet, Poisoned, Stun, Constrict and Freeze are
+defined and tested but nothing applies them yet, because their sources are player special
+weapons (Phases 12–14).
 
 ### Hooks left deliberately empty — fill, don't delete
 - `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content

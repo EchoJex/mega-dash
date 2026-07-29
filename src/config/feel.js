@@ -92,6 +92,22 @@ export const FEEL = {
   chargedDamageMult: 2.0,
   chargedSizeMult: 1.5,
 
+  // ── Elemental attributes ─────────────────────────────────────────────
+  // Terrain form / character form pairs. See systems/attributes.js. Flinch and
+  // knockback are NOT here — they are basic hitbox interaction on every hit.
+  // Every number below is a placeholder taken from the tracker's adjectives
+  // ("moderate damage", "very mild damage very rapidly").
+  hotDamage: 3,             // contact damage from Hot ground, scaled by how much
+                            // of the attribute is left, so it cools as it fades
+  hotTickFrames: 26,        // minimum frames between two Hot hits on the same target
+  hotLingerFrames: 300,     // 5s — the tracker's figure for Blaze Man's arena
+  burnFrames: 180,
+  burnDps: 1.6,             // mild, rapid, and scaled down by remaining duration
+  poisonFrames: 300,
+  poisonDps: 0.5,           // much less often than Burn, but it flinches
+  wetFrames: 600,           // 10s
+  wetFrictionMult: 0.32,    // reduced contact friction — you slide
+
   // ── Camera ───────────────────────────────────────────────────────────
   // Follows once the player passes this fraction of screen width, and NEVER
   // scrolls back left — walking backwards is allowed but does not rewind the

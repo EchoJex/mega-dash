@@ -26,6 +26,7 @@ import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
 import * as Arena from '../systems/arena.js';
+import * as Attr from '../systems/attributes.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
 } from '../systems/assets.js';
@@ -138,6 +139,9 @@ export default class GameScene extends Phaser.Scene {
     this.arena = null;
     this.warp = null;
     this.shake = null;
+    // Character attributes on the player (Burn, Wet, ...). Run-scoped: nothing
+    // about a status survives death, so it lives here and not in save.
+    this.status = Attr.makeStatus();
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
     this.startArea();
   }
@@ -309,8 +313,15 @@ export default class GameScene extends Phaser.Scene {
     }
 
     Arena.stepShake(this.shake);
+    this.stepAttributes(box);
 
     if (this.arena) {
+      Arena.stepArena(this.arena);
+      // Phasing platforms are real collision only while they are ON. Republishing
+      // the list each frame is what makes a platform vanish from under you the
+      // instant it phases out, which is the whole point of the mechanic.
+      this.world.platforms = this.arena.platforms.filter((pl) => pl.on);
+      this.stepArenaHazards(box);
       // Sealed room: no streaming, no camera, walls hold you in. The beam is
       // exempt — it deliberately travels above the ceiling.
       if (!p.beam) Arena.clampToArena(this.arena, p);
@@ -407,6 +418,95 @@ export default class GameScene extends Phaser.Scene {
     if (held >= FEEL.chargeFullMs) this.fire(true);
   }
 
+  /**
+   * Character attributes on the player, plus contact with terrain attributes.
+   *
+   * Burn damage does NOT go through hurt(): the tracker is explicit that it has
+   * no flinch and no knockback, and routing it through the hit path would give
+   * it both, plus i-frames that would then block real hits. Hot is the opposite
+   * — it IS a hit, so it uses hurt() and gets the full reaction.
+   */
+  stepAttributes(box) {
+    const r = this.run;
+    const dot = Attr.stepStatus(this.status);
+    if (dot > 0) {
+      r.hp -= dot;
+      if (dev('hpFloor')) r.hp = Math.max(1, r.hp);
+      if (r.hp <= 0) return this.gameOver();
+    }
+
+    if (!this.arena) return;
+
+    // Hot ground. The tick keeps it from firing every frame while you stand in
+    // it; the remaining fraction scales the damage down as it cools.
+    const hot = Attr.patchAt(this.arena.patches, box, 'player');
+    if (hot && hot.tick === 0 && r.invuln === 0) {
+      hot.tick = FEEL.hotTickFrames;
+      const frac = Attr.patchFrac(hot);
+      this.hurt(box.x + box.w / 2, Math.max(1, Math.round(FEEL.hotDamage * frac)));
+      Attr.applyStatus(this.status, 'burn', Math.round(FEEL.burnFrames * frac));
+    }
+
+    // Standing in lava is Hot by another name; water is only a current.
+    const q = this.arena.liquid;
+    if (q && q.kind === 'lava' && q.h > 0.5 && box.y + box.h > this.arena.floorY - q.h) {
+      if (r.invuln === 0) {
+        this.hurt(box.x + box.w / 2, FEEL.hazardDamage);
+        Attr.applyStatus(this.status, 'burn', FEEL.burnFrames);
+      }
+    }
+
+    // A steady environmental push (rain, current). Applied to position rather
+    // than velocity so it is a force you lean against, not something that
+    // accumulates into a slide.
+    const push = this.arena.push;
+    if (push && (push.x || push.y)) {
+      this.player.x += push.x;
+      this.player.y += push.y;
+    }
+  }
+
+  /**
+   * Arena hazard entities — currently Blaze Man's falling rocks.
+   *
+   * They crumble on the floor OR on a platform, leaving Hot where they land, and
+   * deal a real hit plus Burn if they catch you on the way down.
+   */
+  stepArenaHazards(box) {
+    const a = this.arena;
+    for (let i = a.hazards.length - 1; i >= 0; i--) {
+      const h = a.hazards[i];
+      h.y += h.vy;
+
+      const hitPlayer = this.run.invuln === 0
+        && box.x < h.x + h.w && box.x + box.w > h.x
+        && box.y < h.y + h.h && box.y + box.h > h.y;
+      if (hitPlayer) {
+        this.hurt(h.x + h.w / 2, FEEL.hazardDamage);
+        Attr.applyStatus(this.status, 'burn', FEEL.burnFrames);
+        a.hazards.splice(i, 1);
+        continue;
+      }
+
+      // Crumble on the first surface it meets.
+      let landed = h.y + h.h >= a.floorY ? a.floorY : null;
+      for (const pl of a.platforms) {
+        if (!pl.on) continue;
+        if (h.x + h.w > pl.x && h.x < pl.x + pl.w
+          && h.y + h.h >= pl.y && h.y + h.h <= pl.y + pl.h + h.vy + 1) {
+          landed = pl.y;
+          pl.hot = FEEL.hotLingerFrames;
+          break;
+        }
+      }
+      if (landed !== null) {
+        Attr.addPatch(a.patches,
+          Attr.makePatch('hot', h.x - 4, landed - 3, h.w + 8, 4, FEEL.hotLingerFrames, 'boss'));
+        a.hazards.splice(i, 1);
+      }
+    }
+  }
+
   stepBullets() {
     const r = this.run;
     const pcx = this.player.x + 12, pcy = this.player.y + 12;
@@ -425,7 +525,37 @@ export default class GameScene extends Phaser.Scene {
         b.vx = (b.vx / ns) * sp;
         b.vy = (b.vy / ns) * sp;
       }
+      // Ballistic shots: gravity, a bounce off the floor, and a climb up the
+      // sealed walls. Blaze Man's fireballs are the reason all three exist —
+      // "bouncing fireballs that climb up walls and leave hot trails".
+      if (b.gravity) b.vy += b.gravity;
       b.x += b.vx; b.y += b.vy; b.life--;
+
+      if (b.bounce || b.crawls) {
+        const floor = this.arena ? this.arena.floorY : GROUND_Y;
+        if (b.y + b.radius >= floor) {
+          b.y = floor - b.radius;
+          if (b.hot && this.arena) {
+            Attr.addPatch(this.arena.patches,
+              Attr.makePatch('hot', b.x - 8, floor - 3, 16, 4, b.hot, 'boss'));
+          }
+          if (b.crawls) {
+            // Tempest Man's water keeps travelling along the floor until it
+            // reaches a drain, rather than stopping where it lands.
+            b.vy = 0; b.gravity = 0;
+            const d = this.arena?.drain;
+            if (d && b.x > d.x && b.x < d.x + d.w) b.life = -1;
+          } else {
+            b.vy = -Math.abs(b.vy) * b.bounce;
+            if (Math.abs(b.vy) < 0.6) b.vy = -0.6;   // never settle into a crawl
+          }
+        }
+      }
+      if (b.climbs && this.arena) {
+        // At a wall the fireball turns and runs UP it instead of dying.
+        if (b.x - b.radius <= this.arena.x0) { b.x = this.arena.x0 + b.radius; b.vx = 0; b.vy = -1.6; b.gravity = 0.02; }
+        if (b.x + b.radius >= this.arena.x1) { b.x = this.arena.x1 - b.radius; b.vx = 0; b.vy = -1.6; b.gravity = 0.02; }
+      }
 
       // Split after a delay into a fan of smaller, mildly homing fragments.
       if (b.splitIn !== undefined && --b.splitIn <= 0) {
@@ -452,9 +582,28 @@ export default class GameScene extends Phaser.Scene {
     const pbox = Phys.hitboxOf(this.player);
     for (const b of this.bullets) {
       if (!b.enemy || b.life <= 0) continue;
-      if (Phys.overlaps(this.bulletBox(b), pbox)) {
-        b.life = -1;
-        if (r.invuln === 0) this.hurt(b.x);
+      if (!Phys.overlaps(this.bulletBox(b), pbox)) continue;
+
+      // A pressure shot PUSHES instead of hurting and does not expire on
+      // contact — Tempest Man's water is an obstacle, not a bullet.
+      if (b.push) {
+        this.player.x += Math.sign(b.vx || 1) * b.push;
+        continue;
+      }
+      b.life = -1;
+      if (r.invuln === 0) {
+        this.hurt(b.x, b.damage || 1);
+        if (b.burn) Attr.applyStatus(this.status, 'burn', b.burn);
+      }
+    }
+
+    // Shots flagged `blocks` eat player fire, so cover matters.
+    for (const w of this.bullets) {
+      if (!w.blocks || w.life <= 0) continue;
+      const wb = this.bulletBox(w);
+      for (const b of this.bullets) {
+        if (b.enemy || b.life <= 0) continue;
+        if (Phys.overlaps(this.bulletBox(b), wb)) b.life = -1;
       }
     }
 
@@ -607,8 +756,19 @@ export default class GameScene extends Phaser.Scene {
     beh.step({
       boss: b,
       player: this.player,
+      playerBox: Phys.hitboxOf(this.player),
       layer: b.layer,
+      arena: this.arena,
+      floorY: GROUND_Y,
       shoot: (spec) => this.spawnEnemyShot(spec),
+      shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; },
+      hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
+      status: (id, frames) => Attr.applyStatus(this.status, id, frames),
+      patch: (id, x, y, w, h, frames, opts = {}) => {
+        if (!this.arena) return;
+        Attr.addPatch(this.arena.patches,
+          Object.assign(Attr.makePatch(id, x, y, w, h, frames, 'boss'), opts));
+      },
       // The walkable span: the sealed arena's inner walls during a fight, the
       // camera view otherwise (a boss met outside an arena still has somewhere
       // to patrol). Every behaviour is written against bounds, never the camera.
@@ -823,6 +983,16 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.arena) {
       Arena.drawArena(g, this.arena, this.viewW, sh);
+      // Falling rocks: a hot core with a darker crust, so they read as burning
+      // debris rather than as another grey projectile.
+      for (const h of this.arena.hazards) {
+        g.fillStyle(0x3A1A10, 1);
+        g.fillRect(h.x + sh.x, h.y + sh.y, h.w, h.h);
+        g.fillStyle(0xE8541A, 1);
+        g.fillRect(h.x + 2 + sh.x, h.y + 2 + sh.y, h.w - 4, h.h - 4);
+        g.fillStyle(0xFFC24A, 1);
+        g.fillRect(h.x + 4 + sh.x, h.y + 4 + sh.y, h.w - 8, h.h - 8);
+      }
     } else {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
@@ -912,6 +1082,14 @@ export default class GameScene extends Phaser.Scene {
         // live palette swap: the suit takes the equipped weapon's colours
         palette: weaponOf(r.activeWeapon).palette,
       });
+      // An active attribute flashes its colour over the suit. Flashing rather
+      // than tinting keeps the weapon's own palette readable underneath, which
+      // matters because the palette is how you know what you have equipped.
+      const tint = Attr.statusTint(this.status);
+      if (tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.player.g.fillStyle(tint, 0.45);
+        L.player.g.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
+      }
     }
 
     for (const l of Object.values(L)) l.end();

@@ -125,7 +125,12 @@ export default class UIScene extends Phaser.Scene {
      * weapons are planned to fire from a standing diagonal, so the input has to
      * exist as a distinct press before the weapons can use it.
      */
-    this.padH = 54;
+    // Height is capped by the FLOOR, not by thumb comfort: GROUND_Y sits at
+    // VIEW_H-40, so a taller pad starts covering actors standing on the ground —
+    // and during Blaze Man's layer-3 flood it would hide the lava you are
+    // standing in. The size increase this layout needed came from WIDTH and from
+    // the pads being visible at all, not from eating the playfield.
+    this.padH = 46;
     const padY = VIEW_H - this.padH;
     // Sized proportionally then clamped, so all three clusters plus the gap
     // between them still fit at the narrowest supported virtual width (320) and
