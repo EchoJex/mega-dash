@@ -622,16 +622,25 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // boss damage
+    // BOSS DAMAGE.
+    //
+    // killBoss() nulls this.boss, so the loop MUST stop the moment it fires.
+    // It used to keep going, and the next bullet overlapping the boss on that
+    // same frame dereferenced null — which threw out of update() and killed
+    // Phaser's game loop, freezing the whole game on the frame the boss died.
+    //
+    // It needed two bullets landing on one frame to happen, so the buster almost
+    // never triggered it and a multi-projectile weapon (Swarm Caller fires three)
+    // triggered it most times. Any early-out inside a loop over `bullets` that
+    // can clear `this.boss` needs the same treatment.
     if (this.boss) {
       const bb = { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h };
       for (const b of this.bullets) {
         if (b.enemy || b.life <= 0) continue;
-        if (Phys.overlaps(this.bulletBox(b), bb)) {
-          this.boss.hp -= b.damage;
-          b.life = -1;
-          if (this.boss.hp <= 0) this.killBoss();
-        }
+        if (!Phys.overlaps(this.bulletBox(b), bb)) continue;
+        this.boss.hp -= b.damage;
+        b.life = -1;
+        if (this.boss.hp <= 0) { this.killBoss(); break; }
       }
     }
     this.bullets = this.bullets.filter(

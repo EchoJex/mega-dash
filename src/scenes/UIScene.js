@@ -60,18 +60,27 @@ const vpt = (scene, p) => scene.cameras.main.getWorldPoint(p.x, p.y);
 /**
  * How far a finger may slide off a button before the hold drops.
  *
- * Deliberately MILD. An unlimited grip (tracking the finger anywhere on screen
- * until it lifts) stops a control ever releasing when you roll your thumb onto
- * a neighbour; zero grip drops a held jump the instant your thumb shifts, which
- * cuts the rise mid-flight. A few pixels covers normal thumb roll and nothing
- * more.
+ * ASYMMETRIC on purpose, and that asymmetry is the fix for holds dropping as if
+ * the finger had lifted. Sideways drift means you are reaching for a neighbour,
+ * so it stays tight. UPWARD drift is just thumb roll — the pads are only 30px
+ * tall and sit on the bottom edge, so a pressing thumb wanders above the pad
+ * constantly. A symmetric margin small enough to be "mild" sideways is far too
+ * small vertically, which is what kept cancelling holds mid-jump.
+ *
+ * Downward is unbounded: there is nothing below the pads but the screen edge,
+ * and the slide gesture is a deliberate drag that way.
  */
-const GRACE = 8;
+const GRACE_X = 10;
+const GRACE_UP = 34;
 
-// Controls are visible but recede: solid enough to aim at, faint enough not to
-// cover the playfield. They brighten on press so a touch is confirmed on screen.
-const PAD_ALPHA = 0.30;
-const PAD_ALPHA_ON = 0.62;
+/**
+ * Controls rest at the opacity the pressed state used to use, and PRESSING them
+ * clears the fill entirely so only the border remains. Pressing is the moment you
+ * most need to see the ground you are standing on, so the button gets out of the
+ * way rather than lighting up.
+ */
+const PAD_ALPHA = 0.62;
+const PAD_ALPHA_ON = 0;
 
 // Wheel geometry. Sized to clear the HUD above and both thumb pads below on the
 // narrowest supported virtual width (320).
@@ -80,7 +89,7 @@ const WHEEL_R = 64;
 const SLOT_R = 9;
 const LOCKED_FILL = 0x3a3f4a;
 const LOCKED_ALPHA = 0.45;
-const IDLE_ALPHA = 0.5; // the button's resting transparency
+const IDLE_ALPHA = PAD_ALPHA; // RE-QUIP rests at the same opacity as the pads
 
 /**
  * Readable label colour for a given fill. The 17 primaries deliberately span
@@ -125,12 +134,12 @@ export default class UIScene extends Phaser.Scene {
      * weapons are planned to fire from a standing diagonal, so the input has to
      * exist as a distinct press before the weapons can use it.
      */
-    // Height is capped by the FLOOR, not by thumb comfort: GROUND_Y sits at
-    // VIEW_H-40, so a taller pad starts covering actors standing on the ground —
-    // and during Blaze Man's layer-3 flood it would hide the lava you are
-    // standing in. The size increase this layout needed came from WIDTH and from
-    // the pads being visible at all, not from eating the playfield.
-    this.padH = 46;
+    // 30px, and deliberately short. GROUND_Y sits at VIEW_H-40, so anything
+    // taller starts covering the ground itself — and reading ground elevation and
+    // the hazards sitting on it matters more than thumb comfort. The size this
+    // layout needed came from WIDTH and from the pads being visible at all.
+    // Losing the hold is handled by GRACE_UP, not by a taller button.
+    this.padH = 30;
     const padY = VIEW_H - this.padH;
     // Sized proportionally then clamped, so all three clusters plus the gap
     // between them still fit at the narrowest supported virtual width (320) and
@@ -203,17 +212,21 @@ export default class UIScene extends Phaser.Scene {
     return b;
   }
 
-  /** Light a pad up while it is being held, so a touch is visibly acknowledged. */
+  /**
+   * Held state: the fill drops out and only the border and a ghost of the glyph
+   * survive, so a pressed pad hides as little of the playfield as possible while
+   * still showing you which control your thumb is on.
+   */
   litPad(b, on) {
-    b.rect.setAlpha(on ? PAD_ALPHA_ON : PAD_ALPHA);
-    b.rect.setStrokeStyle(1, 0x5cadd5, on ? 0.9 : PAD_ALPHA);
-    b.txt.setAlpha(on ? 1 : PAD_ALPHA + 0.25);
+    b.rect.setFillStyle(0x0d1420, on ? PAD_ALPHA_ON : PAD_ALPHA);
+    b.rect.setStrokeStyle(1, 0x5cadd5, on ? 0.95 : 0.7);
+    b.txt.setAlpha(on ? 0.3 : 0.95);
   }
 
-  /** Is this virtual point inside b, allowing GRACE px of thumb roll? */
-  static within(b, v, pad = GRACE) {
-    return v.x >= b.x - pad && v.x <= b.x + b.w + pad
-        && v.y >= b.y - pad && v.y <= b.y + b.h + pad;
+  /** Is this point still on b, allowing for thumb roll? See GRACE_UP. */
+  static within(b, v) {
+    return v.x >= b.x - GRACE_X && v.x <= b.x + b.w + GRACE_X
+        && v.y >= b.y - GRACE_UP;         // downward is unbounded
   }
 
   /**
@@ -264,8 +277,9 @@ export default class UIScene extends Phaser.Scene {
       if (p.id !== owner || !p.isDown) return;
       const v = vpt(this, p);
       if (!slid && v.y - startY > SLIDE_DEADZONE) { slid = true; this.game_.toggleSlide(); }
-      // Sliding down toward the screen edge must not count as leaving the strip.
-      const left = v.x < z.x - GRACE || v.x > z.x + z.w + GRACE || v.y < z.y - GRACE;
+      // Sliding down toward the screen edge must not count as leaving the strip,
+      // and neither must ordinary upward thumb roll off a 30px pad.
+      const left = v.x < z.x - GRACE_X || v.x > z.x + z.w + GRACE_X || v.y < z.y - GRACE_UP;
       if (left) { release(); return; }
       aim(btnAt(v));
     });
@@ -325,7 +339,7 @@ export default class UIScene extends Phaser.Scene {
    */
   togglePause() {
     if (this.pausePanel) return this.closePause();
-    if (this.cards || this.panel || this.mode === 'open') return;
+    if (this.cards || this.mode === 'open') return;
     this.openPause();
   }
 
@@ -421,8 +435,8 @@ export default class UIScene extends Phaser.Scene {
     // Sits in the gap between the movement strip and the action pads, so no
     // control overlaps another and the middle of the screen stays clear.
     const gapL = this.z3.x + this.z3.w, gapR = this.z4.x;
-    const bw = Math.max(44, Math.min(64, gapR - gapL - 6)), bh = 24;
-    const x = Math.round((gapL + gapR) / 2 - bw / 2), y = VIEW_H - this.padH + 15;
+    const bw = Math.max(44, Math.min(64, gapR - gapL - 6)), bh = this.padH - 6;
+    const x = Math.round((gapL + gapR) / 2 - bw / 2), y = VIEW_H - this.padH + 3;
     this.reqBox = this.add.rectangle(x, y, bw, bh, 0x0d1420).setOrigin(0)
       .setStrokeStyle(1, 0x5cadd5)
       .setAlpha(IDLE_ALPHA)
@@ -697,7 +711,7 @@ export default class UIScene extends Phaser.Scene {
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);
     // Card screen takes priority over every other overlay.
-    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.panel) this.openCards();
+    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as
