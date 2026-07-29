@@ -1,93 +1,1250 @@
 {
   "schema": "megaman-boss-tracker-v1",
   "exported": "2026-07-28T05:57:08.976Z",
-  "_note": "CANONICAL machine-readable export of design/boss-design-tracker.html. The HTML file's inline `const BOSSES = [...]` array is STALE — 'Save edited copy' preserves edits in the rendered DOM, not in that array. Parse THIS file, or the DOM, never that array.",
-  "statusKey": { "ok": "defined", "warn": "partial", "miss": "missing", "na": "not applicable" },
+  "_note": "CANONICAL machine-readable export of design/boss-design-tracker.html. The HTML file's inline `const BOSSES = [...]` array is STALE - 'Save edited copy' preserves edits in the rendered DOM, not in that array. Parse THIS file, or the DOM, never that array.",
+  "statusKey": {
+    "ok": "defined",
+    "warn": "partial",
+    "miss": "missing",
+    "na": "not applicable"
+  },
   "bosses": [
     {
-      "name": "Core Man", "type": "Typeless", "palette": "Light grey / dark grey",
-      "bossAppliedAttribute": { "status": "na", "text": "None" },
-      "weaponAppliedAttribute": { "status": "na", "text": "None" },
-      "arenaTheme": { "status": "ok", "text": "Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears" },
-      "hazardsLayer1": { "status": "ok", "text": "Turrets aim at player to nearest 45 deg, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown." },
-      "hazardsLayer2": { "status": "ok", "text": "Same number of turrets; aim within nearest 22.5 deg; slightly reduced cooldown." },
-      "hazardsLayer3": { "status": "ok", "text": "Same number of turrets; aim within nearest 11.25 deg; further reduced cooldown." },
+      "name": "Core Man",
+      "type": "Typeless",
+      "palette": {
+        "status": "ok",
+        "text": "Light grey / dark grey"
+      },
+      "bossAppliedAttribute": {
+        "status": "na",
+        "text": "None"
+      },
+      "weaponAppliedAttribute": {
+        "status": "na",
+        "text": "None"
+      },
+      "arenaTheme": {
+        "status": "ok",
+        "text": "Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears"
+      },
+      "hazardsLayer1": {
+        "status": "ok",
+        "text": "Turrets aim at player to nearest 45 deg, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown."
+      },
+      "hazardsLayer2": {
+        "status": "ok",
+        "text": "Same number of turrets; aim within nearest 22.5 deg; slightly reduced cooldown."
+      },
+      "hazardsLayer3": {
+        "status": "ok",
+        "text": "Same number of turrets; aim within nearest 11.25 deg; further reduced cooldown."
+      },
       "attackName": "Core Pulse",
-      "attackLayer1": { "status": "ok", "text": "Moves back and forth on the stage, occasionally stopping to fire a 3 bullet spread with mild auto-aim after a short time, dealing small damage." },
-      "attackLayer2": { "status": "ok", "text": "Moves back and forth across the stage, occasionally stopping to fire either a 3 bullet spread directly forward with mild auto-aim after a short time or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out." },
-      "attackLayer3": { "status": "ok", "text": "Moves back and forth across the stage, occasionally stopping to fire either a set of 3 3-bullet spread directly forward with mild auto-aim after a short time or aim directly at the player, tracking the player continuously while shooting a string of 5-10 bullets that do not auto aim, either way, dealing small damage." },
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Moves back and forth on the stage, occasionally stopping to fire a 3 bullet spread with mild auto-aim after a short time, dealing small damage."
+      },
+      "attackLayer2": {
+        "status": "ok",
+        "text": "Moves back and forth across the stage, occasionally stopping to fire either a 3 bullet spread directly forward with mild auto-aim after a short time or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out."
+      },
+      "attackLayer3": {
+        "status": "ok",
+        "text": "Moves back and forth across the stage, occasionally stopping to fire either a set of 3 3-bullet spread directly forward with mild auto-aim after a short time or aim directly at the player, tracking the player continuously while shooting a string of 5-10 bullets that do not auto aim, either way, dealing small damage."
+      },
       "weaponName": "Core Blaster",
-      "weaponDescription": "Fires a neutral bullet with scalable fire rate; very low base damage.",
-      "lv1": "Semi auto, mild damage 0.25s cooldown.",
-      "lv3": "Mild auto-aim. 3-bullet burst shot, like a rifle. Short cool down",
-      "lv6": "Main bullet does not auto-aim; main bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim. Short cooldown",
-      "lv10": "full-auto with high fire rate, does not split; strong auto-aim. 0.125 cooldown"
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Fires a neutral bullet with scalable fire rate; very low base damage."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "Semi auto, mild damage 0.25s cooldown."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "Mild auto-aim. 3-bullet burst shot, like a rifle. Short cool down"
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "Main bullet does not auto-aim; main bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim. Short cooldown"
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "full-auto with high fire rate, does not split; strong auto-aim. 0.125 cooldown"
+      }
     },
     {
-      "name": "Blaze Man", "type": "Fire", "palette": "Red / black (shared boss + weapon palette)",
-      "bossAppliedAttribute": { "status": "ok", "text": "Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. Low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Lasts 5s after the source concludes. Burn: the player is on fire. Very mild damage very rapidly, rapidly diminishing. No flinch or knockback." },
-      "weaponAppliedAttribute": { "status": "ok", "text": "Hot: environment only, as above; does not affect player in any way. Burn: the enemy is on fire, very mild damage very rapidly, rapidly diminishing. No flinch or knockback." },
-      "arenaTheme": { "status": "ok", "text": "Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot." },
-      "hazardsLayer1": { "status": "ok", "text": "Brief screen shake -> occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so." },
-      "hazardsLayer2": { "status": "ok", "text": "Slightly more overt screen shake -> slightly more rocks on screen, falling slightly faster, plus a couple of pits full of lava." },
-      "hazardsLayer3": { "status": "ok", "text": "Very overt screen shake -> a cascade of falling rocks fall nearly all at once" },
+      "name": "Blaze Man",
+      "type": "Fire",
+      "palette": {
+        "status": "ok",
+        "text": "Red / black (shared boss + weapon palette)"
+      },
+      "bossAppliedAttribute": {
+        "status": "ok",
+        "text": "Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. Low transparency red hue becoming more transparent as it diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Lasts 5s after the source concludes. Burn: the player is on fire. Very mild damage very rapidly, rapidly diminishing. No flinch or knockback."
+      },
+      "weaponAppliedAttribute": {
+        "status": "ok",
+        "text": "Hot: environment only, as above; does not affect the player in any way. Burn: the enemy is on fire, very mild damage very rapidly, rapidly diminishing. No flinch or knockback."
+      },
+      "arenaTheme": {
+        "status": "ok",
+        "text": "Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot."
+      },
+      "hazardsLayer1": {
+        "status": "ok",
+        "text": "Brief screen shake -> occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so."
+      },
+      "hazardsLayer2": {
+        "status": "ok",
+        "text": "Slightly more overt screen shake -> slightly more rocks on screen, falling slightly faster, plus a couple of pits full of lava."
+      },
+      "hazardsLayer3": {
+        "status": "ok",
+        "text": "Very overt screen shake -> a cascade of falling rocks fall nearly all at once"
+      },
       "attackName": "Inferno Wheel",
-      "attackLayer1": { "status": "ok", "text": "Launches several bouncing fireballs toward the player that climb up walls and leave hot trails." },
-      "attackLayer2": { "status": "ok", "text": "Fewer fireballs, but higher bounce heights and alternating firing angles." },
-      "attackLayer3": { "status": "ok", "text": "Same as Layer 2; additionally, synchronized with the stage hazard, the boss jumps to a small platform just for himself a few seconds before the screen shakes, the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; lava subsides below floor level after 6-10s, leaving Hot on the ground." },
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Launches several bouncing fireballs toward the player that climb up walls and leave hot trails."
+      },
+      "attackLayer2": {
+        "status": "ok",
+        "text": "Fewer fireballs, but higher bounce heights and alternating firing angles."
+      },
+      "attackLayer3": {
+        "status": "ok",
+        "text": "Same as Layer 2; additionally, synchronized with the stage hazard, the boss jumps to a small platform just for himself a few seconds before the screen shakes, the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; lava subsides below floor level after 6-10s, leaving Hot on the ground."
+      },
       "weaponName": "Blaze Wheel",
-      "weaponDescription": "Throws a small low-apogee bouncing fireball along the ground; applies Hot to ground or Burn to enemy on contact for a scalable time. High fireball contact damage, separate from Burn DPS. Player immune to player-created Hot and Burn. Hot/Burn do not stack with themselves but reset their durations.",
-      "lv1": "Short travel distance; up to 1 on screen; 0.5s Hot duration.",
-      "lv3": "1s Hot duration on ground; slight increase in travel distance.",
-      "lv6": "Adds a second fireball on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal travel. Up to 2 on screen; Hot does not stack.",
-      "lv10": "Combined effective travel = full screen (half each); fireballs pierce all enemies, applying 2s Burn to each; up to 2 wheels on screen; player leaves a trail of Hot for 1s on any surface contacted"
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Throws a small low-apogee bouncing fireball along the ground; applies Hot to ground or Burn to enemy on contact for a scalable time. High fireball contact damage, separate from Burn DPS. Player immune to player-created Hot and Burn. Hot/Burn do not stack with themselves but reset their durations."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "Short travel distance; up to 1 on screen; 0.5s Hot duration."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "1s Hot duration on ground; slight increase in travel distance."
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "Adds a second fireball on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal travel. Up to 2 on screen; Hot does not stack."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Combined effective travel = full screen (half each); fireballs pierce all enemies, applying 2s Burn to each; up to 2 wheels on screen; player leaves a trail of Hot for 1s on any surface contacted"
+      }
     },
     {
-      "name": "Tempest Man", "_renamedFrom": "Torrent Man", "type": "Water", "palette": "Light brown / light blue",
-      "bossAppliedAttribute": { "status": "ok", "text": "None" },
-      "weaponAppliedAttribute": { "status": "ok", "text": "Wet: the surface or enemy has been soaked in water, reducing contact friction, shown by an initially low transparency blue hue that fades until expiry. Lasts 10 seconds." },
-      "arenaTheme": { "status": "warn", "text": "Background theme High seas, tempest" },
-      "hazardsLayer1": { "status": "ok", "text": "Heavy rain pouring straight down applies a continuous directional force pushing the player in the direction of the rain. Steady, powerful water flows from portholes in the upper left and upper right corners, cascading down the walls and across the floor toward a grate-covered central drain/pit. Floor water knee-deep with strong inward currents pulling toward the centre; the flow drags the player toward the drain (stronger on the ground, weaker in the air). A damaging spike ball sits on top of the grate." },
-      "hazardsLayer2": { "status": "ok", "text": "Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force. Same porthole/drain setup; touching the grate pit deals damage." },
-      "hazardsLayer3": { "status": "miss", "text": "" },
+      "name": "Tempest Man",
+      "_renamedFrom": "Torrent Man",
+      "type": "Water",
+      "palette": {
+        "status": "warn",
+        "text": "Light brown / light blue"
+      },
+      "bossAppliedAttribute": {
+        "status": "ok",
+        "text": "None"
+      },
+      "weaponAppliedAttribute": {
+        "status": "ok",
+        "text": "Wet: the surface or enemy has been soaked in water, reducing contact friction, shown by an initially low transparency blue hue that fades until expiry. Lasts 10 seconds."
+      },
+      "arenaTheme": {
+        "status": "warn",
+        "text": "Background theme High seas, tempest"
+      },
+      "hazardsLayer1": {
+        "status": "ok",
+        "text": "Heavy rain pouring straight down applies a continuous directional force pushing the player in the direction of the rain. Steady, powerful water flows from portholes in the upper left and upper right corners, cascading down the walls and across the floor toward a grate-covered central drain/pit. Floor water knee-deep with strong inward currents pulling toward the centre; the flow drags the player toward the drain (stronger on the ground, weaker in the air). A damaging spike ball sits on top of the grate."
+      },
+      "hazardsLayer2": {
+        "status": "ok",
+        "text": "Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force. Same porthole/drain setup; touching the grate pit deals damage."
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
       "attackName": "Aqua Torrent",
-      "attackLayer1": { "status": "ok", "text": "Slow-moving high-pressure water cannons fire water in discrete angled arcs at random times; no damage on contact, but pushes the player in the direction of the water's travel and blocks player bullets. Once it reaches the ground it continues travelling until it reaches a drain, pushing the player back; no damage." },
-      "attackLayer2": { "status": "miss", "text": "" },
-      "attackLayer3": { "status": "miss", "text": "" },
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Slow-moving high-pressure water cannons fire water in discrete angled arcs at random times; no damage on contact, but pushes the player in the direction of the water's travel and blocks player bullets. Once it reaches the ground it continues travelling until it reaches a drain, pushing the player back; no damage."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
       "weaponName": "Torrent Cannon",
-      "weaponDescription": "Stand still firing a continuous water stream dealing very low but highly frequent damage. Pushes the enemy; faster enemies slightly push through, slower enemies get pushed backwards.",
-      "lv1": "Short travel distance; very low base damage.",
-      "lv3": "Angle the attack diagonally with directional inputs. Increase travel distance accordingly.",
-      "lv6": "Water stream now affected by gravity but travels significantly further overall.",
-      "lv10": "Stream replaced with a semi-rapid water balloon style grenade launcher with small water-based explosions on contact with any enemy."
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Stand still firing a continuous water stream dealing very low but highly frequent damage. Pushes the enemy; faster enemies slightly push through, slower enemies get pushed backwards."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "Short travel distance; very low base damage."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "Angle the attack diagonally with directional inputs. Increase travel distance accordingly."
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "Water stream now affected by gravity but travels significantly further overall."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Stream replaced with a semi-rapid water balloon style grenade launcher with small water-based explosions on contact with any enemy."
+      }
+    },
+    {
+      "name": "Volt Man",
+      "type": "Electric",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "warn",
+        "text": "Stun on first enemy contact, with durations defined per level. Functionally same as constrict/freeze; elementally correct colors flash."
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Chain Spark",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Fires up to 5 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Volt Spark",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "0 chains; 1s stun on first enemy contact."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "Chain damage to 1 additional enemy, who does not get stunned."
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "2s stun on first enemy contact; chain damage to a total of 2 additional enemies, stunned 0.5s."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Chain damage hits all enemies near the first enemy contacted; all stunned 4s."
+      }
+    },
+    {
+      "name": "Thorn Man",
+      "type": "Grass",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "warn",
+        "text": "Constrict (via Vine Lash): several seconds. Functionally same as stun/freeze; elementally correct colors flash."
+      },
+      "weaponAppliedAttribute": {
+        "status": "warn",
+        "text": "Constrict (Thorn Lash Lv10 vs mini-bosses, 5s DPS)."
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Vine Lash",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall - heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Thorn Lash",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "Short reach; can only reel in and damage minions; does not toss or constrict them."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "Increased reach. On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release."
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "Significantly increased reach."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles."
+      }
+    },
+    {
+      "name": "Frost Man",
+      "type": "Ice",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "warn",
+        "text": "Slippery - blizzard freezes all surfaces, making them slippery."
+      },
+      "weaponAppliedAttribute": {
+        "status": "warn",
+        "text": "Freeze (shield break on minion contact; icicles freeze). Functionally same as stun/constrict; elementally correct colors flash."
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Glacier Spike",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Frost Guard",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Forms a large shield of ice in front of the player while the attack button is pressed. Short cooldown if released; long cooldown if destroyed by damage."
+      },
+      "lv1": {
+        "status": "ok",
+        "text": "Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead."
+      },
+      "lv3": {
+        "status": "ok",
+        "text": "Releasing attack before the shield breaks releases 3 small icicles (moderate cooldown) doing 1/3 damage each; they freeze."
+      },
+      "lv6": {
+        "status": "ok",
+        "text": "Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released."
+      }
+    },
+    {
+      "name": "Strike Man",
+      "type": "Fighting",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Rush Combo",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Teleports close and performs rapid punches + uppercut launcher."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Strike Gauntlet",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Close-range powerful punch with knockback and damage reduction during attack animations. Tap attack for a quick low-damage mini-dash combo-starter jab; long-press attack 0.4s for a combo finisher."
+      },
+      "lv1": {
+        "status": "warn",
+        "text": "2 jabs, or 1 jab and one combo finisher."
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv10": {
+        "status": "miss",
+        "text": ""
+      }
+    },
+    {
+      "name": "Venom Man",
+      "type": "Poison",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "warn",
+        "text": "Lingering poison clouds drain health over time and reduce player speed."
+      },
+      "weaponAppliedAttribute": {
+        "status": "warn",
+        "text": "Poisoned: faint purple hue; DPS applied much less often (~every 3 seconds); causes flinch."
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Toxic Cloud",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Releases lingering poison clouds that drain health over time and reduce player speed."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Venom Spray",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv6+: clouds can be detonated for burst damage."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Poisoned enemies drop health pickups when killed."
+      }
+    },
+    {
+      "name": "Quake Man",
+      "type": "Ground",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "warn",
+        "text": "Stun on nearby enemies via shockwave; duration scales per level."
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Seismic Stomp",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Causes screen-wide tremors and rising rock pillars."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Quake Hammer",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Ground-pound that creates shockwaves and stuns nearby enemies. Per-level scaling: shockwave size + stun duration."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv5+: can break certain floors or reveal hidden paths."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Max: super stomp that causes falling debris from the ceiling."
+      }
+    },
+    {
+      "name": "Gale Man",
+      "type": "Flying",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Wind Vortex",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Creates tornadoes that suck the player in and launch them upward."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Gale Vortex",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Creates a controllable mini-tornado that lifts enemies and carries projectiles. Per-level scaling: bigger/longer tornado + movement speed while controlling it."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv7+: can ride your own tornado for limited flight."
+      },
+      "lv10": {
+        "status": "miss",
+        "text": ""
+      }
+    },
+    {
+      "name": "Psi Man",
+      "type": "Psychic",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Mind Lift",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Levitates the player and drops them from height while firing homing psychic orbs."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Psi Orb",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv6+: can control multiple orbs."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Ultimate: brief mind control on weak enemies."
+      }
+    },
+    {
+      "name": "Swarm Man",
+      "type": "Bug",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Infestation",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Releases bug drones that home in and explode on contact."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Swarm Caller",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv5+: bugs can block projectiles."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Lv9: bugs form a temporary shield or kamikaze explosion wave."
+      }
+    },
+    {
+      "name": "Granite Man",
+      "type": "Rock",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Boulder Roll",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Pushes massive rolling rocks that crush and block paths."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Rock Buster",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv7+: boulders can be kicked or exploded on command."
+      },
+      "lv10": {
+        "status": "miss",
+        "text": ""
+      }
+    },
+    {
+      "name": "Wraith Man",
+      "type": "Ghost",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Spectral Shift",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Phases through attacks and counters with intangibility + surprise teleports."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Wraith Cloak",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv6+: can phase through walls for short distances."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Max: leaves damaging ghost copies that mimic your movement."
+      }
+    },
+    {
+      "name": "Drake Man",
+      "type": "Dragon",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Dragon Breath",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Sweeping fire/ice beam + fireball projectiles."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Drake Breath",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Lv8+: charge for a massive dragon-head projectile."
+      }
+    },
+    {
+      "name": "Eclipse Man",
+      "type": "Dark",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Shadow Bind",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Creates darkness zones that slow the player and spawn shadow clones."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Eclipse Blade",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Throws a dark energy boomerang that steals a small amount of enemy health. Per-level scaling: faster return + more health steal."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv7+: creates shadow trails that damage enemies."
+      },
+      "lv10": {
+        "status": "warn",
+        "text": "Ultimate: temporary 'Dark Mode' with increased damage and lifesteal."
+      }
+    },
+    {
+      "name": "Alloy Man",
+      "type": "Steel",
+      "palette": {
+        "status": "miss",
+        "text": ""
+      },
+      "bossAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponAppliedAttribute": {
+        "status": "miss",
+        "text": ""
+      },
+      "arenaTheme": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer1": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "hazardsLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackName": "Metal Barrage",
+      "attackLayer1": {
+        "status": "ok",
+        "text": "Fires homing metal blades + deploys temporary shields."
+      },
+      "attackLayer2": {
+        "status": "miss",
+        "text": ""
+      },
+      "attackLayer3": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponName": "Alloy Blade",
+      "weaponDescription": {
+        "status": "ok",
+        "text": "Throws penetrative metal blades that ricochet multiple times. Per-level scaling: more ricochets + higher damage."
+      },
+      "lv1": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv3": {
+        "status": "miss",
+        "text": ""
+      },
+      "lv6": {
+        "status": "warn",
+        "text": "Lv5+: blades can be recalled early."
+      },
+      "lv10": {
+        "status": "ok",
+        "text": "Temporary steel armor mode that greatly reduces damage taken."
+      }
     }
   ],
   "attributes": [
-    { "name": "Hot", "applies": "environment",
-      "shared": { "status": "ok", "text": "Faint red hue that fades until the attribute subsides. Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides." },
-      "bossVariant": { "status": "ok", "text": "Boss/hazard-sourced: player vulnerable. In Blaze Man's arena, lingers 5s after the cause concludes." },
-      "weaponVariant": { "status": "ok", "text": "Player-sourced (Blaze Wheel): player immune to own Hot; applied to ground/enemies for level-scaled durations." } },
-    { "name": "Burn", "applies": "character",
-      "shared": { "status": "ok", "text": "Faint red hue that fades until the attribute subsides. Target is on fire: rapid but weak DPS, no flinch or knockback, scaling down until the duration concludes." },
-      "bossVariant": { "status": "miss", "text": "" }, "weaponVariant": { "status": "miss", "text": "" } },
-    { "name": "Wet", "applies": "both",
-      "shared": { "status": "warn", "text": "The specified object has gotten soaked. Reduces contact friction; low transparency blue hue fading until expiry." },
-      "bossVariant": { "status": "miss", "text": "" }, "weaponVariant": { "status": "miss", "text": "" } },
-    { "name": "Poisoned", "applies": "character",
-      "shared": { "status": "ok", "text": "Faint purple hue. DPS applied much less often (~once every 3 seconds); causes flinch." },
-      "bossVariant": { "status": "warn", "text": "Toxic Cloud: lingering clouds drain health over time and reduce player speed." },
-      "weaponVariant": { "status": "warn", "text": "Venom Spray: damage over time; weakens enemies." } },
-    { "name": "Stun", "applies": "character",
-      "shared": { "status": "warn", "text": "Functionally the same as constrict/freeze; elementally correct colours flash while the target has this attribute. NOTE: distinct from FLINCH, which is the neutral hit reaction." },
-      "bossVariant": { "status": "miss", "text": "" },
-      "weaponVariant": { "status": "warn", "text": "Volt Spark (1s / 2s / 0.5s chained / 4s per level); Quake Hammer (nearby enemies). NOTE: this entry still credits Core Blaster, but Core Man's weapon attribute is now 'None' — tracker inconsistency, confirm which is right." } },
-    { "name": "Constrict", "applies": "character",
-      "shared": { "status": "warn", "text": "Functionally the same as stun/freeze; elementally correct colours flash." },
-      "bossVariant": { "status": "warn", "text": "Vine Lash: constricts the player for several seconds before reel-in and toss." },
-      "weaponVariant": { "status": "warn", "text": "Thorn Lash Lv10: constricts mini-bosses, 5s DPS." } },
-    { "name": "Freeze", "applies": "character",
-      "shared": { "status": "warn", "text": "Functionally the same as stun/constrict; elementally correct colours flash." },
-      "bossVariant": { "status": "miss", "text": "" },
-      "weaponVariant": { "status": "warn", "text": "Frost Guard: shield break on minion contact freezes; released icicles freeze." } }
+    {
+      "name": "Hot",
+      "applies": "environment",
+      "shared": {
+        "status": "ok",
+        "text": "Faint red hue that fades until the attribute subsides. Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides."
+      },
+      "bossVariant": {
+        "status": "ok",
+        "text": "Boss/hazard-sourced: player vulnerable. In Blaze Man's arena, lingers 5s after the cause concludes."
+      },
+      "weaponVariant": {
+        "status": "ok",
+        "text": "Player-sourced (Blaze Wheel): player immune to own Hot; applied to ground/enemies for level-scaled durations."
+      }
+    },
+    {
+      "name": "Burn",
+      "applies": "character",
+      "shared": {
+        "status": "ok",
+        "text": "Faint red hue that fades until the attribute subsides. Target is on fire: rapid but weak DPS, no flinch or knockback, scaling down until the duration concludes."
+      },
+      "bossVariant": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponVariant": {
+        "status": "miss",
+        "text": ""
+      }
+    },
+    {
+      "name": "Wet",
+      "applies": "both",
+      "shared": {
+        "status": "warn",
+        "text": "The specified object has gotten soaked. Reduces contact friction; low transparency blue hue fading until expiry."
+      },
+      "bossVariant": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponVariant": {
+        "status": "miss",
+        "text": ""
+      }
+    },
+    {
+      "name": "Poisoned",
+      "applies": "character",
+      "shared": {
+        "status": "ok",
+        "text": "Faint purple hue. DPS applied much less often (~once every 3 seconds); causes flinch."
+      },
+      "bossVariant": {
+        "status": "warn",
+        "text": "Toxic Cloud: lingering clouds drain health over time and reduce player speed."
+      },
+      "weaponVariant": {
+        "status": "warn",
+        "text": "Venom Spray: damage over time; weakens enemies."
+      }
+    },
+    {
+      "name": "Stun",
+      "applies": "character",
+      "shared": {
+        "status": "warn",
+        "text": "Functionally the same as constrict/freeze; elementally correct colours flash while the target has this attribute. NOTE: distinct from FLINCH, which is the neutral hit reaction present on every hit."
+      },
+      "bossVariant": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponVariant": {
+        "status": "warn",
+        "text": "Volt Spark (1s / 2s / 0.5s chained / 4s per level); Quake Hammer (nearby enemies). NOTE: this entry still credits Core Blaster, but Core Man's weapon attribute is now 'None' - tracker inconsistency, confirm which is right."
+      }
+    },
+    {
+      "name": "Constrict",
+      "applies": "character",
+      "shared": {
+        "status": "warn",
+        "text": "Functionally the same as stun/freeze; elementally correct colours flash."
+      },
+      "bossVariant": {
+        "status": "warn",
+        "text": "Vine Lash: constricts the player for several seconds before reel-in and toss."
+      },
+      "weaponVariant": {
+        "status": "warn",
+        "text": "Thorn Lash Lv10: constricts mini-bosses, 5s DPS."
+      }
+    },
+    {
+      "name": "Freeze",
+      "applies": "character",
+      "shared": {
+        "status": "warn",
+        "text": "Functionally the same as stun/constrict; elementally correct colours flash."
+      },
+      "bossVariant": {
+        "status": "miss",
+        "text": ""
+      },
+      "weaponVariant": {
+        "status": "warn",
+        "text": "Frost Guard: shield break on minion contact freezes; released icicles freeze."
+      }
+    }
   ]
 }
