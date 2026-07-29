@@ -1,5 +1,16 @@
 # Mega Dash
 
+> ## ⏸ `main` is PAUSED for playtesting
+>
+> This build is the **dev base camp**: controls, physics, arenas, progression and
+> the updater all work, and it is meant to be played rather than changed. New work
+> is happening on **`boss-dev`** — boss attacks, arena hazards and the elemental
+> attribute system for Core Man, Blaze Man and Tempest Man.
+>
+> Pull `boss-dev` from inside the game with **long-press UPDATE → pick the branch**.
+> `main` keeps its own rolling `latest` build, so tapping UPDATE always returns you
+> to this stable base camp.
+
 A mobile-first, landscape-only 2D side-scrolling platformer.
 **Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
 
