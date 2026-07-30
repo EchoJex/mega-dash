@@ -194,9 +194,43 @@ const BLAZE = {
   speed: 2.1,
   gravity: 0.17,
   hotFrames: 150,          // the trail it leaves underfoot
-  floodFrames: [360, 600], // "subsides after 6-10s"
+  floodFrames: 1800,       // the flood recedes after 30 seconds
   floodDepth: 24,          // "about one default player height"
 };
+
+/**
+ * THE FLOOD'S SAFETY CONTRACT — there is always somewhere to stand.
+ *
+ * While the lava is up the floor does not exist, so the platforms are the only
+ * footing in the room and the fight stops being a fight the moment they are all
+ * unusable. A platform is unusable if it has phased out, if it is Hot, or if the
+ * boss is standing on it. So for the whole flood:
+ *
+ *   - nothing phases out
+ *   - at least one platform that is NOT the boss's perch is guaranteed cool,
+ *     including clearing any Hot a rock already left on it
+ *
+ * The hazard loop separately stops dropping rocks while the lava is up (see
+ * blazeHazard), because a rock landing on the last cool platform would take the
+ * guarantee away a second after it was given.
+ */
+function keepFootingDuringFlood(ctx, a, perch) {
+  for (const pl of a.platforms) { pl.on = true; pl.t = Math.max(pl.t, 120); }
+
+  const guests = a.platforms.filter((pl) => pl !== perch);
+  if (!guests.length || guests.some((pl) => pl.hot === 0)) return;
+
+  // Every guest platform is Hot — cool the first one, and clear the terrain
+  // attribute sitting on it too, or it would still burn on contact.
+  const safe = guests[0];
+  safe.hot = 0;
+  for (let i = a.patches.length - 1; i >= 0; i--) {
+    const p = a.patches[i];
+    const overX = p.x < safe.x + safe.w && p.x + p.w > safe.x;
+    const overY = Math.abs(p.y - (safe.y - 3)) < 6;
+    if (overX && overY) a.patches.splice(i, 1);
+  }
+}
 
 function blazeAttack(layer) {
   return (ctx) => {
@@ -218,21 +252,25 @@ function blazeAttack(layer) {
 
     switch (fs.mode) {
       case 'flood': {
-        // Ride to the perch, then trigger the room.
+        // Ride up to the perch, then trigger the room.
         const tx = fs.perch.x + fs.perch.w / 2 - b.w / 2;
         b.x += (tx - b.x) * 0.12;
         b.y += (fs.perch.y - b.h - b.y) * 0.12;
         if (--fs.t === 60) ctx.shake(3, 90);          // the tell
         if (fs.t <= 0) {
           a.liquid.target = BLAZE.floodDepth;
-          a.liquid.hold = Math.round(rnd(...BLAZE.floodFrames));
+          a.liquid.hold = BLAZE.floodFrames;
+          keepFootingDuringFlood(ctx, a, fs.perch);
           fs.mode = 'flooded';
-          fs.t = a.liquid.hold + 120;
         }
         break;
       }
       case 'flooded': {
         b.y += (fs.perch.y - b.h - b.y) * 0.12;
+        // Re-asserted every frame: the floor is gone, so the guarantee that one
+        // platform stays solid and cool has to hold for the whole 30 seconds,
+        // not just at the moment the lava arrives.
+        keepFootingDuringFlood(ctx, a, fs.perch);
         if (a.liquid.hold === 0 && a.liquid.h <= 0.6) {
           // "leaving Hot on the ground" once the lava drops away
           ctx.patch('hot', a.x0, a.floorY - 3, a.x1 - a.x0, 4, FEEL.hotLingerFrames);
@@ -277,38 +315,53 @@ function blazeAttack(layer) {
   };
 }
 
-// Hazard: falling flaming rocks. The screen shake IS the telegraph, and it
-// escalates with the layer exactly as the tracker describes.
+/**
+ * Hazard: falling flaming rocks that leave Hot where they land. The screen shake
+ * is the telegraph.
+ *
+ * L2 is "slightly more, slightly bigger, slightly faster" than L1, and L3 IS L2 —
+ * the arena hazard stops escalating there. The escalation at layer 3 lives in the
+ * boss's own attack (the flood), not in the room. There are no lava pits: that
+ * was an earlier reading of the design and the owner has since corrected it.
+ */
 const BLAZE_HAZ = {
-  shake: { 1: [1, 30], 2: [2, 40], 3: [4, 60] },
-  cycle: { 1: 1200, 2: 900, 3: 1080 },     // "every 20 seconds or so"
-  rocks: { 1: 3, 2: 5, 3: 11 },            // L3 is a cascade, nearly all at once
-  drop: { 1: 26, 2: 18, 3: 3 },            // frames between rocks
-  fall: { 1: 0.9, 2: 1.15, 3: 1.2 },
+  shake: { 1: [1, 30], 2: [2, 40], 3: [2, 40] },
+  cycle: { 1: 1200, 2: 900, 3: 900 },      // "every 20 seconds or so"
+  rocks: { 1: 3, 2: 5, 3: 5 },
+  drop: { 1: 26, 2: 18, 3: 18 },           // frames between rocks
+  fall: { 1: 0.9, 2: 1.15, 3: 1.15 },
+  size: { 1: 12, 2: 15, 3: 15 },           // slightly bigger
 };
 
 function blazeHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a) return;
-    const hs = ctx.boss.hs || (ctx.boss.hs = { t: 180, left: 0, gap: 0, pits: false });
+    const hs = ctx.boss.hs || (ctx.boss.hs = { t: 180, left: 0, gap: 0 });
 
-    // L2 adds "a couple of pits full of lava" — permanent for the fight.
-    if (layer >= 2 && !hs.pits) {
-      hs.pits = true;
-      for (const f of [0.24, 0.7]) {
-        ctx.patch('hot', Math.round((a.x1 - a.x0) * f) - 22, a.floorY - 3, 44, 4, 1, { permanent: true, pool: true });
-      }
+    // NOT WHILE THE LAVA IS UP. During the flood the platforms are the only
+    // footing left, and a rock landing on one would make it Hot — taking away
+    // the last safe place to stand. The cycle resumes once the lava recedes.
+    //
+    // Keyed on `target`, not on the visible height: the lava takes ~2s to rise,
+    // and a rock released during that climb would still be in the air when the
+    // floor vanished underneath it.
+    if (a.liquid && (a.liquid.target > 0.5 || a.liquid.h > 0.5)) {
+      a.hazards.length = 0;                // anything already falling is cancelled
+      hs.left = 0;
+      hs.t = Math.max(hs.t, 90);           // a beat to breathe before it restarts
+      return;
     }
 
     if (hs.left > 0) {
       if (--hs.gap > 0) return;
       hs.gap = BLAZE_HAZ.drop[layer];
       hs.left--;
+      const s = BLAZE_HAZ.size[layer];
       a.hazards.push({
         kind: 'rock',
-        x: rnd(a.x0 + 8, a.x1 - 32), y: a.ceilY - 10,
-        w: 12, h: 12, vy: BLAZE_HAZ.fall[layer],
+        x: rnd(a.x0 + 8, a.x1 - 8 - s), y: a.ceilY - s,
+        w: s, h: s, vy: BLAZE_HAZ.fall[layer],
       });
       return;
     }

@@ -115,6 +115,90 @@ test('phasing platforms never all vanish at once', () => {
   }
 });
 
+/**
+ * Blaze Man's layer-3 flood removes the floor for 30 seconds, so the platforms
+ * become the only footing in the room. If they are all phased out, all Hot, or
+ * all occupied by the boss, the fight is unsurvivable through no fault of the
+ * player. This walks the whole flood and checks the guarantee every frame.
+ */
+test('the layer-3 flood always leaves somewhere safe to stand', () => {
+  const h = harness('blaze', 3);
+  const { attack, hazard } = fightFor('blaze', 3);
+  let floodFrames = 0, worst = null;
+
+  for (let i = 0; i < 8000; i++) {
+    attack.step(h.ctx);
+    hazard.step(h.ctx);
+    Arena.stepArena(h.arena);
+
+    const q = h.arena.liquid;
+    if (!q || q.h <= 0.5) continue;
+    floodFrames++;
+
+    const perch = h.boss.fs?.perch;
+    const safe = h.arena.platforms.filter((pl) => {
+      if (!pl.on || pl === perch) return false;
+      if (pl.hot > 0) return false;
+      // A platform with Hot terrain on it is not a refuge either.
+      return !h.arena.patches.some((p) =>
+        p.x < pl.x + pl.w && p.x + p.w > pl.x && Math.abs(p.y - (pl.y - 3)) < 6);
+    });
+    if (safe.length === 0) { worst = i; break; }
+  }
+
+  assert.ok(floodFrames > 600, `the flood barely happened (${floodFrames} frames)`);
+  assert.equal(worst, null, `no safe platform at frame ${worst} of the flood`);
+});
+
+test('no rocks fall while the lava is up', () => {
+  const h = harness('blaze', 3);
+  const { attack, hazard } = fightFor('blaze', 3);
+  let checked = 0;
+  for (let i = 0; i < 8000; i++) {
+    attack.step(h.ctx);
+    hazard.step(h.ctx);
+    Arena.stepArena(h.arena);
+    if (h.arena.liquid.h > 0.5) {
+      checked++;
+      assert.equal(h.arena.hazards.length, 0,
+        `a rock was airborne during the flood at frame ${i}`);
+    }
+  }
+  assert.ok(checked > 600, 'the flood never ran, so this proved nothing');
+});
+
+test('Blaze Man layers 2 and 3 use the SAME arena hazard', () => {
+  // The owner's correction: the room stops escalating at layer 2. Layer 3's
+  // escalation is the boss's flood, not a bigger rockfall.
+  const rocksIn = (layer) => {
+    const h = harness('blaze', layer);
+    const hz = FIGHTS.blaze.hazard[layer];
+    let count = 0, seen = new Set();
+    for (let i = 0; i < 4000; i++) {
+      hz.step(h.ctx);
+      Arena.stepArena(h.arena);
+      for (const r of h.arena.hazards) {
+        if (!seen.has(r)) { seen.add(r); count++; }
+      }
+      h.arena.hazards.length = 0;          // collect and clear, ignore landing
+    }
+    return { count, size: [...seen][0]?.w, fall: [...seen][0]?.vy };
+  };
+  const l1 = rocksIn(1), l2 = rocksIn(2), l3 = rocksIn(3);
+  assert.equal(l2.size, l3.size, 'L2 and L3 rocks must be the same size');
+  assert.equal(l2.fall, l3.fall, 'L2 and L3 rocks must fall at the same speed');
+  assert.ok(l2.size > l1.size, 'L2 rocks should be slightly bigger than L1');
+  assert.ok(l2.fall > l1.fall, 'L2 rocks should fall slightly faster than L1');
+});
+
+test('Blaze Man has no permanent lava pools', () => {
+  // Removed with the owner's correction — the arena hazard is rocks only.
+  const h = harness('blaze', 3);
+  const { hazard } = fightFor('blaze', 3);
+  for (let i = 0; i < 2000; i++) { hazard.step(h.ctx); Arena.stepArena(h.arena); }
+  assert.equal(h.arena.patches.filter((p) => p.permanent).length, 0);
+});
+
 test('a status refreshes its duration instead of stacking', () => {
   const bag = Attr.makeStatus();
   Attr.applyStatus(bag, 'burn', 100);

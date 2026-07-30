@@ -1,7 +1,7 @@
 {
   "schema": "megaman-boss-tracker-v2",
-  "generated": "2026-07-29",
-  "_note": "GENERATED from design/boss-design-tracker.html. The HTML is canonical: edit it in a browser, hit \"Save edited copy\", then regenerate this file. Do not hand-edit this file — the next regeneration overwrites it. Its array and DOM now carry identical content, so the old stale-array trap no longer applies.",
+  "generated": "2026-07-30",
+  "_note": "GENERATED from design/boss-design-tracker.html. The HTML is canonical: edit it in a browser, hit \"Save edited copy\", then regenerate this file. Do not hand-edit this file — the next regeneration overwrites it.",
   "statusKey": {
     "ok": "defined",
     "warn": "partial",
@@ -120,11 +120,11 @@
       },
       "hazardsLayer2": {
         "status": "ok",
-        "text": "Slightly more overt screen shake → slightly more rocks on screen, falling slightly faster, plus a couple of pits full of lava."
+        "text": "Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster."
       },
       "hazardsLayer3": {
         "status": "ok",
-        "text": "Very overt screen shake → a cascade of falling rocks fall nearly all at once"
+        "text": "Same arena hazard as Layer 2."
       },
       "attackName": "Inferno Wheel",
       "attackLayer1": {
@@ -137,7 +137,7 @@
       },
       "attackLayer3": {
         "status": "ok",
-        "text": "Same as Layer 2; additionally, synchronized with the stage hazard, the boss jumps to a small platform just for himself a few seconds before the screen shakes, the Red pixels of the background ebb rapidly, then entire floor fills with lava, slowly, up to about one default player height; lava subsides below floor level after 6–10s, leaving Hot on the ground."
+        "text": "Same as Layer 2; additionally the boss jumps up to a small platform just for himself a few seconds before the screen shakes, the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 30 seconds, leaving Hot on the ground. Rocks shall not fall onto the platforms while the lava is up — the other platforms are already Hot, and there always needs to be somewhere safe for the player to stand."
       },
       "weaponName": "Blaze Wheel",
       "weaponDescription": {
