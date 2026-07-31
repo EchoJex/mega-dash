@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf } from '../config/display.js';
-import { TEXT_RES, fitCamera } from '../systems/text.js';
+import { fitCamera, label, plate } from '../systems/text.js';
 import { save, fullReset } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
 
@@ -20,10 +20,9 @@ export default class TitleScene extends Phaser.Scene {
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
 
     const title = this.died ? 'GAME OVER' : 'MEGA DASH';
-    this.add.text(cx, 46, title, { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '20px', color: '#5CADD5' })
-      .setOrigin(0.5);
-    this.add.text(cx, 66, this.died ? '' : 'FIND THE DOOR · BEAT THE BOSS',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#3A6A8A' }).setOrigin(0.5);
+    label(this, cx, 46, title, { scale: 3, color: '#5CADD5', origin: 0.5 });
+    label(this, cx, 68, this.died ? '' : 'FIND THE DOOR · BEAT THE BOSS',
+      { color: '#3A6A8A', origin: 0.5 });
 
     if (this.died && this.run) {
       const s = this.run;
@@ -32,8 +31,7 @@ export default class TitleScene extends Phaser.Scene {
         `LEVEL ${s.level}   DIST ${Math.floor(s.dist)}m`,
         `KILLS ${s.kills}   BOSSES ${s.bossesDefeated.length}`,
       ];
-      stats.forEach((t, i) => this.add.text(cx, 78 + i * 10, t,
-        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '8px', color: '#E0F0FF' }).setOrigin(0.5));
+      stats.forEach((t, i) => label(this, cx, 80 + i * 11, t, { color: '#E0F0FF', origin: 0.5 }));
 
       // The conversion, itemised. Score alone earns Chips, so even a run that
       // never reaches a boss still buys something in the Hub.
@@ -42,10 +40,8 @@ export default class TitleScene extends Phaser.Scene {
         const parts = [`score ${c.fromScore}`];
         if (c.fromBosses) parts.push(`bosses ${c.fromBosses}`);
         if (c.mult !== 1) parts.push(`x${c.mult.toFixed(2)}`);
-        this.add.text(cx, 112, `+${c.total} CHIPS`,
-          { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: '#F5D328' }).setOrigin(0.5);
-        this.add.text(cx, 122, parts.join('  ·  '),
-          { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#8A7A30' }).setOrigin(0.5);
+        label(this, cx, 116, `+${c.total} CHIPS`, { color: '#F5D328', origin: 0.5 });
+        label(this, cx, 126, parts.join('  ·  '), { color: '#8A7A30', origin: 0.5 });
       }
     }
 
@@ -53,11 +49,10 @@ export default class TitleScene extends Phaser.Scene {
     this.btn(cx, 158, `HUB   (${save.chips} chips)`, () => this.scene.start('Hub'));
     this.updateBtn(cx, 176);
 
-    this.note = this.add.text(cx, VIEW_H - 22, '',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+    this.note = label(this, cx, VIEW_H - 24, '', { color: '#3A6A8A', origin: 0.5 });
 
-    this.add.text(cx, VIEW_H - 12, 'full reset', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#804040' })
-      .setOrigin(0.5).setInteractive({ useHandCursor: true })
+    label(this, cx, VIEW_H - 12, 'full reset', { color: '#804040', origin: 0.5 })
+      .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => confirm('Wipe ALL saved data and reload?') && fullReset());
   }
 
@@ -69,11 +64,9 @@ export default class TitleScene extends Phaser.Scene {
    * too and explains itself there instead of silently doing nothing.
    */
   updateBtn(x, y) {
-    const t = this.add.text(x, y, 'UPDATE', {
-      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '8px',
-      color: canUpdate() ? '#2AAB1C' : '#3A6A8A',
-      backgroundColor: '#0d1420', padding: { x: 8, y: 3 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const { rect: t } = plate(this, x, y, 'UPDATE', {
+      color: canUpdate() ? '#2AAB1C' : '#3A6A8A', padX: 8, padY: 3,
+    });
 
     let timer = null, fired = false;
     t.on('pointerdown', () => {
@@ -90,8 +83,7 @@ export default class TitleScene extends Phaser.Scene {
     t.on('pointerup', release);
     t.on('pointerout', () => { if (timer) { timer.remove(); timer = null; } });
 
-    this.add.text(x, y + 13, 'tap: main · hold: pick branch',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#3A6A8A' }).setOrigin(0.5);
+    label(this, x, y + 12, 'tap: main · hold: pick branch', { color: '#3A6A8A', origin: 0.5 });
     return t;
   }
 
@@ -100,12 +92,9 @@ export default class TitleScene extends Phaser.Scene {
     this.note?.setText(msg);
   }
 
-  btn(x, y, label, fn) {
-    const t = this.add.text(x, y, label, {
-      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: '#5CADD5',
-      backgroundColor: '#0d1420', padding: { x: 8, y: 4 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    t.on('pointerdown', fn);
-    return t;
+  btn(x, y, text, fn) {
+    const { rect } = plate(this, x, y, text, { color: '#5CADD5', padX: 8, padY: 4 });
+    rect.on('pointerdown', fn);
+    return rect;
   }
 }

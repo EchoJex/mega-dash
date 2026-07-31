@@ -125,6 +125,22 @@ transparent**. Fill belongs to the weapon; silhouette belongs to the player.
 free. Real art cannot — a Phaser tint would wreck a 3-colour sprite. Fixing it needs
 per-weapon frames or a palette-swap shader, and both need the art to exist first.
 
+### Sprite art is HUMAN-AUTHORED. Do not generate it.
+
+Character art, silhouettes and boss arena backgrounds are the owner's to draw. Generated
+pixel art falls below the line the owner has drawn between *AI-supported* and *AI-created*
+game development, and that line is a deliberate authorship decision, not a quality
+judgement about any particular generator.
+
+So do not offer to generate, and never quietly add, sprites or silhouettes for the player,
+minions, bosses, or arena backdrops. Bosses stay honest rectangles at true collision
+footprint until real art lands. `silhouette: null` in `bosses.js` is not a gap to fill.
+
+**What IS fair game to generate:** the procedural overworld terrain, the placeholder arena
+backdrops (shapes, not art — replaced when the owner draws the real ones), the HUD bitmap
+font, sound effects, and draft *design prose* the owner then edits. Anything that is not a
+drawn sprite.
+
 Bosses are **honest rectangles at true collision footprint** right now. Silhouette design
 follows from attack and arena design, which is not done. Do not invent silhouettes early.
 

@@ -35,7 +35,7 @@
 
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf } from '../config/display.js';
-import { TEXT_RES, fitCamera } from '../systems/text.js';
+import { fitCamera, label, plate } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
 import { dev, DEV } from '../config/dev.js';
@@ -165,7 +165,7 @@ export default class UIScene extends Phaser.Scene {
     ];
 
     // HP is drawn as pips in this.g; the text picks up below it
-    this.hud = this.add.text(4, 15, '', { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' });
+    this.hud = label(this, 4, 15, '', { color: '#E0F0FF' });
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
@@ -191,11 +191,10 @@ export default class UIScene extends Phaser.Scene {
       .setOrigin(0).setDepth(100).setVisible(false);
   }
 
-  mkTap(x, y, w, h, label, fn) {
+  mkTap(x, y, w, h, text, fn) {
     const r = this.add.rectangle(x, y, w, h, 0x0d1420, 0.7).setOrigin(0)
       .setInteractive({ useHandCursor: true });
-    const t = this.add.text(x + w / 2, y + h / 2, label,
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' }).setOrigin(0.5);
+    const t = label(this, x + w / 2, y + h / 2, text, { color: '#5CADD5', origin: 0.5 });
     r.on('pointerdown', fn);
     return { r, t };
   }
@@ -205,9 +204,8 @@ export default class UIScene extends Phaser.Scene {
     const r = this.add.rectangle(b.x, b.y, b.w, b.h, 0x0d1420, PAD_ALPHA).setOrigin(0)
       .setStrokeStyle(1, 0x5cadd5, PAD_ALPHA)
       .setInteractive({ useHandCursor: true });
-    const t = this.add.text(b.x + b.w / 2, b.y + b.h / 2, glyph, {
-      resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '11px', color: '#5CADD5',
-    }).setOrigin(0.5).setAlpha(PAD_ALPHA + 0.25);
+    const t = label(this, b.x + b.w / 2, b.y + b.h / 2, glyph,
+      { scale: 2, color: '#5CADD5', origin: 0.5 }).setAlpha(0.95);
     b.rect = r; b.txt = t;
     return b;
   }
@@ -349,21 +347,19 @@ export default class UIScene extends Phaser.Scene {
     this.pausePanel = this.add.container(0, 0).setDepth(60);
     this.pausePanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.9)
       .setOrigin(0).setInteractive());
-    this.pausePanel.add(this.add.text(cx, 60, 'PAUSED',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '14px', color: '#5CADD5' }).setOrigin(0.5));
+    this.pausePanel.add(label(this, cx, 60, 'PAUSED', { scale: 2, color: '#5CADD5', origin: 0.5 }));
 
-    const btn = (y, label, colour, fn) => {
-      const t = this.add.text(cx, y, label, {
-        resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '9px', color: colour,
-        backgroundColor: '#0d1420', padding: { x: 10, y: 4 },
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      t.on('pointerdown', fn);
-      this.pausePanel.add(t);
+    const btn = (y, text, colour, fn) => {
+      const { rect, txt } = plate(this, cx, y, text, { color: colour, padX: 10, padY: 4 });
+      rect.on('pointerdown', fn);
+      this.pausePanel.add(rect);
+      this.pausePanel.add(txt);
+      const t = rect;
     };
     btn(104, 'RESUME', '#5CADD5', () => this.closePause());
     btn(132, 'ABORT RUN', '#C04040', () => this.abortRun());
-    this.pausePanel.add(this.add.text(cx, 150, 'ends the run and banks your Chips',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#6A5A5A' }).setOrigin(0.5));
+    this.pausePanel.add(label(this, cx, 150, 'ends the run and banks your Chips',
+      { color: '#6A5A5A', origin: 0.5 }));
   }
 
   closePause() {
@@ -411,10 +407,9 @@ export default class UIScene extends Phaser.Scene {
 
       // first three letters of the leading word — unique across all 18, and the
       // only label that fits inside an 18px slot
-      const abbr = this.add.text(x, y - 2, wd.name.split(' ')[0].slice(0, 3),
-        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: ink }).setOrigin(0.5);
-      const lvl = this.add.text(x, y + 4, '',
-        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '5px', color: ink }).setOrigin(0.5);
+      const abbr = label(this, x, y - 4, wd.name.split(' ')[0].slice(0, 3),
+        { color: ink, origin: 0.5 });
+      const lvl = label(this, x, y + 4, '', { color: ink, origin: 0.5 });
 
       this.wheel.add([disc, abbr, lvl]);
       return { id, x, y, angle, disc, abbr, lvl, locked: false };
@@ -424,10 +419,8 @@ export default class UIScene extends Phaser.Scene {
     this.lockG = this.add.graphics();
     this.wheel.add(this.lockG);
 
-    this.readName = this.add.text(cx, cy - 5, '',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF' }).setOrigin(0.5);
-    this.readLv = this.add.text(cx, cy + 5, '',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5);
+    this.readName = label(this, cx, cy - 6, '', { color: '#E0F0FF', origin: 0.5 });
+    this.readLv = label(this, cx, cy + 4, '', { color: '#5CADD5', origin: 0.5 });
     this.wheel.add([this.readName, this.readLv]);
   }
 
@@ -441,9 +434,8 @@ export default class UIScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x5cadd5)
       .setAlpha(IDLE_ALPHA)
       .setInteractive({ useHandCursor: true });
-    this.reqTxt = this.add.text(x + bw / 2, y + bh / 2, 'RE-QUIP',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#5CADD5' })
-      .setOrigin(0.5).setAlpha(IDLE_ALPHA);
+    this.reqTxt = label(this, x + bw / 2, y + bh / 2, 'RE-QUIP',
+      { color: '#5CADD5', origin: 0.5 }).setAlpha(IDLE_ALPHA);
 
     this.reqBox.on('pointerdown', (p) => {
       if (this.press) return;
@@ -668,10 +660,9 @@ export default class UIScene extends Phaser.Scene {
     this.cards = this.add.container(0, 0).setDepth(50);
     this.cards.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.93).setOrigin(0)
       .setInteractive());
-    this.cards.add(this.add.text(this.w / 2, 14, `LEVEL ${level}`,
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '10px', color: '#F5D328' }).setOrigin(0.5));
-    this.cards.add(this.add.text(this.w / 2, 26, 'CHOOSE ONE',
-      { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#5CADD5' }).setOrigin(0.5));
+    this.cards.add(label(this, this.w / 2, 12, `LEVEL ${level}`,
+      { scale: 2, color: '#F5D328', origin: 0.5 }));
+    this.cards.add(label(this, this.w / 2, 30, 'CHOOSE ONE', { color: '#5CADD5', origin: 0.5 }));
 
     const n = cards.length;
     const cw = Math.min(64, (this.w - 16) / n - 4);
@@ -685,12 +676,8 @@ export default class UIScene extends Phaser.Scene {
         .setStrokeStyle(1, col, 1).setInteractive({ useHandCursor: true });
       box.on('pointerdown', () => { c.take(); this.closeCards(); });
       this.cards.add(box);
-      this.cards.add(this.add.text(x + cw / 2, y + 26, c.title,
-        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '7px', color: '#E0F0FF',
-          align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
-      this.cards.add(this.add.text(x + cw / 2, y + 52, c.sub,
-        { resolution: TEXT_RES, fontFamily: 'monospace', fontSize: '6px', color: '#8AB',
-          align: 'center', wordWrap: { width: cw - 6 } }).setOrigin(0.5));
+      this.cards.add(label(this, x + cw / 2, y + 26, c.title, { color: '#E0F0FF', origin: 0.5 }));
+      this.cards.add(label(this, x + cw / 2, y + 52, c.sub, { color: '#88AABB', origin: 0.5 }));
     });
   }
 
@@ -726,9 +713,7 @@ export default class UIScene extends Phaser.Scene {
     // a boss actually handed over its weapon.
     if (r.justUnlocked) {
       if (!this.unlockMsg) {
-        this.unlockMsg = this.add.text(this.w / 2, 44, '', {
-          fontFamily: 'monospace', fontSize: '8px', color: '#F5D328',
-        }).setOrigin(0.5);
+        this.unlockMsg = label(this, this.w / 2, 44, '', { color: '#F5D328', origin: 0.5 });
         this.unlockAt = performance.now();
       }
       this.unlockMsg.setText(`${weaponOf(r.justUnlocked).name} ACQUIRED`);
