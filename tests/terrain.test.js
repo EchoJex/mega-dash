@@ -19,9 +19,26 @@ import { FEEL } from '../src/config/feel.js';
 
 const GROUND_Y = 184, VIEW_W = 480;
 
+/**
+ * SEEDED. These tests used to sample Math.random, which made them a coin flip:
+ * the theme sample-size assertion passed locally and failed ~54% of CI runs, and
+ * worse, the traversability checks only caught a bad seed probabilistically.
+ * A deterministic sweep over many seeds is both reproducible and far more
+ * thorough than one lucky sample.
+ */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 /** Generate a long stretch and return its gaps and spans, left to right. */
-function survey(distance = 60000, bossId = null) {
-  const w = makeWorld(80, GROUND_Y, bossId);
+function survey(distance = 60000, bossId = null, seed = 1) {
+  const w = makeWorld(80, GROUND_Y, bossId, mulberry32(seed));
   for (let camX = 0; camX < distance; camX += 120) generate(w, camX, VIEW_W);
   const spans = [...w.groundSpans].sort((a, b) => a.x1 - b.x1);
   const gaps = [];
@@ -84,18 +101,22 @@ test('the generator keeps producing ground and never stalls', () => {
  * value that would produce an uncrossable world fails the build instead of
  * shipping.
  */
-test('EVERY boss theme still produces a crossable world', () => {
+test('EVERY boss theme still produces a crossable world, across many seeds', () => {
+  const SEEDS = 25;
   for (const id of Object.keys(THEMES)) {
-    // Long enough that even the LEAST pitted theme (Granite: deliberately solid
-    // slabs) still yields a meaningful sample. 30k was not.
-    const { gaps } = survey(70000, id);
-    assert.ok(gaps.length > 50, `${id}: too few gaps to be meaningful (${gaps.length})`);
-    const bad = gaps.filter((g) => g.width > maxPitWidth() + 0.01);
-    assert.equal(bad.length, 0, `${id}: ${bad.length} impassable gaps`);
-    for (const g of gaps) {
-      const landW = g.landing.x2 - g.landing.x1;
-      assert.ok(landW >= 30 - 0.01, `${id}: landing span only ${landW.toFixed(1)}px`);
+    let total = 0;
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const { gaps } = survey(20000, id, seed);
+      total += gaps.length;
+      const bad = gaps.filter((g) => g.width > maxPitWidth() + 0.01);
+      assert.equal(bad.length, 0, `${id} seed ${seed}: ${bad.length} impassable gaps`);
+      for (const g of gaps) {
+        const landW = g.landing.x2 - g.landing.x1;
+        assert.ok(landW >= 30 - 0.01, `${id} seed ${seed}: landing span ${landW.toFixed(1)}px`);
+      }
     }
+    // Sample size is now a property of the sweep, not of one lucky draw.
+    assert.ok(total > 100, `${id}: only ${total} gaps across ${SEEDS} seeds`);
   }
 });
 
@@ -106,11 +127,17 @@ test('every boss has a terrain theme', () => {
 });
 
 test('themes actually differ from each other', () => {
-  // Otherwise the whole feature is a no-op that looks implemented.
+  // Otherwise the whole feature is a no-op that looks implemented. Averaged over
+  // seeds so the comparison is about the THEME, not about one draw.
   const shape = (id) => {
-    const { gaps, spans } = survey(40000, id);
-    const avgSpan = spans.reduce((s, x) => s + (x.x2 - x.x1), 0) / spans.length;
-    return { gapRate: gaps.length / spans.length, avgSpan };
+    let gapRate = 0, avgSpan = 0;
+    const N = 10;
+    for (let seed = 1; seed <= N; seed++) {
+      const { gaps, spans } = survey(20000, id, seed);
+      gapRate += gaps.length / spans.length / N;
+      avgSpan += spans.reduce((s, x) => s + (x.x2 - x.x1), 0) / spans.length / N;
+    }
+    return { gapRate, avgSpan };
   };
   const airy = shape('gale'), solid = shape('granite');
   assert.ok(airy.gapRate > solid.gapRate * 1.4,

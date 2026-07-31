@@ -20,7 +20,17 @@ const LOOKAHEAD = 160;
 /** Ground guaranteed on the far side of a pit — room to land and to turn. */
 const LANDING_MIN = 30;
 
-const rand = (a, b) => a + Math.random() * (b - a);
+/**
+ * Generation randomness is INJECTABLE.
+ *
+ * Production passes nothing and gets Math.random. Tests pass a seeded generator,
+ * which turns the traversability checks from a probabilistic sample into a
+ * deterministic sweep over many seeds — a rare seed that produced an uncrossable
+ * world would otherwise only fail the build sometimes, which is worse than not
+ * testing it at all. (An earlier unseeded threshold in those tests failed ~54%
+ * of CI runs while passing locally.)
+ */
+const rand = (rng, a, b) => a + rng() * (b - a);
 
 /**
  * How far a running jump actually carries, SIMULATED from the live FEEL values.
@@ -91,7 +101,7 @@ export const THEMES = {
 const NEUTRAL = THEMES.core;
 export const themeFor = (bossId) => THEMES[bossId] || NEUTRAL;
 
-export function makeWorld(startX, groundY, bossId = null) {
+export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
   return {
     groundSpans: [{ x1: startX - 240, x2: startX + 180 }],
     spikes: [],
@@ -104,6 +114,7 @@ export function makeWorld(startX, groundY, bossId = null) {
     lastWasPit: false,
     theme: themeFor(bossId),
     themeId: bossId,
+    rng,
   };
 }
 
@@ -111,6 +122,7 @@ export function generate(world, camX, viewW) {
   const target = camX + viewW + LOOKAHEAD;
   const pitMax = maxPitWidth();
   const th = world.theme || NEUTRAL;
+  const rng = world.rng || Math.random;
   // Themed chances are clamped so no theme can push the world past what the
   // generator's own guarantees assume — flavour never overrides traversability.
   const pitChance = Math.min(0.42, PIT_CHANCE * th.pit);
@@ -126,31 +138,31 @@ export function generate(world, camX, viewW) {
     // chance, ~8% of all gaps came out wider than a jump could clear, and the
     // worst ran to several hundred pixels. Damage-and-beam made those survivable
     // but not passable — the run simply could not continue rightward.
-    if (!world.lastWasPit && Math.random() < pitChance) {
+    if (!world.lastWasPit && rng() < pitChance) {
       world.lastWasPit = true;
-      world.genX += rand(PIT_MIN, pitMax);
+      world.genX += rand(rng, PIT_MIN, pitMax);
       continue;
     }
 
     const afterPit = world.lastWasPit;
     world.lastWasPit = false;
-    const w = Math.max(afterPit ? LANDING_MIN : 0, rand(SPAN_MIN, SPAN_MAX) * th.span);
+    const w = Math.max(afterPit ? LANDING_MIN : 0, rand(rng, SPAN_MIN, SPAN_MAX) * th.span);
     const x1 = world.genX, x2 = x1 + w;
     world.groundSpans.push({ x1, x2 });
 
-    if (w > 56 && Math.random() < spikeChance) {
-      const sw = rand(12, 24);
+    if (w > 56 && rng() < spikeChance) {
+      const sw = rand(rng, 12, 24);
       // Keep spikes off the landing edge: a spike bed exactly where a forced
       // jump has to put you is a hit you were never given the chance to avoid.
       const lead = afterPit ? LANDING_MIN : 16;
       const hi = Math.max(lead, w - sw - 16);
-      world.spikes.push({ x: x1 + rand(lead, hi), y: world.groundY - 7, w: sw, h: 7 });
+      world.spikes.push({ x: x1 + rand(rng, lead, hi), y: world.groundY - 7, w: sw, h: 7 });
     }
-    if (Math.random() < platChance) {
-      const pw = rand(28, 52);
+    if (rng() < platChance) {
+      const pw = rand(rng, 28, 52);
       world.platforms.push({
-        x: x1 + rand(0, Math.max(1, w - pw)),
-        y: world.groundY - Math.min(96, rand(26, 78) * th.high),
+        x: x1 + rand(rng, 0, Math.max(1, w - pw)),
+        y: world.groundY - Math.min(96, rand(rng, 26, 78) * th.high),
         w: pw, h: 5,
       });
     }
