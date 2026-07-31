@@ -155,7 +155,9 @@ export default class GameScene extends Phaser.Scene {
   startArea() {
     this.upcoming = this.nextBoss();
     this.areaTheme = Arena.themeFor(this.upcoming);
-    this.world = Terrain.makeWorld(80, GROUND_Y);
+    // The ground leans toward the coming boss too, not just the backdrop — an
+    // approach to Gale Man should FEEL airy, not merely look it.
+    this.world = Terrain.makeWorld(80, GROUND_Y, this.upcoming?.id);
     this.cam = { x: 0 };
     this.player.x = 80;
     this.player.y = GROUND_Y - 24;

@@ -52,7 +52,46 @@ export function jumpReach() {
  */
 export const maxPitWidth = () => Math.floor(jumpReach() * 0.75);
 
-export function makeWorld(startX, groundY) {
+/**
+ * TERRAIN THEMES — the overworld leans toward the boss whose door is coming.
+ *
+ * The backdrop already foreshadows the next boss; the ground did not, so every
+ * stretch between doors played identically no matter who was ahead. A theme
+ * nudges the SHAPE of the run — how pitted, how high, how spiky, how many
+ * platforms — so approaching Gale Man feels airy and approaching Granite Man
+ * feels like a slab, without needing any new art or any new mechanics.
+ *
+ * These are multipliers on the base numbers, deliberately mild: this is flavour,
+ * and the traversability guarantee in generate() still binds absolutely. Nothing
+ * here can produce a gap a jump cannot clear.
+ *
+ * NOT the sealed boss arenas. Those backdrops are the owner's to draw.
+ */
+export const THEMES = {
+  //          pit     span    spike   plat    height  (multipliers / bias)
+  gale:     { pit: 1.30, span: 0.75, spike: 0.8, plat: 1.6, high: 1.5 },  // airy, broken
+  psi:      { pit: 1.15, span: 0.85, spike: 0.9, plat: 1.5, high: 1.4 },
+  wraith:   { pit: 1.20, span: 0.85, spike: 1.0, plat: 1.3, high: 1.2 },
+  granite:  { pit: 0.55, span: 1.40, spike: 0.9, plat: 0.5, high: 0.6 },  // solid slabs
+  quake:    { pit: 0.70, span: 1.30, spike: 1.1, plat: 0.6, high: 0.7 },
+  alloy:    { pit: 0.85, span: 1.15, spike: 1.3, plat: 0.9, high: 0.9 },  // industrial
+  strike:   { pit: 0.80, span: 1.20, spike: 1.2, plat: 0.8, high: 0.8 },  // arena floors
+  blaze:    { pit: 1.20, span: 0.90, spike: 1.3, plat: 1.0, high: 1.0 },  // broken, hostile
+  drake:    { pit: 1.10, span: 0.95, spike: 1.3, plat: 1.1, high: 1.2 },
+  torrent:  { pit: 1.25, span: 0.90, spike: 0.7, plat: 1.2, high: 0.9 },  // channels
+  frost:    { pit: 1.10, span: 1.00, spike: 0.8, plat: 1.2, high: 1.1 },
+  thorn:    { pit: 0.95, span: 0.95, spike: 1.2, plat: 1.4, high: 1.3 },  // overgrown
+  swarm:    { pit: 1.00, span: 0.90, spike: 1.1, plat: 1.5, high: 1.3 },
+  venom:    { pit: 1.05, span: 0.95, spike: 1.4, plat: 1.1, high: 1.0 },
+  volt:     { pit: 1.05, span: 1.00, spike: 1.2, plat: 1.3, high: 1.2 },
+  eclipse:  { pit: 1.15, span: 0.90, spike: 1.2, plat: 1.2, high: 1.1 },
+  core:     { pit: 1.00, span: 1.00, spike: 1.0, plat: 1.0, high: 1.0 },  // the neutral baseline
+};
+
+const NEUTRAL = THEMES.core;
+export const themeFor = (bossId) => THEMES[bossId] || NEUTRAL;
+
+export function makeWorld(startX, groundY, bossId = null) {
   return {
     groundSpans: [{ x1: startX - 240, x2: startX + 180 }],
     spikes: [],
@@ -63,12 +102,20 @@ export function makeWorld(startX, groundY) {
     // Whether the last thing emitted was a pit. Two pits in a row used to be
     // possible and compounded into an uncrossable gap — see generate().
     lastWasPit: false,
+    theme: themeFor(bossId),
+    themeId: bossId,
   };
 }
 
 export function generate(world, camX, viewW) {
   const target = camX + viewW + LOOKAHEAD;
   const pitMax = maxPitWidth();
+  const th = world.theme || NEUTRAL;
+  // Themed chances are clamped so no theme can push the world past what the
+  // generator's own guarantees assume — flavour never overrides traversability.
+  const pitChance = Math.min(0.42, PIT_CHANCE * th.pit);
+  const spikeChance = Math.min(0.6, SPIKE_CHANCE * th.spike);
+  const platChance = Math.min(0.85, PLATFORM_CHANCE * th.plat);
   let guard = 0;
   while (world.genX < target && guard++ < 40) {
     // A pit is simply the absence of a ground span. Falling in is not fatal —
@@ -79,7 +126,7 @@ export function generate(world, camX, viewW) {
     // chance, ~8% of all gaps came out wider than a jump could clear, and the
     // worst ran to several hundred pixels. Damage-and-beam made those survivable
     // but not passable — the run simply could not continue rightward.
-    if (!world.lastWasPit && Math.random() < PIT_CHANCE) {
+    if (!world.lastWasPit && Math.random() < pitChance) {
       world.lastWasPit = true;
       world.genX += rand(PIT_MIN, pitMax);
       continue;
@@ -87,11 +134,11 @@ export function generate(world, camX, viewW) {
 
     const afterPit = world.lastWasPit;
     world.lastWasPit = false;
-    const w = Math.max(afterPit ? LANDING_MIN : 0, rand(SPAN_MIN, SPAN_MAX));
+    const w = Math.max(afterPit ? LANDING_MIN : 0, rand(SPAN_MIN, SPAN_MAX) * th.span);
     const x1 = world.genX, x2 = x1 + w;
     world.groundSpans.push({ x1, x2 });
 
-    if (w > 56 && Math.random() < SPIKE_CHANCE) {
+    if (w > 56 && Math.random() < spikeChance) {
       const sw = rand(12, 24);
       // Keep spikes off the landing edge: a spike bed exactly where a forced
       // jump has to put you is a hit you were never given the chance to avoid.
@@ -99,11 +146,11 @@ export function generate(world, camX, viewW) {
       const hi = Math.max(lead, w - sw - 16);
       world.spikes.push({ x: x1 + rand(lead, hi), y: world.groundY - 7, w: sw, h: 7 });
     }
-    if (Math.random() < PLATFORM_CHANCE) {
+    if (Math.random() < platChance) {
       const pw = rand(28, 52);
       world.platforms.push({
         x: x1 + rand(0, Math.max(1, w - pw)),
-        y: world.groundY - rand(26, 78),
+        y: world.groundY - Math.min(96, rand(26, 78) * th.high),
         w: pw, h: 5,
       });
     }

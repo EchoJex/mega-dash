@@ -13,14 +13,15 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeWorld, generate, jumpReach, maxPitWidth } from '../src/systems/terrain.js';
+import { makeWorld, generate, jumpReach, maxPitWidth, THEMES } from '../src/systems/terrain.js';
+import { BOSSES } from '../src/data/bosses.js';
 import { FEEL } from '../src/config/feel.js';
 
 const GROUND_Y = 184, VIEW_W = 480;
 
 /** Generate a long stretch and return its gaps and spans, left to right. */
-function survey(distance = 60000) {
-  const w = makeWorld(80, GROUND_Y);
+function survey(distance = 60000, bossId = null) {
+  const w = makeWorld(80, GROUND_Y, bossId);
   for (let camX = 0; camX < distance; camX += 120) generate(w, camX, VIEW_W);
   const spans = [...w.groundSpans].sort((a, b) => a.x1 - b.x1);
   const gaps = [];
@@ -75,6 +76,45 @@ test('the generator keeps producing ground and never stalls', () => {
   for (let camX = 0; camX < 20000; camX += 120) generate(w, camX, VIEW_W);
   assert.ok(w.genX > before + 19000, 'generation fell behind the camera');
   assert.ok(w.groundSpans.length > 100);
+});
+
+/**
+ * Themes are flavour and must never be able to break the traversability
+ * guarantee. This is the test that lets the theme numbers be tuned freely: any
+ * value that would produce an uncrossable world fails the build instead of
+ * shipping.
+ */
+test('EVERY boss theme still produces a crossable world', () => {
+  for (const id of Object.keys(THEMES)) {
+    const { gaps } = survey(30000, id);
+    assert.ok(gaps.length > 50, `${id}: too few gaps to be meaningful (${gaps.length})`);
+    const bad = gaps.filter((g) => g.width > maxPitWidth() + 0.01);
+    assert.equal(bad.length, 0, `${id}: ${bad.length} impassable gaps`);
+    for (const g of gaps) {
+      const landW = g.landing.x2 - g.landing.x1;
+      assert.ok(landW >= 30 - 0.01, `${id}: landing span only ${landW.toFixed(1)}px`);
+    }
+  }
+});
+
+test('every boss has a terrain theme', () => {
+  for (const b of BOSSES) {
+    assert.ok(THEMES[b.id], `${b.id} has no terrain theme, so its approach plays neutral`);
+  }
+});
+
+test('themes actually differ from each other', () => {
+  // Otherwise the whole feature is a no-op that looks implemented.
+  const shape = (id) => {
+    const { gaps, spans } = survey(40000, id);
+    const avgSpan = spans.reduce((s, x) => s + (x.x2 - x.x1), 0) / spans.length;
+    return { gapRate: gaps.length / spans.length, avgSpan };
+  };
+  const airy = shape('gale'), solid = shape('granite');
+  assert.ok(airy.gapRate > solid.gapRate * 1.4,
+    `gale should be far more pitted than granite (${airy.gapRate.toFixed(2)} vs ${solid.gapRate.toFixed(2)})`);
+  assert.ok(solid.avgSpan > airy.avgSpan * 1.4,
+    `granite should have far longer ground than gale (${solid.avgSpan.toFixed(0)} vs ${airy.avgSpan.toFixed(0)})`);
 });
 
 test('a wider jump immediately permits wider pits', () => {

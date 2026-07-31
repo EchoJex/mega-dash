@@ -209,8 +209,8 @@
         "text": "Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain.\nSteady, powerful water flows from portholes in the upper left and upper right corners of the stage. The water cascades down the walls and across the floor toward a grate-covered deadly central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center.\nImplement appropriate 2D physics: the flowing water applies a moderate continuous directional force / velocity bias that drags Mega Man toward the central drain (stronger on the ground, weaker in the air). Touching the grate pit deals damage."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Rain from all three directions in rapid succession with no settled beat. Both portholes run at full pressure; floor water rises to mid-shin and the inward current roughly doubles, so holding station away from the drain takes constant input."
       },
       "attackName": "Aqua Torrent",
       "attackLayer1": {
@@ -218,12 +218,12 @@
         "text": "Slow-moving high-pressure water cannons fire water in discrete angled arcs at random times; no damage on contact, but pushes the player in the direction of the water's travel and blocks player bullets. Once the attack reaches the ground it continues it's travel until it reaches a drain, pushes the player back; no damage."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two cannons fire in alternating arcs so the pushes cross, and a landed jet now sweeps along the floor in the direction it fell rather than travelling straight to the nearest drain."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Three cannons; one fires straight down from the ceiling to cut the room in half. Jets persist noticeably longer on the floor, so two crossing currents can be live at once."
       },
       "weaponName": "Torrent Cannon",
       "weaponDescription": {
@@ -283,20 +283,20 @@
         "text": "Stun on first enemy contact, with durations defined per level. Functionally same as constrict/freeze; elementally correct colors flash."
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] High-voltage substation interior: exposed bus bars, insulator stacks, and caged floor panels. Background is a wall of transformers whose indicator lamps pulse in time with the hazard cycle."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Same sweep, faster, plus overhead conductors that drop a vertical arc at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The sweep runs in both directions at once, meeting in the middle. Arcs now chain between conductors, briefly electrifying the air between two of them rather than only the ground beneath."
       },
       "attackName": "Chain Spark",
       "attackLayer1": {
@@ -304,12 +304,12 @@
         "text": "Fires up to 5 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Bolts increase to 7 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched."
       },
       "weaponName": "Volt Spark",
       "weaponDescription": {
@@ -369,20 +369,20 @@
         "text": "Constrict (Thorn Lash Lv10 vs mini-bosses, 5s DPS)."
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle."
       },
       "attackName": "Vine Lash",
       "attackLayer1": {
@@ -390,12 +390,12 @@
         "text": "Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots."
       },
       "weaponName": "Thorn Lash",
       "weaponDescription": {
@@ -455,20 +455,20 @@
         "text": "Freeze (shield break on minion contact; icicles freeze). Functionally same as stun/constrict; elementally correct colors flash."
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it."
       },
       "attackName": "Glacier Spike",
       "attackLayer1": {
@@ -476,12 +476,12 @@
         "text": "Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle."
       },
       "weaponName": "Frost Guard",
       "weaponDescription": {
@@ -541,20 +541,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Underground fight pit: chain-link cage walls, a stained mat floor, and a background of stacked crowd barriers and hanging lamps."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised."
       },
       "attackName": "Rush Combo",
       "attackLayer1": {
@@ -562,12 +562,12 @@
         "text": "Teleports close and performs rapid punches + uppercut launcher."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started."
       },
       "weaponName": "Strike Gauntlet",
       "weaponDescription": {
@@ -579,16 +579,16 @@
         "text": "2 jabs, or 1 jab and one combo finisher."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Jab chain extends to three hits; the third hit staggers. Long-press finisher gains a short forward lunge."
       },
       "lv6": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases."
       },
       "lv10": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Finisher becomes a full dash-through that passes between enemies, hitting every one it crosses and ending in the launcher."
       },
       "primaryHex": {
         "status": "ok",
@@ -627,20 +627,20 @@
         "text": "Poisoned: faint purple hue; DPS applied much less often (~every 3 seconds); causes flinch."
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots."
       },
       "attackName": "Toxic Cloud",
       "attackLayer1": {
@@ -648,12 +648,12 @@
         "text": "Releases lingering poison clouds that drain health over time and reduce player speed."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Clouds are released in an arc rather than dropped in place, and now linger long enough for two to be present at once."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] On release the clouds slowly drift toward the player instead of staying put, and a popped cloud leaves a corrosive pool where it dispersed."
       },
       "weaponName": "Venom Spray",
       "weaponDescription": {
@@ -661,12 +661,12 @@
         "text": "Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Short cone, low DoT; Poisoned lasts a few seconds and does not stack."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits."
       },
       "lv6": {
         "status": "warn",
@@ -713,20 +713,20 @@
         "text": "Stun on nearby enemies via shockwave; duration scales per level."
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand."
       },
       "attackName": "Seismic Stomp",
       "attackLayer1": {
@@ -734,12 +734,12 @@
         "text": "Causes screen-wide tremors and rising rock pillars."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave."
       },
       "weaponName": "Quake Hammer",
       "weaponDescription": {
@@ -747,12 +747,12 @@
         "text": "Ground-pound that creates shockwaves and stuns nearby enemies. Per-level scaling: shockwave size + stun duration."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Ground-pound on landing from a jump; small shockwave both directions, brief Stun on contact."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them."
       },
       "lv6": {
         "status": "warn",
@@ -799,20 +799,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The wind gusts rather than holding steady — short, strong bursts strong enough to break a jump arc, separated by calm."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Gusts alternate with vacuum pockets that pull toward the rotor, so the player is fighting force in both directions within one cycle."
       },
       "attackName": "Wind Vortex",
       "attackLayer1": {
@@ -820,12 +820,12 @@
         "text": "Creates tornadoes that suck the player in and launch them upward."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position."
       },
       "weaponName": "Gale Vortex",
       "weaponDescription": {
@@ -833,20 +833,20 @@
         "text": "Creates a controllable mini-tornado that lifts enemies and carries projectiles. Per-level scaling: bigger/longer tornado + movement speed while controlling it."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Small tornado, short duration, lifts minions only."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Larger and longer; the tornado now carries enemy projectiles that enter it."
       },
       "lv6": {
         "status": "warn",
         "text": "Lv7+: can ride your own tornado for limited flight."
       },
       "lv10": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The tornado becomes steerable in flight and returns carried projectiles at whoever fired them."
       },
       "primaryHex": {
         "status": "ok",
@@ -885,20 +885,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest."
       },
       "attackName": "Mind Lift",
       "attackLayer1": {
@@ -906,12 +906,12 @@
         "text": "Levitates the player and drops them from height while firing homing psychic orbs."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out."
       },
       "weaponName": "Psi Orb",
       "weaponDescription": {
@@ -919,12 +919,12 @@
         "text": "Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] One slow homing orb at a time; steerable while the attack button is held."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing."
       },
       "lv6": {
         "status": "warn",
@@ -971,20 +971,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Hatching is continuous from both walls, and the ceiling drops sacs that burst into slowing resin where they land."
       },
       "attackName": "Infestation",
       "attackLayer1": {
@@ -992,12 +992,12 @@
         "text": "Releases bug drones that home in and explode on contact."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed."
       },
       "weaponName": "Swarm Caller",
       "weaponDescription": {
@@ -1005,12 +1005,12 @@
         "text": "Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two bug allies, short duration; they attack the nearest minion and expire together."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Three allies with a longer duration; they now prioritise whatever the player last damaged."
       },
       "lv6": {
         "status": "warn",
@@ -1057,20 +1057,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] A sustained rockslide down one side of the room, changing sides between cycles."
       },
       "attackName": "Boulder Roll",
       "attackLayer1": {
@@ -1078,12 +1078,12 @@
         "text": "Pushes massive rolling rocks that crush and block paths."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward."
       },
       "weaponName": "Rock Buster",
       "weaponDescription": {
@@ -1091,20 +1091,20 @@
         "text": "Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Single thrown boulder; rolls on landing and stops at the first wall."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Heavier boulder that rolls further and crushes through minions instead of stopping on the first."
       },
       "lv6": {
         "status": "warn",
         "text": "Lv7+: boulders can be kicked or exploded on command."
       },
       "lv10": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall."
       },
       "primaryHex": {
         "status": "ok",
@@ -1143,20 +1143,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] More cold spots, moving faster, and they now leave a short trail that is also unsafe."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost."
       },
       "attackName": "Spectral Shift",
       "attackLayer1": {
@@ -1164,12 +1164,12 @@
         "text": "Phases through attacks and counters with intangibility + surprise teleports."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity."
       },
       "weaponName": "Wraith Cloak",
       "weaponDescription": {
@@ -1177,12 +1177,12 @@
         "text": "Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Brief invulnerability and invisibility on activation; reappearing deals a small burst around the player."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Longer duration and a larger reappear burst; movement speed is increased while cloaked."
       },
       "lv6": {
         "status": "warn",
@@ -1229,20 +1229,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] More vents in quicker succession, and the fissure widens so the safe standing area either side narrows."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Vents fire in a travelling sequence along the fissure, sweeping the room end to end."
       },
       "attackName": "Dragon Breath",
       "attackLayer1": {
@@ -1250,12 +1250,12 @@
         "text": "Sweeping fire/ice beam + fireball projectiles."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst."
       },
       "weaponName": "Drake Breath",
       "weaponDescription": {
@@ -1263,16 +1263,16 @@
         "text": "Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Short fixed-angle beam, high damage, held while the attack button is down."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The beam can be angled with directional input and reaches noticeably further."
       },
       "lv6": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain."
       },
       "lv10": {
         "status": "warn",
@@ -1315,20 +1315,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Larger and more numerous patches, and a shadow clone of an ordinary minion spawns inside each one."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The room blacks out entirely on a slow cycle, leaving only silhouettes and the boss's own outline visible."
       },
       "attackName": "Shadow Bind",
       "attackLayer1": {
@@ -1336,12 +1336,12 @@
         "text": "Creates darkness zones that slow the player and spawn shadow clones."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack."
       },
       "weaponName": "Eclipse Blade",
       "weaponDescription": {
@@ -1349,12 +1349,12 @@
         "text": "Throws a dark energy boomerang that steals a small amount of enemy health. Per-level scaling: faster return + more health steal."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Single boomerang out and back; small health steal on each pass."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Faster return and increased steal; the boomerang now passes through the first enemy rather than stopping."
       },
       "lv6": {
         "status": "warn",
@@ -1401,20 +1401,20 @@
         "text": ""
       },
       "arenaTheme": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor."
       },
       "hazardsLayer1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away."
       },
       "hazardsLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room."
       },
       "hazardsLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The crane also drags a plate along the floor between drops, sweeping the ground the length of the room."
       },
       "attackName": "Metal Barrage",
       "attackLayer1": {
@@ -1422,12 +1422,12 @@
         "text": "Fires homing metal blades + deploys temporary shields."
       },
       "attackLayer2": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Blades are fired in a spread and ricochet twice instead of once; the deployed shield now orbits the boss rather than sitting in front of it."
       },
       "attackLayer3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] The shield breaks into blades when destroyed, so removing it is itself an attack the player has to answer."
       },
       "weaponName": "Alloy Blade",
       "weaponDescription": {
@@ -1435,12 +1435,12 @@
         "text": "Throws penetrative metal blades that ricochet multiple times. Per-level scaling: more ricochets + higher damage."
       },
       "lv1": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Single blade, one ricochet, pierces the first enemy hit."
       },
       "lv3": {
-        "status": "miss",
-        "text": ""
+        "status": "warn",
+        "text": "[DRAFT] Two ricochets and increased pierce; blades survive contact with terrain corners."
       },
       "lv6": {
         "status": "warn",
