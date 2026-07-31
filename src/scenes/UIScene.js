@@ -41,6 +41,7 @@ import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
 import { dev, DEV } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
+import { sfx, unlockAudio } from '../systems/sfx.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
 const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
@@ -169,6 +170,9 @@ export default class UIScene extends Phaser.Scene {
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
+
+    // Mobile browsers refuse to start audio until a real input happens.
+    this.input.on('pointerdown', unlockAudio);
 
     this.bindZone3();
     this.bindZone4();
@@ -583,6 +587,7 @@ export default class UIScene extends Phaser.Scene {
     if (this.mode !== 'open') return;
     // Dev mode equips through the padlock; otherwise a locked slot is inert.
     if (!this.game_.run.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
+    sfx('requip');
     this.game_.selectWeapon(id);
     this.closeWheel();
   }
@@ -674,7 +679,7 @@ export default class UIScene extends Phaser.Scene {
       const col = hexNum(c.tint);
       const box = this.add.rectangle(x, y, cw, h, col, 0.22).setOrigin(0)
         .setStrokeStyle(1, col, 1).setInteractive({ useHandCursor: true });
-      box.on('pointerdown', () => { c.take(); this.closeCards(); });
+      box.on('pointerdown', () => { sfx('select'); c.take(); this.closeCards(); });
       this.cards.add(box);
       this.cards.add(label(this, x + cw / 2, y + 26, c.title, { color: '#E0F0FF', origin: 0.5 }));
       this.cards.add(label(this, x + cw / 2, y + 52, c.sub, { color: '#88AABB', origin: 0.5 }));

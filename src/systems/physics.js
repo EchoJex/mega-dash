@@ -152,7 +152,10 @@ export function requestJump(p) {
     p.jumpCut = false;
     return 'airdash';
   } else {
+    // Airborne with nothing left: remember the press in case a landing arrives
+    // within the buffer window. It is NOT a jump yet, and must not sound like one.
     p.jumpBuffer = FEEL.jumpBufferFrames;
+    return 'buffered';
   }
   return 'jump';
 }

@@ -27,6 +27,7 @@ import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
 import * as Arena from '../systems/arena.js';
 import * as Attr from '../systems/attributes.js';
+import { sfx } from '../systems/sfx.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
 } from '../systems/assets.js';
@@ -177,6 +178,7 @@ export default class GameScene extends Phaser.Scene {
    */
   beginWarp(build) {
     if (this.warp) return;
+    sfx('warp');
     this.warp = { phase: 'out', t: Arena.WARP.out, alpha: 0, build };
     this.intent.moveDir = 0;
     this.intent.fireHeld = false;
@@ -371,6 +373,7 @@ export default class GameScene extends Phaser.Scene {
     // No weapon equipped: the player is a bare silhouette and fires nothing.
     if (w === NULL_WEAPON || w.projectiles < 1) return;
     const lv = r.wpLevels[w.id] || 1;
+    sfx(charged ? 'shootBig' : 'shoot');
     let dmg = damageAtLevel(w, lv) * r.dmgMult;
     let rad = w.radius * r.bulletSizeMult;
     if (charged) { dmg *= FEEL.chargedDamageMult; rad *= FEEL.chargedSizeMult; }
@@ -680,6 +683,7 @@ export default class GameScene extends Phaser.Scene {
 
   killMinion(e) {
     const r = this.run;
+    sfx('enemyDie');
     r.kills++;
     r.combo = Math.min(r.combo + 1, FEEL.comboMax);
     r.maxCombo = Math.max(r.maxCombo, r.combo);
@@ -700,8 +704,10 @@ export default class GameScene extends Phaser.Scene {
     );
     for (const p of got) {
       if (p.type === 'etank') {
+        sfx('pickupTank');
         r.hp = Math.min(FEEL.hpMax + r.hpBonus + r.runHpBonus, r.hp + FEEL.pickupHeal);
       } else {
+        sfx('pickupExp');
         this.gainExp(p.amount || 0);
       }
     }
@@ -770,7 +776,7 @@ export default class GameScene extends Phaser.Scene {
       arena: this.arena,
       floorY: GROUND_Y,
       shoot: (spec) => this.spawnEnemyShot(spec),
-      shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; },
+      shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; sfx('rumble'); },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
       status: (id, frames) => Attr.applyStatus(this.status, id, frames),
       patch: (id, x, y, w, h, frames, opts = {}) => {
@@ -798,6 +804,7 @@ export default class GameScene extends Phaser.Scene {
 
   killBoss() {
     const b = this.boss;
+    sfx('bossDie');
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);
     this.run.bossesDefeated.push(b.id);
@@ -828,6 +835,7 @@ export default class GameScene extends Phaser.Scene {
     // it just cannot finish you.
     if (dev('hpFloor')) r.hp = Math.max(1, r.hp);
     r.invuln = FEEL.invulnFrames + r.armorBonus;
+    sfx('hurt');
     r.combo = 1; r.comboTimer = 0;
     p.hitAnim = 20;
     p.flinchTimer = FEEL.flinchFrames;
@@ -845,6 +853,7 @@ export default class GameScene extends Phaser.Scene {
    * down at the leftmost safe spot on screen. Control is suspended throughout.
    */
   beamOut() {
+    sfx('beam');
     const p = this.player;
     if (p.beam) return;                       // already going
     p.beam = { phase: 'up' };
@@ -937,6 +946,7 @@ export default class GameScene extends Phaser.Scene {
       // Queue a card screen rather than showing it here: a single big orb can
       // grant several levels at once, and each one deserves its own choice.
       r.pendingLevelUps++;
+      sfx('levelUp');
     }
     if (r.pendingLevelUps > 0) this.paused = true;
   }
@@ -948,7 +958,13 @@ export default class GameScene extends Phaser.Scene {
    * the cut fired on literally every jump and variable jump height — the genre
    * signature this engine is built around — never actually worked.
    */
-  doJump() { this.intent.jumpHeld = true; Phys.requestJump(this.player); }
+  doJump() {
+    this.intent.jumpHeld = true;
+    // Only sound a jump that actually leaves the ground. A buffered press while
+    // airborne may never become a jump at all.
+    const kind = Phys.requestJump(this.player);
+    if (kind === 'jump' || kind === 'airdash') sfx('jump');
+  }
   endJump() { this.intent.jumpHeld = false; }
 
   toggleSlide() {
