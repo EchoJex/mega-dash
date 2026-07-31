@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mega Dash — Dev Tracker</title>
+<style>
+  :root{
+    --bg:#101318; --panel:#181d25; --grid:#2a323f; --ink:#d7dde6; --dim:#8b95a3;
+    --ready:#49d97e; --wip:#f2b53d; --draft:#8b7bd8; --todo:#ff5c5c; --na:#6b7686;
+    --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.5}
+  body{padding:0 10px calc(90px + env(safe-area-inset-bottom))}
+  .wrap{max-width:900px;margin:0 auto}
+
+  header{position:sticky;top:0;z-index:40;background:var(--bg);padding:10px 0 8px;border-bottom:1px solid var(--grid)}
+  h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .sp{flex:1}
+  button,select,input{font-family:inherit;font-size:13px}
+  button{background:#243044;color:var(--ink);border:1px solid var(--grid);padding:7px 12px;cursor:pointer;border-radius:3px}
+  button:hover{filter:brightness(1.25)}
+  button.primary{background:var(--ready);color:#06220f;border-color:transparent;font-weight:700}
+  button.warn{background:#3a2430;color:#f0a0b0}
+  #state{font-size:12px;color:var(--dim)}
+  #state.err{color:#ff8080}
+  #state.ok{color:var(--ready)}
+
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+  nav button{padding:5px 10px;font-size:12px}
+  nav button.on{background:var(--ink);color:#101318;font-weight:700}
+
+  section.card{border:1px solid var(--grid);background:var(--panel);margin:14px 0;border-radius:4px;overflow:hidden}
+  .head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#0d1015;border-bottom:1px solid var(--grid);cursor:pointer}
+  .head h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin:0;flex:1}
+  .dot{width:12px;height:12px;flex:none;border-radius:2px}
+  .meta{padding:6px 12px;font-size:11.5px;color:var(--dim);border-bottom:1px solid var(--grid)}
+  .bar{display:flex;gap:2px;height:10px;width:120px;flex:none;background:#0a0c10;border:1px solid var(--grid);padding:1px}
+  .bar i{flex:1}
+  .body{display:none}
+  .body.open{display:block}
+
+  .field{display:grid;grid-template-columns:130px 92px 1fr;gap:0;border-top:1px solid var(--grid)}
+  .field:first-child{border-top:none}
+  .lbl{padding:8px 10px;color:var(--dim);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;background:#141922}
+  .st{padding:6px;background:#141922}
+  .st select{width:100%;background:#0d1015;color:var(--ink);border:1px solid var(--grid);padding:4px;border-radius:2px}
+  .txt{padding:8px 10px;white-space:pre-wrap;outline:none;min-height:36px}
+  .txt:focus{box-shadow:inset 0 0 0 1px var(--ready)}
+  .f-ready .txt{box-shadow:inset 3px 0 0 var(--ready)}
+  .f-wip   .txt{background:rgba(242,181,61,.09);box-shadow:inset 3px 0 0 var(--wip)}
+  .f-draft .txt{background:rgba(139,123,216,.10);box-shadow:inset 3px 0 0 var(--draft)}
+  .f-todo  .txt{background:rgba(255,92,92,.08);box-shadow:inset 3px 0 0 var(--todo);color:var(--dim)}
+  .f-na    .txt{color:var(--na);box-shadow:inset 3px 0 0 var(--na)}
+  i.f-ready{background:var(--ready)} i.f-wip{background:var(--wip)}
+  i.f-draft{background:var(--draft)} i.f-todo{background:var(--todo)} i.f-na{background:var(--na)}
+
+  .bug{display:grid;grid-template-columns:150px 92px 1fr 34px;border-top:1px solid var(--grid)}
+  .bug input,.bug select{width:100%;background:#0d1015;color:var(--ink);border:none;border-right:1px solid var(--grid);padding:8px}
+  .bug .del{background:none;border:none;color:#7a4a55;cursor:pointer;font-size:16px}
+  .free{padding:10px 12px;white-space:pre-wrap;outline:none;min-height:64px}
+  .free:focus{box-shadow:inset 0 0 0 1px var(--draft)}
+  .note{padding:8px 12px;font-size:11.5px;color:var(--dim);background:#0d1015;border-bottom:1px solid var(--grid)}
+
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--grid);max-width:520px;border-radius:4px}
+  dialog input{width:100%;background:#0d1015;color:var(--ink);border:1px solid var(--grid);padding:8px;margin:8px 0}
+  dialog p{font-size:12.5px;color:var(--dim);line-height:1.6}
+  code{background:#0d1015;padding:1px 4px;border-radius:2px}
+  @media (max-width:620px){
+    .field{grid-template-columns:1fr;}
+    .lbl{padding:6px 10px 0;background:none}
+    .st{background:none;padding:4px 10px}
+    .bug{grid-template-columns:1fr 1fr;}
+    .bug .note-in{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Mega Dash — Dev Tracker</h1>
+  <div class="row">
+    <button id="saveBtn" class="primary">Save</button>
+    <button id="reloadBtn">Reload</button>
+    <select id="branch" title="branch"></select>
+    <span class="sp"></span>
+    <span id="state">…</span>
+    <button id="tokenBtn" title="GitHub token">🔑</button>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+</div>
+
+<dialog id="tokenDlg">
+  <h3 style="margin:0 0 4px;font-size:13px;letter-spacing:.1em;text-transform:uppercase">GitHub token</h3>
+  <p>
+    Needed to save. Create a <b>fine-grained</b> personal access token with
+    <b>only</b> this repository selected and <b>only</b> <code>Contents: Read and write</code>.
+    Nothing else.
+  </p>
+  <p>
+    It is stored in this browser's localStorage and is <b>never committed</b>.
+    Revoke it any time from GitHub → Settings → Developer settings.
+    Leave the box empty and the tracker still works read-only.
+  </p>
+  <input id="tokenIn" type="password" placeholder="github_pat_..." autocomplete="off">
+  <div class="row">
+    <button id="tokenSave" class="primary">Save token</button>
+    <button id="tokenClear" class="warn">Forget token</button>
+    <span class="sp"></span>
+    <button id="tokenClose">Close</button>
+  </div>
+</dialog>
+
+<script type="module">
+import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
+
+// ── Config ────────────────────────────────────────────────────────────
+const OWNER = 'EchoJex', REPO = 'mega-dash', PATH = 'design/TRACKER.md';
+const BRANCHES = ['main', 'boss-dev'];
+const MARKS = ['ready', 'wip', 'draft', 'todo', 'na'];
+const TOKEN_KEY = 'megadash_gh_token';
+const BRANCH_KEY = 'megadash_branch';
+
+let doc = null;          // parsed model
+let sha = null;          // blob sha, for conflict-free writes
+let dirty = false, saving = false, saveTimer = null;
+
+const $ = (s) => document.querySelector(s);
+const token = () => localStorage.getItem(TOKEN_KEY) || '';
+const branch = () => localStorage.getItem(BRANCH_KEY) || 'main';
+
+function setState(msg, cls = '') {
+  const el = $('#state');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+// ── GitHub REST ───────────────────────────────────────────────────────
+// Base64 has to go through UTF-8 explicitly or every em dash and arrow in the
+// tracker corrupts on save.
+const b64encode = (str) => {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+};
+const b64decode = (b64) => {
+  const bin = atob(b64.replace(/\n/g, ''));
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+};
+
+async function gh(path, opts = {}) {
+  const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
+  if (token()) headers.Authorization = 'Bearer ' + token();
+  const res = await fetch('https://api.github.com' + path, { ...opts, headers });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+async function load() {
+  setState('loading…');
+  try {
+    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${branch()}&t=${Date.now()}`);
+    sha = r.sha;
+    doc = parse(b64decode(r.content));
+    render();
+    dirty = false;
+    setState('loaded · ' + branch(), 'ok');
+  } catch (e) {
+    setState('load failed: ' + e.message, 'err');
+  }
+}
+
+async function save(manual) {
+  if (!doc || saving) return;
+  if (!token()) { setState('no token — read only', 'err'); return; }
+  saving = true;
+  setState('saving…');
+  try {
+    const body = {
+      message: manual ? 'tracker: manual save' : 'tracker: autosave',
+      content: b64encode(serialize(doc)),
+      sha, branch: branch(),
+    };
+    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    sha = r.content.sha;
+    dirty = false;
+    setState('saved ' + new Date().toLocaleTimeString(), 'ok');
+  } catch (e) {
+    // A 409 means the file moved under us — almost always because Claude
+    // committed. Say so plainly rather than silently clobbering either side.
+    setState(/409/.test(e.message)
+      ? 'conflict — someone else changed it. Reload, then re-apply your edit.'
+      : 'save failed: ' + e.message, 'err');
+  } finally {
+    saving = false;
+  }
+}
+
+function touch() {
+  dirty = true;
+  setState('unsaved…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => save(false), 2500);
+}
+
+// ── Parse / serialize ─────────────────────────────────────────────────
+// Conservative on purpose: anything the model does not recognise is kept as a
+// raw line and written back untouched, so the app can never eat content it did
+// not understand.
+// ── Render ────────────────────────────────────────────────────────────
+function render() {
+  const main = $('#main'), nav = $('#nav');
+  main.innerHTML = ''; nav.innerHTML = '';
+
+  for (const sec of doc.sections) {
+    // The doc's own legend/preamble has no editable fields — it is reference
+    // text that belongs in the Markdown, not a card to click through.
+    const editable = sec.items.some((it) => fieldsOf(it).length)
+      || /BUGS|BRAINSTORM/i.test(sec.title);
+    if (!editable) continue;
+
+    const btn = document.createElement('button');
+    btn.textContent = sec.title.split('—')[0].trim();
+    btn.onclick = () => {
+      document.querySelectorAll('#main > section').forEach((s) => {
+        s.style.display = s.dataset.group === sec.title ? '' : 'none';
+      });
+      nav.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === btn));
+    };
+    nav.appendChild(btn);
+
+    // The first item of a section is its untitled intro prose — not a card.
+    for (const it of sec.items) {
+      if (it.title === null) continue;
+      main.appendChild(card(sec, it));
+    }
+    if (/BUGS/i.test(sec.title)) main.appendChild(bugCard(sec));
+  }
+  nav.firstChild?.click();
+}
+
+function card(sec, it) {
+  const el = document.createElement('section');
+  el.className = 'card';
+  el.dataset.group = sec.title;
+
+  const head = document.createElement('div');
+  head.className = 'head';
+  const meta = rawOf(it).join(' ').replace(/`/g, '').trim();
+  const hex = (meta.match(/#[0-9A-Fa-f]{6}/) || ['#6b7686'])[0];
+  head.innerHTML = `<span class="dot" style="background:${hex}"></span>`
+    + `<h2>${esc(it.title)}</h2><span class="bar"></span>`;
+  el.appendChild(head);
+
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'meta';
+    m.textContent = meta;
+    el.appendChild(m);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  head.onclick = () => body.classList.toggle('open');
+
+  const isBrainstorm = /BRAINSTORM/i.test(sec.title);
+  if (isBrainstorm) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = 'Context only — Claude reads this and implements nothing from it.';
+    body.appendChild(note);
+    const free = document.createElement('div');
+    free.className = 'free';
+    free.contentEditable = 'true';
+    free.textContent = rawOf(it).join('\n').trim();
+    free.oninput = () => {
+      it.content = free.innerText.split('\n').map((line) => ({ type: 'raw', line }));
+      touch();
+    };
+    body.appendChild(free);
+    body.classList.add('open');
+  } else {
+    for (const f of fieldsOf(it)) body.appendChild(fieldRow(f, head));
+  }
+  el.appendChild(body);
+  refreshBar(head, it);
+  return el;
+}
+
+function fieldRow(f, head) {
+  const row = document.createElement('div');
+  row.className = 'field f-' + f.mark;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'lbl'; lbl.textContent = f.label;
+
+  const st = document.createElement('div');
+  st.className = 'st';
+  const sel = document.createElement('select');
+  for (const m of MARKS) {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m; o.selected = m === f.mark;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => { f.mark = sel.value; row.className = 'field f-' + f.mark; bump(head); touch(); };
+  st.appendChild(sel);
+
+  const txt = document.createElement('div');
+  txt.className = 'txt';
+  txt.contentEditable = 'true';
+  txt.textContent = f.text;
+  txt.oninput = () => {
+    f.text = txt.innerText;
+    // THE ASSERTION RULE: editing a field revokes its ready state. Marking it
+    // ready again is a deliberate act, and that act is the go-ahead to build it.
+    if (f.mark !== 'wip') {
+      f.mark = 'wip'; sel.value = 'wip'; row.className = 'field f-wip'; bump(head);
+    }
+    touch();
+  };
+
+  row.append(lbl, st, txt);
+  return row;
+}
+
+function bump(head) {
+  const el = head.parentElement;
+  const marks = [...el.querySelectorAll('.field')].map((r) => r.className.split('f-')[1]);
+  head.querySelector('.bar').innerHTML = marks.map((m) => `<i class="f-${m}"></i>`).join('');
+}
+function refreshBar(head, it) {
+  head.querySelector('.bar').innerHTML = fieldsOf(it).map((f) => `<i class="f-${f.mark}"></i>`).join('');
+}
+
+// ── Bugs ──────────────────────────────────────────────────────────────
+function bugCard(sec) {
+  const el = document.createElement('section');
+  el.className = 'card'; el.dataset.group = sec.title;
+  el.innerHTML = '<div class="head"><h2>Bugs</h2></div>'
+    + '<div class="note">Shorthand is fine. Build is the versionCode on the title screen. '
+    + 'Claude fixes <b>ready</b> bugs; <b>wip</b> means you are still describing it.</div>';
+  const body = document.createElement('div');
+  body.className = 'body open';
+
+  const rows = parseBugs(sec);
+  const redraw = () => {
+    body.innerHTML = '';
+    rows.forEach((b, i) => body.appendChild(bugRow(b, () => { rows.splice(i, 1); writeBugs(sec, rows); redraw(); touch(); }, () => writeBugs(sec, rows))));
+    const add = document.createElement('button');
+    add.textContent = '+ bug';
+    add.style.margin = '8px 12px';
+    add.onclick = () => { rows.push({ build: BUILDS[0], mark: 'wip', note: '' }); writeBugs(sec, rows); redraw(); touch(); };
+    body.appendChild(add);
+  };
+  redraw();
+  el.appendChild(body);
+  return el;
+}
+
+// Recent builds, refreshed by Claude on each push. 'other' keeps it open-ended.
+const BUILDS = ['1031 (boss-dev)', '1030 (boss-dev)', '1028 (boss-dev)', '1024 (main)', 'other'];
+
+/** Bugs live as a Markdown table in the BUGS section's intro item. */
+const bugsItem = (sec) => sec.items[0];
+
+function parseBugs(sec) {
+  const out = [];
+  for (const l of rawOf(bugsItem(sec))) {
+    const m = /^\|\s*(.+?)\s*\|\s*`\[(\w+)\]`\s*\|\s*(.*?)\s*\|$/.exec(l);
+    if (m && !/no open bugs/i.test(m[3])) out.push({ build: m[1], mark: m[2], note: m[3] });
+  }
+  return out;
+}
+
+function writeBugs(sec, rows) {
+  const it = bugsItem(sec);
+  const prose = rawOf(it).filter((l) => !/^\|/.test(l));
+  // Drop trailing blanks so repeated saves cannot grow the gap.
+  while (prose.length && !prose[prose.length - 1].trim()) prose.pop();
+  const table = ['', '| build | status | bug |', '|---|---|---|'].concat(
+    rows.length
+      ? rows.map((b) => `| ${b.build} | \`[${b.mark}]\` | ${b.note} |`)
+      : ['| — | `[todo]` | _no open bugs_ |'],
+    [''],
+  );
+  it.content = prose.concat(table).map((line) => ({ type: 'raw', line }));
+}
+function bugRow(b, onDel, onChange) {
+  const row = document.createElement('div');
+  row.className = 'bug';
+  const sel = document.createElement('select');
+  for (const v of BUILDS) {
+    const o = document.createElement('option'); o.value = v; o.textContent = v;
+    o.selected = v === b.build; sel.appendChild(o);
+  }
+  const free = document.createElement('input');
+  free.placeholder = 'build'; free.value = BUILDS.includes(b.build) ? '' : b.build;
+  free.style.display = b.build === 'other' || !BUILDS.includes(b.build) ? '' : 'none';
+  sel.onchange = () => {
+    b.build = sel.value;
+    free.style.display = sel.value === 'other' ? '' : 'none';
+    onChange(); touch();
+  };
+  free.oninput = () => { b.build = free.value || 'other'; onChange(); touch(); };
+
+  const mark = document.createElement('select');
+  for (const m of ['wip', 'ready', 'todo', 'na']) {
+    const o = document.createElement('option'); o.value = m; o.textContent = m;
+    o.selected = m === b.mark; mark.appendChild(o);
+  }
+  mark.onchange = () => { b.mark = mark.value; onChange(); touch(); };
+
+  const note = document.createElement('input');
+  note.className = 'note-in';
+  note.placeholder = 'what happened'; note.value = b.note;
+  note.oninput = () => { b.note = note.value; onChange(); touch(); };
+
+  const del = document.createElement('button');
+  del.className = 'del'; del.textContent = '×'; del.onclick = onDel;
+
+  const buildCell = document.createElement('div');
+  buildCell.append(sel, free);
+  row.append(buildCell, mark, note, del);
+  return row;
+}
+
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+// ── Wiring ────────────────────────────────────────────────────────────
+const bsel = $('#branch');
+for (const b of BRANCHES) {
+  const o = document.createElement('option');
+  o.value = b; o.textContent = b; o.selected = b === branch();
+  bsel.appendChild(o);
+}
+bsel.onchange = () => { localStorage.setItem(BRANCH_KEY, bsel.value); load(); };
+
+$('#saveBtn').onclick = () => save(true);
+$('#reloadBtn').onclick = () => {
+  if (dirty && !confirm('You have unsaved edits. Reload and lose them?')) return;
+  load();
+};
+$('#tokenBtn').onclick = () => { $('#tokenIn').value = token(); $('#tokenDlg').showModal(); };
+$('#tokenSave').onclick = () => {
+  localStorage.setItem(TOKEN_KEY, $('#tokenIn').value.trim());
+  $('#tokenDlg').close(); setState('token saved', 'ok');
+};
+$('#tokenClear').onclick = () => {
+  localStorage.removeItem(TOKEN_KEY); $('#tokenIn').value = '';
+  $('#tokenDlg').close(); setState('token cleared — read only');
+};
+$('#tokenClose').onclick = () => $('#tokenDlg').close();
+
+addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+load();
+</script>
+</body></html>

@@ -18,31 +18,33 @@ import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
 import { readFileSync } from 'node:fs';
 
 const TRACKER = JSON.parse(
-  readFileSync(new URL('../design/boss-design-tracker.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('../design/boss-data.json', import.meta.url), 'utf8'),
 );
 
 /**
- * The tracker is the design source of truth, so `bosses.js` is downstream of it.
- * There is no codegen step — this test is what makes "downstream" real. It only
- * checks the fields the tracker actually owns definitively (the palette hexes,
- * the scale and the names); prose stays prose.
+ * design/TRACKER.md is the source of truth, so `bosses.js` is downstream of it.
+ * There is no codegen for the game data — this test is what makes "downstream"
+ * real. It reads boss-data.json, which tools/sync-tracker.js extracts from the
+ * tracker's meta lines, and checks only the MECHANICAL values (palette hexes,
+ * scale, names). Prose stays prose and is never asserted.
  *
- * A failure here means somebody edited one side without the other. Fix the
- * TRACKER first, then bring the code to match — not the reverse.
+ * A failure means somebody changed one side without the other. Fix TRACKER.md
+ * first, run `npm run sync`, then bring the code to match — not the reverse.
  */
-test('bosses.js matches the design tracker', () => {
-  assert.equal(BOSSES.length, TRACKER.bosses.length);
-  BOSSES.forEach((b, i) => {
-    const t = TRACKER.bosses[i];
-    const hex = (f) => t[f].text.trim().split(/\s+/)[0];
-    assert.equal(b.primary.toUpperCase(), hex('primaryHex').toUpperCase(), `${b.id} primary`);
-    assert.equal(b.secondary.toUpperCase(), hex('secondaryHex').toUpperCase(), `${b.id} secondary`);
-    assert.equal(b.outline.toUpperCase(), hex('outlineHex').toUpperCase(), `${b.id} outline`);
-    assert.equal(b.scale, parseFloat(t.spriteScale.text), `${b.id} scale`);
+test('bosses.js matches design/TRACKER.md', () => {
+  const t = TRACKER.bosses;
+  assert.equal(BOSSES.length, Object.keys(t).length);
+  for (const b of BOSSES) {
+    const d = t[b.id];
+    assert.ok(d, `${b.id} is missing from the tracker — check its \`id\` stamp`);
+    assert.equal(b.primary.toUpperCase(), d.primary.toUpperCase(), `${b.id} primary`);
+    assert.equal(b.secondary.toUpperCase(), d.secondary.toUpperCase(), `${b.id} secondary`);
+    assert.equal(b.outline.toUpperCase(), d.outline.toUpperCase(), `${b.id} outline`);
+    assert.equal(b.scale, d.scale, `${b.id} scale`);
     // Display names are UPPERCASE in code, title case in the tracker.
-    assert.equal(b.name, t.name.toUpperCase(), `${b.id} name`);
-    assert.equal(b.attackName, t.attackName, `${b.id} attack name`);
-  });
+    assert.equal(b.name, d.name.toUpperCase(), `${b.id} name`);
+    assert.equal(b.attackName, d.attackName, `${b.id} attack name`);
+  }
 });
 
 // NOTE: minion colours are deliberately UNCONSTRAINED against the boss

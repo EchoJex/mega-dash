@@ -49,6 +49,7 @@ npm run dev
 | `npm run build` | production bundle → `dist/` |
 | `npm test` | code-integrity and data-shape checks |
 | `npm run status` | element slice board — what is built, per boss |
+| `npm run sync` | regenerate `design/boss-data.json` from TRACKER.md |
 | `npm run apk` | local APK build (CI does this automatically) |
 
 ## Controls
@@ -68,7 +69,9 @@ buying rank 1 in the Hub.
 ## Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** — architecture, terminology, the element-slice plan. Read first.
-- **[design/boss-design-tracker.html](design/boss-design-tracker.html)** — the design
-  bible and the canonical source: 17 bosses × 24 fields. Open in any browser, edit, then
-  **Save edited copy**. `boss-design-tracker.json` is generated from it and is what code
-  reads — never hand-edit the JSON.
+- **[design/TRACKER.md](design/TRACKER.md)** — the design source of truth: slices, bugs
+  and brainstorming, in plain readable Markdown.
+- **[Tracker web app](https://echojex.github.io/mega-dash/)** — a friendlier lens over that
+  same file. Autosaves straight into the repo; no export, no download. Needs a fine-grained
+  GitHub token (Contents: read/write on this repo only), stored in your browser and never
+  committed. Read-only without one.

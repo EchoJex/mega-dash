@@ -24,8 +24,9 @@
  * placeholder rectangles (see systems/assets.js). Filling these in early would
  * mean designing blind and redoing it.
  *
- * Source of truth: design/boss-design-tracker.html - read it before
- * implementing any boss.
+ * Source of truth: design/TRACKER.md - read it before implementing any boss.
+ * The palette hexes and scale here are checked against it by tests/data.test.js
+ * via design/boss-data.json, so the two cannot drift apart.
  */
 
 export const BOSSES = [

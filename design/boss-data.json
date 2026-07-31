@@ -1,0 +1,158 @@
+{
+  "_note": "GENERATED from design/TRACKER.md by tools/sync-tracker.js. Do not edit.",
+  "bosses": {
+    "core": {
+      "name": "Core Man",
+      "primary": "#687380",
+      "secondary": "#2E3338",
+      "outline": "#0A0A12",
+      "scale": 1.7,
+      "attackName": "Core Pulse",
+      "weaponName": "Core Blaster"
+    },
+    "blaze": {
+      "name": "Blaze Man",
+      "primary": "#E11416",
+      "secondary": "#141414",
+      "outline": "#0A0A12",
+      "scale": 1.75,
+      "attackName": "Inferno Wheel",
+      "weaponName": "Blaze Wheel"
+    },
+    "torrent": {
+      "name": "Tempest Man",
+      "primary": "#145DBD",
+      "secondary": "#C09060",
+      "outline": "#0A0A12",
+      "scale": 1.75,
+      "attackName": "Aqua Torrent",
+      "weaponName": "Torrent Cannon"
+    },
+    "volt": {
+      "name": "Volt Man",
+      "primary": "#F5D328",
+      "secondary": "#5B21B6",
+      "outline": "#0A0A12",
+      "scale": 1.65,
+      "attackName": "Chain Spark",
+      "weaponName": "Volt Spark"
+    },
+    "thorn": {
+      "name": "Thorn Man",
+      "primary": "#2AAB1C",
+      "secondary": "#5C4033",
+      "outline": "#0A0A12",
+      "scale": 1.8,
+      "attackName": "Vine Lash",
+      "weaponName": "Thorn Lash"
+    },
+    "frost": {
+      "name": "Frost Man",
+      "primary": "#A0EFE7",
+      "secondary": "#FFFFFF",
+      "outline": "#0A0A12",
+      "scale": 1.85,
+      "attackName": "Glacier Spike",
+      "weaponName": "Frost Guard"
+    },
+    "strike": {
+      "name": "Strike Man",
+      "primary": "#EA6A34",
+      "secondary": "#7C2D12",
+      "outline": "#0A0A12",
+      "scale": 1.85,
+      "attackName": "Rush Combo",
+      "weaponName": "Strike Gauntlet"
+    },
+    "venom": {
+      "name": "Venom Man",
+      "primary": "#A926D9",
+      "secondary": "#84CC16",
+      "outline": "#0A0A12",
+      "scale": 1.7,
+      "attackName": "Toxic Cloud",
+      "weaponName": "Venom Spray"
+    },
+    "quake": {
+      "name": "Quake Man",
+      "primary": "#A76625",
+      "secondary": "#EA580C",
+      "outline": "#0A0A12",
+      "scale": 1.95,
+      "attackName": "Seismic Stomp",
+      "weaponName": "Quake Hammer"
+    },
+    "gale": {
+      "name": "Gale Man",
+      "primary": "#5CADD5",
+      "secondary": "#F8FAFC",
+      "outline": "#0A0A12",
+      "scale": 1.5,
+      "attackName": "Wind Vortex",
+      "weaponName": "Gale Vortex"
+    },
+    "psi": {
+      "name": "Psi Man",
+      "primary": "#EA43BD",
+      "secondary": "#F9A8D4",
+      "outline": "#0A0A12",
+      "scale": 1.55,
+      "attackName": "Mind Lift",
+      "weaponName": "Psi Orb"
+    },
+    "swarm": {
+      "name": "Swarm Man",
+      "primary": "#B8DC28",
+      "secondary": "#4D5C1A",
+      "outline": "#0A0A12",
+      "scale": 1.6,
+      "attackName": "Infestation",
+      "weaponName": "Swarm Caller"
+    },
+    "granite": {
+      "name": "Granite Man",
+      "primary": "#5F443A",
+      "secondary": "#A8A296",
+      "outline": "#0A0A12",
+      "scale": 2,
+      "attackName": "Boulder Roll",
+      "weaponName": "Rock Buster"
+    },
+    "wraith": {
+      "name": "Wraith Man",
+      "primary": "#A68DD8",
+      "secondary": "#2A1F4A",
+      "outline": "#0A0A12",
+      "scale": 1.6,
+      "attackName": "Spectral Shift",
+      "weaponName": "Wraith Cloak"
+    },
+    "drake": {
+      "name": "Drake Man",
+      "primary": "#C3225D",
+      "secondary": "#6B1220",
+      "outline": "#0A0A12",
+      "scale": 1.9,
+      "attackName": "Dragon Breath",
+      "weaponName": "Drake Breath"
+    },
+    "eclipse": {
+      "name": "Eclipse Man",
+      "primary": "#2A273F",
+      "secondary": "#DC2626",
+      "outline": "#0A0A12",
+      "scale": 1.75,
+      "attackName": "Shadow Bind",
+      "weaponName": "Eclipse Blade"
+    },
+    "alloy": {
+      "name": "Alloy Man",
+      "primary": "#B2BABD",
+      "secondary": "#4B5563",
+      "outline": "#0A0A12",
+      "scale": 1.9,
+      "attackName": "Metal Barrage",
+      "weaponName": "Alloy Blade   ---"
+    }
+  }
+}

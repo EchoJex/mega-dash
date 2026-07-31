@@ -13,7 +13,17 @@
 # uninstall — see the note in android/app/build.gradle.
 name: Build APK
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    # Design and doc edits must not burn an APK build. The tracker web app
+    # autosaves to design/TRACKER.md on every pause in typing, so without this
+    # every sentence the owner writes would trigger a full Android build and
+    # republish the release channel.
+    paths-ignore:
+      - 'design/**'
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
 
 # Needed to publish releases.
 permissions:

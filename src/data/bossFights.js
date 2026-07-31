@@ -22,10 +22,10 @@
  *   status  (id, frames) -> a character attribute on the player
  *   patch   (id, x, y, w, h, frames, opts) -> a terrain attribute on the arena
  *
- * SOURCE OF TRUTH: design/boss-design-tracker.json (exported from the HTML
- * tracker). Do NOT read the `const BOSSES` array inside the HTML — it is stale.
- * A `null` layer means the tracker has not defined it; inventing content there
- * would mean designing blind.
+ * SOURCE OF TRUTH: design/TRACKER.md. Build only from fields the owner has
+ * marked `[ready]` — never from `[draft]` or `[wip]`. A `null` layer here means
+ * the tracker has not defined that layer; inventing content would mean
+ * designing blind.
  */
 
 import { FEEL } from '../config/feel.js';
