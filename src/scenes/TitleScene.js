@@ -8,7 +8,7 @@ const LONG_PRESS_MS = 500;
 
 /**
  * Title + results. Doubles as the game-over screen (pass { died, run }).
- * PHASE 5 gives this the full Vampire-Survivors style results panel.
+ * The full Vampire-Survivors style results panel lands in the finishing passes.
  */
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }

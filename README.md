@@ -47,14 +47,15 @@ npm run dev
 |---|---|
 | `npm run dev` | dev server (LAN-accessible so a phone can play it) |
 | `npm run build` | production bundle → `dist/` |
-| `npm test` | balance + data integrity checks |
+| `npm test` | code-integrity and data-shape checks |
+| `npm run status` | element slice board — what is built, per boss |
 | `npm run apk` | local APK build (CI does this automatically) |
 
 ## Controls
 
 | Zone | |
 |---|---|
-| bottom-left | 4 columns — move left / right, diagonals reserved; drag down = slide |
+| bottom-left | 4 buttons — ◀ ◸ ◹ ▶; diagonals reserved for weapons; drag down = slide |
 | bottom-right | `[]` jump (again mid-air = air dash) · `()` shoot, hold = charge |
 | bottom-centre | RE-QUIP — **tap** to pause and open the weapon wheel · **swipe** for a slow-motion directional switch |
 | top-right | pause |
@@ -66,6 +67,8 @@ buying rank 1 in the Hub.
 
 ## Documentation
 
-- **[CLAUDE.md](CLAUDE.md)** — architecture, terminology, phase plan. Read first.
+- **[CLAUDE.md](CLAUDE.md)** — architecture, terminology, the element-slice plan. Read first.
 - **[design/boss-design-tracker.html](design/boss-design-tracker.html)** — the design
-  bible: 17 bosses × 24 fields. Open in any browser.
+  bible and the canonical source: 17 bosses × 24 fields. Open in any browser, edit, then
+  **Save edited copy**. `boss-design-tracker.json` is generated from it and is what code
+  reads — never hand-edit the JSON.

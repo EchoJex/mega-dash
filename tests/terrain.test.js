@@ -86,7 +86,9 @@ test('the generator keeps producing ground and never stalls', () => {
  */
 test('EVERY boss theme still produces a crossable world', () => {
   for (const id of Object.keys(THEMES)) {
-    const { gaps } = survey(30000, id);
+    // Long enough that even the LEAST pitted theme (Granite: deliberately solid
+    // slabs) still yields a meaningful sample. 30k was not.
+    const { gaps } = survey(70000, id);
     assert.ok(gaps.length > 50, `${id}: too few gaps to be meaningful (${gaps.length})`);
     const bad = gaps.filter((g) => g.width > maxPitWidth() + 0.01);
     assert.equal(bad.length, 0, `${id}: ${bad.length} impassable gaps`);

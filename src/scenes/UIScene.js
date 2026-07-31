@@ -714,7 +714,7 @@ export default class UIScene extends Phaser.Scene {
       `${w.name} L${r.wpLevels[r.activeWeapon] || 1}`,
     );
 
-    // Stand-in for Phase 5's proper acquisition popup — just enough to confirm
+    // Stand-in for the proper acquisition popup — just enough to confirm
     // a boss actually handed over its weapon.
     if (r.justUnlocked) {
       if (!this.unlockMsg) {

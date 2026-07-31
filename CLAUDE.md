@@ -17,6 +17,7 @@ source. Explain decisions in plain language, not code walkthroughs.
 npm run dev      # dev server, --host so a phone on the same wifi can play it
 npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
+npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -187,7 +188,7 @@ isolation** — re-run the spacing optimisation so the set stays separated.
 petite builds.
 
 ### Every boss has TWO concurrent danger sources
-This is central to Phases 6–8 and must not be collapsed into one system:
+This is central to every boss and must not be collapsed into one system:
 
 1. an **ambient arena hazard loop** on its own timer
 2. the **boss's own attack state machine**
@@ -295,7 +296,8 @@ Weapon choice is about *utility*, not power. If you add projectiles or pierce,
 Equipping a weapon **recolours the player sprite live** from its source boss's palette.
 
 Real feature jumps at **Lv 1 / 3 / 6 / 10** per the design tracker; intermediate levels
-are damage-only. Currently all levels use a flat placeholder step.
+are damage-only. A weapon uses the flat placeholder step until it gains a `WEAPON_LADDERS`
+entry, which happens in its element's slice — never ahead of it, and never in a batch.
 
 ---
 
@@ -328,24 +330,73 @@ agree; `tests/data.test.js` enforces it.
 
 ---
 
-## Phase plan
+## The plan: ONE ELEMENT AT A TIME
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Strip to buster-only; weapon-select pause screen | ✅ |
-| 2 | 17 placeholder bosses (visuals + presence, no attacks) | ✅ |
-| 3 | 17 placeholder weapons + per-weapon level system | ✅ |
-| — | **Port to Phaser** (this repo) | ✅ |
-| — | **Tuning pass** — motion constants set to classic NES values | ✅ |
-| — | Minions, time-keyed difficulty ramp, pickups | ✅ |
-| — | **RE-QUIP wheel** — replaces Phase 1's weapon-select screen | ✅ |
-| — | **Sprite path** — MANIFEST art swaps in, unblocks Phases 9–11 | ✅ |
-| — | **In-app updater** + per-branch CI releases (the dev loop) | ✅ |
-| 4 | VS-style level-up cards; weapons unlock only via their boss | ✅ |
-| 5 | Boss defeat animations + weapon acquisition popups | ⏭ deferred (cosmetic) |
-| 6–8 | **Boss attacks + arena hazards** | 🔶 in progress |
-| 9–11 | Weapon visuals, in thirds | ⬜ |
-| 12–14 | Weapon mechanics, in thirds | ⬜ |
+**Run `npm run status` for where every slice actually stands.** It reads live code
+and the tracker, so unlike a table in this file it cannot go stale. Do not add a
+progress table here — that drift has already bitten this project twice.
+
+### Why it is sliced this way
+
+The old plan was horizontal: "all 17 weapon visuals", then "all 17 weapon mechanics",
+each split in thirds. Those thirds existed only to fit a session's compute budget on the
+free plan, and to guarantee a playable build per session. **CI now builds every push on
+every branch**, so a playable build per push is automatic and that constraint is gone.
+
+Horizontal slicing was the worst possible shape here. A weapon's visuals cannot be
+playtested without its mechanics, so nothing was *finished* until the very last phase; it
+needed all 17 ladders designed before any of it could start; and it maximised the distance
+between writing a design and finding out whether it was fun.
+
+So: **one element, built end to end, playtested, pushed. Then the next.**
+
+### What one element slice contains
+
+An element is DONE when all of this is true for its boss:
+
+1. **Design reviewed by the owner.** Generated `[DRAFT]` prose is a starting point, not a
+   specification. A slice does not begin until the owner has passed over that boss's
+   tracker fields. This is the gate, not a formality.
+2. **Attack layers** — every layer the tracker defines, in `data/bossFights.js`.
+3. **Arena** — theme, backdrop shapes, and the furniture its hazards need.
+4. **Hazard layers** — every layer the tracker defines, layer-synced with the attacks.
+5. **Elemental attribute** — terrain form and character form, in `systems/attributes.js`.
+6. **Weapon** — the real Lv 1/3/6/10 ladder, registered in `WEAPON_LADDERS`. This is what
+   flips the slice from "in progress" to DONE.
+7. **Sound** for its attacks and its weapon.
+8. **Overworld terrain theme** for its approach (a first pass already exists for all 17).
+9. **Playtested on device, pushed to a branch.**
+
+Art is NOT in the slice. Sprites and arena backdrops are the owner's to draw and land
+whenever they land, per actor, via `MANIFEST` — the game stays playable without them.
+
+### Order
+
+Core → Blaze → Tempest first: their design is owner-authored rather than drafted, and the
+first three establish the template. Core Man is deliberately first as the simplest — it is
+Typeless, so it carries no attribute and its weapon is the plain one.
+
+After those three the order is the owner's call. Nothing technical forces it.
+
+### Cross-cutting work that is NOT part of any slice
+
+These are global and land late, once the elements exist to tune against:
+
+| | |
+|---|---|
+| **Balance pass** | weapon damage, boss/minion HP, the difficulty ramp — see the testing note below |
+| **Physics tuning overlay** | driven by `FEEL_GROUPS`; deliberately deferred |
+| **Boss defeat animations** | elemental death + weapon acquisition; cosmetic, folded into each slice when its element is built |
+| **Ship prep** | `DEV.enabled = false`, which disables every playtest perk at once |
+
+### Already complete (the foundation)
+
+Engine and port to Phaser · fixed timestep · hand-rolled physics · classic NES motion
+constants · sealed arenas with warp transitions · the dual boss loop · minions and the
+time-keyed ramp · pickups · EXP and level-up cards · meta upgrades and Chips · the RE-QUIP
+wheel · the sprite path (`MANIFEST`) · the in-app updater and per-branch CI · touch
+controls · the bitmap font · procedural sound · the elemental attribute framework ·
+themed overworld terrain · procedural terrain traversability guarantees.
 
 ### Tuning pass
 The core **motion** constants in `config/feel.js` (walk, jump, gravity, terminal
@@ -359,7 +410,7 @@ playtested. Treat those as a starting point, not as precious.
 A live in-game tuning overlay is **deliberately deferred to late in development**.
 `FEEL_GROUPS` exists to drive it when that time comes — do not build it early.
 
-### Phase 4 — as built
+### Run progression — as built
 
 **Weapons are earned.** You start with the buster only. A special unlocks by killing the
 boss that carries it (`BOSSES[].dropWeapon`). `starter_arsenal` / `twin_arsenal` are the
@@ -385,7 +436,7 @@ weapons are genuinely gated, spikes genuinely kill. Set `enabled: false` to ship
 switch disables everything. The HUD shows `[DEV]` whenever it is on, because a playtest
 misread as "balanced" while invincible is worse than no playtest.
 
-### Phase 6–8 — what is actually built
+### The dual boss loop — as built
 
 The dual-loop plumbing is live: `GameScene.stepBoss()` drives an attack loop and an
 ambient hazard loop side by side every frame, both layer-synced, both fed from
@@ -409,7 +460,7 @@ their hand-authored content.
 `systems/attributes.js` implements the elemental attribute layer: Hot (terrain) / Burn
 (character) are live and used by Blaze Man; Wet, Poisoned, Stun, Constrict and Freeze are
 defined and tested but nothing applies them yet, because their sources are player special
-weapons (Phases 12–14).
+weapons, which land in each element's own slice.
 
 ### Hooks left deliberately empty — fill, don't delete
 - `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content

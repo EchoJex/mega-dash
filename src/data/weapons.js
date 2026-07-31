@@ -17,24 +17,42 @@
  * PALETTE
  * -------
  * Each special weapon carries its source boss's colours. Equipping a weapon
- * recolours the player sprite live (see entities/Player.js). The buster's
+ * recolours the player sprite live (see GameScene.draw). The buster's
  * palette is the classic blue.
  *
  * LEVELS
  * ------
  * Weapons level 1 -> 10 within a run. Real feature jumps happen at Lv 1/3/6/10
- * per the design tracker; intermediate levels are damage-only steps. Right now
- * ALL levels are the flat placeholder step (weaponDamagePerLevel) — the real
- * ladders land in Phases 12-14.
+ * per the design tracker; intermediate levels are damage-only steps. A weapon
+ * uses the flat placeholder step (weaponDamagePerLevel) until it gains a
+ * WEAPON_LADDERS entry, which happens as part of its ELEMENT'S SLICE — one
+ * element built end to end at a time. Never fill these in a batch.
  *
  * SHAPES
  * ------
  * `shape` selects a placeholder projectile drawing so all 18 read differently
- * on screen (see systems/assets.js). Real art replaces these in Phases 9-11.
+ * on screen (see systems/assets.js). Real art replaces these per actor via
+ * MANIFEST, whenever the owner draws it.
  */
 
 import { FEEL } from '../config/feel.js';
 import { BOSS_BY_ID } from './bosses.js';
+
+/**
+ * PER-WEAPON LEVEL LADDERS — the hook for the real Lv 1/3/6/10 behaviour.
+ *
+ * EMPTY ON PURPOSE. Every weapon currently uses the flat placeholder step, so a
+ * weapon's level changes its damage and nothing else. A weapon graduates out of
+ * placeholder when it gains an entry here, keyed by weapon id, and `npm run
+ * status` reads this map to report which element slices are actually finished.
+ *
+ * Fill one weapon at a time as part of its element slice — never all at once,
+ * and never ahead of the owner reviewing that boss's tracker ladder.
+ */
+export const WEAPON_LADDERS = {};
+
+/** True once a weapon has real per-level behaviour rather than a damage step. */
+export const hasLadder = (id) => Object.prototype.hasOwnProperty.call(WEAPON_LADDERS, id);
 
 /** The balance formula. Single source of truth. */
 export function weaponDamage(cooldownFrames, projectiles = 1) {
@@ -176,7 +194,7 @@ export const weaponOf = (id) => WEAPON_BY_ID[id] || NULL_WEAPON;
  */
 export const WHEEL_ORDER = WEAPONS.map((w) => w.id);
 
-/** Damage at a given weapon level. Placeholder curve until Phases 12-14. */
+/** Damage at a given weapon level. Placeholder curve until the weapon's slice. */
 export function damageAtLevel(weapon, level) {
   return weapon.damage * (1 + (level - 1) * FEEL.weaponDamagePerLevel);
 }

@@ -820,7 +820,8 @@ export default class GameScene extends Phaser.Scene {
       this.run.wpLevels[b.dropWeapon] = 1;
       this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
     }
-    // PHASE 5 adds the elemental death animation, fade, palette-swap reveal.
+    // The elemental death animation, fade and palette-swap reveal land in this
+    // boss's own element slice — see the plan in CLAUDE.md.
     // The WRAP DOOR out only exists once the boss is down.
     this.world.doors = [{
       x: this.viewW / 2 - 8, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
@@ -921,7 +922,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   die() {
-    // PHASE 5 replaces this with the Mega Man 2 death burst + results screen.
+    // The Mega Man 2 death burst replaces this during the finishing passes.
     save.runs++;
     save.dist += Math.floor(this.run.dist);
     if (this.run.score > save.hi) save.hi = this.run.score;

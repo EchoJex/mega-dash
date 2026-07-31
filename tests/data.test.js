@@ -9,7 +9,10 @@ import assert from 'node:assert/strict';
 import { MINIONS, ELITE_OUTLINE } from '../src/data/minions.js';
 import { BOSSES } from '../src/data/bosses.js';
 import { UPGRADES } from '../src/data/upgrades.js';
-import { WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER } from '../src/data/weapons.js';
+import {
+  WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER,
+  WEAPON_LADDERS, hasLadder, damageAtLevel,
+} from '../src/data/weapons.js';
 import { SPRITE_CLASS, DEPTH, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
 import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
 import { readFileSync } from 'node:fs';
@@ -145,3 +148,24 @@ test('every weapon shape has an explicit drawn half-height', () => {
   }
 });
 
+
+/**
+ * The element-slice plan depends on WEAPON_LADDERS being the honest record of
+ * which weapons have graduated from the flat placeholder. A typo'd key would
+ * make `npm run status` claim a slice is finished when it is not.
+ */
+test('every weapon ladder entry names a real weapon', () => {
+  const ids = new Set(WEAPONS.map((w) => w.id));
+  for (const id of Object.keys(WEAPON_LADDERS)) {
+    assert.ok(ids.has(id), `WEAPON_LADDERS has "${id}", which is not a weapon`);
+  }
+});
+
+test('a weapon without a ladder still levels, it just does not change behaviour', () => {
+  // Guards the placeholder path staying intact while ladders are filled one at
+  // a time — a half-migrated weapon must never become unplayable.
+  for (const w of WEAPONS) {
+    if (hasLadder(w.id)) continue;
+    assert.ok(damageAtLevel(w, 10) > damageAtLevel(w, 1), `${w.id} does not scale at all`);
+  }
+});

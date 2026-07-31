@@ -126,6 +126,9 @@ const FURNITURE = {
   },
 };
 
+/** Which bosses have their arena furniture built. Read by `npm run status`. */
+export const FURNISHED = () => Object.keys(FURNITURE);
+
 /**
  * Placeholder backdrop for a boss, derived from its palette.
  *
