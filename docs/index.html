@@ -163,16 +163,50 @@ async function gh(path, opts = {}) {
 
 async function load() {
   setState('loading…');
-  try {
-    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${branch()}&t=${Date.now()}`);
-    sha = r.sha;
-    doc = parse(b64decode(r.content));
-    render();
-    dirty = false;
-    setState('loaded · ' + branch(), 'ok');
-  } catch (e) {
-    setState('load failed: ' + e.message, 'err');
+  // Try the selected branch first, then the others. The tracker file does not
+  // exist on every branch, and a bare 404 with no explanation is a dead end for
+  // someone who just wants to write down a bug.
+  const order = [branch(), ...BRANCHES.filter((b) => b !== branch())];
+  let lastErr = null;
+  for (const br of order) {
+    try {
+      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${br}&t=${Date.now()}`);
+      sha = r.sha;
+      doc = parse(b64decode(r.content));
+      render();
+      dirty = false;
+      if (br !== branch()) {
+        localStorage.setItem(BRANCH_KEY, br);
+        $('#branch').value = br;
+      }
+      setState('loaded · ' + br, 'ok');
+      loadBuilds();
+      return;
+    } catch (e) { lastErr = e; }
   }
+  setState('load failed: ' + (lastErr ? lastErr.message : 'unknown'), 'err');
+}
+
+/**
+ * Build numbers for the bug dropdown, read LIVE from the release channels CI
+ * publishes. A hardcoded list is only ever as current as the last time someone
+ * remembered to edit it, which for a bug report is exactly when it matters.
+ */
+async function loadBuilds() {
+  try {
+    const rs = await gh(`/repos/${OWNER}/${REPO}/releases?per_page=20`);
+    const seen = new Map();
+    for (const r of rs) {
+      const code = (/versionCode=(\d+)/.exec(r.body || '') || [])[1];
+      const br = (/branch=(\S+)/.exec(r.body || '') || [])[1] || '?';
+      if (code && !seen.has(code)) seen.set(code, `${code} (${br})`);
+    }
+    if (seen.size) {
+      BUILDS.length = 0;
+      BUILDS.push(...[...seen.entries()].sort((a, b) => b[0] - a[0]).map((e) => e[1]), 'other');
+      if (doc) render();
+    }
+  } catch { /* offline or no token — the static fallback list stands */ }
 }
 
 async function save(manual) {
@@ -366,8 +400,9 @@ function bugCard(sec) {
   return el;
 }
 
-// Recent builds, refreshed by Claude on each push. 'other' keeps it open-ended.
-const BUILDS = ['1031 (boss-dev)', '1030 (boss-dev)', '1028 (boss-dev)', '1024 (main)', 'other'];
+// Fallback only — loadBuilds() replaces these with the live release channels.
+// 'other' always stays, so a build that never shipped can still be reported.
+const BUILDS = ['boss-dev (latest)', 'main (latest)', 'other'];
 
 /** Bugs live as a Markdown table in the BUGS section's intro item. */
 const bugsItem = (sec) => sec.items[0];
