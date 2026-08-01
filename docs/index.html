@@ -153,10 +153,37 @@ const b64decode = (b64) => {
   return new TextDecoder().decode(bytes);
 };
 
+/** True once the current token has been rejected, so we stop re-sending it. */
+let tokenBad = false;
+
+/**
+ * The repo is PUBLIC, so reading needs no credentials at all.
+ *
+ * A bad or expired token therefore must never stop you reading the tracker — it
+ * should only stop you saving. Attaching the token unconditionally meant one
+ * mistyped character produced "401 Bad credentials" on a plain read and the
+ * whole app went blank, which is a far worse failure than "saving is off".
+ * Reads now retry anonymously and the app carries on read-only.
+ */
 async function gh(path, opts = {}) {
-  const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
-  if (token()) headers.Authorization = 'Bearer ' + token();
-  const res = await fetch('https://api.github.com' + path, { ...opts, headers });
+  const method = (opts.method || 'GET').toUpperCase();
+  const send = async (withToken) => {
+    const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
+    if (withToken) headers.Authorization = 'Bearer ' + token();
+    return fetch('https://api.github.com' + path, { ...opts, headers });
+  };
+
+  const useToken = !!token() && !tokenBad;
+  let res = await send(useToken);
+
+  if (res.status === 401 && useToken) {
+    tokenBad = true;
+    if (method === 'GET') {
+      res = await send(false);            // public read still works without it
+      if (res.ok) return res.json();   // caller reports the read-only state
+    }
+    throw new Error('TOKEN_REJECTED');
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${(await res.text()).slice(0, 200)}`);
   return res.json();
 }
@@ -179,7 +206,12 @@ async function load() {
         localStorage.setItem(BRANCH_KEY, br);
         $('#branch').value = br;
       }
-      setState('loaded · ' + br, 'ok');
+      // The read succeeded, but say so honestly: if the token was rejected on
+      // the way through, saving is off and you need to know that NOW, not when
+      // an hour of edits fails to persist.
+      setState(tokenBad
+        ? 'loaded · ' + br + ' — TOKEN REJECTED, read-only. Tap 🔑.'
+        : 'loaded · ' + br, tokenBad ? 'err' : 'ok');
       loadBuilds();
       return;
     } catch (e) { lastErr = e; }
@@ -231,9 +263,13 @@ async function save(manual) {
   } catch (e) {
     // A 409 means the file moved under us — almost always because Claude
     // committed. Say so plainly rather than silently clobbering either side.
-    setState(/409/.test(e.message)
-      ? 'conflict — someone else changed it. Reload, then re-apply your edit.'
-      : 'save failed: ' + e.message, 'err');
+    if (e.message === 'TOKEN_REJECTED') {
+      setState('token rejected — your edits are NOT saved. Tap 🔑 and paste a new one.', 'err');
+    } else if (/409/.test(e.message)) {
+      setState('conflict — someone else changed it. Reload, then re-apply your edit.', 'err');
+    } else {
+      setState('save failed: ' + e.message, 'err');
+    }
   } finally {
     saving = false;
   }
@@ -485,12 +521,27 @@ $('#reloadBtn').onclick = () => {
   load();
 };
 $('#tokenBtn').onclick = () => { $('#tokenIn').value = token(); $('#tokenDlg').showModal(); };
-$('#tokenSave').onclick = () => {
-  localStorage.setItem(TOKEN_KEY, $('#tokenIn').value.trim());
-  $('#tokenDlg').close(); setState('token saved', 'ok');
+$('#tokenSave').onclick = async () => {
+  // Trim hard: a token pasted on a phone very often carries a trailing space or
+  // newline, and that alone is enough to make GitHub reject it.
+  const t = $('#tokenIn').value.replace(/\s+/g, '');
+  localStorage.setItem(TOKEN_KEY, t);
+  tokenBad = false;
+  $('#tokenDlg').close();
+  if (!t) { setState('token cleared — read only'); return; }
+  // Prove it works NOW rather than letting the first real save fail.
+  setState('checking token…');
+  try {
+    await gh(`/repos/${OWNER}/${REPO}`);
+    setState(tokenBad ? 'token rejected — check it and try again' : 'token OK — saving enabled',
+      tokenBad ? 'err' : 'ok');
+  } catch {
+    setState('token rejected — check it and try again', 'err');
+  }
 };
 $('#tokenClear').onclick = () => {
   localStorage.removeItem(TOKEN_KEY); $('#tokenIn').value = '';
+  tokenBad = false;
   $('#tokenDlg').close(); setState('token cleared — read only');
 };
 $('#tokenClose').onclick = () => $('#tokenDlg').close();
