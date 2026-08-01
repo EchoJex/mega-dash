@@ -38,6 +38,7 @@ import { VIEW_H, viewWidthOf } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
+import { BOSSES, bossLayer } from '../data/bosses.js';
 import { dev, DEV } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
@@ -341,7 +342,7 @@ export default class UIScene extends Phaser.Scene {
    */
   togglePause() {
     if (this.pausePanel) return this.closePause();
-    if (this.cards || this.mode === 'open') return;
+    if (this.cards || this.bossPanel || this.mode === 'open') return;
     this.openPause();
   }
 
@@ -360,10 +361,70 @@ export default class UIScene extends Phaser.Scene {
       this.pausePanel.add(txt);
       const t = rect;
     };
-    btn(104, 'RESUME', '#5CADD5', () => this.closePause());
-    btn(132, 'ABORT RUN', '#C04040', () => this.abortRun());
-    this.pausePanel.add(label(this, cx, 150, 'ends the run and banks your Chips',
+    btn(96, 'RESUME', '#5CADD5', () => this.closePause());
+    if (dev('bossSelect')) btn(120, 'BOSS SELECT', '#F5D328', () => this.openBossSelect());
+    btn(144, 'ABORT RUN', '#C04040', () => this.abortRun());
+    this.pausePanel.add(label(this, cx, 162, 'ends the run and banks your Chips',
       { color: '#6A5A5A', origin: 0.5 }));
+  }
+
+  /**
+   * DEV — pick any boss and restart the area just outside his door.
+   *
+   * Element-slice development means fighting one boss over and over. Reaching
+   * him normally costs a 60-second door timer plus a shuffle bag that may not
+   * offer him for sixteen doors, which is the single biggest tax on that loop.
+   *
+   * Each tile shows the layer you will actually get. With `cycleLayers` on, that
+   * wraps 1-2-3-1 rather than sticking at 3, so every layer stays reachable
+   * however many times you have already won.
+   */
+  openBossSelect() {
+    if (this.bossPanel) return;
+    this.closePause();
+    this.game_.paused = true;
+    const cx = this.w / 2;
+    this.bossPanel = this.add.container(0, 0).setDepth(70);
+    // Fully opaque: this is a menu, not an overlay, and at 0.94 the HUD text
+    // underneath bled through and collided with the tile labels.
+    this.bossPanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 1)
+      .setOrigin(0).setInteractive());
+    this.bossPanel.add(label(this, cx, 8, 'BOSS SELECT', { color: '#F5D328', origin: 0.5 }));
+    this.bossPanel.add(label(this, cx, 20, 'drops you outside his door · number = layer',
+      { color: '#6A6A5A', origin: 0.5 }));
+
+    // 17 tiles laid out to fit the narrowest supported width without scrolling.
+    const cols = 6, tw = Math.floor((this.w - 12) / cols) - 2, th = 26;
+    const x0 = Math.round((this.w - (cols * (tw + 2) - 2)) / 2);
+    BOSSES.forEach((b, i) => {
+      const x = x0 + (i % cols) * (tw + 2);
+      const y = 34 + Math.floor(i / cols) * (th + 3);
+      const layer = bossLayer(save, b.id, dev('cycleLayers'));
+      const tile = this.add.rectangle(x, y, tw, th, hexNum(b.primary), 0.85).setOrigin(0)
+        .setStrokeStyle(1, hexNum(b.outline), 1)
+        .setInteractive({ useHandCursor: true });
+      const ink = inkFor(b.primary);
+      // 7 chars, not 6 — TEMPEST, GRANITE and ECLIPSE all lose their last
+      // letter at 6 and read as TEMPES / GRANIT / ECLIPS.
+      const name = label(this, x + tw / 2, y + 5, b.name.split(' ')[0].slice(0, 7),
+        { color: ink, origin: 0.5 });
+      const lv = label(this, x + tw / 2, y + 16, 'L' + layer, { color: ink, origin: 0.5 });
+      tile.on('pointerdown', () => {
+        sfx('select');
+        this.closeBossSelect();
+        this.game_.devJumpToBoss(b);
+      });
+      this.bossPanel.add([tile, name, lv]);
+    });
+
+    const { rect, txt } = plate(this, cx, VIEW_H - 14, 'BACK', { color: '#5CADD5', padX: 10, padY: 3 });
+    rect.on('pointerdown', () => { this.closeBossSelect(); this.openPause(); });
+    this.bossPanel.add([rect, txt]);
+  }
+
+  closeBossSelect() {
+    this.bossPanel?.destroy(true);
+    this.bossPanel = null;
   }
 
   closePause() {

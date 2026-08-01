@@ -32,6 +32,22 @@ export const DEV = {
 
   /** Level-up cards may offer weapons you have not unlocked yet. */
   cardsFromAllWeapons: true,
+
+  /**
+   * A boss picker in the pause menu that drops you just outside any boss's
+   * door. Element-slice development means fighting one boss over and over;
+   * waiting out a 60-second door timer and a shuffle bag to reach him is the
+   * single biggest tax on that loop.
+   */
+  bossSelect: true,
+
+  /**
+   * Boss layers WRAP instead of clamping: the 4th encounter is the 1st again
+   * (4=1, 5=2, 6=3). Shipped behaviour clamps at 3 forever, which is correct
+   * for players and useless for testing, because layers 1 and 2 become
+   * unreachable the moment you have beaten a boss three times.
+   */
+  cycleLayers: true,
 };
 
 /** True only when dev mode is on AND that specific perk is enabled. */

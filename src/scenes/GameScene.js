@@ -152,8 +152,8 @@ export default class GameScene extends Phaser.Scene {
    * so the backdrop can foreshadow which arena the door leads to — you should
    * be able to tell Blaze Man is coming because the world ahead is going red.
    */
-  startArea() {
-    this.upcoming = this.nextBoss();
+  startArea(forceBoss = null) {
+    this.upcoming = forceBoss || this.nextBoss();
     this.areaTheme = Arena.themeFor(this.upcoming);
     // The ground leans toward the coming boss too, not just the backdrop — an
     // approach to Gale Man should FEEL airy, not merely look it.
@@ -168,6 +168,36 @@ export default class GameScene extends Phaser.Scene {
     this.arena = null;
     this.areaFrame = 0;
     Terrain.generate(this.world, 0, this.viewW);
+    if (forceBoss) this.placeDoorAhead();
+  }
+
+  /**
+   * DEV — drop the boss door a short walk to the right of the spawn.
+   *
+   * Deliberately OUTSIDE the door rather than inside the arena: the warp, the
+   * fade, and the room building on the far side are all part of what needs
+   * testing, and skipping straight to the fight would skip the transition bugs.
+   * A few steps is enough to reach it without waiting out a 60-second timer.
+   */
+  placeDoorAhead() {
+    const x = this.player.x + 72;
+    // Guarantee solid ground under and around it — the procedural stream may
+    // well have put a pit exactly there.
+    this.world.groundSpans.push({ x1: x - 48, x2: x + 64 });
+    this.world.spikes = this.world.spikes.filter((sp) => sp.x + sp.w < x - 48 || sp.x > x + 64);
+    this.world.doors = [{ x, y: GROUND_Y, w: 16, h: 28, alive: true }];
+  }
+
+  /**
+   * DEV — restart the area at a chosen boss, keeping the run's progress.
+   *
+   * Weapon levels, EXP and Chips all survive, because the point is to test a
+   * fight repeatedly with whatever loadout you are carrying, not to reset.
+   */
+  devJumpToBoss(def) {
+    if (!dev('bossSelect')) return;
+    this.startArea(def);
+    this.paused = false;
   }
 
   // ── Warp ────────────────────────────────────────────────────────────
@@ -210,7 +240,7 @@ export default class GameScene extends Phaser.Scene {
   /** Door contact -> the boss's sealed arena. */
   warpToArena(def) {
     this.beginWarp(() => {
-      const layer = bossLayer(save, def.id);
+      const layer = bossLayer(save, def.id, dev('cycleLayers'));
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
       this.cam = { x: 0 };
       this.minions = [];   // nothing follows you in

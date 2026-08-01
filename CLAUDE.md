@@ -450,8 +450,22 @@ choice.
 
 ### Dev mode — `src/config/dev.js`
 
-Playtest perks: unlimited HP, spike immunity, pit respawn, equipping padlocked weapons,
-and cards drawn from locked weapons. **The game logic is written as if none of it exists** —
+Playtest perks: HP floored at 1 (every hit still lands), equipping padlocked weapons,
+cards drawn from locked weapons, a **boss selector** in the pause menu, and **layer
+cycling**.
+
+**Boss selector** — pause → BOSS SELECT → any of the 17. It restarts the area with that
+boss's door a short walk ahead, keeping the run's weapons, levels and Chips. Deliberately
+outside the door rather than inside the arena: the warp, the fade and the room building
+on the far side all need testing too. This exists because element-slice development means
+fighting one boss repeatedly, and reaching him normally costs a 60-second door timer plus
+a shuffle bag that might not offer him for sixteen doors.
+
+**Layer cycling** — `bossLayer(save, id, cycle)`. Shipped behaviour clamps at layer 3
+forever, because a boss beaten five times must not become easy again. Dev mode wraps
+instead: encounter 4 is encounter 1 again (4=1, 5=2, 6=3), so every layer stays reachable
+however many times you have already won. Each tile in the picker shows the layer you will
+actually get. **The game logic is written as if none of it exists** —
 weapons are genuinely gated, spikes genuinely kill. Set `enabled: false` to ship; that one
 switch disables everything. The HUD shows `[DEV]` whenever it is on, because a playtest
 misread as "balanced" while invincible is worse than no playtest.

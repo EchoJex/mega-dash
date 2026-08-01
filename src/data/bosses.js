@@ -182,7 +182,15 @@ export function makeBossBag() {
  * Hazards and attacks are ALWAYS layer-synced: a layer-2 boss uses layer-2
  * arena hazards and layer-2 attacks together.
  */
-export function bossLayer(save, id) {
+export function bossLayer(save, id, cycle = false) {
   const clears = (save.bossKills && save.bossKills[id]) || 0;
-  return Math.max(1, Math.min(3, clears + 1));
+  // SHIPPED BEHAVIOUR: layers only ever go up, then stay at 3. A boss you have
+  // beaten five times must not become easy again — that would undo the meta
+  // progression the layer system exists to provide.
+  if (!cycle) return Math.max(1, Math.min(3, clears + 1));
+
+  // DEV ONLY: wrap instead of clamping, so the 4th encounter is the 1st again
+  // (4=1, 5=2, 6=3, ...). Playtesting a layer means fighting it repeatedly, and
+  // a save stuck at layer 3 makes layers 1 and 2 unreachable without a wipe.
+  return (clears % 3) + 1;
 }

@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MINIONS, ELITE_OUTLINE } from '../src/data/minions.js';
-import { BOSSES } from '../src/data/bosses.js';
+import { BOSSES, bossLayer } from '../src/data/bosses.js';
 import { UPGRADES } from '../src/data/upgrades.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER,
@@ -169,5 +169,54 @@ test('a weapon without a ladder still levels, it just does not change behaviour'
   for (const w of WEAPONS) {
     if (hasLadder(w.id)) continue;
     assert.ok(damageAtLevel(w, 10) > damageAtLevel(w, 1), `${w.id} does not scale at all`);
+  }
+});
+
+/**
+ * DEV LAYER CYCLING — the boss selector's whole point.
+ *
+ * Shipped behaviour clamps at layer 3 forever: a boss you have beaten five
+ * times must not become easy again, or the meta progression means nothing.
+ * But that makes layers 1 and 2 unreachable for testing once you have won
+ * three times, so dev mode wraps instead: encounter 4 is encounter 1 again.
+ */
+test('shipped layers rise then stay at 3, and never fall', () => {
+  const save = { bossKills: {} };
+  let prev = 0;
+  for (let clears = 0; clears <= 8; clears++) {
+    save.bossKills.blaze = clears;
+    const l = bossLayer(save, 'blaze');
+    assert.ok(l >= 1 && l <= 3, `layer ${l} out of range`);
+    assert.ok(l >= prev, 'a shipped layer must never go down');
+    prev = l;
+  }
+  save.bossKills.blaze = 99;
+  assert.equal(bossLayer(save, 'blaze'), 3, 'clamps at 3 however many clears');
+});
+
+test('dev cycling wraps 4=1, 5=2, 6=3', () => {
+  const save = { bossKills: {} };
+  const expected = [1, 2, 3, 1, 2, 3, 1, 2, 3];
+  expected.forEach((want, clears) => {
+    save.bossKills.blaze = clears;
+    assert.equal(bossLayer(save, 'blaze', true), want,
+      `${clears} clears (encounter ${clears + 1}) should be layer ${want}`);
+  });
+});
+
+test('an unfought boss is layer 1 either way, and unknown ids do not throw', () => {
+  assert.equal(bossLayer({ bossKills: {} }, 'blaze'), 1);
+  assert.equal(bossLayer({ bossKills: {} }, 'blaze', true), 1);
+  assert.equal(bossLayer({}, 'nope'), 1);
+  assert.equal(bossLayer({}, 'nope', true), 1);
+});
+
+test('every boss is reachable from the dev selector', () => {
+  // The picker lists BOSSES directly, so this guards the case where a boss
+  // exists in data but can never be selected to test.
+  assert.equal(BOSSES.length, 17);
+  assert.equal(new Set(BOSSES.map((b) => b.id)).size, 17, 'duplicate boss id');
+  for (const b of BOSSES) {
+    assert.ok(b.name && b.primary && b.outline, `${b.id} cannot render a tile`);
   }
 });
