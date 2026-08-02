@@ -808,7 +808,12 @@ export default class GameScene extends Phaser.Scene {
       arena: this.arena,
       floorY: GROUND_Y,
       shoot: (spec) => this.spawnEnemyShot(spec),
-      shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; sfx('rumble'); },
+      shake: (mag, dur) => {
+        this.shake = { mag, dur, t: dur };
+        // Stretch the rumble to the shake it is announcing, and drop its pitch
+        // further as the shake gets heavier, so a bigger tell sounds bigger.
+        sfx('rumble', { dur: Math.max(0.7, dur / 55), pitch: mag >= 3 ? 0.8 : 1 });
+      },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
       status: (id, frames) => Attr.applyStatus(this.status, id, frames),
       patch: (id, x, y, w, h, frames, opts = {}) => {

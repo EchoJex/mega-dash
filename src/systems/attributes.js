@@ -125,17 +125,38 @@ export function stepPatches(list) {
   }
 }
 
-/** Merge overlapping same-source patches so a rain of rocks stays cheap. */
+/**
+ * How much of a new patch must sit on an existing one to count as the SAME
+ * ground being re-heated rather than new ground catching fire.
+ *
+ * This ratio is the whole fix for a real bug. Merging on ANY overlap meant a
+ * bouncing fireball welded its entire trail into one patch and reset that whole
+ * strip's clock on every bounce — so the ground it touched first stayed at full
+ * heat until the fireball was gone, and only then began to cool. Hot appeared to
+ * last far longer than its duration, and the duration itself looked broken.
+ *
+ * Requiring substantial overlap means each bounce point ages on its own clock
+ * and the trail cools from the back forward, which is what "applies Hot for a
+ * scalable time" actually means.
+ */
+const MERGE_RATIO = 0.6;
+
+/**
+ * Add a terrain patch, refreshing an existing one only when it is genuinely the
+ * same ground. Re-application resets the duration and never stacks, per the
+ * tracker's rule for Hot and Burn.
+ */
 export function addPatch(list, patch) {
   for (const p of list) {
     if (p.id !== patch.id || p.source !== patch.source) continue;
-    if (patch.x < p.x + p.w && patch.x + patch.w > p.x && Math.abs(p.y - patch.y) < 4) {
-      const x0 = Math.min(p.x, patch.x), x1 = Math.max(p.x + p.w, patch.x + patch.w);
-      p.x = x0; p.w = x1 - x0;
-      p.t = Math.max(p.t, patch.t);          // refresh, never stack
-      p.tMax = Math.max(p.tMax, patch.tMax);
-      return p;
-    }
+    if (Math.abs(p.y - patch.y) >= 4) continue;
+    const overlap = Math.min(p.x + p.w, patch.x + patch.w) - Math.max(p.x, patch.x);
+    if (overlap < patch.w * MERGE_RATIO) continue;   // adjacent ground, not the same
+    // Refresh in place. The span deliberately does NOT grow: growing is what let
+    // one patch swallow a whole trail and made its lifetime unbounded.
+    p.t = Math.max(p.t, patch.t);
+    p.tMax = Math.max(p.tMax, patch.tMax);
+    return p;
   }
   list.push(patch);
   return patch;

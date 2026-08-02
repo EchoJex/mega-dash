@@ -146,8 +146,14 @@ const SOUNDS = {
   beam:      [{ wave: 'sine', f0: 200, f1: 1600, dur: 0.35, vol: 0.18 }],
   // Arena hazards. The rockfall shake and Blaze Man's flood need to be heard
   // coming, not just seen — the shake is the telegraph and this is its voice.
-  rumble:    [{ wave: 'noise', dur: 0.9, vol: 0.16, decay: 'flat' },
-              { wave: 'sawtooth', f0: 70, f1: 40, dur: 0.9, vol: 0.14, decay: 'flat' }],
+  //
+  // Long and LOW on purpose: it is meant to read as an earthquake building, not
+  // as a short hit. The pitch sits under the rest of the sound set so it never
+  // competes with a shot or a jump, and callers stretch it to match the length
+  // of the shake it is announcing (see the `shake` hook in GameScene).
+  rumble:    [{ wave: 'noise', dur: 1.6, vol: 0.17, decay: 'flat' },
+              { wave: 'sawtooth', f0: 44, f1: 20, dur: 1.6, vol: 0.16, decay: 'flat' },
+              { wave: 'sine', f0: 30, f1: 16, dur: 1.6, vol: 0.13, decay: 'flat' }],
   lava:      [{ wave: 'noise', dur: 1.6, vol: 0.14, decay: 'flat' }],
   turret:    [{ wave: 'square', f0: 420, f1: 300, dur: 0.05, vol: 0.12 }],
 };
@@ -155,11 +161,25 @@ const SOUNDS = {
 /**
  * Play a named sound. Unknown names are a silent no-op rather than a throw:
  * audio must never be able to break a run.
+ *
+ * `opts.dur` and `opts.pitch` are MULTIPLIERS, so a caller can stretch or drop
+ * a sound without inventing a second copy of it. The rumble uses this to match
+ * the length of the screen shake it announces — a layer that shakes twice as
+ * long should sound like it, or the telegraph and the tell disagree.
  */
-export function sfx(name) {
+export function sfx(name, opts = {}) {
   const s = SOUNDS[name];
   if (!s) return;
-  for (const v of s) voice(v);
+  const dur = opts.dur || 1, pitch = opts.pitch || 1;
+  for (const v of s) {
+    voice(dur === 1 && pitch === 1 ? v : {
+      ...v,
+      dur: v.dur * dur,
+      delay: (v.delay || 0) * dur,
+      f0: v.f0 ? v.f0 * pitch : v.f0,
+      f1: v.f1 ? v.f1 * pitch : v.f1,
+    });
+  }
 }
 
 export const SFX_NAMES = Object.keys(SOUNDS);

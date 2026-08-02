@@ -226,13 +226,21 @@ test('an actor is immune to terrain attributes it created itself', () => {
   assert.ok(Attr.patchAt(list, box, 'boss'), 'but it still burns the enemy');
 });
 
-test('overlapping same-source patches merge instead of piling up', () => {
-  const list = [];
-  Attr.addPatch(list, Attr.makePatch('hot', 0, 0, 20, 4, 60));
-  Attr.addPatch(list, Attr.makePatch('hot', 10, 0, 20, 4, 90));
-  assert.equal(list.length, 1);
-  assert.equal(list[0].w, 30, 'the merged patch should span both');
-  assert.equal(list[0].t, 90, 'and take the longer duration, not the sum');
+test('substantial overlap refreshes in place; partial overlap is new ground', () => {
+  // Merging on ANY overlap is what let a bouncing trail weld into one strip
+  // whose clock never started. Only genuinely the same ground refreshes, and
+  // the span never grows.
+  const same = [];
+  Attr.addPatch(same, Attr.makePatch('hot', 0, 0, 20, 4, 60));
+  Attr.addPatch(same, Attr.makePatch('hot', 2, 0, 20, 4, 90));
+  assert.equal(same.length, 1, '90% overlap is the same ground');
+  assert.equal(same[0].t, 90, 'and takes the longer duration, not the sum');
+  assert.equal(same[0].w, 20, 'the span must NOT grow');
+
+  const apart = [];
+  Attr.addPatch(apart, Attr.makePatch('hot', 0, 0, 20, 4, 60));
+  Attr.addPatch(apart, Attr.makePatch('hot', 10, 0, 20, 4, 90));
+  assert.equal(apart.length, 2, 'half-overlapping ground ages on its own clock');
 });
 
 test('a permanent pool never weakens or expires', () => {
@@ -259,4 +267,80 @@ test('flinch and knockback are NOT modelled as attributes', () => {
     assert.equal(Attr.ATTR[bad], undefined,
       `${bad} is basic hitbox interaction, not a status — see CLAUDE.md`);
   }
+});
+
+/**
+ * HOT MUST START COOLING WHEN IT IS APPLIED.
+ *
+ * The bug this guards: addPatch merged on ANY overlap, so a bouncing fireball
+ * welded its whole trail into one patch and reset that strip's clock on every
+ * bounce. Ground touched first stayed at full heat until the fireball expired,
+ * and only then began to cool — Hot appeared to last far longer than its
+ * duration, and the duration itself looked broken.
+ */
+test('a bouncing trail cools from the back forward, not all at once', () => {
+  const list = [];
+  const HOT = 180;
+  const step = (n) => { for (let i = 0; i < n; i++) Attr.stepPatches(list); };
+
+  const first = Attr.addPatch(list, Attr.makePatch('hot', 40, 180, 16, 4, HOT, 'boss'));
+  step(45);
+  assert.equal(first.t, 135, 'the first patch must be ageing immediately');
+
+  // Subsequent bounces land on ADJACENT ground and must not refresh the first.
+  for (let b = 1; b < 5; b++) {
+    Attr.addPatch(list, Attr.makePatch('hot', 40 + b * 14, 180, 16, 4, HOT, 'boss'));
+    assert.ok(first.t < HOT, `bounce ${b + 1} refreshed ground it did not touch`);
+    step(45);
+  }
+  assert.ok(list.length > 1, 'a trail must be several patches, not one welded strip');
+});
+
+test('re-heating the same ground refreshes and never stacks', () => {
+  // The tracker is explicit: Hot does not stack with itself but resets duration.
+  const list = [];
+  Attr.addPatch(list, Attr.makePatch('hot', 100, 180, 16, 4, 180, 'boss'));
+  for (let i = 0; i < 150; i++) Attr.stepPatches(list);
+  assert.equal(list[0].t, 30);
+  Attr.addPatch(list, Attr.makePatch('hot', 102, 180, 16, 4, 180, 'boss'));
+  assert.equal(list.length, 1, 'the same ground must not become two patches');
+  assert.equal(list[0].t, 180, 're-application must reset the duration');
+});
+
+test('one patch of Hot lasts exactly its stated duration', () => {
+  const list = [];
+  Attr.addPatch(list, Attr.makePatch('hot', 0, 180, 16, 4, 180, 'boss'));
+  let n = 0;
+  while (list.length) { Attr.stepPatches(list); n++; }
+  assert.equal(n, 180, '3 seconds at 60fps');
+});
+
+test('Blaze Man attack Hot is 3 seconds on every layer', () => {
+  // The owner set this explicitly. A fireball trail and the layer-3 flood
+  // residue are both ATTACK-sourced and must agree.
+  for (const layer of [1, 2, 3]) {
+    const h = harness('blaze', layer);
+    const { attack } = fightFor('blaze', layer);
+    let seen = 0;
+    for (let i = 0; i < 4000 && seen === 0; i++) {
+      attack.step(h.ctx);
+      Arena.stepArena(h.arena);
+      for (const s of h.shots) if (s.hot) { assert.equal(s.hot, 180, `L${layer} fireball Hot`); seen++; }
+    }
+    assert.ok(seen > 0, `L${layer} never fired a Hot-bearing shot`);
+  }
+});
+
+test('a patch can never outlive its own duration however often the trail passes', () => {
+  // The property that actually matters: no patch is ever older than its tMax,
+  // and none survives longer than its duration after its LAST application.
+  const list = [];
+  for (let b = 0; b < 40; b++) {
+    Attr.addPatch(list, Attr.makePatch('hot', b * 11, 180, 16, 4, 180, 'boss'));
+    for (const p of list) assert.ok(p.t <= p.tMax, 'a patch exceeded its own lifetime');
+    for (let i = 0; i < 20; i++) Attr.stepPatches(list);
+  }
+  let n = 0;
+  while (list.length) { Attr.stepPatches(list); n++; }
+  assert.ok(n <= 180, `Hot outlived its duration by ${n - 180} frames after the last application`);
 });

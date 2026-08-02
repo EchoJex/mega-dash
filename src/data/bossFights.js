@@ -193,7 +193,10 @@ const BLAZE = {
   rest: { 1: [90, 150], 2: [80, 130], 3: [80, 130] },
   speed: 2.1,
   gravity: 0.17,
-  hotFrames: 150,          // the trail it leaves underfoot
+  // 3 SECONDS on every attack layer, per the owner. The trail cools from the
+  // moment each patch is laid down, not from when the fireball finally expires
+  // — see MERGE_RATIO in systems/attributes.js for why that was not true before.
+  hotFrames: 180,
   floodFrames: 1800,       // the flood recedes after 30 seconds
   floodDepth: 24,          // "about one default player height"
 };
@@ -273,7 +276,9 @@ function blazeAttack(layer) {
         keepFootingDuringFlood(ctx, a, fs.perch);
         if (a.liquid.hold === 0 && a.liquid.h <= 0.6) {
           // "leaving Hot on the ground" once the lava drops away
-          ctx.patch('hot', a.x0, a.floorY - 3, a.x1 - a.x0, 4, FEEL.hotLingerFrames);
+          // The flood is an ATTACK, so its residue uses the attack's 3s Hot
+          // rather than the arena hazard's longer linger.
+          ctx.patch('hot', a.x0, a.floorY - 3, a.x1 - a.x0, 4, BLAZE.hotFrames);
           fs.mode = 'patrol'; fs.t = rnd(...BLAZE.rest[layer]); fs.flood = 1200;
         }
         break;
