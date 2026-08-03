@@ -315,9 +315,10 @@ test('one patch of Hot lasts exactly its stated duration', () => {
   assert.equal(n, 180, '3 seconds at 60fps');
 });
 
-test('Blaze Man attack Hot is 3 seconds on every layer', () => {
-  // The owner set this explicitly. A fireball trail and the layer-3 flood
-  // residue are both ATTACK-sourced and must agree.
+test('Blaze Man attack Hot is 1.5 seconds on every layer, and shorter than the hazard', () => {
+  // The owner set this explicitly after playtesting 3s. A fireball trail and the
+  // layer-3 flood residue are both ATTACK-sourced and must agree. The ARENA
+  // hazard's Hot is deliberately longer — a rock scorches, a fireball brushes.
   for (const layer of [1, 2, 3]) {
     const h = harness('blaze', layer);
     const { attack } = fightFor('blaze', layer);
@@ -325,10 +326,97 @@ test('Blaze Man attack Hot is 3 seconds on every layer', () => {
     for (let i = 0; i < 4000 && seen === 0; i++) {
       attack.step(h.ctx);
       Arena.stepArena(h.arena);
-      for (const s of h.shots) if (s.hot) { assert.equal(s.hot, 180, `L${layer} fireball Hot`); seen++; }
+      for (const s of h.shots) if (s.hot) { assert.equal(s.hot, 90, `L${layer} fireball Hot`); seen++; }
     }
     assert.ok(seen > 0, `L${layer} never fired a Hot-bearing shot`);
   }
+  assert.ok(FEEL.hotLingerFrames > 90, 'a rock must scorch for longer than a fireball brushes');
+});
+
+/**
+ * THE MARK IS THE SIZE OF THE THING THAT MADE IT.
+ *
+ * Both hot-laying call sites go through surfacePatch precisely so this cannot
+ * drift apart again — a radius-3 fireball stamping a 16px patch is an invisible
+ * hitbox, and the owner spotted it as "the patches feel too big for the size of
+ * the things that were applying the attribute".
+ */
+test('a surface patch is exactly as wide as its source', () => {
+  const rock = Attr.surfacePatch('hot', 100, 15, 184, 300);      // a 15px rock
+  assert.equal(rock.w, 15);
+  assert.equal(rock.x, 100);
+
+  const radius = 3;                                              // a Blaze fireball
+  const ball = Attr.surfacePatch('hot', 50 - radius, radius * 2, 184, 90);
+  assert.equal(ball.w, 6, 'a 6px fireball leaves a 6px mark');
+  assert.equal(ball.x + ball.w / 2, 50, 'centred on the source');
+
+  // Both sit ON the surface rather than floating above or sinking below it.
+  for (const p of [rock, ball]) {
+    assert.ok(p.y < 184 && p.y + p.h > 184 - 4, 'the patch must sit in the surface');
+  }
+  // Degenerate sources still produce something you can see and collide with.
+  assert.ok(Attr.surfacePatch('hot', 0, 0, 100, 60).w >= 2);
+});
+
+/**
+ * The rockfall's readability contract, both halves of it.
+ *
+ * The shake IS the telegraph, so it has to be long enough to read as a warning
+ * and it has to arrive well before the first rock. And however many rocks a
+ * cycle throws, only three may be in the air at once — the cap is what keeps a
+ * gap to stand in, and it is why the count could be raised at all.
+ */
+test('the rockfall telegraphs long before it lands, and never exceeds three in the air', () => {
+  for (const layer of [1, 2, 3]) {
+    const h = harness('blaze', layer);
+    const hz = FIGHTS.blaze.hazard[layer];
+    let shakeAt = null, firstRockAt = null, peak = 0, total = 0;
+    const seen = new Set();
+
+    for (let i = 0; i < 4000; i++) {
+      hz.step(h.ctx);
+      Arena.stepArena(h.arena);
+      // Rocks are not stepped here (that lives in GameScene), so retire them on
+      // a fixed flight time — otherwise the cap could never be exercised.
+      for (const r of h.arena.hazards) {
+        if (seen.has(r)) continue;
+        seen.add(r); total++;
+        if (firstRockAt === null) firstRockAt = i;
+      }
+      if (h.shakes.length && shakeAt === null) shakeAt = i;
+      peak = Math.max(peak, h.arena.hazards.length);
+      if (h.arena.hazards.length && i % 40 === 39) h.arena.hazards.shift();
+    }
+
+    assert.ok(peak <= 3, `L${layer} had ${peak} rocks airborne at once`);
+    assert.ok(total > 3, `L${layer} only ever produced ${total} rocks`);
+    assert.ok(shakeAt !== null && firstRockAt !== null, `L${layer} never ran a cycle`);
+    assert.ok(firstRockAt - shakeAt >= 60,
+      `L${layer} gave only ${firstRockAt - shakeAt} frames of warning before the first rock`);
+    assert.ok(h.shakes[0].dur >= 90,
+      `L${layer} shook for only ${h.shakes[0].dur} frames — too brief to read`);
+  }
+});
+
+test('more rocks per cycle at layer 2 than layer 1, and layer 3 matches layer 2', () => {
+  // The owner's correction stands: the ROOM stops escalating at layer 2.
+  const per = (layer) => {
+    const h = harness('blaze', layer);
+    const hz = FIGHTS.blaze.hazard[layer];
+    let n = 0;
+    const seen = new Set();
+    for (let i = 0; i < 1400; i++) {
+      hz.step(h.ctx);
+      Arena.stepArena(h.arena);
+      for (const r of h.arena.hazards) if (!seen.has(r)) { seen.add(r); n++; }
+      h.arena.hazards.length = 0;
+    }
+    return n;
+  };
+  const l1 = per(1), l2 = per(2), l3 = per(3);
+  assert.ok(l2 > l1, `L2 (${l2}) should throw more rocks than L1 (${l1})`);
+  assert.equal(l2, l3, 'L3 uses the same rockfall as L2');
 });
 
 test('a patch can never outlive its own duration however often the trail passes', () => {

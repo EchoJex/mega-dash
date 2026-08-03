@@ -277,10 +277,21 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(t.x + t.w / 2 - 1 + sx, t.y + t.h + sy, 2, 3);
   }
 
-  // Terrain attributes: a translucent wash that fades as the attribute subsides.
+  // Terrain attributes: a translucent wash that fades as the attribute subsides,
+  // plus a brighter 1px cap on the surface itself.
+  //
+  // The cap is what makes a SMALL patch fair. Patches are now sized to whatever
+  // made them — a 6px fireball leaves a 6px mark — and a 6px wash at fading alpha
+  // is easy to miss while platforming. The cap keeps the EDGES of the hot ground
+  // legible right up to the moment it expires, so you can always see exactly
+  // where it stops.
   for (const p of arena.patches) {
-    g.fillStyle(Attr.ATTR[p.id]?.tint ?? 0xffffff, Attr.patchAlpha(p));
+    const tint = Attr.ATTR[p.id]?.tint ?? 0xffffff;
+    const a = Attr.patchAlpha(p);
+    g.fillStyle(tint, a);
     g.fillRect(p.x + sx, p.y + sy, p.w, p.h);
+    g.fillStyle(tint, Math.min(1, a * 2.2));
+    g.fillRect(p.x + sx, p.y + sy, p.w, 1);
   }
 
   // Liquid last, so it covers the floor furniture it is supposed to submerge.

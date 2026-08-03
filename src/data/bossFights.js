@@ -193,10 +193,15 @@ const BLAZE = {
   rest: { 1: [90, 150], 2: [80, 130], 3: [80, 130] },
   speed: 2.1,
   gravity: 0.17,
-  // 3 SECONDS on every attack layer, per the owner. The trail cools from the
-  // moment each patch is laid down, not from when the fireball finally expires
-  // — see MERGE_RATIO in systems/attributes.js for why that was not true before.
-  hotFrames: 180,
+  // 1.5 SECONDS on every attack layer, per the owner after playtesting 3s: the
+  // trail should read as a rapidly decaying TAIL behind the fireball, obviously
+  // temporary, still long enough to see. The arena hazard's Hot is deliberately
+  // much longer (FEEL.hotLingerFrames) — a rock scorches the ground, a fireball
+  // only brushes it.
+  //
+  // The trail cools from the moment each patch is laid down, not from when the
+  // fireball finally expires — see MERGE_RATIO in systems/attributes.js.
+  hotFrames: 90,
   floodFrames: 1800,       // the flood recedes after 30 seconds
   floodDepth: 24,          // "about one default player height"
 };
@@ -249,7 +254,7 @@ function blazeAttack(layer) {
       const perch = a.platforms.find((pl) => pl.on) || a.platforms[0];
       if (perch) {
         perch.on = true; perch.t = 1200;             // his perch does not phase out
-        fs.mode = 'flood'; fs.t = 150; fs.perch = perch;
+        fs.mode = 'flood'; fs.t = 210; fs.perch = perch;
       } else { fs.flood = 300; }
     }
 
@@ -259,7 +264,11 @@ function blazeAttack(layer) {
         const tx = fs.perch.x + fs.perch.w / 2 - b.w / 2;
         b.x += (tx - b.x) * 0.12;
         b.y += (fs.perch.y - b.h - b.y) * 0.12;
-        if (--fs.t === 60) ctx.shake(3, 90);          // the tell
+        // The tell, in two beats: he climbs clear of the floor first, then the
+        // room starts shaking for a full 2.5 seconds before any lava appears.
+        // This attack deletes the floor for 30 seconds — the warning has to be
+        // proportional to that, not to a normal volley.
+        if (--fs.t === 150) ctx.shake(3, 170);
         if (fs.t <= 0) {
           a.liquid.target = BLAZE.floodDepth;
           a.liquid.hold = BLAZE.floodFrames;
@@ -330,10 +339,24 @@ function blazeAttack(layer) {
  * was an earlier reading of the design and the owner has since corrected it.
  */
 const BLAZE_HAZ = {
-  shake: { 1: [1, 30], 2: [2, 40], 3: [2, 40] },
+  // THE TELEGRAPH IS THE SHAKE, so it has to last long enough to be read as a
+  // warning rather than a glitch. Half a second of rumble before rocks start
+  // falling is not a warning, it is a surprise with a sound effect attached.
+  // ~2 seconds of building quake, with the first rock arriving at `lead`, gives
+  // time to look up, pick a spot and commit to it.
+  shake: { 1: [1, 130], 2: [2, 150], 3: [2, 150] },
+  lead: 96,                                // frames of shake before the first rock
   cycle: { 1: 1200, 2: 900, 3: 900 },      // "every 20 seconds or so"
-  rocks: { 1: 3, 2: 5, 3: 5 },
-  drop: { 1: 26, 2: 18, 3: 18 },           // frames between rocks
+  rocks: { 1: 6, 2: 9, 3: 9 },             // per cycle — more overall
+  // ...but never more than this many in the air at once. The cap, not the count,
+  // is what keeps the shower readable: a fourth rock waits for a slot instead of
+  // filling the sky, so there is always a gap you can see through and stand in.
+  airborne: 3,
+  // Spacing between rocks, tuned to ROUGHLY a third of a rock's flight time, so
+  // the cap above is reached just as the first rock lands and the shower reads as
+  // a steady staggered stream. Dropping them faster than that only clumps three
+  // together and then stalls for a second and a half waiting for a slot.
+  drop: { 1: 64, 2: 50, 3: 50 },
   fall: { 1: 0.9, 2: 1.15, 3: 1.15 },
   size: { 1: 12, 2: 15, 3: 15 },           // slightly bigger
 };
@@ -358,8 +381,18 @@ function blazeHazard(layer) {
       return;
     }
 
+    // `cycle` is the WHOLE period, so this runs during the shower too. Ticking
+    // it only between showers meant the real interval was cycle + however long
+    // the rocks took to clear, which stretched the tracker's "every 20 seconds
+    // or so" to nearer 27 once the rock count went up.
+    if (hs.t > 0) hs.t--;
+
     if (hs.left > 0) {
       if (--hs.gap > 0) return;
+      // Hold the next rock back until one already falling has landed. Retried
+      // every frame rather than skipped, so the cycle still delivers all of its
+      // rocks — it just paces them by what is on screen instead of by a timer.
+      if (a.hazards.length >= BLAZE_HAZ.airborne) { hs.gap = 1; return; }
       hs.gap = BLAZE_HAZ.drop[layer];
       hs.left--;
       const s = BLAZE_HAZ.size[layer];
@@ -368,14 +401,16 @@ function blazeHazard(layer) {
         x: rnd(a.x0 + 8, a.x1 - 8 - s), y: a.ceilY - s,
         w: s, h: s, vy: BLAZE_HAZ.fall[layer],
       });
+      // Never let the next telegraph start while the last rocks are still up.
+      if (hs.left === 0) hs.t = Math.max(hs.t, 150);
       return;
     }
 
-    if (--hs.t > 0) return;
+    if (hs.t > 0) return;
     const [mag, dur] = BLAZE_HAZ.shake[layer];
     ctx.shake(mag, dur);
     hs.left = BLAZE_HAZ.rocks[layer];
-    hs.gap = 24;                              // the shake lands before the rocks
+    hs.gap = BLAZE_HAZ.lead;                  // the shake lands well before the rocks
     hs.t = BLAZE_HAZ.cycle[layer];
   };
 }

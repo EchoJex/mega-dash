@@ -151,9 +151,19 @@ const SOUNDS = {
   // as a short hit. The pitch sits under the rest of the sound set so it never
   // competes with a shot or a jump, and callers stretch it to match the length
   // of the shake it is announcing (see the `shake` hook in GameScene).
-  rumble:    [{ wave: 'noise', dur: 1.6, vol: 0.17, decay: 'flat' },
-              { wave: 'sawtooth', f0: 44, f1: 20, dur: 1.6, vol: 0.16, decay: 'flat' },
-              { wave: 'sine', f0: 30, f1: 16, dur: 1.6, vol: 0.13, decay: 'flat' }],
+  //
+  // HOW "DEEPER" IS ACTUALLY ACHIEVED. A phone speaker cannot move enough air to
+  // reproduce a 15Hz fundamental at all, so simply dropping the numbers makes the
+  // sound quieter, not deeper. What the ear reads as depth on a small speaker is
+  // the HARMONIC SERIES of a very low tone — a sawtooth at 15Hz puts energy at
+  // 30/45/60/75Hz, which the speaker can move, and the brain reconstructs the
+  // missing fundamental underneath it. So the sawtooth carries the depth, the
+  // triangle adds body, and the sine is there for headphones and any device with
+  // a real driver, where it is felt rather than heard.
+  rumble:    [{ wave: 'noise', dur: 1.6, vol: 0.15, decay: 'flat' },
+              { wave: 'sawtooth', f0: 33, f1: 13, dur: 1.6, vol: 0.20, decay: 'flat' },
+              { wave: 'triangle', f0: 25, f1: 11, dur: 1.6, vol: 0.16, decay: 'flat' },
+              { wave: 'sine', f0: 19, f1: 9, dur: 1.6, vol: 0.15, decay: 'flat' }],
   lava:      [{ wave: 'noise', dur: 1.6, vol: 0.14, decay: 'flat' }],
   turret:    [{ wave: 'square', f0: 420, f1: 300, dur: 0.05, vol: 0.12 }],
 };

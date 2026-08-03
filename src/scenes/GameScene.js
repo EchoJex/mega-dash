@@ -535,8 +535,10 @@ export default class GameScene extends Phaser.Scene {
         }
       }
       if (landed !== null) {
+        // A rock leaves a rock-wide scorch — see surfacePatch for why the
+        // footprint is derived rather than padded.
         Attr.addPatch(a.patches,
-          Attr.makePatch('hot', h.x - 4, landed - 3, h.w + 8, 4, FEEL.hotLingerFrames, 'boss'));
+          Attr.surfacePatch('hot', h.x, h.w, landed, FEEL.hotLingerFrames));
         a.hazards.splice(i, 1);
       }
     }
@@ -571,8 +573,10 @@ export default class GameScene extends Phaser.Scene {
         if (b.y + b.radius >= floor) {
           b.y = floor - b.radius;
           if (b.hot && this.arena) {
+            // The trail is the width of the fireball that left it, not a fixed
+            // 16px stamp under a 6px shot.
             Attr.addPatch(this.arena.patches,
-              Attr.makePatch('hot', b.x - 8, floor - 3, 16, 4, b.hot, 'boss'));
+              Attr.surfacePatch('hot', b.x - b.radius, b.radius * 2, floor, b.hot));
           }
           if (b.crawls) {
             // Tempest Man's water keeps travelling along the floor until it
@@ -810,9 +814,14 @@ export default class GameScene extends Phaser.Scene {
       shoot: (spec) => this.spawnEnemyShot(spec),
       shake: (mag, dur) => {
         this.shake = { mag, dur, t: dur };
-        // Stretch the rumble to the shake it is announcing, and drop its pitch
-        // further as the shake gets heavier, so a bigger tell sounds bigger.
-        sfx('rumble', { dur: Math.max(0.7, dur / 55), pitch: mag >= 3 ? 0.8 : 1 });
+        // Stretch the rumble to EXACTLY the shake it is announcing, and drop its
+        // pitch further as the shake gets heavier so a bigger tell sounds bigger.
+        //
+        // 96 is not arbitrary: the base rumble is 1.6s, `dur` is in frames, so
+        // dur/60/1.6 = dur/96 makes the sound and the shake start and stop
+        // together. They are one telegraph and must not disagree about when it
+        // is over.
+        sfx('rumble', { dur: Math.max(0.7, dur / 96), pitch: mag >= 3 ? 0.72 : 0.9 });
       },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
       status: (id, frames) => Attr.applyStatus(this.status, id, frames),

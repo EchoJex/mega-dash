@@ -116,6 +116,23 @@ export function makePatch(id, x, y, w, h, frames, source = 'boss') {
   return { id, x, y, w, h, t: frames, tMax: frames, source, tick: 0 };
 }
 
+/**
+ * A patch laid down BY something, ON the surface it landed on.
+ *
+ * THE MARK IS THE SIZE OF THE THING THAT MADE IT. This exists so that rule lives
+ * in one place: the two call sites (a falling rock crumbling, a fireball
+ * bouncing) each used to compute their own footprint and each got it wrong in a
+ * different direction — a radius-3 fireball stamped 16px, a 12px rock stamped
+ * 20px. Both looked and hurt wider than the thing you were watching, which is
+ * the same unfairness the sprite-box/collision-box split exists to prevent.
+ *
+ * `srcX`/`srcW` are the SOURCE's own horizontal extent. The patch sits 3px into
+ * the surface so it reads as scorched ground rather than a floating bar.
+ */
+export const PATCH_H = 4;
+export const surfacePatch = (id, srcX, srcW, surfaceY, frames, source = 'boss') =>
+  makePatch(id, srcX, surfaceY - 3, Math.max(2, srcW), PATCH_H, frames, source);
+
 export function stepPatches(list) {
   for (let i = list.length - 1; i >= 0; i--) {
     const p = list[i];
