@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Capacitor boilerplate, narrowed.
+
+  The generated default was `<external-path path="."/>` plus `<cache-path
+  path="."/>`, which makes the provider capable of granting a URI to ANY file on
+  shared storage. Nothing in this app uses it — the updater streams its APK
+  straight into a PackageInstaller session and never writes a file — but a
+  provider that can hand out arbitrary shared-storage paths is a scanner finding
+  waiting to happen, and it is not something a game needs.
+
+  Scoped to this app's own directories instead. The provider itself stays because
+  Capacitor plugins (Camera, Filesystem, Share) expect it to exist if one is ever
+  added; these paths are what such a plugin would actually use.
+-->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
-    <cache-path name="my_cache_images" path="." />
+    <cache-path name="cache" path="." />
+    <files-path name="files" path="." />
+    <external-files-path name="external_files" path="." />
+    <external-cache-path name="external_cache" path="." />
 </paths>

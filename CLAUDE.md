@@ -38,13 +38,26 @@ so a feature branch can never become the default update. Release notes carry
 `versionCode=NNNN`, which is what the updater compares against the installed build.
 
 **`android/` is committed** — it holds the updater's native code (`Updater.java`,
-`UpdaterPlugin.java`) and `debug.keystore`. That keystore is deliberately in the repo: without
-one stable signing key, every CI run would sign differently and no build could ever install
-over the last. It signs debug builds of an unreleased game and protects nothing.
+`UpdaterPlugin.java`) and `megadash-signing.keystore`. That keystore is deliberately in the
+repo: without one stable signing key, every CI run would sign differently and no build could
+ever install over the last. It signs an unreleased game and protects nothing.
+
+**Never regenerate that keystore or change its `keyAlias`.** The signing identity is the key
+inside it. Change either and every phone with the game installed has to uninstall first,
+losing the save. The alias still reads `androiddebugkey` for historical reasons; renaming it
+would cost a forced reinstall for nothing.
+
+**CI ships a RELEASE build, and both build types use that one key.** A debug build carries
+`android:debuggable="true"`, which is a Play Protect heuristic for sideloaded APKs — the game
+was getting "Harmful app blocked" on every update. Because the key is unchanged, a release
+build still installs cleanly over an older debug build.
 
 **The game itself is entirely offline.** It bundles every asset and fetches nothing. There
-is no Pages deploy, no service worker, no remote content. `INTERNET` exists solely for the
-updater.
+is no Pages deploy, no service worker, no remote content. The manifest requests exactly two
+permissions, both for the updater: `INTERNET` and `REQUEST_INSTALL_PACKAGES`. There are no
+services and no manifest-declared receivers. Adding a permission to a sideloaded app with no
+store reputation costs real trust — treat that list as closed unless a feature genuinely
+needs it.
 
 ---
 

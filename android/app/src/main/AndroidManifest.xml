@@ -36,14 +36,46 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
-
     <!--
-      The GAME is entirely offline — it bundles every asset and never fetches
-      anything. These two exist solely for the in-app updater, which pulls CI
-      builds from GitHub Releases so new builds can be installed from inside the
-      app instead of from a dev server on a PC. See Updater.java.
+      PERMISSIONS — this list is COMPLETE and deliberately minimal.
+
+      The GAME is entirely offline: it bundles every asset and fetches nothing.
+      Both permissions below exist solely for the in-app updater, which pulls CI
+      builds from GitHub Releases so new builds install from inside the app
+      instead of from a dev server on a PC. See Updater.java.
+
+      No storage, location, camera, microphone, contacts, SMS, call-log, phone,
+      accessibility, notification-listener, overlay or query-all-packages
+      permission is requested, and no library adds one during manifest merge —
+      Capacitor's own manifest declares none and there are no Cordova plugins.
+      There are also no <service> and no <receiver> declarations anywhere: the
+      only component beyond MainActivity is the FileProvider below, and the
+      updater's install-status receiver is registered at runtime and unregistered
+      when the install finishes, so nothing of this app runs in the background.
+
+      Keep it that way. Every permission added here is a Play Protect heuristic
+      taken on, and this app is sideloaded, so it has no store reputation to
+      offset one.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      THE ONE UNAVOIDABLE FLAG.
+
+      This is what lets the UPDATE button work, and it is also the single
+      strongest signal behind Play Protect's "Harmful app blocked" warning on a
+      sideloaded build: an app that downloads an APK and installs it is
+      structurally identical to a dropper, and a scanner cannot tell our intent
+      from theirs. Everything else in this project is arranged to avoid ADDING to
+      that suspicion — release-signed rather than debug-signed, no background
+      components, no obfuscation, no second network use.
+
+      Removing this permission is possible and would very likely clear the
+      warning, but it costs the dev loop: the updater would have to hand the
+      downloaded APK to the system installer via a browser download instead, and
+      the owner would confirm the install in the notification shade rather than
+      in the game. That is a product decision, not a cleanup — do not remove it
+      as part of a tidy-up.
+    -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>

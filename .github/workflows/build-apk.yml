@@ -8,9 +8,11 @@
 #                branch can never become everyone's default update
 #
 # The release notes carry "versionCode=NNNN"; the updater compares that against
-# the installed build. The committed debug keystore (android/app/debug.keystore)
+# the installed build. The committed keystore (android/app/megadash-signing.keystore)
 # is what lets each build install over the last instead of demanding an
-# uninstall — see the note in android/app/build.gradle.
+# uninstall — see the note in android/app/build.gradle. It signs both build
+# types, so a debug build made locally and a release build made here are
+# interchangeable to the installer.
 name: Build APK
 
 on:
@@ -45,6 +47,15 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # compileSdk 35 and a matching apksigner. AGP can usually fetch a missing
+      # platform itself, but the runner image's contents move around and a build
+      # that fails to find android-35 would take the whole dev loop down.
+      - name: Ensure Android SDK 35 and build tools
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Install dependencies
         run: npm ci
 
@@ -59,18 +70,42 @@ jobs:
       - name: Sync web assets into the Android project
         run: npx cap sync android
 
-      - name: Assemble debug APK
+      # RELEASE, not debug. A debug build carries android:debuggable="true",
+      # which is one of the clearest triggers for Play Protect's "Harmful app
+      # blocked" on a sideloaded APK. Both build types are signed with the same
+      # committed key, so this is still a legitimate upgrade of any build that
+      # came before it — no uninstall, no lost save.
+      - name: Assemble release APK
         run: |
           cd android
           chmod +x gradlew
           # Unique, increasing versionCode per run so the updater can order builds.
-          ./gradlew assembleDebug --no-daemon \
+          ./gradlew assembleRelease --no-daemon \
             -PversionCodeOverride=$((1000 + GITHUB_RUN_NUMBER))
+
+      # An unsigned release APK installs nowhere, and one signed with the WRONG
+      # key installs only after an uninstall — which loses the save on every
+      # phone. Both are worse than a failed build, so check before publishing.
+      - name: Verify the APK is signed with the project key
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs --verbose "$APK"
+          # apksigner prints the digest lowercase and unseparated; keytool uses
+          # uppercase with colons. Normalise so the comparison cannot drift.
+          GOT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK" \
+            | sed -n 's/.*SHA-256 digest: *//p' | head -1 | tr -d ': ' | tr 'A-Z' 'a-z')
+          WANT=c925de5b50a10f5d8ceaa871372ff9935a64064aeeef1bf40e10c788bb1ee725
+          if [ "$GOT" != "$WANT" ]; then
+            echo "::error::APK signed with $GOT, expected $WANT — installing it would require an uninstall"
+            exit 1
+          fi
+          echo "Signed with the project key ($GOT)"
 
       - uses: actions/upload-artifact@v4
         with:
           name: mega-dash-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/release/*.apk
           retention-days: 30
 
       - name: Publish releases (rolling 'latest' + per-branch channel)
@@ -80,7 +115,7 @@ jobs:
           CODE=$((1000 + GITHUB_RUN_NUMBER))
           BRANCH="$GITHUB_REF_NAME"
           SLUG=$(printf '%s' "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9-')
-          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APK=android/app/build/outputs/apk/release/app-release.apk
           cp "$APK" "MegaDash-$CODE.apk"
           NOTES="versionCode=$CODE"$'\n'"branch=$BRANCH"$'\n'"$GITHUB_SHA"
 

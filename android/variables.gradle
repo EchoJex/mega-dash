@@ -1,7 +1,12 @@
 ext {
+    // minSdk 22 covers essentially every device still running. Android 14+ blocks
+    // installing apps that TARGET below 23, which is about targetSdk, not this.
     minSdkVersion = 22
-    compileSdkVersion = 34
-    targetSdkVersion = 34
+    // API 35 (Android 15). Capacitor 6 is validated against 34 and ships nothing
+    // that breaks at 35; API 36 needs Capacitor 7, which is a framework major
+    // upgrade and a separate job. Requires AGP 8.6+ — see android/build.gradle.
+    compileSdkVersion = 35
+    targetSdkVersion = 35
     androidxActivityVersion = '1.8.0'
     androidxAppCompatVersion = '1.6.1'
     androidxCoordinatorLayoutVersion = '1.2.0'

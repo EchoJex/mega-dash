@@ -21,30 +21,58 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // A COMMITTED debug keystore, deliberately.
-    //
-    // Android refuses to install an APK over one signed with a different key. The
-    // default debug keystore is generated per machine, so CI would sign every run
-    // differently and the in-app updater could never update anything — each build
-    // would demand an uninstall first, losing the save. Committing one key makes
-    // every build a legitimate upgrade of the last.
-    //
-    // This protects nothing and is not a secret: it signs debug builds of a game
-    // that is not on any store. A real release key would never live here.
+    /**
+     * ONE SIGNING IDENTITY FOR EVERY BUILD, FOREVER.
+     *
+     * Android refuses to install an APK over one signed with a different key, so
+     * the in-app updater only works if every CI run signs identically. A locally
+     * generated debug key would differ per machine and per runner, and every
+     * build would demand an uninstall — losing the save.
+     *
+     * Both build types point at this same config on purpose: a debug build and a
+     * release build of the same commit are interchangeable as far as the
+     * installer is concerned, and a branch build can always update a main build.
+     *
+     * DO NOT change `keyAlias`, and do not regenerate this keystore. The signing
+     * IDENTITY is the key inside it, not the filename — swapping either one makes
+     * every phone with the game installed require a manual uninstall first. The
+     * alias reads as a debug alias for the historical reason that this started as
+     * the debug key; renaming it now would cost a forced reinstall for nothing.
+     *
+     * This protects nothing and is not a secret: it signs an unreleased game that
+     * is on no store. A real release key would never live in a repository.
+     */
     signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
+        shared {
+            storeFile file('megadash-signing.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+            // v2/v3 are whole-APK signatures the platform can verify far more
+            // cheaply and strictly than the v1 JAR signature. Sideloaded APKs
+            // carrying only a v1 signature look dated to the package verifier,
+            // and v1-only installs are rejected outright from Android 11 up.
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
         }
     }
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.shared
         }
         release {
+            // WHAT SHIPS. The build published to GitHub Releases must be a
+            // RELEASE build: a debug build carries android:debuggable="true",
+            // which lets any process with ADB access inject code into it, and is
+            // one of the clearest heuristics behind Play Protect's "Harmful app
+            // blocked" on a sideloaded APK. There is nothing to gain from it here
+            // — the dev loop is "install the APK and play", not chrome://inspect.
+            signingConfig signingConfigs.shared
+            // R8 stays OFF deliberately. Obfuscated code in a sideloaded APK
+            // reads as MORE suspicious to a scanner, not less, and the bundle is
+            // a Phaser game inside a WebView — there is nothing to shrink.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
