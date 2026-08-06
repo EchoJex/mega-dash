@@ -461,6 +461,45 @@ from unlocked non-maxed weapons, plus an always-present E-Tank (refill) and Chip
 (`FEEL.cardChips`). Levels queue: one big orb can grant several, and each gets its own
 choice.
 
+### Reporting a playtest — read this before asking the owner to describe a bug
+
+The owner playtests on a phone with no debugger attached, so anything the game does not
+draw on screen does not exist. Three things exist to make a playtest note actionable
+instead of anecdotal. **Ask for them before guessing.**
+
+**The dev HUD's third line** — `b1035 s4821 5x 412x392 dpr2.75`
+
+| | |
+|---|---|
+| `b1035` | CI build. Pins an observation to a build, so "it felt better before" has a before. |
+| `s4821` | the run's **world seed** |
+| `5x …` | render density, the viewport it was picked from, and DPR |
+
+That last group is not decoration. `RENDER_SCALE` is chosen once at startup from the
+reported viewport (`config/display.js`), and a platform behaviour change can move it with
+no code change at all — 4x to 5x is **56% more real pixels every frame**, which reads as
+"it feels sluggish now" with nothing visibly different. Android 15's forced edge-to-edge
+does exactly this, which is why `targetSdk` sits at 34. Ask for this line before
+investigating any performance complaint.
+
+**The crash overlay** — `systems/crash.js`. An exception in the update loop used to kill
+the loop and show a frozen picture. Now it paints a full-screen report with the message, a
+trimmed stack, the build, the seed and where the run had got to, and **a tap copies it to
+the clipboard**. Raw DOM importing nothing from the game, installed as a side effect of
+being the first import in `main.js` — imports are hoisted, so a call in `main.js` would run
+after every other module had already been evaluated, too late to catch a load-time error.
+Only the first error takes the screen; a dead loop throws 60 times a second.
+
+**Seeded worlds** — `systems/rng.js`. `?seed=1234` pins one in a browser, and a reported
+seed rebuilds that exact world here, so a bad gap becomes a regression test instead of a
+statistical argument. Seeds are keyed on **area index**, so using the boss selector cannot
+shift the worlds after it. Scope: this seeds the WORLD only. Minion spawns, drops and boss
+attack choices still use `Math.random`. Full replay needs recorded input — a separate job,
+and the fixed timestep already makes it reachable.
+
+Text in the HUD goes through a 5×7 bitmap font whose `fold()` **silently drops any glyph
+it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to a HUD string.
+
 ### Dev mode — `src/config/dev.js`
 
 Playtest perks: HP floored at 1 (every hit still lands), equipping padlocked weapons,
