@@ -14,31 +14,28 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, generate, jumpReach, maxPitWidth, THEMES } from '../src/systems/terrain.js';
+import { makeRng, areaRng, seedFromLocation } from '../src/systems/rng.js';
 import { BOSSES } from '../src/data/bosses.js';
 import { FEEL } from '../src/config/feel.js';
 
 const GROUND_Y = 184, VIEW_W = 480;
 
 /**
- * SEEDED. These tests used to sample Math.random, which made them a coin flip:
- * the theme sample-size assertion passed locally and failed ~54% of CI runs, and
- * worse, the traversability checks only caught a bad seed probabilistically.
- * A deterministic sweep over many seeds is both reproducible and far more
+ * SEEDED, with the GAME'S OWN generator.
+ *
+ * These tests used to sample Math.random, which made them a coin flip: the
+ * theme sample-size assertion passed locally and failed ~54% of CI runs, and
+ * worse, the traversability checks only caught a bad seed probabilistically. A
+ * deterministic sweep over many seeds is both reproducible and far more
  * thorough than one lucky sample.
+ *
+ * It used to carry a private copy of mulberry32. Now that the shipped game
+ * seeds its worlds too (systems/rng.js), the copy was actively harmful: it
+ * meant these guarantees were proven about a generator the game does not use,
+ * so the two could drift apart and nothing would notice.
  */
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Generate a long stretch and return its gaps and spans, left to right. */
 function survey(distance = 60000, bossId = null, seed = 1) {
-  const w = makeWorld(80, GROUND_Y, bossId, mulberry32(seed));
+  const w = makeWorld(80, GROUND_Y, bossId, makeRng(seed));
   for (let camX = 0; camX < distance; camX += 120) generate(w, camX, VIEW_W);
   const spans = [...w.groundSpans].sort((a, b) => a.x1 - b.x1);
   const gaps = [];
@@ -144,6 +141,53 @@ test('themes actually differ from each other', () => {
     `gale should be far more pitted than granite (${airy.gapRate.toFixed(2)} vs ${solid.gapRate.toFixed(2)})`);
   assert.ok(solid.avgSpan > airy.avgSpan * 1.4,
     `granite should have far longer ground than gale (${solid.avgSpan.toFixed(0)} vs ${airy.avgSpan.toFixed(0)})`);
+});
+
+/**
+ * THE SEED HAS TO MEAN SOMETHING.
+ *
+ * The dev HUD prints a run's seed so a bad world can be named and rebuilt here.
+ * That is only worth anything if the same seed really does give the same world
+ * — otherwise the number on screen is decoration and every world bug stays
+ * un-investigable. This is the test that makes it a promise.
+ */
+test('the same seed rebuilds exactly the same world', () => {
+  const build = () => {
+    const w = makeWorld(80, GROUND_Y, 'blaze', areaRng(4821, 1));
+    for (let camX = 0; camX < 8000; camX += 120) generate(w, camX, VIEW_W);
+    return JSON.stringify(w.groundSpans.concat(w.spikes, w.platforms));
+  };
+  assert.equal(build(), build(), 'a seeded world must be reproducible');
+});
+
+test('different seeds and different areas give different worlds', () => {
+  // Otherwise every run would be the same level, or every area within a run.
+  const build = (seed, area) => {
+    const w = makeWorld(80, GROUND_Y, 'blaze', areaRng(seed, area));
+    for (let camX = 0; camX < 8000; camX += 120) generate(w, camX, VIEW_W);
+    return JSON.stringify(w.groundSpans);
+  };
+  assert.notEqual(build(4821, 1), build(777, 1), 'seed must change the world');
+  assert.notEqual(build(4821, 1), build(4821, 2), 'each area must differ');
+  // Area worlds are keyed on the INDEX, not on a generator carried through the
+  // run, so jumping straight to a boss with the dev picker cannot shift the
+  // worlds that follow it.
+  assert.equal(build(4821, 3), build(4821, 3), 'area 3 is area 3 however you got there');
+});
+
+test('an unparseable ?seed= falls back to random, never to a fixed world', () => {
+  // A typo that silently pinned every run to one world would be worse than
+  // ignoring the parameter, and much harder to notice.
+  const orig = globalThis.location;
+  try {
+    globalThis.location = { search: '?seed=banana' };
+    const a = seedFromLocation(), b = seedFromLocation();
+    assert.ok(Number.isFinite(a) && Number.isFinite(b));
+    globalThis.location = { search: '?seed=4821' };
+    assert.equal(seedFromLocation(), 4821, 'a valid seed must still pin');
+  } finally {
+    globalThis.location = orig;
+  }
 });
 
 test('a wider jump immediately permits wider pits', () => {

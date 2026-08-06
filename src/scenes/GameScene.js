@@ -28,6 +28,8 @@ import * as Pickups from '../systems/pickups.js';
 import * as Arena from '../systems/arena.js';
 import * as Attr from '../systems/attributes.js';
 import { sfx } from '../systems/sfx.js';
+import { areaRng, seedFromLocation } from '../systems/rng.js';
+import { setCrashContext } from '../systems/crash.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
 } from '../systems/assets.js';
@@ -123,7 +125,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.run = run;
-    this.world = Terrain.makeWorld(80, GROUND_Y);
+    // THE RUN'S WORLD SEED. Printed in the dev HUD and in the crash overlay so
+    // any world you can see is a world I can rebuild — see systems/rng.js.
+    // `?seed=1234` pins it for reproducing a reported world in a browser.
+    this.seed = seedFromLocation();
+    this.areaIndex = 0;
+    setCrashContext({ seed: this.seed });
+    this.world = Terrain.makeWorld(80, GROUND_Y, null, areaRng(this.seed, 0));
     this.cam = { x: 0 };
     this.player = {
       x: 80, y: GROUND_Y - 24, vx: 0, vy: 0, facing: 1,
@@ -157,7 +165,14 @@ export default class GameScene extends Phaser.Scene {
     this.areaTheme = Arena.themeFor(this.upcoming);
     // The ground leans toward the coming boss too, not just the backdrop — an
     // approach to Gale Man should FEEL airy, not merely look it.
-    this.world = Terrain.makeWorld(80, GROUND_Y, this.upcoming?.id);
+    // Keyed on the area's INDEX, not on a generator carried through the run, so
+    // area 3 is the same world whether you walked there or jumped straight to it
+    // with the dev boss picker.
+    this.areaIndex++;
+    setCrashContext({ where: `area ${this.areaIndex} -> ${this.upcoming?.id || '?'}` });
+    this.world = Terrain.makeWorld(
+      80, GROUND_Y, this.upcoming?.id, areaRng(this.seed, this.areaIndex),
+    );
     this.cam = { x: 0 };
     this.player.x = 80;
     this.player.y = GROUND_Y - 24;
@@ -241,6 +256,9 @@ export default class GameScene extends Phaser.Scene {
   warpToArena(def) {
     this.beginWarp(() => {
       const layer = bossLayer(save, def.id, dev('cycleLayers'));
+      // A crash inside a fight should say WHICH fight. Boss and layer are the
+      // two things that pick which code was running.
+      setCrashContext({ where: `arena ${def.id} L${layer}` });
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
       this.cam = { x: 0 };
       this.minions = [];   // nothing follows you in

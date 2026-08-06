@@ -1,5 +1,10 @@
 /**
- * Weapon and boss data shape.
+ * THE DPS INVARIANT — one test, deliberately skipped, deliberately alone.
+ *
+ * This file holds nothing else so the invariant is easy to find and un-skip
+ * when weapon tuning begins. It used to also carry two boss-data checks, which
+ * had nothing to do with DPS and lived here only by accident; they are in
+ * data.test.js with the rest of the data-shape tests now.
  *
  * NOTE ON BALANCE: the DPS invariant below is SKIPPED on purpose. Weapon
  * numbers are placeholders until the late tuning phase, and a test that pins a
@@ -11,7 +16,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { WEAPONS, dpsAtLevel } from '../src/data/weapons.js';
 import { FEEL } from '../src/config/feel.js';
-import { BOSSES } from '../src/data/bosses.js';
 
 test('all weapons share the same level-1 DPS', {
   skip: 'balance is a late-phase concern; weapon numbers are placeholders',
@@ -22,13 +26,4 @@ test('all weapons share the same level-1 DPS', {
       `${w.name} is off target: ${dpsAtLevel(w, 1).toFixed(3)} vs ${FEEL.dpsTarget}`,
     );
   }
-});
-
-test('every boss drops a weapon that exists', () => {
-  const ids = new Set(WEAPONS.map((w) => w.id));
-  for (const b of BOSSES) assert.ok(ids.has(b.dropWeapon), `${b.id} -> ${b.dropWeapon} missing`);
-});
-
-test('boss primary colours are all distinct', () => {
-  assert.equal(new Set(BOSSES.map((b) => b.primary)).size, BOSSES.length);
 });

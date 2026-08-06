@@ -62,8 +62,13 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # BUILD_CODE must be the SAME number the APK gets as its versionCode
+      # below, because that is what the updater compares and what the release is
+      # named after. It is stamped into the bundle so the dev HUD and any crash
+      # report can name the build they came from — a playtest note that cannot
+      # be pinned to a build is an anecdote.
       - name: Build web bundle
-        run: npm run build
+        run: BUILD_CODE=$((1000 + GITHUB_RUN_NUMBER)) npm run build
 
       # android/ is committed (it carries the updater's native code), so this
       # only copies the fresh web build in and refreshes the plugin wiring.

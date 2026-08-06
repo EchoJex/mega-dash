@@ -81,6 +81,15 @@ export const RENDER_SCALE = pickRenderScale();
  * Diagnosing that from a phone with no debugger means guessing, so the numbers
  * go on screen in dev mode instead.
  */
+/**
+ * Which CI build this is, stamped in at bundle time by vite.config.js.
+ *
+ * "dev" for a local build, otherwise the same number as the APK's versionCode,
+ * the updater's comparison value, and the GitHub release. One number, so a bug
+ * report can name the build it came from without anyone having to remember.
+ */
+export const BUILD = typeof __BUILD__ === 'string' ? __BUILD__ : 'dev';
+
 export const DISPLAY_DIAG = {
   cssW: Math.round(globalThis.innerWidth || 0),
   cssH: Math.round(globalThis.innerHeight || 0),

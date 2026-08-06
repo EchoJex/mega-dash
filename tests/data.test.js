@@ -211,6 +211,20 @@ test('an unfought boss is layer 1 either way, and unknown ids do not throw', () 
   assert.equal(bossLayer({}, 'nope', true), 1);
 });
 
+test('every boss drops a weapon that exists', () => {
+  // Moved here from dps.test.js, which is about the DPS invariant and had
+  // collected two unrelated boss-data checks.
+  const ids = new Set(WEAPONS.map((w) => w.id));
+  for (const b of BOSSES) assert.ok(ids.has(b.dropWeapon), `${b.id} -> ${b.dropWeapon} missing`);
+});
+
+test('boss primary colours are all distinct', () => {
+  // The 17 primaries are perceptually spaced; two identical ones would make a
+  // boss unidentifiable at a glance. Distinctness is structural, so it is
+  // asserted — the SPACING is a tuned property and deliberately is not.
+  assert.equal(new Set(BOSSES.map((b) => b.primary)).size, BOSSES.length);
+});
+
 test('every boss is reachable from the dev selector', () => {
   // The picker lists BOSSES directly, so this guards the case where a boss
   // exists in data but can never be selected to test.

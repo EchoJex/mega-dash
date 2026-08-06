@@ -34,7 +34,7 @@
  */
 
 import Phaser from 'phaser';
-import { VIEW_H, viewWidthOf, DISPLAY_DIAG } from '../config/display.js';
+import { VIEW_H, viewWidthOf, DISPLAY_DIAG, BUILD } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
@@ -769,14 +769,23 @@ export default class UIScene extends Phaser.Scene {
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as
     // "balanced" while invincible is worse than no playtest at all.
-    // In dev, also show what the renderer was handed at startup. RENDER_SCALE is
-    // picked once from the reported viewport, and a platform behaviour change
-    // can move it without any code changing — a jump from 4x to 5x is 56% more
-    // pixels per frame and shows up as "it feels sluggish now" with nothing
-    // visibly different. These are the numbers to read out when that happens.
+    // THE DIAGNOSTIC LINE — the three things that make a playtest note
+    // actionable instead of anecdotal.
+    //
+    //   b1034     which build. "It felt better before" needs a before.
+    //   s4821     the run's world seed. Names an exact world I can rebuild and
+    //             keep as a regression test — see systems/rng.js.
+    //   5x ...    render density and the viewport it was picked from. Density
+    //             is chosen once at startup and a platform change can move it
+    //             with no code change; 4x to 5x is 56% more pixels per frame,
+    //             which reads as "sluggish" with nothing visibly different.
+    //
+    // Only glyphs the bitmap font actually has — see FONT_CHARS in
+    // systems/font.js. `fold()` silently DROPS anything missing, so an "@"
+    // here renders as nothing and the line quietly lies about the DPR.
     const diag = DEV.enabled
-      ? `\n${DISPLAY_DIAG.scale}x ${DISPLAY_DIAG.cssW}x${DISPLAY_DIAG.cssH}`
-        + `@${DISPLAY_DIAG.dpr.toFixed(2)} vw${this.w}`
+      ? `\nb${BUILD} s${gm.seed} ${DISPLAY_DIAG.scale}x `
+        + `${DISPLAY_DIAG.cssW}x${DISPLAY_DIAG.cssH} dpr${DISPLAY_DIAG.dpr.toFixed(2)}`
       : '';
     this.hud.setText(
       `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}` +

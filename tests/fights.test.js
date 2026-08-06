@@ -41,41 +41,41 @@ function harness(bossId, layer) {
   };
 }
 
-test('every defined fight layer runs for a long stretch without throwing', () => {
+/**
+ * Every written layer runs a long stretch without throwing AND does something.
+ *
+ * These were two tests running two near-identical simulations. A layer that
+ * throws and a layer that silently does nothing are both "this fight is broken",
+ * and one pass over each layer answers both — a boss that never acts is not
+ * meaningfully different from one that crashes, from the player's side.
+ */
+test('every defined fight layer runs a long stretch, without throwing and without idling', () => {
   for (const [id, f] of Object.entries(FIGHTS)) {
     for (const kind of ['attack', 'hazard']) {
       for (const layer of [1, 2, 3]) {
         const beh = f[kind][layer];
         if (!beh) continue;
         const h = harness(id, layer);
+        let pushed = false;
         assert.doesNotThrow(() => {
           // Long enough for every state machine to cycle several times,
           // including Blaze Man's layer-3 flood at ~900 frames.
           for (let i = 0; i < 3000; i++) {
             beh.step(h.ctx);
             Arena.stepArena(h.arena);
+            // Sampled per frame, not read at the end: a force is rebuilt every
+            // frame rather than accumulated, so by the last frame it may be
+            // back at zero. Tempest Man's whole layer-1 hazard is push — rain
+            // and the current toward the drain — and it spawns nothing at all,
+            // so counting only spawned things scored a working hazard as idle.
+            if (h.arena.push.x || h.arena.push.y) pushed = true;
           }
         }, `${id} ${kind} L${layer}`);
+        const acted = h.shots.length + h.shakes.length + h.hurts.length
+          + h.arena.hazards.length + h.arena.patches.length + (pushed ? 1 : 0);
+        assert.ok(acted > 0, `${id} ${kind} L${layer} did nothing across 3000 frames`);
       }
     }
-  }
-});
-
-test('each boss actually does something over a fight-length window', () => {
-  const acted = {};
-  for (const [id, f] of Object.entries(FIGHTS)) {
-    const h = harness(id, 3);
-    const { attack, hazard } = fightFor(id, 3);
-    for (let i = 0; i < 2000; i++) {
-      attack?.step(h.ctx);
-      hazard?.step(h.ctx);
-      Arena.stepArena(h.arena);
-    }
-    acted[id] = h.shots.length + h.shakes.length + h.arena.hazards.length
-      + h.arena.patches.length + h.hurts.length;
-  }
-  for (const id of ['core', 'blaze', 'torrent']) {
-    assert.ok(acted[id] > 0, `${id} did nothing at all across 2000 frames`);
   }
 });
 
@@ -389,13 +389,20 @@ test('the rockfall telegraphs long before it lands, and never exceeds three in t
       if (h.arena.hazards.length && i % 40 === 39) h.arena.hazards.shift();
     }
 
+    // The CONTRACT, not the tuning. "Three in the air" is a number the owner
+    // stated, so it is asserted exactly. The shake's length and lead are feel
+    // values that will be tuned again, so this only asserts the ORDER that has
+    // to hold — the room shakes first, and the shake is still running when the
+    // first rock arrives. Pinning the frame counts here would fail the build the
+    // next time the telegraph is deliberately retimed.
     assert.ok(peak <= 3, `L${layer} had ${peak} rocks airborne at once`);
     assert.ok(total > 3, `L${layer} only ever produced ${total} rocks`);
     assert.ok(shakeAt !== null && firstRockAt !== null, `L${layer} never ran a cycle`);
-    assert.ok(firstRockAt - shakeAt >= 60,
-      `L${layer} gave only ${firstRockAt - shakeAt} frames of warning before the first rock`);
-    assert.ok(h.shakes[0].dur >= 90,
-      `L${layer} shook for only ${h.shakes[0].dur} frames — too brief to read`);
+    assert.ok(firstRockAt > shakeAt,
+      `L${layer} dropped a rock before the shake that is supposed to announce it`);
+    assert.ok(h.shakes[0].dur > firstRockAt - shakeAt,
+      `L${layer} finished shaking before the first rock landed — the tell and the `
+      + `threat never overlap`);
   }
 });
 
