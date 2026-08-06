@@ -68,6 +68,26 @@ function pickRenderScale() {
 
 export const RENDER_SCALE = pickRenderScale();
 
+/**
+ * WHAT pickRenderScale() ACTUALLY SAW — dev HUD only, never read by gameplay.
+ *
+ * RENDER_SCALE is chosen once from the viewport the browser reports at startup,
+ * and a platform change can move that number without anything in this project
+ * changing: Android 15's forced edge-to-edge lays the window out behind the
+ * system bars, so the WebView reports a taller viewport and the density can jump
+ * a whole step. One step from 4 to 5 is 56% more real pixels per frame, which is
+ * felt and not seen — the game looks identical and runs worse.
+ *
+ * Diagnosing that from a phone with no debugger means guessing, so the numbers
+ * go on screen in dev mode instead.
+ */
+export const DISPLAY_DIAG = {
+  cssW: Math.round(globalThis.innerWidth || 0),
+  cssH: Math.round(globalThis.innerHeight || 0),
+  dpr: globalThis.devicePixelRatio || 1,
+  scale: RENDER_SCALE,
+};
+
 /** Virtual view width, independent of how densely the canvas is rasterised. */
 export const viewWidthOf = (scaleManager) =>
   Math.round(scaleManager.gameSize.width / RENDER_SCALE);

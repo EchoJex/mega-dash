@@ -69,6 +69,36 @@ export function setMuted(m) {
  *   vol      peak gain before the master
  *   decay    'exp' snaps and rings out; 'flat' holds then cuts
  */
+/**
+ * ONE CACHED NOISE BUFFER, REUSED FOR EVERY NOISE VOICE.
+ *
+ * White noise is white noise — there is no reason to synthesise a fresh one per
+ * play, and doing so was expensive in exactly the wrong place. The old code
+ * allocated a Float32Array of `sampleRate * dur` and filled it with Math.random()
+ * SYNCHRONOUSLY ON THE MAIN THREAD, inside the call that starts the sound. For a
+ * short hit that is a few thousand samples and invisible. For the rumble — 2-3
+ * seconds long — it is a six-figure loop and a megabyte of allocation, running
+ * at the precise frame the screen starts shaking, so the telegraph announced
+ * itself with a stutter.
+ *
+ * One buffer, built on first use and looped to whatever length the caller wants.
+ * Two seconds is long enough that the loop point is inaudible in noise, and a
+ * small random playback rate per voice decorrelates repeats so consecutive
+ * rumbles do not sound like the same recording twice.
+ */
+const NOISE_SECONDS = 2;
+let noiseBuf = null;
+
+function noiseBuffer(c) {
+  if (noiseBuf && noiseBuf.sampleRate === c.sampleRate) return noiseBuf;
+  const n = Math.floor(c.sampleRate * NOISE_SECONDS);
+  const buf = c.createBuffer(1, n, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  noiseBuf = buf;
+  return buf;
+}
+
 function voice({ wave = 'square', f0 = 440, f1 = f0, dur = 0.12, vol = 0.3, decay = 'exp', delay = 0 }) {
   const c = audio();
   if (!c) return;
@@ -80,12 +110,11 @@ function voice({ wave = 'square', f0 = 440, f1 = f0, dur = 0.12, vol = 0.3, deca
   if (wave === 'noise') {
     // White noise for hits and explosions — the NES had a dedicated noise
     // channel, and percussive sounds are unconvincing without one.
-    const n = Math.max(1, Math.floor(c.sampleRate * dur));
-    const buf = c.createBuffer(1, n, c.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
     src = c.createBufferSource();
-    src.buffer = buf;
+    src.buffer = noiseBuffer(c);
+    src.playbackRate.value = 0.9 + Math.random() * 0.2;
+    // Anything longer than the cached buffer loops rather than allocating.
+    if (dur > NOISE_SECONDS * 0.9) src.loop = true;
   } else {
     src = c.createOscillator();
     src.type = wave;

@@ -34,7 +34,7 @@
  */
 
 import Phaser from 'phaser';
-import { VIEW_H, viewWidthOf } from '../config/display.js';
+import { VIEW_H, viewWidthOf, DISPLAY_DIAG } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
@@ -769,10 +769,19 @@ export default class UIScene extends Phaser.Scene {
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as
     // "balanced" while invincible is worse than no playtest at all.
+    // In dev, also show what the renderer was handed at startup. RENDER_SCALE is
+    // picked once from the reported viewport, and a platform behaviour change
+    // can move it without any code changing — a jump from 4x to 5x is 56% more
+    // pixels per frame and shows up as "it feels sluggish now" with nothing
+    // visibly different. These are the numbers to read out when that happens.
+    const diag = DEV.enabled
+      ? `\n${DISPLAY_DIAG.scale}x ${DISPLAY_DIAG.cssW}x${DISPLAY_DIAG.cssH}`
+        + `@${DISPLAY_DIAG.dpr.toFixed(2)} vw${this.w}`
+      : '';
     this.hud.setText(
       `SC ${String(Math.floor(r.score)).padStart(6, '0')}  Lv${r.level}` +
         (DEV.enabled ? '  [DEV]' : '') + '\n' +
-      `${w.name} L${r.wpLevels[r.activeWeapon] || 1}`,
+      `${w.name} L${r.wpLevels[r.activeWeapon] || 1}` + diag,
     );
 
     // Stand-in for the proper acquisition popup — just enough to confirm

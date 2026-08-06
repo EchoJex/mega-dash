@@ -2,11 +2,29 @@ ext {
     // minSdk 22 covers essentially every device still running. Android 14+ blocks
     // installing apps that TARGET below 23, which is about targetSdk, not this.
     minSdkVersion = 22
-    // API 35 (Android 15). Capacitor 6 is validated against 34 and ships nothing
-    // that breaks at 35; API 36 needs Capacitor 7, which is a framework major
-    // upgrade and a separate job. Requires AGP 8.6+ — see android/build.gradle.
+    // COMPILE against 35, TARGET 34. These do different jobs and only one of
+    // them changes how the app behaves at runtime.
+    //
+    // compileSdk is just which APIs the code may reference — raising it is free.
+    // targetSdk is a DECLARATION that the app has been tested against that
+    // release's behaviour changes, and the platform switches those changes on
+    // because of it. API 35 (Android 15) forces edge-to-edge: the window is laid
+    // out behind the status and navigation bars, which changes the size the
+    // WebView reports. This game picks RENDER_SCALE from the viewport height
+    // (see config/display.js), so a taller viewport can push the density up a
+    // whole step and multiply the pixels being rasterised every frame — which is
+    // the leading suspect for the sluggishness reported on the first build that
+    // targeted 35.
+    //
+    // Back to 34 to isolate that. Nothing is lost: 34 was already current, and
+    // targetSdk had nothing to do with the Play Protect warning.
+    //
+    // This MUST go back up before any Play Store release — Play requires new
+    // apps and updates to target within a year of the latest major Android
+    // release. Do that as its own change, with the edge-to-edge insets handled
+    // properly, not as a drive-by.
     compileSdkVersion = 35
-    targetSdkVersion = 35
+    targetSdkVersion = 34
     androidxActivityVersion = '1.8.0'
     androidxAppCompatVersion = '1.6.1'
     androidxCoordinatorLayoutVersion = '1.2.0'
