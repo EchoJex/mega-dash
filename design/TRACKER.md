@@ -449,7 +449,7 @@ Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[wip]` | Main mega buster |
+| 1036 (main) | `[wip]` |  |
 
 # BRAINSTORM — context only, never implemented
 
