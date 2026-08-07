@@ -449,7 +449,7 @@ Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge. By default I want there to be |
+| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge. By default I want there to be  |
 
 # BRAINSTORM — context only, never implemented
 
