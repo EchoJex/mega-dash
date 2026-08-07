@@ -464,5 +464,5 @@ it is ready to be real.
 ## Game pacing
 
 ## Play feel
-Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% 
+Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max
 ## Cosmetics
