@@ -403,7 +403,7 @@ Terrain form / character form pairs, shared across bosses and weapons.
 interaction present on every hit.
 
 ## Hot
-- **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides. Attribute refreshes it's cooldown but does not stack with other hot sources.
+- **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides. New
 - **boss-applied** `[wip]` Boss/hazard-sourced: Hot surfaces do damage/flinch/knockback to the player if touched, with damage/flinch/knockback scaling down until Hot fully subsides. Lingers 3s after the attribute is applied.
 - **weapon-applied** `[wip]` Player-sourced (Blaze Wheel): player is immune to own Hot; can be applied to any surface for level-scaled duration. Applies burn on contact.
 
