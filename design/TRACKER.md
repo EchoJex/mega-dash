@@ -449,7 +449,7 @@ Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how far below a cliff edge you can go before you don't pop back up scales with mastery level. Levels 1 through 3 will have the player stick to the cliff wall for 0.25s before popping back up if the current master is sufficient to recover from. Mastery 3 of 3 acting exactly like it currently does. |
+| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how far below a cliff edge you can go before you don't pop back up scales with mastery level. Levels 1 through 3 will have the player stick to the cliff wall for 0.25s before popping back up if the current master is sufficient to recover from. Mastery 3 of 3 exactly like it currently does. |
 
 # BRAINSTORM — context only, never implemented
 
