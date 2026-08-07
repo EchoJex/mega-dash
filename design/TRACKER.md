@@ -444,11 +444,12 @@ interaction present on every hit.
 Shorthand is fine. `build` is the versionCode shown on the title screen.
 Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
-| build | status | bug |
-|---|---|---|
-| — | `[todo]` | _no open bugs_ |
 
 ---
+
+| build | status | bug |
+|---|---|---|
+| 1036 (main) | `[wip]` |  |
 
 # BRAINSTORM — context only, never implemented
 
