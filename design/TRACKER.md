@@ -449,7 +449,7 @@ Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[wip]` | When falling into a pit the player |
+| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back |
 
 # BRAINSTORM — context only, never implemented
 
