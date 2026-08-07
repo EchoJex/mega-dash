@@ -404,7 +404,7 @@ interaction present on every hit.
 
 ## Hot
 - **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides. Attribute refreshes cooldown but does not stack with other hot sources.
-- **boss-applied** `[wip]` Boss/hazard-sourced: Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides.. In Blaze Man's arena, lingers 3s after the attribute is applied.
+- **boss-applied** `[wip]` Boss/hazard-sourced: Hot surfaces do damage/flinch/knockback to the player if touched, with damage/flinch/knockback scaling down until Hot fully subsides.. In Blaze Man's arena, lingers 3s after the attribute is applied.
 - **weapon-applied** `[ready]` Player-sourced (Blaze Wheel): player immune to own Hot; applied to ground/enemies for level-scaled durations.
 
 ## Burn
