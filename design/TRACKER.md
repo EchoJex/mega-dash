@@ -403,7 +403,7 @@ Terrain form / character form pairs, shared across bosses and weapons.
 interaction present on every hit.
 
 ## Hot
-- **shared** `[ready]` Faint red hue that gets more faint until the attribute subsides. Hot surfaces do damage/flinch/knockback to the player if touched, with hue/damage/flinch/knockback scaling down until Hot fully subsides.
+- **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides.
 - **boss-applied** `[ready]` Boss/hazard-sourced: player vulnerable. In Blaze Man's arena, lingers 5s after the cause concludes.
 - **weapon-applied** `[ready]` Player-sourced (Blaze Wheel): player immune to own Hot; applied to ground/enemies for level-scaled durations.
 
