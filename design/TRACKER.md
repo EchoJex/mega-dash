@@ -464,5 +464,5 @@ it is ready to be real.
 ## Game pacing
 
 ## Play feel
-Players second 
+Players primary jump feels
 ## Cosmetics
