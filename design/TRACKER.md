@@ -464,5 +464,5 @@ it is ready to be real.
 ## Game pacing
 
 ## Play feel
-Players primary jump acceleration and max hight feels good, but the double jump doesn't. There should be a brief pause in vertical velocity, preserving
+Players primary jump acceleration and max hight feels good, but the double jump doesn't. There should be a brief pause in vertical velocity, preserving horizontal
 ## Cosmetics
