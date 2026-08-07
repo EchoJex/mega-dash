@@ -449,7 +449,7 @@ Claude fixes `[ready]` bugs; `[wip]` means still describing it.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how deep into a pit before you don't pop back up scaling with mastery levelwill, with mastery 3 of 3 acting exactly like it currently does, and  |
+| 1036 (main) | `[wip]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how deebefore you don't pop back up scaling with mastery levelwill, with mastery 3 of 3 acting exactly like it currently does, and  |
 
 # BRAINSTORM — context only, never implemented
 
