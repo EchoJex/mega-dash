@@ -35,7 +35,7 @@ where each one stands.
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **attribute (boss)** `[na]` None
 - **attribute (weapon)** `[na]` None
-- **hazard L1** `[ready]` Turrets aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
+- **hazard L1** `[wip]` Turrets visibly aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[ready]` Same number of turrets; aim within nearest 22.5°; slightly reduced cooldown.
 - **hazard L3** `[ready]` Same number of turrets; aim within nearest 11.25°; further reduced cooldown.
 - **attack L1** `[ready]` Moves back and forth on the stage, occasionally stopping to fire a 3 bullet spread with mild auto-aim after a short time, dealing small damage.
