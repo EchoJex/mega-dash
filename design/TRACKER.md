@@ -470,4 +470,4 @@ Players primary jump acceleration and max hight feels good, but the double jump 
 Default Sprite is rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
 
 
-Ui needs to
+Ui needs to accommodate
