@@ -474,4 +474,4 @@ Default Sprite is rather small and boring with offensive weapons and defensive w
 Redo the requip wheel to emphasize two active offensive weapons and two active defensive weapons Large and in the center of the wheel with a press and hold feature While in the requip wheel to enable or disable their use. Inactive but unlocked offensive weapons will be shown as grayed out in a half circle above the active offensive weapons and inactive defensive weapons will be shown as grayed out in a half circle below the active defensive weapons slot. All icons should continue to display their levels as is currently in the requip wheel.
 
 
-Rename core man's core blaster "Nullfire Drone" in the weapon get pop-up, and "N-Drone" in the requip wheel and level up card. 
+Rename core man's core blaster "Nullfire Drone" in the weapon get pop-up, and "N-Drone" in the requip wheel and level up card. Rename core man 
