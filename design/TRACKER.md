@@ -78,7 +78,7 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[wip]` Basically a Blastoise
+- **palette notes** `[wip]` Basically a Blastoise with two
 - **arena** `[wip]` Background theme High seas, tempest
 - **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[ready]` Wet: the surface or enemy has been soaked in water, reducing contact friction and visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
