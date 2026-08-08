@@ -408,7 +408,7 @@ interaction present on every hit.
 - **weapon-applied** `[wip]` Player-sourced (Blaze Wheel): player is immune to own Hot; can be applied to any surface for level-scaled duration. Applies burn on contact.
 
 ## Burn
-- **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
+- **shared** `[draft]` Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
 - **boss-applied** `[wip]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **weapon-applied** `[wip]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
