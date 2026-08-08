@@ -43,7 +43,7 @@ where each one stands.
 - **attack L3** `[wip]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
 - **weapon** `[wip]` Defensive; a small gray drone hovers just above and in front of the player's shoulder. Dark grey when clip is in cooldown. It continuously auto aims at the nearest enemy and auto fires a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
 - **weapon Lv1** `[wip]` Single shot, mild damage, bullet does not auto aim, 1 shot per second, 10 ammo clip.
-- **weapon Lv3** `[wip]` Bullet has Mild auto-aim. 1, 3-bullet burst shot per second, like a rifle. 9 bullet clip
+- **weapon Lv3** `[wip]` Bullet has Mild auto-aim. 3-bullet burst shot per second, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` Main bullet does not auto-aim; main bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim. Short cooldown
 - **weapon Lv10** `[ready]` full-auto with high fire rate,  does not split; strong auto-aim. 0.125 cooldown
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
