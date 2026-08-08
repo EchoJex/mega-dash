@@ -35,8 +35,8 @@ where each one stands.
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[ready]` None
-- **hazard L1** `[draft]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
-- **hazard L2** `[draft]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
+- **hazard L1** `[wip]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
+- **hazard L2** `[wip]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
 - **hazard L3** `[wip]` Same number of turrets; visibly track and aim within nearest 11.25°; further reduced cooldown.
 - **attack L1** `[wip]` Moves back and forth on the stage, occasionally stopping, waiting a moment, then fire a 3 bullet spread directly forward toward the player with mild auto-aim, dealing small damage.
 - **attack L2** `[wip]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
