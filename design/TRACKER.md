@@ -463,7 +463,7 @@ it is ready to be real.
 ## Boss ideas
 
 ## Game pacing
-Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which will now be called a sidearm). 
+Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which will now be called a sidearm). Load out
 ## Play feel
 Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height
 ## Cosmetics
