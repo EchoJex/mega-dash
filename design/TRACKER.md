@@ -44,7 +44,7 @@ where each one stands.
 - **weapon** `[wip]` Defensive; a small gray drone hovers just above and in front of the player's shoulder. Dark grey when clip is in cooldown. It continuously auto aims at the nearest enemy and auto fires a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
 - **weapon Lv1** `[wip]` Single shot, mild damage, bullet does not auto aim, 1 shot per second, 10 ammo clip.
 - **weapon Lv3** `[wip]` Bullet has Mild auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
-- **weapon Lv6** `[wip]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 set of fragments produced, the first shall target
+- **weapon Lv6** `[wip]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 sets of fragments produced, the first shall target
 - **weapon Lv10** `[ready]` full-auto with high fire rate,  does not split; strong auto-aim. 0.125 cooldown
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
