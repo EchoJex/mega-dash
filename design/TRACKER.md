@@ -54,7 +54,7 @@ where each one stands.
 `palette` #E11416 / #141414 / #0A0A12 · `scale` 1.75x player height (average build) · `id` blaze
 `attack` Inferno Wheel · `weapon` Blaze Wheel
 
-- **palette notes** `[wip]`
+- **palette notes** `[todo]`
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **attribute (boss)** `[ready]` Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Hot affect shall last for 5s after the source that applied it has concluded.
   Burn: the player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
