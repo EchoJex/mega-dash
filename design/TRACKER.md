@@ -58,7 +58,6 @@ where each one stands.
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **attribute (boss)** `[wip]`
 - **attribute (weapon)** `[wip]` add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Hot affect shall last for 3s. Does not affect player in any way.
-  Burn: the enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
