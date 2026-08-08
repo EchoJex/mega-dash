@@ -408,7 +408,7 @@ interaction present on every hit.
 - **weapon-applied** `[draft]` player is immune to own Hot; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; mild damage and moderate flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
 
 ## Burn
-- **shared** `[draft]` Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
+- **shared** `[wip]` Character attribute: Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
 - **boss-applied** `[draft]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **weapon-applied** `[draft]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
