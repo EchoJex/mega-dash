@@ -467,4 +467,4 @@ Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which w
 ## Play feel
 Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height
 ## Cosmetics
-Default Sprite is rather small and lean with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon.
+Default Sprite is rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon.
