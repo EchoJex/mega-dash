@@ -404,7 +404,8 @@ interaction present on every hit.
 
 ## Hot
 - **shared** `[wip]` Faint red hue that gets more faint until the attribute subsides. New sources applying hot to a surface override existing hot attribute. Causes
-- **boss-applied** `[wip]` Boss/hazard-sourced: Hot surfaces do damage/flinch/knockback to the player if touched, with damage/flinch/knockback scaling down until Hot fully subsides. Lingers 3s after the attribute is applied.
+- **boss-applied** `[wip]` Hot (boss/hazard-sourced): applies only to environment; area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch, scaling down until Hot subsides. Hot affect shall last for 5s after the source that applied it has concluded.
+  Burn: the player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **weapon-applied** `[wip]` Player-sourced (Blaze Wheel): player is immune to own Hot; can be applied to any surface for level-scaled duration. Applies burn on contact.
 
 ## Burn
