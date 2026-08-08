@@ -414,7 +414,7 @@ interaction present on every hit.
 
 ## Wet
 - **shared** `[wip]` Environmental attribute: The spot wet and slippery
-- **boss-applied** `[todo]`
+- **boss-applied** `[wip]` Does not affect boss
 - **weapon-applied** `[ready]` the surface or enemy has been soaked in water, reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
 ## Poisoned
