@@ -470,4 +470,4 @@ Players primary jump acceleration and max hight feels good, but the double jump 
 Default Sprite is rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
 
 
-Redo the requip wheel to emphasize two active offensive weapons and two active defensive weapons with a press and hold feature While in the requip wheel to enable or disable their use. Inactive but unlocked offensive weapons will be shown as grayed out above the active offensive weapons and inactive defensive weapons will be shown as grayed out below the active defensive weapons slot 
+Redo the requip wheel to emphasize two active offensive weapons and two active defensive weapons  with a press and hold feature While in the requip wheel to enable or disable their use. Inactive but unlocked offensive weapons will be shown as grayed out above the active offensive weapons and inactive defensive weapons will be shown as grayed out below the active defensive weapons slot 
