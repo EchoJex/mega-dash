@@ -63,7 +63,7 @@ where each one stands.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
-- **attack L1** `[ready]` Launches several bouncing fireballs toward the player that climb up walls and leave hot trails.
+- **attack L1** `[wip]` Launches several moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
 - **attack L2** `[ready]` Fewer fireballs, but higher bounce heights and alternating firing angles.
 - **attack L3** `[ready]` Same as Layer 2; additionally the boss jumps up to a small platform just for himself a few seconds before the screen shakes, the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 30 seconds, leaving Hot on the ground. Rocks shall not fall onto the platforms while the lava is up — the other platforms are already Hot, and there always needs to be somewhere safe for the player to stand.
 - **weapon** `[ready]` Throws a small low-apogee bouncing fireball along the ground; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS. Player immune to player created hot and burn. Hot or burn do not stack with itself, but resets their respective durations.
