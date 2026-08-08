@@ -40,7 +40,7 @@ where each one stands.
 - **hazard L3** `[wip]` Same number of turrets; visibly track and aim within nearest 11.25°; further reduced cooldown.
 - **attack L1** `[wip]` Moves back and forth on the stage, occasionally stopping, waiting a moment, then fire a 3 bullet spread directly forward toward the player with mild auto-aim, dealing small damage.
 - **attack L2** `[wip]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
-- **attack L3** `[wip]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5bullets that do not auto aim, either way, dealing small damage.
+- **attack L3** `[wip]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
 - **weapon** `[ready]` Fires a neutral bullet with scalable fire rate; very low base damage.
 - **weapon Lv1** `[ready]` Semi auto, mild damage 0.25s cooldown.
 - **weapon Lv3** `[ready]` Mild auto-aim. 3-bullet burst shot, like a rifle. Short cool down
