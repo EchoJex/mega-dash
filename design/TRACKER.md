@@ -32,7 +32,7 @@ where each one stands.
 `attack` Core Pulse · `weapon` Core Blaster
 
 - **palette notes** `[wip]` Light grey / dark grey
-  0.8x
+  0.8x player height
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[ready]` None
