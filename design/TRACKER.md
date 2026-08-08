@@ -69,7 +69,7 @@ where each one stands.
 - **weapon** `[wip]` Lob a small low-apogee bouncing fireball from a small backpack; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS. Player immune to player created hot and burn. Hot or burn do not stack with itself, but resets their respective durations.
 - **weapon Lv1** `[wip]` No rolling distance; up to 1 on screen; 1s Hot duration.
 - **weapon Lv3** `[wip]` 2s Hot duration on ground; slight roll distance.
-- **weapon Lv6** `[wip]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen; Hot does not stack.
+- **weapon Lv6** `[wip]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective travel shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 wheels on screen; player leaves a trail of Hot attribute for 1s on any surface contacted
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
