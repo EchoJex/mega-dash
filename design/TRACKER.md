@@ -421,7 +421,7 @@ interaction present on every hit.
 ## Poisoned
 - **shared** `[wip]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments
 - **boss-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds and reduce player speed.
-- **weapon-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds and reduce player speed.
+- **weapon-applied** `[wip]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds and reduce player speed.
 
 ## Stun
 - **shared** `[wip]` Functionally the same as constrict/freeze; elementally correct colors flash while the target has this attribute.
