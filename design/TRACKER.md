@@ -45,7 +45,7 @@ where each one stands.
 - **weapon Lv1** `[wip]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per second, 10 ammo clip.
 - **weapon Lv3** `[wip]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
 - **weapon Lv6** `[wip]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 sets of 3 fragments produced, the first set of 3 shall target the nearest enemy and the second set shall target the next nearest enemy;
-- **weapon Lv10** `[wip]` Weapon now full-auto with high fire rate,  does not split; strong auto-aim. 0.125 cooldown
+- **weapon Lv10** `[wip]` Weapon now fires full-auto with high fire rate,  does not split; strong auto-aim. 0.125 cooldown
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Blaze Man — Fire
