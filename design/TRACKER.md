@@ -420,7 +420,7 @@ interaction present on every hit.
 
 ## Poisoned
 - **shared** `[wip]` Faint purple hue. DPS applied much less often (~once every 5 seconds); causes flinch.
-- **boss-applied** `[wip]` Deal small damage to player health over time and reduce player speed.
+- **boss-applied** `[wip]` Deal small damage to player  over time and reduce player speed.
 - **weapon-applied** `[wip]` Venom Spray: damage over time; weakens enemies.
 
 ## Stun
