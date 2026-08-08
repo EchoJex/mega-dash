@@ -419,7 +419,7 @@ interaction present on every hit.
 - **weapon-applied** `[ready]` the surface or enemy has been soaked in water, reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
 ## Poisoned
-- **shared** `[wip]` Faint purple hue. DPS applied much less often (~once every  seconds); causes flinch.
+- **shared** `[wip]` Faint purple hue. DPS applied much less often (~once every 5 seconds); causes flinch.
 - **boss-applied** `[wip]` Toxic Cloud: lingering clouds drain health over time and reduce player speed.
 - **weapon-applied** `[wip]` Venom Spray: damage over time; weakens enemies.
 
