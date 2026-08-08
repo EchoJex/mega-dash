@@ -33,7 +33,7 @@ where each one stands.
 
 - **palette notes** `[ready]` Light grey / dark grey
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
-- **attribute (boss)** `[na]` None
+- **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[na]` None
 - **hazard L1** `[wip]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[wip]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
