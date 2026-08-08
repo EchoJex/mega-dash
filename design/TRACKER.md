@@ -405,7 +405,7 @@ interaction present on every hit.
 ## Hot
 - **shared** `[draft]` Environmental attribute: Faint red hue that gets more faint until the attribute subsides. Causes burn on contact
 - **boss-applied** `[draft]` Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
-- **weapon-applied** `[draft]` player is immune to own Hot; can be applied to any surface for level-scaled duration. Applies burn on contact with an enemy.
+- **weapon-applied** `[wip]` player is immune to own Hot; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
 
 ## Burn
 - **shared** `[draft]` Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
