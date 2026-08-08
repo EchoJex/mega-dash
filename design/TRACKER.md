@@ -404,7 +404,7 @@ interaction present on every hit.
 
 ## Hot
 - **shared** `[wip]` Environmental attribute: Faint red hue that gets more faint until the attribute subsides. Lasts Causes burn on contact
-- **boss-applied** `[wip]` applies only to environment; area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, scaling down until Hot subsides. Hot affect shall last for 5s unless reapplied
+- **boss-applied** `[wip]` area is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, scaling down until Hot subsides. Hot affect shall last for 5s unless reapplied
 - **weapon-applied** `[draft]` player is immune to own Hot; can be applied to any surface for level-scaled duration. Applies burn on contact with an enemy.
 
 ## Burn
