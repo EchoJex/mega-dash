@@ -46,7 +46,7 @@ where each one stands.
 - **weapon Lv1** `[draft]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per second, 10 ammo clip.
 - **weapon Lv3** `[draft]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
 - **weapon Lv6** `[draft]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 sets of 3 fragments produced, the first set of 3 shall target the nearest enemy and the second set shall target the next nearest enemy;
-- **weapon Lv10** `[wip]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split; 30 bullet clip
+- **weapon Lv10** `[draft]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split; 30 bullet clip
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Blaze Man — Fire
