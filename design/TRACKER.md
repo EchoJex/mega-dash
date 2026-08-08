@@ -413,7 +413,7 @@ interaction present on every hit.
 - **weapon-applied** `[draft]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
 ## Wet
-- **shared** `[wip]` Environmental attribute: The spot
+- **shared** `[wip]` Environmental attribute: The spot wet and slippery
 - **boss-applied** `[todo]`
 - **weapon-applied** `[ready]` the surface or enemy has been soaked in water, reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
