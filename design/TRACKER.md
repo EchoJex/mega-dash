@@ -409,8 +409,8 @@ interaction present on every hit.
 
 ## Burn
 - **shared** `[draft]` Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
-- **boss-applied** `[wip]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
-- **weapon-applied** `[wip]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
+- **boss-applied** `[draft]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
+- **weapon-applied** `[draft]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
 ## Wet
 - **shared** `[wip]` The specified object has gotten soaked.
