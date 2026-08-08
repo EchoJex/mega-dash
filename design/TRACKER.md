@@ -470,4 +470,4 @@ Players primary jump acceleration and max hight feels good, but the double jump 
 Default Sprite is rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
 
 
-Ui needs to accommodate two active offensive weapons and two active defensive weapons. Instead of the requip wheel. All unlocked weapons will be
+Ui needs to accommodate two active offensive weapons and two active defensive weapons. Instead of the requip wheel. All unlocked weapons will be shown grayed out with unlocked but not active weapons above the active weapon slots and all
