@@ -419,7 +419,7 @@ interaction present on every hit.
 - **weapon-applied** `[ready]` the surface or enemy has been soaked in water, reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
 ## Poisoned
-- **shared** `[wip]` TheFaint purple hue.
+- **shared** `[wip]` The object has come in contact withFaint purple hue.
 - **boss-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds and reduce player speed.
 - **weapon-applied** `[wip]` Venom Spray: damage over time; weakens enemies.
 
