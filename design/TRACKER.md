@@ -31,7 +31,7 @@ where each one stands.
 `palette` #687380 / #2E3338 / #0A0A12 · `scale` 1.7x player height (average build) · `id` core
 `attack` Core Pulse · `weapon` Core Blaster
 
-- **palette notes** `[wip]` Light grey / dark grey
+- **palette notes** `[draft]` Light grey / dark grey
   0.8x player height
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **attribute (boss)** `[ready]` None
