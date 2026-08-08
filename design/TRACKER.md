@@ -70,7 +70,7 @@ where each one stands.
 - **weapon Lv1** `[wip]` No rolling distance; up to 1 on screen; 1s Hot duration.
 - **weapon Lv3** `[wip]` 2s Hot duration on ground; slight roll distance.
 - **weapon Lv6** `[wip]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
-- **weapon Lv10** `[wip]` Combined effective tool distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 wheels on screen; player leaves a trail of Hot attribute for 1s on any surface contacted
+- **weapon Lv10** `[wip]` Combined effective roll distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 wheels on screen; player leaves a trail of Hot attribute for 1s on any surface contacted
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Tempest Man — Water
