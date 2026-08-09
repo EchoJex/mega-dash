@@ -72,8 +72,11 @@ export const FEEL = {
   // The 80% is a HEIGHT figure, not a velocity one. Peak height goes as v^2/2g,
   // so the impulse is jumpVelocity * sqrt(0.8) — scaling the velocity itself by
   // 0.8 would land at 64% height, noticeably shorter than asked for.
-  doubleJumpPauseFrames: 6,   // the hang before the second jump fires
-  doubleJumpHeightMult: 0.8,  // fraction of the PRIMARY jump's peak height
+  doubleJumpPauseFrames: 6,    // the hang before the second jump fires
+  // Raised from 0.80 after the first playtest: the second jump read as too
+  // short next to the first. 0.88 is about 42px of peak against the primary
+  // jump's 47.5 — still clearly the smaller of the two, which is the point.
+  doubleJumpHeightMult: 0.88,  // fraction of the PRIMARY jump's peak height
   maxAirActions: 1,           // double jumps available per jump
 
   // ── Slide ────────────────────────────────────────────────────────────

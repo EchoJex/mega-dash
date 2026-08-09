@@ -253,6 +253,26 @@ test('benching or disabling the live weapon falls back to the sidearm', () => {
   assert.equal(Loadout.normaliseActive(lo, a), SIDEARM_ID, 'a benched weapon cannot stay live');
 });
 
+/**
+ * Being switched off belongs to the SLOT, not to the weapon. A weapon that
+ * comes back from the bench hours later must not still be off from a decision
+ * the player has long forgotten making.
+ */
+test('leaving a slot clears the switched-off flag', () => {
+  const lo = Loadout.makeLoadout();
+  const [a, b] = specialsOfClass(OFFENSIVE);
+  Loadout.autoEquip(lo, a);
+  Loadout.toggleEnabled(lo, a);
+  assert.equal(Loadout.isEnabled(lo, a), false);
+
+  Loadout.equip(lo, b, 0);                     // b displaces a
+  assert.equal(Loadout.isEnabled(lo, a), true, 'displaced weapons come back on');
+
+  Loadout.toggleEnabled(lo, b);
+  Loadout.unequip(lo, b);
+  assert.equal(Loadout.isEnabled(lo, b), true, 'unequipping clears it too');
+});
+
 test('the bench is everything unlocked in a class that is not slotted', () => {
   const lo = Loadout.makeLoadout();
   const [a, b, c] = specialsOfClass(OFFENSIVE);

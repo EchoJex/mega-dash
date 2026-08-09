@@ -52,7 +52,15 @@ export const equippedIds = (lo) =>
 
 export const isEquipped = (lo, id) => equippedIds(lo).includes(id);
 
-/** Switched-off weapons keep their slot but do nothing. The sidearm cannot be. */
+/**
+ * Switched-off weapons keep their slot but do nothing. The sidearm cannot be.
+ *
+ * BEING SWITCHED OFF IS A PROPERTY OF OCCUPYING A SLOT, so it is cleared the
+ * moment a weapon leaves one. Otherwise a weapon benched while off would come
+ * back off the next time it was slotted, hours later, with the player having
+ * no memory of switching it off and nothing on screen explaining why their new
+ * pick was doing nothing.
+ */
 export const isEnabled = (lo, id) => id === SIDEARM_ID || !lo.disabled.has(id);
 
 export function toggleEnabled(lo, id) {
@@ -81,6 +89,7 @@ export function equip(lo, id, index) {
   const displaced = slots[index];
   if (already >= 0) slots[already] = displaced;   // straight swap
   slots[index] = id;
+  if (already < 0 && displaced) lo.disabled.delete(displaced);
   return already >= 0 ? null : displaced;
 }
 
@@ -103,7 +112,7 @@ export function unequip(lo, id) {
   for (const c of CLASSES) {
     const slots = slotsOf(lo, c);
     const i = slots.indexOf(id);
-    if (i >= 0) { slots[i] = null; return true; }
+    if (i >= 0) { slots[i] = null; lo.disabled.delete(id); return true; }
   }
   return false;
 }

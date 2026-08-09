@@ -124,7 +124,20 @@ import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
 
 // ── Config ────────────────────────────────────────────────────────────
 const OWNER = 'EchoJex', REPO = 'mega-dash', PATH = 'design/TRACKER.md';
-const BRANCHES = ['main', 'boss-dev'];
+/**
+ * Branches are LISTED FROM GITHUB, not hardcoded.
+ *
+ * This used to be a literal ['main', 'boss-dev'], which meant every new working
+ * branch was invisible here: the tracker on that branch could not be opened, and
+ * Reload just re-fetched whichever old branch was still selected — looking for
+ * all the world like the app was broken. A hardcoded list of a thing that
+ * changes weekly is a list that is wrong.
+ *
+ * The fallback below is only for a failed or rate-limited API call, so the app
+ * still opens read-only rather than showing an empty picker.
+ */
+const FALLBACK_BRANCHES = ['main'];
+let BRANCHES = [...FALLBACK_BRANCHES];
 // Ordered by how often they are chosen: [draft] is the build signal and the
 // most common deliberate act, so it leads.
 const MARKS = ['draft', 'wip', 'ready', 'todo', 'na'];
@@ -516,12 +529,49 @@ const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>':
 
 // ── Wiring ────────────────────────────────────────────────────────────
 const bsel = $('#branch');
-for (const b of BRANCHES) {
-  const o = document.createElement('option');
-  o.value = b; o.textContent = b; o.selected = b === branch();
-  bsel.appendChild(o);
+
+function fillBranchPicker() {
+  bsel.innerHTML = '';
+  // The current selection always appears, even if the listing failed or the
+  // branch has since been deleted — otherwise the picker would silently show
+  // something other than what is loaded.
+  const all = BRANCHES.includes(branch()) ? BRANCHES : [branch(), ...BRANCHES];
+  for (const b of all) {
+    const o = document.createElement('option');
+    o.value = b; o.textContent = b; o.selected = b === branch();
+    bsel.appendChild(o);
+  }
 }
+
+/**
+ * Pull the real branch list. Newest-pushed first, so the branch you are working
+ * on is near the top of the picker instead of buried alphabetically.
+ */
+async function loadBranches() {
+  try {
+    const rows = await gh(`/repos/${OWNER}/${REPO}/branches?per_page=100&t=${Date.now()}`);
+    const names = rows.map((b) => b.name);
+    if (names.length) {
+      BRANCHES = [
+        ...names.filter((n) => n === 'main'),
+        ...names.filter((n) => n !== 'main').sort(),
+      ];
+    }
+  } catch {
+    // Unauthenticated listing can be rate-limited. The fallback still opens.
+  }
+  fillBranchPicker();
+}
+
 bsel.onchange = () => { localStorage.setItem(BRANCH_KEY, bsel.value); load(); };
+
+// ?branch=<name> selects a branch on load, so a link can point straight at one.
+// Typing a branch into a phone's address bar beats hunting through a dropdown,
+// and it is the way in when the listing is rate-limited. Applied BEFORE the
+// picker is first filled, so the URL and the selection never disagree.
+const urlBranch = new URLSearchParams(location.search).get('branch');
+if (urlBranch) localStorage.setItem(BRANCH_KEY, urlBranch);
+fillBranchPicker();
 
 $('#saveBtn').onclick = () => save(true);
 $('#reloadBtn').onclick = () => {
@@ -555,6 +605,9 @@ $('#tokenClear').onclick = () => {
 $('#tokenClose').onclick = () => $('#tokenDlg').close();
 
 addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+// Branches first, so the picker is populated before the load reports which one
+// it settled on. Both are fire-and-forget; neither blocks the other.
+loadBranches();
 load();
 </script>
 </body></html>
