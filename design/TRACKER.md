@@ -146,12 +146,12 @@ where each one stands.
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **attribute (boss)** `[wip]` Slippery — blizzard freezes all surfaces, making them slippery.
 - **attribute (weapon)** `[wip]` Freeze (shield break on minion contact; icicles freeze). Functionally same as stun/constrict; elementally correct colors flash.
-- **hazard L1** `[draft]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
-- **hazard L2** `[draft]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
-- **hazard L3** `[draft]` A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it.
+- **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
+- **hazard L2** `[wip]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
+- **hazard L3** `[wip]` A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it.
 - **attack L1** `[ready]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
-- **attack L2** `[draft]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
-- **attack L3** `[draft]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
+- **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
+- **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon** `[ready]` Forms a large shield of ice in front of the player while the attack button is pressed. Short cooldown if released; long cooldown if destroyed by damage.
 - **weapon Lv1** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Releasing attack before the shield breaks releases 3 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
