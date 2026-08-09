@@ -170,7 +170,7 @@ where each one stands.
 - **hazard L1** `[wip]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
 - **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
 - **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
-- **attack L1** `[ready]` Teleports close and performs rapid punches + uppercut launcher.
+- **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
 - **attack L2** `[draft]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
 - **attack L3** `[draft]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
 - **weapon** `[ready]` Close-range powerful punch with knockback and damage reduction during attack animations. Tap attack for a quick low-damage mini-dash combo-starter jab; long-press attack 0.4s for a combo finisher.
