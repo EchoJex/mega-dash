@@ -375,7 +375,7 @@ where each one stands.
 `palette` #B2BABD / #4B5563 / #0A0A12 · `scale` 1.9x player height (bulky build) · `id` alloy
 `attack` Metal Barrage · `weapon` Alloy Blade
 
-- **arena** `[draft]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
+- **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[draft]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
