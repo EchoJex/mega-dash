@@ -252,9 +252,9 @@ where each one stands.
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
-- **hazard L2** `[draft]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
-- **hazard L3** `[draft]` The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest.
+- **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
+- **hazard L2** `[wip]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
+- **hazard L3** `[wip]` The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest.
 - **attack L1** `[ready]` Levitates the player and drops them from height while firing homing psychic orbs.
 - **attack L2** `[draft]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
 - **attack L3** `[draft]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
