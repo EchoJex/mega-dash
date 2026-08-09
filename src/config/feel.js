@@ -133,6 +133,10 @@ export const FEEL = {
   stunPlayerStep: 0.85,     // 15% off the remaining speed, per stack
   stunEnemyStep: 0.70,      // 30% off the remaining speed, per stack
 
+  // Wading: a jump launched from knee-deep water leaves at half strength.
+  // Only the launch — a midair jump out of it is unaffected.
+  wadeJumpMult: 0.5,
+
   // ── Camera ───────────────────────────────────────────────────────────
   // Follows once the player passes this fraction of screen width, and NEVER
   // scrolls back left — walking backwards is allowed but does not rewind the

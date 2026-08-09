@@ -242,6 +242,50 @@ export function drawPlaceholder(g, actor) {
 }
 
 /**
+ * BOSS RIGS — hardware bolted onto a boss's placeholder rectangle.
+ *
+ * This is NOT a silhouette and it is not a step toward one. Bosses stay honest
+ * rectangles at their true collision footprint until the owner draws them; a rig
+ * is a piece of hardware whose ORIENTATION is game state the player has to read.
+ * Tempest Man's jetpack is the only one so far, and it exists because his
+ * exhaust plume pushes you and eats your shots — a force with no visible source
+ * would just be the room shoving you at random.
+ *
+ * The nozzles point exactly where the plume points (`boss.jet`, set by his
+ * attack loop), so the picture and the physics cannot disagree. When real art
+ * lands via MANIFEST this goes away with it.
+ */
+export function drawBossRig(g, boss, screenX) {
+  const jet = boss.jet;
+  if (!jet) return;
+  const cx = screenX + boss.w / 2;
+  const cy = boss.y + boss.h * 0.5;
+
+  // The pack sits on his back — the side away from the plume.
+  const px = cx - jet.dx * (boss.w * 0.35);
+  const py = cy - jet.dy * (boss.h * 0.3);
+  g.fillStyle(0x6B7686, 1);
+  g.fillRect(Math.round(px) - 4, Math.round(py) - 5, 8, 10);
+  g.fillStyle(0x39404E, 1);
+  g.fillRect(Math.round(px) - 3, Math.round(py) - 3, 6, 2);
+
+  // Two nozzles, offset perpendicular to the thrust so they read as a pair
+  // whichever way the pack has swung.
+  const nx = -jet.dy, ny = jet.dx;
+  for (const side of [-3, 3]) {
+    const bx = px + nx * side, by = py + ny * side;
+    g.fillStyle(0x2A323C, 1);
+    g.fillRect(Math.round(bx + jet.dx * 5) - 1, Math.round(by + jet.dy * 5) - 1, 3, 3);
+    g.fillStyle(0x5CADD5, 0.5);
+    for (let d = 7; d < jet.len; d += 5) {
+      const w = 3 - Math.floor(d / (jet.len / 2));
+      g.fillRect(Math.round(bx + jet.dx * d), Math.round(by + jet.dy * d),
+        Math.max(1, w), Math.max(1, w));
+    }
+  }
+}
+
+/**
  * Vertical half-extent of each projectile shape, as a multiple of its radius.
  *
  * WHY THIS EXISTS

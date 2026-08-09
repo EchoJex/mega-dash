@@ -52,19 +52,19 @@ where each one stands.
 `palette` #687380 / #2E3338 / #0A0A12 · `scale` 0.8x player height (prototype chassis) · `id` core
 `attack` Core Pulse · `weapon` Nullfire Drone
 
-- **palette notes** `[draft]` Light grey / dark grey
+- **palette notes** `[ready]` Light grey / dark grey
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
-- **hazard L1** `[draft]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
-- **hazard L2** `[draft]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
-- **hazard L3** `[draft]` Same number of turrets; visibly track and aim within nearest 11.25°; further reduced cooldown.
-- **attack L1** `[draft]` Moves back and forth on the stage, occasionally stopping, waiting a moment, then fire a 3 bullet spread directly forward toward the player with mild auto-aim, dealing small damage.
-- **attack L2** `[draft]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
-- **attack L3** `[draft]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
-- **weapon** `[draft]` Defensive; a small gray drone hovers just above and in front of the player's shoulder. Very Slowly refills the current clip when no enemies present. When clip is fully depleted indicate this emergency reload by making the drone Dark grey and cease firing until clip colored completes. It continuously auto aims at the nearest enemy and auto fires, only if an enemy is on screen, a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
-- **weapon Lv1** `[draft]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per second, 10 ammo clip.
-- **weapon Lv3** `[draft]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
-- **weapon Lv6** `[draft]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 sets of 3 fragments produced, the first set of 3 shall target the nearest enemy and the second set shall target the next nearest enemy;
-- **weapon Lv10** `[draft]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split; 30 bullet clip
+- **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
+- **hazard L2** `[ready]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
+- **hazard L3** `[ready]` Same number of turrets; visibly track and aim within nearest 11.25°; further reduced cooldown.
+- **attack L1** `[ready]` Moves back and forth on the stage, occasionally stopping, waiting a moment, then fire a 3 bullet spread directly forward toward the player with mild auto-aim, dealing small damage.
+- **attack L2** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
+- **attack L3** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
+- **weapon** `[ready]` Defensive; a small gray drone hovers just above and in front of the player's shoulder. Very Slowly refills the current clip when no enemies present. When clip is fully depleted indicate this emergency reload by making the drone Dark grey and cease firing until clip colored completes. It continuously auto aims at the nearest enemy and auto fires, only if an enemy is on screen, a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
+- **weapon Lv1** `[ready]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per second, 10 ammo clip.
+- **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
+- **weapon Lv6** `[ready]` 2 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. From the 2 sets of 3 fragments produced, the first set of 3 shall target the nearest enemy and the second set shall target the next nearest enemy;
+- **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split; 30 bullet clip
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Blaze Man — Fire
@@ -77,14 +77,14 @@ where each one stands.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
-- **attack L1** `[draft]` Launches several moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
-- **attack L2** `[draft]` Fewer fireballs, but much higher bounce heights and alternating firing angles.
-- **attack L3** `[draft]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
-- **weapon** `[draft]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
-- **weapon Lv1** `[draft]` No rolling distance; up to 1 on screen; 1s Hot duration.
-- **weapon Lv3** `[draft]` 2s Hot duration on ground; moderate roll distance with rapid deceleration while on the ground
-- **weapon Lv6** `[draft]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
-- **weapon Lv10** `[draft]` Combined effective roll distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 fireballs on screen; fireballs rapidly accelerate while on the ground
+- **attack L1** `[ready]` Launches several moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
+- **attack L2** `[ready]` Fewer fireballs, but much higher bounce heights and alternating firing angles.
+- **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
+- **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
+- **weapon Lv1** `[ready]` No rolling distance; up to 1 on screen; 1s Hot duration.
+- **weapon Lv3** `[ready]` 2s Hot duration on ground; moderate roll distance with rapid deceleration while on the ground
+- **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
+- **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 fireballs on screen; fireballs rapidly accelerate while on the ground
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Tempest Man — Water
@@ -92,41 +92,41 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[draft]` Blue yellow guy with a grey hydro jet pack
-- **arena** `[draft]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
-- **hazard L1** `[draft]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
+- **palette notes** `[ready]` Blue yellow guy with a grey hydro jet pack
+- **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
+- **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have half the jump strength; midair jumps are only affected by the rain forces. Occasional large brown barrels float from the steel pipes which break open and despawn on contact with the spike ball. Player can stand on them or shoot them to destroy them.
-- **hazard L2** `[draft]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background and flagged telegraph the rain direction change.
+- **hazard L2** `[ready]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background and flagged telegraph the rain direction change.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have half the jump strength; midair jumps are only affected by the rain forces. Occasional large brown barrels or spike balls float from the steel pipes which break open and despawn on contact with the central drain spike ball. Player can stand on barrels or shoot the barrels to destroy them. Spike balls despawn on contact with the central spike ball
-- **hazard L3** `[draft]` Rain changes direction with limited die down between direction changes, with a random duration of at least 3s. Lightning bolts in the background that cause the screen to flash. Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have half the jump strength; midair jumps are only affected by the rain forces. Semi frequent spike balls float from the steel pipes which despawn on contact with the central spike ball
-- **attack L1** `[draft]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **attack L2** `[draft]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **attack L3** `[draft]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **weapon** `[draft]` Defensive; small, grey two-nozzle jetpack that has a blue layer on top that indicates a tank fill level. Rapidly self refilling water supply when not producing weapon affects. Tank capacity and refill rate level scalable
-- **weapon Lv1** `[draft]` Burst of mild damage large knockback water when landing on the ground
-- **weapon Lv3** `[draft]` Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
-- **weapon Lv6** `[draft]` Add the ability to hover briefly at the apex of any jump which shoots two water jets directly downward with very low but very rapid damage and knockback
-- **weapon Lv10** `[draft]` All previous effects plus a large high knocked tidal wave travels in both horizontal directions when landing on the ground. Size of tidal wave is scaled with downward velocity on impact.
-- **silhouette** `[draft]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
+- **hazard L3** `[ready]` Rain changes direction with limited die down between direction changes, with a random duration of at least 3s. Lightning bolts in the background that cause the screen to flash. Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have half the jump strength; midair jumps are only affected by the rain forces. Semi frequent spike balls float from the steel pipes which despawn on contact with the central spike ball
+- **attack L1** `[ready]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
+- **attack L2** `[ready]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
+- **attack L3** `[ready]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
+- **weapon** `[ready]` Defensive; small, grey two-nozzle jetpack that has a blue layer on top that indicates a tank fill level. Rapidly self refilling water supply when not producing weapon affects. Tank capacity and refill rate level scalable
+- **weapon Lv1** `[ready]` Burst of mild damage large knockback water when landing on the ground
+- **weapon Lv3** `[ready]` Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
+- **weapon Lv6** `[ready]` Add the ability to hover briefly at the apex of any jump which shoots two water jets directly downward with very low but very rapid damage and knockback
+- **weapon Lv10** `[ready]` All previous effects plus a large high knocked tidal wave travels in both horizontal directions when landing on the ground. Size of tidal wave is scaled with downward velocity on impact.
+- **silhouette** `[ready]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
 
 ## Volt Man — Electric
 
 `palette` #F5D328 / #5B21B6 / #0A0A12 · `scale` 1.65x player height (average build) · `id` volt
 `attack` Chain Spark · `weapon` Volt Spark
 
-- **palette notes** `[draft]` Yellow primary; deep purple secondary.
-- **arena** `[draft]` A large plasma lamp in the background
-- **hazard L1** `[draft]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
-- **hazard L2** `[draft]` Same sweep, faster, plus overhead conductors that drop a vertical a St Elmo's for looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
-- **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
-- **attack L1** `[draft]` Fires up to 3 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
-- **attack L2** `[draft]` Bolts increase to 7 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap.
-- **attack L3** `[draft]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
-- **weapon** `[draft]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
-- **weapon Lv1** `[draft]` 0 chains; 1s stun on first enemy contact.
-- **weapon Lv3** `[draft]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv6** `[draft]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv10** `[draft]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **palette notes** `[ready]` Yellow primary; deep purple secondary.
+- **arena** `[ready]` A large plasma lamp in the background
+- **hazard L1** `[ready]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
+- **hazard L2** `[ready]` Same sweep, faster, plus overhead conductors that drop a vertical a St Elmo's for looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
+- **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
+- **attack L1** `[ready]` Fires up to 3 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
+- **attack L2** `[ready]` Bolts increase to 7 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap.
+- **attack L3** `[ready]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
+- **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
+- **weapon Lv1** `[ready]` 0 chains; 1s stun on first enemy contact.
+- **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Thorn Man — Grass
@@ -160,9 +160,9 @@ where each one stands.
 - **attack L1** `[wip]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
-- **weapon** `[draft]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
-- **weapon Lv1** `[draft]` Shield blocks the equivalent of 1 minion attacks; breaks and freezes the opponent if contacting a minion instead.
-- **weapon Lv3** `[draft]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
+- **weapon** `[ready]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
+- **weapon Lv1** `[ready]` Shield blocks the equivalent of 1 minion attacks; breaks and freezes the opponent if contacting a minion instead.
+- **weapon Lv3** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv6** `[wip]` Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
 - **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
@@ -172,18 +172,18 @@ where each one stands.
 `palette` #EA6A34 / #7C2D12 / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` strike
 `attack` Rush Combo · `weapon` Strike Gauntlet
 
-- **arena** `[draft]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
-- **hazard L1** `[draft]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
+- **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
+- **hazard L1** `[ready]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
 - **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
 - **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
 - **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
 - **attack L2** `[wip]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
 - **attack L3** `[wip]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
-- **weapon** `[draft]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
-- **weapon Lv1** `[draft]` 2 jabs, or 1 jab and one combo finisher.
-- **weapon Lv3** `[draft]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
-- **weapon Lv6** `[draft]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
-- **weapon Lv10** `[draft]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
+- **weapon** `[ready]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
+- **weapon Lv1** `[ready]` 2 jabs, or 1 jab and one combo finisher.
+- **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
+- **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
+- **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Venom Man — Poison
@@ -218,9 +218,9 @@ where each one stands.
 - **attack L1** `[wip]` Causes screen-wide tremors and rising rock pillars.
 - **attack L2** `[wip]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
 - **attack L3** `[wip]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
-- **weapon** `[draft]` Offensive; Large rock shaped hammer. Slow swing on tap high damage high knockback, overhead Ground-pound that creates shockwaves and stuns nearby enemies on long press (0.4s). Per-level scaling: shockwave size + stun duration.
-- **weapon Lv1** `[draft]` Ground-pound on landing from a jump; small shockwave both directions, brief Stun on contact.
-- **weapon Lv3** `[draft]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
+- **weapon** `[ready]` Offensive; Large rock shaped hammer. Slow swing on tap high damage high knockback, overhead Ground-pound that creates shockwaves and stuns nearby enemies on long press (0.4s). Per-level scaling: shockwave size + stun duration.
+- **weapon Lv1** `[ready]` Ground-pound on landing from a jump; small shockwave both directions, brief Stun on contact.
+- **weapon Lv3** `[ready]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
 - **weapon Lv6** `[wip]` Lv5+: can break certain floors or reveal hidden paths.
 - **weapon Lv10** `[wip]` Max: super stomp that causes falling debris from the ceiling.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
@@ -275,10 +275,10 @@ where each one stands.
 - **attack L1** `[wip]` Releases bug drones that home in and explode on contact.
 - **attack L2** `[wip]` Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass.
 - **attack L3** `[wip]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
-- **weapon** `[draft]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
-- **weapon Lv1** `[draft]` Two bug allies, short duration; they attack the nearest minion and expire together.
-- **weapon Lv3** `[draft]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
-- **weapon Lv6** `[draft]` Lv6: every other bug will prioritize blocking projectiles.
+- **weapon** `[ready]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
+- **weapon Lv1** `[ready]` Two bug allies, short duration; they attack the nearest minion and expire together.
+- **weapon Lv3** `[ready]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
+- **weapon Lv6** `[ready]` Lv6: every other bug will prioritize blocking projectiles.
 - **weapon Lv10** `[wip]` Lv9: bugs form a temporary shield or kamikaze explosion wave.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
@@ -386,14 +386,14 @@ Terrain form / character form pairs, shared across bosses and weapons.
 interaction present on every hit.
 
 ## Hot
-- **shared** `[draft]` Environmental attribute: Faint red hue that gets more faint until the attribute subsides. Causes burn on contact
-- **boss-applied** `[draft]` Does not affect boss; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
-- **weapon-applied** `[draft]` Does not affect player; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; mild damage and moderate flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
+- **shared** `[ready]` Environmental attribute: Faint red hue that gets more faint until the attribute subsides. Causes burn on contact
+- **boss-applied** `[ready]` Does not affect boss; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; moderate damage/flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
+- **weapon-applied** `[ready]` Does not affect player; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; mild damage and moderate flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
 
 ## Burn
-- **shared** `[draft]` Character attribute: Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
-- **boss-applied** `[draft]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
-- **weapon-applied** `[draft]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
+- **shared** `[ready]` Character attribute: Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
+- **boss-applied** `[ready]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
+- **weapon-applied** `[ready]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
 ## Wet
 - **shared** `[wip]` Environmental attribute: The spot wet and slippery
@@ -406,9 +406,9 @@ interaction present on every hit.
 - **weapon-applied** `[wip]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds and reduce enemy movement speed.
 
 ## Stun
-- **shared** `[draft]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
-- **boss-applied** `[draft]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
-- **weapon-applied** `[draft]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
+- **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
+- **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
+- **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
 ## Constrict
 - **shared** `[wip]` Functionally the same as stun/freeze; elementally correct colors flash while the target has this attribute.

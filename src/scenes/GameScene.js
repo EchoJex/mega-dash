@@ -33,7 +33,7 @@ import { sfx } from '../systems/sfx.js';
 import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
-  ActorLayer, drawProjectile, drawPickup, projectileHalfHeight,
+  ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
 } from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
@@ -353,6 +353,11 @@ export default class GameScene extends Phaser.Scene {
         // Stun is a stacking slow on movement AND attack speed, so it is
         // applied here and again to the weapon cooldown below.
         speedMult: Attr.speedMult(this.status),
+        // "Jumps while in contact with knee-deep water have half the jump
+        // strength; midair jumps are only affected by the rain forces." Wading
+        // is the cost of standing in Tempest Man's floor water, and it does
+        // not follow you into the air.
+        jumpMult: this.inWadingWater() ? FEEL.wadeJumpMult : 1,
       }, GROUND_Y);
       if (!this.arena) {
         this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
@@ -402,7 +407,13 @@ export default class GameScene extends Phaser.Scene {
       // Phasing platforms are real collision only while they are ON. Republishing
       // the list each frame is what makes a platform vanish from under you the
       // instant it phases out, which is the whole point of the mechanic.
-      this.world.platforms = this.arena.platforms.filter((pl) => pl.on);
+      // Solid props (Tempest Man's floating barrels) join the same list, so
+      // standing on one uses the ordinary one-way platform path rather than a
+      // second copy of it.
+      this.world.platforms = [
+        ...this.arena.platforms.filter((pl) => pl.on),
+        ...this.arena.hazards.filter((h) => h.solid),
+      ];
       this.stepArenaHazards(box);
       // Sealed room: no streaming, no camera, walls hold you in. The beam is
       // exempt — it deliberately travels above the ceiling.
@@ -637,6 +648,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Is the player standing in water deep enough to wade in?
+   *
+   * Grounded only, deliberately: the tracker is explicit that "midair jumps are
+   * only affected by the rain forces", so the question is "are my boots in it",
+   * not "am I overlapping it". Lava is excluded — that is a hazard to be
+   * escaped, not terrain to slog through.
+   */
+  inWadingWater() {
+    const q = this.arena?.liquid;
+    if (!q || q.kind !== 'water' || q.h <= 0.5) return false;
+    const p = this.player;
+    return p.onGround && p.y + 24 > this.arena.floorY - q.h;
+  }
+
+  /**
    * Collision box for a shot. Player shots get a slightly GENEROUS box so hits
    * connect when they look close; enemy shots get a stingy one, inverted for the
    * same reason. Both pads are declared in feel.js.
@@ -700,44 +726,94 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Arena hazard entities — currently Blaze Man's falling rocks.
+   * ARENA HAZARD ENTITIES — the physical objects a hazard loop puts in a room.
    *
-   * They crumble on the floor OR on a platform, leaving Hot where they land, and
-   * deal a real hit plus Burn if they catch you on the way down.
+   * One list and one contract, because four bosses now need loose objects and
+   * writing a bespoke loop per boss is how they end up disagreeing about what a
+   * hit is worth. The hazard loop in data/bossFights.js owns where each one
+   * goes and how it moves; this owns what happens when the player meets it.
+   *
+   * Fields, all optional except x/y/w/h and kind:
+   *
+   *   damage         a real hit on contact — flinch, knockback, i-frames
+   *   burn / stun    an attribute applied with that hit, in frames
+   *   crumbles       dies on the first surface it touches, leaving `leaves`
+   *   solid          the player can stand on it (it joins world.platforms)
+   *   hp             shootable; player fire chips it and destroys it at zero
+   *   popsOnBall     dies on contact with the drain's spike ball
+   *   ttl            despawns after this many frames whatever else happens
+   *
+   * Motion is NOT here. A rock falls, a barrel floats and a training bag swings
+   * on a rail — those are the hazards' designs, not a shared rule.
    */
   stepArenaHazards(box) {
     const a = this.arena;
+    const ball = a.drain?.ball;
+
     for (let i = a.hazards.length - 1; i >= 0; i--) {
       const h = a.hazards[i];
-      h.y += h.vy;
+      if (h.ttl !== undefined && --h.ttl <= 0) { a.hazards.splice(i, 1); continue; }
 
-      const hitPlayer = this.run.invuln === 0
-        && box.x < h.x + h.w && box.x + box.w > h.x
+      const touching = box.x < h.x + h.w && box.x + box.w > h.x
         && box.y < h.y + h.h && box.y + box.h > h.y;
-      if (hitPlayer) {
-        this.hurt(h.x + h.w / 2, FEEL.hazardDamage);
-        Attr.applyStatus(this.status, 'burn', FEEL.burnFrames);
+      // A solid prop is footing, not a hit: you are meant to stand on a barrel.
+      if (touching && h.damage && this.run.invuln === 0) {
+        this.hurt(h.x + h.w / 2, h.damage);
+        if (h.burn) Attr.applyStatus(this.status, 'burn', h.burn);
+        if (h.stun) {
+          Attr.applyStatus(this.status, 'stun', h.stun, { step: FEEL.stunPlayerStep });
+        }
+        if (h.diesOnHit) { a.hazards.splice(i, 1); continue; }
+      }
+
+      // "Barrels break open and despawn on contact with the spike ball" — and
+      // at layer 2 the floating spike balls do the same, which is the only
+      // thing keeping the room from filling up with them.
+      if (h.popsOnBall && ball
+        && h.x < ball.x + ball.r && h.x + h.w > ball.x - ball.r
+        && h.y < ball.y + ball.r && h.y + h.h > ball.y - ball.r) {
         a.hazards.splice(i, 1);
+        sfx('enemyDie', { pitch: 0.7 });
         continue;
       }
 
-      // Crumble on the first surface it meets.
-      let landed = h.y + h.h >= a.floorY ? a.floorY : null;
-      for (const pl of a.platforms) {
-        if (!pl.on) continue;
-        if (h.x + h.w > pl.x && h.x < pl.x + pl.w
-          && h.y + h.h >= pl.y && h.y + h.h <= pl.y + pl.h + h.vy + 1) {
-          landed = pl.y;
-          pl.hot = FEEL.hotLingerFrames;
-          break;
+      if (h.crumbles) {
+        // Crumble on the first surface it meets.
+        let landed = h.y + h.h >= a.floorY ? a.floorY : null;
+        for (const pl of a.platforms) {
+          if (!pl.on) continue;
+          if (h.x + h.w > pl.x && h.x < pl.x + pl.w
+            && h.y + h.h >= pl.y && h.y + h.h <= pl.y + pl.h + (h.vy || 0) + 1) {
+            landed = pl.y;
+            if (h.leaves === 'hot') pl.hot = FEEL.hotLingerFrames;
+            break;
+          }
+        }
+        if (landed !== null) {
+          // A rock leaves a rock-wide scorch — see surfacePatch for why the
+          // footprint is derived rather than padded.
+          if (h.leaves) {
+            Attr.addPatch(a.patches,
+              Attr.surfacePatch(h.leaves, h.x, h.w, landed, FEEL.hotLingerFrames));
+          }
+          a.hazards.splice(i, 1);
         }
       }
-      if (landed !== null) {
-        // A rock leaves a rock-wide scorch — see surfacePatch for why the
-        // footprint is derived rather than padded.
-        Attr.addPatch(a.patches,
-          Attr.surfacePatch('hot', h.x, h.w, landed, FEEL.hotLingerFrames));
-        a.hazards.splice(i, 1);
+    }
+
+    // Shootable props. Kept out of the bullet loop because a barrel is scenery
+    // rather than an enemy: destroying one scores nothing and drops nothing,
+    // and routing it through hitEnemy would give it a combo and an EXP roll.
+    for (const b of this.bullets) {
+      if (b.enemy || b.life <= 0) continue;
+      const bb = this.bulletBox(b);
+      for (let i = a.hazards.length - 1; i >= 0; i--) {
+        const h = a.hazards[i];
+        if (h.hp === undefined) continue;
+        if (!Phys.overlaps(bb, h)) continue;
+        b.life = -1;
+        if ((h.hp -= b.damage) <= 0) { a.hazards.splice(i, 1); sfx('enemyDie', { pitch: 0.8 }); }
+        break;
       }
     }
   }
@@ -848,6 +924,42 @@ export default class GameScene extends Phaser.Scene {
         if (b.x + b.radius >= this.arena.x1) { b.x = this.arena.x1 - b.radius; b.vx = 0; b.vy = -1.6; b.gravity = 0.02; }
       }
 
+      // ZIGZAG. Volt Man's bolts do not travel in a line — they kink by a fixed
+      // angle on an alternating beat, which is what makes their path readable
+      // as a lightning bolt rather than as a slow projectile.
+      if (b.zigzag && --b.zigT <= 0) {
+        b.zigT = b.zigzag;
+        b.zigSign = -(b.zigSign || 1);
+        const sp = Math.hypot(b.vx, b.vy) || 1;
+        const th = Math.atan2(b.vy, b.vx) + b.zigSign * (b.zigAngle || 0.7);
+        b.vx = Math.cos(th) * sp;
+        b.vy = Math.sin(th) * sp;
+      }
+
+      // RICOCHET off every sealed surface, losing damage each time. `ricochet`
+      // is a bounce BUDGET, so a bolt's reach is a count rather than a timer
+      // and the tracker's "longer bounce life" at layer 2 is one number.
+      if (b.ricochet && this.arena) {
+        const a = this.arena;
+        let bounced = false;
+        if (b.x - b.radius <= a.x0) { b.x = a.x0 + b.radius; b.vx = Math.abs(b.vx); bounced = true; }
+        if (b.x + b.radius >= a.x1) { b.x = a.x1 - b.radius; b.vx = -Math.abs(b.vx); bounced = true; }
+        if (b.y - b.radius <= a.ceilY) { b.y = a.ceilY + b.radius; b.vy = Math.abs(b.vy); bounced = true; }
+        if (b.y + b.radius >= a.floorY) {
+          b.y = a.floorY - b.radius; b.vy = -Math.abs(b.vy); bounced = true;
+          // Layer 3 discharges into "every panel the last bolt touched", so
+          // the floor remembers where it was struck.
+          for (const pn of a.panels) {
+            if (b.x >= pn.x && b.x < pn.x + pn.w) pn.marked = true;
+          }
+        }
+        if (bounced) {
+          b.damage *= b.bounceDmg ?? 0.75;
+          if (b.bounceShrink) b.radius = Math.max(1.5, b.radius * b.bounceShrink);
+          if (--b.ricochet <= 0) b.life = -1;
+        }
+      }
+
       // Split after a delay into a fan of smaller, mildly homing fragments.
       if (b.splitIn) {
         if (--b.splitIn <= 0) {
@@ -893,10 +1005,21 @@ export default class GameScene extends Phaser.Scene {
         this.player.x += Math.sign(b.vx || 1) * b.push;
         continue;
       }
-      b.life = -1;
+      // A bolt "bounces and arcs on contact with surfaces OR the player", so
+      // it survives the hit and turns around rather than being spent on it.
+      if (b.bouncesOffPlayer && b.ricochet > 0) {
+        b.vx = -b.vx; b.vy = -Math.abs(b.vy);
+        b.damage *= b.bounceDmg ?? 0.75;
+        b.ricochet--;
+      } else {
+        b.life = -1;
+      }
       if (r.invuln === 0) {
         this.hurt(b.x, b.damage || 1);
         if (b.burn) Attr.applyStatus(this.status, 'burn', b.burn);
+        if (b.stun) {
+          Attr.applyStatus(this.status, 'stun', b.stun, { step: FEEL.stunPlayerStep });
+        }
       }
     }
 
@@ -1067,10 +1190,12 @@ export default class GameScene extends Phaser.Scene {
     this.stepFight(b, 'attack');
     this.stepFight(b, 'hazard');
 
-    // contact damage
+    // Contact damage. `contactDamage` lets a boss whose whole attack IS its
+    // body — Tempest Man flies at you and never fires — cost more to touch
+    // than one whose body is incidental.
     const box = Phys.hitboxOf(this.player);
     if (this.run.invuln === 0 && Phys.overlaps(box, { x: b.x, y: b.y, w: b.w, h: b.h })) {
-      this.hurt(b.x + b.w / 2);
+      this.hurt(b.x + b.w / 2, b.contactDamage || 1);
     }
   }
 
@@ -1103,7 +1228,26 @@ export default class GameScene extends Phaser.Scene {
         sfx('rumble', { dur: Math.max(0.7, dur / 96), pitch: mag >= 3 ? 0.72 : 0.9 });
       },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
-      status: (id, frames) => Attr.applyStatus(this.status, id, frames),
+      status: (id, frames, opts) => Attr.applyStatus(this.status, id, frames, opts),
+      // Move the player without going through the hit path. Tempest Man's
+      // jetpack exhaust is a FORCE, not an attack: it repositions you without
+      // costing health or granting the i-frames a hit would.
+      shove: (dx, dy) => { this.player.x += dx; this.player.y += dy; },
+      // Eat player fire in a radius. The same jetpack "blocks player bullets",
+      // which needs the projectile list a fight behaviour cannot see.
+      blockAt: (x, y, r) => {
+        for (const b of this.bullets) {
+          if (b.enemy || b.life <= 0) continue;
+          if ((b.x - x) ** 2 + (b.y - y) ** 2 <= r * r) b.life = -1;
+        }
+      },
+      // A whole-room light flash. `at` is 0-1 across the room width, for
+      // placing the lightning bolt that goes with it.
+      flash: (frames, at) => {
+        if (!this.arena) return;
+        this.arena.flash = Math.max(this.arena.flash, frames);
+        if (at !== undefined) this.arena.boltX = at;
+      },
       patch: (id, x, y, w, h, frames, opts = {}) => {
         if (!this.arena) return;
         Attr.addPatch(this.arena.patches,
@@ -1391,16 +1535,8 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.arena) {
       Arena.drawArena(g, this.arena, this.viewW, sh);
-      // Falling rocks: a hot core with a darker crust, so they read as burning
-      // debris rather than as another grey projectile.
-      for (const h of this.arena.hazards) {
-        g.fillStyle(0x3A1A10, 1);
-        g.fillRect(h.x + sh.x, h.y + sh.y, h.w, h.h);
-        g.fillStyle(0xE8541A, 1);
-        g.fillRect(h.x + 2 + sh.x, h.y + 2 + sh.y, h.w - 4, h.h - 4);
-        g.fillStyle(0xFFC24A, 1);
-        g.fillRect(h.x + 4 + sh.x, h.y + 4 + sh.y, h.w - 8, h.h - 8);
-      }
+      // After the room, so a barrel floats ON the water rather than under it.
+      Arena.drawHazards(g, this.arena, sh);
     } else {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
@@ -1484,6 +1620,14 @@ export default class GameScene extends Phaser.Scene {
         facing: -1, clip: b.state,
         palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
       });
+      // Hardware whose orientation is game state — see drawBossRig. Not a
+      // silhouette: the rectangle underneath is still the honest footprint.
+      drawBossRig(L.boss.g, b, sx(b.x));
+      const bt = Attr.statusTint(b.status);
+      if (bt !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.boss.g.fillStyle(bt, 0.45 * Attr.statusIntensity(b.status));
+        L.boss.g.fillRect(sx(b.x), b.y, b.w, b.h);
+      }
     }
 
     // player — flashes while invulnerable
@@ -1509,6 +1653,14 @@ export default class GameScene extends Phaser.Scene {
       // Worn hardware, allies and hit feedback, on the player's own layer so
       // the drone and the shield sit above every world actor with him.
       Wpn.drawWeaponry(L.player.g, sx, this.weaponCtx());
+    }
+
+    // A lightning or arc flash washes the whole room. Drawn on the topmost
+    // world layer and WITHOUT the shake offset: light does not shake, and a
+    // flash that moved would read as a second impact.
+    if (this.arena?.flash > 0) {
+      L.player.g.fillStyle(0xBFD8FF, 0.34 * (this.arena.flash / 10));
+      L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
     }
 
     for (const l of Object.values(L)) l.end();

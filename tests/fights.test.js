@@ -22,11 +22,12 @@ const VIEW_W = 400, FLOOR = 184;
 function harness(bossId, layer) {
   const def = BOSS_BY_ID[bossId];
   const arena = Arena.makeArena(def, layer, VIEW_W, FLOOR);
-  const shots = [], shakes = [], hurts = [];
+  const shots = [], shakes = [], hurts = [], shoves = [], blocks = [];
+  const status = Attr.makeStatus();
   const boss = { ...def, layer, x: 200, y: FLOOR - 42, w: 32, h: 42, fs: null, hs: null };
   const player = { x: 80, y: FLOOR - 24, vx: 0, vy: 0, onGround: true };
   return {
-    arena, shots, shakes, hurts, boss, player,
+    arena, shots, shakes, hurts, shoves, blocks, status, boss, player,
     ctx: {
       boss, player, layer, arena, floorY: FLOOR,
       playerBox: { x: 86, y: FLOOR - 22, w: 12, h: 22 },
@@ -34,9 +35,15 @@ function harness(bossId, layer) {
       shoot: (s) => shots.push(s),
       shake: (mag, dur) => shakes.push({ mag, dur }),
       hurt: (x, d) => hurts.push({ x, d }),
-      status: (id, f) => Attr.applyStatus({}, id, f),
+      status: (id, f, o) => Attr.applyStatus(status, id, f, o),
       patch: (id, x, y, w, h, f, o = {}) =>
         Attr.addPatch(arena.patches, Object.assign(Attr.makePatch(id, x, y, w, h, f), o)),
+      shove: (dx, dy) => { shoves.push({ dx, dy }); player.x += dx; player.y += dy; },
+      blockAt: (x, y, r) => blocks.push({ x, y, r }),
+      flash: (frames, at) => {
+        arena.flash = Math.max(arena.flash, frames);
+        if (at !== undefined) arena.boltX = at;
+      },
     },
   };
 }
@@ -71,8 +78,12 @@ test('every defined fight layer runs a long stretch, without throwing and withou
             if (h.arena.push.x || h.arena.push.y) pushed = true;
           }
         }, `${id} ${kind} L${layer}`);
+        // Shoves and bullet-blocking count as acting: Tempest Man's attack
+        // layers fire nothing at all — the jetpack plume IS the attack — and
+        // scoring that as idle would be measuring the wrong thing.
         const acted = h.shots.length + h.shakes.length + h.hurts.length
-          + h.arena.hazards.length + h.arena.patches.length + (pushed ? 1 : 0);
+          + h.arena.hazards.length + h.arena.patches.length + (pushed ? 1 : 0)
+          + h.shoves.length + h.blocks.length;
         assert.ok(acted > 0, `${id} ${kind} L${layer} did nothing across 3000 frames`);
       }
     }
@@ -80,17 +91,43 @@ test('every defined fight layer runs a long stretch, without throwing and withou
 });
 
 test('layer falls BACK to the hardest layer written, never forward', () => {
-  // Tempest has attack L1 only and hazard L1-L2 in the tracker.
-  const t3 = fightFor('torrent', 3);
-  assert.equal(t3.attack, FIGHTS.torrent.attack[1]);
-  assert.equal(t3.hazard, FIGHTS.torrent.hazard[2]);
+  // Strike Man has hazard L1 only and no attack at any layer, because that is
+  // all his tracker fields define. A layer-3 encounter therefore reuses hazard
+  // L1 and stays attackless rather than borrowing another boss's behaviour.
+  const s3 = fightFor('strike', 3);
+  assert.equal(s3.hazard, FIGHTS.strike.hazard[1]);
+  assert.equal(s3.attack, null);
   // A boss with no entry at all degrades instead of throwing.
   assert.deepEqual(fightFor('nope', 2), { attack: null, hazard: null });
 });
 
-test('the three built bosses get the furniture their hazards need', () => {
+/**
+ * A fight may only be as complete as its tracker fields. This is the guard
+ * against filling a `null` in because it looked like a gap — the layers a boss
+ * has must match the layers the owner has actually written.
+ */
+test('no boss has more built layers than the tracker defines', () => {
+  const written = {
+    core: { attack: 3, hazard: 3 },
+    blaze: { attack: 3, hazard: 3 },
+    torrent: { attack: 3, hazard: 3 },
+    volt: { attack: 3, hazard: 3 },
+    // Hazard L2/L3 and every attack layer are still `[wip]` for Strike Man.
+    strike: { attack: 0, hazard: 1 },
+  };
+  assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
+    'a boss gained or lost a fight entry — update the expected map with it');
+  for (const [id, want] of Object.entries(written)) {
+    for (const kind of ['attack', 'hazard']) {
+      const built = [1, 2, 3].filter((l) => FIGHTS[id][kind][l]).length;
+      assert.equal(built, want[kind], `${id} ${kind}`);
+    }
+  }
+});
+
+test('every furnished boss gets the geometry its hazards need', () => {
   const core = Arena.makeArena(BOSS_BY_ID.core, 1, VIEW_W, FLOOR);
-  assert.ok(core.turrets.length > 0, 'Core Man needs ceiling turrets');
+  assert.ok(core.turrets.length > 0, 'Proto Mk0 needs ceiling turrets');
 
   const blaze = Arena.makeArena(BOSS_BY_ID.blaze, 1, VIEW_W, FLOOR);
   assert.ok(blaze.platforms.length > 0, 'Blaze Man needs phasing platforms');
@@ -100,11 +137,112 @@ test('the three built bosses get the furniture their hazards need', () => {
   assert.ok(torrent.drain, 'Tempest Man needs a drain');
   assert.equal(torrent.liquid.kind, 'water');
   assert.equal(torrent.drain.grateHurts, true, 'the grate hurts from layer 2');
+  assert.equal(torrent.pipes.length, 2, 'barrels and spike balls come out of the pipes');
+
+  const volt = Arena.makeArena(BOSS_BY_ID.volt, 2, VIEW_W, FLOOR);
+  assert.ok(volt.panels.length > 1, 'Volt Man needs floor panels to sweep');
+  assert.ok(volt.conductors.length > 0, 'and conductors overhead');
+  // The sweep has to be able to reach anywhere the player can stand: a gap in
+  // the tiling would be a permanent safe square that makes it optional.
+  const span = volt.panels.reduce((s, p) => s + p.w, 0);
+  assert.ok(span >= volt.x1 - volt.x0 - volt.panels.length,
+    'the panels must tile the whole floor, leaving no free square');
+
+  const strike = Arena.makeArena(BOSS_BY_ID.strike, 1, VIEW_W, FLOOR);
+  assert.ok(strike.rails.length > 0, 'Strike Man needs ceiling rails');
 
   // A boss with no furniture entry still gets a valid, empty room.
-  const other = Arena.makeArena(BOSS_BY_ID.volt, 1, VIEW_W, FLOOR);
+  const other = Arena.makeArena(BOSS_BY_ID.thorn, 1, VIEW_W, FLOOR);
   assert.deepEqual(other.turrets, []);
   assert.equal(other.liquid, null);
+});
+
+/**
+ * THE LAMP IS THE HAZARD. A floor panel that energised without warning would be
+ * a tax rather than something to read, and every layer escalates the speed and
+ * the coverage — never the warning. This is the one Volt Man invariant worth
+ * pinning, because losing it would not fail any other test.
+ */
+test('a Volt Man floor panel is never live without having been telegraphed', () => {
+  for (const layer of [1, 2, 3]) {
+    const h = harness('volt', layer);
+    const hz = FIGHTS.volt.hazard[layer];
+    const warned = new Set();
+    for (let i = 0; i < 3000; i++) {
+      hz.step(h.ctx);
+      Arena.stepArena(h.arena);
+      h.arena.panels.forEach((p, k) => {
+        if (p.tell > 0 || p.pending > 0) warned.add(k);
+        if (p.live > 0) {
+          assert.ok(warned.has(k),
+            `panel ${k} energised with no lamp warning at L${layer} frame ${i}`);
+        }
+      });
+    }
+    assert.ok(warned.size > 0, `the L${layer} sweep never ran`);
+  }
+});
+
+/**
+ * Tempest Man's pipes deliver different things per layer, and the difference is
+ * the whole shape of the room: at layer 1 they hand you footing, at layer 3
+ * they hand you spikes. Asserted as WHICH KINDS appear, not how many — the
+ * cadence is a placeholder.
+ */
+test('Tempest Man stops sending barrels by layer 3', () => {
+  const kindsAt = (layer) => {
+    const h = harness('torrent', layer);
+    const hz = FIGHTS.torrent.hazard[layer];
+    const kinds = new Set();
+    for (let i = 0; i < 6000; i++) {
+      hz.step(h.ctx);
+      Arena.stepArena(h.arena);
+      for (const o of h.arena.hazards) kinds.add(o.kind);
+      h.arena.hazards.length = 0;      // collect and clear; drift is not the point
+    }
+    return kinds;
+  };
+  assert.deepEqual([...kindsAt(1)], ['barrel'], 'layer 1 is barrels only');
+  assert.ok(kindsAt(2).has('spikeball'), 'layer 2 adds spike balls');
+  assert.deepEqual([...kindsAt(3)], ['spikeball'], 'layer 3 is spike balls only');
+});
+
+test('a Tempest Man barrel is standable and shootable; a spike ball is neither', () => {
+  const h = harness('torrent', 2);
+  const hz = FIGHTS.torrent.hazard[2];
+  const seen = {};
+  for (let i = 0; i < 6000 && Object.keys(seen).length < 2; i++) {
+    hz.step(h.ctx);
+    Arena.stepArena(h.arena);
+    for (const o of h.arena.hazards) seen[o.kind] = o;
+  }
+  assert.equal(seen.barrel.solid, true, 'a barrel is footing');
+  assert.ok(seen.barrel.hp > 0, 'and can be shot away');
+  assert.equal(seen.barrel.damage, undefined, 'standing on one must not hurt');
+  assert.ok(seen.spikeball.damage > 0);
+  assert.notEqual(seen.spikeball.solid, true, 'you cannot stand on a spike ball');
+  // Both are popped by the central ball; nothing despawns on a timer, or the
+  // drain would be decorative.
+  assert.equal(seen.barrel.popsOnBall, true);
+  assert.equal(seen.spikeball.popsOnBall, true);
+  assert.equal(seen.barrel.ttl, undefined);
+});
+
+/**
+ * Tempest Man's attack is a body and an exhaust plume — he fires nothing. This
+ * guards that reading of the field, because the previous one gave him a water
+ * cannon and the two are not compatible.
+ */
+test('Tempest Man attacks with his jetpack, never with a projectile', () => {
+  for (const layer of [1, 2, 3]) {
+    const h = harness('torrent', layer);
+    const atk = FIGHTS.torrent.attack[layer];
+    for (let i = 0; i < 2000; i++) atk.step(h.ctx);
+    assert.equal(h.shots.length, 0, `L${layer} should fire nothing`);
+    assert.ok(h.blocks.length > 0, `L${layer} plume should eat player fire`);
+    assert.ok(h.boss.jet, 'the plume must be published for the renderer');
+    assert.equal(h.boss.contactDamage > 1, true, 'touching him is the damage');
+  }
 });
 
 test('phasing platforms never all vanish at once', () => {
@@ -150,21 +288,71 @@ test('the layer-3 flood always leaves somewhere safe to stand', () => {
   assert.equal(worst, null, `no safe platform at frame ${worst} of the flood`);
 });
 
-test('no rocks fall while the lava is up', () => {
+/**
+ * ROCKS KEEP FALLING DURING THE FLOOD, BUT NEVER ONTO A PLATFORM.
+ *
+ * The tracker is explicit: "Rocks shall fall, but not from right above the
+ * platforms while the lava is up." While the floor is gone the platforms are
+ * the only footing in the room, so a rock landing on one would make it Hot and
+ * take away the last safe place to stand — but stopping the shower entirely
+ * (which an earlier reading did) turned the flood into a rest.
+ *
+ * This guards the SAFETY property, not the rock count: a column is checked
+ * against every platform's span at the moment the rock is released.
+ */
+test('rocks keep falling during the flood but never above a platform', () => {
   const h = harness('blaze', 3);
   const { attack, hazard } = fightFor('blaze', 3);
-  let checked = 0;
+  let flooded = 0, rocksDuringFlood = 0;
+  const seen = new Set();
+
   for (let i = 0; i < 8000; i++) {
     attack.step(h.ctx);
     hazard.step(h.ctx);
     Arena.stepArena(h.arena);
-    if (h.arena.liquid.h > 0.5) {
-      checked++;
-      assert.equal(h.arena.hazards.length, 0,
-        `a rock was airborne during the flood at frame ${i}`);
+    if (h.arena.liquid.h <= 0.5) continue;
+    flooded++;
+    for (const r of h.arena.hazards) {
+      if (seen.has(r)) continue;
+      seen.add(r);
+      rocksDuringFlood++;
+      for (const pl of h.arena.platforms) {
+        const over = r.x + r.w > pl.x && r.x < pl.x + pl.w;
+        assert.ok(!over,
+          `a rock was released above a platform during the flood at frame ${i}`);
+      }
     }
   }
-  assert.ok(checked > 600, 'the flood never ran, so this proved nothing');
+  assert.ok(flooded > 600, 'the flood never ran, so this proved nothing');
+  assert.ok(rocksDuringFlood > 0, 'the shower stopped entirely during the flood');
+});
+
+/**
+ * THE BOSS'S LIFT IS HIS ALONE, and it must not be counted as shelter. It is
+ * always solid, so if the "never leave the player with nowhere to stand" rule
+ * saw it, that rule would be satisfied at every moment by a platform the player
+ * cannot use while he is standing on it.
+ */
+test('Blaze Man layer 3 gives the boss his own lift and still leaves shelter', () => {
+  const h = harness('blaze', 3);
+  const { attack, hazard } = fightFor('blaze', 3);
+  assert.ok(h.arena.lift, 'layer 3 must build the lift');
+  assert.ok(h.arena.platforms.includes(h.arena.lift));
+
+  for (let i = 0; i < 6000; i++) {
+    attack.step(h.ctx);
+    hazard.step(h.ctx);
+    Arena.stepArena(h.arena);
+    const shelter = h.arena.platforms.filter((p) => !p.lift);
+    assert.ok(shelter.some((p) => p.on),
+      `every player platform was gone at frame ${i}`);
+  }
+});
+
+test('Blaze Man layers 1 and 2 have no lift — it is a layer-3 tell', () => {
+  for (const layer of [1, 2]) {
+    assert.equal(harness('blaze', layer).arena.lift, undefined);
+  }
 });
 
 test('Blaze Man layers 2 and 3 use the SAME arena hazard', () => {

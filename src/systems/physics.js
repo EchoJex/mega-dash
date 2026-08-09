@@ -77,7 +77,11 @@ export function stepPlayer(p, world, input, groundY) {
   else if (p.coyote > 0) p.coyote--;
 
   if (p.jumpBuffer > 0 && (p.onGround || p.coyote > 0)) {
-    p.vy = FEEL.jumpVelocity;
+    // `jumpMult` is terrain drag on the launch — wading in Tempest Man's floor
+    // water. It scales the IMPULSE, so a half-strength jump reaches a quarter
+    // of the height; that is the intent, and the tracker's phrase is "half the
+    // jump strength" rather than half the height.
+    p.vy = FEEL.jumpVelocity * (input.jumpMult ?? 1);
     p.onGround = false;
     p.coyote = 0;
     p.jumpBuffer = 0;
