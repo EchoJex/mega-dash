@@ -228,7 +228,7 @@ where each one stands.
 `palette` #5CADD5 / #F8FAFC / #0A0A12 · `scale` 1.5x player height (petite build) · `id` gale
 `attack` Wind Vortex · `weapon` Gale Vortex
 
-- **arena** `[draft]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
+- **arena** `[wip]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
