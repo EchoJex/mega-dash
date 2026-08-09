@@ -159,6 +159,11 @@ const drone = {
     }
 
     if (--st.cool > 0) return;
+    // An empty clip with no reload running should be impossible — the clip only
+    // empties inside the burst above, which starts one. Recovering rather than
+    // spinning matters anyway: without this the drone would sit at cool <= 0
+    // firing a zero-length burst every frame and never reload itself.
+    if (st.clip <= 0) { st.reload = L.reloadFrames; return; }
     st.cool = L.pullFrames;
     st.burst = Math.min(L.burst, st.clip);
     st.burstGap = 1;
@@ -284,6 +289,9 @@ const torrent = {
     st.tank = L.tank;
     st.idle = 0;
     st.hovering = 0;
+    // One hover per jump. Armed on the ground so equipping the pack mid-air
+    // cannot hand you a free one before you have landed once.
+    st.apexArmed = false;
   },
 
   step(st, lv, ctx) {

@@ -24,7 +24,16 @@ function harness(bossId, layer) {
   const arena = Arena.makeArena(def, layer, VIEW_W, FLOOR);
   const shots = [], shakes = [], hurts = [], shoves = [], blocks = [];
   const status = Attr.makeStatus();
-  const boss = { ...def, layer, x: 200, y: FLOOR - 42, w: 32, h: 42, fs: null, hs: null };
+  // Must match what GameScene.spawnBoss actually builds. `anim` in particular
+  // is not optional: behaviours bob and pulse off it, and a harness without it
+  // silently produced NaN positions — which then froze the state machine
+  // before it reached the code the test was there to exercise. A harness that
+  // is missing a field does not fail, it just stops testing.
+  const boss = {
+    ...def, layer, x: 200, y: FLOOR - 42, w: 32, h: 42,
+    hp: 100, maxHp: 100, anim: 0, state: 'idle',
+    isBoss: true, status: {}, fs: null, hs: null,
+  };
   const player = { x: 80, y: FLOOR - 24, vx: 0, vy: 0, onGround: true };
   return {
     arena, shots, shakes, hurts, shoves, blocks, status, boss, player,
@@ -68,6 +77,7 @@ test('every defined fight layer runs a long stretch, without throwing and withou
           // Long enough for every state machine to cycle several times,
           // including Blaze Man's layer-3 flood at ~900 frames.
           for (let i = 0; i < 3000; i++) {
+            h.boss.anim++;                 // GameScene does this before stepping
             beh.step(h.ctx);
             Arena.stepArena(h.arena);
             // Sampled per frame, not read at the end: a force is rebuilt every
@@ -85,7 +95,51 @@ test('every defined fight layer runs a long stretch, without throwing and withou
           + h.arena.hazards.length + h.arena.patches.length + (pushed ? 1 : 0)
           + h.shoves.length + h.blocks.length;
         assert.ok(acted > 0, `${id} ${kind} L${layer} did nothing across 3000 frames`);
+
+        // A NaN position is worse than a crash: the boss keeps "running", every
+        // comparison against it is false, and the state machine wedges in
+        // whatever mode it was in — so the fight looks alive and does nothing.
+        // That is exactly how a real crash in Tempest Man's climb state stayed
+        // hidden behind a green test.
+        assert.ok(Number.isFinite(h.boss.x) && Number.isFinite(h.boss.y),
+          `${id} ${kind} L${layer} left the boss at a non-finite position`);
       }
+    }
+  }
+});
+
+/**
+ * A STATE MACHINE THAT WEDGES IS THE QUIET FAILURE MODE.
+ *
+ * It throws nothing, it keeps being called, and it keeps doing whatever its
+ * current mode does forever — so "runs without throwing" and "does something"
+ * are both satisfied while the fight is broken. Requiring the cycle to CLOSE
+ * twice is what catches it: every attack loop is a loop, and one that never
+ * comes back round to where it started is stuck.
+ */
+test('every attack loop cycles back to its opening state, more than once', () => {
+  for (const [id, f] of Object.entries(FIGHTS)) {
+    for (const layer of [1, 2, 3]) {
+      const beh = f.attack[layer];
+      if (!beh) continue;
+      const h = harness(id, layer);
+      let opening = null, left = false, closes = 0;
+      const seen = new Set();
+      for (let i = 0; i < 6000; i++) {
+        h.boss.anim++;
+        beh.step(h.ctx);
+        Arena.stepArena(h.arena);
+        const mode = h.boss.fs?.mode;
+        if (mode === undefined) continue;
+        seen.add(mode);
+        if (opening === null) { opening = mode; continue; }
+        if (mode !== opening) { left = true; continue; }
+        if (left) { closes++; left = false; }
+      }
+      assert.ok(seen.size > 1, `${id} attack L${layer} never left '${opening}'`);
+      assert.ok(closes >= 2,
+        `${id} attack L${layer} wedged in '${[...seen].pop()}' — `
+        + `reached ${[...seen].join('/')} but closed the cycle ${closes} time(s)`);
     }
   }
 });

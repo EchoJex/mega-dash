@@ -603,7 +603,7 @@ function tempestAttack(layer) {
         b.y += (cruiseY - b.y) * 0.1;
         if (Math.abs(b.y - cruiseY) < 2) {
           fs.mode = 'cruise';
-          fs.t = rnd(...TEMPEST.rest);
+          fs.t = rnd(...TEMPEST.rest[layer]);
           fs.dir = -fs.dir;
         }
         break;
@@ -983,11 +983,22 @@ function voltHazard(layer) {
  * so he has no attack loop at all yet — the room is the whole fight. Do not
  * invent one; the owner writes those.
  */
+/**
+ * THE BAG HAS TO HANG INTO THE PLAYER'S LANE OR IT IS SCENERY.
+ *
+ * The room is 224px tall with the floor at 184, so a bag hanging a few pixels
+ * below a ceiling rail is nowhere near anything and the hazard does nothing.
+ * These numbers put its bottom edge at 168: a standing player (box 162-184) is
+ * clipped, and a sliding one (173-184) passes underneath.
+ *
+ * That is the whole hazard, and it is why the slide matters here — walk into
+ * the bag and you are knocked back, time a slide and you are through.
+ */
 const STRIKE_HAZ = {
   speed: 1.1,
-  w: 12,
-  h: 18,
-  drop: 6,          // how far the bag hangs below its rail
+  w: 14,
+  h: 40,
+  drop: 106,        // how far the bag's TOP hangs below its rail
 };
 
 function strikeHazard(layer) {

@@ -197,6 +197,11 @@ export default class GameScene extends Phaser.Scene {
     this.bullets = [];
     this.minions = [];
     this.pickups = [];
+    // Summoned allies and hit sparks belong to the space they were made in.
+    // Weapon STATE survives (a drone keeps its clip across a door) — the two
+    // are deliberately different: state is the weapon, allies are the room.
+    this.run.allies.length = 0;
+    this.fx = Wpn.makeFx();
     this.arena = null;
     this.areaFrame = 0;
     Terrain.generate(this.world, 0, this.viewW);
@@ -281,6 +286,8 @@ export default class GameScene extends Phaser.Scene {
       this.minions = [];   // nothing follows you in
       this.bullets = [];
       this.pickups = [];
+      this.run.allies.length = 0;
+      this.fx = Wpn.makeFx();
       this.world.doors = [];
       this.player.x = 24;
       this.player.y = GROUND_Y - 24;
@@ -473,11 +480,19 @@ export default class GameScene extends Phaser.Scene {
     const r = this.run;
     const ids = [SIDEARM_ID, ...Loadout.equippedIds(r.loadout)]
       .filter((id) => Loadout.isEnabled(r.loadout, id));
+    // Cleared before the weapons run, and re-asserted by whichever one grants
+    // it. Otherwise benching the Strike Gauntlet mid-swing would leave its
+    // damage reduction switched on for the rest of the run.
+    r.meleeArmor = 0;
     Wpn.pruneStates(r.wstate, ids);
     Wpn.coolWeapons(r.wstate);
     const ctx = this.weaponCtx(ids);
     Wpn.stepWeapons(ctx, ids);
     if (this.justLanded) Wpn.notify(ctx, ids, 'land');
+    // A jump is an input event, so it lands between sim steps. Banked and
+    // spent HERE so a weapon never acts outside the fixed timestep — the same
+    // rule the fire button follows.
+    if (this.jumpEvent) { this.jumpEvent = false; Wpn.notify(ctx, ids, 'jump'); }
     Wpn.stepFx(this.fx);
   }
 
@@ -822,6 +837,11 @@ export default class GameScene extends Phaser.Scene {
     const r = this.run;
     const pcx = this.player.x + 12, pcy = this.player.y + 12;
     const spawned = [];
+    // Built ONCE. Seeking and splitting both need the enemy list, and building
+    // a fresh context per bullet per frame was allocating a closure-heavy
+    // object dozens of times a frame for two lookups.
+    let seekCtx = null;
+    const enemyCtx = () => (seekCtx || (seekCtx = this.weaponCtx()));
 
     for (const b of this.bullets) {
       // Mild auto-aim: steer the velocity toward the player rather than
@@ -840,7 +860,7 @@ export default class GameScene extends Phaser.Scene {
       // steer-don't-snap shape as `homing` above, but it also carries the
       // acceleration the Nullfire Drone's ladder asks for at Lv6 and Lv10.
       if (b.seek) {
-        if (b.seek.hp <= 0) b.seek = Wpn.nearestEnemy(this.weaponCtx(), b.x, b.y);
+        if (b.seek.hp <= 0) b.seek = Wpn.nearestEnemy(enemyCtx(), b.x, b.y);
         if (b.seek) {
           const c = Wpn.centreOf(b.seek);
           const dx = c.x - b.x, dy = c.y - b.y;
@@ -971,7 +991,7 @@ export default class GameScene extends Phaser.Scene {
           // fired at picks which enemy this set locks onto.
           let target = null;
           if (b.splitSeekRank !== undefined) {
-            const ranked = Wpn.enemiesByRange(this.weaponCtx(), b.x, b.y);
+            const ranked = Wpn.enemiesByRange(enemyCtx(), b.x, b.y);
             target = ranked[Math.min(b.splitSeekRank, ranked.length - 1)] || null;
           }
           for (let i = 0; i < n; i++) {
@@ -1446,12 +1466,11 @@ export default class GameScene extends Phaser.Scene {
     const kind = Phys.requestJump(this.player);
     if (kind !== 'jump' && kind !== 'double') return;
     sfx('jump');
-    // Torrent Cannon vents on a jump from Lv3. Notified here rather than from a
-    // velocity check in step(), because a buffered press that never becomes a
-    // jump must not trigger it.
-    const ids = [SIDEARM_ID, ...Loadout.equippedIds(this.run.loadout)]
-      .filter((id) => Loadout.isEnabled(this.run.loadout, id));
-    Wpn.notify(this.weaponCtx(ids), ids, 'jump');
+    // Torrent Cannon vents on a jump from Lv3. Banked rather than fired here,
+    // because this runs from an input handler between sim steps — see
+    // stepEquipped. Flagged on the real jump only, so a buffered press that
+    // never becomes one cannot trigger it.
+    this.jumpEvent = true;
   }
   endJump() { this.intent.jumpHeld = false; }
 

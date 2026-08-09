@@ -18,7 +18,30 @@ npm run dev      # dev server, --host so a phone on the same wifi can play it
 npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
+npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
+```
+
+### `npm run smoke` — the thing `npm test` cannot do
+
+`npm test` runs in ~0.1s against fake contexts, which is the right standard for plumbing
+and why it runs before every commit. But a fake context can be *wrong in a way that hides
+a bug*: the boss harness was once missing `anim`, every behaviour reading it produced NaN,
+the state machine wedged before reaching the line that actually crashed, and the suite
+stayed green through a fight that died on a real device within seconds.
+
+`tools/smoke.mjs` builds nothing and fakes nothing. It serves `dist/`, opens it in
+Chromium, starts a run, fights every boss whose fight is built, then equips all eight
+weapons that have a ladder at every rung and fires them — failing on any page exception,
+console error, crash overlay, non-finite position or runaway projectile count.
+
+It is **deliberately not in CI and not a devDependency**: Playwright's postinstall would
+pull ~150MB of browsers onto every APK build for a job CI does not run. Run it locally
+after any change to a fight, a weapon runtime or the render loop:
+
+```bash
+npx playwright@latest install chromium    # once
+npm run build && npm run smoke
 ```
 
 ### The dev loop is the in-app updater, not a local server

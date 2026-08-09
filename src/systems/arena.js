@@ -54,6 +54,14 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     drain: null,
     // A constant push applied to the player each frame (rain, current).
     push: { x: 0, y: 0 },
+    // Horizontal component of the rain, -1..1. Set by Tempest Man's hazard
+    // loop, and the thing his lightning telegraphs a change to. Null means the
+    // room has no weather.
+    rainDir: null,
+    // The room's own clock, for anything that has to animate without reading
+    // the run frame — rain streaks, mainly. Arena-scoped so it restarts with
+    // the room rather than carrying a run's worth of offset into it.
+    t: 0,
     // Hazard state lives here rather than on the boss, because the ambient loop
     // keeps running regardless of what the boss is doing.
     hazards: [],
@@ -131,7 +139,7 @@ const FURNITURE = {
   },
 
   /**
-   * TEMPEST MAN — corner portholes pouring down the walls, knee-deep floor
+   * TEMPEST MAN — corner pipes pouring down the walls, knee-deep floor
    * water with an inward current, and a grate-covered central drain with a
    * damaging spike ball sitting on it.
    */
@@ -253,6 +261,7 @@ export function stepShake(shake) {
  */
 export function stepArena(arena) {
   if (!arena) return;
+  arena.t++;
   Attr.stepPatches(arena.patches);
   if (arena.flash > 0) arena.flash--;
 
@@ -433,6 +442,26 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(p.x + sx, p.y + sy, p.w, p.h);
     g.fillStyle(tint, Math.min(1, a * 2.2));
     g.fillRect(p.x + sx, p.y + sy, p.w, 1);
+  }
+
+  // RAIN. Drawn from `rainDir`, which is the same number that drives the push
+  // on the player — so what you see leaning on you is what is leaning on you.
+  // Without this the lightning telegraphs a change to something invisible,
+  // which is the same as no telegraph at all.
+  if (arena.rainDir !== null) {
+    const rx = arena.rainDir;
+    const len = 7;
+    g.lineStyle(1, 0x9AD8F0, 0.35);
+    // A fixed lattice scrolled by the clock rather than particles: the streaks
+    // have to be dense enough to read as heavy rain, and 60 tracked objects
+    // per frame for something purely decorative is not a trade worth making.
+    for (let i = 0; i < 34; i++) {
+      const seed = i * 61.7;
+      const span = viewW + 60;
+      const fall = (arena.t * 3.4 + seed * 7) % (arena.floorY + 20);
+      const x = ((seed * 13) % span) - 30 + rx * fall * 0.8;
+      g.lineBetween(x + sx, fall - 20 + sy, x + rx * len + sx, fall - 20 + len + sy);
+    }
   }
 
   // Liquid last, so it covers the floor furniture it is supposed to submerge.
