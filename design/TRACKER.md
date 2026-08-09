@@ -190,10 +190,10 @@ where each one stands.
 - **attribute (boss)** `[wip]` Lingering poison clouds drain health over time and reduce player speed.
 - **attribute (weapon)** `[wip]` Poisoned: faint purple hue; DPS applied much less often (~every 3 seconds); causes flinch.
 - **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
-- **hazard L2** `[draft]` More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it.
-- **hazard L3** `[draft]` The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots.
-- **attack L1** `[ready]` Releases lingering poison clouds that drain health over time and reduce player speed.
-- **attack L2** `[draft]` Clouds are released in an arc rather than dropped in place, and now linger long enough for two to be present at once.
+- **hazard L2** `[wip]` More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it.
+- **hazard L3** `[wip]` The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots.
+- **attack L1** `[wip]` Releases lingering poison clouds that drain health over time and reduce player speed.
+- **attack L2** `[wip]` Clouds are released in an arc rather than dropped in place, and now linger long enough for two to be present at once.
 - **attack L3** `[draft]` On release the clouds slowly drift toward the player instead of staying put, and a popped cloud leaves a corrosive pool where it dispersed.
 - **weapon** `[ready]` Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT.
 - **weapon Lv1** `[draft]` Short cone, low DoT; Poisoned lasts a few seconds and does not stack.
