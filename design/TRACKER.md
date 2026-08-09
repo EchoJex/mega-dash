@@ -103,7 +103,7 @@ where each one stands.
 - **palette notes** `[draft]` Yellow primary; deep purple secondary.
 - **arena** `[draft]` A large plasma lamp in the background
 - **attribute (boss)** `[ready]`
-- **attribute (weapon)** `[wip]`
+- **attribute (weapon)** `[ready]`
 - **hazard L1** `[draft]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[draft]` Same sweep, faster, plus overhead conductors that drop a vertical arc at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain between conductors, briefly electrifying the air between two of them rather than only the ground beneath.
