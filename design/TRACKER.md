@@ -320,7 +320,7 @@ where each one stands.
 - **hazard L3** `[wip]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
 - **attack L1** `[wip]` Phases through attacks and counters with intangibility + surprise teleports.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
-- **attack L3** `[draft]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
+- **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
 - **weapon** `[ready]` Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage.
 - **weapon Lv1** `[draft]` Brief invulnerability and invisibility on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[draft]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
