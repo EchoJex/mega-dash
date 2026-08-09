@@ -114,7 +114,7 @@ where each one stands.
 - **weapon Lv1** `[draft]` 0 chains; 1s stun on first enemy contact.
 - **weapon Lv3** `[wip]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned.
 - **weapon Lv6** `[wip]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec
-- **weapon Lv10** `[wip]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; each of those 3 all stunned 4s.
+- **weapon Lv10** `[wip]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; each of those 3 can cause all stunned 4s.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Thorn Man — Grass
