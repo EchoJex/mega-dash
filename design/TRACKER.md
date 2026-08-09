@@ -154,7 +154,7 @@ where each one stands.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon** `[draft]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
 - **weapon Lv1** `[wip]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
-- **weapon Lv3** `[ready]` Releasing attack before the shield breaks releases 3 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
+- **weapon Lv3** `[wip]` Releasing attack before the shield breaks releases 3 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
 - **weapon Lv6** `[ready]` Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
 - **weapon Lv10** `[ready]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
