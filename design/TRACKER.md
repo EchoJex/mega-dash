@@ -113,7 +113,7 @@ where each one stands.
 - **weapon** `[draft]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
 - **weapon Lv1** `[draft]` 0 chains; 1s stun on first enemy contact.
 - **weapon Lv3** `[wip]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned.
-- **weapon Lv6** `[wip]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned 0.5s.
+- **weapon Lv6** `[wip]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 0.5s.
 - **weapon Lv10** `[ready]` Chain damage hits all enemies near the first enemy contacted; all stunned 4s.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
