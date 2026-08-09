@@ -336,7 +336,7 @@ where each one stands.
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
+- **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
 - **hazard L2** `[draft]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
 - **hazard L3** `[draft]` Vents fire in a travelling sequence along the fissure, sweeping the room end to end.
 - **attack L1** `[ready]` Sweeping fire/ice beam + fireball projectiles.
