@@ -342,7 +342,7 @@ where each one stands.
 - **attack L1** `[wip]` Sweeping fire/ice beam + fireball projectiles.
 - **attack L2** `[wip]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
 - **attack L3** `[wip]` The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst.
-- **weapon** `[ready]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
+- **weapon** `[wip]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
 - **weapon Lv1** `[draft]` Short fixed-angle beam, high damage, held while the attack button is down.
 - **weapon Lv3** `[draft]` The beam can be angled with directional input and reaches noticeably further.
 - **weapon Lv6** `[draft]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
