@@ -186,10 +186,10 @@ where each one stands.
 `attack` Toxic Cloud · `weapon` Venom Spray
 
 - **palette notes** `[ready]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
-- **arena** `[draft]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
+- **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
 - **attribute (boss)** `[wip]` Lingering poison clouds drain health over time and reduce player speed.
 - **attribute (weapon)** `[wip]` Poisoned: faint purple hue; DPS applied much less often (~every 3 seconds); causes flinch.
-- **hazard L1** `[draft]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
+- **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
 - **hazard L2** `[draft]` More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it.
 - **hazard L3** `[draft]` The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots.
 - **attack L1** `[ready]` Releases lingering poison clouds that drain health over time and reduce player speed.
