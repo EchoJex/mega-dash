@@ -89,7 +89,7 @@ where each one stands.
 - **hazard L3** `[wip]` Rain changes direction with limited die down between direction changes, with a random duration of at least 3s. Lightning bolts in the background that cause the screen to flash . Both portholes run at full pressure; floor water rises to mid-shin and the inward current roughly doubles, so holding station away from the drain takes constant input.
 - **attack L1** `[draft]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L2** `[draft]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **attack L3** `[wip]` Boss flies around the stage just like the attack pattern of Queen B from DKC at . Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
+- **attack L3** `[wip]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC at . Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **weapon** `[wip]`
 - **weapon Lv1** `[wip]`
 - **weapon Lv3** `[ready]` Angle the attack diagonally with directional inputs. Increase travel distance accordingly.
