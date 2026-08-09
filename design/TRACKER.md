@@ -213,9 +213,9 @@ where each one stands.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
 - **hazard L3** `[wip]` A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand.
-- **attack L1** `[ready]` Causes screen-wide tremors and rising rock pillars.
-- **attack L2** `[draft]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
-- **attack L3** `[draft]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
+- **attack L1** `[wip]` Causes screen-wide tremors and rising rock pillars.
+- **attack L2** `[wip]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
+- **attack L3** `[wip]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
 - **weapon** `[ready]` Ground-pound that creates shockwaves and stuns nearby enemies. Per-level scaling: shockwave size + stun duration.
 - **weapon Lv1** `[draft]` Ground-pound on landing from a jump; small shockwave both directions, brief Stun on contact.
 - **weapon Lv3** `[draft]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
