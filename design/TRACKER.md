@@ -76,7 +76,7 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[wip]` Blue yellow
+- **palette notes** `[wip]` Blue yellow guy with
 - **arena** `[draft]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
 - **attribute (boss)** `[ready]`
 - **attribute (weapon)** `[ready]`
