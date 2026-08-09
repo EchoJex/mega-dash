@@ -79,7 +79,7 @@ where each one stands.
 - **palette notes** `[wip]`
 - **arena** `[wip]` Background theme High seas, tempest
 - **attribute (boss)** `[ready]` None
-- **attribute (weapon)** `[wip]`
+- **attribute (weapon)** `[ready]`
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows from portholes in the upper left and upper right corners of the stage. The water cascades down the walls and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center.
   Implement appropriate 2D physics: the flowing water applies a moderate continuous directional force / velocity bias that drags Mega Man toward the central drain (stronger on the ground, weaker in the air). a damaging spike ball sits on top the grate that the player should avoid. Combine with the diagonal storm rain push for layered pressing pressure the player must resist."
