@@ -294,9 +294,9 @@ where each one stands.
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
-- **hazard L2** `[draft]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
-- **hazard L3** `[draft]` A sustained rockslide down one side of the room, changing sides between cycles.
+- **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
+- **hazard L2** `[wip]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
+- **hazard L3** `[wip]` A sustained rockslide down one side of the room, changing sides between cycles.
 - **attack L1** `[ready]` Pushes massive rolling rocks that crush and block paths.
 - **attack L2** `[draft]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
 - **attack L3** `[draft]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
