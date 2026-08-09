@@ -102,7 +102,7 @@ where each one stands.
 
 - **palette notes** `[ready]` Yellow primary; deep purple secondary. Yellow is the classic electric read; the original cyan collided with Frost, Gale and Tempest.
 - **arena** `[draft]` A large plasma lamp in the background
-- **attribute (boss)** `[todo]`
+- **attribute (boss)** `[ready]`
 - **attribute (weapon)** `[wip]` Stun on first enemy contact, with durations defined per level. Functionally same as constrict/freeze; elementally correct colors flash.
 - **hazard L1** `[draft]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[draft]` Same sweep, faster, plus overhead conductors that drop a vertical arc at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
