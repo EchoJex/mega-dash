@@ -323,7 +323,7 @@ where each one stands.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
 - **weapon** `[wip]` Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage.
 - **weapon Lv1** `[wip]` Brief invulnerability and invisibility on activation; reappearing deals a small burst around the player.
-- **weapon Lv3** `[draft]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
+- **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
