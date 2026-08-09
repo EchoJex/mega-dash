@@ -90,7 +90,7 @@ where each one stands.
 - **attack L1** `[draft]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L2** `[draft]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L3** `[draft]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **weapon** `[wip]` Defensive; small, two-nozzle jetpack that is blue at first but exposed a grey layer underneath as the jetpack runs dry if used too much,
+- **weapon** `[wip]` Defensive; small, two-nozzle jetpack that is blue at first but exposed a grey layer underneath as the jetpack runs dry.  if used too much,
 - **weapon Lv1** `[wip]` Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[wip]` Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[wip]` Add the ability to hover briefly at the apex of any jump which shoots two water jets directly downward with very low but very rapid damage and knockback
