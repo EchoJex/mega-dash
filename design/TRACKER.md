@@ -143,7 +143,7 @@ where each one stands.
 `palette` #A0EFE7 / #FFFFFF / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` frost
 `attack` Glacier Spike · `weapon` Frost Guard
 
-- **arena** `[draft]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
+- **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **attribute (boss)** `[wip]` Slippery — blizzard freezes all surfaces, making them slippery.
 - **attribute (weapon)** `[wip]` Freeze (shield break on minion contact; icicles freeze). Functionally same as stun/constrict; elementally correct colors flash.
 - **hazard L1** `[draft]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
