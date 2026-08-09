@@ -340,7 +340,7 @@ where each one stands.
 - **hazard L2** `[wip]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
 - **hazard L3** `[wip]` Vents fire in a travelling sequence along the fissure, sweeping the room end to end.
 - **attack L1** `[wip]` Sweeping fire/ice beam + fireball projectiles.
-- **attack L2** `[draft]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
+- **attack L2** `[wip]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
 - **attack L3** `[draft]` The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst.
 - **weapon** `[ready]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
 - **weapon Lv1** `[draft]` Short fixed-angle beam, high damage, held while the attack button is down.
