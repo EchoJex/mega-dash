@@ -76,7 +76,7 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[wip]` Basically a Blastoise with two steel hydro cannons
+- **palette notes** `[wip]` Basically a Blastoise
 - **arena** `[wip]` Background theme High seas, tempest
 - **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[wip]`
