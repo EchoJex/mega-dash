@@ -343,9 +343,9 @@ where each one stands.
 - **attack L2** `[wip]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
 - **attack L3** `[wip]` The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst.
 - **weapon** `[wip]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
-- **weapon Lv1** `[draft]` Short fixed-angle beam, high damage, held while the attack button is down.
-- **weapon Lv3** `[draft]` The beam can be angled with directional input and reaches noticeably further.
-- **weapon Lv6** `[draft]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
+- **weapon Lv1** `[wip]` Short fixed-angle beam, high damage, held while the attack button is down.
+- **weapon Lv3** `[wip]` The beam can be angled with directional input and reaches noticeably further.
+- **weapon Lv6** `[wip]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
 - **weapon Lv10** `[wip]` Lv8+: charge for a massive dragon-head projectile.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
