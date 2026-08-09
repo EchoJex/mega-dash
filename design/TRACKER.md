@@ -207,7 +207,7 @@ where each one stands.
 `palette` #A76625 / #EA580C / #0A0A12 · `scale` 1.95x player height (bulky build) · `id` quake
 `attack` Seismic Stomp · `weapon` Quake Hammer
 
-- **arena** `[draft]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
+- **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[wip]` Stun on nearby enemies via shockwave; duration scales per level.
 - **hazard L1** `[draft]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
