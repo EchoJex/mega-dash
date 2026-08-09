@@ -279,7 +279,7 @@ where each one stands.
 - **attack L1** `[wip]` Releases bug drones that home in and explode on contact.
 - **attack L2** `[wip]` Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass.
 - **attack L3** `[wip]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
-- **weapon** `[wip]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
+- **weapon** `[draft]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
 - **weapon Lv1** `[draft]` Two bug allies, short duration; they attack the nearest minion and expire together.
 - **weapon Lv3** `[draft]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
 - **weapon Lv6** `[wip]` Lv5+: bugs can block projectiles.
