@@ -90,7 +90,7 @@ where each one stands.
 - **attack L1** `[draft]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L2** `[draft]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L3** `[draft]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
-- **weapon** `[wip]` Basically F.L.U.D.D. from
+- **weapon** `[wip]` Basically F.L.U.D.D. from Mario
 - **weapon Lv1** `[wip]`
 - **weapon Lv3** `[ready]` Angle the attack diagonally with directional inputs. Increase travel distance accordingly.
 - **weapon Lv6** `[ready]` Water stream now affected by gravity but travels significantly further overall.
