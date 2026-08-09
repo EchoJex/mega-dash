@@ -378,9 +378,9 @@ where each one stands.
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
-- **hazard L2** `[draft]` Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room.
-- **hazard L3** `[draft]` The crane also drags a plate along the floor between drops, sweeping the ground the length of the room.
+- **hazard L1** `[wip]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
+- **hazard L2** `[wip]` Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room.
+- **hazard L3** `[wip]` The crane also drags a plate along the floor between drops, sweeping the ground the length of the room.
 - **attack L1** `[ready]` Fires homing metal blades + deploys temporary shields.
 - **attack L2** `[draft]` Blades are fired in a spread and ricochet twice instead of once; the deployed shield now orbits the boss rather than sitting in front of it.
 - **attack L3** `[draft]` The shield breaks into blades when destroyed, so removing it is itself an attack the player has to answer.
