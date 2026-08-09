@@ -297,12 +297,12 @@ where each one stands.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
 - **hazard L2** `[wip]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
 - **hazard L3** `[wip]` A sustained rockslide down one side of the room, changing sides between cycles.
-- **attack L1** `[ready]` Pushes massive rolling rocks that crush and block paths.
-- **attack L2** `[draft]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
-- **attack L3** `[draft]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
-- **weapon** `[ready]` Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed.
-- **weapon Lv1** `[draft]` Single thrown boulder; rolls on landing and stops at the first wall.
-- **weapon Lv3** `[draft]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
+- **attack L1** `[wip]` Pushes massive rolling rocks that crush and block paths.
+- **attack L2** `[wip]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
+- **attack L3** `[wip]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
+- **weapon** `[wip]` Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed.
+- **weapon Lv1** `[wip]` Single thrown boulder; rolls on landing and stops at the first wall.
+- **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
 - **weapon Lv10** `[draft]` Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
