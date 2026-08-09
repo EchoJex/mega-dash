@@ -164,12 +164,12 @@ where each one stands.
 `palette` #EA6A34 / #7C2D12 / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` strike
 `attack` Rush Combo · `weapon` Strike Gauntlet
 
-- **arena** `[draft]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of stacked crowd barriers and hanging lamps.
+- **arena** `[wip]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of stacked crowd barriers and hanging lamps.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
-- **hazard L2** `[draft]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
-- **hazard L3** `[draft]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
+- **hazard L1** `[wip]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
+- **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
+- **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
 - **attack L1** `[ready]` Teleports close and performs rapid punches + uppercut launcher.
 - **attack L2** `[draft]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
 - **attack L3** `[draft]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
