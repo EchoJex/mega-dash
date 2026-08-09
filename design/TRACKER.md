@@ -210,9 +210,9 @@ where each one stands.
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[wip]` Stun on nearby enemies via shockwave; duration scales per level.
-- **hazard L1** `[draft]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
-- **hazard L2** `[draft]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
-- **hazard L3** `[draft]` A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand.
+- **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
+- **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
+- **hazard L3** `[wip]` A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand.
 - **attack L1** `[ready]` Causes screen-wide tremors and rising rock pillars.
 - **attack L2** `[draft]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
 - **attack L3** `[draft]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
