@@ -122,7 +122,7 @@ where each one stands.
 `palette` #2AAB1C / #5C4033 / #0A0A12 · `scale` 1.8x player height (average build) · `id` thorn
 `attack` Vine Lash · `weapon` Thorn Lash
 
-- **arena** `[draft]` Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from.
+- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from.
 - **attribute (boss)** `[wip]` Constrict (via Vine Lash): several seconds. Functionally same as stun/freeze; elementally correct colors flash.
 - **attribute (weapon)** `[wip]` Constrict (Thorn Lash Lv10 vs mini-bosses, 5s DPS).
 - **hazard L1** `[draft]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
