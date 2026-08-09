@@ -95,7 +95,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Angle the attack diagonally with directional inputs. Increase travel distance accordingly.
 - **weapon Lv6** `[ready]` Water stream now affected by gravity but travels significantly further overall.
 - **weapon Lv10** `[ready]` Stream replaced with a semi-rapid water balloon style grenade launcher with small water-based explosions on contact with any enemy.
-- **silhouette** `[wip]` Basically a
+- **silhouette** `[wip]` Basically a Blastoise
 
 ## Volt Man — Electric
 
