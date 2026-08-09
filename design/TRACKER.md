@@ -76,7 +76,7 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[wip]` Basically a Blastoise
+- **palette notes** `[wip]`
 - **arena** `[wip]` Background theme High seas, tempest
 - **attribute (boss)** `[ready]` None
 - **attribute (weapon)** `[wip]`
