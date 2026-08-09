@@ -195,9 +195,9 @@ where each one stands.
 - **attack L1** `[wip]` Releases lingering poison clouds that drain health over time and reduce player speed.
 - **attack L2** `[wip]` Clouds are released in an arc rather than dropped in place, and now linger long enough for two to be present at once.
 - **attack L3** `[wip]` On release the clouds slowly drift toward the player instead of staying put, and a popped cloud leaves a corrosive pool where it dispersed.
-- **weapon** `[ready]` Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT.
-- **weapon Lv1** `[draft]` Short cone, low DoT; Poisoned lasts a few seconds and does not stack.
-- **weapon Lv3** `[draft]` Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits.
+- **weapon** `[wip]` Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT.
+- **weapon Lv1** `[wip]` Short cone, low DoT; Poisoned lasts a few seconds and does not stack.
+- **weapon Lv3** `[wip]` Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits.
 - **weapon Lv6** `[wip]` Lv6+: clouds can be detonated for burst damage.
 - **weapon Lv10** `[wip]` Poisoned enemies drop health pickups when killed.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
