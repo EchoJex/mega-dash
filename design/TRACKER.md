@@ -255,12 +255,12 @@ where each one stands.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
 - **hazard L2** `[wip]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
 - **hazard L3** `[wip]` The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest.
-- **attack L1** `[ready]` Levitates the player and drops them from height while firing homing psychic orbs.
-- **attack L2** `[draft]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
-- **attack L3** `[draft]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
-- **weapon** `[ready]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
-- **weapon Lv1** `[draft]` One slow homing orb at a time; steerable while the attack button is held.
-- **weapon Lv3** `[draft]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
+- **attack L1** `[wip]` Levitates the player and drops them from height while firing homing psychic orbs.
+- **attack L2** `[wip]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
+- **attack L3** `[wip]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
+- **weapon** `[wip]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
+- **weapon Lv1** `[wip]` One slow homing orb at a time; steerable while the attack button is held.
+- **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
 - **weapon Lv6** `[wip]` Lv6+: can control multiple orbs.
 - **weapon Lv10** `[wip]` Ultimate: brief mind control on weak enemies.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
