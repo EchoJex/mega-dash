@@ -421,7 +421,7 @@ interaction present on every hit.
 
 ## Stun
 - **shared** `[wip]` Functionally the same as constrict/freeze; elementally correct colors flash while the target has this attribute.
-- **boss-applied** `[wip]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless
+- **boss-applied** `[wip]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied,
 - **weapon-applied** `[wip]`
 
 ## Constrict
