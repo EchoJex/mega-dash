@@ -388,7 +388,7 @@ where each one stands.
 - **weapon Lv1** `[wip]` Single blade, one ricochet, pierces the first enemy hit.
 - **weapon Lv3** `[wip]` Two ricochets and increased pierce; blades survive contact with terrain corners.
 - **weapon Lv6** `[wip]` Lv5+: blades can be recalled early.
-- **weapon Lv10** `[ready]` Temporary steel armor mode that greatly reduces damage taken.
+- **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ---
