@@ -152,7 +152,7 @@ where each one stands.
 - **attack L1** `[ready]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
-- **weapon** `[wip]` Defensive; Forms a large shield of ice in front of the player that slowly bulks upwhile the attack button is pressed. Short cooldown if released; long cooldown if destroyed by damage.
+- **weapon** `[wip]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up while the attack button is pressed. Short cooldown if released; long cooldown if destroyed by damage.
 - **weapon Lv1** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Releasing attack before the shield breaks releases 3 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
 - **weapon Lv6** `[ready]` Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
