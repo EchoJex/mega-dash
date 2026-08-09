@@ -176,7 +176,7 @@ where each one stands.
 - **weapon** `[draft]` Offensive; Close-range powerful punch with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
 - **weapon Lv1** `[draft]` 2 jabs, or 1 jab and one combo finisher.
 - **weapon Lv3** `[draft]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit.
-- **weapon Lv6** `[wip]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases.that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit.
+- **weapon Lv6** `[wip]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit.
 - **weapon Lv10** `[draft]` Finisher becomes a full dash-through that passes between enemies, hitting every one it crosses and ending in the launcher.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
