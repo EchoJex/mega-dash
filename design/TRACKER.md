@@ -101,7 +101,7 @@ where each one stands.
 `attack` Chain Spark · `weapon` Volt Spark
 
 - **palette notes** `[ready]` Yellow primary; deep purple secondary. Yellow is the classic electric read; the original cyan collided with Frost, Gale and Tempest.
-- **arena** `[draft]` High-voltage substation interior: exposed bus bars, insulator stacks, and caged floor panels. Background is a wall of transformers whose indicator lamps pulse in time with the hazard cycle.
+- **arena** `[wip]`
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[wip]` Stun on first enemy contact, with durations defined per level. Functionally same as constrict/freeze; elementally correct colors flash.
 - **hazard L1** `[draft]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
