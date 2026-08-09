@@ -420,7 +420,7 @@ interaction present on every hit.
 - **weapon-applied** `[wip]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds and reduce enemy movement speed.
 
 ## Stun
-- **shared** `[wip]` Very mild flinch with a faint yellow hue that becomes more intense
+- **shared** `[wip]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
 - **boss-applied** `[wip]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 - **weapon-applied** `[draft]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
