@@ -337,7 +337,7 @@ where each one stands.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
-- **hazard L2** `[draft]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
+- **hazard L2** `[wip]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
 - **hazard L3** `[draft]` Vents fire in a travelling sequence along the fissure, sweeping the room end to end.
 - **attack L1** `[ready]` Sweeping fire/ice beam + fireball projectiles.
 - **attack L2** `[draft]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
