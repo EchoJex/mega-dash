@@ -149,7 +149,7 @@ where each one stands.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
 - **hazard L2** `[wip]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
 - **hazard L3** `[wip]` A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it.
-- **attack L1** `[ready]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
+- **attack L1** `[wip]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon** `[draft]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
