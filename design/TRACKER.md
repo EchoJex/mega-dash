@@ -421,7 +421,7 @@ interaction present on every hit.
 
 ## Stun
 - **shared** `[wip]` Functionally the same as constrict/freeze; elementally correct colors flash while the target has this attribute.
-- **boss-applied** `[todo]`
+- **boss-applied** `[wip]` Reduces
 - **weapon-applied** `[wip]`
 
 ## Constrict
