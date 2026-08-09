@@ -91,7 +91,7 @@ where each one stands.
 - **attack L2** `[draft]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L3** `[draft]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **weapon** `[wip]` Defensive; Basically F.L.U.D.D. from Mario Sunshine
-- **weapon Lv1** `[draft]` Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground
+- **weapon Lv1** `[wip]` Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[wip]` Add the ability to hover briefly at the apex of any jump which shoots two water jets directly downward
 - **weapon Lv6** `[ready]` Water stream now affected by gravity but travels significantly further overall.
 - **weapon Lv10** `[ready]` Stream replaced with a semi-rapid water balloon style grenade launcher with small water-based explosions on contact with any enemy.
