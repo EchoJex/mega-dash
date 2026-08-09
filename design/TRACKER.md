@@ -422,7 +422,7 @@ interaction present on every hit.
 ## Stun
 - **shared** `[wip]` Functionally the same as constrict/freeze; elementally correct colors flash while the target has this attribute.
 - **boss-applied** `[todo]`
-- **weapon-applied** `[wip]` Volt Spark (1s / 2s / 0.5s chained / 4s per level); Quake Hammer (nearby enemies).
+- **weapon-applied** `[wip]`
 
 ## Constrict
 - **shared** `[wip]` Functionally the same as stun/freeze; elementally correct colors flash while the target has this attribute.
