@@ -270,15 +270,15 @@ where each one stands.
 `palette` #B8DC28 / #4D5C1A / #0A0A12 · `scale` 1.6x player height (petite build) · `id` swarm
 `attack` Infestation · `weapon` Swarm Caller
 
-- **arena** `[draft]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
+- **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
-- **hazard L2** `[draft]` Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst.
-- **hazard L3** `[draft]` Hatching is continuous from both walls, and the ceiling drops sacs that burst into slowing resin where they land.
-- **attack L1** `[ready]` Releases bug drones that home in and explode on contact.
-- **attack L2** `[draft]` Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass.
-- **attack L3** `[draft]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
+- **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
+- **hazard L2** `[wip]` Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst.
+- **hazard L3** `[wip]` Hatching is continuous from both walls, and the ceiling drops sacs that burst into slowing resin where they land.
+- **attack L1** `[wip]` Releases bug drones that home in and explode on contact.
+- **attack L2** `[wip]` Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass.
+- **attack L3** `[wip]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
 - **weapon** `[ready]` Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
 - **weapon Lv1** `[draft]` Two bug allies, short duration; they attack the nearest minion and expire together.
 - **weapon Lv3** `[draft]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
