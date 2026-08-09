@@ -125,9 +125,9 @@ where each one stands.
 - **arena** `[wip]` Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from.
 - **attribute (boss)** `[wip]` Constrict (via Vine Lash): several seconds. Functionally same as stun/freeze; elementally correct colors flash.
 - **attribute (weapon)** `[wip]` Constrict (Thorn Lash Lv10 vs mini-bosses, 5s DPS).
-- **hazard L1** `[draft]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
-- **hazard L2** `[draft]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
-- **hazard L3** `[draft]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
+- **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
+- **hazard L2** `[wip]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
+- **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
 - **attack L1** `[ready]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
 - **attack L2** `[draft]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
 - **attack L3** `[draft]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
