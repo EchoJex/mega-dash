@@ -100,7 +100,7 @@ where each one stands.
 `palette` #F5D328 / #5B21B6 / #0A0A12 · `scale` 1.65x player height (average build) · `id` volt
 `attack` Chain Spark · `weapon` Volt Spark
 
-- **palette notes** `[ready]` Yellow primary; deep purple secondary. Yellow is the classic electric read; the original cyan collided with Frost, Gale and Tempest.
+- **palette notes** `[draft]` Yellow primary; deep purple secondary.
 - **arena** `[draft]` A large plasma lamp in the background
 - **attribute (boss)** `[ready]`
 - **attribute (weapon)** `[wip]`
