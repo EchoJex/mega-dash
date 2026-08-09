@@ -185,7 +185,7 @@ where each one stands.
 `palette` #A926D9 / #84CC16 / #0A0A12 · `scale` 1.7x player height (average build) · `id` venom
 `attack` Toxic Cloud · `weapon` Venom Spray
 
-- **palette notes** `[ready]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
+- **palette notes** `[wip]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
 - **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
 - **attribute (boss)** `[wip]` Lingering poison clouds drain health over time and reduce player speed.
 - **attribute (weapon)** `[wip]` Poisoned: faint purple hue; DPS applied much less often (~every 3 seconds); causes flinch.
