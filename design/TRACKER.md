@@ -241,7 +241,7 @@ where each one stands.
 - **weapon Lv1** `[wip]` Small tornado, short duration, lifts minions only.
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
-- **weapon Lv10** `[draft]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
+- **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Psi Man — Psychic
