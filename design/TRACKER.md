@@ -238,8 +238,8 @@ where each one stands.
 - **attack L2** `[wip]` Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance.
 - **attack L3** `[wip]` A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position.
 - **weapon** `[wip]` Defensive; Creates a controllable mini-tornado that lifts enemies and carries projectiles. Per-level scaling: bigger/longer tornado + movement speed while controlling it.
-- **weapon Lv1** `[draft]` Small tornado, short duration, lifts minions only.
-- **weapon Lv3** `[draft]` Larger and longer; the tornado now carries enemy projectiles that enter it.
+- **weapon Lv1** `[wip]` Small tornado, short duration, lifts minions only.
+- **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[draft]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
