@@ -234,8 +234,8 @@ where each one stands.
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
 - **hazard L2** `[wip]` The wind gusts rather than holding steady — short, strong bursts strong enough to break a jump arc, separated by calm.
 - **hazard L3** `[wip]` Gusts alternate with vacuum pockets that pull toward the rotor, so the player is fighting force in both directions within one cycle.
-- **attack L1** `[ready]` Creates tornadoes that suck the player in and launch them upward.
-- **attack L2** `[draft]` Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance.
+- **attack L1** `[wip]` Creates tornadoes that suck the player in and launch them upward.
+- **attack L2** `[wip]` Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance.
 - **attack L3** `[draft]` A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position.
 - **weapon** `[ready]` Creates a controllable mini-tornado that lifts enemies and carries projectiles. Per-level scaling: bigger/longer tornado + movement speed while controlling it.
 - **weapon Lv1** `[draft]` Small tornado, short duration, lifts minions only.
