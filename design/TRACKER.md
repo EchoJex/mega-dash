@@ -312,11 +312,11 @@ where each one stands.
 `palette` #A68DD8 / #2A1F4A / #0A0A12 · `scale` 1.6x player height (petite build) · `id` wraith
 `attack` Spectral Shift · `weapon` Wraith Cloak
 
-- **arena** `[draft]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
+- **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[draft]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
-- **hazard L2** `[draft]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
+- **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
+- **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
 - **hazard L3** `[draft]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
 - **attack L1** `[ready]` Phases through attacks and counters with intangibility + surprise teleports.
 - **attack L2** `[draft]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
