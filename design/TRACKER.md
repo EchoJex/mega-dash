@@ -173,7 +173,7 @@ where each one stands.
 - **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
 - **attack L2** `[wip]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
 - **attack L3** `[wip]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
-- **weapon** `[wip]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; subsequent taps are long-press attack 0.4s for a combo finisher.
+- **weapon** `[wip]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
 - **weapon Lv1** `[draft]` 2 jabs, or 1 jab and one combo finisher.
 - **weapon Lv3** `[draft]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[draft]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
