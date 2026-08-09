@@ -317,7 +317,7 @@ where each one stands.
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
-- **hazard L3** `[draft]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
+- **hazard L3** `[wip]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
 - **attack L1** `[ready]` Phases through attacks and counters with intangibility + surprise teleports.
 - **attack L2** `[draft]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[draft]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
