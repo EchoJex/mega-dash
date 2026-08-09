@@ -122,11 +122,14 @@ const SIDEARM_Y = 46, SIDEARM_R = 11;
 const OFF_Y = 82, DEF_Y = 132;
 const ACTIVE_R = 15, ACTIVE_DX = 27;
 const ARC_RY = 42, ARC_SLOT_R = 7;
-const ARC_RX_MAX = 130;
-// The upper arc's top-centre is where the sidearm sits, so the benched
-// offensive weapons open a gap around it rather than stacking on top of it.
-const ARC_GAP = 0.34;              // radians of clearance either side of 12 o'clock
-const READ_Y = 100;
+const ARC_RX_MAX = 150;
+// The upper arc's top-centre is exactly where the sidearm sits, so the benched
+// offensive weapons are split across the two shoulders with a wedge left open
+// between them. Shrinking the arc's ENDS instead — which an earlier version
+// did — moves everything except the one slot that was in the way.
+const ARC_WEDGE = 0.34;            // radians held clear either side of 12 o'clock
+const ARC_END = 0.12;              // and a little clear of horizontal at the ends
+const READ_Y = 103;
 const SWIPE_CY = 66;               // between the sidearm and the offensive row
 const HOLD_MS = 350;               // press-and-hold to switch a slot off
 const LOCKED_FILL = 0x3a3f4a;
@@ -505,7 +508,7 @@ export default class UIScene extends Phaser.Scene {
    */
   buildWheel() {
     const cx = this.w / 2;
-    const rx = Math.min(cx - 18, ARC_RX_MAX);
+    const rx = Math.min(cx - 16, ARC_RX_MAX);
     this.wheel = this.add.container(0, 0).setVisible(false);
 
     this.aimG = this.add.graphics();
@@ -576,13 +579,21 @@ export default class UIScene extends Phaser.Scene {
   mkArc(cls, cx, cy, rx, dir) {
     const ids = specialsOfClass(cls);
     const n = ids.length;
-    const gap = dir < 0 ? ARC_GAP : 0;
-    const from = gap, to = Math.PI - gap;
+    const lo = ARC_END, hi = Math.PI - ARC_END, mid = Math.PI / 2;
+    // Only the UPPER arc has to dodge anything; nothing sits below the
+    // defensive row, so its arc runs unbroken.
+    const wedge = dir < 0 ? ARC_WEDGE : 0;
+    const left = wedge ? Math.ceil(n / 2) : n;
+    const right = n - left;
+    const spread = (i, count, a, b) =>
+      (count <= 1 ? (a + b) / 2 : a + (i / (count - 1)) * (b - a));
+
     return ids.map((id, i) => {
-      // Walk the half-circle from one side to the other. n-1 in the divisor so
-      // the first and last weapons sit at the very ends of the arc.
-      const t = n === 1 ? 0.5 : i / (n - 1);
-      const th = from + t * (to - from);
+      const th = !wedge
+        ? spread(i, n, lo, hi)
+        : i < left
+          ? spread(i, left, lo, mid - wedge)
+          : spread(i - left, right, mid + wedge, hi);
       const x = cx - Math.cos(th) * rx;
       const y = cy + dir * Math.sin(th) * ARC_RY;
       const slot = this.mkSlot(
@@ -664,19 +675,42 @@ export default class UIScene extends Phaser.Scene {
       const off = !!s.id && !Loadout.isEnabled(lo, s.id);
       s.locked = !!s.id && !unlocked;
 
+      // A weapon that is currently SLOTTED vacates its arc position. Showing it
+      // in both places at once made the wheel read as two copies of the same
+      // weapon, and left the player wondering which one they were about to
+      // touch. The position is reserved, not reused — nothing else slides into
+      // the hole, so the arc stays learnable.
+      s.vacant = s.kind === 'arc' && Loadout.isEquipped(lo, s.id);
+      s.disc.setVisible(!s.vacant);
+      if (s.vacant) {
+        s.abbr.setVisible(false);
+        s.lvl.setVisible(false);
+        continue;
+      }
+
       let fill = LOCKED_FILL, alpha = LOCKED_ALPHA;
       if (!s.id) { fill = 0x141c2c; alpha = 0.5; }
       else if (unlocked) {
         fill = hexNum(wd.palette.primary || '#5CADD5');
         alpha = off ? OFF_ALPHA : carried ? 1 : BENCH_ALPHA;
       }
+      // Three rings, because "carried" and "on the fire button" are different
+      // facts and the player needs both at a glance: white for the weapon the
+      // button is pointed at, gold for the rest of the loadout, the weapon's
+      // own outline for everything on the bench.
+      const live = s.id === r.activeWeapon && carried && !off;
       s.disc.setFillStyle(fill).setAlpha(alpha).setScale(1);
       s.disc.setStrokeStyle(
         carried && !off ? 2 : 1,
-        carried && !off ? 0xF5D328 : hexNum(wd.palette.outline || '#0A0A12'),
+        live ? 0xFFFFFF
+          : carried && !off ? 0xF5D328
+            : hexNum(wd.palette.outline || '#0A0A12'),
       );
 
       const ink = inkFor(unlocked ? wd.palette.primary : null);
+      // A LOCKED slot shows its padlock and nothing else. The arc is eleven
+      // weapons wide and most of them are locked for most of a run; labelling
+      // things you cannot use is what turned it into a wall of text.
       const show = !!s.id && unlocked;
       s.abbr.setVisible(show)
         .setText(show ? wd.short.slice(0, s.chars) : '')
@@ -822,6 +856,7 @@ export default class UIScene extends Phaser.Scene {
    * there is nothing to select — it is already running.
    */
   tapSlot(s) {
+    if (s.vacant) return;        // its weapon is already in a slot
     const r = this.game_.run;
     if (!s.id) {
       // An empty socket is a target, not a dead end: if a weapon is waiting to
