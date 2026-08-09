@@ -112,7 +112,7 @@ where each one stands.
 - **attack L3** `[draft]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
 - **weapon** `[draft]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
 - **weapon Lv1** `[draft]` 0 chains; 1s stun on first enemy contact.
-- **weapon Lv3** `[ready]` Chain damage to 1 additional enemy, who does not get stunned.
+- **weapon Lv3** `[draft]` Chain damage to 1 additional enemy, who does not get stunned.
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 2 additional enemies, stunned 0.5s.
 - **weapon Lv10** `[ready]` Chain damage hits all enemies near the first enemy contacted; all stunned 4s.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
