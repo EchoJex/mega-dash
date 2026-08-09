@@ -107,7 +107,7 @@ where each one stands.
 - **hazard L1** `[draft]` Floor panels electrify in a slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[draft]` Same sweep, faster, plus overhead conductors that drop a vertical a St Elmo's for looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
-- **attack L1** `[wip]` Fires up to 3 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
+- **attack L1** `[draft]` Fires up to 3 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
 - **attack L2** `[draft]` Bolts increase to 7 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap.
 - **attack L3** `[draft]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
 - **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
