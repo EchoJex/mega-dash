@@ -77,7 +77,7 @@ where each one stands.
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
 - **palette notes** `[wip]`
-- **arena** `[wip]` Background theme dark cloudy skies. Bolts of lightning and screen flashes
+- **arena** `[wip]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph
 - **attribute (boss)** `[ready]`
 - **attribute (weapon)** `[ready]`
 - **hazard L1** `[draft]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
