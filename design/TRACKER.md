@@ -134,8 +134,8 @@ where each one stands.
 - **weapon** `[wip]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
 - **weapon Lv1** `[wip]` Short reach; can only reel in and damage minions; does not toss or constrict them.
 - **weapon Lv3** `[wip]` Increased reach. On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
-- **weapon Lv6** `[ready]` Significantly increased reach.
-- **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
+- **weapon Lv6** `[wip]` Significantly increased reach.
+- **weapon Lv10** `[wip]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Frost Man — Ice
