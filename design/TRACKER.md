@@ -282,7 +282,7 @@ where each one stands.
 - **weapon** `[draft]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: more bugs + longer duration.
 - **weapon Lv1** `[draft]` Two bug allies, short duration; they attack the nearest minion and expire together.
 - **weapon Lv3** `[draft]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
-- **weapon Lv6** `[wip]` Lv5+: every other bug will prioritize blocking projectiles.
+- **weapon Lv6** `[wip]` Lv56: every other bug will prioritize blocking projectiles.
 - **weapon Lv10** `[wip]` Lv9: bugs form a temporary shield or kamikaze explosion wave.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
