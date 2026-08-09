@@ -21,23 +21,47 @@
  * -----------------
  * One button, two ways in, deliberately priced differently:
  *
- *   TAP    hard pause. Gameplay dims, the wheel and every unlocked weapon come
- *          up to full opacity. The safe read-everything-and-choose route.
+ *   TAP    hard pause. Gameplay dims, the wheel comes up to full opacity. The
+ *          safe read-everything-and-choose route.
  *   SWIPE  no pause. Time collapses to a crawl, a ghosted wheel appears, and
  *          the DIRECTION of the swipe picks the weapon. Fast, but it costs real
  *          seconds and you are still being shot at.
  *
- * Slot positions are fixed (WHEEL_ORDER in data/weapons.js) whether or not a
- * weapon is unlocked. Locked slots stay in place under a padlock rather than
- * being skipped, so the wheel never reshuffles under your thumb as bosses fall
- * and the swipe can become muscle memory.
+ * LAYOUT — the loadout is the wheel, and the wheel is the loadout:
+ *
+ *          . . . benched offensive specials, greyed, in an upper arc . . .
+ *                            ( SIDE ARM )
+ *                    [ OFF 1 ]        [ OFF 2 ]
+ *                    [ DEF 1 ]        [ DEF 2 ]
+ *          . . . benched defensive specials, in a lower arc . . .
+ *
+ * The five things you are carrying are large and central; everything you own
+ * but are not carrying is small, dim, and out at the rim. That ordering is the
+ * point — the old wheel gave a padlock you would never use the same visual
+ * weight as the weapon in your hands.
+ *
+ *   TAP an active slot        equip it to the fire button and resume (offensive
+ *                             and sidearm only — a defensive weapon has nothing
+ *                             to aim, so tapping one only reads it out)
+ *   TAP a benched weapon      slot it into its own class
+ *   PRESS AND HOLD any slot   switch that weapon off without giving up the slot
+ *
+ * ARC POSITIONS ARE FIXED (ARC_ORDER in data/weapons.js) whether or not a
+ * weapon is unlocked, and locked ones sit under a padlock rather than being
+ * skipped. The arc therefore never reshuffles under your thumb as bosses fall,
+ * which is the only way any of this becomes muscle memory. The brainstorm only
+ * asked for the benched ones to be shown; keeping the padlocks costs a slot
+ * position each and buys a stable map.
  */
 
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf, DISPLAY_DIAG, BUILD } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
-import { weaponOf, WHEEL_ORDER } from '../data/weapons.js';
+import {
+  weaponOf, WHEEL_ORDER, SIDEARM_ID, OFFENSIVE, DEFENSIVE, specialsOfClass, classOf,
+} from '../data/weapons.js';
+import * as Loadout from '../systems/loadout.js';
 import { BOSSES, bossLayer } from '../data/bosses.js';
 import { dev, DEV } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
@@ -84,13 +108,31 @@ const GRACE_UP = 34;
 const PAD_ALPHA = 0.62;
 const PAD_ALPHA_ON = 0;
 
-// Wheel geometry. Sized to clear the HUD above and both thumb pads below on the
-// narrowest supported virtual width (320).
-const WHEEL_CY = 100;
-const WHEEL_R = 64;
-const SLOT_R = 9;
+/**
+ * Wheel geometry, in virtual pixels. Every number here is fenced by the HUD
+ * above (three lines, so up to y=33) and the thumb pads below (from y=194), and
+ * checked at the narrowest supported virtual width (320).
+ *
+ * The arcs are ELLIPSES, not circles: a circle wide enough to hold eleven
+ * offensive weapons would be taller than the space between the HUD and the
+ * pads, and squashing it vertically costs nothing legibility-wise while
+ * keeping the "half circle above / below" read the brainstorm asked for.
+ */
+const SIDEARM_Y = 46, SIDEARM_R = 11;
+const OFF_Y = 82, DEF_Y = 132;
+const ACTIVE_R = 15, ACTIVE_DX = 27;
+const ARC_RY = 42, ARC_SLOT_R = 7;
+const ARC_RX_MAX = 130;
+// The upper arc's top-centre is where the sidearm sits, so the benched
+// offensive weapons open a gap around it rather than stacking on top of it.
+const ARC_GAP = 0.34;              // radians of clearance either side of 12 o'clock
+const READ_Y = 100;
+const SWIPE_CY = 66;               // between the sidearm and the offensive row
+const HOLD_MS = 350;               // press-and-hold to switch a slot off
 const LOCKED_FILL = 0x3a3f4a;
 const LOCKED_ALPHA = 0.45;
+const BENCH_ALPHA = 0.5;           // unlocked but not carried
+const OFF_ALPHA = 0.3;             // slotted but switched off
 const IDLE_ALPHA = PAD_ALPHA; // RE-QUIP rests at the same opacity as the pads
 
 /**
@@ -103,6 +145,13 @@ function inkFor(hex) {
   const n = hexNum(hex);
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
+}
+
+/** A slotted-but-switched-off weapon wears a cross. Kept, just not running. */
+function drawOffMark(g, x, y, s) {
+  g.lineStyle(1, 0xC04040, 0.95);
+  g.lineBetween(x - s, y - s, x + s, y + s);
+  g.lineBetween(x + s, y - s, x - s, y + s);
 }
 
 /** Padlock glyph for a locked slot: shackle arch over a body with a keyhole. */
@@ -448,45 +497,101 @@ export default class UIScene extends Phaser.Scene {
    * combat, so tearing down and rebuilding ~40 game objects every time it
    * appeared would be wasteful for no gain.
    */
+  /**
+   * Built once and then only restyled. `refreshWheel` changes what each disc
+   * SHOWS; nothing is ever created or destroyed while the game is running,
+   * because the swipe route pops this up mid-combat and rebuilding two dozen
+   * game objects every time would be waste for no gain.
+   */
   buildWheel() {
-    const cx = this.w / 2, cy = WHEEL_CY;
-    const n = WHEEL_ORDER.length;
+    const cx = this.w / 2;
+    const rx = Math.min(cx - 18, ARC_RX_MAX);
     this.wheel = this.add.container(0, 0).setVisible(false);
 
-    // rim + aim line, under the slots
     this.aimG = this.add.graphics();
     this.wheel.add(this.aimG);
 
-    this.slots = WHEEL_ORDER.map((id, i) => {
-      const angle = -Math.PI / 2 + (i / n) * Math.PI * 2; // slot 0 at 12 o'clock
-      const x = cx + Math.cos(angle) * WHEEL_R;
-      const y = cy + Math.sin(angle) * WHEEL_R;
-      const wd = weaponOf(id);
-      const ink = inkFor(wd.palette.primary);
+    // The five slots you are carrying. `id` is filled in by refreshWheel — an
+    // active slot shows whatever is in it, so unlike an arc position it does
+    // not belong to one weapon.
+    this.active = [
+      { kind: 'sidearm', cls: null, index: -1, x: cx, y: SIDEARM_Y, r: SIDEARM_R },
+      { kind: 'slot', cls: OFFENSIVE, index: 0, x: cx - ACTIVE_DX, y: OFF_Y, r: ACTIVE_R },
+      { kind: 'slot', cls: OFFENSIVE, index: 1, x: cx + ACTIVE_DX, y: OFF_Y, r: ACTIVE_R },
+      { kind: 'slot', cls: DEFENSIVE, index: 0, x: cx - ACTIVE_DX, y: DEF_Y, r: ACTIVE_R },
+      { kind: 'slot', cls: DEFENSIVE, index: 1, x: cx + ACTIVE_DX, y: DEF_Y, r: ACTIVE_R },
+    ].map((s) => this.mkSlot(s, 5));
 
-      const disc = this.add.circle(x, y, SLOT_R, hexNum(wd.palette.primary))
-        .setStrokeStyle(1, hexNum(wd.palette.outline || '#0A0A12'))
-        .setInteractive({ useHandCursor: true });
-      disc.on('pointerdown', () => this.pick(id));
-      disc.on('pointerover', () => { if (this.mode === 'open') this.setReadout(id); });
+    this.arc = [
+      ...this.mkArc(OFFENSIVE, cx, OFF_Y, rx, -1),
+      ...this.mkArc(DEFENSIVE, cx, DEF_Y, rx, 1),
+    ];
 
-      // first three letters of the leading word — unique across all 18, and the
-      // only label that fits inside an 18px slot
-      const abbr = label(this, x, y - 4, wd.name.split(' ')[0].slice(0, 3),
-        { color: ink, origin: 0.5 });
-      const lvl = label(this, x, y + 4, '', { color: ink, origin: 0.5 });
-
-      this.wheel.add([disc, abbr, lvl]);
-      return { id, x, y, angle, disc, abbr, lvl, locked: false };
-    });
-
-    // padlocks sit ON TOP of their greyed slot, so added after every disc
+    // Padlocks and the off-switch cross sit ON TOP of their disc, so this goes
+    // in after every one of them.
     this.lockG = this.add.graphics();
     this.wheel.add(this.lockG);
 
-    this.readName = label(this, cx, cy - 6, '', { color: '#E0F0FF', origin: 0.5 });
-    this.readLv = label(this, cx, cy + 4, '', { color: '#5CADD5', origin: 0.5 });
-    this.wheel.add([this.readName, this.readLv]);
+    this.readName = label(this, cx, READ_Y, '', { color: '#E0F0FF', origin: 0.5 });
+    this.readLv = label(this, cx, READ_Y + 9, '', { color: '#5CADD5', origin: 0.5 });
+    // Below the lower arc rather than above the sidearm: the top of the wheel
+    // is the busiest part of it, and a banner there covers the slot the player
+    // is being asked to look at.
+    this.banner = label(this, cx, 166, '', { color: '#F5D328', origin: 0.5 });
+    this.wheel.add([this.readName, this.readLv, this.banner]);
+
+    // Press-and-hold is resolved at SCENE level, not on the disc: a thumb held
+    // for a third of a second drifts, and a disc stops seeing its own pointer
+    // the moment it does — the same reason the movement pads track holds here.
+    this.input.on('pointerup', () => {
+      const sp = this.slotPress;
+      this.slotPress = null;
+      if (!sp || this.mode !== 'open') return;
+      if (performance.now() - sp.t >= HOLD_MS) this.toggleSlot(sp.slot);
+      else this.tapSlot(sp.slot);
+    });
+  }
+
+  /** One tappable disc: body, abbreviation, level. Contents are set on refresh. */
+  mkSlot(s, chars) {
+    const disc = this.add.circle(s.x, s.y, s.r, LOCKED_FILL)
+      .setStrokeStyle(1, 0x0a0a12)
+      .setInteractive({ useHandCursor: true });
+    const abbr = label(this, s.x, s.y - 5, '', { color: '#E0F0FF', origin: 0.5 });
+    const lvl = label(this, s.x, s.y + 3, '', { color: '#E0F0FF', origin: 0.5 });
+    const slot = { ...s, chars, disc, abbr, lvl, id: null };
+    disc.on('pointerdown', () => { this.slotPress = { slot, t: performance.now() }; });
+    disc.on('pointerover', () => { if (this.mode === 'open') this.setReadout(slot.id); });
+    this.wheel.add([disc, abbr, lvl]);
+    return slot;
+  }
+
+  /**
+   * A class's benched specials, spread along a half-ellipse.
+   *
+   * `dir` is -1 for the arc above the offensive row and +1 for the one below
+   * the defensive row. The upper arc skips a wedge at 12 o'clock so it opens
+   * around the sidearm instead of burying it.
+   */
+  mkArc(cls, cx, cy, rx, dir) {
+    const ids = specialsOfClass(cls);
+    const n = ids.length;
+    const gap = dir < 0 ? ARC_GAP : 0;
+    const from = gap, to = Math.PI - gap;
+    return ids.map((id, i) => {
+      // Walk the half-circle from one side to the other. n-1 in the divisor so
+      // the first and last weapons sit at the very ends of the arc.
+      const t = n === 1 ? 0.5 : i / (n - 1);
+      const th = from + t * (to - from);
+      const x = cx - Math.cos(th) * rx;
+      const y = cy + dir * Math.sin(th) * ARC_RY;
+      const slot = this.mkSlot(
+        { kind: 'arc', cls, index: -1, x, y, r: ARC_SLOT_R }, 3,
+      );
+      slot.id = id;
+      slot.fixed = true;          // an arc position belongs to one weapon forever
+      return slot;
+    });
   }
 
   buildRequip() {
@@ -534,20 +639,67 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  /** Sync every slot to current unlock state and weapon levels. */
+  /**
+   * Sync every disc to the current loadout, unlock state and levels.
+   *
+   * Four visual states, and they have to be distinguishable at a glance under
+   * fire: CARRIED (full colour), SWITCHED OFF (dim with a cross), BENCHED (half
+   * strength), LOCKED (grey under a padlock). A benched weapon and a locked one
+   * looking alike was the specific failure of the old wheel.
+   */
   refreshWheel() {
-    const r = this.game_.run;
+    const r = this.game_.run, lo = r.loadout;
     this.lockG.clear();
-    for (const s of this.slots) {
-      const unlocked = r.unlocked.has(s.id);
+
+    // Active slots take whatever is in them; an empty one shows as a hollow
+    // socket rather than vanishing, so the cap is always visible.
+    for (const s of this.active) {
+      s.id = s.kind === 'sidearm' ? SIDEARM_ID : Loadout.slotsOf(lo, s.cls)[s.index];
+    }
+
+    for (const s of [...this.active, ...this.arc]) {
       const wd = weaponOf(s.id);
-      s.locked = !unlocked;
-      s.disc.setFillStyle(unlocked ? hexNum(wd.palette.primary) : LOCKED_FILL);
-      s.disc.setAlpha(unlocked ? 1 : LOCKED_ALPHA);
-      s.disc.setScale(1);
-      s.abbr.setVisible(unlocked);
-      s.lvl.setVisible(unlocked).setText(String(r.wpLevels[s.id] || 1));
-      if (!unlocked) drawPadlock(this.lockG, s.x, s.y, SLOT_R * 1.6);
+      const unlocked = !!s.id && r.unlocked.has(s.id);
+      const carried = !!s.id && (s.kind !== 'arc');
+      const off = !!s.id && !Loadout.isEnabled(lo, s.id);
+      s.locked = !!s.id && !unlocked;
+
+      let fill = LOCKED_FILL, alpha = LOCKED_ALPHA;
+      if (!s.id) { fill = 0x141c2c; alpha = 0.5; }
+      else if (unlocked) {
+        fill = hexNum(wd.palette.primary || '#5CADD5');
+        alpha = off ? OFF_ALPHA : carried ? 1 : BENCH_ALPHA;
+      }
+      s.disc.setFillStyle(fill).setAlpha(alpha).setScale(1);
+      s.disc.setStrokeStyle(
+        carried && !off ? 2 : 1,
+        carried && !off ? 0xF5D328 : hexNum(wd.palette.outline || '#0A0A12'),
+      );
+
+      const ink = inkFor(unlocked ? wd.palette.primary : null);
+      const show = !!s.id && unlocked;
+      s.abbr.setVisible(show)
+        .setText(show ? wd.short.slice(0, s.chars) : '')
+        .setTint(hexNum(ink));
+      s.lvl.setVisible(show)
+        .setText(show ? `L${r.wpLevels[s.id] || 1}` : '')
+        .setTint(hexNum(ink));
+      // Re-centre: the abbreviation width changes with the weapon in the slot.
+      s.abbr.setX(s.x); s.lvl.setX(s.x);
+
+      if (s.locked) drawPadlock(this.lockG, s.x, s.y, s.r * 1.5);
+      if (off) drawOffMark(this.lockG, s.x, s.y, s.r * 0.7);
+    }
+
+    // The acquire-time picker points at the class that just gained a weapon.
+    const pending = r.pendingLoadout;
+    this.banner.setVisible(!!pending)
+      .setText(pending ? `SLOT ${weaponOf(pending).short}?` : '');
+    if (pending) {
+      const cls = classOf(pending);
+      for (const s of this.active) {
+        if (s.cls === cls) s.disc.setScale(1.12);
+      }
     }
   }
 
@@ -567,6 +719,10 @@ export default class UIScene extends Phaser.Scene {
 
   closeWheel() {
     this.mode = null;
+    // Closing on an unresolved acquire IS the answer: the new weapon goes to
+    // the bench. It keeps its level and stays one tap away in the arc, so this
+    // is a real third option rather than a way to get stuck.
+    this.game_.run.pendingLoadout = null;
     this.game_.paused = false;
     this.scrim.setVisible(false);
     this.wheel.setVisible(false);
@@ -574,7 +730,14 @@ export default class UIScene extends Phaser.Scene {
     this.reqTxt.setAlpha(IDLE_ALPHA);
   }
 
-  /** SWIPE route — no pause, ghosted wheel, time drops to a crawl. */
+  /**
+   * SWIPE route — no pause, ghosted wheel, time drops to a crawl.
+   *
+   * The swipe only ever aims at what the fire button can actually use: the
+   * sidearm and the two offensive slots. Three targets instead of eighteen is
+   * what makes it usable under fire at all — the old wheel asked for a 20°
+   * flick accuracy while you were being shot at.
+   */
   beginSwipe() {
     this.mode = 'swipe';
     this.refreshWheel();
@@ -584,73 +747,145 @@ export default class UIScene extends Phaser.Scene {
   }
 
   endSwipe() {
-    if (this.aimIndex >= 0) this.game_.selectWeapon(this.slots[this.aimIndex].id);
+    const target = this.swipeTargets()[this.aimIndex];
+    if (target) { sfx('requip'); this.game_.selectWeapon(target.id); }
     this.mode = null;
     this.wheel.setVisible(false);
     this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
   }
 
-  /** Swipe vector -> the slot lying in that direction, snapped to an unlocked one. */
-  aimSwipe(dx, dy) {
-    const a = Math.atan2(dy, dx);
-    let best = 0, bestD = Infinity;
-    this.slots.forEach((s, i) => {
-      const d = Math.abs(((a - s.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-      if (d < bestD) { bestD = d; best = i; }
-    });
-    this.aimIndex = this.nearestUnlocked(best);
-    this.highlight(this.aimIndex);
+  /** Slots the swipe can land on: filled, enabled, and firable. */
+  swipeTargets() {
+    const usable = Loadout.firables(this.game_.run.loadout);
+    return this.active.filter((s) => s.id && usable.includes(s.id));
   }
 
-  /**
-   * Walk outward from a slot to the closest unlocked one. Aiming at a padlock
-   * should still give you a weapon — a swipe that silently does nothing reads
-   * as a dropped input, not as a rule.
-   */
-  nearestUnlocked(i) {
-    const n = this.slots.length, un = this.game_.run.unlocked;
-    for (let d = 0; d <= n / 2; d++) {
-      for (const k of d === 0 ? [i] : [i + d, i - d]) {
-        const j = ((k % n) + n) % n;
-        if (un.has(this.slots[j].id)) return j;
-      }
-    }
-    return 0;
+  /** Swipe vector -> whichever firable slot lies in that direction. */
+  aimSwipe(dx, dy) {
+    const a = Math.atan2(dy, dx);
+    const cx = this.w / 2;
+    const targets = this.swipeTargets();
+    let best = -1, bestD = Infinity;
+    targets.forEach((s, i) => {
+      const th = Math.atan2(s.y - SWIPE_CY, s.x - cx);
+      const d = Math.abs(((a - th + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    this.aimIndex = best;
+    this.highlight(best);
   }
 
   highlight(i) {
-    this.slots.forEach((s, k) => s.disc.setScale(k === i ? 1.35 : 1));
-    if (i >= 0) this.setReadout(this.slots[i].id);
+    const targets = this.swipeTargets();
+    this.active.forEach((s) => s.disc.setScale(1));
+    const s = targets[i];
+    if (s) { s.disc.setScale(1.3); this.setReadout(s.id); }
     this.drawAim();
   }
 
   drawAim() {
-    const g = this.aimG, cx = this.w / 2, cy = WHEEL_CY;
+    const g = this.aimG, cx = this.w / 2;
     g.clear();
-    g.lineStyle(1, 0x5cadd5, 0.3);
-    g.strokeCircle(cx, cy, WHEEL_R);
-    if (this.aimIndex >= 0) {
-      const s = this.slots[this.aimIndex];
-      // starts outside the centre readout so the line never crosses the text
-      g.lineStyle(1, 0xf5d328, 0.9);
-      g.lineBetween(cx + Math.cos(s.angle) * 26, cy + Math.sin(s.angle) * 26, s.x, s.y);
-    }
+    const s = this.swipeTargets()[this.aimIndex];
+    if (!s) return;
+    g.lineStyle(1, 0xf5d328, 0.9);
+    g.lineBetween(cx, SWIPE_CY, s.x, s.y);
   }
 
   setReadout(id) {
-    const wd = weaponOf(id), r = this.game_.run;
+    const r = this.game_.run;
+    if (r.pendingLoadout) {
+      this.readName.setText(weaponOf(r.pendingLoadout).name);
+      this.readLv.setText('CHOOSE A SLOT OR BENCH');
+      return;
+    }
+    if (!id) {
+      this.readName.setText('EMPTY SLOT');
+      this.readLv.setText('TAP A WEAPON FROM THE ARC');
+      return;
+    }
+    const wd = weaponOf(id);
+    const lo = r.loadout;
     this.readName.setText(wd.name);
-    this.readLv.setText(r.unlocked.has(id) ? `Lv ${r.wpLevels[id] || 1}` : 'LOCKED');
+    this.readLv.setText(
+      !r.unlocked.has(id) ? 'LOCKED'
+        : !Loadout.isEnabled(lo, id) ? `Lv ${r.wpLevels[id] || 1}  OFF`
+          : `Lv ${r.wpLevels[id] || 1}  ${wd.cls.toUpperCase()}`,
+    );
   }
 
-  /** Tapping a slot while paused equips it and resumes. Padlocks are inert. */
-  pick(id) {
-    if (this.mode !== 'open') return;
-    // Dev mode equips through the padlock; otherwise a locked slot is inert.
-    if (!this.game_.run.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
+  /**
+   * A tap, resolved by what was tapped.
+   *
+   * An arc weapon slots in; an offensive or sidearm slot becomes the live
+   * weapon and resumes the game; a defensive slot only reads out, because
+   * there is nothing to select — it is already running.
+   */
+  tapSlot(s) {
+    const r = this.game_.run;
+    if (!s.id) {
+      // An empty socket is a target, not a dead end: if a weapon is waiting to
+      // be slotted, this is where it goes.
+      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls) this.installPending(s);
+      else this.setReadout(null);
+      return;
+    }
+    if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
+
+    if (r.pendingLoadout && s.kind === 'slot' && classOf(r.pendingLoadout) === s.cls) {
+      this.installPending(s);
+      return;
+    }
+
+    if (s.kind === 'arc') {
+      sfx('requip');
+      this.game_.equipSlot(s.id, this.landingSlot(s.id));
+      this.refreshWheel();
+      this.setReadout(s.id);
+      return;
+    }
+    if (classOf(s.id) === DEFENSIVE) { this.setReadout(s.id); return; }
     sfx('requip');
-    this.game_.selectWeapon(id);
+    this.game_.selectWeapon(s.id);
     this.closeWheel();
+  }
+
+  /**
+   * Which slot a benched weapon should displace.
+   *
+   * An empty one if there is one; otherwise the slot that is NOT the weapon
+   * currently on the fire button, so a one-tap swap never silently disarms the
+   * thing you were shooting with.
+   */
+  landingSlot(id) {
+    const r = this.game_.run, cls = classOf(id);
+    const slots = Loadout.slotsOf(r.loadout, cls);
+    const empty = slots.indexOf(null);
+    if (empty >= 0) return empty;
+    const keep = slots.indexOf(r.activeWeapon);
+    return keep === 0 ? 1 : 0;
+  }
+
+  /** Press-and-hold: switch a carried weapon off without losing the slot. */
+  toggleSlot(s) {
+    const r = this.game_.run;
+    if (!s.id || s.kind === 'arc' || s.kind === 'sidearm') return;
+    if (!r.unlocked.has(s.id)) return;
+    sfx('select');
+    this.game_.toggleWeapon(s.id);
+    this.refreshWheel();
+    this.setReadout(s.id);
+  }
+
+  /** Resolve the post-boss loadout choice into the slot the player picked. */
+  installPending(s) {
+    const r = this.game_.run;
+    const id = r.pendingLoadout;
+    sfx('requip');
+    this.game_.equipSlot(id, s.index);
+    r.pendingLoadout = null;
+    this.refreshWheel();
+    this.setReadout(id);
   }
 
   /**
@@ -700,7 +935,9 @@ export default class UIScene extends Phaser.Scene {
       const wd = weaponOf(id);
       const lv = r.wpLevels[id] || 1;
       return {
-        title: wd.name.split(' ')[0],
+        // The short name, not the first word: NULLFIRE DRONE reads as N-DRONE
+        // on a card, and "NULLFIRE" would not match what the wheel shows.
+        title: wd.short,
         sub: r.unlocked.has(id) ? `Lv ${lv} -> ${lv + 1}` : `LOCKED  Lv ${lv}->${lv + 1}`,
         tint: wd.palette.primary || '#5CADD5',
         take: () => {
@@ -793,19 +1030,27 @@ export default class UIScene extends Phaser.Scene {
       `${w.name} L${r.wpLevels[r.activeWeapon] || 1}` + diag,
     );
 
-    // Stand-in for the proper acquisition popup — just enough to confirm
-    // a boss actually handed over its weapon.
+    // THE WEAPON-ACQUIRE SEQUENCE. The banner names what the boss dropped;
+    // then, only if both slots of that class are already full, the wheel opens
+    // on the choice. A weapon that fitted straight into a free slot needs no
+    // decision and does not get a menu.
     if (r.justUnlocked) {
       if (!this.unlockMsg) {
         this.unlockMsg = label(this, this.w / 2, 44, '', { color: '#F5D328', origin: 0.5 });
         this.unlockAt = performance.now();
       }
-      this.unlockMsg.setText(`${weaponOf(r.justUnlocked).name} ACQUIRED`);
+      const wd = weaponOf(r.justUnlocked);
+      this.unlockMsg.setText(`${wd.name} ACQUIRED`);
       if (performance.now() - this.unlockAt > 2500) {
         this.unlockMsg.destroy();
         this.unlockMsg = null;
         r.justUnlocked = null;
       }
+    } else if (r.pendingLoadout && this.mode !== 'open'
+      && !this.cards && !this.pausePanel && !gm.warp) {
+      // Deliberately after the banner has run its course, so the player has
+      // read WHAT they got before being asked where to put it.
+      this.openWheel();
     }
 
     // The pads draw themselves now (real rectangles with glyphs, lit while held),
