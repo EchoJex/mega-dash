@@ -167,7 +167,7 @@ where each one stands.
 - **arena** `[draft]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
-- **hazard L1** `[wip]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
+- **hazard L1** `[draft]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
 - **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
 - **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
 - **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
