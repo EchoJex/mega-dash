@@ -164,7 +164,7 @@ where each one stands.
 `palette` #EA6A34 / #7C2D12 / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` strike
 `attack` Rush Combo · `weapon` Strike Gauntlet
 
-- **arena** `[wip]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
+- **arena** `[draft]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[wip]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
