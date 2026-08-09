@@ -304,7 +304,7 @@ where each one stands.
 - **weapon Lv1** `[wip]` Single thrown boulder; rolls on landing and stops at the first wall.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
-- **weapon Lv10** `[draft]` Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall.
+- **weapon Lv10** `[wip]` Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Wraith Man — Ghost
