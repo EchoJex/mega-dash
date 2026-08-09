@@ -354,7 +354,7 @@ where each one stands.
 `palette` #2A273F / #DC2626 / #0A0A12 · `scale` 1.75x player height (average build) · `id` eclipse
 `attack` Shadow Bind · `weapon` Eclipse Blade
 
-- **arena** `[draft]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
+- **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[draft]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
