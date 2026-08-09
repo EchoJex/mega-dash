@@ -291,7 +291,7 @@ where each one stands.
 `palette` #5F443A / #A8A296 / #0A0A12 · `scale` 2.0x player height (bulky build) · `id` granite
 `attack` Boulder Roll · `weapon` Rock Buster
 
-- **arena** `[draft]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
+- **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[draft]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
