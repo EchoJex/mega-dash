@@ -20,6 +20,7 @@
 import { FEEL } from '../config/feel.js';
 import { MINIONS } from '../data/minions.js';
 import { isOverGround } from './physics.js';
+import * as Attr from './attributes.js';
 
 /** Whole difficulty steps elapsed. Step 0 is the first `rampSeconds` of a run. */
 export const difficultyStep = (frames) =>
@@ -74,19 +75,51 @@ export function trySpawn(world, camX, viewW, frames, groundY) {
     hp: Math.round(hp), maxHp: Math.round(hp),
     anim: Math.floor(Math.random() * 120), // desync the bob between spawns
     onGround: false,
+    // Elemental attributes live per actor, exactly as they do on the player.
+    // Empty for an ambient minion — nothing carries an element until a player
+    // weapon puts one on it.
+    status: {},
+    kbVx: 0,
   };
 }
 
-/** Advance every minion one fixed step. */
+/**
+ * Advance every minion one fixed step.
+ *
+ * Returns whole points of attribute damage per minion so the caller can kill
+ * and score them; Burn on an enemy has to route through the same death path as
+ * a bullet or the drop never happens.
+ */
 export function stepMinions(list, world, player, groundY) {
+  const burned = [];
   for (const e of list) {
     e.anim++;
-    if (e.def.kind === 'ground') stepGround(e, world, groundY);
-    else stepAir(e, player, groundY);
+    const dot = Attr.stepStatus(e.status);
+    if (dot > 0) burned.push({ e, dot });
+
+    // Knockback overrides walking for as long as it lasts, then decays away.
+    // Applied to position rather than folded into vx, because a Scrapper's vx
+    // is its patrol direction and blending the two would flip it permanently.
+    if (Math.abs(e.kbVx) > 0.05) {
+      e.x += e.kbVx;
+      e.kbVx *= FEEL.knockbackDecay;
+    } else {
+      e.kbVx = 0;
+    }
+
+    // Freeze and Constrict stop an actor outright; Stun only slows it. The two
+    // are different mechanics — see the note in systems/attributes.js.
+    const held = Attr.isHeld(e.status);
+    const slow = Attr.speedMult(e.status);
+    if (e.def.kind === 'ground') stepGround(e, world, groundY, held, slow);
+    else stepAir(e, player, groundY, held, slow);
   }
+  return burned;
 }
 
-function stepGround(e, world, groundY) {
+function stepGround(e, world, groundY, held, slow) {
+  // Gravity applies even while held — a frozen Drifter has to fall, or a
+  // freeze weapon would read as parking enemies in mid-air.
   e.vy = Math.min(e.vy + FEEL.gravity, FEEL.maxFallSpeed);
   e.y += e.vy;
 
@@ -97,7 +130,8 @@ function stepGround(e, world, groundY) {
     e.onGround = true;
   }
 
-  e.x += e.vx;
+  if (held) return;
+  e.x += e.vx * slow;
 
   // Turn back at the lip of a pit. Probed one step ahead of the leading edge so
   // the turn happens before any part of the body is over open air.
@@ -107,15 +141,16 @@ function stepGround(e, world, groundY) {
   }
 }
 
-function stepAir(e, player, groundY) {
-  e.x += e.vx;
+function stepAir(e, player, groundY, held, slow) {
+  if (held) return;
+  e.x += e.vx * slow;
 
   // Gentle altitude tracking: enough to make ignoring one a mistake, capped so
   // it arcs toward you and can be out-manoeuvred rather than simply landing on
   // your head.
   const dy = player.y + 12 - (e.y + e.h / 2);
   const track = Math.max(-e.def.trackMax, Math.min(e.def.trackMax, dy * e.def.trackStrength));
-  e.y += track + Math.sin(e.anim * e.def.bobRate) * e.def.bobAmp;
+  e.y += (track + Math.sin(e.anim * e.def.bobRate) * e.def.bobAmp) * slow;
 
   if (e.y < 8) e.y = 8;
   if (e.y + e.h > groundY - 2) e.y = groundY - 2 - e.h;

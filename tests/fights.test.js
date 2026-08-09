@@ -252,14 +252,59 @@ test('a permanent pool never weakens or expires', () => {
   assert.equal(Attr.patchFrac(pool), 1, 'and stays at full strength');
 });
 
-test('stun, constrict and freeze are one behaviour with three tints', () => {
+test('constrict and freeze are one behaviour with two tints', () => {
   const tints = new Set();
-  for (const id of ['stun', 'constrict', 'freeze']) {
+  for (const id of ['constrict', 'freeze']) {
     assert.equal(Attr.ATTR[id].held, true, `${id} should hold the target`);
     tints.add(Attr.ATTR[id].tint);
     assert.equal(Attr.isHeld(Attr.applyStatus(Attr.makeStatus(), id, 30)), true);
   }
-  assert.equal(tints.size, 3, 'but each must read as a different element');
+  assert.equal(tints.size, 2, 'but each must read as a different element');
+});
+
+/**
+ * STUN IS A SLOW, NOT A HOLD, and it is the only attribute that stacks.
+ *
+ * It used to share the hold behaviour with constrict and freeze. The tracker
+ * now defines it as a multiplicative speed cut that resets its own duration on
+ * every re-application, which is a different mechanic — so this guards the
+ * distinction rather than the numbers, which are still placeholders.
+ */
+test('stun slows multiplicatively and stacks instead of holding', () => {
+  assert.notEqual(Attr.ATTR.stun.held, true, 'stun must not hold the target');
+
+  const bag = Attr.makeStatus();
+  Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  assert.equal(Attr.isHeld(bag), false, 'a stunned actor can still act');
+  assert.ok(Math.abs(Attr.speedMult(bag) - 0.7) < 1e-9);
+
+  // Each stack takes its cut of what is LEFT, so two stacks is 0.49, not 0.4.
+  Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  assert.ok(Math.abs(Attr.speedMult(bag) - 0.49) < 1e-9);
+  assert.equal(bag.stun.stacks, 2);
+  assert.equal(bag.stun.t, 300, 're-application resets the full duration');
+
+  // ...and it never reaches zero, which is why no cap is needed.
+  for (let i = 0; i < 40; i++) Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  assert.ok(Attr.speedMult(bag) > 0);
+});
+
+test('an expired stun drops its stacks rather than resuming from them', () => {
+  const bag = Attr.makeStatus();
+  Attr.applyStatus(bag, 'stun', 2, { step: 0.7 });
+  Attr.applyStatus(bag, 'stun', 2, { step: 0.7 });
+  assert.equal(bag.stun.stacks, 2);
+  for (let i = 0; i < 4; i++) Attr.stepStatus(bag);
+  Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  assert.equal(bag.stun.stacks, 1, 'a fresh stun starts over at one stack');
+});
+
+test('other statuses still refuse to stack with themselves', () => {
+  const bag = Attr.makeStatus();
+  Attr.applyStatus(bag, 'burn', 120);
+  Attr.applyStatus(bag, 'burn', 120);
+  assert.equal(bag.burn.t, 120, 'a second burn refreshes, never adds');
+  assert.equal(bag.burn.stacks, undefined);
 });
 
 test('flinch and knockback are NOT modelled as attributes', () => {

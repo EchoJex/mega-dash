@@ -16,7 +16,7 @@ import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { dev } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
-import { WEAPONS, NULL_WEAPON, weaponOf, BUSTER_ID, damageAtLevel } from '../data/weapons.js';
+import { WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
@@ -27,6 +27,8 @@ import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
 import * as Arena from '../systems/arena.js';
 import * as Attr from '../systems/attributes.js';
+import * as Loadout from '../systems/loadout.js';
+import * as Wpn from '../systems/weaponry.js';
 import { sfx } from '../systems/sfx.js';
 import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
@@ -105,23 +107,37 @@ export default class GameScene extends Phaser.Scene {
       // slide is meta-gated: rank 0 means the player cannot slide at all
       slideRank: 0, slideDurMult: 1, slideSpeedBonus: 1, slideIframes: 0,
       // weapons
-      unlocked: new Set([BUSTER_ID]),
-      wpLevels: { [BUSTER_ID]: 1 },
-      activeWeapon: BUSTER_ID,
+      unlocked: new Set([SIDEARM_ID]),
+      wpLevels: { [SIDEARM_ID]: 1 },
+      // THE LOADOUT: two offensive slots, two defensive, plus the sidearm which
+      // never occupies one. Everything else unlocked sits on the bench, still
+      // levelling and still offered by cards. See systems/loadout.js.
+      loadout: Loadout.makeLoadout(),
+      activeWeapon: SIDEARM_ID,
       cooldown: 0,
+      // Per-weapon runtime state (drone clip, shield hits, jab chain), keyed by
+      // weapon id and owned by systems/weaponry.js.
+      wstate: {},
+      allies: [],
+      fireHeldFrames: 0,
+      meleeArmor: 0,
+      lastDamaged: null,
+      pendingLoadout: null,
     };
     applyUpgrades(save, run);
     run.hp = FEEL.hpMax + run.hpBonus;
     run.revivesLeft = run.revives;
 
-    // Weapons are EARNED: you start with the buster and unlock a special by
+    // Weapons are EARNED: you start with the sidearm and unlock a special by
     // beating the boss that carries it (killBoss below). The two arsenal
     // upgrades are the only head start, and they cost Chips.
-    const specials = WEAPONS.filter((w) => w.id !== BUSTER_ID);
+    const specials = WEAPONS.filter((w) => w.id !== SIDEARM_ID);
     const headStart = run.twinArsenal ? 2 : run.starterArsenal ? 1 : 0;
     for (const w of shuffled(specials).slice(0, headStart)) {
       run.unlocked.add(w.id);
       run.wpLevels[w.id] = 1;
+      // A head start you have to go and equip is not a head start.
+      Loadout.autoEquip(run.loadout, w.id);
     }
 
     this.run = run;
@@ -136,7 +152,7 @@ export default class GameScene extends Phaser.Scene {
     this.player = {
       x: 80, y: GROUND_Y - 24, vx: 0, vy: 0, facing: 1,
       onGround: true, sliding: false, slideTimer: 0,
-      airActions: FEEL.maxAirActions, airDashTimer: 0,
+      airActions: FEEL.maxAirActions, djPause: 0,
       jumpBuffer: 0, coyote: 0, jumpCut: false,
       flinchTimer: 0, knockbackVx: 0, hitAnim: 0,
     };
@@ -151,6 +167,7 @@ export default class GameScene extends Phaser.Scene {
     // Character attributes on the player (Burn, Wet, ...). Run-scoped: nothing
     // about a status survives death, so it lives here and not in save.
     this.status = Attr.makeStatus();
+    this.fx = Wpn.makeFx();
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
     this.startArea();
   }
@@ -325,15 +342,28 @@ export default class GameScene extends Phaser.Scene {
     if (k.D.isDown || k.RIGHT.isDown) kb = 1;
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
 
+    const wasOnGround = p.onGround;
+    const fallVy = p.vy;
     if (p.beam) {
       this.stepBeam();
     } else {
-      Phys.stepPlayer(p, this.world, { moveDir, jumpHeld: this.intent.jumpHeld }, GROUND_Y);
+      Phys.stepPlayer(p, this.world, {
+        moveDir,
+        jumpHeld: this.intent.jumpHeld,
+        // Stun is a stacking slow on movement AND attack speed, so it is
+        // applied here and again to the weapon cooldown below.
+        speedMult: Attr.speedMult(this.status),
+      }, GROUND_Y);
       if (!this.arena) {
         this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
         if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
       }
     }
+    // A landing is an EVENT, not a state — Torrent Cannon vents on it and
+    // Quake Hammer resolves its pound on it, and both need the impact speed,
+    // which is gone by the time stepPlayer returns.
+    this.landVy = fallVy;
+    this.justLanded = !wasOnGround && p.onGround;
 
     // distance is real rightward progress, used for EXP and stats
     // Distance is a stat only. It grants no EXP — walking right is not progress
@@ -405,9 +435,15 @@ export default class GameScene extends Phaser.Scene {
     if (r.cooldown > 0) r.cooldown--;
     if (p.hitAnim > 0) p.hitAnim--;
     if (r.comboTimer > 0 && --r.comboTimer === 0) r.combo = 1;
+    // The hold length has to survive the frame the button comes UP, because
+    // that is the frame a tap resolves into a jab rather than a finisher.
+    const held = this.intent.fireHeld ? r.fireHeldFrames + 1 : r.fireHeldFrames;
+    r.fireHeldFrames = this.intent.fireHeld ? held : 0;
 
-    // held fire auto-repeats; hold long enough and release for a charged shot
-    if (this.intent.fireHeld && r.cooldown === 0) this.fire(false);
+    this.stepEquipped();
+    this.stepFireInput(held);
+    this.intent.firePressed = false;
+    this.intent.fireReleased = false;
 
     this.stepMinions(box);
     this.stepPickups(box);
@@ -415,7 +451,149 @@ export default class GameScene extends Phaser.Scene {
     this.stepBoss();
   }
 
+  /**
+   * Advance every equipped weapon, plus the allies and effects they own.
+   *
+   * Runs AFTER movement so a weapon reads the position the player actually
+   * ended the frame at, and before collision so anything it spawns is resolved
+   * on the same frame it appeared.
+   */
+  stepEquipped() {
+    const r = this.run;
+    const ids = [SIDEARM_ID, ...Loadout.equippedIds(r.loadout)]
+      .filter((id) => Loadout.isEnabled(r.loadout, id));
+    Wpn.pruneStates(r.wstate, ids);
+    Wpn.coolWeapons(r.wstate);
+    const ctx = this.weaponCtx(ids);
+    Wpn.stepWeapons(ctx, ids);
+    if (this.justLanded) Wpn.notify(ctx, ids, 'land');
+    Wpn.stepFx(this.fx);
+  }
+
+  /**
+   * The one object every weapon behaviour reads the world through.
+   *
+   * Built fresh each frame rather than cached, because half of it (the enemy
+   * list, the arena) changes underneath it. Keeping the surface small and
+   * explicit is what stops systems/weaponry.js reaching into the scene.
+   */
+  weaponCtx(ids = null) {
+    const r = this.run;
+    const equipped = ids || [SIDEARM_ID, ...Loadout.equippedIds(r.loadout)];
+    return {
+      run: r,
+      player: this.player,
+      bullets: this.bullets,
+      allies: r.allies,
+      // Minions and the boss are one list to a weapon: nothing in the ladders
+      // distinguishes them except Frost Guard, which checks `isBoss` itself.
+      enemies: this.boss ? [...this.minions, this.boss] : this.minions,
+      arena: this.arena,
+      floorY: GROUND_Y,
+      landVy: this.landVy || 0,
+      equipped,
+      fx: this.fx,
+      levelOf: (id) => r.wpLevels[id] || 1,
+      spawn: (spec) => this.spawnPlayerShot(spec),
+      hitEnemy: (e, dmg, opts) => this.hitEnemy(e, dmg, opts),
+      overGround: (x) => Phys.isOverGround(this.world, x),
+      shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; },
+      puff: (spec) => Wpn.puff(this.fx, spec),
+      arc: (a, b) => Wpn.arcFx(this.fx, a, b),
+      patch: (id, x, w, surfaceY, frames) => {
+        if (!this.arena) return;
+        // `source: 'player'` is what makes you immune to your own Hot — see
+        // patchAt() in systems/attributes.js.
+        Attr.addPatch(this.arena.patches,
+          Attr.surfacePatch(id, x, w, surfaceY, frames, 'player'));
+      },
+      sfx: (name, opts) => sfx(name, opts),
+    };
+  }
+
+  /**
+   * Damage an enemy from a player weapon, wherever the hit came from.
+   *
+   * One entry point because minions and bosses die differently but everything
+   * that hits them cares about neither — and because `lastDamaged` (which the
+   * Swarm Caller's allies prioritise) has to be stamped on every path, not just
+   * the projectile one.
+   */
+  hitEnemy(e, dmg, opts = {}) {
+    if (!e || e.hp <= 0) return;
+    e.hp -= dmg;
+    this.run.lastDamaged = e;
+    // A BOSS IS NEVER MOVED BY A HIT. Its position is driven by a state machine
+    // that patrols to arena bounds and perches on platforms; shoving it would
+    // desync that from what it thinks it is doing. Flinch and knockback are
+    // basic hitbox interaction everywhere else, and this is the one exception.
+    if (!e.isBoss) {
+      if (opts.knockback) {
+        const dir = Math.sign((e.x + e.w / 2) - (opts.from ?? this.player.x + 12)) || 1;
+        e.kbVx = dir * opts.knockback;
+      }
+      if (opts.launch) e.vy = -opts.launch;
+    }
+    if (opts.stun) {
+      Attr.applyStatus(e.status || (e.status = {}), 'stun', opts.stun,
+        { step: FEEL.stunEnemyStep });
+    }
+    if (e.hp <= 0) {
+      if (e === this.boss) this.killBoss();
+      else this.killMinion(e);
+    }
+  }
+
+  /** A projectile owned by the player. Player shots use the generous pad. */
+  spawnPlayerShot(spec) {
+    this.bullets.push({
+      vy: 0, life: 180, charged: false, enemy: false, ...spec,
+    });
+  }
+
   // ── Weapons ─────────────────────────────────────────────────────────
+  /**
+   * Route the fire button to whatever is holding it.
+   *
+   * Three shapes, and which one applies is a property of the weapon:
+   *
+   *   generic     no runtime yet — auto-repeat on its own cooldown, plus a
+   *               charged shot on release. The placeholder path, and still what
+   *               the sidearm and eleven specials use.
+   *   repeat      a runtime that fires while held (Blaze Wheel, Volt Spark).
+   *               It paces itself; this just keeps offering.
+   *   longPress   a runtime with two moves on one button (Strike Gauntlet,
+   *               Quake Hammer). The heavy move fires the INSTANT the hold
+   *               crosses 0.4s rather than waiting for release, because making
+   *               the player release to commit adds latency to the move that
+   *               can least afford it. Releasing before then gives the tap.
+   */
+  stepFireInput(held) {
+    const r = this.run;
+    if (this.intent.firePressed) r.fireConsumed = false;
+
+    const id = r.activeWeapon;
+    const beh = Wpn.hasRuntime(id) ? Wpn.RUNTIME[id] : null;
+
+    if (!beh?.fire) {
+      if (this.intent.fireHeld && r.cooldown === 0) this.fire(false);
+      if (this.intent.fireReleased) this.releaseFire();
+      return;
+    }
+
+    const ctx = this.weaponCtx();
+    if (!beh.longPress) {
+      if (this.intent.fireHeld) Wpn.fireActive(ctx, id, held);
+      return;
+    }
+    if (this.intent.fireHeld && held >= Wpn.LONG_PRESS_FRAMES && !r.fireConsumed) {
+      if (Wpn.fireActive(ctx, id, held)) r.fireConsumed = true;
+    } else if (this.intent.fireReleased && !r.fireConsumed) {
+      Wpn.fireActive(ctx, id, held);
+      r.fireConsumed = true;
+    }
+  }
+
   fire(charged) {
     const r = this.run, p = this.player;
     if (r.cooldown > 0) return;
@@ -453,7 +631,9 @@ export default class GameScene extends Phaser.Scene {
         });
       }
     }
-    r.cooldown = Math.max(1, Math.round(w.cooldown * r.cdMult));
+    // Stun cuts attack speed as well as movement, so it stretches the cooldown
+    // by the same factor it shrinks the walk by.
+    r.cooldown = Math.max(1, Math.round(w.cooldown * r.cdMult / Attr.speedMult(this.status)));
   }
 
   /**
@@ -580,11 +760,65 @@ export default class GameScene extends Phaser.Scene {
         b.vx = (b.vx / ns) * sp;
         b.vy = (b.vy / ns) * sp;
       }
+      // PLAYER-SIDE seeking, aimed at an enemy rather than at the player. Same
+      // steer-don't-snap shape as `homing` above, but it also carries the
+      // acceleration the Nullfire Drone's ladder asks for at Lv6 and Lv10.
+      if (b.seek) {
+        if (b.seek.hp <= 0) b.seek = Wpn.nearestEnemy(this.weaponCtx(), b.x, b.y);
+        if (b.seek) {
+          const c = Wpn.centreOf(b.seek);
+          const dx = c.x - b.x, dy = c.y - b.y;
+          const d = Math.hypot(dx, dy) || 1;
+          const sp = Math.hypot(b.vx, b.vy) || 1;
+          b.vx += (dx / d) * sp * (b.seekTurn || 0.05);
+          b.vy += (dy / d) * sp * (b.seekTurn || 0.05);
+          const ns = Math.hypot(b.vx, b.vy) || 1;
+          b.vx = (b.vx / ns) * sp;
+          b.vy = (b.vy / ns) * sp;
+        }
+      }
+      if (b.accel && b.accel !== 1) {
+        const sp = Math.hypot(b.vx, b.vy) || 1;
+        const cap = b.maxSpeed || 8;
+        const next = Math.min(cap, sp * b.accel);
+        b.vx = (b.vx / sp) * next;
+        b.vy = (b.vy / sp) * next;
+      }
+      // A ground-hugging wave (Torrent's tidal, Quake's shockwave) rides the
+      // floor line instead of falling, so it stays a floor attack whatever the
+      // terrain under it is doing.
+      if (b.hugsFloor) b.y = (this.arena ? this.arena.floorY : GROUND_Y) - 5;
+
       // Ballistic shots: gravity, a bounce off the floor, and a climb up the
       // sealed walls. Blaze Man's fireballs are the reason all three exist —
       // "bouncing fireballs that climb up walls and leave hot trails".
       if (b.gravity) b.vy += b.gravity;
       b.x += b.vx; b.y += b.vy; b.life--;
+
+      // BLAZE WHEEL's lob converting to a roll. The arc ends the first time it
+      // touches the floor; from there it is a ground weapon that spends a
+      // distance budget laying Hot behind it. `drag` below 1 is the Lv3 "rapid
+      // deceleration"; above 1 is the Lv10 acceleration. Distance, not time, is
+      // what the ladder scales, so the budget is in pixels.
+      if (b.roll) {
+        const floor = this.arena ? this.arena.floorY : GROUND_Y;
+        if (!b.rolling && b.y + b.radius >= floor) {
+          b.rolling = true;
+          b.y = floor - b.radius;
+          b.vy = 0; b.gravity = 0;
+          b.vx = Math.sign(b.vx || 1) * b.roll.speed;
+          if (b.roll.left <= 0) b.life = -1;      // Lv1: lands and stops dead
+        }
+        if (b.rolling) {
+          b.roll.left -= Math.abs(b.vx);
+          b.vx = Math.max(-6, Math.min(6, b.vx * b.roll.drag));
+          if (b.hot && this.arena) {
+            Attr.addPatch(this.arena.patches,
+              Attr.surfacePatch('hot', b.x - b.radius, b.radius * 2, floor, b.hot, 'player'));
+          }
+          if (b.roll.left <= 0 || Math.abs(b.vx) < 0.15) b.life = -1;
+        }
+      }
 
       if (b.bounce || b.crawls) {
         const floor = this.arena ? this.arena.floorY : GROUND_Y;
@@ -615,20 +849,32 @@ export default class GameScene extends Phaser.Scene {
       }
 
       // Split after a delay into a fan of smaller, mildly homing fragments.
-      if (b.splitIn !== undefined && --b.splitIn <= 0) {
-        b.life = -1;
-        const n = b.splitCount || 3;
-        for (let i = 0; i < n; i++) {
-          const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
-          spawned.push({
-            ...b,
-            x: b.x, y: b.y,
-            vx: Math.cos(a) * (b.splitSpeed || 1.5),
-            vy: Math.sin(a) * (b.splitSpeed || 1.5),
-            radius: b.splitRadius || 2.5,
-            homing: b.splitHoming || 0,
-            splitIn: undefined, life: 240,
-          });
+      if (b.splitIn) {
+        if (--b.splitIn <= 0) {
+          b.life = -1;
+          const n = b.splitCount || 3;
+          // The Nullfire Drone's Lv6 pair sends its two sets after DIFFERENT
+          // enemies — "the first set of 3 shall target the nearest enemy and
+          // the second set the next nearest" — so the rank the parent was
+          // fired at picks which enemy this set locks onto.
+          let target = null;
+          if (b.splitSeekRank !== undefined) {
+            const ranked = Wpn.enemiesByRange(this.weaponCtx(), b.x, b.y);
+            target = ranked[Math.min(b.splitSeekRank, ranked.length - 1)] || null;
+          }
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+            spawned.push({
+              ...b,
+              x: b.x, y: b.y,
+              vx: Math.cos(a) * (b.splitSpeed || 1.5),
+              vy: Math.sin(a) * (b.splitSpeed || 1.5),
+              radius: b.splitRadius || 2.5,
+              homing: b.splitHoming || 0,
+              seek: target, seekTurn: b.splitSeekTurn, accel: b.splitAccel,
+              splitIn: 0, life: 240,
+            });
+          }
         }
       }
     }
@@ -664,40 +910,42 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // minion damage
+    // PLAYER SHOTS HITTING ENEMIES.
+    //
+    // Minions and the boss go through one loop and one entry point, because
+    // every property a shot can carry — pierce, knockback, Burn, Stun — applies
+    // to both and keeping two copies is how they drift apart.
+    //
+    // killBoss() nulls this.boss, so a hit that kills it MUST stop touching it.
+    // The old loop kept going, and the next bullet overlapping the boss on that
+    // same frame dereferenced null — which threw out of update() and killed
+    // Phaser's game loop, freezing the game on the frame the boss died. It took
+    // two bullets landing on one frame, so the sidearm almost never triggered
+    // it and a multi-projectile weapon triggered it most times. `hitEnemy`
+    // owns the null now, and the `!this.boss` re-check below is what keeps a
+    // pierce shot from carrying on into a boss that no longer exists.
     for (const b of this.bullets) {
       if (b.enemy || b.life <= 0) continue;
       const box = this.bulletBox(b);
-      for (const e of this.minions) {
-        if (e.hp <= 0) continue;
-        if (Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
-          e.hp -= b.damage;
-          b.life = -1;
-          if (e.hp <= 0) this.killMinion(e);
-          break;
-        }
-      }
-    }
+      let pierce = b.pierce || 0;
+      // Only a piercing shot needs to remember who it has already passed
+      // through; everything else dies on first contact and cannot hit twice.
+      if (pierce > 0 && !b.hitSet) b.hitSet = new Set();
 
-    // BOSS DAMAGE.
-    //
-    // killBoss() nulls this.boss, so the loop MUST stop the moment it fires.
-    // It used to keep going, and the next bullet overlapping the boss on that
-    // same frame dereferenced null — which threw out of update() and killed
-    // Phaser's game loop, freezing the whole game on the frame the boss died.
-    //
-    // It needed two bullets landing on one frame to happen, so the buster almost
-    // never triggered it and a multi-projectile weapon (Swarm Caller fires three)
-    // triggered it most times. Any early-out inside a loop over `bullets` that
-    // can clear `this.boss` needs the same treatment.
-    if (this.boss) {
-      const bb = { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h };
-      for (const b of this.bullets) {
-        if (b.enemy || b.life <= 0) continue;
-        if (!Phys.overlaps(this.bulletBox(b), bb)) continue;
-        this.boss.hp -= b.damage;
-        b.life = -1;
-        if (this.boss.hp <= 0) { this.killBoss(); break; }
+      // A snapshot: hitEnemy can null `this.boss` mid-loop, and reading it
+      // again from the scene after that is exactly the crash described above.
+      // The `hp <= 0` guard is what stops a pierce shot hitting a corpse.
+      for (const e of this.boss ? [...this.minions, this.boss] : this.minions) {
+        if (e.hp <= 0 || b.hitSet?.has(e)) continue;
+        if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
+        b.hitSet?.add(e);
+        // Attributes land BEFORE the damage, so an enemy the shot kills still
+        // shows the element that killed it rather than dying clean.
+        if (b.burn) Attr.applyStatus(e.status || (e.status = {}), 'burn', b.burn);
+        this.hitEnemy(e, b.damage, {
+          knockback: b.knockback, from: b.x, stun: b.stun,
+        });
+        if (pierce-- <= 0) { b.life = -1; break; }
       }
     }
     this.bullets = this.bullets.filter(
@@ -725,9 +973,15 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y);
+    // Attribute damage (Burn, Poison) routes through the same kill path as a
+    // bullet, so a minion that burns to death still drops its EXP.
+    for (const { e, dot } of Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y)) {
+      e.hp -= dot;
+      if (e.hp <= 0) this.killMinion(e);
+    }
 
     for (const e of this.minions) {
+      if (e.hp <= 0) continue;
       if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
         this.hurt(e.x + e.w / 2);
       }
@@ -783,6 +1037,8 @@ export default class GameScene extends Phaser.Scene {
       x: this.viewW - w - 24, y: GROUND_Y - h, w, h,
       anim: 0, state: 'enter',
       fight,
+      isBoss: true,      // weapons that treat a boss differently check this
+      status: {},        // elemental attributes, same bag shape as the player's
       fs: null, // attack-loop state, owned by data/bossFights.js
       hs: null, // hazard-loop state
     };
@@ -792,6 +1048,11 @@ export default class GameScene extends Phaser.Scene {
     const b = this.boss;
     if (!b) return;
     b.anim++;
+    // Elemental attributes tick on the boss exactly as they do on a minion.
+    // Burn routed through hitEnemy so a boss finished off by a status still
+    // runs the full death path — drops, wrap door, the weapon unlock.
+    const dot = Attr.stepStatus(b.status);
+    if (dot > 0) { this.hitEnemy(b, dot); if (!this.boss) return; }
     if (b.state === 'enter') {
       const tx = this.cam.x + this.viewW * 0.6 - b.w / 2;
       b.x += (tx - b.x) * 0.055;
@@ -881,6 +1142,13 @@ export default class GameScene extends Phaser.Scene {
       this.run.unlocked.add(b.dropWeapon);
       this.run.wpLevels[b.dropWeapon] = 1;
       this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
+      // Slot it silently while there is room; make it a decision once there is
+      // not. Benching a weapon the player just fought a boss for without saying
+      // so would be the worst possible reading of the two-slot cap.
+      if (Loadout.autoEquip(this.run.loadout, b.dropWeapon) < 0) {
+        this.run.pendingLoadout = b.dropWeapon;
+      }
+      this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
     }
     // The elemental death animation, fade and palette-swap reveal land in this
     // boss's own element slice — see the plan in CLAUDE.md.
@@ -895,6 +1163,10 @@ export default class GameScene extends Phaser.Scene {
   hurt(sourceX, amount = 1) {
     const r = this.run, p = this.player;
     if (r.invuln > 0) return;
+    // Strike Gauntlet's "damage reduction during attack animations". Rounded up
+    // so a reduction can never turn a real hit into a free one — armour should
+    // make a trade survivable, not make you immune while mashing.
+    if (r.meleeArmor > 0) amount = Math.max(1, Math.ceil(amount * (1 - r.meleeArmor)));
     r.hp -= amount;
     // DEV: the hit lands in full — flinch, knockback and i-frames all apply —
     // it just cannot finish you.
@@ -1028,7 +1300,14 @@ export default class GameScene extends Phaser.Scene {
     // Only sound a jump that actually leaves the ground. A buffered press while
     // airborne may never become a jump at all.
     const kind = Phys.requestJump(this.player);
-    if (kind === 'jump' || kind === 'airdash') sfx('jump');
+    if (kind !== 'jump' && kind !== 'double') return;
+    sfx('jump');
+    // Torrent Cannon vents on a jump from Lv3. Notified here rather than from a
+    // velocity check in step(), because a buffered press that never becomes a
+    // jump must not trigger it.
+    const ids = [SIDEARM_ID, ...Loadout.equippedIds(this.run.loadout)]
+      .filter((id) => Loadout.isEnabled(this.run.loadout, id));
+    Wpn.notify(this.weaponCtx(ids), ids, 'jump');
   }
   endJump() { this.intent.jumpHeld = false; }
 
@@ -1045,10 +1324,49 @@ export default class GameScene extends Phaser.Scene {
     if (started && r.slideIframes > 0) r.invuln = Math.max(r.invuln, r.slideIframes);
   }
   setMove(dir) { this.intent.moveDir = dir; }
-  beginFire() { this.intent.fireHeld = true; this.intent.fireStart = performance.now(); }
-  endFire() { this.intent.fireHeld = false; this.releaseFire(); }
+
+  /**
+   * Fire is EDGE-TRACKED, not just held.
+   *
+   * The press and release flags are consumed inside the fixed step rather than
+   * acted on here, so a weapon never fires outside the simulation — a tap
+   * arriving between two sim steps has to resolve on the next one, or the whole
+   * determinism the fixed timestep buys is gone.
+   */
+  beginFire() {
+    this.intent.fireHeld = true;
+    this.intent.firePressed = true;
+    this.intent.fireStart = performance.now();
+  }
+  endFire() {
+    this.intent.fireHeld = false;
+    this.intent.fireReleased = true;
+  }
+
+  /**
+   * Point the fire button at a weapon. Only the sidearm and equipped, enabled
+   * OFFENSIVE weapons can be selected — a defensive weapon runs by itself and
+   * has nothing to aim.
+   */
   selectWeapon(id) {
-    if (this.run.unlocked.has(id) || dev('unlockAnyWeapon')) this.run.activeWeapon = id;
+    const r = this.run;
+    if (!r.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
+    if (!Loadout.firables(r.loadout).includes(id)) return;
+    r.activeWeapon = id;
+  }
+
+  /** Slot a weapon and keep the fire button pointed at something real. */
+  equipSlot(id, index) {
+    const r = this.run;
+    if (!r.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
+    Loadout.equip(r.loadout, id, index);
+    r.activeWeapon = Loadout.normaliseActive(r.loadout, r.activeWeapon);
+  }
+
+  toggleWeapon(id) {
+    const r = this.run;
+    Loadout.toggleEnabled(r.loadout, id);
+    r.activeWeapon = Loadout.normaliseActive(r.loadout, r.activeWeapon);
   }
 
   // ── Render ──────────────────────────────────────────────────────────
@@ -1136,6 +1454,14 @@ export default class GameScene extends Phaser.Scene {
           outline: e.elite ? ELITE_OUTLINE : e.def.outline,
         },
       });
+      // Same flashing readout the player gets. An enemy that is burning or
+      // frozen has to say so, or a status weapon has no visible effect at all
+      // until the health bar you cannot see runs out.
+      const et = Attr.statusTint(e.status);
+      if (et !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.minions.g.fillStyle(et, 0.5 * Attr.statusIntensity(e.status));
+        L.minions.g.fillRect(sx(e.x), e.y, e.w, e.h);
+      }
     }
 
     for (const b of this.bullets) {
@@ -1177,9 +1503,12 @@ export default class GameScene extends Phaser.Scene {
       // matters because the palette is how you know what you have equipped.
       const tint = Attr.statusTint(this.status);
       if (tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.player.g.fillStyle(tint, 0.45);
+        L.player.g.fillStyle(tint, 0.45 * Attr.statusIntensity(this.status));
         L.player.g.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
       }
+      // Worn hardware, allies and hit feedback, on the player's own layer so
+      // the drone and the shield sit above every world actor with him.
+      Wpn.drawWeaponry(L.player.g, sx, this.weaponCtx());
     }
 
     for (const l of Object.values(L)) l.end();

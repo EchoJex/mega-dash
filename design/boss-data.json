@@ -2,13 +2,13 @@
   "_note": "GENERATED from design/TRACKER.md by tools/sync-tracker.js. Do not edit.",
   "bosses": {
     "core": {
-      "name": "Core Man",
+      "name": "Proto Mk0",
       "primary": "#687380",
       "secondary": "#2E3338",
       "outline": "#0A0A12",
-      "scale": 1.7,
+      "scale": 0.8,
       "attackName": "Core Pulse",
-      "weaponName": "Core Blaster"
+      "weaponName": "Nullfire Drone"
     },
     "blaze": {
       "name": "Blaze Man",
@@ -20,7 +20,7 @@
       "weaponName": "Blaze Wheel"
     },
     "torrent": {
-      "name": "Torrent Man",
+      "name": "Tempest Man",
       "primary": "#145DBD",
       "secondary": "#C09060",
       "outline": "#0A0A12",
