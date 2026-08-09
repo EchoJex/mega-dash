@@ -112,9 +112,9 @@ where each one stands.
 - **attack L3** `[draft]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
 - **weapon** `[draft]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
 - **weapon Lv1** `[draft]` 0 chains; 1s stun on first enemy contact.
-- **weapon Lv3** `[wip]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv6** `[wip]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv10** `[wip]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv3** `[draft]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv6** `[draft]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv10** `[draft]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Thorn Man — Grass
