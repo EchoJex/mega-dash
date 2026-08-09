@@ -359,7 +359,7 @@ where each one stands.
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
 - **hazard L2** `[wip]` Larger and more numerous patches, and a shadow clone of an ordinary minion spawns inside each one.
-- **hazard L3** `[draft]` The room blacks out entirely on a slow cycle, leaving only silhouettes and the boss's own outline visible.
+- **hazard L3** `[wip]` The room blacks out entirely on a slow cycle, leaving only silhouettes and the boss's own outline visible.
 - **attack L1** `[ready]` Creates darkness zones that slow the player and spawn shadow clones.
 - **attack L2** `[draft]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[draft]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
