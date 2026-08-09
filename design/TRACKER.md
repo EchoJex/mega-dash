@@ -177,7 +177,7 @@ where each one stands.
 - **weapon Lv1** `[draft]` 2 jabs, or 1 jab and one combo finisher.
 - **weapon Lv3** `[draft]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[draft]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a medium distance.
-- **weapon Lv10** `[wip]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit..
+- **weapon Lv10** `[wip]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Venom Man — Poison
