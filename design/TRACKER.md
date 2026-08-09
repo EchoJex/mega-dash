@@ -249,7 +249,7 @@ where each one stands.
 `palette` #EA43BD / #F9A8D4 / #0A0A12 · `scale` 1.55x player height (petite build) · `id` psi
 `attack` Mind Lift · `weapon` Psi Orb
 
-- **arena** `[draft]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
+- **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[draft]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
