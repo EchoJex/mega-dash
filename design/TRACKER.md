@@ -333,7 +333,7 @@ where each one stands.
 `palette` #C3225D / #6B1220 / #0A0A12 · `scale` 1.9x player height (bulky build) · `id` drake
 `attack` Dragon Breath · `weapon` Drake Breath
 
-- **arena** `[draft]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
+- **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
 - **attribute (boss)** `[todo]`
 - **attribute (weapon)** `[todo]`
 - **hazard L1** `[draft]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
