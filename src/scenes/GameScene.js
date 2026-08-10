@@ -106,6 +106,9 @@ export default class GameScene extends Phaser.Scene {
       starterArsenal: false, twinArsenal: false,
       // slide is meta-gated: rank 0 means the player cannot slide at all
       slideRank: 0, slideDurMult: 1, slideSpeedBonus: 1, slideIframes: 0,
+      // Cliff Edge Mastery is meta-gated the same way the slide is: rank 0
+      // means a ledge is a ledge and walking off it is walking off it.
+      cliffRank: 0, cliffGrab: FEEL.cliffGrabDepth[0],
       // weapons
       unlocked: new Set([SIDEARM_ID]),
       wpLevels: { [SIDEARM_ID]: 1 },
@@ -365,6 +368,10 @@ export default class GameScene extends Phaser.Scene {
         // is the cost of standing in Tempest Man's floor water, and it does
         // not follow you into the air.
         jumpMult: this.inWadingWater() ? FEEL.wadeJumpMult : 1,
+        // Cliff Edge Mastery: how far below a ledge a grab still reaches,
+        // and how long it hangs there first. Rank 0 is near enough to zero.
+        cliffGrab: r.cliffGrab,
+        cliffStick: r.cliffRank > 0 ? FEEL.cliffStickFrames : 0,
       }, GROUND_Y);
       if (!this.arena) {
         this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);

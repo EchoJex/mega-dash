@@ -10,6 +10,8 @@
  * Each upgrade writes a derived field onto the run state at run start.
  */
 
+import { FEEL } from '../config/feel.js';
+
 export const UPGRADES = [
   { id: 'energy_tank',  name: 'ENERGY TANK',  color: '#E11416', maxLv: 4, cost: 120, mult: 1.7,
     desc: (l) => `+${l} max energy pip${l === 1 ? '' : 's'} every run`,
@@ -78,6 +80,29 @@ export const UPGRADES = [
       r.slideDurMult = l >= 2 ? 1.5 : 1;
       r.slideSpeedBonus = l >= 2 ? 1.15 : 1;
       r.slideIframes = l >= 3 ? 24 : 0;
+    } },
+  /**
+   * CLIFF EDGE MASTERY — how far below a ledge you can still claw back up.
+   *
+   * At rank 0 the ledge is nearly absolute: walk off it and you have walked off
+   * it. That is the honest default the owner asked for, "similar to the
+   * almost-but-not-quite tolerance for incoming bullet hurt box detection" —
+   * the edge is where it looks like it is.
+   *
+   * The recovery the game USED to give for free is now the reward. Each rank
+   * buys depth, and ranks 1-3 make the save visible: you stick to the wall for
+   * a quarter second before hauling yourself up, so a rescue reads as a rescue
+   * rather than as the floor twitching. Rank 3 restores the old full player
+   * height, plus that pause.
+   */
+  { id: 'cliff_mastery', name: 'CLIFF EDGE MASTERY', color: '#5CADD5', maxLv: 3, cost: 110, mult: 2.0,
+    desc: (l) => ['Walk off a ledge and you fall — no recovery',
+      'Catch a ledge from a third of a body below',
+      'Catch a ledge from two thirds of a body below',
+      'Catch a ledge from a full body below'][l],
+    apply: (r, l) => {
+      r.cliffRank = l;
+      r.cliffGrab = FEEL.cliffGrabDepth[l];
     } },
 ];
 

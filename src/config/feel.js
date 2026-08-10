@@ -167,6 +167,20 @@ export const FEEL = {
   // visually overhanging a ledge — the classic landing-on-a-sliver feel.
   groundProbeInset: 4,
 
+  // ── Cliff Edge Mastery ───────────────────────────────────────────────
+  // How far BELOW a ledge the player can be and still claw back onto it,
+  // indexed by the meta upgrade's rank. The game used to give the rank-3
+  // amount away for free, which quietly made every ledge in the game two
+  // dozen pixels taller than it looked.
+  //
+  // Rank 0 is not zero: one pixel of slack absorbs the sub-pixel case where
+  // the box lands exactly on the plane. Anything more and the edge stops
+  // being where it appears to be.
+  cliffGrabDepth: [1, 8, 16, 24],   // rank 0..3, in px (24 = one player height)
+  // Ranks 1-3 hang on the wall before hauling up, so a save READS as a save
+  // rather than as the floor twitching. A quarter second, per the tracker.
+  cliffStickFrames: 15,
+
   // ── Difficulty ramp (Vampire Survivors pillar) ───────────────────────
   // Keyed to ELAPSED TIME, not distance. The prototype used rightward distance
   // (a holdover from when the screen force-scrolled), which meant a player who

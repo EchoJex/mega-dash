@@ -145,18 +145,75 @@ export function stepPlayer(p, world, input, groundY) {
       isOverGround(world, probe) ||
       isOverGround(world, box.x + inset) ||
       isOverGround(world, box.x + box.w - inset);
-    if (supported && box.y + box.h >= groundY) {
-      const off = p.sliding ? FEEL.playerHitboxSlide.offY : FEEL.playerHitbox.offY;
-      const h = p.sliding ? FEEL.playerHitboxSlide.h : FEEL.playerHitbox.h;
-      p.y = groundY - h - off;
-      p.vy = 0;
-      p.onGround = true;
-      p.airActions = FEEL.maxAirActions;
-      p.djPause = 0;
+
+    /**
+     * LANDING vs LEDGE GRAB — the same test used to serve both, and that is the
+     * whole of the cliff bug.
+     *
+     * There was no depth limit here: as long as any probe was over a span and
+     * your box had passed the floor plane, you were snapped up onto it. Walk
+     * off a ledge, hold back toward it, and the game hauled you out of the pit
+     * from most of a body down. Every ledge was quietly two dozen pixels taller
+     * than it looked.
+     *
+     * The two cases are told apart by HOW you got below the plane:
+     *
+     *   landing  you were above it last frame and crossed it this frame. The
+     *            overshoot can be a whole frame of falling — up to terminal
+     *            velocity — so the tolerance has to be `vy`, not a constant, or
+     *            a fast fall punches through the floor.
+     *   grab     you were already below it and horizontal movement brought you
+     *            back over the span. THIS is the thing Cliff Edge Mastery buys,
+     *            and at rank 0 it barely exists.
+     */
+    const depth = (box.y + box.h) - groundY;
+    if (supported && depth >= 0) {
+      const landing = depth <= Math.max(1, p.vy) + 1;
+      const reach = input.cliffGrab ?? FEEL.cliffGrabDepth[0];
+
+      if (landing) {
+        settleOnGround(p, groundY);
+      } else if (depth <= reach) {
+        // THE SAVE IS VISIBLE. Ranks 1-3 hang on the wall for a beat before
+        // hauling up, so being rescued reads as being rescued rather than as
+        // the floor twitching under you.
+        //
+        // The hold PINS the height it caught at. Merely zeroing vy is not
+        // enough: gravity re-applies at the top of the next step, so the player
+        // would sink a few pixels over the hold and — at a depth near the
+        // rank's limit — sink straight back out of range, cancelling the rescue
+        // it had already committed to. Sticking to a wall means not moving.
+        if (p.cliffStick == null) {
+          p.cliffStick = input.cliffStick ?? FEEL.cliffStickFrames;
+          p.cliffY = p.y;
+        }
+        p.y = p.cliffY;
+        p.vy = 0;
+        if (p.cliffStick > 0) p.cliffStick--;
+        else settleOnGround(p, groundY);
+      }
     }
+    // Clear of the plane again: any half-finished grab is forgotten.
+    if (!p.onGround && depth < 0) p.cliffStick = null;
   }
 
   if (p.y < 0) { p.y = 0; p.vy = 0; }
+}
+
+/**
+ * Put the player down on the ground plane and refresh everything a landing
+ * refreshes. Shared by a real landing and by a completed ledge grab, so the two
+ * can never disagree about what touching down means.
+ */
+function settleOnGround(p, groundY) {
+  const off = p.sliding ? FEEL.playerHitboxSlide.offY : FEEL.playerHitbox.offY;
+  const h = p.sliding ? FEEL.playerHitboxSlide.h : FEEL.playerHitbox.h;
+  p.y = groundY - h - off;
+  p.vy = 0;
+  p.onGround = true;
+  p.airActions = FEEL.maxAirActions;
+  p.djPause = 0;
+  p.cliffStick = null;
 }
 
 /** Queue a jump. Buffered so a slightly-early press still lands. */

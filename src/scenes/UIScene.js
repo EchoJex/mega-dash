@@ -51,17 +51,21 @@
  * class. Everything you are carrying is large and central; everything you own
  * but are not carrying is small and out at the rim.
  *
- *   TAP a module              put it on the fire button and resume (offensive
- *                             and sidearm only — a defensive weapon has nothing
- *                             to aim, so tapping one only reads it out)
- *   TAP a benched weapon      slot it into its own class
+ *   TAP a module              select it — white corners
+ *   TAP a benched weapon      drop it into the selected module of its class
  *   PRESS AND HOLD a module   switch that weapon off without giving up the slot
  *
- * BORDERS ARE STATE. A cyan border means the module is equipped and running; a
- * switched-off one loses the cyan entirely and keeps only the dark frame that
- * holds the grid together. The weapon actually on the fire button gets white
- * corner ticks on top of the cyan, because "equipped" and "live" are different
- * facts and both have to be readable at a glance.
+ * ONE GESTURE, BOTH ROWS. Select then fill works the same for offensive and
+ * defensive, which the earlier version did not: a tap on an offensive module
+ * meant "make this live", a tap on a defensive one meant nothing at all, and a
+ * weapon tapped on the ring landed in whichever slot the game chose for you.
+ *
+ * BORDERS ARE STATE, and there are only two: a cyan border means the module is
+ * carrying something and running it, and no border means it is not. A red cross
+ * used to mark the switched-off case and read as an error rather than as a
+ * choice the player had made. White corners are separate from all of that —
+ * they mark the SELECTED module, which is about what happens next rather than
+ * about what is running.
  *
  * ARC POSITIONS ARE FIXED (ARC_ORDER in data/weapons.js) whether or not a
  * weapon is unlocked, and locked ones sit under a padlock rather than being
@@ -197,13 +201,6 @@ function drawShield(g, cx, cy, s, colour, alpha) {
     const iw = Math.max(2, w - Math.round(((i + 1) / steps) * (w - 2)));
     g.fillRect(cx - Math.round(iw / 2), y + flat + i * band, iw, band);
   }
-}
-
-/** A slotted-but-switched-off weapon wears a cross. Kept, just not running. */
-function drawOffMark(g, x, y, s) {
-  g.lineStyle(1, 0xC04040, 0.95);
-  g.lineBetween(x - s, y - s, x + s, y + s);
-  g.lineBetween(x + s, y - s, x - s, y + s);
 }
 
 /** Padlock glyph for a locked slot: shackle arch over a body with a keyhole. */
@@ -783,7 +780,6 @@ export default class UIScene extends Phaser.Scene {
       // 'off', it is simply not carried, and marking it so would say the
       // wrong thing about a weapon that is one tap from working fine.
       const off = carried && !Loadout.isEnabled(lo, s.id);
-      const live = !!s.id && s.id === r.activeWeapon && carried && !off;
       s.locked = !!s.id && !unlocked;
 
       // A weapon that is currently SLOTTED vacates its arc position. Showing it
@@ -799,8 +795,8 @@ export default class UIScene extends Phaser.Scene {
         continue;
       }
 
-      if (s.kind === 'slot') this.paintModule(s, { unlocked, off, live, wanted });
-      else this.paintDisc(s, { wd, unlocked, carried, off, live });
+      if (s.kind === 'slot') this.paintModule(s, { unlocked, off, wanted, selected: this.target === s });
+      else this.paintDisc(s, { wd, unlocked });
 
       // ONLY MODULES CARRY TEXT. Eleven benched offensive weapons on a
       // half-circle land about 15px apart, and a three-glyph label is 17px
@@ -828,7 +824,6 @@ export default class UIScene extends Phaser.Scene {
       const gx = s.kind === 'slot' ? s.cxm : s.x;
       const gy = s.kind === 'slot' ? s.y + MOD / 2 : s.y;
       if (s.locked) drawPadlock(this.lockG, gx, gy, glyphR);
-      if (off) drawOffMark(this.lockG, gx, gy, glyphR * 0.5);
     }
 
     // The sidearm's caption. It carries its own level because it can be levelled
@@ -842,7 +837,7 @@ export default class UIScene extends Phaser.Scene {
    * dark grid frame, which holds the 2x2 shape together without claiming the
    * weapon is doing anything.
    */
-  paintModule(s, { unlocked, off, live, wanted }) {
+  paintModule(s, { unlocked, off, selected, wanted }) {
     const g = this.moduleG;
     const cx = s.cxm, cy = s.y + MOD / 2;
     const filled = !!s.id && unlocked;
@@ -853,13 +848,18 @@ export default class UIScene extends Phaser.Scene {
     if (s.mark === 'sword') drawSword(g, cx, cy, 16, CYAN, markA);
     else drawShield(g, cx, cy, 16, CYAN, markA);
 
+    // ACTIVE IS THE BORDER, and that is the whole vocabulary: cyan means this
+    // module is carrying something and running it, no border means it is not.
+    // A red cross used to mark the switched-off case and it read as an error
+    // rather than as a choice the player had made.
     const running = filled && !off;
     g.lineStyle(running ? 2 : 1, running ? CYAN : FRAME_DARK, running ? 0.95 : 0.8);
     g.strokeRect(s.x + 0.5, s.y + 0.5, MOD - 1, MOD - 1);
 
-    // The weapon actually on the fire button gets corner ticks. A second colour
-    // on the border would compete with the cyan; ticks read as an annotation.
-    if (live) {
+    // White corners mark the SELECTED module — the one a weapon tapped on the
+    // ring will drop into. A second border colour would compete with the cyan;
+    // corner ticks read as an annotation on top of it.
+    if (selected) {
       g.fillStyle(0xFFFFFF, 0.95);
       for (const [dx, dy] of [[0, 0], [MOD - 4, 0], [0, MOD - 2], [MOD - 4, MOD - 2]]) {
         g.fillRect(s.x + dx, s.y + dy, 4, 2);
@@ -884,6 +884,7 @@ export default class UIScene extends Phaser.Scene {
   /** TAP route — hard pause, everything unlocked comes up to full opacity. */
   openWheel() {
     this.mode = 'open';
+    this.target = null;
     this.game_.paused = true;
     // The HUD goes away for the TAP route only. The game is stopped, so score
     // and energy are not telling you anything you need right now, and the dev
@@ -902,6 +903,7 @@ export default class UIScene extends Phaser.Scene {
 
   closeWheel() {
     this.mode = null;
+    this.target = null;
     this.hud.setVisible(true);
     // Closing on an unresolved acquire IS the answer: the new weapon goes to
     // the bench. It keeps its level and stays one tap away in the arc, so this
@@ -1012,38 +1014,48 @@ export default class UIScene extends Phaser.Scene {
   /**
    * A tap, resolved by what was tapped.
    *
-   * An arc weapon slots in; an offensive or sidearm slot becomes the live
-   * weapon and resumes the game; a defensive slot only reads out, because
-   * there is nothing to select — it is already running.
+   * TWO TAPS, ALWAYS THE SAME TWO. Tapping a module SELECTS it — white corners
+   * — and tapping a weapon then puts that weapon in it. One gesture for both
+   * classes and for every slot, rather than the old arrangement where an
+   * offensive module meant "make this live", a defensive one meant nothing at
+   * all, and a benched weapon landed in whichever slot the game picked for you.
+   *
+   * Tapping the selected module again clears the selection, so the gesture is
+   * reversible without a second control.
    */
   tapSlot(s) {
-    if (s.vacant) return;        // its weapon is already in a slot
+    if (s.vacant) return;
     const r = this.game_.run;
-    if (!s.id) {
-      // An empty socket is a target, not a dead end: if a weapon is waiting to
-      // be slotted, this is where it goes.
-      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls) this.installPending(s);
-      else this.setReadout(null);
-      return;
-    }
-    if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
 
-    if (r.pendingLoadout && s.kind === 'slot' && classOf(r.pendingLoadout) === s.cls) {
-      this.installPending(s);
-      return;
-    }
+    if (s.kind === 'sidearm') { this.setReadout(s.id); return; }
 
-    if (s.kind === 'arc') {
-      sfx('requip');
-      this.game_.equipSlot(s.id, this.landingSlot(s.id));
+    if (s.kind === 'slot') {
+      // A boss drop waiting for a home short-circuits the selection: the wheel
+      // opened to ask this exact question, so answer it.
+      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls) {
+        this.installPending(s);
+        return;
+      }
+      this.target = this.target === s ? null : s;
       this.refreshWheel();
       this.setReadout(s.id);
       return;
     }
-    if (classOf(s.id) === DEFENSIVE) { this.setReadout(s.id); return; }
+
+    // A benched or locked weapon on the ring.
+    if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
+    const cls = classOf(s.id);
+    // Into the selected module when the classes agree; otherwise fall back to
+    // the automatic landing slot, so tapping a weapon is never a dead end even
+    // if you have not selected anything.
+    const index = this.target && this.target.cls === cls
+      ? this.target.index
+      : this.landingSlot(s.id);
     sfx('requip');
-    this.game_.selectWeapon(s.id);
-    this.closeWheel();
+    this.game_.equipSlot(s.id, index);
+    this.target = null;
+    this.refreshWheel();
+    this.setReadout(s.id);
   }
 
   /**
@@ -1062,11 +1074,18 @@ export default class UIScene extends Phaser.Scene {
     return keep === 0 ? 1 : 0;
   }
 
-  /** Press-and-hold: switch a carried weapon off without losing the slot. */
+  /**
+   * Press-and-hold: switch a carried weapon off without giving up the slot.
+   *
+   * Works on both rows. A defensive weapon runs by itself, so switching it off
+   * is the ONLY way to quiet it; an offensive one keeps its slot and its levels
+   * while it sits out. The sidearm has no off switch — it is what you fall back
+   * to, so it cannot be the thing that leaves you unarmed.
+   */
   toggleSlot(s) {
     const r = this.game_.run;
-    if (!s.id || s.kind === 'arc' || s.kind === 'sidearm') return;
-    if (!r.unlocked.has(s.id)) return;
+    if (!s.id || s.kind !== 'slot') return;
+    if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
     sfx('select');
     this.game_.toggleWeapon(s.id);
     this.refreshWheel();
