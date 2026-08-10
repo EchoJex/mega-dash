@@ -1,0 +1,288 @@
+#!/usr/bin/env node
+/**
+ * SMOKE TEST — boot the real production bundle in a browser and play it.
+ *
+ * `npm run smoke` (after `npm run build`).
+ *
+ * WHY THIS EXISTS, AND WHY IT IS NOT PART OF `npm test`
+ * ----------------------------------------------------
+ * The unit suite runs in ~0.1s against fake contexts, which is the right
+ * standard for plumbing and the reason it gets run before every commit. But a
+ * fake context can be WRONG in a way that hides a bug rather than finding one:
+ * the boss harness in tests/fights.test.js was missing `anim`, every behaviour
+ * reading it produced NaN, the state machine wedged before reaching the line
+ * that actually crashed, and the suite stayed green through a fight that dies
+ * on the real thing within seconds. This caught that. Nothing else could have.
+ *
+ * It takes about three minutes and needs a browser, so it stays opt-in and out
+ * of CI — the APK build runs `npm test` and should keep doing exactly that.
+ * Playwright is deliberately NOT a devDependency: its postinstall pulls ~150MB
+ * of browsers onto every CI run for a job CI does not run.
+ *
+ *     npx playwright@latest install chromium      # once
+ *     npm run build && npm run smoke
+ *
+ * WHAT IT DOES. Serves dist/, opens it, starts a run, then visits every boss
+ * whose fight is built and fights each one; then equips all eight weapons that
+ * have a ladder, at every rung, and fires them. It fails on any page exception,
+ * console error, failed request, crash overlay, non-finite position, or
+ * runaway projectile count.
+ *
+ * Navigation goes through `globalThis.__game`, the dev-only handle main.js
+ * publishes for exactly this. Clicking pixel coordinates was unreliable and,
+ * worse, failed SILENTLY — a missed click just left the game sitting on the
+ * title screen with nothing to report and a cheerful pass. Play input still
+ * goes through the real keyboard, so the input path is exercised for real.
+ */
+import { createServer } from 'node:http';
+import { readFileSync, existsSync } from 'node:fs';
+import { extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+
+let chromium;
+try {
+  ({ chromium } = await import('playwright'));
+} catch {
+  console.log('playwright is not installed — this tool is deliberately opt-in.\n');
+  console.log('  npx playwright@latest install chromium');
+  console.log('  npm i --no-save playwright');
+  console.log('  npm run build && npm run smoke\n');
+  process.exit(1);
+}
+
+const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
+if (!existsSync(join(ROOT, 'index.html'))) {
+  console.log('no dist/ — run `npm run build` first.');
+  process.exit(1);
+}
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+
+const server = createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const file = join(ROOT, url === '/' ? 'index.html' : url);
+  if (!existsSync(file)) { res.writeHead(404); res.end('nope'); return; }
+  res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream' });
+  res.end(readFileSync(file));
+});
+await new Promise((r) => server.listen(4173, r));
+
+// Screenshots go to a scratch directory, never into the repo.
+const OUT = mkdtempSync(join(tmpdir(), 'megadash-smoke-'));
+const shot = (name) => join(OUT, name);
+
+// Prefer a pre-installed browser when the environment has one (CI images and
+// container sandboxes usually do), otherwise let Playwright find its own.
+const PINNED = process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium';
+const browser = await chromium.launch(
+  existsSync(PINNED) ? { executablePath: PINNED } : {},
+);
+const page = await browser.newPage({ viewport: { width: 900, height: 420 } });
+
+const problems = [];
+const fail = (m) => problems.push(m);
+page.on('console', (m) => {
+  const t = m.text();
+  // 'Failed to load resource' carries no URL; the response handler sees the
+  // same event WITH one, so this would only ever be a duplicate.
+  if (m.type() !== 'error') return;
+  if (/favicon/i.test(t) || /Failed to load resource/i.test(t)) return;
+  fail(`console.error: ${t}`);
+});
+page.on('response', (r) => {
+  if (r.status() >= 400 && !/favicon/i.test(r.url())) fail(`HTTP ${r.status()} ${r.url()}`);
+});
+page.on('pageerror', (e) => fail(`pageerror: ${e.message}\n${e.stack}`));
+
+await page.goto('http://localhost:4173/?seed=4821', { waitUntil: 'networkidle' });
+await page.waitForTimeout(1200);
+
+const has = await page.evaluate(() => !!globalThis.__game);
+if (!has) { console.log('FAIL — no __game handle; is DEV.enabled off?'); process.exit(1); }
+
+/** Hold real keys, so the input path is exercised rather than bypassed. */
+async function play(seconds, keys) {
+  const end = Date.now() + seconds * 1000;
+  while (Date.now() < end) {
+    for (const k of keys) {
+      await page.keyboard.down(k);
+      await page.waitForTimeout(55 + Math.random() * 85);
+      await page.keyboard.up(k);
+    }
+  }
+}
+
+/** Whatever the crash overlay is showing, or null. It is raw DOM, so readable. */
+const crashText = () => page.evaluate(() => {
+  const t = document.body.innerText || '';
+  return /CRASH/i.test(t) ? t.slice(0, 700) : null;
+});
+
+await page.evaluate(() => {
+  globalThis.__game.scene.getScene('Title').scene.start('Game');
+});
+await page.waitForTimeout(1400);
+
+const started = await page.evaluate(() => !!globalThis.__game.scene.getScene('Game')?.run);
+if (!started) fail('the run never started');
+
+await play(6, ['ArrowRight', 'KeyZ', 'Space', 'ArrowRight', 'KeyZ', 'ArrowLeft', 'KeyX']);
+await page.screenshot({ path: shot('area.png') });
+
+/**
+ * Visit every boss whose fight is built. This is the point of the exercise:
+ * arenas, hazard loops and attack state machines only run inside a sealed room
+ * and none of it is reachable from the scrolling area.
+ */
+for (const id of ['core', 'blaze', 'torrent', 'volt', 'strike']) {
+  const jumped = await page.evaluate((want) => {
+    const gs = globalThis.__game.scene.getScene('Game');
+    // Draw from the shuffle bag until the wanted boss turns up, then use the
+    // real dev jump — which drops the player OUTSIDE the door, so the door,
+    // the warp and the room building all get exercised too.
+    for (let i = 0; i < 40; i++) {
+      const def = gs.nextBoss();
+      if (def.id !== want) continue;
+      gs.devJumpToBoss(def);
+      return true;
+    }
+    return false;
+  }, id);
+  if (!jumped) { fail(`${id}: never came out of the bag`); continue; }
+
+  // Walk into the door — 72px at 1.375px/frame is about a second.
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(2200);
+  await page.keyboard.up('ArrowRight');
+  await page.waitForTimeout(900);
+
+  const inArena = await page.evaluate(() => {
+    const gs = globalThis.__game.scene.getScene('Game');
+    return { arena: !!gs.arena, boss: !!gs.boss };
+  });
+  if (!inArena.arena) { fail(`${id}: never reached the arena (door missed?)`); continue; }
+  if (!inArena.boss) fail(`${id}: arena built with no boss in it`);
+
+  // Fight for a while. Both loops get frames, and the fixed seed makes it the
+  // same fight on every run.
+  await play(11, ['ArrowRight', 'KeyZ', 'Space', 'KeyZ', 'ArrowLeft', 'Space', 'KeyX']);
+  await page.screenshot({ path: shot(`${id}.png`) });
+
+  const crash = await crashText();
+  if (crash) { fail(`${id} crashed:\n${crash}`); break; }
+
+  const alive = await page.evaluate(() => {
+    const gs = globalThis.__game.scene.getScene('Game');
+    const p = gs.player;
+    return {
+      run: !!gs.run,
+      finite: Number.isFinite(p.x) && Number.isFinite(p.y),
+      bossFinite: !gs.boss || (Number.isFinite(gs.boss.x) && Number.isFinite(gs.boss.y)),
+    };
+  });
+  if (!alive.run) fail(`${id}: the run ended mid-fight`);
+  if (!alive.finite) fail(`${id}: the player ended at a non-finite position`);
+  if (!alive.bossFinite) fail(`${id}: the boss ended at a non-finite position`);
+}
+
+/**
+ * The loadout and the wheel. Unlock a weapon of each class at max level, slot
+ * them from the arc, switch one off — the paths a real run only reaches after
+ * several bosses have fallen.
+ */
+const wheel = await page.evaluate(() => {
+  const g = globalThis.__game;
+  const gs = g.scene.getScene('Game');
+  const ui = g.scene.getScene('UI');
+  const out = {};
+  for (const id of ['blaze_wheel', 'volt_spark', 'core_blaster', 'torrent_cannon',
+    'frost_guard', 'strike_gauntlet', 'quake_hammer', 'swarm_caller']) {
+    gs.run.unlocked.add(id);
+    gs.run.wpLevels[id] = 10;              // the top rung of every ladder
+  }
+  ui.openWheel();
+  out.slotsDrawn = ui.active.length + ui.arc.length;
+  for (const s of ui.arc) ui.tapSlot(s);   // fill both slots of both classes
+  out.offensive = [...gs.run.loadout.offensive];
+  out.defensive = [...gs.run.loadout.defensive];
+  const live = gs.run.loadout.offensive.find(Boolean);
+  gs.selectWeapon(live);
+  out.selected = gs.run.activeWeapon;
+  gs.toggleWeapon(live);                   // switching it off must re-point the button
+  out.afterDisable = gs.run.activeWeapon;
+  gs.toggleWeapon(live);
+  gs.selectWeapon(live);
+  ui.closeWheel();
+  return out;
+});
+if (wheel.slotsDrawn !== 22) fail(`wheel drew ${wheel.slotsDrawn} slots, expected 22`);
+if (wheel.offensive.filter(Boolean).length !== 2) fail(`offensive slots: ${wheel.offensive}`);
+if (wheel.defensive.filter(Boolean).length !== 2) fail(`defensive slots: ${wheel.defensive}`);
+if (wheel.selected !== wheel.offensive.find(Boolean)) fail(`select left ${wheel.selected}`);
+if (wheel.afterDisable !== 'buster') fail(`disabling the live weapon left ${wheel.afterDisable}`);
+
+/**
+ * Every weapon with a runtime, at every rung of its ladder, actually fired.
+ *
+ * Tapping the whole arc above left two weapons with no runtime in the slots,
+ * so it proved the wheel worked and nothing about the weapons. This pairs each
+ * offensive weapon with a defensive one, sets both to a rung, and plays — so
+ * all eight runtimes step, draw and fire against a live boss.
+ */
+const PAIRS = [
+  ['blaze_wheel', 'core_blaster'],
+  ['volt_spark', 'torrent_cannon'],
+  ['strike_gauntlet', 'frost_guard'],
+  ['quake_hammer', 'swarm_caller'],
+];
+
+for (const level of [1, 3, 6, 10]) {
+  for (const [off, def] of PAIRS) {
+    const ok = await page.evaluate(([o, d, lv]) => {
+      const gs = globalThis.__game.scene.getScene('Game');
+      const lo = gs.run.loadout;
+      lo.offensive[0] = o; lo.offensive[1] = null;
+      lo.defensive[0] = d; lo.defensive[1] = null;
+      lo.disabled.clear();
+      gs.run.wpLevels[o] = lv; gs.run.wpLevels[d] = lv;
+      gs.run.wstate = {};            // re-init both runtimes at the new rung
+      gs.selectWeapon(o);
+      return gs.run.activeWeapon === o;
+    }, [off, def, level]);
+    if (!ok) { fail(`could not select ${off} at Lv${level}`); continue; }
+
+    // Tap-fire, then a long hold — the two branches of a long-press weapon.
+    await play(3, ['KeyZ', 'ArrowRight', 'Space', 'KeyZ', 'ArrowLeft', 'KeyX']);
+    await page.keyboard.down('KeyZ');
+    await page.waitForTimeout(1100);
+    await page.keyboard.up('KeyZ');
+    await page.waitForTimeout(400);
+
+    const crash = await crashText();
+    if (crash) { fail(`${off}+${def} Lv${level} crashed:\n${crash}`); break; }
+    const sane = await page.evaluate(() => {
+      const gs = globalThis.__game.scene.getScene('Game');
+      return Number.isFinite(gs.player.x) && Number.isFinite(gs.player.y)
+        && gs.bullets.every((b) => Number.isFinite(b.x) && Number.isFinite(b.y))
+        && gs.bullets.length < 400;
+    });
+    if (!sane) fail(`${off}+${def} Lv${level}: non-finite state or runaway projectiles`);
+  }
+  if (problems.length) break;
+}
+await page.screenshot({ path: shot('weapons.png') });
+
+const lastCrash = await crashText();
+if (lastCrash) fail(`weapons crashed:\n${lastCrash}`);
+
+await browser.close();
+server.close();
+
+if (problems.length) {
+  console.log(`FAIL — ${problems.length} problem(s):\n`);
+  for (const p of problems.slice(0, 8)) console.log(p + '\n');
+  process.exit(1);
+}
+console.log('OK — booted, fought all five built bosses, exercised the loadout');
+console.log(`screenshots: ${OUT}`);

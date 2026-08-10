@@ -11,10 +11,16 @@
  * *causes* flinch and knockback because it is a hit, not because flinch is a
  * status.
  *
- * Several attributes are deliberately the SAME behaviour with a different tint:
- * stun, constrict and freeze all mean "the target cannot act for N frames" and
- * differ only in the colour that flashes. That is per the tracker, and it is why
- * they share HELD below rather than each getting its own branch.
+ * Constrict and freeze are deliberately the SAME behaviour with a different
+ * tint: both mean "the target cannot act for N frames" and differ only in the
+ * colour that flashes, which is why they share HELD below.
+ *
+ * STUN IS NO LONGER ONE OF THEM. The tracker now defines it as a stacking
+ * SLOW — 15% off the player's movement and attack speed per stack, 30% off an
+ * enemy's, multiplied against whatever speed is left — not as a hold. A slow
+ * that stacks and a hold that does not are different mechanics, so stun gets
+ * its own branch and CLAUDE.md's older "stun, constrict and freeze already do"
+ * line no longer covers it.
  *
  * WHO IS IMMUNE TO WHAT is decided by `source`, not by the attribute. The player
  * is immune to Hot it created itself (Blaze Wheel) but not to Hot the arena
@@ -29,8 +35,9 @@ export const ATTR = {
   burn:      { form: 'character', tint: 0xE11416, label: 'BURN' },
   wet:       { form: 'both',      tint: 0x145DBD, label: 'WET' },
   poisoned:  { form: 'character', tint: 0xA926D9, label: 'POISON' },
-  // Identical behaviour, different colour — see the note above.
-  stun:      { form: 'character', tint: 0xF5D328, label: 'STUN', held: true },
+  // A stacking slow, not a hold. See the note above.
+  stun:      { form: 'character', tint: 0xF5D328, label: 'STUN', stacks: true },
+  // Identical behaviour, different colour.
   constrict: { form: 'character', tint: 0x2AAB1C, label: 'HELD', held: true },
   freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', held: true },
 };
@@ -50,10 +57,34 @@ export const makeStatus = () => ({});
  * duration instead of adding a second instance. That is the tracker's rule for
  * Hot and Burn and it generalises: stacking would make a rapid-fire weapon
  * silently many times stronger than its damage numbers say.
+ *
+ * STUN IS THE ONE EXCEPTION, because the tracker asks for it explicitly:
+ * re-applying adds a stack and resets the clock, and each stack multiplies what
+ * is LEFT of the target's speed rather than subtracting from the original. That
+ * shape is self-limiting — 0.7^n approaches zero without ever reaching it — so
+ * no cap is needed to stop a chain weapon freezing something outright.
+ *
+ * `opts.step` is the per-stack multiplier, and it is passed in rather than read
+ * from FEEL here because the same attribute hits the player at 15% and an enemy
+ * at 30%. The applier knows who it is hitting; this function does not.
  */
-export function applyStatus(bag, id, frames) {
-  if (!ATTR[id]) return bag;
+export function applyStatus(bag, id, frames, opts = {}) {
+  const def = ATTR[id];
+  if (!def) return bag;
   const cur = bag[id];
+
+  if (def.stacks) {
+    const step = opts.step ?? 1;
+    bag[id] = {
+      t: frames,
+      tMax: frames,
+      accum: cur?.accum || 0,
+      stacks: (cur && cur.t > 0 ? cur.stacks : 0) + 1,
+      step,
+    };
+    return bag;
+  }
+
   if (cur && cur.t > frames) { cur.tMax = Math.max(cur.tMax, frames); return bag; }
   bag[id] = { t: frames, tMax: frames, accum: cur?.accum || 0 };
   return bag;
@@ -100,6 +131,29 @@ export function statusTint(bag) {
     if (f > bestFrac) { bestFrac = f; best = ATTR[id]?.tint ?? null; }
   }
   return best;
+}
+
+/**
+ * How strongly to flash the tint, 0-1. Stun deepens with every stack, per the
+ * tracker's "faint yellow hue that becomes more intense with each additional
+ * stack" — so the number of stacks is readable without a HUD counter.
+ */
+export function statusIntensity(bag) {
+  const s = bag?.stun;
+  if (!s || s.t <= 0) return 1;
+  return Math.min(1, 0.45 + 0.18 * s.stacks);
+}
+
+/**
+ * Movement and attack speed multiplier from Stun. 1 when unstunned.
+ *
+ * Multiplicative in the number of stacks, which is the tracker's wording:
+ * each stack takes its cut of the speed that is LEFT, not of the original.
+ */
+export function speedMult(bag) {
+  const s = bag?.stun;
+  if (!s || s.t <= 0) return 1;
+  return (s.step ?? 1) ** s.stacks;
 }
 
 /** Wet reduces contact friction; nothing else changes how the player moves. */

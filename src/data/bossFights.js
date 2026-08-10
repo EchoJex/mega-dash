@@ -22,10 +22,14 @@
  *   status  (id, frames) -> a character attribute on the player
  *   patch   (id, x, y, w, h, frames, opts) -> a terrain attribute on the arena
  *
+ *   hurt    (sourceX, damage) -> applies a real hit: flinch, knockback, i-frames
+ *   shove   (dx, dy) -> moves the player with no hit and no i-frames
+ *   blockAt (x, y, r) -> destroys player shots in a radius
+ *   flash   (frames, at) -> a whole-room light flash, `at` 0-1 across the width
+ *
  * SOURCE OF TRUTH: design/TRACKER.md. Build only from fields the owner has
- * marked `[ready]` — never from `[draft]` or `[wip]`. A `null` layer here means
- * the tracker has not defined that layer; inventing content would mean
- * designing blind.
+ * marked `[draft]` — never from `[wip]`. A `null` layer here means the tracker
+ * has not defined that layer; inventing content would mean designing blind.
  */
 
 import { FEEL } from '../config/feel.js';
@@ -39,12 +43,18 @@ export function aimAt(sx, sy, px, py) {
   return { x: dx / d, y: dy / d };
 }
 
-// ── CORE MAN — Typeless ─────────────────────────────────────────────
+// ── PROTO MK0 (id `core`) — Typeless ────────────────────────────────
 // "Moves back and forth on the stage, occasionally stopping to fire..."
 // L1  a 3-bullet spread with mild auto-aim
 // L2  either that spread, OR a 5-bullet string with aim LOCKED to where the
 //     player was when the first bullet left
-// L3  either three spreads, OR a 5-10 bullet string that tracks continuously
+// L3  either a SET OF TWO spreads, OR a 5-bullet string that tracks
+//     continuously instead of locking
+//
+// The string is five bullets at every layer and the layer-3 set is two, not
+// three: an earlier reading had 3 volleys and a random 5-10 string, which was
+// harder than the tracker asks for and made layer 3 a different attack rather
+// than a sharper one.
 const CORE = {
   speed: 0.55,
   windupFrames: 26,      // the stop-and-telegraph before firing
@@ -89,11 +99,11 @@ function coreAttack(layer) {
         if (--fs.t > 0) break;
         if (fs.pattern === 'spread') {
           fs.mode = 'spread';
-          fs.volleys = layer >= 3 ? 3 : 1;   // L3 fires a set of three
+          fs.volleys = layer >= 3 ? 2 : 1;   // L3 fires "a set of 2"
           fs.t = 0;
         } else {
           fs.mode = 'string';
-          fs.shots = layer >= 3 ? Math.round(rnd(5, 10)) : 5;
+          fs.shots = 5;                      // "a string of 5 bullets" at every layer
           fs.t = 0;
           // L2 locks aim at the player's position as the first bullet leaves;
           // L3 keeps tracking, so it re-aims every shot.
@@ -111,7 +121,7 @@ function coreAttack(layer) {
           coreShot(ctx, Math.cos(th) * CORE.spreadSpeed, Math.sin(th) * CORE.spreadSpeed,
             CORE.homing);
         }
-        if (--fs.volleys > 0) { fs.t = 22; break; }   // L3 fires three of these
+        if (--fs.volleys > 0) { fs.t = 22; break; }   // L3 fires two of these
         fs.mode = 'patrol';
         fs.t = rnd(...CORE.restFrames);
         break;
@@ -202,7 +212,7 @@ const BLAZE = {
   // The trail cools from the moment each patch is laid down, not from when the
   // fireball finally expires — see MERGE_RATIO in systems/attributes.js.
   hotFrames: 90,
-  floodFrames: 1800,       // the flood recedes after 30 seconds
+  floodFrames: 1200,       // "the lava recedes after 20 seconds"
   floodDepth: 24,          // "about one default player height"
 };
 
@@ -218,9 +228,14 @@ const BLAZE = {
  *   - at least one platform that is NOT the boss's perch is guaranteed cool,
  *     including clearing any Hot a rock already left on it
  *
- * The hazard loop separately stops dropping rocks while the lava is up (see
- * blazeHazard), because a rock landing on the last cool platform would take the
- * guarantee away a second after it was given.
+ * The boss rides his OWN lift during the flood (arena furniture, layer 3 only),
+ * so he no longer takes one of the player's three platforms with him — which is
+ * what the tracker means by "a small platform that moves up and down just for
+ * himself". `perch` is still excluded here in case the lift is missing.
+ *
+ * The hazard loop keeps dropping rocks through the flood but never above a
+ * platform (see blazeHazard), so shelter cannot be taken away a second after it
+ * was given while the sky stays a threat.
  */
 function keepFootingDuringFlood(ctx, a, perch) {
   for (const pl of a.platforms) { pl.on = true; pl.t = Math.max(pl.t, 120); }
@@ -251,12 +266,17 @@ function blazeAttack(layer) {
     const midFlood = fs.mode === 'flood' || fs.mode === 'flooded';
     if (layer >= 3 && a && !midFlood && fs.flood == null) fs.flood = 900;
     if (layer >= 3 && a && !midFlood && --fs.flood <= 0) {
-      const perch = a.platforms.find((pl) => pl.on) || a.platforms[0];
+      // His own lift, if the room has one. Falling back to a shared platform
+      // keeps the layer playable in a room built before the lift existed.
+      const perch = a.lift || a.platforms.find((pl) => pl.on) || a.platforms[0];
       if (perch) {
         perch.on = true; perch.t = 1200;             // his perch does not phase out
         fs.mode = 'flood'; fs.t = 210; fs.perch = perch;
       } else { fs.flood = 300; }
     }
+    // The glow decays back to nothing whenever a flood is not building, so the
+    // ebb only ever means "this is about to happen".
+    if (a && !midFlood) a.ebb *= 0.9;
 
     switch (fs.mode) {
       case 'flood': {
@@ -264,10 +284,12 @@ function blazeAttack(layer) {
         const tx = fs.perch.x + fs.perch.w / 2 - b.w / 2;
         b.x += (tx - b.x) * 0.12;
         b.y += (fs.perch.y - b.h - b.y) * 0.12;
-        // The tell, in two beats: he climbs clear of the floor first, then the
-        // room starts shaking for a full 2.5 seconds before any lava appears.
-        // This attack deletes the floor for 30 seconds — the warning has to be
-        // proportional to that, not to a normal volley.
+        // THE TELL, IN THREE BEATS. He climbs clear of the floor; "the red
+        // pixels of the background ebb rapidly"; then the room shakes for a
+        // full 2.5 seconds before any lava appears. This attack deletes the
+        // floor for twenty seconds, so the warning is proportional to that
+        // rather than to a normal volley.
+        a.ebb = Math.min(1, (210 - fs.t) / 160) * (0.55 + 0.45 * Math.sin(fs.t * 0.55));
         if (--fs.t === 150) ctx.shake(3, 170);
         if (fs.t <= 0) {
           a.liquid.target = BLAZE.floodDepth;
@@ -279,9 +301,11 @@ function blazeAttack(layer) {
       }
       case 'flooded': {
         b.y += (fs.perch.y - b.h - b.y) * 0.12;
+        b.x += (fs.perch.x + fs.perch.w / 2 - b.w / 2 - b.x) * 0.12;  // ride the lift
+        a.ebb = 0.4 + 0.12 * Math.sin(b.anim * 0.16);
         // Re-asserted every frame: the floor is gone, so the guarantee that one
-        // platform stays solid and cool has to hold for the whole 30 seconds,
-        // not just at the moment the lava arrives.
+        // platform stays solid and cool has to hold for the whole twenty
+        // seconds, not just at the moment the lava arrives.
         keepFootingDuringFlood(ctx, a, fs.perch);
         if (a.liquid.hold === 0 && a.liquid.h <= 0.6) {
           // "leaving Hot on the ground" once the lava drops away
@@ -361,25 +385,54 @@ const BLAZE_HAZ = {
   size: { 1: 12, 2: 15, 3: 15 },           // slightly bigger
 };
 
+/**
+ * Where the next rock falls.
+ *
+ * Anywhere across the room normally. While the lava is up it must not be above
+ * a platform, because those are the only footing left — so the column is
+ * re-rolled a few times and the drop is skipped for a frame if the sky over
+ * open lava is genuinely full.
+ */
+function rockDropX(a, size, flooding) {
+  const lo = a.x0 + 8, hi = a.x1 - 8 - size;
+  if (!flooding) return rnd(lo, hi);
+  for (let tries = 0; tries < 12; tries++) {
+    const x = rnd(lo, hi);
+    const clear = !a.platforms.some((pl) => x + size > pl.x - 4 && x < pl.x + pl.w + 4);
+    if (clear) return x;
+  }
+  return null;
+}
+
 function blazeHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a) return;
     const hs = ctx.boss.hs || (ctx.boss.hs = { t: 180, left: 0, gap: 0 });
 
-    // NOT WHILE THE LAVA IS UP. During the flood the platforms are the only
-    // footing left, and a rock landing on one would make it Hot — taking away
-    // the last safe place to stand. The cycle resumes once the lava recedes.
+    // "Rocks shall fall, but not from right above the platforms while the lava
+    // is up." During the flood the platforms are the only footing left, so a
+    // rock landing on one would make it Hot and take away the last safe place
+    // to stand — but stopping the shower outright made the flood a rest.
     //
     // Keyed on `target`, not on the visible height: the lava takes ~2s to rise,
     // and a rock released during that climb would still be in the air when the
     // floor vanished underneath it.
-    if (a.liquid && (a.liquid.target > 0.5 || a.liquid.h > 0.5)) {
-      a.hazards.length = 0;                // anything already falling is cancelled
-      hs.left = 0;
-      hs.t = Math.max(hs.t, 90);           // a beat to breathe before it restarts
-      return;
+    const flooding = !!(a.liquid && (a.liquid.target > 0.5 || a.liquid.h > 0.5));
+
+    // A flood can begin with rocks already in the air. One of those landing on
+    // a platform would take away the only footing in the room a second after
+    // the floor vanished, so they are culled at the moment the lava starts
+    // rising rather than allowed to finish a fall that was fair when it began.
+    if (flooding && !hs.wasFlooding) {
+      for (let i = a.hazards.length - 1; i >= 0; i--) {
+        const r = a.hazards[i];
+        if (a.platforms.some((pl) => r.x + r.w > pl.x - 4 && r.x < pl.x + pl.w + 4)) {
+          a.hazards.splice(i, 1);
+        }
+      }
     }
+    hs.wasFlooding = flooding;
 
     // `cycle` is the WHOLE period, so this runs during the shower too. Ticking
     // it only between showers meant the real interval was cycle + however long
@@ -393,13 +446,20 @@ function blazeHazard(layer) {
       // every frame rather than skipped, so the cycle still delivers all of its
       // rocks — it just paces them by what is on screen instead of by a timer.
       if (a.hazards.length >= BLAZE_HAZ.airborne) { hs.gap = 1; return; }
+      const s = BLAZE_HAZ.size[layer];
+      const x = rockDropX(a, s, flooding);
+      // While flooded, a cycle can run out of clear sky. Waiting a frame and
+      // retrying is right — the shower should thin out over the platforms, not
+      // lose its rocks.
+      if (x === null) { hs.gap = 1; return; }
       hs.gap = BLAZE_HAZ.drop[layer];
       hs.left--;
-      const s = BLAZE_HAZ.size[layer];
       a.hazards.push({
         kind: 'rock',
-        x: rnd(a.x0 + 8, a.x1 - 8 - s), y: a.ceilY - s,
+        x, y: a.ceilY - s,
         w: s, h: s, vy: BLAZE_HAZ.fall[layer],
+        crumbles: true, leaves: 'hot',
+        damage: FEEL.hazardDamage, burn: FEEL.burnFrames, diesOnHit: true,
       });
       // Never let the next telegraph start while the last rocks are still up.
       if (hs.left === 0) hs.t = Math.max(hs.t, 150);
@@ -415,82 +475,222 @@ function blazeHazard(layer) {
   };
 }
 
-// ── TEMPEST MAN — Water ─────────────────────────────────────────────
-// Attack: "Slow-moving high-pressure water cannons fire water in discrete
-// angled arcs at random times; no damage on contact, but pushes the player in
-// the direction of the water's travel and blocks player bullets."
+// ── TEMPEST MAN (id `torrent`) — Water ──────────────────────────────
+/**
+ * "Boss flies around the stage just like the attack pattern of Queen B from
+ *  DKC at full health / damaged / critical health. Player takes moderate damage
+ *  from contact with boss. Jetpack pushes the player in the direction of the
+ *  water's travel and blocks player bullets."
+ *
+ * THE QUEEN B PATTERN, as three layers. He is not a shooter — he is a moving
+ * obstacle with an exhaust plume, and the fight is about reading where he is
+ * going. He cruises at altitude, picks a moment, dives across the room at the
+ * player's height, and climbs back. Layer by layer the cruise gets faster, the
+ * gap between dives shorter, and the number of dives per pass goes up.
+ *
+ * THE JETPACK IS THE WEAPON. It fires opposite his travel, which means the
+ * exhaust always sweeps the ground he just left — so the safe place is behind
+ * him, not beside him. It shoves the player along its own direction and eats
+ * player fire, so shooting him through the plume does not work and the answer
+ * is to get around it.
+ *
+ * This replaces an earlier water-cannon reading of the field. The tracker's
+ * attack layers describe a flight pattern with no projectile at all, and the
+ * cannon was a leftover from a previous draft of the same line.
+ */
 const TEMPEST = {
-  rest: [110, 190],
-  windup: 26,
-  speed: 1.5,
-  push: 0.55,
+  cruiseY: { 1: 0.30, 2: 0.30, 3: 0.26 },   // fraction of the floor height
+  drift: { 1: 0.55, 2: 0.9, 3: 1.3 },
+  rest: { 1: [140, 210], 2: [100, 160], 3: [65, 110] },
+  dives: { 1: 1, 2: 2, 3: 3 },
+  diveSpeed: { 1: 2.1, 2: 2.8, 3: 3.5 },
+  tell: 30,
+  contact: 2,        // "moderate damage from contact with boss"
+  jetLen: 30,
+  jetPush: 0.9,
+  jetR: 8,
 };
+
+/**
+ * The exhaust plume: a short ray out of the boss, pointing opposite his travel.
+ *
+ * Sampled at a few points rather than modelled as a shape, because the only two
+ * questions it ever answers are "is the player in it" and "is a bullet in it",
+ * and both are cheap point tests. `b.jet` is left on the boss for the renderer
+ * so the nozzles always point where the force actually is.
+ */
+function tempestJet(ctx, b, fs) {
+  const vx = b.x - (fs.px ?? b.x), vy = b.y - (fs.py ?? b.y);
+  fs.px = b.x; fs.py = b.y;
+  const m = Math.hypot(vx, vy);
+  // Hovering: the nozzles hang straight down, which is also what holds him up.
+  const jx = m < 0.08 ? 0 : -vx / m;
+  const jy = m < 0.08 ? 1 : -vy / m;
+  b.jet = { dx: jx, dy: jy, len: TEMPEST.jetLen };
+
+  const ox = b.x + b.w / 2, oy = b.y + b.h * 0.75;
+  const box = ctx.playerBox;
+  for (let d = 4; d <= TEMPEST.jetLen; d += 6) {
+    const px = ox + jx * d, py = oy + jy * d;
+    ctx.blockAt(px, py, TEMPEST.jetR);
+    const near = px > box.x - TEMPEST.jetR && px < box.x + box.w + TEMPEST.jetR
+      && py > box.y - TEMPEST.jetR && py < box.y + box.h + TEMPEST.jetR;
+    // Weaker further down the plume, so being clipped by its tip is a nudge
+    // and standing in its mouth is a problem.
+    if (near) {
+      const falloff = 1 - d / (TEMPEST.jetLen + 8);
+      ctx.shove(jx * TEMPEST.jetPush * falloff, jy * TEMPEST.jetPush * falloff * 0.6);
+    }
+  }
+}
 
 function tempestAttack(layer) {
   return (ctx) => {
     const b = ctx.boss, p = ctx.player;
-    const fs = b.fs || (b.fs = { mode: 'patrol', t: rnd(...TEMPEST.rest), dir: -1 });
+    let fs = b.fs;
+    if (!fs) {
+      fs = b.fs = { mode: 'cruise', t: rnd(...TEMPEST.rest[layer]), dir: -1, left: 0 };
+      // He hurts more to touch than the default body-check, because touching
+      // him is most of what the fight can do to you.
+      b.contactDamage = TEMPEST.contact;
+    }
+    const cruiseY = ctx.floorY * TEMPEST.cruiseY[layer];
 
     switch (fs.mode) {
-      case 'patrol':
-        b.x += fs.dir * 0.4;                    // "slow-moving"
+      case 'cruise': {
+        b.x += fs.dir * TEMPEST.drift[layer];
+        b.y += (cruiseY - b.y) * 0.06 + Math.sin(b.anim * 0.05) * 0.35;
         if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
-        if (--fs.t <= 0) { fs.mode = 'windup'; fs.t = TEMPEST.windup; }
+        if (--fs.t <= 0) {
+          fs.mode = 'tell';
+          fs.t = TEMPEST.tell;
+          fs.left = TEMPEST.dives[layer];
+        }
         break;
+      }
 
-      case 'windup': {
+      case 'tell': {
+        // He stops dead and sinks a little. Standing still is the whole
+        // telegraph — with no projectile to watch for, the only warning the
+        // player gets is that he has stopped drifting.
+        b.y += 0.35;
         if (--fs.t > 0) break;
-        // A discrete arc, not a stream: one shot per volley, angled at the
-        // player, that keeps travelling along the floor once it lands.
-        const v = aimAt(b.x + b.w / 2, b.y + b.h * 0.4, p.x + 12, p.y + 12);
-        const th = Math.atan2(v.y, v.x) - 0.5;
-        ctx.shoot({
-          x: b.x + b.w / 2, y: b.y + b.h * 0.4,
-          vx: Math.cos(th) * TEMPEST.speed, vy: Math.sin(th) * TEMPEST.speed,
-          radius: 4, damage: 0, color: '#5CADD5', shape: 'stream',
-          gravity: 0.06, push: TEMPEST.push, blocks: true, crawls: true, life: 460,
-        });
-        fs.mode = 'patrol';
-        fs.t = rnd(...TEMPEST.rest);
+        fs.mode = 'dive';
+        // Committed at launch: he goes for the height the player was at, and
+        // crosses the room. Dodging is a matter of not being on that line by
+        // the time he arrives.
+        fs.targetY = Math.max(16, Math.min(ctx.floorY - b.h - 2, p.y));
+        fs.dir = p.x + 12 > b.x + b.w / 2 ? 1 : -1;
+        break;
+      }
+
+      case 'dive': {
+        b.x += fs.dir * TEMPEST.diveSpeed[layer];
+        b.y += Math.sign(fs.targetY - b.y) * Math.min(2.2, Math.abs(fs.targetY - b.y) * 0.2);
+        const atEdge = fs.dir < 0
+          ? b.x <= ctx.bounds.x0
+          : b.x + b.w >= ctx.bounds.x1;
+        if (atEdge) {
+          b.x = fs.dir < 0 ? ctx.bounds.x0 : ctx.bounds.x1 - b.w;
+          if (--fs.left > 0) { fs.mode = 'tell'; fs.t = Math.round(TEMPEST.tell * 0.6); }
+          else { fs.mode = 'climb'; }
+        }
+        break;
+      }
+
+      case 'climb': {
+        b.y += (cruiseY - b.y) * 0.1;
+        if (Math.abs(b.y - cruiseY) < 2) {
+          fs.mode = 'cruise';
+          fs.t = rnd(...TEMPEST.rest[layer]);
+          fs.dir = -fs.dir;
+        }
         break;
       }
     }
+
+    tempestJet(ctx, b, fs);
   };
 }
 
-// Hazard: rain pushing the player, portholes pouring down both walls, and a
-// current across the floor dragging toward the central drain.
+/**
+ * TEMPEST MAN's hazard — the room itself, running all three layers.
+ *
+ * Constant at every layer: heavy rain pushing you along its own direction,
+ * steel pipes in the upper corners pouring a cascade down the walls, knee-deep
+ * floor water with a current dragging inward, and a grate-covered central drain
+ * with a spike ball sitting on it. The wading penalty on jumps lives in
+ * GameScene, because it is a property of the water rather than of this loop.
+ *
+ * What each layer adds:
+ *   L1  rain straight down; occasional barrels float out of the pipes. They are
+ *       footing and they are shootable, so they are the one thing in the room
+ *       that is on your side — until they reach the ball and break open.
+ *   L2  rain cycles between three directions on a fixed beat, each change
+ *       telegraphed by a lightning bolt and a screen flash; spike balls join
+ *       the barrels coming out of the pipes.
+ *   L3  the direction changes hold for a random stretch of at least three
+ *       seconds with only a brief die-down between them, and it is spike balls
+ *       only — the barrels stop coming, so the floor stops offering shelter.
+ */
 const TEMPEST_HAZ = {
   rainPush: 0.055,
   currentGround: 0.09,
   currentAir: 0.03,
-  cycle: 300,        // L2 changes rain direction on this beat
+  cycle: 300,                 // L2's fixed beat between direction changes
+  l3Hold: [200, 460],         // L3: random, and never under three seconds
+  l3Lull: 40,                 // the "limited die down" between L3 changes
   dirs: [[0, 1], [-0.6, 1], [0.6, 1]],
+  spawn: { 1: 330, 2: 260, 3: 190 },
+  // What floats out of the pipes. Weighted by repetition, which keeps the mix
+  // in one readable line: L2 is mostly barrels with the occasional ball.
+  drops: {
+    1: ['barrel'],
+    2: ['barrel', 'barrel', 'spikeball'],
+    3: ['spikeball'],
+  },
+  floatSpeed: 1.3,
+  driftSpeed: 0.5,
 };
 
 function tempestHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a || !a.drain) return;
-    const hs = ctx.boss.hs || (ctx.boss.hs = { t: TEMPEST_HAZ.cycle, dir: 0 });
+    const hs = ctx.boss.hs || (ctx.boss.hs = {
+      t: TEMPEST_HAZ.cycle, dir: 0, lull: 0, spawn: 120, pipe: 0,
+    });
 
-    // L1 rain is straight down. L2 cycles through three directions.
+    // L1 rain is straight down and never changes. L2 cycles on a fixed beat;
+    // L3 holds each direction for a random stretch with a brief lull between,
+    // so the pattern cannot be counted out.
     if (layer >= 2 && --hs.t <= 0) {
-      hs.t = TEMPEST_HAZ.cycle;
+      hs.t = layer >= 3 ? rnd(...TEMPEST_HAZ.l3Hold) : TEMPEST_HAZ.cycle;
       hs.dir = (hs.dir + 1 + Math.floor(Math.random() * 2)) % TEMPEST_HAZ.dirs.length;
+      hs.lull = layer >= 3 ? TEMPEST_HAZ.l3Lull : 0;
+      // "Bolts of lightning and screen flashes telegraph the rain direction
+      // changes." The flash IS the telegraph, so it fires on the change rather
+      // than as decoration.
+      ctx.flash(10, hs.dir === 1 ? 0.25 : hs.dir === 2 ? 0.75 : 0.5);
     }
+    if (hs.lull > 0) hs.lull--;
+
     const [rx] = TEMPEST_HAZ.dirs[layer >= 2 ? hs.dir : 0];
     a.rainDir = rx;
 
     // The push is rebuilt every frame rather than accumulated, so it is a steady
-    // force you lean against, not something that winds up over time.
+    // force you lean against, not something that winds up over time. During an
+    // L3 lull the rain slackens rather than stopping — "limited die down".
     const p = ctx.player;
     const pcx = p.x + 12;
+    const slack = hs.lull > 0 ? 0.25 : 1;
     const toDrain = Math.sign((a.drain.x + a.drain.w / 2) - pcx);
     const cur = p.onGround ? TEMPEST_HAZ.currentGround : TEMPEST_HAZ.currentAir;
-    a.push.x = rx * TEMPEST_HAZ.rainPush + toDrain * cur;
+    a.push.x = rx * TEMPEST_HAZ.rainPush * slack + toDrain * cur;
     a.push.y = 0;
+
+    tempestFloaters(ctx, a, hs, layer);
 
     // The spike ball on the grate, and (L2+) the grate itself.
     const ball = a.drain.ball;
@@ -501,6 +701,331 @@ function tempestHazard(layer) {
       && box.y + box.h >= a.drain.y - 1
       && box.x + box.w > a.drain.x && box.x < a.drain.x + a.drain.w;
     if (hitBall || onGrate) ctx.hurt(ball.x, 2);
+  };
+}
+
+/**
+ * Barrels and spike balls: out of a pipe, down the cascade, then along the
+ * waterline to the drain, where the central spike ball pops them.
+ *
+ * The two alternate between the pipes rather than picking randomly, so both
+ * corners stay live and the room never spends twenty seconds threatening one
+ * side. Popping on the ball is what caps the population — there is no despawn
+ * timer, and there should not be one: an object that vanished on its own would
+ * make the drain decorative.
+ */
+function tempestFloaters(ctx, a, hs, layer) {
+  const drainCx = a.drain.x + a.drain.w / 2;
+  const waterTop = a.floorY - (a.liquid?.h || 0);
+
+  for (const h of a.hazards) {
+    if (h.kind !== 'barrel' && h.kind !== 'spikeball') continue;
+    if (h.y + h.h < waterTop - 1) {
+      h.y += TEMPEST_HAZ.floatSpeed;          // still falling down the cascade
+    } else {
+      h.y = waterTop - h.h + 2;               // riding the surface
+      h.x += Math.sign(drainCx - (h.x + h.w / 2)) * TEMPEST_HAZ.driftSpeed;
+    }
+    if (h.kind === 'spikeball') h.spin = (h.spin || 0) + 0.09;
+  }
+
+  if (--hs.spawn > 0) return;
+  hs.spawn = TEMPEST_HAZ.spawn[layer];
+  const pipes = a.pipes || [];
+  if (!pipes.length) return;
+  const pipe = pipes[hs.pipe % pipes.length];
+  hs.pipe++;
+
+  const table = TEMPEST_HAZ.drops[layer];
+  const kind = table[Math.floor(Math.random() * table.length)];
+  const x = pipe.dir > 0 ? pipe.x + pipe.w - 6 : pipe.x - 6;
+  if (kind === 'barrel') {
+    a.hazards.push({
+      kind: 'barrel', x, y: pipe.y + pipe.h, w: 14, h: 12,
+      // Standable AND shootable: the one friendly object in the room, and the
+      // only reason to want the pipes doing anything.
+      solid: true, hp: 6, popsOnBall: true,
+    });
+  } else {
+    a.hazards.push({
+      kind: 'spikeball', x, y: pipe.y + pipe.h, w: 12, h: 12,
+      damage: 2, popsOnBall: true, spin: 0,
+    });
+  }
+}
+
+// ── VOLT MAN — Electric ─────────────────────────────────────────────
+/**
+ * "Fires up to 3 sequential zigzag lightning bolts that bounce and arc on
+ *  contact with surfaces or the player. Damage and size decrease at every
+ *  bounce."
+ *  L2 "Bolts increase to 7 and gain a longer bounce life, and the boss fires a
+ *      second volley on a shallower angle before the first has finished, so two
+ *      zigzag paths overlap."
+ *  L3 "Bolts no longer lose size on bounce, only damage. Between volleys the
+ *      boss discharges into the floor, briefly energising every panel the last
+ *      bolt touched."
+ *
+ * BOUNCES ARE A BUDGET, NOT A TIMER. Each bolt carries a count and spends one
+ * per surface, so "longer bounce life" is a single number and a bolt's reach is
+ * something the player can learn by watching rather than by counting seconds.
+ *
+ * The layer-3 discharge reads the marks bolts leave on the floor panels — see
+ * the ricochet block in GameScene.stepBullets. That means the discharge is
+ * literally where the last volley went, which is the point: it punishes the
+ * ground you were just forced to stand on.
+ */
+const VOLT = {
+  bolts: { 1: 3, 2: 7, 3: 7 },
+  bounces: { 1: 3, 2: 6, 3: 6 },
+  gap: 12,                   // frames between bolts in a volley
+  speed: 2.3,
+  windup: 30,
+  rest: { 1: [110, 170], 2: [90, 140], 3: [80, 125] },
+  bounceDmg: 0.72,
+  // "Bolts no longer lose size on bounce" at layer 3 — only their damage falls.
+  bounceShrink: { 1: 0.86, 2: 0.86, 3: 1 },
+  zig: 9,                    // frames between kinks
+  secondVolley: 34,          // L2+: the overlapping volley, fired before the first ends
+  dischargeLive: 70,
+};
+
+function voltBolt(ctx, layer, th, shallow) {
+  const b = ctx.boss;
+  ctx.shoot({
+    x: b.x + b.w / 2, y: b.y + b.h * 0.45,
+    vx: Math.cos(th) * VOLT.speed, vy: Math.sin(th) * VOLT.speed,
+    radius: 3, damage: 2, color: b.primary, shape: 'spark',
+    zigzag: VOLT.zig, zigAngle: shallow ? 0.5 : 0.75,
+    ricochet: VOLT.bounces[layer],
+    bounceDmg: VOLT.bounceDmg,
+    bounceShrink: VOLT.bounceShrink[layer],
+    bouncesOffPlayer: true,
+    stun: 45,
+    life: 900,
+  });
+}
+
+function voltAttack(layer) {
+  return (ctx) => {
+    const b = ctx.boss, p = ctx.player;
+    const fs = b.fs || (b.fs = { mode: 'patrol', t: rnd(...VOLT.rest[layer]), dir: -1 });
+
+    switch (fs.mode) {
+      case 'patrol': {
+        b.x += fs.dir * 0.6;
+        if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
+        if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
+        if (--fs.t <= 0) { fs.mode = 'windup'; fs.t = VOLT.windup; }
+        break;
+      }
+
+      case 'windup': {
+        if (--fs.t > 0) break;
+        fs.mode = 'volley';
+        fs.left = VOLT.bolts[layer];
+        fs.second = layer >= 2 ? VOLT.secondVolley : -1;
+        fs.t = 0;
+        const v = aimAt(b.x + b.w / 2, b.y + b.h * 0.45, p.x + 12, p.y + 12);
+        fs.base = Math.atan2(v.y, v.x);
+        break;
+      }
+
+      case 'volley': {
+        // The second volley starts BEFORE the first has finished, which is what
+        // makes two zigzag paths overlap rather than arrive in sequence.
+        if (fs.second > 0 && --fs.second === 0) {
+          fs.left += VOLT.bolts[layer];
+          fs.shallow = true;
+        }
+        if (--fs.t > 0) break;
+        fs.t = VOLT.gap;
+        voltBolt(ctx, layer, fs.base + (Math.random() - 0.5) * 0.5, fs.shallow);
+        if (--fs.left > 0) break;
+        fs.shallow = false;
+        // Layer 3 earths itself between volleys, lighting up exactly the
+        // panels the bolts struck on their way round the room.
+        fs.mode = layer >= 3 ? 'discharge' : 'patrol';
+        fs.t = layer >= 3 ? 40 : rnd(...VOLT.rest[layer]);
+        break;
+      }
+
+      case 'discharge': {
+        if (--fs.t > 0) break;
+        const a = ctx.arena;
+        if (a) {
+          ctx.flash(8);
+          for (const pn of a.panels) {
+            if (!pn.marked) continue;
+            pn.marked = false;
+            pn.live = Math.max(pn.live, VOLT.dischargeLive);
+          }
+        }
+        fs.mode = 'patrol';
+        fs.t = rnd(...VOLT.rest[layer]);
+        break;
+      }
+    }
+  };
+}
+
+/**
+ * VOLT MAN's hazard — the floor sweep, and the conductors above it.
+ *
+ * L1 "Floor panels electrify in a slow left-to-right sweep, one panel at a
+ *     time, telegraphed by a lamp on the panel a moment before it energises.
+ *     Contact deals moderate damage and a short Stun."
+ * L2 "Same sweep, faster, plus overhead conductors that drop a vertical bolt at
+ *     fixed positions on a regular beat. The conductors are inert between arcs
+ *     and can be stood under safely."
+ * L3 "The sweep runs in both directions at once, meeting in the middle. Arcs
+ *     now chain through nearby minions and into the player if the player is
+ *     close to them."
+ *
+ * THE LAMP IS THE WHOLE HAZARD. A panel you cannot avoid is not a hazard, it is
+ * a tax; the tell arriving a beat before the current is what turns a floor that
+ * kills you into a floor you read. Everything the layers add is speed and
+ * coverage, never a shorter warning.
+ *
+ * NOTE ON THE LAYER-3 CHAIN: a boss arena is sealed and carries no ambient
+ * minions, and Volt Man summons none, so "chain through nearby minions" has
+ * nothing to travel along in practice. It is written against `enemies` anyway
+ * so it works the day he gains a summon, and its observable behaviour today is
+ * the second half of the sentence — the arc reaching the player when they are
+ * close to the strike rather than directly under it.
+ */
+const VOLT_HAZ = {
+  step: { 1: 40, 2: 26, 3: 26 },   // frames between panels in the sweep
+  tell: 28,
+  live: 52,
+  damage: 3,
+  stun: 90,
+  arcBeat: { 1: 0, 2: 210, 3: 170 },
+  arcTell: 34,
+  arcLive: 24,
+  chainRange: 34,                  // L3 only
+};
+
+function voltHazard(layer) {
+  return (ctx) => {
+    const a = ctx.arena;
+    if (!a || !a.panels.length) return;
+    const hs = ctx.boss.hs || (ctx.boss.hs = { t: 90, i: 0, arc: VOLT_HAZ.arcBeat[layer] || 0 });
+    const n = a.panels.length;
+
+    // THE SWEEP. One panel at a time, and at layer 3 a second head runs the
+    // other way so the two meet in the middle.
+    if (--hs.t <= 0) {
+      hs.t = VOLT_HAZ.step[layer];
+      const heads = layer >= 3 ? [hs.i, n - 1 - hs.i] : [hs.i];
+      for (const k of heads) {
+        const pn = a.panels[((k % n) + n) % n];
+        pn.tell = VOLT_HAZ.tell;
+        pn.pending = VOLT_HAZ.tell;
+      }
+      hs.i = (hs.i + 1) % n;
+    }
+
+    for (const pn of a.panels) {
+      // The lamp burns down, THEN the current arrives. Two counters rather than
+      // one so the warning cannot be shortened by a fast sweep.
+      if (pn.pending > 0 && --pn.pending === 0) pn.live = VOLT_HAZ.live;
+      if (pn.live <= 0) continue;
+      const box = ctx.playerBox;
+      if (box.x + box.w > pn.x && box.x < pn.x + pn.w && box.y + box.h >= pn.y - 1) {
+        ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.damage);
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
+      }
+    }
+
+    // OVERHEAD CONDUCTORS, layer 2 and up. Inert between arcs, so standing
+    // under one is only a mistake on the beat.
+    const beat = VOLT_HAZ.arcBeat[layer];
+    if (!beat || !a.conductors.length) return;
+    if (--hs.arc <= 0) {
+      hs.arc = beat;
+      for (const c of a.conductors) c.tell = VOLT_HAZ.arcTell;
+    }
+    for (const c of a.conductors) {
+      if (c.tell > 0) { if (c.tell === 1) c.arc = VOLT_HAZ.arcLive; continue; }
+      if (c.arc <= 0) continue;
+      const cxp = c.x + c.w / 2;
+      const box = ctx.playerBox;
+      // Layer 3's chain widens what counts as "under it", and any enemy in the
+      // room is a conductor for it.
+      let reach = box.x + box.w > cxp - 3 && box.x < cxp + 3;
+      if (!reach && layer >= 3) {
+        const pcx = box.x + box.w / 2;
+        reach = Math.abs(pcx - cxp) < VOLT_HAZ.chainRange;
+      }
+      if (reach && c.arc === VOLT_HAZ.arcLive) {
+        ctx.flash(6);
+        ctx.hurt(cxp, VOLT_HAZ.damage);
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
+      }
+    }
+  };
+}
+
+// ── STRIKE MAN — Fighting ───────────────────────────────────────────
+/**
+ * "Weighted training bags swing across the room on ceiling rails at a steady
+ *  pace, dealing knockback and light damage. Their path is fixed and
+ *  learnable."
+ *
+ * FIXED IS THE DESIGN. The bag starts at a known place, travels at a constant
+ * speed and turns at the walls — no randomness anywhere, so the room is a
+ * rhythm to step into rather than a thing to react to. Resist the urge to
+ * "improve" it with a varied speed; the tracker calls the predictability out
+ * by name.
+ *
+ * Layers 2 and 3 are still `[wip]`, and so are all three of his attack layers,
+ * so he has no attack loop at all yet — the room is the whole fight. Do not
+ * invent one; the owner writes those.
+ */
+/**
+ * THE BAG HAS TO HANG INTO THE PLAYER'S LANE OR IT IS SCENERY.
+ *
+ * The room is 224px tall with the floor at 184, so a bag hanging a few pixels
+ * below a ceiling rail is nowhere near anything and the hazard does nothing.
+ * These numbers put its bottom edge at 168: a standing player (box 162-184) is
+ * clipped, and a sliding one (173-184) passes underneath.
+ *
+ * That is the whole hazard, and it is why the slide matters here — walk into
+ * the bag and you are knocked back, time a slide and you are through.
+ */
+const STRIKE_HAZ = {
+  speed: 1.1,
+  w: 14,
+  h: 40,
+  drop: 106,        // how far the bag's TOP hangs below its rail
+};
+
+function strikeHazard(layer) {
+  return (ctx) => {
+    const a = ctx.arena;
+    if (!a || !a.rails?.length) return;
+    const hs = ctx.boss.hs || (ctx.boss.hs = { spawned: false });
+
+    if (!hs.spawned) {
+      hs.spawned = true;
+      const rail = a.rails[1] || a.rails[0];
+      a.hazards.push({
+        kind: 'bag',
+        x: a.x0 + 24, y: rail.y + STRIKE_HAZ.drop,
+        w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
+        railY: rail.y,
+        vx: STRIKE_HAZ.speed,
+        damage: 1,          // "light damage"; hurt() supplies the knockback
+      });
+    }
+
+    for (const h of a.hazards) {
+      if (h.kind !== 'bag') continue;
+      h.x += h.vx;
+      if (h.x <= a.x0 + 4) { h.x = a.x0 + 4; h.vx = Math.abs(h.vx); }
+      if (h.x + h.w >= a.x1 - 4) { h.x = a.x1 - 4 - h.w; h.vx = -Math.abs(h.vx); }
+    }
   };
 }
 
@@ -515,12 +1040,27 @@ export const FIGHTS = {
     hazard: { 1: { step: blazeHazard(1) }, 2: { step: blazeHazard(2) }, 3: { step: blazeHazard(3) } },
   },
 
-  // TEMPEST MAN — the tracker defines attack L1 and hazards L1/L2 only. Attack
-  // L2/L3 and hazard L3 are still blank there, so they stay null and the
-  // layer-fallback in fightFor() reuses the hardest layer actually written.
   torrent: {
-    attack: { 1: { step: tempestAttack(1) }, 2: null, 3: null },
-    hazard: { 1: { step: tempestHazard(1) }, 2: { step: tempestHazard(2) }, 3: null },
+    attack: {
+      1: { step: tempestAttack(1) }, 2: { step: tempestAttack(2) }, 3: { step: tempestAttack(3) },
+    },
+    hazard: {
+      1: { step: tempestHazard(1) }, 2: { step: tempestHazard(2) }, 3: { step: tempestHazard(3) },
+    },
+  },
+
+  volt: {
+    attack: { 1: { step: voltAttack(1) }, 2: { step: voltAttack(2) }, 3: { step: voltAttack(3) } },
+    hazard: { 1: { step: voltHazard(1) }, 2: { step: voltHazard(2) }, 3: { step: voltHazard(3) } },
+  },
+
+  // STRIKE MAN — the tracker defines his arena and hazard L1 only. Hazard L2/L3
+  // and all three attack layers are still `[wip]`, so `attack` stays null at
+  // every layer and the fallback in fightFor() reuses hazard L1. He is a room
+  // without a fighter in it until the owner writes one; do not invent it.
+  strike: {
+    attack: { 1: null, 2: null, 3: null },
+    hazard: { 1: { step: strikeHazard(1) }, 2: null, 3: null },
   },
 };
 

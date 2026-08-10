@@ -46,21 +46,27 @@ const rows = BOSSES.map((b) => {
   const fields = byId[b.id] || [];
   const of = (label) => fields.find((f) => f.label === label);
   const written = DESIGN_FIELDS.filter((k) => of(k)?.text?.trim()).length;
-  // A slice is gated on OWNER-ASSERTED design. Drafts and works-in-progress
-  // both count as not-ready; only `[ready]` is a go-ahead to build.
-  const drafts = DESIGN_FIELDS.filter((k) => ['draft', 'wip'].includes(of(k)?.mark)).length;
+  // MARKERS, under the current scheme: `[draft]` is the go-ahead to build,
+  // `[wip]` means the owner is still writing it and it must be skipped, and
+  // `[ready]` means built and settled. See design/TRACKER.md — this is the
+  // reverse of the original scheme and the reason a "draft" is not a warning.
+  const buildable = DESIGN_FIELDS.filter((k) => of(k)?.mark === 'draft').length;
+  const unready = DESIGN_FIELDS.filter((k) => of(k)?.mark === 'wip').length;
   const atk = layers(FIGHTS[b.id]?.attack);
   const haz = layers(FIGHTS[b.id]?.hazard);
   const wpn = hasLadder(b.dropWeapon);
   const built = atk + haz + (furnished.has(b.id) ? 1 : 0) + (wpn ? 1 : 0);
   return {
-    b, written, drafts, atk, haz, wpn,
+    b, written, buildable, unready, atk, haz, wpn,
     furn: furnished.has(b.id),
     theme: !!THEMES[b.id],
     built,
-    // A slice is DONE when everything its tracker defines is built and its
-    // weapon has a real ladder. Owner-reviewed design is the gate, not a bonus.
-    done: wpn && atk >= 1 && haz >= 1 && furnished.has(b.id) && drafts === 0,
+    // A slice is DONE when its weapon has a real ladder, it has at least one
+    // attack and hazard layer, its arena is furnished, and no design field is
+    // still waiting: nothing left `[draft]` to build, nothing left `[wip]` to
+    // write.
+    done: wpn && atk >= 1 && haz >= 1 && furnished.has(b.id)
+      && buildable === 0 && unready === 0,
   };
 });
 
@@ -68,22 +74,24 @@ const W = 13;
 console.log('\nELEMENT SLICE BOARD — one element built end to end at a time\n');
 console.log(
   'ELEMENT'.padEnd(10) + 'BOSS'.padEnd(W)
-  + 'DESIGN'.padEnd(16) + 'ATK'.padEnd(6) + 'HAZ'.padEnd(6)
+  + 'DESIGN'.padEnd(20) + 'ATK'.padEnd(6) + 'HAZ'.padEnd(6)
   + 'ARENA'.padEnd(7) + 'WEAPON'.padEnd(8) + 'STATE',
 );
-console.log('-'.repeat(78));
+console.log('-'.repeat(82));
 
 for (const r of rows) {
-  const design = r.drafts > 0
-    ? `${r.written}/12 (${r.drafts} unready)`
-    : `${r.written}/12`;
+  const notes = [];
+  if (r.buildable) notes.push(`${r.buildable} to build`);
+  if (r.unready) notes.push(`${r.unready} wip`);
+  const design = notes.length ? `${r.written}/12 (${notes.join(', ')})` : `${r.written}/12`;
   const state = r.done ? 'DONE'
-    : r.built > 0 ? 'in progress'
-      : r.written > 0 ? 'design only' : '-';
+    : r.buildable > 0 ? 'READY TO BUILD'
+      : r.built > 0 ? 'in progress'
+        : r.written > 0 ? 'design only' : '-';
   console.log(
     r.b.element.padEnd(10)
     + r.b.name.replace(' MAN', '').padEnd(W)
-    + design.padEnd(16)
+    + design.padEnd(20)
     + bar(r.atk, 3).padEnd(6)
     + bar(r.haz, 3).padEnd(6)
     + (r.furn ? 'built' : '-').padEnd(7)
@@ -94,16 +102,21 @@ for (const r of rows) {
 
 const done = rows.filter((r) => r.done).length;
 const started = rows.filter((r) => r.built > 0).length;
-const drafts = rows.reduce((s, r) => s + r.drafts, 0);
+const buildable = rows.reduce((s, r) => s + r.buildable, 0);
+const unready = rows.reduce((s, r) => s + r.unready, 0);
 
-console.log('-'.repeat(78));
-console.log(`slices complete: ${done}/17   started: ${started}/17   `
-  + `design fields not yet [ready]: ${drafts}`);
+console.log('-'.repeat(82));
+console.log(`slices complete: ${done}/17   started: ${started}/17`);
+console.log(`design fields ready to build [draft]: ${buildable}   `
+  + `still being written [wip]: ${unready}`);
 console.log(`\nATK/HAZ show which of the 3 layers are built, not which are designed —`);
 console.log(`a boss whose tracker only defines one layer is complete at 1/3.`);
 console.log(`WEAPON reads 'flat' until the weapon gains a WEAPON_LADDERS entry.`);
-if (drafts) {
-  console.log(`\n${drafts} design fields are [draft] or [wip] — awaiting the owner's`);
-  console.log(`[ready] assertion. A slice is not DONE while any of its design is unready.`);
+if (buildable) {
+  console.log(`\n${buildable} design fields are [draft]: the owner has finished them and`);
+  console.log(`they are waiting to be built. ${unready} more are [wip] and must be left alone.`);
+} else if (unready) {
+  console.log(`\nNothing is [draft], so there is nothing to build. ${unready} fields are`);
+  console.log(`[wip] — the owner is still writing them.`);
 }
 console.log('');

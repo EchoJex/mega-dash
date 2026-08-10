@@ -18,7 +18,30 @@ npm run dev      # dev server, --host so a phone on the same wifi can play it
 npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
+npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
+```
+
+### `npm run smoke` — the thing `npm test` cannot do
+
+`npm test` runs in ~0.1s against fake contexts, which is the right standard for plumbing
+and why it runs before every commit. But a fake context can be *wrong in a way that hides
+a bug*: the boss harness was once missing `anim`, every behaviour reading it produced NaN,
+the state machine wedged before reaching the line that actually crashed, and the suite
+stayed green through a fight that died on a real device within seconds.
+
+`tools/smoke.mjs` builds nothing and fakes nothing. It serves `dist/`, opens it in
+Chromium, starts a run, fights every boss whose fight is built, then equips all eight
+weapons that have a ladder at every rung and fires them — failing on any page exception,
+console error, crash overlay, non-finite position or runaway projectile count.
+
+It is **deliberately not in CI and not a devDependency**: Playwright's postinstall would
+pull ~150MB of browsers onto every APK build for a job CI does not run. Run it locally
+after any change to a fight, a weapon runtime or the render loop:
+
+```bash
+npx playwright@latest install chromium    # once
+npm run build && npm run smoke
 ```
 
 ### The dev loop is the in-app updater, not a local server
@@ -130,7 +153,7 @@ construction order. **The player is always above every world actor** — hazards
 minions, projectiles, bosses — because losing sight of the player is losing the run. Only
 UI overlays go above, and those live in UIScene, a whole scene above this one.
 
-**Palette:** the buster is just another weapon (dark blue body, light blue accent), and
+**Palette:** the sidearm is just another weapon (dark blue body, light blue accent), and
 `NULL_WEAPON` is the no-weapon starting point — a palette with no primary and no
 secondary, so the player renders as an **outline-only silhouette with every interior cell
 transparent**. Fill belongs to the weapon; silhouette belongs to the player.
@@ -169,8 +192,12 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 | **Upgrades** | persistent | bought with Chips | permanent stat boosts (16) |
 | **Weapon Level** | run only, per weapon, 1→10 | level-up choices | that weapon's feature ladder |
 | **Layer** | persistent, per boss, 1→3 | lifetime clears of that boss | how hard that boss fights |
+| **Slot** | run only, 2 offensive + 2 defensive | equipping a weapon you have unlocked | which weapons are actually in play |
 
-Never say "Bolts" (renamed to Chips). EXP never buys Upgrades; Chips never grant Levels.
+Never say "Bolts" (renamed to Chips) or "Mega Buster" (renamed to **Side Arm** — its id is
+still `buster` so saves survive, but nothing user-facing says buster). EXP never buys
+Upgrades; Chips never grant Levels. A weapon is *unlocked* for the run and *equipped* into
+a slot; those are different states and an unlocked weapon on the bench still levels up.
 
 ---
 
@@ -299,7 +326,31 @@ the fight starts and the stream resumes when it ends.
 
 ## Weapons
 
-`src/data/weapons.js` — buster + 17 specials.
+`src/data/weapons.js` — the sidearm + 17 specials.
+
+### Classes and the loadout
+
+Every weapon carries a `cls`, taken from the first word of its tracker field:
+
+| class | count | how it plays |
+|---|---|---|
+| **sidearm** | 1 | the old Mega Buster, renamed. Always equipped, never occupies a slot |
+| **offensive** | 11 | shares the fire button; the wheel picks which one is live |
+| **defensive** | 6 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
+
+A run carries the sidearm plus **two offensive and two defensive** specials.
+Everything else unlocked sits on the bench: still levelling, still offered by level-up
+cards, one tap away in the wheel. `systems/loadout.js` owns the slots and is the only
+thing that may decide what is equipped; `systems/weaponry.js` owns what each weapon does.
+
+The class split is a mechanic, not a label. A defensive weapon costs you no thumb, which
+is exactly why its slot is a real budget rather than a second set of guns.
+
+Weapons whose tracker field is still `[wip]` are classified **provisionally** so the wheel
+has somewhere to put them. That is not a design decision — it gets confirmed in that
+weapon's own slice.
+
+### Balance and ladders
 
 **Balance invariant: every weapon deals identical DPS at level 1.**
 `damage = dpsTarget × cooldown/60 ÷ projectiles`. The test asserting this is deliberately
@@ -310,8 +361,14 @@ Weapon choice is about *utility*, not power. If you add projectiles or pierce,
 Equipping a weapon **recolours the player sprite live** from its source boss's palette.
 
 Real feature jumps at **Lv 1 / 3 / 6 / 10** per the design tracker; intermediate levels
-are damage-only. A weapon uses the flat placeholder step until it gains a `WEAPON_LADDERS`
-entry, which happens in its element's slice — never ahead of it, and never in a batch.
+are damage-only. `ladderAt(id, level)` merges every rung up to the current level, so a
+rung only states what it *changes*. A weapon uses the flat placeholder step until it gains
+a `WEAPON_LADDERS` entry, which happens in its element's slice — never ahead of it.
+
+**A partial ladder is legal and expected.** Frost Guard, Quake Hammer and Swarm Caller all
+stop short of Lv10 because the tracker leaves those rungs `[wip]`. Level 7 then plays as
+the last written rung with more damage, which is the correct degradation — the weapon is
+unfinished, not broken. Fill the rung in when the owner writes it; do not invent it.
 
 ---
 
@@ -332,18 +389,28 @@ cannot silently rewrite or drop prose it did not understand.
 
 ### Status markers — the implementation gate
 
-Every field carries one marker, and **Claude implements `[ready]` fields only**:
+Every field carries one marker, and **Claude implements `[draft]` fields only**:
 
 | marker | meaning |
 |---|---|
-| `[ready]` | The owner has asserted this is ready to build. **The only green light.** |
-| `[wip]` | Being written. Editing any field sets this automatically. |
-| `[draft]` | Generated by Claude as a starting point. Never implement; it must be reviewed first. |
+| `[draft]` | The owner has finished this field and it is ready to build. **The only green light.** |
+| `[wip]` | Still being written. Not ready — skip it. Editing any field sets this automatically. |
+| `[ready]` | Already built and untouched since. Nothing to do — skip it. |
 | `[todo]` | Nothing written yet. |
 | `[na]` | Deliberately not applicable. |
 
-Editing a field revokes `[ready]`. Re-marking it ready is a deliberate act, and that act
-is the go-ahead. **Do not build from `[draft]` or `[wip]`, and do not ask to.**
+Editing a field drops it to `[wip]`. Moving it to `[draft]` is a deliberate act, and that
+act is the go-ahead. **Do not build from `[wip]`, and do not ask to.** A field settles at
+`[ready]` once it has been built and the owner has not revised it since.
+
+**This is the reverse of the original scheme**, where `[ready]` was the go-ahead and
+`[draft]` meant Claude-generated prose awaiting review. The owner rewrote the design in
+their own words, so the "generated draft" state no longer exists and the marker was
+repurposed. Comments in older code may still describe the old direction — the table above
+wins, and fix the comment when you touch that file.
+
+The BUGS table uses the same three markers: fix `[draft]` bugs, leave `[wip]` alone, and
+`[ready]` means already fixed.
 
 ### BRAINSTORM is off-limits
 
@@ -387,13 +454,16 @@ So: **one element, built end to end, playtested, pushed. Then the next.**
 
 An element is DONE when all of this is true for its boss:
 
-1. **Design reviewed by the owner.** Generated `[DRAFT]` prose is a starting point, not a
-   specification. A slice does not begin until the owner has passed over that boss's
-   tracker fields. This is the gate, not a formality.
+1. **Design marked `[draft]` by the owner.** That marker is the gate, not a formality —
+   a slice does not begin until the owner has written that boss's fields and moved them
+   to `[draft]`. Anything still `[wip]` is not ready and is skipped, even mid-slice.
 2. **Attack layers** — every layer the tracker defines, in `data/bossFights.js`.
 3. **Arena** — theme, backdrop shapes, and the furniture its hazards need.
 4. **Hazard layers** — every layer the tracker defines, layer-synced with the attacks.
 5. **Elemental attribute** — terrain form and character form, in `systems/attributes.js`.
+   These live in the tracker's own ELEMENTAL ATTRIBUTES section, not in the slice: the
+   pairs are shared across bosses and weapons, so duplicating them per slice only let the
+   two copies disagree.
 6. **Weapon** — the real Lv 1/3/6/10 ladder, registered in `WEAPON_LADDERS`. This is what
    flips the slice from "in progress" to DONE.
 7. **Sound** for its attacks and its weapon.
@@ -405,9 +475,10 @@ whenever they land, per actor, via `MANIFEST` — the game stays playable withou
 
 ### Order
 
-Core → Blaze → Tempest first: their design is owner-authored rather than drafted, and the
-first three establish the template. Core Man is deliberately first as the simplest — it is
-Typeless, so it carries no attribute and its weapon is the plain one.
+Core → Blaze → Tempest first: they were the first fields the owner wrote in their own
+words, and the first three establish the template. Proto Mk0 (id `core`, renamed from Core
+Man) is deliberately first as the simplest — he is Typeless, so he carries no attribute.
+He is also the only boss SMALLER than the player, at 0.8x rather than the 1.75x average.
 
 After those three the order is the owner's call. Nothing technical forces it.
 
@@ -426,10 +497,11 @@ These are global and land late, once the elements exist to tune against:
 
 Engine and port to Phaser · fixed timestep · hand-rolled physics · classic NES motion
 constants · sealed arenas with warp transitions · the dual boss loop · minions and the
-time-keyed ramp · pickups · EXP and level-up cards · meta upgrades and Chips · the RE-QUIP
-wheel · the sprite path (`MANIFEST`) · the in-app updater and per-branch CI · touch
-controls · the bitmap font · procedural sound · the elemental attribute framework ·
-themed overworld terrain · procedural terrain traversability guarantees.
+time-keyed ramp · pickups · EXP and level-up cards · meta upgrades and Chips · the
+2+2+sidearm loadout and the RE-QUIP wheel built around it · the per-weapon runtime
+(`systems/weaponry.js`) · the sprite path (`MANIFEST`) · the in-app updater and per-branch
+CI · touch controls · the bitmap font · procedural sound · the elemental attribute
+framework · themed overworld terrain · procedural terrain traversability guarantees.
 
 ### Tuning pass
 The core **motion** constants in `config/feel.js` (walk, jump, gravity, terminal
@@ -445,9 +517,15 @@ A live in-game tuning overlay is **deliberately deferred to late in development*
 
 ### Run progression — as built
 
-**Weapons are earned.** You start with the buster only. A special unlocks by killing the
+**Weapons are earned.** You start with the sidearm only. A special unlocks by killing the
 boss that carries it (`BOSSES[].dropWeapon`). `starter_arsenal` / `twin_arsenal` are the
-only head start and they cost Chips — they unlock 1 / 2 random specials at run start.
+only head start and they cost Chips — they unlock 1 / 2 random specials at run start,
+auto-slotted, because a head start you have to go and equip is not a head start.
+
+**A drop with no free slot becomes a decision.** If its class already holds two, the
+acquire banner is followed by the re-quip wheel opening on that choice with the new weapon
+named and its class pulsing. Closing without picking benches it — a real third option,
+since it keeps its level and stays one tap away.
 
 **EXP is collected, never granted.** A level is a flat `FEEL.expPerLevel` (100). Distance
 grants nothing. Every enemy DROPS EXP on death and the player has to walk over it — so
@@ -529,27 +607,41 @@ ambient hazard loop side by side every frame, both layer-synced, both fed from
 `data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
 work.
 
-**Three bosses are built from the tracker** — Core Man, Blaze Man and Tempest Man, every
-layer the tracker actually defines:
+**Five bosses are built from the tracker**, each to exactly the layers it defines — run
+`npm run status` for the live picture, which cannot go stale the way this table can:
 
 | | attack | hazard | arena furniture |
 |---|---|---|---|
-| Core Man | L1–3 | L1–3 ceiling turrets, snapping to 45° / 22.5° / 11.25° | gear backdrop, 2 turrets |
-| Blaze Man | L1–3 incl. the L3 lava flood | L1–3 falling rocks, +lava pools at L2 | volcano, 3 phasing platforms, floodable floor |
-| Tempest Man | L1 water cannon | L1–2 rain, current, drain | high seas, portholes, grate + spike ball, floor water |
+| Proto Mk0 | L1–3 | L1–3 ceiling turrets, snapping to 45° / 22.5° / 11.25° | gear backdrop, 2 turrets |
+| Blaze Man | L1–3 incl. the L3 lava flood | L1–3 falling rocks | volcano, 3 phasing platforms, the boss's own lift, floodable floor |
+| Tempest Man | L1–3 flight-and-jetpack (no projectiles) | L1–3 rain, current, drain, barrels, spike balls | storm sky, corner pipes, grate + spike ball, floor water |
+| Volt Man | L1–3 zigzag ricochet bolts | L1–3 floor-panel sweep, conductors | plasma lamp, 8 floor panels, 2 conductors |
+| Strike Man | none — his attack layers are `[wip]` | L1 swinging training bag | fight pit, cage walls, ceiling rails |
 
-The remaining 14 bosses are `null` at every layer, and Tempest's attack L2/L3 and hazard
-L3 are `null` because the tracker leaves them blank. **Do not invent content there** — the
-owner specifies which dataset to implement, and seed-draft prose is not the same thing as
-their hand-authored content.
+Every other boss is `null` at every layer, as are Strike Man's attacks and his hazard
+L2/L3, because the tracker leaves those `[wip]`. **Do not invent content there.**
 
-`systems/attributes.js` implements the elemental attribute layer: Hot (terrain) / Burn
-(character) are live and used by Blaze Man; Wet, Poisoned, Stun, Constrict and Freeze are
-defined and tested but nothing applies them yet, because their sources are player special
-weapons, which land in each element's own slice.
+**Two entries were rewritten rather than extended, and both matter as precedent.** Tempest
+Man's attack had been a patrolling water cannon; the tracker's attack layers describe a
+Queen B flight pattern with no projectile at all, so the cannon went. Blaze Man's layer-3
+flood ran for 30 seconds and cancelled the rockfall; the tracker says 20 seconds and
+"rocks shall fall, but not from right above the platforms". Where working code and a
+`[draft]` field disagree, the field wins.
+
+`systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
+(character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
+panels, conductors and the Volt Spark; **Freeze** is live on Frost Guard. Wet, Poisoned
+and Constrict are defined and tested but nothing applies them yet, because their sources
+are weapons whose slices have not happened.
+
+**Stun is not a hold.** It is a stacking multiplicative slow — 15% per stack off the
+player, 30% off an enemy, duration reset by every re-application, cutting attack speed as
+well as movement. Constrict and freeze are still the "cannot act" pair. Older comments
+lumping all three together predate the tracker's current definition.
 
 ### Hooks left deliberately empty — fill, don't delete
 - `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content
+- `WEAPON_LADDERS` rungs a weapon does not have → the tracker leaves them `[wip]`
 - `player.diagInput` (`'ul'` / `'ur'`) → reserved diagonal special moves
 - `MANIFEST` in `systems/assets.js` → real art
 - `silhouette: null` in `bosses.js` → deferred by design

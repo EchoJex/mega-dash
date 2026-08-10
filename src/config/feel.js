@@ -56,13 +56,28 @@ export const FEEL = {
   jumpBufferFrames: 6,    // press registered this early before landing
   coyoteFrames: 5,        // jump still allowed this soon after leaving a ledge
 
-  // ── Air dash (double jump) ───────────────────────────────────────────
-  // Mega Man X-style: an upward impulse followed by a brief near-weightless
-  // hang before gravity resumes.
-  airDashVelocity: -4.8,
-  airDashHangFrames: 13,
-  airDashGravityMult: 0.16,
-  maxAirActions: 1,       // air dashes available per jump
+  // ── Double jump ──────────────────────────────────────────────────────
+  // HANG, THEN LAUNCH. Pressing jump in mid-air first freezes vertical motion
+  // for a few frames — horizontal velocity is untouched, so you keep drifting —
+  // and only then fires a second jump using the SAME gravity and the same
+  // release-to-cut rule as the first one, at 80% of its peak height.
+  //
+  // This replaced a Mega Man X-style air dash (an impulse into a long
+  // low-gravity float). The primary jump had been retuned to the classic NES
+  // arc and the air dash had not, so the two read as two different games: the
+  // first jump crisp and weighty, the second mushy. Borrowing the first jump's
+  // own physics is the whole point of the fix — do not reintroduce a separate
+  // gravity multiplier here.
+  //
+  // The 80% is a HEIGHT figure, not a velocity one. Peak height goes as v^2/2g,
+  // so the impulse is jumpVelocity * sqrt(0.8) — scaling the velocity itself by
+  // 0.8 would land at 64% height, noticeably shorter than asked for.
+  doubleJumpPauseFrames: 6,    // the hang before the second jump fires
+  // Raised from 0.80 after the first playtest: the second jump read as too
+  // short next to the first. 0.88 is about 42px of peak against the primary
+  // jump's 47.5 — still clearly the smaller of the two, which is the point.
+  doubleJumpHeightMult: 0.88,  // fraction of the PRIMARY jump's peak height
+  maxAirActions: 1,           // double jumps available per jump
 
   // ── Slide ────────────────────────────────────────────────────────────
   // The slide is META-GATED: at Slide Mastery rank 0 the player cannot slide at
@@ -97,16 +112,33 @@ export const FEEL = {
   // knockback are NOT here — they are basic hitbox interaction on every hit.
   // Every number below is a placeholder taken from the tracker's adjectives
   // ("moderate damage", "very mild damage very rapidly").
+  // Hot: "moderate damage/flinch/knockback on touch" from a boss or arena,
+  // "mild damage and moderate flinch/knockback" from the player's own weapon.
+  // Two numbers because the tracker asks for two — the same attribute is
+  // deliberately gentler when you are the one setting the ground on fire.
   hotDamage: 3,             // contact damage from Hot ground, scaled by how much
                             // of the attribute is left, so it cools as it fades
+  hotDamageWeapon: 1,       // "mild" — Hot the player laid down, hitting enemies
   hotTickFrames: 26,        // minimum frames between two Hot hits on the same target
-  hotLingerFrames: 300,     // 5s — the tracker's figure for Blaze Man's arena
+  hotLingerFrames: 300,     // 5s — the tracker's default "unless reapplied"
   burnFrames: 180,
   burnDps: 1.6,             // mild, rapid, and scaled down by remaining duration
   poisonFrames: 300,
   poisonDps: 0.5,           // much less often than Burn, but it flinches
   wetFrames: 600,           // 10s
   wetFrictionMult: 0.32,    // reduced contact friction — you slide
+
+  // Stun is a STACKING SLOW, not a hold. Each stack multiplies whatever speed
+  // is LEFT, and any fresh application resets the whole 5 seconds. Asymmetric
+  // on purpose: the tracker gives the player 15% and enemies 30%, so the same
+  // attribute is twice as punishing coming off your weapon as going onto you.
+  stunFrames: 300,          // 5s, reset by every re-application
+  stunPlayerStep: 0.85,     // 15% off the remaining speed, per stack
+  stunEnemyStep: 0.70,      // 30% off the remaining speed, per stack
+
+  // Wading: a jump launched from knee-deep water leaves at half strength.
+  // Only the launch — a midair jump out of it is unaffected.
+  wadeJumpMult: 0.5,
 
   // ── Camera ───────────────────────────────────────────────────────────
   // Follows once the player passes this fraction of screen width, and NEVER
@@ -247,7 +279,7 @@ export const toSeconds = (frames) => (frames / 60).toFixed(2) + 's';
 export const FEEL_GROUPS = {
   Movement: ['moveSpeed', 'slideSpeedMult', 'accel', 'friction'],
   Jump: ['gravity', 'maxFallSpeed', 'jumpVelocity', 'jumpCutMult', 'jumpBufferFrames', 'coyoteFrames'],
-  AirDash: ['airDashVelocity', 'airDashHangFrames', 'airDashGravityMult', 'maxAirActions'],
+  DoubleJump: ['doubleJumpPauseFrames', 'doubleJumpHeightMult', 'maxAirActions'],
   Slide: ['slideDurationFrames', 'slideHeightMult'],
   Combat: ['invulnFrames', 'flinchFrames', 'knockbackSpeed', 'chargeFullMs'],
   Camera: ['camDeadzone', 'camLerp'],

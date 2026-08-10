@@ -54,9 +54,28 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     drain: null,
     // A constant push applied to the player each frame (rain, current).
     push: { x: 0, y: 0 },
+    // Horizontal component of the rain, -1..1. Set by Tempest Man's hazard
+    // loop, and the thing his lightning telegraphs a change to. Null means the
+    // room has no weather.
+    rainDir: null,
+    // The room's own clock, for anything that has to animate without reading
+    // the run frame — rain streaks, mainly. Arena-scoped so it restarts with
+    // the room rather than carrying a run's worth of offset into it.
+    t: 0,
     // Hazard state lives here rather than on the boss, because the ambient loop
     // keeps running regardless of what the boss is doing.
     hazards: [],
+    // Electrified floor panels and the conductors above them (Volt Man).
+    panels: [],
+    conductors: [],
+    // A whole-room light flash, in frames. Tempest Man's lightning telegraphs
+    // a rain direction change with one; Volt Man's arcs use it too. Drawn over
+    // the room but under the HUD, and it never moves with the shake — a flash
+    // that shook would read as a second impact rather than as light.
+    flash: 0,
+    // 0-1, how hard the backdrop is glowing right now. Blaze Man's layer-3
+    // tell is "the red pixels of the background ebb rapidly" before the flood.
+    ebb: 0,
     theme: themeFor(bossDef),
   };
   FURNITURE[bossDef?.id]?.(a, layer, viewW, floorY);
@@ -103,17 +122,35 @@ const FURNITURE = {
       on: true, t: 150 + i * 70, hot: 0,
     }));
     a.liquid = { kind: 'lava', h: 0, target: 0, rise: 0.22, hold: 0 };
+
+    // LAYER 3 ONLY — "a small platform that moves up and down just for himself".
+    // His own, and marked as such: it never phases out, rocks never fall on it,
+    // and the flood's footing guarantee ignores it when it looks for somewhere
+    // safe for the PLAYER to stand. A shared platform would have made the
+    // flood a fight over one tile.
+    if (layer >= 3) {
+      a.lift = {
+        x: Math.round(viewW * 0.5) - 16, y: floorY - 56,
+        w: 32, h: 5, on: true, hot: 0, t: 1e9,
+        lift: { base: floorY - 56, amp: 18, phase: 0, rate: 0.018 },
+      };
+      a.platforms.push(a.lift);
+    }
   },
 
   /**
-   * TEMPEST MAN — corner portholes pouring down the walls, knee-deep floor
+   * TEMPEST MAN — corner pipes pouring down the walls, knee-deep floor
    * water with an inward current, and a grate-covered central drain with a
    * damaging spike ball sitting on it.
    */
   torrent(a, layer, viewW, floorY) {
-    a.portholes = [
-      { x: a.x0 + 6, y: a.ceilY + 14, dir: 1 },
-      { x: a.x1 - 16, y: a.ceilY + 14, dir: -1 },
+    // "Large steel pipes protruding from the walls in the upper corners." They
+    // are the spout for the cascade AND the mouth barrels and spike balls
+    // arrive from, so the hazard loop reads their positions rather than
+    // inventing spawn points that happen to line up.
+    a.pipes = [
+      { x: a.x0, y: a.ceilY + 16, w: 16, h: 10, dir: 1 },
+      { x: a.x1 - 16, y: a.ceilY + 16, w: 16, h: 10, dir: -1 },
     ];
     a.drain = {
       x: Math.round(viewW / 2) - 14, w: 28, y: floorY,
@@ -123,6 +160,43 @@ const FURNITURE = {
       grateHurts: layer >= 2,
     };
     a.liquid = { kind: 'water', h: 9, target: 9, rise: 0.1, hold: 0 };
+  },
+
+  /**
+   * VOLT MAN — "a large plasma lamp in the background", a floor of panels that
+   * electrify in a sweep, and (layer 2+) overhead conductors.
+   *
+   * The panels tile the whole floor rather than sitting at chosen spots,
+   * because the hazard is a SWEEP: it has to be able to reach anywhere you
+   * might stand, and a gap in the tiling would be a permanent safe square that
+   * makes the whole mechanic optional.
+   */
+  volt(a, layer, viewW, floorY) {
+    const n = 8;
+    const pw = Math.floor((a.x1 - a.x0) / n);
+    a.panels = Array.from({ length: n }, (_, i) => ({
+      x: a.x0 + i * pw, y: floorY - 3, w: pw, h: 3,
+      live: 0,      // frames of being energised left
+      tell: 0,      // frames of lamp warning left, before it energises
+    }));
+    // "Inert between arcs and can be stood under safely" — so they are drawn
+    // whatever the layer, and only layer 2 and up ever fire them.
+    a.conductors = [0.3, 0.7].map((f) => ({
+      x: Math.round(viewW * f) - 4, y: a.ceilY, w: 8, h: 6, arc: 0, tell: 0,
+    }));
+  },
+
+  /**
+   * STRIKE MAN — "underground fight pit: chain-link cage walls, a stained mat
+   * floor, and a background of hanging lamps", with weighted training bags
+   * swinging across the room on ceiling rails.
+   *
+   * The rail is furniture and the bag riding it is a hazard entity, so the
+   * rail's height is fixed here and the hazard loop only decides how many bags
+   * are on it and how fast they travel.
+   */
+  strike(a, layer, viewW, floorY) {
+    a.rails = [{ y: a.ceilY + 10 }, { y: a.ceilY + 22 }, { y: a.ceilY + 34 }];
   },
 };
 
@@ -187,19 +261,41 @@ export function stepShake(shake) {
  */
 export function stepArena(arena) {
   if (!arena) return;
+  arena.t++;
   Attr.stepPatches(arena.patches);
+  if (arena.flash > 0) arena.flash--;
 
   for (const pl of arena.platforms) {
     if (pl.hot > 0) pl.hot--;
+    // A lift rides its own sine and never phases — see the `lift` note in
+    // FURNITURE.blaze. Checked before the phase timer so it can skip it.
+    if (pl.lift) {
+      pl.lift.phase += pl.lift.rate;
+      pl.y = Math.round(pl.lift.base + Math.sin(pl.lift.phase) * pl.lift.amp);
+      continue;
+    }
     if (--pl.t > 0) continue;
     pl.on = !pl.on;
     pl.t = pl.on ? 220 + Math.random() * 160 : 90 + Math.random() * 70;
   }
+
+  for (const p of arena.panels) {
+    if (p.tell > 0) p.tell--;
+    if (p.live > 0) p.live--;
+  }
+  for (const c of arena.conductors) {
+    if (c.tell > 0) c.tell--;
+    if (c.arc > 0) c.arc--;
+  }
   // NEVER let every platform be gone at once — the tracker calls them shelter,
   // and shelter you cannot reach is just a death sentence with extra steps.
-  if (arena.platforms.length && !arena.platforms.some((p) => p.on)) {
-    const p = arena.platforms[0];
-    p.on = true; p.t = 200;
+  //
+  // The boss's own lift does not count toward that guarantee. It is always on,
+  // so counting it would silently satisfy the check while the player had
+  // nowhere at all to stand.
+  const shelter = arena.platforms.filter((p) => !p.lift);
+  if (shelter.length && !shelter.some((p) => p.on)) {
+    shelter[0].on = true; shelter[0].t = 200;
   }
 
   const q = arena.liquid;
@@ -277,6 +373,60 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(t.x + t.w / 2 - 1 + sx, t.y + t.h + sy, 2, 3);
   }
 
+  // Tempest Man's corner pipes, and the cascade pouring out of them.
+  for (const pipe of arena.pipes || []) {
+    g.fillStyle(0x4A5460, 1);
+    g.fillRect(pipe.x + sx, pipe.y + sy, pipe.w, pipe.h);
+    g.fillStyle(0x2A323C, 1);
+    g.fillRect(pipe.x + sx, pipe.y + 2 + sy, pipe.w, 2);
+    g.fillStyle(0x5CADD5, 0.45);
+    const mx = pipe.dir > 0 ? pipe.x + pipe.w - 5 : pipe.x + 1;
+    g.fillRect(mx + sx, pipe.y + pipe.h + sy, 4, arena.floorY - pipe.y - pipe.h);
+  }
+
+  // Volt Man's floor panels. THREE states and all three have to read at a
+  // glance: inert, lamp-warned, and live. The warning is the whole fairness of
+  // the hazard, so it is the brightest thing on an unlit panel.
+  for (const p of arena.panels) {
+    g.fillStyle(p.live > 0 ? 0xF5D328 : 0x232B36, 1);
+    g.fillRect(p.x + sx, p.y + sy, p.w - 1, p.h);
+    if (p.live > 0) {
+      g.fillStyle(0xFFF6C0, 0.8);
+      g.fillRect(p.x + sx, p.y - 2 + sy, p.w - 1, 2);
+    } else if (p.tell > 0) {
+      g.fillStyle(0xF5D328, 0.9);
+      g.fillRect(p.x + p.w / 2 - 2 + sx, p.y - 2 + sy, 3, 2);
+    }
+  }
+
+  // ...and the conductors above them. Inert between arcs, per the tracker, so
+  // the bolt is drawn only while `arc` is counting down.
+  for (const c of arena.conductors) {
+    g.fillStyle(0x4B5563, 1);
+    g.fillRect(c.x + sx, c.y + sy, c.w, c.h);
+    if (c.tell > 0) {
+      g.fillStyle(0xF5D328, 0.7);
+      g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + c.h + sy, 2, 3);
+    }
+    if (c.arc > 0) {
+      // A ragged vertical bolt rather than a bar: St Elmo's fire, per the
+      // tracker's own description of what it should look like.
+      g.fillStyle(0xFFF6C0, 0.95);
+      let bx = c.x + c.w / 2;
+      for (let y = c.y + c.h; y < arena.floorY; y += 4) {
+        bx += (Math.random() - 0.5) * 4;
+        g.fillRect(Math.round(bx) + sx, y + sy, 2, 4);
+      }
+    }
+  }
+
+  // Strike Man's ceiling rails. The bags riding them are hazard entities and
+  // are drawn with the rest of those below.
+  for (const rail of arena.rails || []) {
+    g.fillStyle(0x2A323C, 1);
+    g.fillRect(sx, rail.y + sy, viewW, 1);
+  }
+
   // Terrain attributes: a translucent wash that fades as the attribute subsides,
   // plus a brighter 1px cap on the surface itself.
   //
@@ -294,6 +444,26 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(p.x + sx, p.y + sy, p.w, 1);
   }
 
+  // RAIN. Drawn from `rainDir`, which is the same number that drives the push
+  // on the player — so what you see leaning on you is what is leaning on you.
+  // Without this the lightning telegraphs a change to something invisible,
+  // which is the same as no telegraph at all.
+  if (arena.rainDir !== null) {
+    const rx = arena.rainDir;
+    const len = 7;
+    g.lineStyle(1, 0x9AD8F0, 0.35);
+    // A fixed lattice scrolled by the clock rather than particles: the streaks
+    // have to be dense enough to read as heavy rain, and 60 tracked objects
+    // per frame for something purely decorative is not a trade worth making.
+    for (let i = 0; i < 34; i++) {
+      const seed = i * 61.7;
+      const span = viewW + 60;
+      const fall = (arena.t * 3.4 + seed * 7) % (arena.floorY + 20);
+      const x = ((seed * 13) % span) - 30 + rx * fall * 0.8;
+      g.lineBetween(x + sx, fall - 20 + sy, x + rx * len + sx, fall - 20 + len + sy);
+    }
+  }
+
   // Liquid last, so it covers the floor furniture it is supposed to submerge.
   const q = arena.liquid;
   if (q && q.h > 0.5) {
@@ -304,6 +474,48 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(sx, top + sy, viewW, arena.floorY - top + 2);
     g.fillStyle(skin, 0.9);
     g.fillRect(sx, top + sy, viewW, 1);
+  }
+}
+
+/**
+ * Loose objects a hazard loop has put in the room.
+ *
+ * Drawn AFTER the liquid, not inside drawArena, because a barrel floats on the
+ * water rather than under it — and a spike ball you cannot see through the
+ * surface is a spike ball you walk into.
+ */
+export function drawHazards(g, arena, shake) {
+  const sx = shake?.x || 0, sy = shake?.y || 0;
+  for (const h of arena.hazards) {
+    const x = h.x + sx, y = h.y + sy;
+    if (h.kind === 'rock') {
+      // A hot core with a darker crust, so it reads as burning debris rather
+      // than as another grey projectile.
+      g.fillStyle(0x3A1A10, 1); g.fillRect(x, y, h.w, h.h);
+      g.fillStyle(0xE8541A, 1); g.fillRect(x + 2, y + 2, h.w - 4, h.h - 4);
+      g.fillStyle(0xFFC24A, 1); g.fillRect(x + 4, y + 4, h.w - 8, h.h - 8);
+    } else if (h.kind === 'barrel') {
+      g.fillStyle(0x5C4033, 1); g.fillRect(x, y, h.w, h.h);
+      g.fillStyle(0x8A6244, 1); g.fillRect(x + 1, y + 2, h.w - 2, 2);
+      g.fillRect(x + 1, y + h.h - 4, h.w - 2, 2);
+      g.fillStyle(0x2E2018, 1); g.fillRect(x, y, h.w, 1);
+    } else if (h.kind === 'spikeball') {
+      const r = h.w / 2, cxx = x + r, cyy = y + r;
+      g.fillStyle(0x9AA4B4, 1); g.fillCircle(cxx, cyy, r);
+      g.fillStyle(0xD8DEE8, 1);
+      for (let i = 0; i < 8; i++) {
+        const th = (i / 8) * Math.PI * 2 + (h.spin || 0);
+        g.fillRect(cxx + Math.cos(th) * r - 1, cyy + Math.sin(th) * r - 1, 2, 2);
+      }
+    } else if (h.kind === 'bag') {
+      // A weighted bag on a rail: the strap up to the rail is what makes the
+      // path readable before the bag arrives.
+      g.fillStyle(0x2A323C, 1);
+      g.fillRect(x + h.w / 2 - 1, (h.railY || 0) + sy, 2, y - (h.railY || 0));
+      g.fillStyle(0x7C2D12, 1); g.fillRect(x, y, h.w, h.h);
+      g.fillStyle(0xEA6A34, 1); g.fillRect(x + 1, y + 3, h.w - 2, 2);
+      g.fillStyle(0x3A1A10, 1); g.fillRect(x, y + h.h - 2, h.w, 2);
+    }
   }
 }
 
@@ -326,18 +538,79 @@ function drawBackdrop(g, arena, viewW, sx, sy) {
       g.fillStyle(0x2a2f38, 1);
     }
   } else if (id === 'blaze') {
-    // "Silhouette of a faintly glowing active volcano"
+    // "Silhouette of a faintly glowing active volcano", whose glow EBBS
+    // rapidly as the layer-3 flood builds — the tracker's own tell, and the
+    // only warning that arrives before the shake.
     const bx = viewW * 0.5, base = arena.floorY;
     g.fillStyle(0x2A1410, 1);
     g.fillTriangle(bx - 96 + sx * 0.3, base + sy * 0.3, bx + 96 + sx * 0.3, base + sy * 0.3, bx + sx * 0.3, 52 + sy * 0.3);
-    g.fillStyle(0x8A2A10, 0.7);
+    g.fillStyle(0x8A2A10, 0.4 + 0.6 * arena.ebb);
     g.fillTriangle(bx - 16 + sx * 0.3, 66 + sy * 0.3, bx + 16 + sx * 0.3, 66 + sy * 0.3, bx + sx * 0.3, 50 + sy * 0.3);
+    if (arena.ebb > 0.02) {
+      g.fillStyle(0xE8541A, 0.28 * arena.ebb);
+      g.fillRect(0, 0, viewW, arena.floorY);
+    }
   } else if (id === 'torrent') {
-    // "High seas, tempest" — a heaving horizon behind the room
-    g.fillStyle(0x0C2340, 1);
-    for (let i = 0; i < 4; i++) {
-      const y = 70 + i * 22;
-      g.fillRect(sx * 0.3, y + sy * 0.3, viewW, 10 - i);
+    // "Dark cloudy skies. Bolts of lightning and screen flashes telegraph the
+    // heavy rain direction changes." The clouds are static banks; the bolt is
+    // drawn only while a flash is running, so the two always agree.
+    g.fillStyle(0x101A2C, 1);
+    g.fillRect(0, 0, viewW, arena.floorY);
+    g.fillStyle(0x1A2740, 1);
+    for (const [cxf, cy, w, h] of [[0.18, 30, 96, 16], [0.55, 46, 130, 20], [0.86, 26, 80, 14]]) {
+      const cxp = viewW * cxf + sx * 0.25;
+      g.fillRect(cxp - w / 2, cy + sy * 0.25, w, h);
+      g.fillRect(cxp - w / 3, cy - 6 + sy * 0.25, (w * 2) / 3, 8);
+    }
+    if (arena.flash > 0) {
+      let bx = viewW * (arena.boltX ?? 0.5);
+      g.fillStyle(0xBFD8FF, 0.9);
+      for (let y = 20; y < 90; y += 5) {
+        bx += (Math.random() - 0.5) * 7;
+        g.fillRect(Math.round(bx), y, 2, 5);
+      }
+    }
+  } else if (id === 'volt') {
+    // "A large plasma lamp in the background" — a globe with tendrils reaching
+    // out to its shell, redrawn every frame so they crawl.
+    const gx = viewW * 0.5, gy = 78, r = 34;
+    g.fillStyle(0x1A1030, 1);
+    g.fillCircle(gx + sx * 0.25, gy + sy * 0.25, r);
+    g.fillStyle(0x5B21B6, 0.55);
+    g.fillCircle(gx + sx * 0.25, gy + sy * 0.25, r * 0.35);
+    g.fillStyle(0xF5D328, 0.5);
+    for (let i = 0; i < 6; i++) {
+      const th = (i / 6) * Math.PI * 2 + Math.sin(i * 2.3) * 0.3;
+      let px = gx + sx * 0.25, py = gy + sy * 0.25;
+      for (let k = 0; k < 6; k++) {
+        px += Math.cos(th) * (r / 6) + (Math.random() - 0.5) * 3;
+        py += Math.sin(th) * (r / 6) + (Math.random() - 0.5) * 3;
+        g.fillRect(Math.round(px), Math.round(py), 2, 2);
+      }
+    }
+    g.fillStyle(0xFFF6C0, 0.9);
+    g.fillCircle(gx + sx * 0.25, gy + sy * 0.25, 4);
+  } else if (id === 'strike') {
+    // "Chain-link cage walls, a stained mat floor, and a background of hanging
+    // lamps." The chain link is a coarse diagonal lattice — enough to read as
+    // mesh at 224px without turning into moire.
+    g.fillStyle(0x141018, 1);
+    g.fillRect(0, 0, viewW, arena.floorY);
+    g.fillStyle(0x2A2430, 1);
+    for (let x = -arena.floorY; x < viewW; x += 12) {
+      for (let k = 0; k < arena.floorY; k += 6) {
+        g.fillRect(x + k + sx * 0.2, k + sy * 0.2, 2, 2);
+        g.fillRect(x + arena.floorY - k + sx * 0.2, k + sy * 0.2, 2, 2);
+      }
+    }
+    for (const f of [0.22, 0.5, 0.78]) {
+      const lx = Math.round(viewW * f) + sx * 0.25;
+      g.fillStyle(0x2A323C, 1);
+      g.fillRect(lx - 1, 0, 2, 22);
+      g.fillStyle(0xEA6A34, 0.75);
+      g.fillCircle(lx, 26, 6);
+      g.fillStyle(0xFFD08A, 0.5);
+      g.fillCircle(lx, 26, 3);
     }
   }
 }

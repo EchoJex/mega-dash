@@ -6,7 +6,12 @@
 <style>
   :root{
     --bg:#101318; --panel:#181d25; --grid:#2a323f; --ink:#d7dde6; --dim:#8b95a3;
-    --ready:#49d97e; --wip:#f2b53d; --draft:#8b7bd8; --todo:#ff5c5c; --na:#6b7686;
+    /* Marker colours follow the marker MEANINGS, which are the reverse of what
+       they once were: [draft] is now the build signal (green = go) and [ready]
+       means already built and settled (blue = at rest). --ui is the app's own
+       accent, kept separate so recolouring a marker never restyles the chrome. */
+    --draft:#49d97e; --wip:#f2b53d; --ready:#4a8fd8; --todo:#ff5c5c; --na:#6b7686;
+    --ui:#49d97e;
     --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
@@ -21,11 +26,11 @@
   button,select,input{font-family:inherit;font-size:13px}
   button{background:#243044;color:var(--ink);border:1px solid var(--grid);padding:7px 12px;cursor:pointer;border-radius:3px}
   button:hover{filter:brightness(1.25)}
-  button.primary{background:var(--ready);color:#06220f;border-color:transparent;font-weight:700}
+  button.primary{background:var(--ui);color:#06220f;border-color:transparent;font-weight:700}
   button.warn{background:#3a2430;color:#f0a0b0}
   #state{font-size:12px;color:var(--dim)}
   #state.err{color:#ff8080}
-  #state.ok{color:var(--ready)}
+  #state.ok{color:var(--ui)}
 
   nav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
   nav button{padding:5px 10px;font-size:12px}
@@ -47,10 +52,10 @@
   .st{padding:6px;background:#141922}
   .st select{width:100%;background:#0d1015;color:var(--ink);border:1px solid var(--grid);padding:4px;border-radius:2px}
   .txt{padding:8px 10px;white-space:pre-wrap;outline:none;min-height:36px}
-  .txt:focus{box-shadow:inset 0 0 0 1px var(--ready)}
-  .f-ready .txt{box-shadow:inset 3px 0 0 var(--ready)}
+  .txt:focus{box-shadow:inset 0 0 0 1px var(--ui)}
+  .f-ready .txt{background:rgba(74,143,216,.09);box-shadow:inset 3px 0 0 var(--ready)}
   .f-wip   .txt{background:rgba(242,181,61,.09);box-shadow:inset 3px 0 0 var(--wip)}
-  .f-draft .txt{background:rgba(139,123,216,.10);box-shadow:inset 3px 0 0 var(--draft)}
+  .f-draft .txt{box-shadow:inset 3px 0 0 var(--draft)}
   .f-todo  .txt{background:rgba(255,92,92,.08);box-shadow:inset 3px 0 0 var(--todo);color:var(--dim)}
   .f-na    .txt{color:var(--na);box-shadow:inset 3px 0 0 var(--na)}
   i.f-ready{background:var(--ready)} i.f-wip{background:var(--wip)}
@@ -60,7 +65,7 @@
   .bug input,.bug select{width:100%;background:#0d1015;color:var(--ink);border:none;border-right:1px solid var(--grid);padding:8px}
   .bug .del{background:none;border:none;color:#7a4a55;cursor:pointer;font-size:16px}
   .free{padding:10px 12px;white-space:pre-wrap;outline:none;min-height:64px}
-  .free:focus{box-shadow:inset 0 0 0 1px var(--draft)}
+  .free:focus{box-shadow:inset 0 0 0 1px var(--ui)}
   .note{padding:8px 12px;font-size:11.5px;color:var(--dim);background:#0d1015;border-bottom:1px solid var(--grid)}
 
   dialog{background:var(--panel);color:var(--ink);border:1px solid var(--grid);max-width:520px;border-radius:4px}
@@ -119,8 +124,23 @@ import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
 
 // ── Config ────────────────────────────────────────────────────────────
 const OWNER = 'EchoJex', REPO = 'mega-dash', PATH = 'design/TRACKER.md';
-const BRANCHES = ['main', 'boss-dev'];
-const MARKS = ['ready', 'wip', 'draft', 'todo', 'na'];
+/**
+ * Branches are LISTED FROM GITHUB, not hardcoded.
+ *
+ * This used to be a literal ['main', 'boss-dev'], which meant every new working
+ * branch was invisible here: the tracker on that branch could not be opened, and
+ * Reload just re-fetched whichever old branch was still selected — looking for
+ * all the world like the app was broken. A hardcoded list of a thing that
+ * changes weekly is a list that is wrong.
+ *
+ * The fallback below is only for a failed or rate-limited API call, so the app
+ * still opens read-only rather than showing an empty picker.
+ */
+const FALLBACK_BRANCHES = ['main'];
+let BRANCHES = [...FALLBACK_BRANCHES];
+// Ordered by how often they are chosen: [draft] is the build signal and the
+// most common deliberate act, so it leads.
+const MARKS = ['draft', 'wip', 'ready', 'todo', 'na'];
 const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';
 
@@ -390,8 +410,8 @@ function fieldRow(f, head) {
   txt.textContent = f.text;
   txt.oninput = () => {
     f.text = txt.innerText;
-    // THE ASSERTION RULE: editing a field revokes its ready state. Marking it
-    // ready again is a deliberate act, and that act is the go-ahead to build it.
+    // THE ASSERTION RULE: editing a field drops it back to wip. Moving it to
+    // draft again is a deliberate act, and that act is the go-ahead to build it.
     if (f.mark !== 'wip') {
       f.mark = 'wip'; sel.value = 'wip'; row.className = 'field f-wip'; bump(head);
     }
@@ -417,7 +437,8 @@ function bugCard(sec) {
   el.className = 'card'; el.dataset.group = sec.title;
   el.innerHTML = '<div class="head"><h2>Bugs</h2></div>'
     + '<div class="note">Shorthand is fine. Build is the versionCode on the title screen. '
-    + 'Claude fixes <b>ready</b> bugs; <b>wip</b> means you are still describing it.</div>';
+    + 'Claude fixes <b>draft</b> bugs; <b>wip</b> means you are still describing it; '
+    + '<b>ready</b> means already fixed.</div>';
   const body = document.createElement('div');
   body.className = 'body open';
 
@@ -484,7 +505,7 @@ function bugRow(b, onDel, onChange) {
   free.oninput = () => { b.build = free.value || 'other'; onChange(); touch(); };
 
   const mark = document.createElement('select');
-  for (const m of ['wip', 'ready', 'todo', 'na']) {
+  for (const m of ['wip', 'draft', 'ready', 'todo', 'na']) {
     const o = document.createElement('option'); o.value = m; o.textContent = m;
     o.selected = m === b.mark; mark.appendChild(o);
   }
@@ -508,12 +529,49 @@ const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>':
 
 // ── Wiring ────────────────────────────────────────────────────────────
 const bsel = $('#branch');
-for (const b of BRANCHES) {
-  const o = document.createElement('option');
-  o.value = b; o.textContent = b; o.selected = b === branch();
-  bsel.appendChild(o);
+
+function fillBranchPicker() {
+  bsel.innerHTML = '';
+  // The current selection always appears, even if the listing failed or the
+  // branch has since been deleted — otherwise the picker would silently show
+  // something other than what is loaded.
+  const all = BRANCHES.includes(branch()) ? BRANCHES : [branch(), ...BRANCHES];
+  for (const b of all) {
+    const o = document.createElement('option');
+    o.value = b; o.textContent = b; o.selected = b === branch();
+    bsel.appendChild(o);
+  }
 }
+
+/**
+ * Pull the real branch list. Newest-pushed first, so the branch you are working
+ * on is near the top of the picker instead of buried alphabetically.
+ */
+async function loadBranches() {
+  try {
+    const rows = await gh(`/repos/${OWNER}/${REPO}/branches?per_page=100&t=${Date.now()}`);
+    const names = rows.map((b) => b.name);
+    if (names.length) {
+      BRANCHES = [
+        ...names.filter((n) => n === 'main'),
+        ...names.filter((n) => n !== 'main').sort(),
+      ];
+    }
+  } catch {
+    // Unauthenticated listing can be rate-limited. The fallback still opens.
+  }
+  fillBranchPicker();
+}
+
 bsel.onchange = () => { localStorage.setItem(BRANCH_KEY, bsel.value); load(); };
+
+// ?branch=<name> selects a branch on load, so a link can point straight at one.
+// Typing a branch into a phone's address bar beats hunting through a dropdown,
+// and it is the way in when the listing is rate-limited. Applied BEFORE the
+// picker is first filled, so the URL and the selection never disagree.
+const urlBranch = new URLSearchParams(location.search).get('branch');
+if (urlBranch) localStorage.setItem(BRANCH_KEY, urlBranch);
+fillBranchPicker();
 
 $('#saveBtn').onclick = () => save(true);
 $('#reloadBtn').onclick = () => {
@@ -547,6 +605,9 @@ $('#tokenClear').onclick = () => {
 $('#tokenClose').onclick = () => $('#tokenDlg').close();
 
 addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+// Branches first, so the picker is populated before the load reports which one
+// it settled on. Both are fire-and-forget; neither blocks the other.
+loadBranches();
 load();
 </script>
 </body></html>

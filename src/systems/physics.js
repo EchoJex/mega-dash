@@ -52,8 +52,11 @@ export function stepPlayer(p, world, input, groundY) {
   } else {
     // Instant-response horizontal movement. accel/friction default to 1.0,
     // i.e. no ramp at all — that snap is a genre signature.
+    // `speedMult` is the Stun attribute's stacking slow. It defaults to 1 so
+    // every other caller — and every test — is unaffected by its existence.
     const slideMult = FEEL.slideSpeedMult * (p.slideSpeedBonus || 1);
-    const target = input.moveDir * FEEL.moveSpeed * (p.sliding ? slideMult : 1);
+    const target = input.moveDir * FEEL.moveSpeed
+      * (p.sliding ? slideMult : 1) * (input.speedMult ?? 1);
     p.vx = target === 0
       ? p.vx * (1 - FEEL.friction)
       : p.vx + (target - p.vx) * FEEL.accel;
@@ -74,12 +77,16 @@ export function stepPlayer(p, world, input, groundY) {
   else if (p.coyote > 0) p.coyote--;
 
   if (p.jumpBuffer > 0 && (p.onGround || p.coyote > 0)) {
-    p.vy = FEEL.jumpVelocity;
+    // `jumpMult` is terrain drag on the launch — wading in Tempest Man's floor
+    // water. It scales the IMPULSE, so a half-strength jump reaches a quarter
+    // of the height; that is the intent, and the tracker's phrase is "half the
+    // jump strength" rather than half the height.
+    p.vy = FEEL.jumpVelocity * (input.jumpMult ?? 1);
     p.onGround = false;
     p.coyote = 0;
     p.jumpBuffer = 0;
     p.airActions = FEEL.maxAirActions;
-    p.airDashTimer = 0;
+    p.djPause = 0;
   }
 
   // ── Variable jump height ───────────────────────────────────────────
@@ -91,13 +98,25 @@ export function stepPlayer(p, world, input, groundY) {
   }
   if (p.onGround) p.jumpCut = false;
 
-  // ── Gravity, with the air-dash hang ────────────────────────────────
-  const g = p.airDashTimer > 0
-    ? FEEL.gravity * FEEL.airDashGravityMult
-    : FEEL.gravity;
-  if (p.airDashTimer > 0) p.airDashTimer--;
-  p.vy = Math.min(p.vy + g, FEEL.maxFallSpeed);
-  p.y += p.vy;
+  // ── The double jump's hang ─────────────────────────────────────────
+  // Vertical motion is frozen outright for a few frames — not slowed, not
+  // lightened — while horizontal velocity carries on untouched. The second jump
+  // fires on the frame the hang ends, using the SAME gravity and the same
+  // release-to-cut rule as the first one, so the two jumps feel like the same
+  // move at two heights rather than two different systems.
+  if (p.djPause > 0) {
+    p.vy = 0;
+    if (--p.djPause === 0) {
+      // Peak height goes as v^2/2g, so an 80% HEIGHT target needs sqrt(0.8) of
+      // the velocity. See the note in feel.js.
+      p.vy = FEEL.jumpVelocity * Math.sqrt(FEEL.doubleJumpHeightMult);
+      p.jumpCut = false;              // the new jump gets its own variable height
+    }
+    p.y += p.vy;
+  } else {
+    p.vy = Math.min(p.vy + FEEL.gravity, FEEL.maxFallSpeed);
+    p.y += p.vy;
+  }
 
   // ── Vertical resolution ────────────────────────────────────────────
   p.onGround = false;
@@ -111,7 +130,7 @@ export function stepPlayer(p, world, input, groundY) {
       p.vy = 0;
       p.onGround = true;
       p.airActions = FEEL.maxAirActions;
-      p.airDashTimer = 0;
+      p.djPause = 0;
       break;
     }
   }
@@ -133,7 +152,7 @@ export function stepPlayer(p, world, input, groundY) {
       p.vy = 0;
       p.onGround = true;
       p.airActions = FEEL.maxAirActions;
-      p.airDashTimer = 0;
+      p.djPause = 0;
     }
   }
 
@@ -145,12 +164,12 @@ export function requestJump(p) {
   if (p.onGround || p.coyote > 0) {
     p.jumpBuffer = FEEL.jumpBufferFrames;
   } else if (p.airActions > 0) {
-    // Air dash: upward impulse then a brief near-weightless hang.
+    // Double jump: hang first, launch second. stepPlayer fires the impulse when
+    // the hang runs out — doing it here instead would cancel the pause the bug
+    // report specifically asked for.
     p.airActions--;
-    p.vy = FEEL.airDashVelocity;
-    p.airDashTimer = FEEL.airDashHangFrames;
-    p.jumpCut = false;
-    return 'airdash';
+    p.djPause = FEEL.doubleJumpPauseFrames;
+    return 'double';
   } else {
     // Airborne with nothing left: remember the press in case a landing arrives
     // within the buffer window. It is NOT a jump yet, and must not sound like one.
