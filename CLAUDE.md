@@ -60,6 +60,18 @@ CI publishes `ch-<branch>` for every branch, and the rolling `latest` **only fro
 so a feature branch can never become the default update. Release notes carry
 `versionCode=NNNN`, which is what the updater compares against the installed build.
 
+### Work on `main` by default
+
+**`main` is where work lands unless the owner asks for a branch.** They will say so
+explicitly when a change is speculative enough to want isolating; absent that, commit
+straight to `main` so the build the phone pulls with a plain tap UPDATE is the current one.
+
+This is a deliberate reversal of the earlier habit of opening a branch per slice. Feature
+branches meant every playtest needed a long-press and a channel pick, the `latest` channel
+sat months behind, and the tracker web app — which is served from `main` — could not even
+see the branch the design was being edited on. The isolation was buying nothing that CI's
+per-branch builds were not already providing on demand.
+
 **`android/` is committed** — it holds the updater's native code (`Updater.java`,
 `UpdaterPlugin.java`) and `megadash-signing.keystore`. That keystore is deliberately in the
 repo: without one stable signing key, every CI run would sign differently and no build could
