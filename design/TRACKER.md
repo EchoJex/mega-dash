@@ -451,7 +451,7 @@ Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which w
 ## Play feel
 Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height
 ## Cosmetics
-Default Sprite is rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
+Player sprite should be rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
 
 
 Redo the requip wheel to emphasize two active offensive weapons and two active defensive weapons Large and in the center of the wheel with a press and hold feature While in the requip wheel to enable or disable their use. Inactive but unlocked offensive weapons will be shown as grayed out in a half circle above the active offensive weapons and inactive defensive weapons will be shown as grayed out in a half circle below the active defensive weapons slot. All icons should continue to display their levels as is currently in the requip wheel.
