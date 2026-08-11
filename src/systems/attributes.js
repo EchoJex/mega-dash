@@ -41,12 +41,20 @@ export const ATTR = {
   constrict: { form: 'character', tint: 0x2AAB1C, label: 'HELD', held: true },
   freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', held: true },
   // NOT AN ELEMENTAL ATTRIBUTE, and deliberately not in the tracker's list.
-  // The Eclipse Blade's aggro pause is "loses track of you for a beat", which
-  // is mechanically a hold and nothing else — it reuses the hold machinery so
-  // every consumer already honours it, and carries no tint because there is
-  // nothing elemental to show. Do not give it one.
-  cloakHold: { form: 'character', tint: null, label: '', held: true },
+  // The Astral Cloak's aggro pause is "loses track of you for a beat", which is
+  // mechanically a hold and nothing else — it reuses the hold machinery so every
+  // consumer already honours it.
+  //
+  // It flashes a FAINT DARK shimmer rather than a colour: an enemy that simply
+  // stopped was indistinguishable from an enemy that happened not to be moving,
+  // which made the cloak's best effect invisible. `flash` keeps it well under
+  // every elemental tint, so a paused enemy reads as shadowed rather than as
+  // afflicted with something.
+  cloakHold: { form: 'character', tint: 0x2A273F, label: '', held: true, flash: 0.4 },
 };
+
+/** How strongly an attribute washes over the actor it is on. 1 is the default. */
+export const flashOf = (id) => ATTR[id]?.flash ?? 1;
 
 /** Statuses that stop an actor acting. */
 export const isHeld = (bag) => Object.keys(bag || {})
@@ -142,19 +150,31 @@ export function stepStatus(bag) {
   return damage;
 }
 
-/** The tint to flash on an afflicted actor, or null. Strongest remaining wins. */
-export function statusTint(bag) {
-  let best = null, bestFrac = 0;
+/**
+ * The tint to flash on an afflicted actor and how hard to flash it.
+ *
+ * ONE FUNCTION RETURNING BOTH, because the two answers have to come from the
+ * same winner. Returning the colour from one call and the strength from another
+ * lets them disagree the moment two statuses are live at once, and the bug that
+ * produces — a faint attribute washed at a fierce attribute's strength — is
+ * almost impossible to spot by looking.
+ *
+ * Strongest remaining fraction wins. A status with no tint has nothing to say
+ * visually and cannot take the slot from one that does.
+ */
+export function statusFlash(bag) {
+  let best = null, bestFrac = 0, alpha = 1;
   for (const id of Object.keys(bag || {})) {
-    // A status with no tint has nothing to say visually and must not win the
-    // slot — otherwise a colourless hold would blank out a live Burn.
     const tint = ATTR[id]?.tint;
     if (tint == null) continue;
     const f = bag[id].t / bag[id].tMax;
-    if (f > bestFrac) { bestFrac = f; best = tint; }
+    if (f > bestFrac) { bestFrac = f; best = tint; alpha = flashOf(id); }
   }
-  return best;
+  return { tint: best, alpha };
 }
+
+/** Just the colour. Kept for callers that only paint. */
+export const statusTint = (bag) => statusFlash(bag).tint;
 
 /**
  * How strongly to flash the tint, 0-1. Stun deepens with every stack, per the

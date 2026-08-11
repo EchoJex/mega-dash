@@ -1833,9 +1833,9 @@ export default class GameScene extends Phaser.Scene {
       // Same flashing readout the player gets. An enemy that is burning or
       // frozen has to say so, or a status weapon has no visible effect at all
       // until the health bar you cannot see runs out.
-      const et = Attr.statusTint(e.status);
-      if (et !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.minions.g.fillStyle(et, 0.5 * Attr.statusIntensity(e.status));
+      const ef = Attr.statusFlash(e.status);
+      if (ef.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.minions.g.fillStyle(ef.tint, 0.5 * ef.alpha * Attr.statusIntensity(e.status));
         L.minions.g.fillRect(sx(e.x), e.y, e.w, e.h);
       }
     }
@@ -1863,9 +1863,9 @@ export default class GameScene extends Phaser.Scene {
       // Hardware whose orientation is game state — see drawBossRig. Not a
       // silhouette: the rectangle underneath is still the honest footprint.
       drawBossRig(L.boss.g, b, sx(b.x));
-      const bt = Attr.statusTint(b.status);
-      if (bt !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.boss.g.fillStyle(bt, 0.45 * Attr.statusIntensity(b.status));
+      const bf = Attr.statusFlash(b.status);
+      if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.boss.g.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
         L.boss.g.fillRect(sx(b.x), b.y, b.w, b.h);
       }
     }
@@ -1888,9 +1888,9 @@ export default class GameScene extends Phaser.Scene {
       // An active attribute flashes its colour over the suit. Flashing rather
       // than tinting leaves the suit readable underneath, so a status never
       // makes the player harder to find on a busy screen.
-      const tint = Attr.statusTint(this.status);
-      if (tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.player.g.fillStyle(tint, 0.45 * Attr.statusIntensity(this.status));
+      const pf = Attr.statusFlash(this.status);
+      if (pf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
+        L.player.g.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
         L.player.g.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
       }
       // Worn hardware, allies and hit feedback, on the player's own layer so

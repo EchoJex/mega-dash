@@ -117,8 +117,14 @@ export const UPGRADES = [
    * Rank 2 is the one that looks smallest and is not: your thumb can only aim
    * one offensive weapon at a time either way, but at rank 1 switching to the
    * special SILENCES the sidearm, and at rank 2 it does not.
+   *
+   * RANK 1 IS DELIBERATELY VERY CHEAP on both mastery ladders — cheaper than
+   * anything else in the Hub. Without it a player earns weapons they physically
+   * cannot use, and an upgrade that gates the whole rest of the arsenal must not
+   * also be a grind. The steep multiplier puts the cost back in ranks 2 and 3,
+   * where you are buying convenience rather than access.
    */
-  { id: 'offensive_mastery', name: 'OFFENSIVE MASTERY', color: '#E11416', maxLv: 3, cost: 90, mult: 2.1,
+  { id: 'offensive_mastery', name: 'OFFENSIVE MASTERY', color: '#E11416', maxLv: 3, cost: 25, mult: 3.4,
     desc: (l) => ['Side arm only — rank 1 opens an offensive slot',
       'One offensive slot; it or the side arm, not both',
       'Offensive slot and side arm both live at once',
@@ -132,7 +138,7 @@ export const UPGRADES = [
    * thumb, so being handed two of them for free would make the class strictly
    * additive, which is the thing the slot cap exists to prevent.
    */
-  { id: 'defensive_mastery', name: 'DEFENSIVE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 90, mult: 2.1,
+  { id: 'defensive_mastery', name: 'DEFENSIVE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 25, mult: 3.4,
     desc: (l) => ['No defensive slots — rank 1 opens one',
       'One defensive slot',
       'Two defensive slots; only one may run',
