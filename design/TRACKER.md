@@ -371,7 +371,7 @@ where each one stands.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
 - **weapon** `[draft]` Defensive; reduces aggro and become immune to stays affects.
 - **weapon Lv1** `[draft]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
-- **weapon Lv3** `[wip]`
+- **weapon Lv3** `[wip]` Slight increase in
 - **weapon Lv6** `[draft]`  creates shadow trails that damage enemies and lifesteal.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
