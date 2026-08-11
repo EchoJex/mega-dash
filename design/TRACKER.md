@@ -295,7 +295,7 @@ where each one stands.
 - **attack L3** `[wip]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
 - **weapon** `[wip]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: tougher bugs + longer duration.
 - **weapon Lv1** `[wip]` One bug ally, short duration; it attacks the nearest minion and must return to the player briefly between targets
-- **weapon Lv3** `[ready]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
+- **weapon Lv3** `[wip]` 2 allies with a longer duration; they now prioritise whatever the player last damaged.
 - **weapon Lv6** `[draft]` Lv6: 3 bugs; every other bug spawned will prioritize intercepting projectiles as a meat shield
 - **weapon Lv10** `[draft]` Lv10: 5 bugs continuously swarm all over the player forming a shield and slowly respawn after tanking enough damage. Additionally, 3 bugs simultaneously converge on an enemy and kamikaze with an explosive blast.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
