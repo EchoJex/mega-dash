@@ -133,7 +133,7 @@ where each one stands.
 `attack` Chain Spark · `weapon` Volt Spark
 
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
-- **arena** `[wip]` A very large plasma lamp in the background; several
+- **arena** `[wip]` A very large plasma lamp in the background; several platformer phase
 - **hazard L1** `[draft]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[draft]` Same sweep, plus overhead conductors that drop a vertical St Elmo's fire looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
