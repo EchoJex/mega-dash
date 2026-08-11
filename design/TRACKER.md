@@ -370,7 +370,7 @@ where each one stands.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
 - **weapon** `[draft]` Defensive; reduces aggro and become immune to stays affects.
-- **weapon Lv1** `[wip]` While active enemies will fire projectiles slightly less frequently
+- **weapon Lv1** `[wip]` While active enemies will fire projectiles slightly less frequently and when
 - **weapon Lv3** `[wip]` Faster return and increased steal; the boomerang now passes through the first enemy rather than stopping.
 - **weapon Lv6** `[wip]` Lv7+: creates shadow trails that damage enemies.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
