@@ -135,7 +135,7 @@ where each one stands.
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **arena** `[draft]` A very large plasma lamp in the background
 - **hazard L1** `[wip]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
-- **hazard L2** `[ready]` Same sweep, faster, plus overhead conductors that drop a vertical a St Elmo's for looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
+- **hazard L2** `[wip]` Same sweep, plus overhead conductors that drop a vertical a St Elmo's for looking bolt at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
 - **attack L1** `[ready]` Fires up to 3 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
 - **attack L2** `[ready]` Bolts increase to 7 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap.
