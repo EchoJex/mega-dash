@@ -369,7 +369,7 @@ where each one stands.
 - **attack L1** `[wip]` Creates darkness zones that slow the player and spawn shadow clones.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
-- **weapon** `[wip]` Defensive; Throws a dark energy boomerang that steals a small amount of enemy health. Per-level scaling: faster return + more health steal.
+- **weapon** `[wip]` Defensive; reducesThrows a dark energy boomerang that steals a small amount of enemy health. Per-level scaling: faster return + more health steal.
 - **weapon Lv1** `[wip]` Single boomerang out and back; small health steal on each pass.
 - **weapon Lv3** `[wip]` Faster return and increased steal; the boomerang now passes through the first enemy rather than stopping.
 - **weapon Lv6** `[wip]` Lv7+: creates shadow trails that damage enemies.
