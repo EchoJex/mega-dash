@@ -632,13 +632,24 @@ it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to
 
 ### Dev mode — `src/config/dev.js`
 
-Playtest perks: HP floored at 1 (every hit still lands), equipping padlocked weapons,
-re-quipping outside the between-fights window, cards drawn from locked weapons, a **boss
-selector** in the pause menu, and **layer cycling**.
+Playtest perks: HP floored at 1 (every hit still lands), **every weapon unlocked at level
+1**, **both Loadout Mastery ranks at 3** (four slots, all live), equipping padlocked
+weapons, re-quipping outside the between-fights window, cards drawn from locked weapons, a
+**boss selector** in the pause menu, and **layer cycling**.
 
-**Loadout Mastery is deliberately NOT bypassed by dev mode.** The ranks are bought in the
-Hub like the slide is, and a playtest that quietly ignored the caps would tell you nothing
-about whether the ladder is worth buying.
+**Level 1, not level 10.** The whole arsenal is on the table so it can be slotted and
+compared; the ladders still have to be climbed, because a weapon handed over at its top
+rung says nothing about whether the rungs below it are worth having.
+
+`maxMastery` is a genuine bypass of meta progression rather than a shortcut around grind,
+and it earns that because every weapon in the game is reached through the loadout — a
+rank-0 playtest can only ever see one weapon at a time, which would gate the slice loop
+behind a Chip grind unrelated to the slice being built. The cost is that dev mode cannot
+tell you how ranks 0–2 feel; switch it off when balancing the ladder itself.
+
+`startUnlocked` also hides the acquire sequence: a boss only grants a weapon you do not
+already have, so nothing ever fires the acquire banner or the slot-choice picker. Switch
+it off to test that.
 
 **Boss selector** — pause → BOSS SELECT → any of the 17. It restarts the area with that
 boss's door a short walk ahead, keeping the run's weapons, levels and Chips. Deliberately

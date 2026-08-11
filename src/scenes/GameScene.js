@@ -140,6 +140,7 @@ export default class GameScene extends Phaser.Scene {
       pendingLoadout: null,
     };
     applyUpgrades(save, run);
+    if (dev('maxMastery')) run.offRank = run.defRank = Loadout.MAX_RANK;
     // The ranks are copied onto the loadout ONCE, here. Nothing downstream
     // reads `save` again, so a purchase made in the Hub can never reshape a
     // run that is already in progress.
@@ -153,6 +154,14 @@ export default class GameScene extends Phaser.Scene {
     // beating the boss that carries it (killBoss below). The two arsenal
     // upgrades are the only head start, and they cost Chips.
     const specials = WEAPONS.filter((w) => w.id !== SIDEARM_ID);
+    // ...except in dev mode, where the whole arsenal is on the table from the
+    // first frame — at LEVEL 1, so the ladders still have to be climbed.
+    if (dev('startUnlocked')) {
+      for (const w of specials) {
+        run.unlocked.add(w.id);
+        run.wpLevels[w.id] = 1;
+      }
+    }
     const headStart = run.twinArsenal ? 2 : run.starterArsenal ? 1 : 0;
     for (const w of shuffled(specials).slice(0, headStart)) {
       run.unlocked.add(w.id);
