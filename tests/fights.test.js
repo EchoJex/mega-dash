@@ -157,12 +157,13 @@ test('every attack loop cycles back to its opening state, more than once', () =>
 });
 
 test('layer falls BACK to the hardest layer written, never forward', () => {
-  // Strike Man has hazard L1 only and no attack at any layer, because that is
-  // all his tracker fields define. A layer-3 encounter therefore reuses hazard
-  // L1 and stays attackless rather than borrowing another boss's behaviour.
+  // Strike Man has hazard L1 only, because that is all his tracker fields
+  // define. A layer-3 encounter therefore reuses hazard L1 rather than
+  // borrowing another boss's behaviour — while his attack, which IS written to
+  // three layers, gets its own layer 3.
   const s3 = fightFor('strike', 3);
   assert.equal(s3.hazard, FIGHTS.strike.hazard[1]);
-  assert.equal(s3.attack, null);
+  assert.equal(s3.attack, FIGHTS.strike.attack[3]);
   // A boss with no entry at all degrades instead of throwing.
   assert.deepEqual(fightFor('nope', 2), { attack: null, hazard: null });
 });
@@ -178,8 +179,9 @@ test('no boss has more built layers than the tracker defines', () => {
     blaze: { attack: 3, hazard: 3 },
     torrent: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
-    // Hazard L2/L3 and every attack layer are still `[wip]` for Strike Man.
-    strike: { attack: 0, hazard: 1 },
+    // Strike Man's attack layers were written to the owner's Fighter Joe / Ryu
+    // brief; his hazard L2/L3 are still `[wip]`.
+    strike: { attack: 3, hazard: 1 },
   };
   assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
     'a boss gained or lost a fight entry — update the expected map with it');

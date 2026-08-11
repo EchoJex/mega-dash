@@ -200,9 +200,9 @@ where each one stands.
 - **hazard L1** `[ready]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
 - **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
 - **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
-- **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
-- **attack L2** `[wip]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
-- **attack L3** `[wip]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
+- **attack L1** `[ready]` Dashes in on foot and throws a Vulcan Jab — a rapid flurry of short-range punches off a clear wind-up — finishing on a Rising Break uppercut that launches. He has nothing at range on this layer, so the whole fight is spacing: stay outside his reach and he simply keeps closing.
+- **attack L2** `[ready]` Adds a guard stance between combos that reflects the first shot it takes. The Rising Break now chases upward once before he lands, and he will throw it on its own as an anti-air the moment the player is above him — jumping over him stops being free.
+- **attack L3** `[ready]` Adds a thrown Force Blast when the player keeps their distance, and a spinning kick that crosses the room and cannot be cleanly jumped. The combo can also be cancelled into a dash mid-string, so he finishes it from the side he did not start on. Near gets jabbed, above gets the uppercut, far gets the blast, and the spin closes whatever gap is left.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
 - **weapon Lv1** `[ready]` 2 jabs, or 1 jab and one combo finisher.

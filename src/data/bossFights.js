@@ -1029,9 +1029,8 @@ function voltHazard(layer) {
  * "improve" it with a varied speed; the tracker calls the predictability out
  * by name.
  *
- * Layers 2 and 3 are still `[wip]`, and so are all three of his attack layers,
- * so he has no attack loop at all yet — the room is the whole fight. Do not
- * invent one; the owner writes those.
+ * Hazard layers 2 and 3 are still `[wip]`, so both fall back to this one —
+ * see fightFor. His ATTACK layers are built; they are below.
  */
 /**
  * THE BAG HAS TO HANG INTO THE PLAYER'S LANE OR IT IS SCENERY.
@@ -1079,6 +1078,232 @@ function strikeHazard(layer) {
   };
 }
 
+/**
+ * STRIKE MAN'S ATTACK — a fighting-game kit, built to the owner's brief of
+ * "Fighter Joe from Kirby / Ryu from Street Fighter".
+ *
+ * L1 "Dashes in on foot and throws a Vulcan Jab — a rapid flurry of
+ *     short-range punches off a clear wind-up — finishing on a Rising Break
+ *     uppercut that launches. He has nothing at range on this layer, so the
+ *     whole fight is spacing."
+ * L2 "Adds a guard stance between combos that reflects the first shot it takes.
+ *     The Rising Break now chases upward once before he lands, and he will
+ *     throw it on its own as an anti-air the moment the player is above him."
+ * L3 "Adds a thrown Force Blast when the player keeps their distance, and a
+ *     spinning kick that crosses the room. The combo can be cancelled into a
+ *     dash mid-string, so he finishes it from the side he did not start on."
+ *
+ * THE LAYERS CLOSE OFF ESCAPES, THEY DO NOT ADD DAMAGE. Layer 1 has exactly one
+ * answer and one counter: stay out of his reach. Layer 2 takes away jumping
+ * over him and takes away free chip damage while he is walking. Layer 3 takes
+ * away standing at range. Each rung removes a place to be rather than making
+ * the same attack hurt more, which is what makes a boss feel like it learned
+ * something instead of like it gained a stat.
+ *
+ * HE MOVES ON FOOT. The `[wip]` text these replaced said "teleports close", and
+ * the two characters the owner named do not teleport — they walk you down. A
+ * dash you can see coming is also the only version of this that is fair at
+ * melee range, because a teleport into a jab flurry cannot be spaced against.
+ */
+const STRIKE_ATK = {
+  walk: { 1: 0.5, 2: 0.6, 3: 0.7 },
+  dash: { 1: 1.6, 2: 1.9, 3: 2.2 },
+  rest: { 1: [80, 130], 2: [65, 105], 3: [50, 90] },
+  reach: 34,               // how close he wants to be before committing
+  // VULCAN JAB
+  jabWindup: 24,
+  jabs: { 1: 4, 2: 5, 3: 6 },
+  jabGap: 8,
+  jabReach: 26,
+  jabDamage: 1,
+  // RISING BREAK — the launcher, and from L2 an anti-air in its own right.
+  riseWindup: 20,
+  riseVy: -4.6,
+  riseGrav: 0.3,
+  riseDamage: 2,
+  riseW: 24,
+  riseChase: { 1: 0, 2: 1, 3: 1 },   // extra upward beats before he falls
+  // GUARD — L2+. Reflects the first shot it eats, then drops.
+  guardFrames: { 1: 0, 2: 70, 3: 55 },
+  // FORCE BLAST — L3, thrown when the player will not come close.
+  blastWindup: 28,
+  blastSpeed: 2.5,
+  blastFar: 70,
+  // SPINNING KICK — L3. Crosses the room at head height.
+  spinWindup: 22,
+  spinSpeed: 2.4,
+  spinFrames: 80,
+  spinDamage: 2,
+};
+
+/** Does a box overlap the player's? Local, because a fight sees only its ctx. */
+const boxHitsPlayer = (ctx, x, y, w, h) => {
+  const p = ctx.playerBox;
+  return p.x < x + w && p.x + p.w > x && p.y < y + h && p.y + p.h > y;
+};
+
+function strikeAttack(layer) {
+  return (ctx) => {
+    const b = ctx.boss, p = ctx.player, a = ctx.arena;
+    const groundY = (a ? a.floorY : ctx.floorY) - b.h;
+    const fs = b.fs || (b.fs = {
+      mode: 'stalk', t: rnd(...STRIKE_ATK.rest[layer]), hits: 0, vy: 0, chase: 0,
+    });
+    const pcx = p.x + 12, bcx = b.x + b.w / 2;
+    const toward = Math.sign(pcx - bcx) || 1;
+    const gap = Math.abs(pcx - bcx);
+    // Above him and close in x — the state that layer 2's anti-air punishes.
+    const overhead = (p.y + 24) < b.y + b.h * 0.4 && gap < STRIKE_ATK.reach * 1.4;
+
+    switch (fs.mode) {
+      case 'stalk': {
+        b.x += toward * STRIKE_ATK.walk[layer];
+        b.y = groundY;
+        // L2+: he covers himself while walking, so chipping him down from
+        // across the room stops being free.
+        if (STRIKE_ATK.guardFrames[layer] && fs.guard > 0) fs.guard--;
+        if (--fs.t > 0) break;
+
+        if (layer >= 2 && overhead) { fs.mode = 'rise'; fs.t = STRIKE_ATK.riseWindup; break; }
+        if (layer >= 3 && gap > STRIKE_ATK.blastFar) {
+          fs.mode = Math.random() < 0.5 ? 'blast' : 'spin';
+          fs.t = fs.mode === 'blast' ? STRIKE_ATK.blastWindup : STRIKE_ATK.spinWindup;
+          fs.dir = toward;
+          break;
+        }
+        fs.mode = 'dash';
+        fs.dir = toward;
+        break;
+      }
+
+      case 'dash': {
+        b.x += fs.dir * STRIKE_ATK.dash[layer];
+        b.y = groundY;
+        if (gap <= STRIKE_ATK.reach || b.x <= ctx.bounds.x0 || b.x + b.w >= ctx.bounds.x1) {
+          fs.mode = 'jabWind';
+          fs.t = STRIKE_ATK.jabWindup;
+        }
+        break;
+      }
+
+      // THE WIND-UP IS THE FAIRNESS. He plants and telegraphs before the
+      // flurry, which is the window to slide out of reach or hit him first.
+      case 'jabWind': {
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        fs.mode = 'jab';
+        fs.hits = STRIKE_ATK.jabs[layer];
+        fs.t = 0;
+        fs.dir = toward;
+        break;
+      }
+
+      case 'jab': {
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        fs.t = STRIKE_ATK.jabGap;
+        const hx = fs.dir > 0 ? b.x + b.w : b.x - STRIKE_ATK.jabReach;
+        if (boxHitsPlayer(ctx, hx, b.y + b.h * 0.3, STRIKE_ATK.jabReach, b.h * 0.5)) {
+          ctx.hurt(bcx, STRIKE_ATK.jabDamage);
+        }
+        if (--fs.hits > 0) break;
+        // L3 can cancel the string into a dash and finish from the other side.
+        if (layer >= 3 && Math.random() < 0.4) {
+          fs.mode = 'dash';
+          fs.dir = -fs.dir;
+          fs.t = 0;
+          break;
+        }
+        fs.mode = 'rise';
+        fs.t = STRIKE_ATK.riseWindup;
+        break;
+      }
+
+      case 'rise': {
+        if (--fs.t > 0) break;
+        fs.mode = 'rising';
+        fs.vy = STRIKE_ATK.riseVy;
+        fs.chase = STRIKE_ATK.riseChase[layer];
+        break;
+      }
+
+      case 'rising': {
+        b.y += fs.vy;
+        fs.vy += STRIKE_ATK.riseGrav;
+        // "Chases upward once before he lands" — a second beat of lift if the
+        // player is still above him when the first one runs out of steam.
+        if (fs.vy > 0 && fs.chase > 0 && overhead) {
+          fs.chase--;
+          fs.vy = STRIKE_ATK.riseVy * 0.8;
+        }
+        if (boxHitsPlayer(ctx, b.x - (STRIKE_ATK.riseW - b.w) / 2, b.y - 6,
+          STRIKE_ATK.riseW, b.h + 6)) {
+          ctx.hurt(bcx, STRIKE_ATK.riseDamage);
+        }
+        if (b.y >= groundY) {
+          b.y = groundY;
+          fs.mode = 'stalk';
+          fs.t = rnd(...STRIKE_ATK.rest[layer]);
+          fs.guard = STRIKE_ATK.guardFrames[layer];
+        }
+        break;
+      }
+
+      case 'blast': {
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        const v = aimAt(bcx, b.y + b.h * 0.45, p.x + 12, p.y + 12);
+        ctx.shoot({
+          x: bcx, y: b.y + b.h * 0.45,
+          vx: v.x * STRIKE_ATK.blastSpeed, vy: v.y * STRIKE_ATK.blastSpeed,
+          radius: 4, damage: 2, color: b.primary, shape: 'spark', life: 240,
+        });
+        fs.mode = 'stalk';
+        fs.t = rnd(...STRIKE_ATK.rest[layer]);
+        fs.guard = STRIKE_ATK.guardFrames[layer];
+        break;
+      }
+
+      case 'spin': {
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        fs.mode = 'spinning';
+        fs.t = STRIKE_ATK.spinFrames;
+        break;
+      }
+
+      case 'spinning': {
+        b.x += fs.dir * STRIKE_ATK.spinSpeed;
+        // Head height, so it cannot simply be jumped — it has to be slid under
+        // or stepped around at a wall.
+        b.y = groundY - 6;
+        if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
+        if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
+        if (boxHitsPlayer(ctx, b.x - 3, b.y, b.w + 6, b.h)) {
+          ctx.hurt(bcx, STRIKE_ATK.spinDamage);
+        }
+        if (--fs.t > 0) break;
+        b.y = groundY;
+        fs.mode = 'stalk';
+        fs.t = rnd(...STRIKE_ATK.rest[layer]);
+        fs.guard = STRIKE_ATK.guardFrames[layer];
+        break;
+      }
+    }
+
+    // THE GUARD IS READ BY THE BULLET LOOP, not applied here. `b.guard` above
+    // zero is what makes the next player shot reflect instead of land — see
+    // stepBullets, which zeroes it on the reflect.
+    //
+    // That zero is how the spend travels BACK: the bullet loop cannot see `fs`,
+    // so the stance notices its published copy went missing and drops itself.
+    // Without this the next frame would republish the stance and the guard
+    // would reflect forever.
+    if (fs.guard > 0 && b.guard === 0) fs.guard = 0;
+    b.guard = fs.guard > 0 ? fs.guard : 0;
+  };
+}
+
 export const FIGHTS = {
   core: {
     attack: { 1: { step: coreAttack(1) }, 2: { step: coreAttack(2) }, 3: { step: coreAttack(3) } },
@@ -1104,12 +1329,13 @@ export const FIGHTS = {
     hazard: { 1: { step: voltHazard(1) }, 2: { step: voltHazard(2) }, 3: { step: voltHazard(3) } },
   },
 
-  // STRIKE MAN — the tracker defines his arena and hazard L1 only. Hazard L2/L3
-  // and all three attack layers are still `[wip]`, so `attack` stays null at
-  // every layer and the fallback in fightFor() reuses hazard L1. He is a room
-  // without a fighter in it until the owner writes one; do not invent it.
+  // STRIKE MAN — all three attack layers built. His hazard L2 and L3 are still
+  // `[wip]`, so they stay null and fightFor() falls back to hazard L1's single
+  // swinging bag at every layer. Fill them in when the owner writes them.
   strike: {
-    attack: { 1: null, 2: null, 3: null },
+    attack: {
+      1: { step: strikeAttack(1) }, 2: { step: strikeAttack(2) }, 3: { step: strikeAttack(3) },
+    },
     hazard: { 1: { step: strikeHazard(1) }, 2: null, 3: null },
   },
 };

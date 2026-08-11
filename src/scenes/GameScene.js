@@ -1227,6 +1227,22 @@ export default class GameScene extends Phaser.Scene {
       for (const e of this.boss ? [...this.minions, this.boss] : this.minions) {
         if (e.hp <= 0 || b.hitSet?.has(e)) continue;
         if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
+
+        // A GUARD STANCE REFLECTS THE FIRST SHOT IT TAKES, then drops. Strike
+        // Man's layer-2 stance is the only user so far. Resolved before damage
+        // and before the hit set, so a reflected shot neither hurts him nor
+        // burns a pierce charge — it simply comes back at you as YOUR bullet
+        // turned enemy, which is what makes chipping a walking boss from across
+        // the room stop being free.
+        if (e.guard > 0) {
+          e.guard = 0;
+          b.vx = -b.vx; b.vy = -b.vy;
+          b.enemy = true;
+          b.hitSet = null;
+          sfx('select', { pitch: 0.7 });
+          break;
+        }
+
         b.hitSet?.add(e);
         // Attributes land BEFORE the damage, so an enemy the shot kills still
         // shows the element that killed it rather than dying clean.
