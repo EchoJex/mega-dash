@@ -255,7 +255,7 @@ where each one stands.
 - **attack L1** `[wip]` Creates tornadoes that suck the player in and launch them upward.
 - **attack L2** `[wip]` Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance.
 - **attack L3** `[wip]` A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position.
-- **weapon** `[wip]` Defensive; white puffs of smoke energy when falling, significantly reducing fall speed and significantly increasing migraine
+- **weapon** `[wip]` Defensive; white puffs of smoke energy when falling, significantly reducing fall speed and significantly increasing migraine horizontal movement
 - **weapon Lv1** `[wip]` Small tornado, short duration, lifts minions only.
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
