@@ -101,7 +101,7 @@ where each one stands.
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
 - **weapon Lv1** `[draft]` No rolling distance; up to 2 on screen; 3s Hot duration.
 - **weapon Lv3** `[draft]` 5s duration Hot trail on ground; moderate roll distance with rapid deceleration while on the ground. Affected by pits and platforms
-- **weapon Lv6** `[wip]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;Affected by pits and platforms
+- **weapon Lv6** `[draft]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;Affected by pits and platforms
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 fireballs on screen; fireballs rapidly accelerate while on the ground
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
