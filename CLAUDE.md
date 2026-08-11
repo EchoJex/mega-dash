@@ -406,6 +406,19 @@ skipped until the late tuning phase — these numbers are placeholders.
 Weapon choice is about *utility*, not power. If you add projectiles or pierce,
 **rebalance the cooldown** — do not just raise damage.
 
+**NO WEAPON MAY BE THE META. Never gate world content behind one weapon.**
+Hidden pathways, breakable terrain, unreachable ledges and secret rooms are all fair game
+— but every one of them must be openable **more than one way**, and at least one of those
+ways must need no particular weapon at all. The moment a shortcut opens only for the Quake
+Hammer, that hammer stops being a choice and becomes equipment you bring, every run,
+forever; the two slots collapse to one and the whole loadout decision dies with them.
+
+This is why several `[wip]` rungs that promise "break certain floors" or "reveal hidden
+paths" cannot be built as written. Reaim them at things that are already optional —
+furniture, enemies, positioning — or make the path openable by any heavy hit, any
+explosion, any fall from height. A weapon may be the *fastest* way through something. It
+must never be the *only* way.
+
 Real feature jumps at **Lv 1 / 3 / 6 / 10** per the design tracker; intermediate levels
 are damage-only. `ladderAt(id, level)` merges every rung up to the current level, so a
 rung only states what it *changes*. A weapon uses the flat placeholder step until it gains

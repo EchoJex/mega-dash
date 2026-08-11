@@ -90,7 +90,7 @@ export default class GameScene extends Phaser.Scene {
     // impossible to reach.
     this.input.keyboard.on('keydown-Z', () => { if (!this.intent.fireHeld) this.beginFire(); });
     this.input.keyboard.on('keyup-Z', () => this.endFire());
-    this.keys = this.input.keyboard.addKeys('A,D,LEFT,RIGHT');
+    this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     this.scene.launch('UI', { game: this });
   }
@@ -390,6 +390,17 @@ export default class GameScene extends Phaser.Scene {
     if (k.A.isDown || k.LEFT.isDown) kb = -1;
     if (k.D.isDown || k.RIGHT.isDown) kb = 1;
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
+
+    // DIAGONAL AIM ON A KEYBOARD. The touch pads have had up-left and up-right
+    // buttons all along, so `player.diagInput` was reachable on a phone and
+    // nowhere else — which meant the Thorn Lash's Lv3 diagonal could not be
+    // played in a browser or reached by the smoke test at all.
+    //
+    // W rather than UP, because UP is jump. Only set from the keyboard when a
+    // key is actually down, so a touch player's diagonal is never cleared by a
+    // keyboard that nobody is touching.
+    if (k.W.isDown && kb !== 0) p.diagInput = kb < 0 ? 'ul' : 'ur';
+    else if (k.W.isDown || kb !== 0) p.diagInput = null;
 
     const wasOnGround = p.onGround;
     const fallVy = p.vy;

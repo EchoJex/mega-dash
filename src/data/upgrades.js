@@ -72,7 +72,7 @@ export const UPGRADES = [
    *
    * Rank 1 is priced low on purpose; the later ranks are where the cost is.
    */
-  { id: 'slide_mastery', name: 'SLIDE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 80, mult: 2.2,
+  { id: 'slide_mastery', name: 'SLIDE MASTERY', color: '#A0EFE7', mastery: true, maxLv: 3, cost: 80, mult: 2.2,
     desc: (l) => ['No slide — rank 1 unlocks it', 'Slide unlocked',
       'Slide +50% duration and +15% speed', 'Slide grants 24 invulnerable frames'][l],
     apply: (r, l) => {
@@ -95,7 +95,7 @@ export const UPGRADES = [
    * rather than as the floor twitching. Rank 3 restores the old full player
    * height, plus that pause.
    */
-  { id: 'cliff_mastery', name: 'CLIFF EDGE MASTERY', color: '#5CADD5', maxLv: 3, cost: 110, mult: 2.0,
+  { id: 'cliff_mastery', name: 'CLIFF EDGE MASTERY', color: '#5CADD5', mastery: true, maxLv: 3, cost: 110, mult: 2.0,
     desc: (l) => ['Walk off a ledge and you fall — no recovery',
       'Catch a ledge from a third of a body below',
       'Catch a ledge from two thirds of a body below',
@@ -124,7 +124,7 @@ export const UPGRADES = [
    * also be a grind. The steep multiplier puts the cost back in ranks 2 and 3,
    * where you are buying convenience rather than access.
    */
-  { id: 'offensive_mastery', name: 'OFFENSIVE MASTERY', color: '#E11416', maxLv: 3, cost: 25, mult: 3.4,
+  { id: 'offensive_mastery', name: 'OFFENSIVE MASTERY', color: '#E11416', mastery: true, maxLv: 3, cost: 25, mult: 3.4,
     desc: (l) => ['Side arm only — rank 1 opens an offensive slot',
       'One offensive slot; it or the side arm, not both',
       'Offensive slot and side arm both live at once',
@@ -138,7 +138,7 @@ export const UPGRADES = [
    * thumb, so being handed two of them for free would make the class strictly
    * additive, which is the thing the slot cap exists to prevent.
    */
-  { id: 'defensive_mastery', name: 'DEFENSIVE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 25, mult: 3.4,
+  { id: 'defensive_mastery', name: 'DEFENSIVE MASTERY', color: '#A0EFE7', mastery: true, maxLv: 3, cost: 25, mult: 3.4,
     desc: (l) => ['No defensive slots — rank 1 opens one',
       'One defensive slot',
       'Two defensive slots; only one may run',
