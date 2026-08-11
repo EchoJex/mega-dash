@@ -236,7 +236,7 @@ where each one stands.
 - **attack L1** `[wip]` Causes screen-wide tremors and rising rock pillars.
 - **attack L2** `[wip]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
 - **attack L3** `[wip]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
-- **weapon** `[wip]` Offensive; Large rock shaped hammer visible when active. Slow, delayed baseball-swing on tap for high damage high knockback, overhead Ground-pound that creates shockwaves and stuns nearby enemies on long press (0.4s). Per-level scaling: shockwave size + stun duration.
+- **weapon** `[wip]` Offensive; Large rock shaped hammer visible when active. Slow, delayed baseball-swing on tap for high damage and high knockback, overhead Ground-pound that creates shockwaves and stuns nearby enemies on long press (0.4s). Per-level scaling: shockwave size + stun duration.
 - **weapon Lv1** `[ready]` Ground-pound on landing from a jump; small shockwave both directions, brief Stun on contact.
 - **weapon Lv3** `[ready]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
 - **weapon Lv6** `[wip]` Lv5+: can break certain floors or reveal hidden paths.
