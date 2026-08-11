@@ -163,7 +163,7 @@ where each one stands.
 - **weapon Lv1** `[draft]` Short reach; can only reel in and damage minions; does not toss or constrict them.
 - **weapon Lv3** `[draft]` Increased reach. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[draft]` Significantly increased reach.
-- **weapon Lv10** `[wip]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
+- **weapon Lv10** `[draft]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Frost Man — Ice
