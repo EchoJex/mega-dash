@@ -389,7 +389,7 @@ where each one stands.
 - **attack L2** `[wip]` Blades are fired in a spread and ricochet twice instead of once; the deployed shield now orbits the boss rather than sitting in front of it.
 - **attack L3** `[wip]` The shield breaks into blades when destroyed, so removing it is itself an attack the player has to answer.
 - **weapon** `[draft]` Offensive; Throws penetrative metal blades that ricochet multiple times. Per-level scaling: more ricochets + higher damage.
-- **weapon Lv1** `[wip]` Single blade, one ricochet, pierces the first enemy hit.
+- **weapon Lv1** `[draft]` Single blade, one ricochet, pierces the first enemy hit.
 - **weapon Lv3** `[wip]` Two ricochets and increased pierce; blades survive contact with terrain corners.
 - **weapon Lv6** `[wip]` Lv5+: blades can be recalled early.
 - **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
