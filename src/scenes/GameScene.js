@@ -11,12 +11,16 @@
  */
 
 import Phaser from 'phaser';
-import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH, viewWidthOf } from '../config/display.js';
+import {
+  FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH, viewWidthOf, PLAYER_PALETTE,
+} from '../config/display.js';
 import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { dev } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
-import { WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel } from '../data/weapons.js';
+import {
+  WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf,
+} from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
@@ -109,14 +113,22 @@ export default class GameScene extends Phaser.Scene {
       // Cliff Edge Mastery is meta-gated the same way the slide is: rank 0
       // means a ledge is a ledge and walking off it is walking off it.
       cliffRank: 0, cliffGrab: FEEL.cliffGrabDepth[0],
+      // Loadout Mastery, meta-gated the same way. Rank 0 is the sidearm in a
+      // welded offensive position and no defensive row at all.
+      offRank: 0, defRank: 0,
       // weapons
       unlocked: new Set([SIDEARM_ID]),
       wpLevels: { [SIDEARM_ID]: 1 },
-      // THE LOADOUT: two offensive slots, two defensive, plus the sidearm which
-      // never occupies one. Everything else unlocked sits on the bench, still
-      // levelling and still offered by cards. See systems/loadout.js.
+      // THE LOADOUT: up to two offensive positions and two defensive ones, how
+      // many of them you may use set by Loadout Mastery, and the SIDEARM
+      // occupying one of the offensive ones rather than riding above them.
+      // Everything else unlocked sits on the bench, still levelling and still
+      // offered by cards. See systems/loadout.js.
       loadout: Loadout.makeLoadout(),
       activeWeapon: SIDEARM_ID,
+      // Slots may only be rearranged between beating a boss and reaching the
+      // next arena — see equipSlot.
+      requipOpen: false,
       cooldown: 0,
       // Per-weapon runtime state (drone clip, shield hits, jab chain), keyed by
       // weapon id and owned by systems/weaponry.js.
@@ -128,6 +140,12 @@ export default class GameScene extends Phaser.Scene {
       pendingLoadout: null,
     };
     applyUpgrades(save, run);
+    // The ranks are copied onto the loadout ONCE, here. Nothing downstream
+    // reads `save` again, so a purchase made in the Hub can never reshape a
+    // run that is already in progress.
+    Loadout.setRanks(run.loadout, {
+      offensive: run.offRank, defensive: run.defRank,
+    });
     run.hp = FEEL.hpMax + run.hpBonus;
     run.revivesLeft = run.revives;
 
@@ -139,7 +157,9 @@ export default class GameScene extends Phaser.Scene {
     for (const w of shuffled(specials).slice(0, headStart)) {
       run.unlocked.add(w.id);
       run.wpLevels[w.id] = 1;
-      // A head start you have to go and equip is not a head start.
+      // A head start you have to go and equip is not a head start. It is still
+      // bounded by Loadout Mastery, so at low rank the arsenal upgrades hand
+      // you an unlocked weapon on the bench rather than a slot you do not own.
       Loadout.autoEquip(run.loadout, w.id);
     }
 
@@ -284,6 +304,9 @@ export default class GameScene extends Phaser.Scene {
       // A crash inside a fight should say WHICH fight. Boss and layer are the
       // two things that pick which code was running.
       setCrashContext({ where: `arena ${def.id} L${layer}` });
+      // The build you walk in with is the build you fight with.
+      this.run.requipOpen = false;
+      this.run.pendingLoadout = null;
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
       this.cam = { x: 0 };
       this.minions = [];   // nothing follows you in
@@ -485,7 +508,7 @@ export default class GameScene extends Phaser.Scene {
    */
   stepEquipped() {
     const r = this.run;
-    const ids = [SIDEARM_ID, ...Loadout.equippedIds(r.loadout)]
+    const ids = Loadout.equippedIds(r.loadout)
       .filter((id) => Loadout.isEnabled(r.loadout, id));
     // Cleared before the weapons run, and re-asserted by whichever one grants
     // it. Otherwise benching the Strike Gauntlet mid-swing would leave its
@@ -512,7 +535,7 @@ export default class GameScene extends Phaser.Scene {
    */
   weaponCtx(ids = null) {
     const r = this.run;
-    const equipped = ids || [SIDEARM_ID, ...Loadout.equippedIds(r.loadout)];
+    const equipped = ids || Loadout.equippedIds(r.loadout);
     return {
       run: r,
       player: this.player,
@@ -1308,6 +1331,10 @@ export default class GameScene extends Phaser.Scene {
       'boss', b.x + b.w / 2 - 3, b.y + b.h / 2, this.run.luckMult,
     ));
     recordBossKill(b.id);
+    // THE RE-QUIP WINDOW. Open from here until the next arena is entered, so
+    // rearranging the loadout is something you do between fights — with or
+    // without a drop to place. See canRequip.
+    this.run.requipOpen = true;
     // THE weapon unlock: this is the only way a special enters the run.
     if (b.dropWeapon && !this.run.unlocked.has(b.dropWeapon)) {
       this.run.unlocked.add(b.dropWeapon);
@@ -1315,8 +1342,14 @@ export default class GameScene extends Phaser.Scene {
       this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
       // Slot it silently while there is room; make it a decision once there is
       // not. Benching a weapon the player just fought a boss for without saying
-      // so would be the worst possible reading of the two-slot cap.
-      if (Loadout.autoEquip(this.run.loadout, b.dropWeapon) < 0) {
+      // so would be the worst possible reading of the slot cap.
+      //
+      // Unless the class has no tradeable position AT ALL, which is what
+      // Loadout Mastery rank 0 means. Then there is no decision to offer and
+      // opening a picker onto a padlocked row would only look broken.
+      const cls = classOf(b.dropWeapon);
+      if (Loadout.autoEquip(this.run.loadout, b.dropWeapon) < 0
+          && Loadout.tradeableSlots(this.run.loadout, cls) > 0) {
         this.run.pendingLoadout = b.dropWeapon;
       }
       this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
@@ -1525,12 +1558,29 @@ export default class GameScene extends Phaser.Scene {
     r.activeWeapon = id;
   }
 
+  /**
+   * Can slots be rearranged right now?
+   *
+   * A LOADOUT CHANGE IS PART OF THE WEAPON ACQUIRE SEQUENCE. The window opens
+   * when a boss goes down and closes when you warp into the next arena, so the
+   * build you walk into a fight with is the build you fight it with. Swapping
+   * mid-fight would turn every hard attack pattern into a menu problem.
+   *
+   * Switching a slotted weapon ON or OFF is NOT gated by this — that is a
+   * moment-to-moment call (quieting the drone in a boss room) and it cannot
+   * change what you are carrying.
+   */
+  canRequip() { return !!this.run.requipOpen || dev('freeRequip'); }
+
   /** Slot a weapon and keep the fire button pointed at something real. */
   equipSlot(id, index) {
     const r = this.run;
-    if (!r.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
+    if (!r.unlocked.has(id) && !dev('unlockAnyWeapon')) return false;
+    if (!this.canRequip()) return false;
+    if (!Loadout.canEquip(r.loadout, id, index)) return false;
     Loadout.equip(r.loadout, id, index);
     r.activeWeapon = Loadout.normaliseActive(r.loadout, r.activeWeapon);
+    return true;
   }
 
   toggleWeapon(id) {
@@ -1665,12 +1715,15 @@ export default class GameScene extends Phaser.Scene {
         w: 24, h: p.sliding ? 12 : 24,
         facing: p.facing,
         clip: p.sliding ? 'slide' : !p.onGround ? 'jump' : p.vx !== 0 ? 'run' : 'idle',
-        // live palette swap: the suit takes the equipped weapon's colours
-        palette: weaponOf(r.activeWeapon).palette,
+        // THE PLAYER IS ALWAYS THIS BLUE. Equipping a weapon used to recolour
+        // the suit from the source boss's palette; that is scrubbed. The suit
+        // is the player's identity and does not change, and what you are
+        // carrying reads from the hardware drawn on him below.
+        palette: PLAYER_PALETTE,
       });
       // An active attribute flashes its colour over the suit. Flashing rather
-      // than tinting keeps the weapon's own palette readable underneath, which
-      // matters because the palette is how you know what you have equipped.
+      // than tinting leaves the suit readable underneath, so a status never
+      // makes the player harder to find on a busy screen.
       const tint = Attr.statusTint(this.status);
       if (tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
         L.player.g.fillStyle(tint, 0.45 * Attr.statusIntensity(this.status));

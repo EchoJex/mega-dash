@@ -165,14 +165,17 @@ construction order. **The player is always above every world actor** — hazards
 minions, projectiles, bosses — because losing sight of the player is losing the run. Only
 UI overlays go above, and those live in UIScene, a whole scene above this one.
 
-**Palette:** the sidearm is just another weapon (dark blue body, light blue accent), and
-`NULL_WEAPON` is the no-weapon starting point — a palette with no primary and no
-secondary, so the player renders as an **outline-only silhouette with every interior cell
-transparent**. Fill belongs to the weapon; silhouette belongs to the player.
+**Palette:** the player is a **fixed blue, forever** — `PLAYER_PALETTE` in
+`config/display.js`. Equipping a weapon used to recolour the suit live from its source
+boss's palette; **that is scrubbed, do not reintroduce it.** What you are carrying will be
+told by weapon hardware drawn on the player, not by his colour. A live recolour is
+something placeholders do for free and real 3-colour art cannot (a Phaser tint would wreck
+it), so the feature was quietly blocking the art it stood in for — and a protagonist whose
+colour changes is one you have to re-find after every re-quip.
 
-**Known gap:** equipping a weapon recolours the player live, which placeholders do for
-free. Real art cannot — a Phaser tint would wreck a 3-colour sprite. Fixing it needs
-per-weapon frames or a palette-swap shader, and both need the art to exist first.
+`NULL_WEAPON` is what an unresolvable weapon id falls back to: no primary and no
+secondary, so anything drawn from it is an **outline-only silhouette with every interior
+cell transparent**. It is a fail-visible path, not the player's look.
 
 ### Sprite art is HUMAN-AUTHORED. Do not generate it.
 
@@ -201,10 +204,11 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 |---|---|---|---|
 | **EXP** / **Level** | run only | **collected** from enemy drops | levelling weapons |
 | **Chips** | persistent | score + boss kills at run end | **Upgrades** |
-| **Upgrades** | persistent | bought with Chips | permanent stat boosts (16) |
+| **Upgrades** | persistent | bought with Chips | permanent stat boosts (18) |
 | **Weapon Level** | run only, per weapon, 1→10 | level-up choices | that weapon's feature ladder |
 | **Layer** | persistent, per boss, 1→3 | lifetime clears of that boss | how hard that boss fights |
-| **Slot** | run only, 2 offensive + 2 defensive | equipping a weapon you have unlocked | which weapons are actually in play |
+| **Slot** | run only, up to 2 offensive + 2 defensive | equipping a weapon you have unlocked | which weapons are actually in play |
+| **Loadout Mastery** | persistent, per class, 0→3 | bought with Chips | how many slots exist and how many run at once |
 
 Never say "Bolts" (renamed to Chips) or "Mega Buster" (renamed to **Side Arm** — its id is
 still `buster` so saves survive, but nothing user-facing says buster). EXP never buys
@@ -346,17 +350,49 @@ Every weapon carries a `cls`, taken from the first word of its tracker field:
 
 | class | count | how it plays |
 |---|---|---|
-| **sidearm** | 1 | the old Mega Buster, renamed. Always equipped, never occupies a slot |
-| **offensive** | 11 | shares the fire button; the wheel picks which one is live |
+| **sidearm** | 1 | the old Mega Buster, renamed. An **offensive** weapon that starts in an offensive slot — it is not a free extra |
+| **offensive** | 11 | shares the fire button; the wheel picks which one is aimed |
 | **defensive** | 6 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
 
-A run carries the sidearm plus **two offensive and two defensive** specials.
-Everything else unlocked sits on the bench: still levelling, still offered by level-up
-cards, one tap away in the wheel. `systems/loadout.js` owns the slots and is the only
-thing that may decide what is equipped; `systems/weaponry.js` owns what each weapon does.
+`systems/loadout.js` owns the slots and is the only thing that may decide what is
+equipped; `systems/weaponry.js` owns what each weapon does. Everything unlocked but not
+slotted sits on the bench: still levelling, still offered by level-up cards, one tap away
+in the wheel.
 
 The class split is a mechanic, not a label. A defensive weapon costs you no thumb, which
 is exactly why its slot is a real budget rather than a second set of guns.
+
+### Loadout Mastery — how big the loadout is at all
+
+Slot count and simultaneity are **meta progression**, bought in the Hub as two independent
+Upgrades. A new save has one offensive position holding the sidearm and **no defensive row
+at all**; everything past that is earned. `MASTERY` in `systems/loadout.js` is the table.
+
+| rank | offensive | defensive |
+|---|---|---|
+| **0** | sidearm only, welded into its position | no defensive slots |
+| **1** | a special slot opens — it **or** the sidearm is live, never both | one slot |
+| **2** | both live at once; the second position is still the sidearm | two slots, only one live |
+| **3** | the second position is freed — two specials, and the sidearm can be traded away | two slots, both live |
+
+Read them as the same ladder offset by the sidearm: a slot, then simultaneity, then the
+last restriction lifted. Rank 2 offensive looks smallest and is not — your thumb aims one
+weapon either way, but at rank 1 switching to the special *silences* the sidearm.
+
+**Where a rank caps how many may run, press-and-hold becomes a radio switch** rather than
+an on/off. The gesture never changes and the cyan border always says which one won, so the
+player never has to know it changed meaning. The offensive row is never allowed to reach
+zero live weapons; defensive is "up to N", so zero is legal there.
+
+**Slots only change between fights.** Equipping is live from a boss going down until you
+warp into the next arena (`GameScene.canRequip`). Outside that window the wheel still
+opens, still reads, and still toggles what is running — switching a weapon on or off
+cannot change what you are carrying, so it is never gated.
+
+The sidearm keeps a **fixed dot above the ring**, which is its *bench*, not a free weapon:
+below rank 3 it is welded into a module so the dot never appears, and at rank 3 trading it
+away makes the dot show up holding it, one tap from going back in. It stays off the arc so
+it never shifts the eleven learned offensive positions.
 
 Weapons whose tracker field is still `[wip]` are classified **provisionally** so the wheel
 has somewhere to put them. That is not a design decision — it gets confirmed in that
@@ -369,8 +405,6 @@ weapon's own slice.
 skipped until the late tuning phase — these numbers are placeholders.
 Weapon choice is about *utility*, not power. If you add projectiles or pierce,
 **rebalance the cooldown** — do not just raise damage.
-
-Equipping a weapon **recolours the player sprite live** from its source boss's palette.
 
 Real feature jumps at **Lv 1 / 3 / 6 / 10** per the design tracker; intermediate levels
 are damage-only. `ladderAt(id, level)` merges every rung up to the current level, so a
@@ -532,9 +566,15 @@ A live in-game tuning overlay is **deliberately deferred to late in development*
 **Weapons are earned.** You start with the sidearm only. A special unlocks by killing the
 boss that carries it (`BOSSES[].dropWeapon`). `starter_arsenal` / `twin_arsenal` are the
 only head start and they cost Chips — they unlock 1 / 2 random specials at run start,
-auto-slotted, because a head start you have to go and equip is not a head start.
+auto-slotted where Loadout Mastery leaves room, because a head start you have to go and
+equip is not a head start.
 
-**A drop with no free slot becomes a decision.** If its class already holds two, the
+**Room to put them is separately earned.** At Loadout Mastery rank 0 a special unlocks,
+levels and benches with nowhere to go — the weapon is real, the slot is the purchase. A
+drop into a class with no tradeable position at all does NOT open the picker; being asked
+to choose a slot you do not own is worse than not being asked.
+
+**A drop with no free slot becomes a decision.** If its class is full but tradeable, the
 acquire banner is followed by the re-quip wheel opening on that choice with the new weapon
 named and its class pulsing. Closing without picking benches it — a real third option,
 since it keeps its level and stays one tap away.
@@ -593,8 +633,12 @@ it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to
 ### Dev mode — `src/config/dev.js`
 
 Playtest perks: HP floored at 1 (every hit still lands), equipping padlocked weapons,
-cards drawn from locked weapons, a **boss selector** in the pause menu, and **layer
-cycling**.
+re-quipping outside the between-fights window, cards drawn from locked weapons, a **boss
+selector** in the pause menu, and **layer cycling**.
+
+**Loadout Mastery is deliberately NOT bypassed by dev mode.** The ranks are bought in the
+Hub like the slide is, and a playtest that quietly ignored the caps would tell you nothing
+about whether the ladder is worth buying.
 
 **Boss selector** — pause → BOSS SELECT → any of the 17. It restarts the area with that
 boss's door a short walk ahead, keeping the run's weapons, levels and Chips. Deliberately

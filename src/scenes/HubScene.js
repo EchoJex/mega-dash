@@ -16,9 +16,17 @@ export default class HubScene extends Phaser.Scene {
     label(this, w / 2, 8, "DR. LIGHT'S LAB", { scale: 2, color: '#F5D328', origin: 0.5 });
     this.chipText = label(this, w / 2, 26, '', { color: '#E0F0FF', origin: 0.5 });
 
+    // ROW PITCH IS DERIVED, not fixed. The list has grown twice and will grow
+    // again; a hard 10px step silently ran the last rows under the BACK plate
+    // when Loadout Mastery added two. The glyph is 7px tall, so 8 is the floor
+    // at which rows still read as separate lines.
+    const TOP = 38, BOTTOM = VIEW_H - 22;
+    const pitch = Math.max(8, Math.min(10,
+      Math.floor((BOTTOM - TOP) / Math.max(1, UPGRADES.length - 1))));
+
     this.rows = [];
     UPGRADES.forEach((u, i) => {
-      const y = 38 + i * 10;
+      const y = TOP + i * pitch;
       const t = label(this, 6, y, '', { color: '#E0F0FF' });
       t.setInteractive({ useHandCursor: true });
       t.on('pointerdown', () => this.buy(u));

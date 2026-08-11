@@ -44,8 +44,14 @@
  * The ring is the frame and its two halves are LABELLED, so which row is which
  * needs no explaining. The four modules are square, black, and carry a sword or
  * shield watermark — the watermark says what the slot IS even when it is empty,
- * which a coloured disc never did. The sidearm sits outside and above the ring
- * because it competes for nothing.
+ * which a coloured disc never did.
+ *
+ * THE SIDEARM OCCUPIES A MODULE like everything else. Its dot above the ring is
+ * its BENCH, not a free extra weapon: below offensive mastery rank 3 the sidearm
+ * is welded into a module and the dot never appears, and at rank 3 you may trade
+ * it out for a second special — at which point the dot shows up, holding it, one
+ * tap from going back in. It keeps its own fixed spot rather than joining the
+ * arc so it never moves.
  *
  * Benched and locked specials sit ON the ring, in the half belonging to their
  * class. Everything you are carrying is large and central; everything you own
@@ -53,7 +59,17 @@
  *
  *   TAP a module              select it — white corners
  *   TAP a benched weapon      drop it into the selected module of its class
- *   PRESS AND HOLD a module   switch that weapon off without giving up the slot
+ *   PRESS AND HOLD a module   switch that weapon on or off
+ *
+ * LOADOUT MASTERY IS DRAWN, NOT EXPLAINED. A module past your rank keeps its
+ * shape and its watermark under a padlock, so the row's full size is always
+ * visible as something to work toward. Where the rank caps how many may run at
+ * once, press-and-hold becomes a radio switch between them — the gesture does
+ * not change and the cyan border always says which one won.
+ *
+ * SLOTS ONLY CHANGE BETWEEN FIGHTS. Equipping is live from a boss going down
+ * until you warp into the next arena; outside that the wheel still opens, still
+ * reads, and still toggles what is running. See GameScene.canRequip.
  *
  * ONE GESTURE, BOTH ROWS. Select then fill works the same for offensive and
  * defensive, which the earlier version did not: a tap on an offensive module
@@ -767,6 +783,12 @@ export default class UIScene extends Phaser.Scene {
     // visible and an empty slot reads as an invitation.
     for (const s of this.active) {
       s.id = s.kind === 'sidearm' ? SIDEARM_ID : Loadout.slotsOf(lo, s.cls)[s.index];
+      // LOADOUT MASTERY, straight onto the module. A position past your rank is
+      // padlocked exactly like a weapon you have not unlocked, because it is
+      // the same kind of "not yet" and should not need a second visual language.
+      s.rankLocked = s.kind === 'slot' && Loadout.slotLocked(lo, s.cls, s.index);
+      s.pinned = s.kind === 'slot' && Loadout.pinnedAt(lo, s.cls) === s.index;
+      if (s.rankLocked) s.id = null;
     }
 
     const pending = r.pendingLoadout;
@@ -780,14 +802,19 @@ export default class UIScene extends Phaser.Scene {
       // 'off', it is simply not carried, and marking it so would say the
       // wrong thing about a weapon that is one tap from working fine.
       const off = carried && !Loadout.isEnabled(lo, s.id);
-      s.locked = !!s.id && !unlocked;
+      s.locked = s.rankLocked || (!!s.id && !unlocked);
 
       // A weapon that is currently SLOTTED vacates its arc position. Showing it
       // in both places at once made the wheel read as two copies of the same
       // weapon, and left the player wondering which one they were about to
       // touch. The position is reserved, not reused — nothing else slides into
       // the hole, so the arc stays learnable.
-      s.vacant = s.kind === 'arc' && Loadout.isEquipped(lo, s.id);
+      // The SIDEARM'S DOT is its bench, and follows the same rule: it only
+      // appears when the sidearm is not in a module. Below offensive rank 3 it
+      // is welded into one, so the dot simply never shows — which is correct,
+      // because there is nothing you could do with it there.
+      s.vacant = (s.kind === 'arc' || s.kind === 'sidearm')
+        && Loadout.isEquipped(lo, s.id);
       s.disc.setVisible(!s.vacant);
       if (s.vacant) {
         s.abbr.setVisible(false);
@@ -795,8 +822,13 @@ export default class UIScene extends Phaser.Scene {
         continue;
       }
 
-      if (s.kind === 'slot') this.paintModule(s, { unlocked, off, wanted, selected: this.target === s });
-      else this.paintDisc(s, { wd, unlocked });
+      if (s.kind === 'slot') {
+        this.paintModule(s, {
+          unlocked, off, wanted, selected: this.target === s, rankLocked: s.rankLocked,
+        });
+      } else {
+        this.paintDisc(s, { wd, unlocked });
+      }
 
       // ONLY MODULES CARRY TEXT. Eleven benched offensive weapons on a
       // half-circle land about 15px apart, and a three-glyph label is 17px
@@ -826,9 +858,13 @@ export default class UIScene extends Phaser.Scene {
       if (s.locked) drawPadlock(this.lockG, gx, gy, glyphR);
     }
 
-    // The sidearm's caption. It carries its own level because it can be levelled
-    // like anything else, and it is the one weapon with no module to show it in.
-    this.sidearmTxt.setText(`SIDE ARM  L${r.wpLevels[SIDEARM_ID] || 1}`);
+    // The sidearm's caption, which lives and dies with its dot. When the sidearm
+    // is in a module the module's own label says so, and a second copy up here
+    // would read as a sixth weapon.
+    const bench = this.active.find((s) => s.kind === 'sidearm');
+    this.sidearmTxt
+      .setVisible(!bench.vacant)
+      .setText(`SIDE ARM  L${r.wpLevels[SIDEARM_ID] || 1}`);
   }
 
   /**
@@ -837,14 +873,17 @@ export default class UIScene extends Phaser.Scene {
    * dark grid frame, which holds the 2x2 shape together without claiming the
    * weapon is doing anything.
    */
-  paintModule(s, { unlocked, off, selected, wanted }) {
+  paintModule(s, { unlocked, off, selected, wanted, rankLocked }) {
     const g = this.moduleG;
     const cx = s.cxm, cy = s.y + MOD / 2;
     const filled = !!s.id && unlocked;
 
     // The watermark says what BELONGS here, so it is brightest on an empty
-    // module and recedes behind a weapon that has moved in.
-    const markA = !filled ? 0.75 : off ? 0.28 : 0.45;
+    // module and recedes behind a weapon that has moved in. A position you have
+    // not bought yet gets the faintest of all: the shape is still there, so the
+    // row's full size is visible as something to work toward, but it does not
+    // invite a tap that would do nothing.
+    const markA = rankLocked ? 0.16 : !filled ? 0.75 : off ? 0.28 : 0.45;
     if (s.mark === 'sword') drawSword(g, cx, cy, 16, CYAN, markA);
     else drawShield(g, cx, cy, 16, CYAN, markA);
 
@@ -852,8 +891,9 @@ export default class UIScene extends Phaser.Scene {
     // module is carrying something and running it, no border means it is not.
     // A red cross used to mark the switched-off case and it read as an error
     // rather than as a choice the player had made.
-    const running = filled && !off;
-    g.lineStyle(running ? 2 : 1, running ? CYAN : FRAME_DARK, running ? 0.95 : 0.8);
+    const running = filled && !off && !rankLocked;
+    g.lineStyle(running ? 2 : 1, running ? CYAN : FRAME_DARK,
+      rankLocked ? 0.4 : running ? 0.95 : 0.8);
     g.strokeRect(s.x + 0.5, s.y + 0.5, MOD - 1, MOD - 1);
 
     // White corners mark the SELECTED module — the one a weapon tapped on the
@@ -940,10 +980,16 @@ export default class UIScene extends Phaser.Scene {
     this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
   }
 
-  /** Slots the swipe can land on: filled, enabled, and firable. */
+  /**
+   * Slots the swipe can land on: filled, enabled, and firable.
+   *
+   * `vacant` matters here. The sidearm's bench dot carries the same id as the
+   * module it may be sitting in, so without this the swipe would offer the same
+   * weapon twice in two places.
+   */
   swipeTargets() {
     const usable = Loadout.firables(this.game_.run.loadout);
-    return this.active.filter((s) => s.id && usable.includes(s.id));
+    return this.active.filter((s) => s.id && !s.vacant && usable.includes(s.id));
   }
 
   /** Swipe vector -> whichever firable slot lies in that direction. */
@@ -989,8 +1035,23 @@ export default class UIScene extends Phaser.Scene {
     else g.strokeCircle(s.x, s.y, s.r + 3);
   }
 
-  setReadout(id) {
-    const r = this.game_.run;
+  /**
+   * The one line of text on the wheel, and therefore the only place a "no" can
+   * be explained. `slot` is the module that was touched, when one was — a
+   * padlocked position has no weapon to name, so it has to speak for itself.
+   *
+   * The font drops any glyph it lacks silently (see FONT_CHARS), so every
+   * string here stays inside plain uppercase, digits and spaces.
+   */
+  setReadout(id, slot = null) {
+    const r = this.game_.run, lo = r.loadout;
+
+    // A position you have not bought. Say which upgrade opens it.
+    if (slot && slot.rankLocked) {
+      this.readName.setText(slot.cls === OFFENSIVE ? 'OFFENSIVE SLOT 2' : 'DEFENSIVE SLOT');
+      this.readLv.setText(`${slot.cls.toUpperCase()} MASTERY OPENS THIS`);
+      return;
+    }
     if (r.pendingLoadout) {
       this.readName.setText(weaponOf(r.pendingLoadout).name);
       this.readLv.setText('CHOOSE A SLOT OR BENCH');
@@ -998,16 +1059,20 @@ export default class UIScene extends Phaser.Scene {
     }
     if (!id) {
       this.readName.setText('EMPTY SLOT');
-      this.readLv.setText('TAP A WEAPON FROM THE ARC');
+      this.readLv.setText(this.game_.canRequip()
+        ? 'TAP A WEAPON FROM THE ARC'
+        : 'BEAT A BOSS TO RE QUIP');
       return;
     }
     const wd = weaponOf(id);
-    const lo = r.loadout;
     this.readName.setText(wd.name);
     this.readLv.setText(
       !r.unlocked.has(id) ? 'LOCKED'
-        : !Loadout.isEnabled(lo, id) ? `Lv ${r.wpLevels[id] || 1}  OFF`
-          : `Lv ${r.wpLevels[id] || 1}  ${wd.cls.toUpperCase()}`,
+        // The sidearm's welded position is not a restriction the player did
+        // anything wrong to hit, so it reads as a fact about the slot.
+        : slot && slot.pinned ? `Lv ${r.wpLevels[id] || 1}  FIXED SLOT`
+          : !Loadout.isEnabled(lo, id) ? `Lv ${r.wpLevels[id] || 1}  OFF`
+            : `Lv ${r.wpLevels[id] || 1}  ${wd.cls.toUpperCase()}`,
     );
   }
 
@@ -1027,33 +1092,38 @@ export default class UIScene extends Phaser.Scene {
     if (s.vacant) return;
     const r = this.game_.run;
 
-    if (s.kind === 'sidearm') { this.setReadout(s.id); return; }
-
     if (s.kind === 'slot') {
+      // A position past your Loadout Mastery rank is not selectable — there is
+      // nothing to put in it. The readout says why rather than the tap simply
+      // doing nothing, which is how a padlock turns into a goal.
+      if (s.rankLocked) { this.setReadout(null, s); return; }
       // A boss drop waiting for a home short-circuits the selection: the wheel
       // opened to ask this exact question, so answer it.
-      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls) {
+      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls
+          && Loadout.canEquip(r.loadout, r.pendingLoadout, s.index)) {
         this.installPending(s);
         return;
       }
       this.target = this.target === s ? null : s;
       this.refreshWheel();
-      this.setReadout(s.id);
+      this.setReadout(s.id, s);
       return;
     }
 
-    // A benched or locked weapon on the ring.
+    // A benched or locked weapon — on the ring, or the sidearm on its own dot,
+    // which behaves identically now that the sidearm competes for a slot.
     if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
     const cls = classOf(s.id);
     // Into the selected module when the classes agree; otherwise fall back to
     // the automatic landing slot, so tapping a weapon is never a dead end even
     // if you have not selected anything.
-    const index = this.target && this.target.cls === cls
+    const index = this.target && this.target.cls === cls && !this.target.rankLocked
       ? this.target.index
       : this.landingSlot(s.id);
-    sfx('requip');
-    this.game_.equipSlot(s.id, index);
-    this.target = null;
+    if (this.game_.equipSlot(s.id, index)) {
+      sfx('requip');
+      this.target = null;
+    }
     this.refreshWheel();
     this.setReadout(s.id);
   }
@@ -1066,12 +1136,17 @@ export default class UIScene extends Phaser.Scene {
    * thing you were shooting with.
    */
   landingSlot(id) {
-    const r = this.game_.run, cls = classOf(id);
-    const slots = Loadout.slotsOf(r.loadout, cls);
-    const empty = slots.indexOf(null);
-    if (empty >= 0) return empty;
-    const keep = slots.indexOf(r.activeWeapon);
-    return keep === 0 ? 1 : 0;
+    const r = this.game_.run, lo = r.loadout, cls = classOf(id);
+    const legal = [];
+    for (let i = 0; i < Loadout.slotCount(lo, cls); i++) {
+      if (Loadout.canEquip(lo, id, i)) legal.push(i);
+    }
+    if (!legal.length) return -1;
+    const slots = Loadout.slotsOf(lo, cls);
+    const empty = legal.find((i) => !slots[i]);
+    if (empty != null) return empty;
+    const keep = legal.filter((i) => slots[i] !== r.activeWeapon);
+    return keep.length ? keep[0] : legal[0];
   }
 
   /**
@@ -1079,25 +1154,34 @@ export default class UIScene extends Phaser.Scene {
    *
    * Works on both rows. A defensive weapon runs by itself, so switching it off
    * is the ONLY way to quiet it; an offensive one keeps its slot and its levels
-   * while it sits out. The sidearm has no off switch — it is what you fall back
-   * to, so it cannot be the thing that leaves you unarmed.
+   * while it sits out.
+   *
+   * WHERE MASTERY CAPS HOW MANY MAY RUN, this is a radio switch instead: at
+   * offensive rank 1 it moves the one live position between the special and the
+   * sidearm, and at defensive rank 2 between the two defensive slots. Same
+   * gesture, and the cyan border always says which one won — so the player
+   * never has to know it changed meaning.
+   *
+   * Unlike equipping, this is NOT gated to the post-boss window. It cannot
+   * change what you are carrying, only which of it is awake, and that is a
+   * moment-to-moment call.
    */
   toggleSlot(s) {
     const r = this.game_.run;
-    if (!s.id || s.kind !== 'slot') return;
+    if (!s.id || s.kind !== 'slot' || s.rankLocked) return;
     if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
     sfx('select');
     this.game_.toggleWeapon(s.id);
     this.refreshWheel();
-    this.setReadout(s.id);
+    this.setReadout(s.id, s);
   }
 
   /** Resolve the post-boss loadout choice into the slot the player picked. */
   installPending(s) {
     const r = this.game_.run;
     const id = r.pendingLoadout;
+    if (!this.game_.equipSlot(id, s.index)) return;
     sfx('requip');
-    this.game_.equipSlot(id, s.index);
     r.pendingLoadout = null;
     this.refreshWheel();
     this.setReadout(id);

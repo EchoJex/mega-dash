@@ -223,9 +223,9 @@ export class ActorLayer {
 export function drawPlaceholder(g, actor) {
   const { x, y, w, h, palette } = actor;
 
-  // A null colour means "transparent cell", not black. That is what makes the
-  // NULL_WEAPON player render as a bare silhouette: no body fill, no accent,
-  // just the outline. Art will express the same thing with alpha.
+  // A null colour means "transparent cell", not black — a NULL_WEAPON actor
+  // renders as a bare silhouette: no body fill, no accent, just the outline.
+  // Art will express the same thing with alpha.
   if (palette.primary) {
     g.fillStyle(hexNum(palette.primary), 1);
     g.fillRect(x, y, w, h);

@@ -26,18 +26,36 @@ comments in code may still describe it the other way round; this table wins.
 
 ## Weapon loadout
 
-A run carries **one sidearm** (the old Mega Buster) plus **two offensive** and
-**two defensive** special weapons. Every weapon field below says which class its
-weapon belongs to; that word is load-bearing, not flavour.
+A run carries up to **two offensive** and **two defensive** weapons. Every weapon
+field below says which class its weapon belongs to; that word is load-bearing,
+not flavour.
 
 - **Offensive** weapons share the fire button. The re-quip wheel picks which one
-  is live, and the sidearm is always available above them.
+  is aimed. **The sidearm** (the old Mega Buster) is one of these — it occupies
+  an offensive slot rather than riding above them for free.
 - **Defensive** weapons run on their own — a drone that auto-fires, a shield
   that maintains itself, a jetpack that vents on landing. They are not aimed.
 
+### Loadout Mastery
+
+How many slots exist, and how many run at once, is meta progression bought in
+the Hub. The two classes are separate upgrades, each rank 0 to 3.
+
+| rank | offensive | defensive |
+|---|---|---|
+| 0 | sidearm only, welded into its position | no defensive slots |
+| 1 | one special slot — it **or** the sidearm, never both | one slot |
+| 2 | both live at once; the second position is still the sidearm | two slots, one live |
+| 3 | second position freed — two specials, sidearm tradeable | two slots, both live |
+
+Where a rank caps how many may run, the press-and-hold on a slot becomes a
+switch *between* them rather than an on/off.
+
 Inactive but unlocked weapons keep their levels for the rest of the run and
-still turn up on level-up cards. Slot changes happen in the re-quip wheel, and
-in the weapon-acquire sequence after a boss falls.
+still turn up on level-up cards. **Slots only change between fights** — from a
+boss going down until you warp into the next arena, which is where the
+weapon-acquire sequence lives. Switching a slotted weapon on or off is not
+gated that way; it cannot change what you are carrying.
 
 ---
 

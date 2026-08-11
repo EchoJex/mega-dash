@@ -30,6 +30,17 @@ export const DEV = {
   /** Tapping a padlocked slot on the re-quip wheel equips it anyway. */
   unlockAnyWeapon: true,
 
+  /**
+   * Slots can be rearranged at any time, not only between a boss falling and
+   * the next arena. Testing a weapon otherwise costs a whole boss fight per
+   * change, which is the same tax bossSelect exists to remove.
+   *
+   * Loadout Mastery is NOT bypassed by this — the ranks are bought in the Hub
+   * like the slide is, and a playtest that quietly ignored the caps would tell
+   * you nothing about whether the ladder is worth buying.
+   */
+  freeRequip: true,
+
   /** Level-up cards may offer weapons you have not unlocked yet. */
   cardsFromAllWeapons: true,
 

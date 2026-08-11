@@ -183,30 +183,126 @@ test('every weapon has a class and a distinct three-letter abbreviation', () => 
   assert.equal(abbrs.size, WEAPONS.length, 'two weapons share an abbreviation');
 });
 
-test('the sidearm belongs to neither special class and cannot be benched', () => {
-  assert.equal(WEAPON_BY_ID[SIDEARM_ID].cls, 'sidearm');
+/** A fully-mastered loadout — the shape most slot mechanics are about. */
+const maxed = () => Loadout.makeLoadout({ [OFFENSIVE]: 3, [DEFENSIVE]: 3 });
+
+test('the sidearm is an offensive weapon that stays off the arc', () => {
+  // It competes for an offensive slot, so it must carry that class...
+  assert.equal(WEAPON_BY_ID[SIDEARM_ID].cls, OFFENSIVE);
+  // ...but it keeps its own fixed bench position rather than joining the arc,
+  // where it would shift eleven learned positions along by one.
   for (const cls of [OFFENSIVE, DEFENSIVE]) {
     assert.ok(!specialsOfClass(cls).includes(SIDEARM_ID));
   }
-  const lo = Loadout.makeLoadout();
-  Loadout.toggleEnabled(lo, SIDEARM_ID);
-  assert.equal(Loadout.isEnabled(lo, SIDEARM_ID), true);
 });
 
-test('a class holds two weapons and refuses a third without being asked', () => {
+// ── Loadout Mastery ──────────────────────────────────────────────────
+//
+// These assert the LADDER'S SHAPE, which is the design, not a placeholder
+// number: what each rank grants is the whole content of the upgrade.
+
+test('a new save carries the sidearm, one welded slot, and no defensive row', () => {
   const lo = Loadout.makeLoadout();
-  const [a, b, c] = specialsOfClass(OFFENSIVE);
-  assert.equal(Loadout.autoEquip(lo, a), 0);
-  assert.equal(Loadout.autoEquip(lo, b), 1);
-  assert.equal(Loadout.autoEquip(lo, c), -1, 'the third must become a decision');
-  assert.deepEqual(Loadout.slotsOf(lo, OFFENSIVE), [a, b]);
+  assert.deepEqual(Loadout.firables(lo), [SIDEARM_ID], 'rank 0 fires the sidearm only');
+  assert.equal(Loadout.slotCount(lo, DEFENSIVE), 0, 'no defensive row at rank 0');
+  assert.equal(Loadout.freeSlot(lo, OFFENSIVE), -1, 'the one position is the sidearm/s');
+  assert.equal(Loadout.tradeableSlots(lo, OFFENSIVE), 0);
+
+  // A special cannot be forced into the welded position.
+  const a = specialsOfClass(OFFENSIVE)[0];
+  assert.equal(Loadout.autoEquip(lo, a), -1);
+  Loadout.equip(lo, a, 0);
+  assert.equal(Loadout.slotsOf(lo, OFFENSIVE)[0], SIDEARM_ID);
+});
+
+test('each offensive rank lifts exactly one restriction', () => {
+  const a = specialsOfClass(OFFENSIVE)[0];
+
+  // Rank 1: a slot opens, but only one of it and the sidearm may run.
+  const r1 = Loadout.makeLoadout({ [OFFENSIVE]: 1 });
+  assert.equal(Loadout.autoEquip(r1, a), 0);
+  assert.equal(Loadout.slotsOf(r1, OFFENSIVE)[1], SIDEARM_ID, 'slot 2 is still the sidearm');
+  assert.equal(Loadout.firables(r1).length, 1, 'rank 1 runs one at a time');
+  // The press-and-hold moves that one live position between the two.
+  Loadout.toggleEnabled(r1, a);
+  assert.deepEqual(Loadout.firables(r1), [a], 'switching one on switches the other off');
+  Loadout.toggleEnabled(r1, SIDEARM_ID);
+  assert.deepEqual(Loadout.firables(r1), [SIDEARM_ID]);
+  // ...and can never leave the fire button pointed at nothing.
+  Loadout.toggleEnabled(r1, SIDEARM_ID);
+  assert.equal(Loadout.firables(r1).length, 1, 'the offensive row is never empty');
+
+  // Rank 2: both run at once, second position still the sidearm.
+  const r2 = Loadout.makeLoadout({ [OFFENSIVE]: 2 });
+  Loadout.autoEquip(r2, a);
+  assert.deepEqual(Loadout.firables(r2), [a, SIDEARM_ID]);
+  assert.equal(Loadout.tradeableSlots(r2, OFFENSIVE), 1);
+
+  // Rank 3: the sidearm's position is freed and can be traded away.
+  const [x, y] = specialsOfClass(OFFENSIVE);
+  const r3 = maxed();
+  Loadout.equip(r3, x, 0);
+  Loadout.equip(r3, y, 1);
+  assert.deepEqual(Loadout.firables(r3), [x, y], 'rank 3 may drop the sidearm entirely');
+  assert.equal(Loadout.tradeableSlots(r3, OFFENSIVE), 2);
+});
+
+test('each defensive rank lifts exactly one restriction', () => {
+  const [a, b] = specialsOfClass(DEFENSIVE);
+
+  const r1 = Loadout.makeLoadout({ [DEFENSIVE]: 1 });
+  assert.equal(Loadout.autoEquip(r1, a), 0);
+  assert.equal(Loadout.autoEquip(r1, b), -1, 'rank 1 is one slot');
+
+  const r2 = Loadout.makeLoadout({ [DEFENSIVE]: 2 });
+  Loadout.autoEquip(r2, a);
+  Loadout.autoEquip(r2, b);
+  assert.deepEqual(Loadout.slotsOf(r2, DEFENSIVE), [a, b], 'rank 2 is two slots');
+  assert.equal(Loadout.running(r2).length, 1, 'but only one of them runs');
+  Loadout.toggleEnabled(r2, b);
+  assert.deepEqual(Loadout.running(r2), [b], 'the hold moves which one');
+  // Unlike offensive, zero defensive running is a legal state.
+  Loadout.toggleEnabled(r2, b);
+  assert.deepEqual(Loadout.running(r2), []);
+
+  const r3 = maxed();
+  Loadout.autoEquip(r3, a);
+  Loadout.autoEquip(r3, b);
+  assert.deepEqual(Loadout.running(r3), [a, b], 'rank 3 runs both');
+});
+
+test('a rank the loadout outgrows is reconciled, not left illegal', () => {
+  const [a, b] = specialsOfClass(DEFENSIVE);
+  const lo = maxed();
+  Loadout.autoEquip(lo, a);
+  Loadout.autoEquip(lo, b);
+  assert.equal(Loadout.running(lo).length, 2);
+  Loadout.setRanks(lo, { [DEFENSIVE]: 2 });
+  assert.equal(Loadout.running(lo).length, 1, 'the cap is enforced retroactively');
+  Loadout.setRanks(lo, { [DEFENSIVE]: 0 });
+  assert.deepEqual(Loadout.equippedIds(lo).filter((id) => id === a || id === b), [],
+    'positions past the rank hold nothing');
+});
+
+test('a class fills its free positions and refuses the next without being asked', () => {
+  const lo = maxed();
+  const [a, b] = specialsOfClass(OFFENSIVE);
+  // Slot 0 starts as the sidearm, so a fully-mastered offensive row has exactly
+  // one position going spare until the player deliberately trades it away.
+  assert.equal(Loadout.autoEquip(lo, a), 1);
+  assert.equal(Loadout.autoEquip(lo, b), -1, 'the next must become a decision');
+  assert.deepEqual(Loadout.slotsOf(lo, OFFENSIVE), [SIDEARM_ID, a]);
+
+  const [d, e] = specialsOfClass(DEFENSIVE);
+  assert.equal(Loadout.autoEquip(lo, d), 0);
+  assert.equal(Loadout.autoEquip(lo, e), 1, 'the defensive row has no sidearm in it');
 });
 
 test('equipping into an occupied slot displaces, and never duplicates', () => {
-  const lo = Loadout.makeLoadout();
+  const lo = maxed();
   const [a, b, c] = specialsOfClass(OFFENSIVE);
-  Loadout.autoEquip(lo, a);
-  Loadout.autoEquip(lo, b);
+  Loadout.equip(lo, a, 0);
+  Loadout.equip(lo, b, 1);
   assert.equal(Loadout.equip(lo, c, 0), a, 'the displaced weapon is reported');
   assert.deepEqual(Loadout.slotsOf(lo, OFFENSIVE), [c, b]);
 
@@ -217,18 +313,19 @@ test('equipping into an occupied slot displaces, and never duplicates', () => {
 });
 
 test('a weapon only ever lands in a slot of its own class', () => {
-  const lo = Loadout.makeLoadout();
+  const lo = maxed();
   const def = specialsOfClass(DEFENSIVE)[0];
   Loadout.equip(lo, def, 0);
-  assert.deepEqual(Loadout.slotsOf(lo, OFFENSIVE), Array(SLOTS_PER_CLASS).fill(null));
+  assert.equal(Loadout.slotsOf(lo, OFFENSIVE)[0], SIDEARM_ID, 'the offensive row is untouched');
   assert.equal(Loadout.slotsOf(lo, DEFENSIVE)[0], def);
+  assert.equal(Loadout.slotsOf(lo, OFFENSIVE).length, SLOTS_PER_CLASS);
 });
 
-test('only the sidearm and enabled offensive slots can be fired', () => {
-  const lo = Loadout.makeLoadout();
+test('only enabled offensive slots can be fired, and defensive slots never are', () => {
+  const lo = maxed();
   const off = specialsOfClass(OFFENSIVE)[0];
   const def = specialsOfClass(DEFENSIVE)[0];
-  Loadout.autoEquip(lo, off);
+  Loadout.autoEquip(lo, off);     // the free offensive position
   Loadout.autoEquip(lo, def);
   assert.deepEqual(Loadout.firables(lo), [SIDEARM_ID, off]);
   assert.deepEqual(Loadout.running(lo), [def]);
@@ -241,16 +338,22 @@ test('only the sidearm and enabled offensive slots can be fired', () => {
   assert.deepEqual(Loadout.running(lo), []);
 });
 
-test('benching or disabling the live weapon falls back to the sidearm', () => {
-  const lo = Loadout.makeLoadout();
+test('benching or disabling the live weapon falls back to something firable', () => {
+  const lo = maxed();
   const [a, b] = specialsOfClass(OFFENSIVE);
-  Loadout.autoEquip(lo, a);
+  Loadout.equip(lo, a, 1);
   assert.equal(Loadout.normaliseActive(lo, a), a);
   Loadout.toggleEnabled(lo, a);
   assert.equal(Loadout.normaliseActive(lo, a), SIDEARM_ID);
   Loadout.toggleEnabled(lo, a);
-  Loadout.equip(lo, b, 0);
+  Loadout.equip(lo, b, 1);
   assert.equal(Loadout.normaliseActive(lo, a), SIDEARM_ID, 'a benched weapon cannot stay live');
+
+  // An offensive row with nothing in it resolves to null, which draws as
+  // NULL_WEAPON and fires nothing, rather than throwing mid-frame.
+  const bare = Loadout.makeLoadout({ [OFFENSIVE]: 3 });
+  Loadout.unequip(bare, SIDEARM_ID);
+  assert.equal(Loadout.normaliseActive(bare, SIDEARM_ID), null);
 });
 
 /**
@@ -259,13 +362,13 @@ test('benching or disabling the live weapon falls back to the sidearm', () => {
  * the player has long forgotten making.
  */
 test('leaving a slot clears the switched-off flag', () => {
-  const lo = Loadout.makeLoadout();
+  const lo = maxed();
   const [a, b] = specialsOfClass(OFFENSIVE);
-  Loadout.autoEquip(lo, a);
+  Loadout.equip(lo, a, 1);
   Loadout.toggleEnabled(lo, a);
   assert.equal(Loadout.isEnabled(lo, a), false);
 
-  Loadout.equip(lo, b, 0);                     // b displaces a
+  Loadout.equip(lo, b, 1);                     // b displaces a
   assert.equal(Loadout.isEnabled(lo, a), true, 'displaced weapons come back on');
 
   Loadout.toggleEnabled(lo, b);
@@ -274,7 +377,7 @@ test('leaving a slot clears the switched-off flag', () => {
 });
 
 test('the bench is everything unlocked in a class that is not slotted', () => {
-  const lo = Loadout.makeLoadout();
+  const lo = maxed();
   const [a, b, c] = specialsOfClass(OFFENSIVE);
   const unlocked = new Set([SIDEARM_ID, a, b, c]);
   Loadout.autoEquip(lo, a);

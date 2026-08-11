@@ -39,9 +39,15 @@
  *
  * PALETTE
  * -------
- * Each special weapon carries its source boss's colours. Equipping a weapon
- * recolours the player sprite live (see GameScene.draw). The buster's
- * palette is the classic blue.
+ * Each special weapon carries its source boss's colours, and they are used for
+ * its projectiles, its effects and its place on the re-quip wheel.
+ *
+ * THE PLAYER IS NOT ONE OF THOSE PLACES. Equipping a weapon used to recolour
+ * the suit live; that is scrubbed and the player is a fixed blue forever (see
+ * PLAYER_PALETTE in config/display.js). Do not reintroduce it — a protagonist
+ * whose colour changes is one you have to re-find after every re-quip, and a
+ * live tint is something placeholders do for free that real 3-colour art
+ * cannot.
  *
  * LEVELS
  * ------
@@ -61,12 +67,20 @@
 import { FEEL } from '../config/feel.js';
 import { BOSS_BY_ID } from './bosses.js';
 
-/** The three weapon classes. `cls` on every DEF below is one of these. */
+/**
+ * The weapon classes. `cls` on every DEF below is one of these.
+ *
+ * SIDEARM is no longer a class a real weapon belongs to. The sidearm is an
+ * OFFENSIVE weapon that happens to start in a slot, so it competes for that
+ * slot like anything else; `SIDEARM` survives only as the class of NULL_WEAPON
+ * and as classOf's fallback for an id that resolves to nothing.
+ */
 export const SIDEARM = 'sidearm';
 export const OFFENSIVE = 'offensive';
 export const DEFENSIVE = 'defensive';
 
-/** Slots per special class. Two offensive, two defensive, plus the sidearm. */
+/** Slots per special class. Two offensive — one of which starts as the sidearm
+ * — and two defensive. */
 export const SLOTS_PER_CLASS = 2;
 
 /**
@@ -280,14 +294,16 @@ const BUSTER_PALETTE = {
 };
 
 /**
- * NULL WEAPON — the "no weapon equipped" starting point.
+ * NULL WEAPON — what an unresolvable weapon id resolves to.
  *
- * Its palette has no primary and no secondary, so the player renders as an
- * OUTLINE ONLY with every interior cell transparent. That is deliberate: the
- * silhouette is the part that belongs to the player, and the fill is the part
- * that belongs to whatever weapon is equipped. It also means any code path that
- * fails to resolve a weapon degrades to a visible, obviously-wrong silhouette
- * rather than throwing.
+ * It fires nothing and its palette has no primary and no secondary, so anything
+ * drawn from it is an OUTLINE ONLY with every interior cell transparent. Any
+ * code path that fails to find a weapon therefore degrades to something visible
+ * and obviously wrong rather than throwing mid-frame — including an offensive
+ * row emptied of every weapon, which is reachable at top mastery rank.
+ *
+ * It is no longer what the PLAYER draws as: the suit is a fixed blue whatever
+ * is equipped. See PLAYER_PALETTE.
  */
 export const NULL_WEAPON = {
   id: null,
@@ -312,9 +328,14 @@ export const NULL_WEAPON = {
  * defeating that boss).
  */
 const DEFS = [
-  { id: 'buster', name: 'SIDE ARM', short: 'SIDEARM', cls: SIDEARM, boss: null,
+  // THE SIDEARM OCCUPIES AN OFFENSIVE SLOT. It is not a free extra weapon
+  // riding above the loadout — a run starts with it in the first offensive
+  // slot, and swapping it out for a special is a real trade you are allowed to
+  // make. `sidearm: true` only keeps it off the ring arc: it has its own fixed
+  // bench position above the wheel, so it never moves and is always findable.
+  { id: 'buster', name: 'SIDE ARM', short: 'SIDEARM', cls: OFFENSIVE, sidearm: true, boss: null,
     cooldown: 8, projectiles: 1, shape: 'bolt', speed: 3.2,
-    desc: 'Standard arm cannon. Always equipped.' },
+    desc: 'Standard arm cannon. Starts in your first offensive slot.' },
 
   { id: 'core_blaster', name: 'NULLFIRE DRONE', short: 'N-DRONE', cls: DEFENSIVE, boss: 'core',
     cooldown: 15, projectiles: 1, shape: 'bolt', speed: 3.4,
@@ -427,14 +448,22 @@ export const WHEEL_ORDER = WEAPONS.map((w) => w.id);
  * property is the whole reason a radial menu is worth having, and it survived
  * the redesign even though the brainstorm only asked for the benched ones to be
  * shown.
+ *
+ * The SIDEARM is excluded even though it is an offensive weapon, because it
+ * keeps its own fixed position above the ring. That position is now its BENCH:
+ * swap it out for a special and it reappears up there, one tap from going back
+ * in, rather than sliding into the arc and shifting eleven learned positions.
  */
 export const ARC_ORDER = {
-  [OFFENSIVE]: WEAPONS.filter((w) => w.cls === OFFENSIVE).map((w) => w.id),
+  [OFFENSIVE]: WEAPONS.filter((w) => w.cls === OFFENSIVE && !w.sidearm).map((w) => w.id),
   [DEFENSIVE]: WEAPONS.filter((w) => w.cls === DEFENSIVE).map((w) => w.id),
 };
 
-/** Every special of a class, in arc order. The sidearm belongs to neither. */
+/** Every special of a class, in arc order. The sidearm is in neither. */
 export const specialsOfClass = (cls) => ARC_ORDER[cls] || [];
+
+/** Is this the sidearm? It slots like a special but benches to its own spot. */
+export const isSidearm = (id) => !!WEAPON_BY_ID[id]?.sidearm;
 
 /** The class a weapon id belongs to, defaulting to the sidearm's. */
 export const classOf = (id) => (WEAPON_BY_ID[id]?.cls) || SIDEARM;

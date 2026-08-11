@@ -104,6 +104,40 @@ export const UPGRADES = [
       r.cliffRank = l;
       r.cliffGrab = FEEL.cliffGrabDepth[l];
     } },
+  /**
+   * OFFENSIVE MASTERY — how much of the offensive row you are allowed to use.
+   *
+   * A new save carries the sidearm and nothing else, in a single welded
+   * position. That is the honest floor: every special weapon in the game is
+   * still earned from a boss, still levels, still shows up on cards, and simply
+   * has nowhere to go until this is bought. The ladder gives back one
+   * restriction at a time — a slot, then the right to run both at once, then
+   * the sidearm's own position.
+   *
+   * Rank 2 is the one that looks smallest and is not: your thumb can only aim
+   * one offensive weapon at a time either way, but at rank 1 switching to the
+   * special SILENCES the sidearm, and at rank 2 it does not.
+   */
+  { id: 'offensive_mastery', name: 'OFFENSIVE MASTERY', color: '#E11416', maxLv: 3, cost: 90, mult: 2.1,
+    desc: (l) => ['Side arm only — rank 1 opens an offensive slot',
+      'One offensive slot; it or the side arm, not both',
+      'Offensive slot and side arm both live at once',
+      'Two free offensive slots — trade the side arm away'][l],
+    apply: (r, l) => { r.offRank = l; } },
+  /**
+   * DEFENSIVE MASTERY — the same ladder without a sidearm to work around.
+   *
+   * Rank 0 means no defensive row at all, so a defensive weapon dropped by a
+   * boss unlocks and benches. That is deliberate: defensive weapons cost no
+   * thumb, so being handed two of them for free would make the class strictly
+   * additive, which is the thing the slot cap exists to prevent.
+   */
+  { id: 'defensive_mastery', name: 'DEFENSIVE MASTERY', color: '#A0EFE7', maxLv: 3, cost: 90, mult: 2.1,
+    desc: (l) => ['No defensive slots — rank 1 opens one',
+      'One defensive slot',
+      'Two defensive slots; only one may run',
+      'Both defensive slots run at once'][l],
+    apply: (r, l) => { r.defRank = l; } },
 ];
 
 export const upgradeLevel = (save, id) => save.upgrades[id] || 0;

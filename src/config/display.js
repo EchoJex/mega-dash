@@ -118,6 +118,27 @@ export const PLAYER_SPRITE_W = 24;
 export const PLAYER_SPRITE_H = 24;
 
 /**
+ * THE PLAYER'S COLOURS, FIXED FOREVER.
+ *
+ * The suit used to be recoloured live from whichever weapon was equipped. That
+ * is scrubbed: the player is this blue at rank 0 and this blue at the end of a
+ * run, and what you are carrying is told by the hardware drawn on him instead.
+ *
+ * Two reasons it had to go. A live recolour is something placeholders do for
+ * free and real art cannot — a Phaser tint would wreck a 3-colour sprite, so
+ * the feature was quietly blocking the art it was standing in for. And a player
+ * whose colour changes is a player you have to re-find every time you re-quip,
+ * which is the opposite of what a protagonist silhouette is for.
+ *
+ * Same 3-colour NES rule as everything else: primary, secondary, shared outline.
+ */
+export const PLAYER_PALETTE = {
+  primary: '#1565C0',
+  secondary: '#5CC8F0',
+  outline: '#0A0A12',
+};
+
+/**
  * MAXIMUM SPRITE GRID PER CLASS — the authoring contract for art.
  *
  * Every actor of a class is drawn inside its class's grid, and art is authored

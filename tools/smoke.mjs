@@ -190,6 +190,10 @@ for (const id of ['core', 'blaze', 'torrent', 'volt', 'strike']) {
  * The loadout and the wheel. Unlock a weapon of each class at max level, slot
  * them from the arc, switch one off — the paths a real run only reaches after
  * several bosses have fallen.
+ *
+ * Loadout Mastery is forced to the top rank and the re-quip window is forced
+ * open, because both are gates a real run passes through the Hub and a boss
+ * kill to reach. What is under test here is the wheel, not the gates.
  */
 const wheel = await page.evaluate(() => {
   const g = globalThis.__game;
@@ -201,6 +205,9 @@ const wheel = await page.evaluate(() => {
     gs.run.unlocked.add(id);
     gs.run.wpLevels[id] = 10;              // the top rung of every ladder
   }
+  gs.run.loadout.rank.offensive = 3;
+  gs.run.loadout.rank.defensive = 3;
+  gs.run.requipOpen = true;
   ui.openWheel();
   out.slotsDrawn = ui.active.length + ui.arc.length;
   for (const s of ui.arc) ui.tapSlot(s);   // fill both slots of both classes
@@ -220,7 +227,12 @@ if (wheel.slotsDrawn !== 22) fail(`wheel drew ${wheel.slotsDrawn} slots, expecte
 if (wheel.offensive.filter(Boolean).length !== 2) fail(`offensive slots: ${wheel.offensive}`);
 if (wheel.defensive.filter(Boolean).length !== 2) fail(`defensive slots: ${wheel.defensive}`);
 if (wheel.selected !== wheel.offensive.find(Boolean)) fail(`select left ${wheel.selected}`);
-if (wheel.afterDisable !== 'buster') fail(`disabling the live weapon left ${wheel.afterDisable}`);
+// At rank 3 the arc taps trade the sidearm away, so the fall-back is the OTHER
+// offensive slot. What matters is that the fire button never ends up pointed at
+// something it cannot fire.
+if (!wheel.offensive.includes(wheel.afterDisable)) {
+  fail(`disabling the live weapon left ${wheel.afterDisable}`);
+}
 
 /**
  * Every weapon with a runtime, at every rung of its ladder, actually fired.
@@ -242,6 +254,7 @@ for (const level of [1, 3, 6, 10]) {
     const ok = await page.evaluate(([o, d, lv]) => {
       const gs = globalThis.__game.scene.getScene('Game');
       const lo = gs.run.loadout;
+      lo.rank.offensive = 3; lo.rank.defensive = 3;   // no welded sidearm slot
       lo.offensive[0] = o; lo.offensive[1] = null;
       lo.defensive[0] = d; lo.defensive[1] = null;
       lo.disabled.clear();
