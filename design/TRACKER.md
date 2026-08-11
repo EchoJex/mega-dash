@@ -297,7 +297,7 @@ where each one stands.
 - **weapon Lv1** `[ready]` Two bug allies, short duration; they attack the nearest minion and expire together.
 - **weapon Lv3** `[ready]` Three allies with a longer duration; they now prioritise whatever the player last damaged.
 - **weapon Lv6** `[ready]` Lv6: every other bug will prioritize blocking projectiles.
-- **weapon Lv10** `[wip]` Lv9: bugs form a temporary shield or kamikaze explosion wave.
+- **weapon Lv10** `[wip]` Lv10: 5 bugs continuously swarm all over the player forming a shield and slowly respawn after tanking enough damage. Additionally, 3 bugs simultaneously converge on an enemy and kamikaze with an explosive blast.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Granite Man — Rock
