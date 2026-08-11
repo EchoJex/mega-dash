@@ -650,11 +650,22 @@ function stepLunge(st, lv, ctx) {
 
 // ── QUAKE HAMMER — Ground, offensive ─────────────────────────────────
 /**
- * "Large rock shaped hammer. Slow swing on tap, high damage high knockback;
- *  overhead ground-pound that creates shockwaves and stuns nearby enemies on
- *  long press (0.4s). Per-level scaling: shockwave size + stun duration."
+ * "Large rock shaped hammer visible when active. Slow, delayed baseball-swing
+ *  on tap for high damage and high knockback; long press 1.5s to hold the
+ *  hammer overhead and on release swing downward producing shockwaves and
+ *  stunning nearby enemies. Per-level scaling: shockwave size + stun duration."
+ *  Lv1  "airborne swings cause the player to swing downward and rapidly travel
+ *        downward where a shockwave will be generated on contact with the
+ *        ground."
+ *  Lv3  larger shockwave, longer stun, and the wave climbs low obstacles.
  *
  * Lv6 and Lv10 are still `[wip]`, so the ladder stops at Lv3.
+ *
+ * A 1.5 SECOND HOLD, NOT THE SHARED 0.4. This weapon's long press is a
+ * commitment — you stop, you wind up, you are open — so it has to be long
+ * enough that it can never happen by accident on a slightly slow tap. It
+ * declares its own via `holdFrames`; every other long-press weapon still uses
+ * LONG_PRESS_FRAMES.
  *
  * The pound resolves ON LANDING, not on the press. Committing to a slam and
  * then watching it land is the whole appeal of the move, and it also means the
@@ -662,12 +673,16 @@ function stepLunge(st, lv, ctx) {
  * player happened to be floating.
  */
 const quake = {
+  longPress: true,
+  holdFrames: (lv) => ladderAt('quake_hammer', lv).holdFrames,
+
   init(st) { st.anim = 0; st.pounding = false; },
 
   step(st, lv, ctx) {
     if (st.anim > 0) st.anim--;
     if (st.pounding && !ctx.player.onGround) {
-      ctx.player.vy = Math.min(FEEL.maxFallSpeed, ctx.player.vy + 1.2);  // slam down
+      const L = ladderAt('quake_hammer', lv);
+      ctx.player.vy = Math.min(FEEL.maxFallSpeed, ctx.player.vy + L.poundAccel);
     }
   },
 
@@ -675,7 +690,7 @@ const quake = {
     if (st.anim > 0 || st.pounding) return false;
     const L = ladderAt('quake_hammer', lv);
 
-    if (held >= LONG_PRESS_FRAMES) {
+    if (held >= L.holdFrames) {
       st.pounding = true;
       st.anim = L.poundFrames;
       ctx.sfx('shootBig', { pitch: 0.7 });
@@ -705,6 +720,17 @@ const quake = {
     ctx.shake(2, 20);
     ctx.sfx('rumble', { dur: 0.5, pitch: 0.8 });
 
+    // "STUNS NEARBY ENEMIES" — the impact itself, separate from the waves it
+    // sends out. Without this the stun would only ever reach whatever the wave
+    // happened to catch, and an enemy standing on top of the player would be
+    // the one thing the ground pound did not touch.
+    for (const e of ctx.enemies) {
+      if (e.hp <= 0) continue;
+      const c = centreOf(e);
+      if (Math.abs(c.x - (p.x + 12)) > L.stunRange) continue;
+      Attr.applyStatus(e.status, 'stun', L.stunFrames, { step: FEEL.stunEnemyStep });
+    }
+
     for (const dir of [-1, 1]) {
       ctx.spawn({
         x: p.x + 12, y: (ctx.arena ? ctx.arena.floorY : ctx.floorY) - 5,
@@ -724,41 +750,85 @@ const quake = {
 // ── SWARM CALLER — Bug, defensive ────────────────────────────────────
 /**
  * "Summons temporary bug allies that attack nearby enemies."
- *  Lv1 two allies, short duration, nearest minion, expire together.
- *  Lv3 three allies, longer, prioritising whatever the player last damaged.
- *  Lv6 every other bug prioritises blocking projectiles instead.
+ *  Lv1  ONE ally, short duration; "it attacks the nearest minion and must
+ *       return to the player briefly between targets".
+ *  Lv3  two allies with a longer duration, prioritising whatever the player
+ *       last damaged.
+ *  Lv6  three, and "every other bug spawned will prioritize intercepting
+ *       projectiles as a meat shield".
+ *  Lv10 "5 bugs continuously swarm all over the player forming a shield and
+ *       slowly respawn after tanking enough damage. Additionally, 3 bugs
+ *       simultaneously converge on an enemy and kamikaze with an explosive
+ *       blast."
  *
- * Lv10 is still `[wip]`, so the ladder stops at Lv6.
+ * BELOW Lv10 the allies expire as a GROUP, which makes the weapon read as a
+ * summon on a cycle rather than a slowly-refilling pet count. Lv10 inverts
+ * that: the swarm is permanent and individual bugs come and go, which is what
+ * "continuously swarm" and "slowly respawn" mean together. That inversion is
+ * the rung — not the count.
  *
- * The allies expire as a GROUP rather than individually, which is what makes
- * the weapon read as a summon on a cycle instead of a slowly-refilling pet
- * count. Interceptors alternate with attackers so a swarm is never all defence
- * or all offence.
+ * The return-to-player beat from Lv1 survives the whole ladder. It is what
+ * stops the swarm being a stationary damage aura parked on one enemy, and it
+ * is why a bug is worth watching.
  */
 const swarm = {
-  init(st) { st.cool = 0; },
+  init(st) { st.cool = 0; st.kami = 0; },
 
   step(st, lv, ctx) {
     const L = ladderAt('swarm_caller', lv);
     const mine = ctx.allies.filter((a) => a.owner === 'swarm_caller');
+
+    // Lv10: a standing swarm. Bugs are topped back up one at a time on a slow
+    // timer instead of the whole group being re-summoned at once.
+    if (L.shield) {
+      if (mine.length < L.count && --st.cool <= 0) {
+        st.cool = L.respawnFrames;
+        ctx.allies.push(makeBug(lv, ctx, L, 'shield'));
+      }
+      // "3 bugs simultaneously converge on an enemy and kamikaze." Sent from
+      // the standing swarm, so the shield thins for as long as they are out —
+      // the attack costs defence, which is what keeps it from being free.
+      if (--st.kami <= 0) {
+        const target = nearestEnemy(ctx, ctx.player.x + 12, ctx.player.y + 12);
+        if (target) {
+          st.kami = L.kamikazeFrames;
+          for (const a of mine.filter((b) => b.role === 'shield').slice(0, L.kamikaze)) {
+            a.role = 'kamikaze';
+            a.target = target;
+          }
+          ctx.sfx('shoot', { pitch: 1.4 });
+        }
+      }
+      return;
+    }
+
     if (mine.length === 0 && --st.cool <= 0) {
       st.cool = L.recallFrames;
       ctx.sfx('pickupExp', { pitch: 0.8 });
       for (let i = 0; i < L.count; i++) {
-        ctx.allies.push({
-          owner: 'swarm_caller',
-          // Lv6: "every other bug will prioritize blocking projectiles."
-          role: L.intercept && i % 2 === 1 ? 'block' : 'attack',
-          x: ctx.player.x + 12, y: ctx.player.y + 6,
-          w: 5, h: 5, vx: 0, vy: 0,
-          life: L.lifeFrames,
-          damage: dmgOf('swarm_caller', lv, ctx) * L.dmgMult,
-          hitGap: 0,
-        });
+        // Lv6: "every other bug spawned will prioritize intercepting projectiles."
+        ctx.allies.push(makeBug(lv, ctx, L,
+          L.intercept && i % 2 === 1 ? 'block' : 'attack'));
       }
     }
   },
 };
+
+function makeBug(lv, ctx, L, role) {
+  return {
+    owner: 'swarm_caller',
+    role,
+    x: ctx.player.x + 12, y: ctx.player.y + 6,
+    w: 5, h: 5, vx: 0, vy: 0,
+    // A standing swarm does not tick down; it is replaced when it dies.
+    life: L.shield ? Infinity : L.lifeFrames,
+    damage: dmgOf('swarm_caller', lv, ctx) * L.dmgMult,
+    blastDamage: dmgOf('swarm_caller', lv, ctx) * (L.blastDmgMult || 0),
+    blastRadius: L.blastRadius || 0,
+    regroup: 0, regroupFor: L.regroup, hitGap: 0,
+    orbit: Math.random() * Math.PI * 2,
+  };
+}
 
 /**
  * Advance the ally swarm. Kept here rather than in GameScene because allies
@@ -771,8 +841,23 @@ export function stepAllies(ctx) {
     const a = list[i];
     if (--a.life <= 0) { list.splice(i, 1); continue; }
     if (a.hitGap > 0) a.hitGap--;
+    if (a.regroup > 0) a.regroup--;
 
     let tx, ty;
+    if (a.role === 'trail') {
+      // A shadow left BEHIND the player, so it does not move at all. It hurts
+      // whatever walks into it and returns a cut of that to the player, which
+      // is what "damage enemies and lifesteal" means for a thing you cannot aim.
+      if (a.hitGap === 0) {
+        const e = enemiesIn(ctx, { x: a.x - 4, y: a.y - 6, w: 8, h: 12 })[0];
+        if (e) {
+          ctx.hitEnemy(e, a.damage, { from: a.x });
+          a.hitGap = a.hitEvery;
+          ctx.heal(a.damage * a.lifesteal);
+        }
+      }
+      continue;
+    }
     if (a.role === 'block') {
       // Interceptors fly at the nearest incoming enemy shot and eat it.
       const shot = nearestEnemyShot(ctx, a.x, a.y);
@@ -784,6 +869,44 @@ export function stepAllies(ctx) {
           continue;
         }
       }
+    } else if (a.role === 'kamikaze') {
+      // A one-way trip. It flies at its target and detonates on arrival, and it
+      // does NOT re-target if that enemy dies first — three bugs converging on
+      // something already dead would look like a bug in the other sense.
+      const t = a.target;
+      if (!t || t.hp <= 0) { a.role = 'shield'; a.target = null; }
+      else {
+        const c = centreOf(t);
+        tx = c.x; ty = c.y;
+        if (Math.hypot(c.x - a.x, c.y - a.y) < 7) {
+          ctx.puff({ x: a.x, y: a.y, w: a.blastRadius * 2, life: 12, color: 0xB8DC28 });
+          ctx.sfx('shootBig', { pitch: 1.3 });
+          for (const e of ctx.enemies) {
+            if (e.hp <= 0) continue;
+            const ec = centreOf(e);
+            if (Math.hypot(ec.x - a.x, ec.y - a.y) > a.blastRadius) continue;
+            ctx.hitEnemy(e, a.blastDamage, { from: a.x, knockback: 2 });
+          }
+          list.splice(i, 1);
+          continue;
+        }
+      }
+    } else if (a.role === 'shield') {
+      // "Continuously swarm all over the player forming a shield." They orbit
+      // rather than chase, and eat any shot that reaches them — a bug spent
+      // this way is gone until the respawn timer replaces it.
+      a.orbit += 0.09;
+      tx = ctx.player.x + 12 + Math.cos(a.orbit) * 13;
+      ty = ctx.player.y + 12 + Math.sin(a.orbit) * 11;
+      const shot = nearestEnemyShot(ctx, a.x, a.y, 12);
+      if (shot) { shot.life = -1; list.splice(i, 1); continue; }
+    }
+
+    // "MUST RETURN TO THE PLAYER BRIEFLY BETWEEN TARGETS." A bug that just
+    // landed a hit goes home for a beat before picking its next one, so the
+    // swarm pulses in and out instead of parking on whatever it reached first.
+    if (tx === undefined && a.regroup > 0) {
+      tx = ctx.player.x + 12; ty = ctx.player.y - 8;
     }
     if (tx === undefined) {
       // Lv3 prioritises whatever the player last damaged; otherwise nearest.
@@ -796,22 +919,27 @@ export function stepAllies(ctx) {
 
     const dx = tx - a.x, dy = ty - a.y;
     const d = Math.hypot(dx, dy) || 1;
-    a.vx += (dx / d) * 0.35;
-    a.vy += (dy / d) * 0.35;
+    const top = a.role === 'kamikaze' ? 4 : 2.2;
+    a.vx += (dx / d) * (a.role === 'kamikaze' ? 0.6 : 0.35);
+    a.vy += (dy / d) * (a.role === 'kamikaze' ? 0.6 : 0.35);
     const sp = Math.hypot(a.vx, a.vy);
-    if (sp > 2.2) { a.vx = (a.vx / sp) * 2.2; a.vy = (a.vy / sp) * 2.2; }
+    if (sp > top) { a.vx = (a.vx / sp) * top; a.vy = (a.vy / sp) * top; }
     a.x += a.vx; a.y += a.vy;
 
-    if (a.role !== 'block' && a.hitGap === 0) {
+    if (a.role !== 'block' && a.role !== 'shield' && a.hitGap === 0) {
       const box = { x: a.x - 3, y: a.y - 3, w: 6, h: 6 };
       const e = enemiesIn(ctx, box)[0];
-      if (e) { ctx.hitEnemy(e, a.damage, { from: a.x }); a.hitGap = 30; }
+      if (e) {
+        ctx.hitEnemy(e, a.damage, { from: a.x });
+        a.hitGap = 30;
+        a.regroup = a.regroupFor || 0;
+      }
     }
   }
 }
 
-function nearestEnemyShot(ctx, x, y) {
-  let best = null, bestD = 90 * 90;
+function nearestEnemyShot(ctx, x, y, maxDist = 90) {
+  let best = null, bestD = maxDist * maxDist;
   for (const b of ctx.bullets) {
     if (!b.enemy || b.life <= 0 || b.push) continue;
     const d = dist2(x, y, b.x, b.y);
@@ -819,6 +947,309 @@ function nearestEnemyShot(ctx, x, y) {
   }
   return best;
 }
+
+// ── THORN LASH — Grass, offensive ────────────────────────────────────
+/**
+ * "Stand still while shooting a directional-input whip-like vine that reels in
+ *  enemies then immediately throws them back as projectiles. Moderately slow
+ *  attack speed."
+ *  Lv1  "short reach; can only reel in and damage minions; does not toss or
+ *        constrict them."
+ *  Lv3  "increased reach. Affected by diagonal inputs. On enemy contact:
+ *        perform the attack as described. Else if on the ground and contacting
+ *        the outer 20% of a platform: grapple on top of that platform. If in
+ *        the air and contacting a platform or ceiling: swing forward in the
+ *        current direction, then release."
+ *  Lv6  "significantly increased reach."
+ *  Lv10 "now constricts mini-bosses and applies DPS for 5 seconds. Now throws
+ *        minions as high-damage projectiles."
+ *
+ * STANDING STILL IS THE PRICE. The root is what makes a whip with this reach
+ * fair — you commit to a spot for the length of the lash, so every use is a
+ * read on what is about to be where you are. It roots the INPUT rather than
+ * freezing the player, so gravity, knockback and a hit landing on you all still
+ * behave; you are braced, not paused.
+ *
+ * THE LV3 GRAPPLE IS THE SAME LASH WITH A DIFFERENT THING ON THE END. Enemy
+ * first, terrain second, nothing third — one priority order, so the player
+ * never has to choose a mode. A ledge lip pulls you up because you are on the
+ * ground; a platform overhead swings you because you are not.
+ */
+const thorn = {
+  init(st) { st.lash = null; st.root = 0; },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('thorn_lash', lv);
+    if (st.root > 0) { st.root--; ctx.run.rootFrames = Math.max(ctx.run.rootFrames, 1); }
+    const la = st.lash;
+    if (!la) return;
+
+    const p = ctx.player;
+    la.ox = p.x + 12; la.oy = p.y + 12;
+    la.len = Math.min(L.reach, la.len + L.reach / L.lashFrames);
+
+    // REELING: whatever is on the end comes home, then resolves.
+    if (la.grabbed) {
+      const e = la.grabbed;
+      if (e.hp <= 0) { st.lash = null; return; }
+      const dx = la.ox - (e.x + e.w / 2), dy = la.oy - (e.y + e.h / 2);
+      const d = Math.hypot(dx, dy) || 1;
+      e.x += (dx / d) * L.reelSpeed;
+      e.y += (dy / d) * L.reelSpeed;
+      if (L.constrictFrames) {
+        Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+      }
+      if (d < 18) {
+        // Lv10 throws it back as a projectile. Below that the reel is the whole
+        // move and the enemy simply arrives.
+        if (L.toss) {
+          e.hp = 0;
+          ctx.spawn({
+            x: e.x + e.w / 2, y: e.y + e.h / 2,
+            vx: L.tossSpeed * p.facing, vy: -0.6,
+            radius: 4, damage: dmgOf('thorn_lash', lv, ctx) * L.tossDmgMult,
+            color: '#2AAB1C', shape: 'rock', weapon: 'thorn_lash',
+            life: 120, pierce: 3, knockback: 3,
+          });
+          ctx.sfx('shootBig', { pitch: 0.95 });
+        }
+        st.lash = null;
+      }
+      return;
+    }
+
+    // SWINGING: the Lv3 airborne grapple carries the player forward instead.
+    if (la.swing) {
+      p.x += L.swingSpeed * la.dir.x;
+      p.vy = Math.min(p.vy, 0.4);
+      if (--la.swing <= 0) st.lash = null;
+      return;
+    }
+
+    if (la.t > 0 && --la.t === 0) { st.lash = null; return; }
+    thornProbe(st, lv, ctx, L);
+  },
+
+  fire(st, lv, ctx) {
+    if (st.lash || st.cool > 0) return false;
+    const L = ladderAt('thorn_lash', lv);
+    st.cool = L.cooldown;
+    st.root = L.rootFrames;
+    const p = ctx.player;
+    ctx.sfx('shoot', { pitch: 0.7 });
+
+    // "Affected by diagonal inputs" from Lv3. `diagInput` is the reserved
+    // up-left / up-right hook; below Lv3 the lash is flat whatever is held.
+    let dy = 0;
+    if (L.diagonal && (p.diagInput === 'ul' || p.diagInput === 'ur')) dy = -0.7;
+    const dir = { x: p.facing, y: dy };
+    const d = Math.hypot(dir.x, dir.y) || 1;
+    dir.x /= d; dir.y /= d;
+
+    st.lash = {
+      ox: p.x + 12, oy: p.y + 12, len: 0, dir,
+      t: L.lashFrames, grabbed: null, swing: 0,
+    };
+    return true;
+  },
+};
+
+/** The tip of the lash, and what it has found there. */
+function thornTip(la) {
+  return { x: la.ox + la.dir.x * la.len, y: la.oy + la.dir.y * la.len };
+}
+
+function thornProbe(st, lv, ctx, L) {
+  const la = st.lash;
+  const tip = thornTip(la);
+  ctx.arc({ x: la.ox, y: la.oy }, tip);
+
+  // ENEMY FIRST. A boss is never reeled — it is not moved by anything (see
+  // hitEnemy) — so it takes the damage and the lash ends there.
+  const box = { x: tip.x - 5, y: tip.y - 5, w: 10, h: 10 };
+  const e = enemiesIn(ctx, box)[0];
+  if (e) {
+    ctx.hitEnemy(e, dmgOf('thorn_lash', lv, ctx) * L.dmgMult, { from: la.ox });
+    if (e.isBoss) {
+      if (L.constrictFrames) Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+      st.lash = null;
+    } else {
+      la.grabbed = e;
+    }
+    return;
+  }
+
+  if (!L.grapple || la.len < L.reach) return;
+
+  // TERRAIN SECOND, and only at full extension — a grapple that fired early
+  // would keep stealing the enemy hit the player was actually aiming at.
+  const p = ctx.player;
+  if (p.onGround) {
+    // "Contacting the outer 20% of a platform: grapple on top of it."
+    for (const pl of ctx.platforms) {
+      const lip = Math.max(4, pl.w * L.ledgeGrab);
+      const nearEnd = (tip.x >= pl.x && tip.x <= pl.x + lip)
+        || (tip.x <= pl.x + pl.w && tip.x >= pl.x + pl.w - lip);
+      if (!nearEnd || tip.y < pl.y - 8 || tip.y > pl.y + 10) continue;
+      p.x = tip.x - 12;
+      p.y = pl.y - 24;
+      p.vy = 0;
+      ctx.sfx('select', { pitch: 1.2 });
+      st.lash = null;
+      return;
+    }
+    return;
+  }
+  // Airborne: anything overhead swings you forward, then releases.
+  const overhead = ctx.platforms.some(
+    (pl) => tip.x >= pl.x && tip.x <= pl.x + pl.w && Math.abs(tip.y - pl.y) < 10,
+  ) || (ctx.arena && tip.y <= ctx.arena.ceilY + 4);
+  if (overhead) {
+    la.swing = L.lashFrames;
+    ctx.sfx('select', { pitch: 0.9 });
+  }
+}
+
+// ── GALE VORTEX — Flying, defensive ──────────────────────────────────
+/**
+ * "White puffs of smoke energy when falling, significantly reducing fall speed
+ *  and significantly increasing horizontal movement."
+ *  Lv1 "up to 3 puffs while falling, each one cancelling vertical velocity and
+ *       separated by a very brief time."
+ *
+ * Lv3, Lv6 and Lv10 in the tracker still describe the OLD tornado weapon this
+ * replaced and are `[wip]`, so the ladder stops at Lv1 and higher levels are
+ * damage-only. Do not build them from the stale text.
+ *
+ * IT SPENDS ITSELF AND REFILLS ON THE GROUND, which is what makes it a
+ * defensive weapon and not flight. Three cancelled falls is a large safety net
+ * over a pit and nothing at all in a fight you are winning on the floor — the
+ * budget is the whole design, and it never asks for the fire button.
+ */
+const gale = {
+  init(st, lv) { st.left = ladderAt('gale_vortex', lv).puffs; st.gap = 0; st.glide = 0; },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('gale_vortex', lv);
+    const p = ctx.player;
+    if (st.gap > 0) st.gap--;
+    if (st.glide > 0) st.glide--;
+
+    if (p.onGround) { st.left = L.puffs; st.glide = 0; return; }
+
+    // A puff fires on its own the moment you are falling and one is due. It is
+    // automatic because the class is: a defensive weapon that wanted a button
+    // would be an offensive weapon with extra steps.
+    if (p.vy > L.glideFall && st.left > 0 && st.gap === 0) {
+      st.left--;
+      st.gap = L.puffGap;
+      st.glide = L.glideFrames;
+      p.vy = p.vy * L.fallCut;
+      ctx.puff({ x: p.x + 12, y: p.y + 20, w: 14, life: 14, color: 0xF8FAFC });
+      ctx.sfx('shoot', { pitch: 1.6 });
+    }
+
+    // While a puff is live the fall is capped and horizontal authority is up.
+    if (st.glide > 0) {
+      ctx.run.glideFall = L.glideFall;
+      ctx.run.airControl = L.airControl;
+    }
+  },
+};
+
+// ── ECLIPSE BLADE — Dark, defensive ──────────────────────────────────
+/**
+ * "Reduces aggro and become immune to status effects."
+ *  Lv1  "while active enemies will fire projectiles slightly less frequently
+ *        and when pursuing the player will pause very briefly at random times."
+ *  Lv3  "slight increase in pause duration and frequency."
+ *  Lv6  "creates shadow trails that damage enemies and lifesteal."
+ *
+ * Lv10's "Dark Mode" is still `[wip]`, so the ladder stops at Lv6.
+ *
+ * THE WEAPON WAS OFFENSIVE AND IS NOW DEFENSIVE. The tracker field used to
+ * describe a returning boomerang; it now describes a cloak, and the field wins.
+ * Its id and its name are unchanged so saves and the wheel are unaffected.
+ *
+ * AGGRO IS A TAX ON THE ENEMY'S CLOCK, not a shield on the player. It slows the
+ * rate at which things happen TO you rather than reducing what they do, which
+ * is the only reading of "stealth" that stays legible in a game where every
+ * threat is already telegraphed — you can still see everything coming, there is
+ * just less of it.
+ */
+const eclipse = {
+  init(st) { st.trail = 0; },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('eclipse_blade', lv);
+    const p = ctx.player;
+
+    // Read by systems/minions.js and by the boss fire path. Re-asserted every
+    // frame and cleared by GameScene before the weapons run, so benching the
+    // cloak restores full aggro on the very next frame.
+    ctx.run.aggroFire = Math.min(ctx.run.aggroFire ?? 1, L.fireChance);
+    ctx.run.aggroPause = { chance: L.pauseChance, frames: L.pauseFrames };
+    // "Immune to status effects." Flat from Lv1 — a partial immunity would be
+    // indistinguishable from luck.
+    if (L.immune) Attr.clearStatus(ctx.statusBag);
+
+    if (!L.trail) return;
+    // Lv6: a trail behind a MOVING player, so the reward is for using the
+    // mobility the cloak buys rather than for standing in it.
+    if (Math.abs(p.vx) < 0.4 || --st.trail > 0) return;
+    st.trail = L.trailGap;
+    ctx.allies.push({
+      owner: 'eclipse_blade', role: 'trail',
+      x: p.x + 12, y: p.y + 12, w: 6, h: 6, vx: 0, vy: 0,
+      life: L.trailLife,
+      damage: dmgOf('eclipse_blade', lv, ctx) * L.trailDmgMult,
+      lifesteal: L.lifesteal,
+      hitGap: 0, hitEvery: L.trailHitGap,
+      regroup: 0, regroupFor: 0, orbit: 0,
+    });
+  },
+};
+
+// ── ALLOY BLADE — Steel, offensive ───────────────────────────────────
+/**
+ * "Throws penetrative metal blades that ricochet multiple times. Per-level
+ *  scaling: more ricochets + higher damage."
+ *  Lv1  "single blade, one ricochet, pierces the first enemy hit."
+ *  Lv3  "two ricochets and increased pierce; blades survive contact with
+ *        terrain corners."
+ *
+ * Lv6's early recall and Lv10's armour mode are still `[wip]`.
+ *
+ * PIERCE AND RICOCHET ARE DIFFERENT BUDGETS and the ladder moves both, which is
+ * what stops the weapon being a plain damage step: pierce is how many bodies
+ * one pass goes through, ricochet is how many more passes there are. The
+ * projectile plumbing for both already exists — this weapon spends it rather
+ * than inventing anything.
+ */
+const alloy = {
+  step() {},
+
+  fire(st, lv, ctx) {
+    if (st.cool > 0) return false;
+    const L = ladderAt('alloy_blade', lv);
+    st.cool = L.cooldown;
+    const p = ctx.player;
+    ctx.sfx('shoot', { pitch: 1.25 });
+    ctx.spawn({
+      x: p.x + 12 + 8 * p.facing, y: p.y + 12,
+      vx: L.speed * p.facing * ctx.run.projSpeedMult, vy: 0,
+      radius: 3, damage: dmgOf('alloy_blade', lv, ctx) * L.dmgMult,
+      color: '#B2BABD', shape: 'blade', weapon: 'alloy_blade',
+      life: L.life, ricochet: L.bounces, pierce: L.pierce,
+      // "Blades survive contact with terrain corners" — a corner is two
+      // surfaces on one frame, and without this the blade spends both bounces
+      // there and dies on a wall it visibly grazed.
+      cornerSafe: !!L.cornerSafe,
+      bounceDmg: 1, bounceShrink: 1,
+    });
+    return true;
+  },
+};
 
 // ── Registry and driver ──────────────────────────────────────────────
 
@@ -836,6 +1267,10 @@ export const RUNTIME = {
   strike_gauntlet: strike,
   quake_hammer: quake,
   swarm_caller: swarm,
+  thorn_lash: thorn,
+  gale_vortex: gale,
+  eclipse_blade: eclipse,
+  alloy_blade: alloy,
 };
 
 export const hasRuntime = (id) => Object.prototype.hasOwnProperty.call(RUNTIME, id);

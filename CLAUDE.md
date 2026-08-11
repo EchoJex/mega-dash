@@ -31,8 +31,8 @@ the state machine wedged before reaching the line that actually crashed, and the
 stayed green through a fight that died on a real device within seconds.
 
 `tools/smoke.mjs` builds nothing and fakes nothing. It serves `dist/`, opens it in
-Chromium, starts a run, fights every boss whose fight is built, then equips all eight
-weapons that have a ladder at every rung and fires them — failing on any page exception,
+Chromium, starts a run, fights every boss whose fight is built, then equips every weapon
+that has a ladder at every rung and fires them — failing on any page exception,
 console error, crash overlay, non-finite position or runaway projectile count.
 
 It is **deliberately not in CI and not a devDependency**: Playwright's postinstall would
@@ -682,24 +682,37 @@ work.
 | Proto Mk0 | L1–3 | L1–3 ceiling turrets, snapping to 45° / 22.5° / 11.25° | gear backdrop, 2 turrets |
 | Blaze Man | L1–3 incl. the L3 lava flood | L1–3 falling rocks | volcano, 3 phasing platforms, the boss's own lift, floodable floor |
 | Tempest Man | L1–3 flight-and-jetpack (no projectiles) | L1–3 rain, current, drain, barrels, spike balls | storm sky, corner pipes, grate + spike ball, floor water |
-| Volt Man | L1–3 zigzag ricochet bolts | L1–3 floor-panel sweep, conductors | plasma lamp, 8 floor panels, 2 conductors |
+| Volt Man | L1–3 zigzag ricochet bolts | L1–3 floor-panel sweep, conductors, L3 chain-through-minions | plasma lamp, 8 floor panels, 2 conductors, 4 phasing platforms |
 | Strike Man | none — his attack layers are `[wip]` | L1 swinging training bag | fight pit, cage walls, ceiling rails |
 
 Every other boss is `null` at every layer, as are Strike Man's attacks and his hazard
 L2/L3, because the tracker leaves those `[wip]`. **Do not invent content there.**
 
-**Two entries were rewritten rather than extended, and both matter as precedent.** Tempest
+**Several entries have been rewritten rather than extended, and they matter as
+precedent — where working code and a `[draft]` field disagree, the field wins.** Tempest
 Man's attack had been a patrolling water cannon; the tracker's attack layers describe a
 Queen B flight pattern with no projectile at all, so the cannon went. Blaze Man's layer-3
 flood ran for 30 seconds and cancelled the rockfall; the tracker says 20 seconds and
-"rocks shall fall, but not from right above the platforms". Where working code and a
-`[draft]` field disagree, the field wins.
+"rocks shall fall, but not from right above the platforms". Volt Man's sweep had been
+speeding up at L2; the field says "same sweep", so it no longer does. The **Eclipse
+Blade** went further and changed class outright — a provisionally-offensive boomerang
+became a defensive cloak, because that is what its field now describes.
+
+**A revision can force a change in a neighbouring `[ready]` field.** Blaze Man's L1 went
+from "several" fireballs to "a couple", which makes L2's "fewer fireballs" false unless L2
+drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at the constant.
 
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
-panels, conductors and the Volt Spark; **Freeze** is live on Frost Guard. Wet, Poisoned
-and Constrict are defined and tested but nothing applies them yet, because their sources
-are weapons whose slices have not happened.
+panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
+Frost Guard; **Constrict** is live on the Thorn Lash at Lv10. Wet and Poisoned are defined
+and tested but nothing applies them yet, because their sources are weapons whose slices
+have not happened.
+
+`cloakHold` is in the ATTR table but is **not** an elemental attribute and is deliberately
+not in the tracker's list — it is the Eclipse Blade's aggro pause, which is mechanically a
+hold and nothing else. It reuses the hold machinery so every consumer already honours it
+and carries no tint, because there is nothing elemental to show.
 
 **Stun is not a hold.** It is a stacking multiplicative slow — 15% per stack off the
 player, 30% off an enemy, duration reset by every re-application, cutting attack speed as

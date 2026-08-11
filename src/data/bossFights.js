@@ -193,11 +193,19 @@ function coreHazard(layer) {
 }
 
 // ── BLAZE MAN — Fire ────────────────────────────────────────────────
-// Attack: "Launches several bouncing fireballs toward the player that climb up
-// walls and leave hot trails." L2 fires fewer but bounces higher and alternates
-// its angles. L3 adds the arena flood, synchronised with the hazard.
+// Attack: "Launches A COUPLE of moderately bouncing fireballs toward the player
+// that climb up walls and leave hot trails." L2 fires "fewer fireballs, but much
+// higher bounce heights and alternating firing angles". L3 adds the arena flood,
+// synchronised with the hazard.
+//
+// L1 WAS FOUR AND THE TRACKER NOW SAYS TWO, which forces L2 down to one: "fewer"
+// is L2's own word and it stops being true the moment L1 drops to L2's count.
+// One fireball that bounces high and alternates its launch angle is a coherent
+// shape for that layer — a persistent thing crossing the room rather than a
+// burst — but the number is an INFERENCE from L1's edit, not something the
+// owner wrote. Change it if that reads wrong on device.
 const BLAZE = {
-  count: { 1: 4, 2: 2, 3: 2 },
+  count: { 1: 2, 2: 1, 3: 1 },
   bounce: { 1: 0.62, 2: 0.86, 3: 0.86 },
   windup: 34,
   rest: { 1: [90, 150], 2: [80, 130], 3: [80, 130] },
@@ -759,7 +767,7 @@ function tempestFloaters(ctx, a, hs, layer) {
  * "Fires up to 3 sequential zigzag lightning bolts that bounce and arc on
  *  contact with surfaces or the player. Damage and size decrease at every
  *  bounce."
- *  L2 "Bolts increase to 7 and gain a longer bounce life, and the boss fires a
+ *  L2 "Bolts increase to 3 and gain a longer bounce life, and the boss fires a
  *      second volley on a shallower angle before the first has finished, so two
  *      zigzag paths overlap."
  *  L3 "Bolts no longer lose size on bounce, only damage. Between volleys the
@@ -776,7 +784,8 @@ function tempestFloaters(ctx, a, hs, layer) {
  * ground you were just forced to stand on.
  */
 const VOLT = {
-  bolts: { 1: 3, 2: 7, 3: 7 },
+  // "up to 2" at L1, "increase to 3" at L2. L3 restates neither, so it inherits.
+  bolts: { 1: 2, 2: 3, 3: 3 },
   bounces: { 1: 3, 2: 6, 3: 6 },
   gap: 12,                   // frames between bolts in a volley
   speed: 2.3,
@@ -798,6 +807,9 @@ function voltBolt(ctx, layer, th, shallow) {
     radius: 3, damage: 2, color: b.primary, shape: 'spark',
     zigzag: VOLT.zig, zigAngle: shallow ? 0.5 : 0.75,
     ricochet: VOLT.bounces[layer],
+    // A corner costs ONE bounce, which is what his reach has always been tuned
+    // against. Only the Alloy Blade's Lv1 rung spends a corner twice.
+    cornerSafe: true,
     bounceDmg: VOLT.bounceDmg,
     bounceShrink: VOLT.bounceShrink[layer],
     bouncesOffPlayer: true,
@@ -872,35 +884,37 @@ function voltAttack(layer) {
 /**
  * VOLT MAN's hazard — the floor sweep, and the conductors above it.
  *
- * L1 "Floor panels electrify in a slow left-to-right sweep, one panel at a
+ * L1 "Floor panels electrify in a VERY SLOW left-to-right sweep, one panel at a
  *     time, telegraphed by a lamp on the panel a moment before it energises.
  *     Contact deals moderate damage and a short Stun."
- * L2 "Same sweep, faster, plus overhead conductors that drop a vertical bolt at
- *     fixed positions on a regular beat. The conductors are inert between arcs
- *     and can be stood under safely."
+ * L2 "SAME SWEEP, plus overhead conductors that drop a vertical St Elmo's fire
+ *     looking bolt at fixed positions on a regular beat. The conductors are
+ *     inert between arcs and can be stood under safely."
  * L3 "The sweep runs in both directions at once, meeting in the middle. Arcs
  *     now chain through nearby minions and into the player if the player is
- *     close to them."
+ *     close to them, DESTROYING THE MINIONS and damaging the player and
+ *     applying stun."
  *
  * THE LAMP IS THE WHOLE HAZARD. A panel you cannot avoid is not a hazard, it is
  * a tax; the tell arriving a beat before the current is what turns a floor that
- * kills you into a floor you read. Everything the layers add is speed and
- * coverage, never a shorter warning.
+ * kills you into a floor you read. What the layers add is COVERAGE, never speed
+ * and never a shorter warning — "same sweep" and "very slow" are both the
+ * owner's words, and an earlier build quietly ran L2 and L3 half again as fast.
  *
  * NOTE ON THE LAYER-3 CHAIN: a boss arena is sealed and carries no ambient
- * minions, and Volt Man summons none, so "chain through nearby minions" has
- * nothing to travel along in practice. It is written against `enemies` anyway
- * so it works the day he gains a summon, and its observable behaviour today is
- * the second half of the sentence — the arc reaching the player when they are
- * close to the strike rather than directly under it.
+ * minions, and Volt Man summons none, so the minion half of that sentence has
+ * nothing to travel along today. It is written against `enemies` anyway so it
+ * works the day he gains a summon — and a chained minion is DESTROYED outright
+ * rather than damaged, because the arc is what kills it.
  */
 const VOLT_HAZ = {
-  step: { 1: 40, 2: 26, 3: 26 },   // frames between panels in the sweep
+  step: { 1: 40, 2: 40, 3: 40 },   // frames between panels — "same sweep"
   tell: 28,
   live: 52,
   damage: 3,
   stun: 90,
-  arcBeat: { 1: 0, 2: 210, 3: 170 },
+  // L3 does not restate the conductor beat, so it inherits L2's.
+  arcBeat: { 1: 0, 2: 210, 3: 210 },
   arcTell: 34,
   arcLive: 24,
   chainRange: 34,                  // L3 only
@@ -951,12 +965,23 @@ function voltHazard(layer) {
       if (c.arc <= 0) continue;
       const cxp = c.x + c.w / 2;
       const box = ctx.playerBox;
-      // Layer 3's chain widens what counts as "under it", and any enemy in the
-      // room is a conductor for it.
       let reach = box.x + box.w > cxp - 3 && box.x < cxp + 3;
-      if (!reach && layer >= 3) {
+      // LAYER 3 CHAINS. The arc travels through any minion standing under it,
+      // destroying it, and carries on into the player if the player is near
+      // that minion — so a minion is not cover, it is a conductor. Standing
+      // clear of the strike is only safe if you are also clear of whatever the
+      // strike is about to earth itself through.
+      if (layer >= 3 && c.arc === VOLT_HAZ.arcLive) {
         const pcx = box.x + box.w / 2;
-        reach = Math.abs(pcx - cxp) < VOLT_HAZ.chainRange;
+        for (const m of ctx.minions) {
+          if (m.hp <= 0) continue;
+          const mcx = m.x + m.w / 2;
+          if (Math.abs(mcx - cxp) > VOLT_HAZ.chainRange) continue;
+          ctx.vaporise(m);
+          if (Math.abs(pcx - mcx) < VOLT_HAZ.chainRange) reach = true;
+        }
+        // ...and the arc itself reaches a little wider than the bolt it draws.
+        if (!reach) reach = Math.abs(pcx - cxp) < VOLT_HAZ.chainRange;
       }
       if (reach && c.arc === VOLT_HAZ.arcLive) {
         ctx.flash(6);

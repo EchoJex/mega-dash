@@ -23,8 +23,8 @@
  *     npm run build && npm run smoke
  *
  * WHAT IT DOES. Serves dist/, opens it, starts a run, then visits every boss
- * whose fight is built and fights each one; then equips all eight weapons that
- * have a ladder, at every rung, and fires them. It fails on any page exception,
+ * whose fight is built and fights each one; then equips every weapon that has a
+ * ladder, at every rung, and fires them. It fails on any page exception,
  * console error, failed request, crash overlay, non-finite position, or
  * runaway projectile count.
  *
@@ -201,7 +201,8 @@ const wheel = await page.evaluate(() => {
   const ui = g.scene.getScene('UI');
   const out = {};
   for (const id of ['blaze_wheel', 'volt_spark', 'core_blaster', 'torrent_cannon',
-    'frost_guard', 'strike_gauntlet', 'quake_hammer', 'swarm_caller']) {
+    'frost_guard', 'strike_gauntlet', 'quake_hammer', 'swarm_caller',
+    'thorn_lash', 'gale_vortex', 'eclipse_blade', 'alloy_blade']) {
     gs.run.unlocked.add(id);
     gs.run.wpLevels[id] = 10;              // the top rung of every ladder
   }
@@ -247,6 +248,8 @@ const PAIRS = [
   ['volt_spark', 'torrent_cannon'],
   ['strike_gauntlet', 'frost_guard'],
   ['quake_hammer', 'swarm_caller'],
+  ['thorn_lash', 'gale_vortex'],
+  ['alloy_blade', 'eclipse_blade'],
 ];
 
 for (const level of [1, 3, 6, 10]) {

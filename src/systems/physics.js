@@ -55,14 +55,22 @@ export function stepPlayer(p, world, input, groundY) {
     // `speedMult` is the Stun attribute's stacking slow. It defaults to 1 so
     // every other caller — and every test — is unaffected by its existence.
     const slideMult = FEEL.slideSpeedMult * (p.slideSpeedBonus || 1);
-    const target = input.moveDir * FEEL.moveSpeed
-      * (p.sliding ? slideMult : 1) * (input.speedMult ?? 1);
+    // `rooted` is a weapon planting the player for the duration of a move — the
+    // Thorn Lash's "stand still while shooting". It zeroes the INPUT rather than
+    // the velocity, so friction still brings you to a stop over a frame or two
+    // and being rooted reads as bracing rather than as hitting a wall.
+    // `airControl` is the Gale Vortex's glide: horizontal authority while
+    // airborne, and only while airborne.
+    const dir = input.rooted ? 0 : input.moveDir;
+    const target = dir * FEEL.moveSpeed
+      * (p.sliding ? slideMult : 1) * (input.speedMult ?? 1)
+      * (p.onGround ? 1 : (input.airControl ?? 1));
     p.vx = target === 0
       ? p.vx * (1 - FEEL.friction)
       : p.vx + (target - p.vx) * FEEL.accel;
     if (Math.abs(p.vx) < 0.01) p.vx = 0;
     p.x += p.vx;
-    if (input.moveDir !== 0) p.facing = input.moveDir;
+    if (dir !== 0) p.facing = input.moveDir;
   }
 
   // ── Slide timer ────────────────────────────────────────────────────
@@ -115,6 +123,10 @@ export function stepPlayer(p, world, input, groundY) {
     p.y += p.vy;
   } else {
     p.vy = Math.min(p.vy + FEEL.gravity, FEEL.maxFallSpeed);
+    // A glide caps the DESCENT only, never the rise: the Gale Vortex slows a
+    // fall, it does not turn every jump into a float. Applied after the clamp
+    // so it is a tighter terminal velocity rather than a second acceleration.
+    if (input.fallCap != null && p.vy > input.fallCap) p.vy = input.fallCap;
     p.y += p.vy;
   }
 

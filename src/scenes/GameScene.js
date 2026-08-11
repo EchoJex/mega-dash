@@ -135,7 +135,14 @@ export default class GameScene extends Phaser.Scene {
       wstate: {},
       allies: [],
       fireHeldFrames: 0,
+      // Per-frame grants from equipped weapons. All of these are cleared and
+      // re-asserted every step by stepEquipped — see the note there.
       meleeArmor: 0,
+      rootFrames: 0,
+      glideFall: null,
+      airControl: 1,
+      aggroFire: 1,
+      aggroPause: null,
       lastDamaged: null,
       pendingLoadout: null,
     };
@@ -404,6 +411,13 @@ export default class GameScene extends Phaser.Scene {
         // and how long it hangs there first. Rank 0 is near enough to zero.
         cliffGrab: r.cliffGrab,
         cliffStick: r.cliffRank > 0 ? FEEL.cliffStickFrames : 0,
+        // The Thorn Lash plants you for the length of a lash, and the Gale
+        // Vortex trades fall speed for air control. Both are asserted by the
+        // weapon each frame and cleared in stepEquipped, so an unequipped
+        // weapon cannot leave either of them switched on.
+        rooted: r.rootFrames > 0,
+        fallCap: r.glideFall,
+        airControl: r.airControl,
       }, GROUND_Y);
       if (!this.arena) {
         this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
@@ -519,10 +533,18 @@ export default class GameScene extends Phaser.Scene {
     const r = this.run;
     const ids = Loadout.equippedIds(r.loadout)
       .filter((id) => Loadout.isEnabled(r.loadout, id));
-    // Cleared before the weapons run, and re-asserted by whichever one grants
-    // it. Otherwise benching the Strike Gauntlet mid-swing would leave its
-    // damage reduction switched on for the rest of the run.
+    // EVERY PER-FRAME GRANT IS CLEARED HERE AND RE-ASSERTED BY WHOEVER GRANTS
+    // IT. Otherwise benching the Strike Gauntlet mid-swing would leave its
+    // damage reduction switched on for the rest of the run, and the same is
+    // true of the Gale Vortex's glide, the Thorn Lash's root and the Eclipse
+    // Blade's aggro tax. A weapon that is not running grants nothing, and this
+    // is the one line that guarantees it.
     r.meleeArmor = 0;
+    r.rootFrames = 0;
+    r.glideFall = null;
+    r.airControl = 1;
+    r.aggroFire = 1;
+    r.aggroPause = null;
     Wpn.pruneStates(r.wstate, ids);
     Wpn.coolWeapons(r.wstate);
     const ctx = this.weaponCtx(ids);
@@ -554,6 +576,12 @@ export default class GameScene extends Phaser.Scene {
       // distinguishes them except Frost Guard, which checks `isBoss` itself.
       enemies: this.boss ? [...this.minions, this.boss] : this.minions,
       arena: this.arena,
+      // Live solid platforms — what the Thorn Lash's grapple can catch. The
+      // same list physics stands the player on, so a vine can never grab a
+      // platform that has phased out from under him.
+      platforms: this.world.platforms,
+      // The player's own status bag, for a weapon that clears it (Eclipse).
+      statusBag: this.status,
       floorY: GROUND_Y,
       landVy: this.landVy || 0,
       equipped,
@@ -573,6 +601,11 @@ export default class GameScene extends Phaser.Scene {
           Attr.surfacePatch(id, x, w, surfaceY, frames, 'player'));
       },
       sfx: (name, opts) => sfx(name, opts),
+      // Lifesteal. Capped at the same ceiling an E-Tank respects, so no weapon
+      // can quietly raise the health bar past what the upgrades bought.
+      heal: (amount) => {
+        r.hp = Math.min(FEEL.hpMax + r.hpBonus + (r.runHpBonus || 0), r.hp + amount);
+      },
     };
   }
 
@@ -651,7 +684,13 @@ export default class GameScene extends Phaser.Scene {
       if (this.intent.fireHeld) Wpn.fireActive(ctx, id, held);
       return;
     }
-    if (this.intent.fireHeld && held >= Wpn.LONG_PRESS_FRAMES && !r.fireConsumed) {
+    // A weapon may declare its OWN hold length. The Quake Hammer's is 1.5s
+    // because its long press is a commitment rather than a modifier; everything
+    // else takes the shared 0.4s.
+    const holdFor = beh.holdFrames
+      ? beh.holdFrames(r.wpLevels[id] || 1)
+      : Wpn.LONG_PRESS_FRAMES;
+    if (this.intent.fireHeld && held >= holdFor && !r.fireConsumed) {
       if (Wpn.fireActive(ctx, id, held)) r.fireConsumed = true;
     } else if (this.intent.fireReleased && !r.fireConsumed) {
       Wpn.fireActive(ctx, id, held);
@@ -872,6 +911,35 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * The top of whatever a rolling thing at world-x `wx` would rest on, given
+   * that its underside is currently at `y`. Null when there is nothing under it.
+   *
+   * Deliberately the SAME two surfaces the player stands on — live platforms and
+   * ground spans — so a fireball that rolls off a ledge falls exactly where the
+   * player would, and a platform that phases out drops both of them. A weapon
+   * that used its own idea of the floor would be a second physics model, and the
+   * two would drift the first time either was tuned.
+   *
+   * `slop` allows a shallow step down (platform to ground) to be taken as a roll
+   * rather than as a fall, which is what keeps a roller from stuttering into the
+   * air at every seam.
+   */
+  supportY(wx, y, slop = 6) {
+    let best = null;
+    for (const pl of this.world.platforms) {
+      if (wx < pl.x || wx > pl.x + pl.w) continue;
+      if (y > pl.y + slop) continue;                 // already past it
+      if (best == null || pl.y < best) best = pl.y;
+    }
+    const floor = this.arena ? this.arena.floorY : GROUND_Y;
+    // In a sealed arena the floor runs wall to wall; in the stream it exists
+    // only where a span does, and the gaps between spans are the pits.
+    const solid = this.arena || Phys.isOverGround(this.world, wx);
+    if (solid && y <= floor + slop && (best == null || floor < best)) best = floor;
+    return best != null && y >= best ? best : null;
+  }
+
   stepBullets() {
     const r = this.run;
     const pcx = this.player.x + 12, pcy = this.player.y + 12;
@@ -936,22 +1004,36 @@ export default class GameScene extends Phaser.Scene {
       // deceleration"; above 1 is the Lv10 acceleration. Distance, not time, is
       // what the ladder scales, so the budget is in pixels.
       if (b.roll) {
-        const floor = this.arena ? this.arena.floorY : GROUND_Y;
-        if (!b.rolling && b.y + b.radius >= floor) {
+        const land = this.supportY(b.x, b.y + b.radius);
+        if (!b.rolling && land != null) {
           b.rolling = true;
-          b.y = floor - b.radius;
+          b.y = land - b.radius;
+          b.rollG = b.rollG ?? b.gravity ?? 0.16; // kept, so it can fall again
           b.vy = 0; b.gravity = 0;
           b.vx = Math.sign(b.vx || 1) * b.roll.speed;
           if (b.roll.left <= 0) b.life = -1;      // Lv1: lands and stops dead
         }
         if (b.rolling) {
-          b.roll.left -= Math.abs(b.vx);
-          b.vx = Math.max(-6, Math.min(6, b.vx * b.roll.drag));
-          if (b.hot && this.arena) {
-            Attr.addPatch(this.arena.patches,
-              Attr.surfacePatch('hot', b.x - b.radius, b.radius * 2, floor, b.hot, 'player'));
+          // "AFFECTED BY PITS AND PLATFORMS". The roller reads the surface
+          // under its new position every step rather than riding a global floor
+          // line, so it rolls off a ledge into a pit, rolls along a platform and
+          // drops off the end of it, and steps down onto the ground below.
+          // Without this a fireball would roll across thin air over a pit, which
+          // is the one thing a ground weapon must never do.
+          const under = this.supportY(b.x, b.y + b.radius);
+          if (under == null) {
+            b.rolling = false;                    // ran out of floor: fall
+            b.gravity = b.rollG;
+          } else {
+            b.y = under - b.radius;
+            b.roll.left -= Math.abs(b.vx);
+            b.vx = Math.max(-6, Math.min(6, b.vx * b.roll.drag));
+            if (b.hot && this.arena) {
+              Attr.addPatch(this.arena.patches,
+                Attr.surfacePatch('hot', b.x - b.radius, b.radius * 2, under, b.hot, 'player'));
+            }
+            if (b.roll.left <= 0 || Math.abs(b.vx) < 0.15) b.life = -1;
           }
-          if (b.roll.left <= 0 || Math.abs(b.vx) < 0.15) b.life = -1;
         }
       }
 
@@ -998,24 +1080,38 @@ export default class GameScene extends Phaser.Scene {
       // RICOCHET off every sealed surface, losing damage each time. `ricochet`
       // is a bounce BUDGET, so a bolt's reach is a count rather than a timer
       // and the tracker's "longer bounce life" at layer 2 is one number.
-      if (b.ricochet && this.arena) {
+      if (b.ricochet) {
         const a = this.arena;
-        let bounced = false;
-        if (b.x - b.radius <= a.x0) { b.x = a.x0 + b.radius; b.vx = Math.abs(b.vx); bounced = true; }
-        if (b.x + b.radius >= a.x1) { b.x = a.x1 - b.radius; b.vx = -Math.abs(b.vx); bounced = true; }
-        if (b.y - b.radius <= a.ceilY) { b.y = a.ceilY + b.radius; b.vy = Math.abs(b.vy); bounced = true; }
-        if (b.y + b.radius >= a.floorY) {
-          b.y = a.floorY - b.radius; b.vy = -Math.abs(b.vy); bounced = true;
+        // A SEALED ROOM HAS FOUR SURFACES; THE STREAM HAS TWO. Outside an arena
+        // there are no side walls to bounce off — the world is endless — so a
+        // ricochet weapon there rebounds off the ground and the top of the
+        // screen only. Without this the Alloy Blade would be a weapon that
+        // silently stopped ricocheting everywhere except a boss room.
+        const x0 = a ? a.x0 : -Infinity;
+        const x1 = a ? a.x1 : Infinity;
+        const ceil = a ? a.ceilY : 0;
+        const floor = a ? a.floorY : GROUND_Y;
+        let bounced = 0;
+        if (b.x - b.radius <= x0) { b.x = x0 + b.radius; b.vx = Math.abs(b.vx); bounced++; }
+        if (b.x + b.radius >= x1) { b.x = x1 - b.radius; b.vx = -Math.abs(b.vx); bounced++; }
+        if (b.y - b.radius <= ceil) { b.y = ceil + b.radius; b.vy = Math.abs(b.vy); bounced++; }
+        if (b.y + b.radius >= floor) {
+          b.y = floor - b.radius; b.vy = -Math.abs(b.vy); bounced++;
           // Layer 3 discharges into "every panel the last bolt touched", so
           // the floor remembers where it was struck.
-          for (const pn of a.panels) {
+          for (const pn of (a?.panels || [])) {
             if (b.x >= pn.x && b.x < pn.x + pn.w) pn.marked = true;
           }
         }
         if (bounced) {
           b.damage *= b.bounceDmg ?? 0.75;
           if (b.bounceShrink) b.radius = Math.max(1.5, b.radius * b.bounceShrink);
-          if (--b.ricochet <= 0) b.life = -1;
+          // A CORNER IS TWO SURFACES ON ONE FRAME. `cornerSafe` charges it as
+          // one bounce — "blades survive contact with terrain corners" — where
+          // without it a corner eats two, which is why a shot aimed into one
+          // dies visibly early. The budget is the reach the player is reading.
+          b.ricochet -= b.cornerSafe ? 1 : bounced;
+          if (b.ricochet <= 0) b.life = -1;
         }
       }
 
@@ -1156,6 +1252,18 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Attribute damage (Burn, Poison) routes through the same kill path as a
+    // THE ECLIPSE BLADE'S PURSUIT PAUSES. "When pursuing the player they will
+    // pause very briefly at random times" — rolled per minion per frame, so a
+    // crowd stutters raggedly rather than all freezing on the same beat, which
+    // is what makes it read as losing track of you rather than as lag.
+    // The hold is a `held` status so every existing consumer already honours it.
+    const ag = r.aggroPause;
+    if (ag) {
+      for (const e of this.minions) {
+        if (e.hp <= 0 || Attr.hasStatus(e.status, 'cloakHold')) continue;
+        if (Math.random() < ag.chance) Attr.applyStatus(e.status, 'cloakHold', ag.frames);
+      }
+    }
     // bullet, so a minion that burns to death still drops its EXP.
     for (const { e, dot } of Minions.stepMinions(this.minions, this.world, this.player, GROUND_Y)) {
       e.hp -= dot;
@@ -1288,6 +1396,18 @@ export default class GameScene extends Phaser.Scene {
       },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
       status: (id, frames, opts) => Attr.applyStatus(this.status, id, frames, opts),
+      // The room's own enemies, for a hazard that travels THROUGH them —
+      // Volt Man's layer-3 arc chains along whatever is standing in the way.
+      // Minions only: a hazard must never be able to chain into its own boss.
+      minions: this.minions,
+      // Destroyed BY THE ROOM, so no score, no combo and no EXP. The arc did
+      // the work; crediting the player for standing near it would make the
+      // hazard a reward.
+      vaporise: (e) => {
+        if (e.hp <= 0) return;
+        e.hp = 0;
+        sfx('enemyDie', { pitch: 1.2 });
+      },
       // Move the player without going through the hit path. Tempest Man's
       // jetpack exhaust is a FORCE, not an attack: it repositions you without
       // costing health or granting the i-frames a hit would.
@@ -1323,6 +1443,12 @@ export default class GameScene extends Phaser.Scene {
 
   /** A projectile owned by a boss or hazard. Enemy shots use the stingy pad. */
   spawnEnemyShot(spec) {
+    // THE ECLIPSE BLADE'S AGGRO TAX, applied at the one choke point every enemy
+    // projectile in the game passes through. "Enemies will fire projectiles
+    // slightly less frequently" is a dropped shot rather than a longer
+    // cooldown: a cooldown change would desync a boss's telegraph from what
+    // comes out of it, and the telegraph is the fight.
+    if (this.run.aggroFire < 1 && Math.random() > this.run.aggroFire) return;
     this.bullets.push({
       vy: 0, life: 300, charged: false, weapon: null,
       ...spec,

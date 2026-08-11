@@ -19,14 +19,20 @@ import {
 } from '../src/data/weapons.js';
 import * as Loadout from '../src/systems/loadout.js';
 import * as Wpn from '../src/systems/weaponry.js';
+import * as Attr from '../src/systems/attributes.js';
 
 const FLOOR = 184;
 
 /** A player, a couple of enemies, and every hook a weapon can reach for. */
 function harness(id, level) {
   const run = {
-    frame: 0, dmgMult: 1, wstate: {}, allies: [], lastDamaged: null,
-    meleeArmor: 0, wpLevels: { [id]: level },
+    frame: 0, dmgMult: 1, projSpeedMult: 1, hp: 20, hpBonus: 0, runHpBonus: 0,
+    wstate: {}, allies: [], lastDamaged: null,
+    // Every per-frame grant a weapon may assert. GameScene clears these before
+    // the weapons run; the harness just has to have them.
+    meleeArmor: 0, rootFrames: 0, glideFall: null, airControl: 1,
+    aggroFire: 1, aggroPause: null,
+    wpLevels: { [id]: level },
   };
   const player = {
     x: 100, y: FLOOR - 24, vx: 0, vy: 0, facing: 1, onGround: true,
@@ -39,24 +45,52 @@ function harness(id, level) {
   const hits = [];
   const shakes = [];
   const patches = [];
+  const effects = [];
   const fx = Wpn.makeFx();
   const arena = {
     x0: 0, x1: 400, floorY: FLOOR, ceilY: 0, patches: [], platforms: [],
   };
+  const statusBag = {};
   const ctx = {
     run, player, bullets, allies: run.allies, enemies, arena,
+    platforms: arena.platforms, statusBag,
     floorY: FLOOR, landVy: 4, equipped: [id], fx,
     levelOf: () => level,
+    heal: (n) => { run.hp += n; },
     spawn: (spec) => bullets.push({ life: 180, enemy: false, ...spec }),
     hitEnemy: (e, dmg, opts) => { hits.push({ e, dmg, opts }); e.hp -= dmg; },
     overGround: () => true,
     shake: (mag, dur) => shakes.push({ mag, dur }),
-    puff: (spec) => Wpn.puff(fx, spec),
+    // COUNTED, NOT SAMPLED. A puff lives a few frames and stepFx clears it, so
+    // reading fx.puffs at the end of a 2000-frame run scores a weapon whose
+    // whole output is puffs as idle. Every transient effect has to be tallied
+    // as it happens.
+    puff: (spec) => { effects.push(spec); return Wpn.puff(fx, spec); },
     arc: (a, b) => Wpn.arcFx(fx, a, b),
     patch: (pid, x, w, y, frames) => patches.push({ pid, x, w, y, frames }),
     sfx: () => {},
   };
-  return { ctx, run, player, enemies, bullets, hits, shakes, patches, fx };
+  return { ctx, run, player, enemies, bullets, hits, shakes, patches, fx, statusBag, effects };
+}
+
+/**
+ * Put the player through a jump-and-fall cycle as the frames tick by.
+ *
+ * A PERMANENTLY GROUNDED HARNESS CANNOT SEE A FALL-TRIGGERED WEAPON. The Gale
+ * Vortex only acts while descending, so with `onGround` pinned true it scored as
+ * doing nothing across two thousand frames — the same shape of gap as the boss
+ * harness that was missing `anim` and hid a real crash behind a green suite.
+ * Anything that reads the player's vertical state gets exercised here.
+ */
+function airCycle(player, i) {
+  const phase = i % 120;
+  if (phase < 40) {
+    player.onGround = false; player.vy = -2 + phase * 0.1;   // rising
+  } else if (phase < 80) {
+    player.onGround = false; player.vy = 2 + (phase - 40) * 0.05; // falling
+  } else {
+    player.onGround = true; player.vy = 0;
+  }
 }
 
 const LADDER_IDS = Object.keys(WEAPON_LADDERS);
@@ -78,9 +112,13 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
       assert.doesNotThrow(() => {
         for (let i = 0; i < 2000; i++) {
           h.run.frame++;
+          airCycle(h.player, i);
           Wpn.coolWeapons(h.run.wstate);
           Wpn.stepWeapons(h.ctx, [id]);
-          if (beh.fire) Wpn.fireActive(h.ctx, id, i % 60);
+          Wpn.stepAllies(h.ctx);
+          // Long enough to trip every long press, including the Quake Hammer's
+          // own 1.5s one — a shared 0.4s ceiling would never reach it.
+          if (beh.fire) Wpn.fireActive(h.ctx, id, i % 120);
           if (i % 90 === 0) Wpn.notify(h.ctx, [id], 'land');
           if (i % 70 === 0) Wpn.notify(h.ctx, [id], 'jump');
           Wpn.stepFx(h.fx);
@@ -94,8 +132,14 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
       // is a freeze and a blocked shot — neither spawns anything, and scoring
       // it as idle would be measuring the wrong thing.
       const statused = h.enemies.filter((e) => Object.keys(e.status).length > 0).length;
+      // So does asserting a per-frame grant. The Eclipse Blade at Lv1 spawns
+      // nothing at all: its whole effect is the aggro tax it publishes onto the
+      // run for GameScene to apply, which is exactly what "reduces aggro" means.
+      const granted = (h.run.aggroFire < 1 ? 1 : 0) + (h.run.aggroPause ? 1 : 0)
+        + (h.run.rootFrames > 0 ? 1 : 0) + (h.run.glideFall != null ? 1 : 0);
       const acted = h.bullets.length + h.hits.length + h.shakes.length
-        + h.run.allies.length + h.fx.puffs.length + h.patches.length + statused;
+        + h.run.allies.length + h.effects.length + h.patches.length
+        + statused + granted;
       assert.ok(acted > 0, `${id} Lv${level} did nothing across 2000 frames`);
     }
   }
@@ -168,6 +212,74 @@ test('a partial ladder degrades to its last written rung', () => {
     assert.deepEqual(ladderAt(id, 10), ladderAt(id, top),
       `${id} above its last rung must reuse that rung, not fall through`);
   }
+});
+
+/**
+ * The DIRECTION each new ladder moves in, which is the design — not the
+ * numbers, which are placeholders. A rung that moved the wrong way would be a
+ * mistake rather than a tuning choice, and that is the only thing worth pinning
+ * this early.
+ */
+test('every ladder moves in the direction its tracker field describes', () => {
+  const grows = (id, key, rungs) => {
+    for (let i = 1; i < rungs.length; i++) {
+      const lo = ladderAt(id, rungs[i - 1])[key];
+      const hi = ladderAt(id, rungs[i])[key];
+      assert.ok(hi > lo, `${id}.${key} must grow from Lv${rungs[i - 1]} to Lv${rungs[i]}`);
+    }
+  };
+  // "Increased reach" at Lv3, "significantly increased reach" at Lv6.
+  grows('thorn_lash', 'reach', [1, 3, 6]);
+  // "More ricochets + higher damage."
+  grows('alloy_blade', 'bounces', [1, 3]);
+  grows('alloy_blade', 'pierce', [1, 3]);
+  // "Larger shockwave and longer Stun."
+  grows('quake_hammer', 'waveSize', [1, 3]);
+  grows('quake_hammer', 'stunFrames', [1, 3]);
+  // "2 allies", then 3, then 5 — and a longer duration with them.
+  grows('swarm_caller', 'count', [1, 3, 6, 10]);
+  grows('swarm_caller', 'lifeFrames', [1, 3, 10]);
+  // "Slight increase in pause duration and frequency."
+  grows('eclipse_blade', 'pauseFrames', [1, 3]);
+  grows('eclipse_blade', 'pauseChance', [1, 3]);
+  // Hot lingers longer as the Blaze Wheel levels: 3s then 5s.
+  grows('blaze_wheel', 'hotFrames', [1, 3]);
+});
+
+test('the Thorn Lash only tosses and constricts at its top rung', () => {
+  // "Lv1: can only reel in and damage minions; does not toss or constrict them."
+  assert.equal(ladderAt('thorn_lash', 1).toss, false);
+  assert.equal(ladderAt('thorn_lash', 1).constrictFrames, 0);
+  assert.equal(ladderAt('thorn_lash', 1).grapple, false, 'the grapple arrives at Lv3');
+  assert.equal(ladderAt('thorn_lash', 3).grapple, true);
+  assert.equal(ladderAt('thorn_lash', 10).toss, true);
+  assert.ok(ladderAt('thorn_lash', 10).constrictFrames > 0);
+});
+
+test('the Swarm Caller inverts from a timed group to a standing swarm at Lv10', () => {
+  // Below Lv10 the group expires together and is re-summoned; at Lv10 the bugs
+  // are permanent and individually replaced. That inversion IS the rung.
+  assert.ok(!ladderAt('swarm_caller', 6).shield);
+  assert.equal(ladderAt('swarm_caller', 10).shield, true);
+  assert.ok(ladderAt('swarm_caller', 10).kamikaze > 0);
+});
+
+test('the Quake Hammer declares its own 1.5 second hold', () => {
+  // The tracker says 1.5s for this weapon specifically. It must not silently
+  // fall back to the shared 0.4s long press every other weapon uses.
+  const hold = ladderAt('quake_hammer', 1).holdFrames;
+  assert.equal(hold, 90);
+  assert.ok(hold > Wpn.LONG_PRESS_FRAMES);
+  assert.equal(Wpn.RUNTIME.quake_hammer.holdFrames(1), hold);
+});
+
+test('a status-immune weapon clears whatever has been applied', () => {
+  const h = harness('eclipse_blade', 1);
+  Attr.applyStatus(h.statusBag, 'burn', 120);
+  assert.ok(Attr.hasStatus(h.statusBag, 'burn'));
+  Wpn.stepWeapons(h.ctx, ['eclipse_blade']);
+  assert.ok(!Attr.hasStatus(h.statusBag, 'burn'), 'the cloak must clear it the same frame');
+  assert.ok(h.run.aggroFire < 1, 'and publish the aggro tax');
 });
 
 // ── Loadout ──────────────────────────────────────────────────────────

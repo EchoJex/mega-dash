@@ -172,6 +172,21 @@ const FURNITURE = {
    * makes the whole mechanic optional.
    */
   volt(a, layer, viewW, floorY) {
+    // "SEVERAL PLATFORMS PHASE IN AND OUT IN RANDOM LOCATIONS." Four rather
+    // than Blaze Man's three, because here they are not shelter — the hazard is
+    // the FLOOR, so a platform is the answer to it, and one too few would turn
+    // the sweep from a thing you read into a thing you wait out.
+    //
+    // They phase on staggered timers for the same reason Blaze Man's do: the
+    // player must never be left with nothing above the live panel. Height
+    // alternates so a phased-out low platform still leaves a reachable high one.
+    a.platforms = Array.from({ length: 4 }, (_, i) => ({
+      x: Math.round(viewW * (0.14 + 0.24 * i)) - 20,
+      y: floorY - 38 - (i % 2) * 28,
+      w: 40, h: 5,
+      on: true, t: 130 + i * 55, hot: 0,
+    }));
+
     const n = 8;
     const pw = Math.floor((a.x1 - a.x0) / n);
     a.panels = Array.from({ length: n }, (_, i) => ({

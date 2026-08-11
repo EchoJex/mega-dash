@@ -40,6 +40,12 @@ export const ATTR = {
   // Identical behaviour, different colour.
   constrict: { form: 'character', tint: 0x2AAB1C, label: 'HELD', held: true },
   freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', held: true },
+  // NOT AN ELEMENTAL ATTRIBUTE, and deliberately not in the tracker's list.
+  // The Eclipse Blade's aggro pause is "loses track of you for a beat", which
+  // is mechanically a hold and nothing else — it reuses the hold machinery so
+  // every consumer already honours it, and carries no tint because there is
+  // nothing elemental to show. Do not give it one.
+  cloakHold: { form: 'character', tint: null, label: '', held: true },
 };
 
 /** Statuses that stop an actor acting. */
@@ -97,6 +103,19 @@ export const statusFrac = (bag, id) =>
   hasStatus(bag, id) ? bag[id].t / bag[id].tMax : 0;
 
 /**
+ * Wipe every status. Immunity is expressed as a CONTINUOUS CLEAR rather than as
+ * a flag consulted at application time, because statuses arrive from a dozen
+ * places — patches, contact, projectiles, hazards — and a flag would have to be
+ * checked correctly at every one of them. Clearing once a frame cannot be
+ * forgotten by a future caller, and it degrades to a single wasted object walk
+ * when nothing is applied.
+ */
+export function clearStatus(bag) {
+  if (!bag) return;
+  for (const id of Object.keys(bag)) delete bag[id];
+}
+
+/**
  * Advance every status one frame and return whole points of damage accrued.
  *
  * Burn is "very mild damage very rapidly, rapidly diminishing" — so it is a
@@ -127,8 +146,12 @@ export function stepStatus(bag) {
 export function statusTint(bag) {
   let best = null, bestFrac = 0;
   for (const id of Object.keys(bag || {})) {
+    // A status with no tint has nothing to say visually and must not win the
+    // slot — otherwise a colourless hold would blank out a live Burn.
+    const tint = ATTR[id]?.tint;
+    if (tint == null) continue;
     const f = bag[id].t / bag[id].tMax;
-    if (f > bestFrac) { bestFrac = f; best = ATTR[id]?.tint ?? null; }
+    if (f > bestFrac) { bestFrac = f; best = tint; }
   }
   return best;
 }

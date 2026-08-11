@@ -3,14 +3,15 @@
  *
  * CLASSES AND THE LOADOUT
  * -----------------------
- * A run carries ONE sidearm (the old Mega Buster) plus TWO offensive and TWO
- * defensive specials. `cls` below is what decides which pair a weapon competes
- * for, and it is taken from the first word of that weapon's tracker field —
- * "Offensive; ..." / "Defensive; ...". It is not flavour text.
+ * A run carries up to TWO offensive and TWO defensive weapons, how many of them
+ * it may actually use set by Loadout Mastery. `cls` below is what decides which
+ * pair a weapon competes for, and it is taken from the first word of that
+ * weapon's tracker field — "Offensive; ..." / "Defensive; ...". It is not
+ * flavour text.
  *
- *   sidearm    always equipped, always available, never occupies a slot
- *   offensive  shares the fire button with the sidearm; the wheel picks which
- *              one is live
+ *   offensive  shares the fire button; the wheel picks which one is aimed. THE
+ *              SIDEARM IS ONE OF THESE — it occupies a slot rather than riding
+ *              above them for free.
  *   defensive  runs by itself — a drone that auto-fires, a shield that
  *              maintains itself, a jetpack that vents on landing. Never aimed.
  *
@@ -150,20 +151,28 @@ export const WEAPON_LADDERS = {
 
   // ── BLAZE WHEEL — offensive, Fire ─────────────────────────────────
   // A lob that converts to a roller on landing, laying Hot behind it.
-  // Lv1  no roll at all, one on screen, 1s of Hot.
-  // Lv3  2s of Hot and a moderate roll that decelerates rapidly.
-  // Lv6  a second fireball on a taller, much wider arc; two on screen.
+  // Lv1  no roll at all, up to 2 on screen, 3s of Hot.
+  // Lv3  5s of Hot and a moderate roll that decelerates rapidly, obeying pits
+  //      and platforms.
+  // Lv6  a second fireball on a taller, much wider arc, landing about where the
+  //      first is projected to stop and rolling the same distance again.
   // Lv10 half a screen of roll each (a full screen combined), piercing, and
   //      the roll ACCELERATES instead of dying out.
+  //
+  // `maxLive` COUNTS FIREBALLS, NOT SHOTS, and that is what makes "up to 2 on
+  // screen" mean two different things at the two ends of the ladder without the
+  // number changing: at Lv1 one fireball per shot, so two shots may overlap; at
+  // Lv6 two per shot, so a volley must land before the next one goes out. Both
+  // are exactly what the tracker says at that rung.
   blaze_wheel: {
     1: {
-      cooldown: 30, maxLive: 1,
+      cooldown: 30, maxLive: 2,
       lobVx: 2.4, lobVy: -2.4, gravity: 0.16,
       roll: 0, rollSpeed: 0, rollDrag: 1,
-      hotFrames: 60, burnFrames: 60, pierce: 0,
+      hotFrames: 180, burnFrames: 60, pierce: 0,
     },
-    3: { hotFrames: 120, roll: 40, rollSpeed: 2.2, rollDrag: 0.94 },
-    6: { maxLive: 2, secondArc: 1.45 },
+    3: { hotFrames: 300, roll: 40, rollSpeed: 2.2, rollDrag: 0.94 },
+    6: { secondArc: 1.45 },
     // 200px each on a 320-480px screen — "full screen combined, half for each".
     10: { roll: 200, rollDrag: 1.05, pierce: 99, burnFrames: 120 },
   },
@@ -237,23 +246,135 @@ export const WEAPON_LADDERS = {
   },
 
   // ── QUAKE HAMMER — offensive, Ground ──────────────────────────────
+  // "Slow, delayed baseball-swing on tap for high damage and high knockback;
+  //  long press 1.5s to hold the hammer overhead and on release swing downward
+  //  producing shockwaves and stunning nearby enemies. Per-level scaling:
+  //  shockwave size + stun duration."
+  //  Lv1  an airborne pound drives the player down fast; the wave is born
+  //       where he actually lands.
+  //  Lv3  larger wave, longer stun, and the wave climbs low obstacles.
   // PARTIAL LADDER: Lv6 and Lv10 are still `[wip]` in the tracker.
+  //
+  // `holdFrames` IS THE TRACKER'S 1.5 SECONDS and is this weapon's own, not the
+  // shared LONG_PRESS_FRAMES: the hold is a commitment here, not a modifier, and
+  // 0.4s would let it happen by accident on a slightly slow tap.
   quake_hammer: {
     1: {
       swingFrames: 30, reach: 22, swingDmgMult: 1.8, swingKnock: 3.6,
-      poundFrames: 26,
+      holdFrames: 90, poundFrames: 26, poundAccel: 1.2,
       waveSpeed: 2.4, waveSize: 5, waveDmgMult: 0.7, waveLife: 70,
-      waveKnock: 2.2, waveClimbs: false, stunFrames: 45,
+      waveKnock: 2.2, waveClimbs: false, stunFrames: 45, stunRange: 40,
     },
-    3: { waveSize: 8, waveLife: 110, stunFrames: 120, waveClimbs: true },
+    3: {
+      waveSize: 8, waveLife: 110, stunFrames: 120, waveClimbs: true,
+      stunRange: 56,
+    },
   },
 
   // ── SWARM CALLER — defensive, Bug ─────────────────────────────────
-  // PARTIAL LADDER: Lv10 is still `[wip]` in the tracker.
+  // "Summons temporary bug allies that attack nearby enemies."
+  //  Lv1  ONE ally, short duration; nearest minion, returning to the player
+  //       briefly between targets.
+  //  Lv3  two allies, longer, prioritising whatever the player last damaged.
+  //  Lv6  three, and every other one intercepts projectiles as a meat shield.
+  //  Lv10 five that swarm the player as a shield and slowly respawn after
+  //       tanking damage, plus a three-bug kamikaze converge on one enemy.
   swarm_caller: {
-    1: { count: 2, lifeFrames: 300, recallFrames: 240, dmgMult: 0.45, intercept: false },
-    3: { count: 3, lifeFrames: 480 },
-    6: { intercept: true },
+    1: {
+      count: 1, lifeFrames: 300, recallFrames: 240, dmgMult: 0.45,
+      intercept: false, regroup: 45, shield: false, kamikaze: 0,
+    },
+    3: { count: 2, lifeFrames: 480 },
+    6: { count: 3, intercept: true },
+    10: {
+      count: 5, lifeFrames: 900, shield: true, respawnFrames: 240,
+      kamikaze: 3, kamikazeFrames: 300, blastRadius: 22, blastDmgMult: 2.4,
+    },
+  },
+
+  // ── THORN LASH — offensive, Grass ─────────────────────────────────
+  // "Stand still while shooting a directional-input whip-like vine that reels
+  //  in enemies then immediately throws them back as projectiles. Moderately
+  //  slow attack speed."
+  //  Lv1  short reach; reels and damages minions only, no toss, no constrict.
+  //  Lv3  longer, diagonal-aware, and it grapples terrain: a ledge lip pulls
+  //       you up, a platform or ceiling hit while airborne swings you forward.
+  //  Lv6  significantly longer again.
+  //  Lv10 constricts minibosses for 5s of DPS, and thrown minions become
+  //       high-damage projectiles.
+  //
+  // REACH IS THE WHOLE LADDER at Lv1/6, which is why nothing else moves there.
+  // A whip that has to be aimed while standing still is priced in exposure, and
+  // reach is what buys the exposure back.
+  thorn_lash: {
+    1: {
+      cooldown: 36, reach: 34, lashFrames: 18, rootFrames: 22,
+      reelSpeed: 3.2, dmgMult: 1.4,
+      toss: false, tossDmgMult: 0, constrictFrames: 0,
+      grapple: false, diagonal: false,
+    },
+    3: { reach: 52, diagonal: true, grapple: true, swingSpeed: 3.4, ledgeGrab: 0.2 },
+    6: { reach: 78 },
+    10: { toss: true, tossDmgMult: 2.6, tossSpeed: 5, constrictFrames: 300 },
+  },
+
+  // ── GALE VORTEX — defensive, Flying ───────────────────────────────
+  // "White puffs of smoke energy when falling, significantly reducing fall
+  //  speed and significantly increasing horizontal movement."
+  //  Lv1  up to 3 puffs while falling, each cancelling vertical velocity,
+  //       separated by a very brief time.
+  // PARTIAL LADDER: Lv3/6/10 still describe the OLD tornado weapon and are
+  // `[wip]`. Do not build them — this weapon was redesigned and those rungs
+  // have not caught up.
+  //
+  // THE PUFFS ARE AUTOMATIC. It is a defensive weapon, so it must never want the
+  // fire button: falling is the trigger, the count is the budget, and touching
+  // the ground refills it. That makes it a safety net you spend rather than an
+  // ability you aim.
+  gale_vortex: {
+    1: {
+      puffs: 3, puffGap: 14, fallCut: 0.18, glideFall: 1.1,
+      airControl: 1.75, glideFrames: 40,
+    },
+  },
+
+  // ── ECLIPSE BLADE — defensive, Dark ───────────────────────────────
+  // "Reduces aggro and become immune to status effects."
+  //  Lv1  enemies fire slightly less often and pause briefly at random while
+  //       pursuing.
+  //  Lv3  slightly longer and more frequent pauses.
+  //  Lv6  shadow trails that damage enemies and lifesteal.
+  // PARTIAL LADDER: Lv10's "Dark Mode" is still `[wip]`.
+  //
+  // AGGRO IS A TAX ON THE ENEMY'S CLOCK, not a stat on the player: it slows the
+  // rate things happen TO you rather than making them hurt less, which is the
+  // only version of "stealth" that stays legible in a game where every threat is
+  // already telegraphed. The status immunity is flat from Lv1 because a partial
+  // immunity would be indistinguishable from luck.
+  eclipse_blade: {
+    1: {
+      fireChance: 0.85, pauseChance: 0.012, pauseFrames: 18,
+      immune: true, trail: false,
+    },
+    3: { pauseChance: 0.02, pauseFrames: 30 },
+    6: {
+      trail: true, trailGap: 8, trailLife: 90, trailDmgMult: 0.5,
+      lifesteal: 0.25, trailHitGap: 30,
+    },
+  },
+
+  // ── ALLOY BLADE — offensive, Steel ────────────────────────────────
+  // "Throws penetrative metal blades that ricochet multiple times. Per-level
+  //  scaling: more ricochets + higher damage."
+  //  Lv1  single blade, one ricochet, pierces the first enemy hit.
+  //  Lv3  two ricochets, more pierce, and blades survive terrain corners.
+  // PARTIAL LADDER: Lv6's early recall and Lv10's armour mode are `[wip]`.
+  alloy_blade: {
+    1: {
+      cooldown: 20, speed: 3.4, bounces: 1, pierce: 1,
+      dmgMult: 1, life: 240, cornerSafe: false,
+    },
+    3: { bounces: 2, pierce: 2, dmgMult: 1.25, cornerSafe: true },
   },
 };
 
@@ -349,7 +470,9 @@ const DEFS = [
   { id: 'volt_spark', name: 'VOLT SPARK', short: 'VOLT', cls: OFFENSIVE, boss: 'volt',
     cooldown: 12, projectiles: 1, shape: 'spark', speed: 3.6,
     desc: 'Fixed-range burst that chains between enemies and stuns.' },
-  // Provisional class — its tracker field is still `[wip]`.
+  // Offensive by behaviour rather than by a class word: the tracker's field
+  // does not name one, and a whip you aim while standing still is not a thing
+  // that runs itself. Confirmed if the owner ever writes the word.
   { id: 'thorn_lash', name: 'THORN LASH', short: 'THORN', cls: OFFENSIVE, boss: 'thorn',
     cooldown: 36, projectiles: 1, shape: 'lash', speed: 2.8,
     desc: 'Whip-vine that reels enemies in and throws them.' },
@@ -367,9 +490,12 @@ const DEFS = [
     cooldown: 40, projectiles: 1, shape: 'wave', speed: 2.0,
     desc: 'Rock hammer; long-press for a stunning ground pound.' },
   // Provisional class — its tracker field is still `[wip]`.
+  // The tracker replaced the tornado with a fall-arresting glide; the name and
+  // id stayed. Higher rungs of its ladder still describe the tornado and are
+  // `[wip]`, so only Lv1 is built.
   { id: 'gale_vortex', name: 'GALE VORTEX', short: 'GALE', cls: DEFENSIVE, boss: 'gale',
     cooldown: 45, projectiles: 1, shape: 'tornado', speed: 1.8,
-    desc: 'Controllable mini-tornado that lifts enemies.' },
+    desc: 'Smoke puffs that cancel a fall and widen air control.' },
   // Provisional class — its tracker field is still `[wip]`.
   { id: 'psi_orb', name: 'PSI ORB', short: 'PSI', cls: OFFENSIVE, boss: 'psi',
     cooldown: 30, projectiles: 1, shape: 'orb', speed: 1.6,
@@ -389,10 +515,13 @@ const DEFS = [
   { id: 'drake_breath', name: 'DRAKE BREATH', short: 'DRAKE', cls: OFFENSIVE, boss: 'drake',
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },
-  // Provisional class — its tracker field is still `[wip]`.
-  { id: 'eclipse_blade', name: 'ECLIPSE BLADE', short: 'ECLIPSE', cls: OFFENSIVE, boss: 'eclipse',
-    cooldown: 24, projectiles: 1, shape: 'boomerang', speed: 3.0,
-    desc: 'Dark boomerang that returns and steals health.' },
+  // RECLASSIFIED. This was a provisionally-offensive boomerang while its
+  // tracker field was `[wip]`; the field now reads "Defensive; reduces aggro and
+  // become immune to status effects", and the field wins. Id and name are
+  // unchanged so saves and the wheel are unaffected.
+  { id: 'eclipse_blade', name: 'ECLIPSE BLADE', short: 'ECLIPSE', cls: DEFENSIVE, boss: 'eclipse',
+    cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
+    desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
   // Provisional class — its tracker field is still `[wip]`.
   { id: 'alloy_blade', name: 'ALLOY BLADE', short: 'ALLOY', cls: OFFENSIVE, boss: 'alloy',
     cooldown: 20, projectiles: 1, shape: 'blade', speed: 3.4,
