@@ -1239,11 +1239,14 @@ export default class GameScene extends Phaser.Scene {
     // enemies in it are the boss and anything its own moveset summons (which
     // comes from data/bossFights.js, not from here). The ambient stream resumes
     // when the fight ends.
-    if (this.boss) return;
-
-    // Spawn cadence tightens with the difficulty step, which is keyed to
-    // elapsed time — camping does not slow this down.
-    if (--this.spawnTimer <= 0) {
+    //
+    // ONLY THE SPAWNER IS SUPPRESSED. This used to return outright, which also
+    // switched off movement, collision and pruning — so a boss-summoned minion
+    // stood frozen and intangible in the middle of its own fight. What a fight
+    // must not have is the AMBIENT stream, not minions.
+    if (!this.boss && --this.spawnTimer <= 0) {
+      // Spawn cadence tightens with the difficulty step, which is keyed to
+      // elapsed time — camping does not slow this down.
       this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
       if (this.minions.length < FEEL.maxMinions) {
         const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y);
@@ -1270,13 +1273,25 @@ export default class GameScene extends Phaser.Scene {
       if (e.hp <= 0) this.killMinion(e);
     }
 
+    // A SEALED ROOM HOLDS ITS MINIONS TOO. Everything a minion knows about the
+    // world says "drift left off the edge of the screen", which is right in the
+    // stream and wrong in an arena — a summon would walk into the wall and be
+    // pruned out of the fight it was summoned for. They turn at the walls, the
+    // same walls that hold the player in.
+    if (this.arena) {
+      for (const e of this.minions) {
+        if (e.x < this.arena.x0) { e.x = this.arena.x0; e.vx = Math.abs(e.vx); }
+        if (e.x + e.w > this.arena.x1) { e.x = this.arena.x1 - e.w; e.vx = -Math.abs(e.vx); }
+      }
+    }
+
     for (const e of this.minions) {
       if (e.hp <= 0) continue;
       if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
         this.hurt(e.x + e.w / 2);
       }
     }
-    this.minions = Minions.pruneMinions(this.minions, this.cam.x);
+    this.minions = Minions.pruneMinions(this.minions, this.arena ? -1e9 : this.cam.x);
   }
 
   killMinion(e) {
@@ -1407,6 +1422,20 @@ export default class GameScene extends Phaser.Scene {
         if (e.hp <= 0) return;
         e.hp = 0;
         sfx('enemyDie', { pitch: 1.2 });
+      },
+      /**
+       * A BOSS-SUMMONED MINION. The only way an enemy other than the boss gets
+       * into a sealed arena — the ambient spawner is off for the whole fight,
+       * and this is what "whatever its own moveset summons" means.
+       *
+       * `cap` is per summoning boss and counts what is already in the room, so
+       * a fight cannot slowly fill up with leftovers from earlier cycles.
+       */
+      summon: (kind, x, y, cap = 99) => {
+        if (this.minions.filter((m) => m.hp > 0 && m.def.kind === kind).length >= cap) return null;
+        const m = Minions.spawnAt(kind, x, y, this.run.frame);
+        if (m) this.minions.push(m);
+        return m;
       },
       // Move the player without going through the hit path. Tempest Man's
       // jetpack exhaust is a FORCE, not an attack: it repositions you without

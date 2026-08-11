@@ -52,6 +52,11 @@
   .st{padding:6px;background:#141922}
   .st select{width:100%;background:#0d1015;color:var(--ink);border:1px solid var(--grid);padding:4px;border-radius:2px}
   .txt{padding:8px 10px;white-space:pre-wrap;outline:none;min-height:36px}
+  /* A choice field is a <select> wearing the same .txt skin, so the rows stay
+     aligned and the marker stripe still reads down the left edge. */
+  select.txt{font:inherit;color:inherit;background-color:transparent;border:0;
+    appearance:none;cursor:pointer;padding-left:14px}
+  select.txt option{background:var(--bg);color:var(--fg)}
   .txt:focus{box-shadow:inset 0 0 0 1px var(--ui)}
   .f-ready .txt{background:rgba(74,143,216,.09);box-shadow:inset 3px 0 0 var(--ready)}
   .f-wip   .txt{background:rgba(242,181,61,.09);box-shadow:inset 3px 0 0 var(--wip)}
@@ -141,6 +146,18 @@ let BRANCHES = [...FALLBACK_BRANCHES];
 // Ordered by how often they are chosen: [draft] is the build signal and the
 // most common deliberate act, so it leads.
 const MARKS = ['draft', 'wip', 'ready', 'todo', 'na'];
+
+/**
+ * Fields whose answer is a CHOICE rather than prose, rendered as a dropdown.
+ *
+ * `weapon class` is read by the build as a key — it decides which pair of
+ * loadout slots the weapon competes for — so it must not be free text. Add a
+ * field here only when the code genuinely consumes its value as an enum;
+ * everything the code reads as prose belongs in a textbox.
+ */
+const CHOICE_FIELDS = {
+  'weapon class': ['Offensive', 'Defensive'],
+};
 const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';
 
@@ -404,12 +421,14 @@ function fieldRow(f, head) {
   sel.onchange = () => { f.mark = sel.value; row.className = 'field f-' + f.mark; bump(head); touch(); };
   st.appendChild(sel);
 
-  const txt = document.createElement('div');
+  // A CLOSED SET OF ANSWERS GETS A DROPDOWN, NOT A TEXTBOX. `weapon class` has
+  // exactly two legal values and the code reads it as a key, so free text there
+  // is only an opportunity to typo something the build then classifies wrong.
+  // Everything else stays prose, because everything else IS prose.
+  const choices = CHOICE_FIELDS[f.label];
+  const txt = document.createElement(choices ? 'select' : 'div');
   txt.className = 'txt';
-  txt.contentEditable = 'true';
-  txt.textContent = f.text;
-  txt.oninput = () => {
-    f.text = txt.innerText;
+  const dirty = () => {
     // THE ASSERTION RULE: editing a field drops it back to wip. Moving it to
     // draft again is a deliberate act, and that act is the go-ahead to build it.
     if (f.mark !== 'wip') {
@@ -417,6 +436,27 @@ function fieldRow(f, head) {
     }
     touch();
   };
+
+  if (choices) {
+    for (const c of choices) {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      o.selected = c.toLowerCase() === f.text.trim().toLowerCase();
+      txt.appendChild(o);
+    }
+    // An unrecognised existing value keeps its place rather than being silently
+    // rewritten to the first option the moment the card is opened.
+    if (![...txt.options].some((o) => o.selected)) {
+      const o = document.createElement('option');
+      o.value = f.text; o.textContent = f.text || '(unset)'; o.selected = true;
+      txt.insertBefore(o, txt.firstChild);
+    }
+    txt.onchange = () => { f.text = txt.value; dirty(); };
+  } else {
+    txt.contentEditable = 'true';
+    txt.textContent = f.text;
+    txt.oninput = () => { f.text = txt.innerText; dirty(); };
+  }
 
   row.append(lbl, st, txt);
   return row;

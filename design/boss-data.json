@@ -8,7 +8,8 @@
       "outline": "#0A0A12",
       "scale": 0.8,
       "attackName": "Core Pulse",
-      "weaponName": "Nullfire Drone"
+      "weaponName": "Nullfire Drone",
+      "weaponClass": "defensive"
     },
     "blaze": {
       "name": "Blaze Man",
@@ -17,7 +18,8 @@
       "outline": "#0A0A12",
       "scale": 1.75,
       "attackName": "Inferno Wheel",
-      "weaponName": "Blaze Wheel"
+      "weaponName": "Blaze Wheel",
+      "weaponClass": "offensive"
     },
     "torrent": {
       "name": "Tempest Man",
@@ -26,7 +28,8 @@
       "outline": "#0A0A12",
       "scale": 1.75,
       "attackName": "Aqua Torrent",
-      "weaponName": "Torrent Cannon"
+      "weaponName": "Torrent Cannon",
+      "weaponClass": "defensive"
     },
     "volt": {
       "name": "Volt Man",
@@ -35,7 +38,8 @@
       "outline": "#0A0A12",
       "scale": 1.65,
       "attackName": "Chain Spark",
-      "weaponName": "Volt Spark"
+      "weaponName": "Volt Spark",
+      "weaponClass": "offensive"
     },
     "thorn": {
       "name": "Thorn Man",
@@ -44,7 +48,8 @@
       "outline": "#0A0A12",
       "scale": 1.8,
       "attackName": "Vine Lash",
-      "weaponName": "Thorn Lash"
+      "weaponName": "Thorn Lash",
+      "weaponClass": "offensive"
     },
     "frost": {
       "name": "Frost Man",
@@ -53,7 +58,8 @@
       "outline": "#0A0A12",
       "scale": 1.85,
       "attackName": "Glacier Spike",
-      "weaponName": "Frost Guard"
+      "weaponName": "Frost Guard",
+      "weaponClass": "defensive"
     },
     "strike": {
       "name": "Strike Man",
@@ -62,7 +68,8 @@
       "outline": "#0A0A12",
       "scale": 1.85,
       "attackName": "Rush Combo",
-      "weaponName": "Strike Gauntlet"
+      "weaponName": "Strike Gauntlet",
+      "weaponClass": "offensive"
     },
     "venom": {
       "name": "Venom Man",
@@ -71,7 +78,8 @@
       "outline": "#0A0A12",
       "scale": 1.7,
       "attackName": "Toxic Cloud",
-      "weaponName": "Venom Spray"
+      "weaponName": "Venom Spray",
+      "weaponClass": "offensive"
     },
     "quake": {
       "name": "Quake Man",
@@ -80,7 +88,8 @@
       "outline": "#0A0A12",
       "scale": 1.95,
       "attackName": "Seismic Stomp",
-      "weaponName": "Quake Hammer"
+      "weaponName": "Quake Hammer",
+      "weaponClass": "offensive"
     },
     "gale": {
       "name": "Gale Man",
@@ -89,7 +98,8 @@
       "outline": "#0A0A12",
       "scale": 1.5,
       "attackName": "Wind Vortex",
-      "weaponName": "Gale Vortex"
+      "weaponName": "Gale Vortex",
+      "weaponClass": "defensive"
     },
     "psi": {
       "name": "Psi Man",
@@ -98,7 +108,8 @@
       "outline": "#0A0A12",
       "scale": 1.55,
       "attackName": "Mind Lift",
-      "weaponName": "Psi Orb"
+      "weaponName": "Psi Orb",
+      "weaponClass": "offensive"
     },
     "swarm": {
       "name": "Swarm Man",
@@ -107,7 +118,8 @@
       "outline": "#0A0A12",
       "scale": 1.6,
       "attackName": "Infestation",
-      "weaponName": "Swarm Caller"
+      "weaponName": "Swarm Caller",
+      "weaponClass": "defensive"
     },
     "granite": {
       "name": "Granite Man",
@@ -116,7 +128,8 @@
       "outline": "#0A0A12",
       "scale": 2,
       "attackName": "Boulder Roll",
-      "weaponName": "Rock Buster"
+      "weaponName": "Rock Buster",
+      "weaponClass": "offensive"
     },
     "wraith": {
       "name": "Wraith Man",
@@ -125,7 +138,8 @@
       "outline": "#0A0A12",
       "scale": 1.6,
       "attackName": "Spectral Shift",
-      "weaponName": "Wraith Cloak"
+      "weaponName": "Wraith Cloak",
+      "weaponClass": "defensive"
     },
     "drake": {
       "name": "Drake Man",
@@ -134,7 +148,8 @@
       "outline": "#0A0A12",
       "scale": 1.9,
       "attackName": "Dragon Breath",
-      "weaponName": "Drake Breath"
+      "weaponName": "Drake Breath",
+      "weaponClass": "offensive"
     },
     "eclipse": {
       "name": "Eclipse Man",
@@ -143,7 +158,8 @@
       "outline": "#0A0A12",
       "scale": 1.75,
       "attackName": "Shadow Bind",
-      "weaponName": "Eclipse Blade"
+      "weaponName": "Astral Cloak",
+      "weaponClass": "defensive"
     },
     "alloy": {
       "name": "Alloy Man",
@@ -152,7 +168,8 @@
       "outline": "#0A0A12",
       "scale": 1.9,
       "attackName": "Metal Barrage",
-      "weaponName": "Alloy Blade   ---"
+      "weaponName": "Alloy Blade   ---",
+      "weaponClass": "offensive"
     }
   }
 }

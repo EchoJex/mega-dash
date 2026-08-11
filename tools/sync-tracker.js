@@ -12,7 +12,7 @@
  * changes; `npm test` fails loudly if the two disagree.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { parse, rawOf } from '../docs/tracker-md.js';
+import { parse, rawOf, fieldsOf } from '../docs/tracker-md.js';
 
 const SRC = new URL('../design/TRACKER.md', import.meta.url);
 const OUT = new URL('../design/boss-data.json', import.meta.url);
@@ -42,6 +42,13 @@ for (const item of slices.items) {
     console.warn(`  ! ${name}: incomplete palette/scale line, skipped`);
     continue;
   }
+  // `weapon class` is the one FIELD that is mechanical rather than prose — the
+  // code reads it as a key, so it is extracted here alongside the meta line and
+  // asserted against weapons.js. The owner picks it from a dropdown precisely so
+  // this can never be a typo.
+  const clsField = fieldsOf(item).find((f) => f.label === 'weapon class');
+  const cls = clsField ? clsField.text.trim().toLowerCase() : '';
+
   out.bosses[id] = {
     name,
     primary: hexes[0].toUpperCase(),
@@ -50,6 +57,7 @@ for (const item of slices.items) {
     scale: parseFloat(scale[1]),
     attackName: attack ? attack[1].trim() : '',
     weaponName: weapon ? weapon[1].trim() : '',
+    weaponClass: cls,
   };
 }
 

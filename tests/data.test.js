@@ -218,6 +218,26 @@ test('every boss drops a weapon that exists', () => {
   for (const b of BOSSES) assert.ok(ids.has(b.dropWeapon), `${b.id} -> ${b.dropWeapon} missing`);
 });
 
+/**
+ * THE ONE FIELD THE CODE READS AS A KEY.
+ *
+ * `weapon class` decides which pair of loadout slots a weapon competes for, so
+ * a mismatch between the tracker and weapons.js is not a documentation slip —
+ * it puts the weapon in the wrong half of the re-quip wheel. The dropdown in
+ * the web app exists so this can never be a typo; this is what makes it stick.
+ *
+ * Fix TRACKER.md first, run `npm run sync`, then bring the code to match.
+ */
+test('every weapon class matches the tracker dropdown', () => {
+  const byBoss = Object.fromEntries(WEAPONS.filter((w) => w.boss).map((w) => [w.boss, w]));
+  for (const [id, d] of Object.entries(TRACKER.bosses)) {
+    const w = byBoss[id];
+    assert.ok(w, `${id} has no weapon in weapons.js`);
+    assert.ok(d.weaponClass, `${id} has no \`weapon class\` field in the tracker`);
+    assert.equal(w.cls, d.weaponClass, `${w.id} is ${w.cls} in code, ${d.weaponClass} in the tracker`);
+  }
+});
+
 test('boss primary colours are all distinct', () => {
   // The 17 primaries are perceptually spaced; two identical ones would make a
   // boss unidentifiable at a glance. Distinctness is structural, so it is

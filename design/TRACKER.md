@@ -78,6 +78,7 @@ where each one stands.
 - **attack L1** `[ready]` Moves back and forth on the stage, occasionally stopping, waiting a moment, then fire a 3 bullet spread directly forward toward the player with mild auto-aim, dealing small damage.
 - **attack L2** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
 - **attack L3** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; a small gray drone hovers just above and in front of the player's shoulder. Very Slowly refills the current clip when no enemies present. When clip is fully depleted indicate this emergency reload by making the drone Dark grey and cease firing until clip colored completes. It continuously auto aims at the nearest enemy and auto fires, only if an enemy is on screen, a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
 - **weapon Lv1** `[ready]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per second, 10 ammo clip.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets shot once per second, like a rifle. 9 bullet clip
@@ -98,6 +99,7 @@ where each one stands.
 - **attack L1** `[ready]` Launches a couple moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
 - **attack L2** `[ready]` Fewer fireballs, but much higher bounce heights and alternating firing angles.
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
 - **weapon Lv1** `[ready]` No rolling distance; up to 2 on screen; 3s Hot duration.
 - **weapon Lv3** `[ready]` 5s duration Hot trail on ground; moderate roll distance with rapid deceleration while on the ground. Affected by pits and platforms
@@ -120,6 +122,7 @@ where each one stands.
 - **attack L1** `[ready]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L2** `[ready]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L3** `[ready]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; small, grey two-nozzle jetpack that has a blue layer on top that indicates a tank fill level. Rapidly self refilling water supply when not producing weapon affects. Tank capacity and refill rate level scalable
 - **weapon Lv1** `[ready]` Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[ready]` Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
@@ -140,6 +143,7 @@ where each one stands.
 - **attack L1** `[ready]` Infrequently fires up to 2 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
 - **attack L2** `[ready]` Bolts increase to 3 and gain a longer bounce life, and the boss fires a second volley on a shallower angle before the first has finished, so two zigzag paths overlap.
 - **attack L3** `[ready]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
 - **weapon Lv1** `[ready]` 0 chains; 1s stun on first enemy contact.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
@@ -159,6 +163,7 @@ where each one stands.
 - **attack L1** `[wip]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
 - **attack L2** `[wip]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
 - **weapon Lv1** `[ready]` Short reach; can only reel in and damage minions; does not toss or constrict them.
 - **weapon Lv3** `[ready]` Increased reach. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
@@ -178,6 +183,7 @@ where each one stands.
 - **attack L1** `[wip]` Blizzard animation freezes all surfaces making them slippery, then drops icicles from above while the boss is protected by projectile-reflecting armor. Armor, blizzard and icicles subside during cooldown.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
 - **weapon Lv1** `[ready]` Shield blocks the equivalent of 1 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
@@ -197,6 +203,7 @@ where each one stands.
 - **attack L1** `[wip]` Teleports close and performs rapid punches + uppercut launcher.
 - **attack L2** `[wip]` Adds a guard stance between combos that reflects the first shot it takes, and the uppercut launcher now chases upward once before the boss lands.
 - **attack L3** `[wip]` The combo can be cancelled into a second teleport mid-string, so the boss finishes the string from a different side than it started.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
 - **weapon Lv1** `[ready]` 2 jabs, or 1 jab and one combo finisher.
 - **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
@@ -217,6 +224,7 @@ where each one stands.
 - **attack L1** `[wip]` Releases lingering poison clouds that drain health over time and reduce player speed.
 - **attack L2** `[wip]` Clouds are released in an arc rather than dropped in place, and now linger long enough for two to be present at once.
 - **attack L3** `[wip]` On release the clouds slowly drift toward the player instead of staying put, and a popped cloud leaves a corrosive pool where it dispersed.
+- **weapon class** `[wip]` Offensive
 - **weapon** `[wip]` Sprays a cone of poison that damages over time and weakens enemies. Per-level scaling: larger cloud + stronger DoT.
 - **weapon Lv1** `[wip]` Short cone, low DoT; Poisoned lasts a few seconds and does not stack.
 - **weapon Lv3** `[wip]` Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits.
@@ -236,6 +244,7 @@ where each one stands.
 - **attack L1** `[wip]` Causes screen-wide tremors and rising rock pillars.
 - **attack L2** `[wip]` The stomp now sends two shockwaves in both directions, and the tremor briefly disables the player's footing so a jump has to be timed before the shake, not during it.
 - **attack L3** `[wip]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; Large rock shaped hammer visible when active. Slow, delayed baseball-swing on tap for high damage and high knockback, long press 1.5s to hold hammer overhead and on release swing downward producing shockwaves and stuns nearby enemies. Per-level scaling: shockwave size + stun duration.
 - **weapon Lv1** `[ready]` Airborne swings cause the player to swing downward and rapidly travel downward where a shockwave will be generated on contact with the ground
 - **weapon Lv3** `[ready]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
@@ -255,6 +264,7 @@ where each one stands.
 - **attack L1** `[wip]` Creates tornadoes that suck the player in and launch them upward.
 - **attack L2** `[wip]` Two smaller tornadoes at once on crossing paths, and the boss dives through one of them to close distance.
 - **attack L3** `[wip]` A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; white puffs of smoke energy when falling, significantly reducing fall speed and significantly increasing migraine horizontal movement
 - **weapon Lv1** `[ready]` Up to 3 puffs while falling, each one cancelling vertical velocity and separated by a very brief time
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
@@ -274,6 +284,7 @@ where each one stands.
 - **attack L1** `[wip]` Levitates the player and drops them from height while firing homing psychic orbs.
 - **attack L2** `[wip]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
 - **attack L3** `[wip]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
+- **weapon class** `[wip]` Offensive
 - **weapon** `[wip]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
 - **weapon Lv1** `[wip]` One slow homing orb at a time; steerable while the attack button is held.
 - **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
@@ -293,6 +304,7 @@ where each one stands.
 - **attack L1** `[wip]` Releases bug drones that home in and explode on contact.
 - **attack L2** `[wip]` Drones are released in a wave that spreads before homing, and a drone that misses circles once and makes a second pass.
 - **attack L3** `[wip]` The boss splits into a drone cloud and reforms elsewhere in the room, taking reduced damage while dispersed.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; Summons temporary bug allies that attack nearby enemies. Per-level scaling: tougher bugs + longer duration.
 - **weapon Lv1** `[ready]` One bug ally, short duration; it attacks the nearest minion and must return to the player briefly between targets
 - **weapon Lv3** `[ready]` 2 allies with a longer duration; they now prioritise whatever the player last damaged.
@@ -312,6 +324,7 @@ where each one stands.
 - **attack L1** `[wip]` Pushes massive rolling rocks that crush and block paths.
 - **attack L2** `[wip]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
 - **attack L3** `[wip]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
+- **weapon class** `[wip]` Offensive
 - **weapon** `[wip]` Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed.
 - **weapon Lv1** `[wip]` Single thrown boulder; rolls on landing and stops at the first wall.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
@@ -331,6 +344,7 @@ where each one stands.
 - **attack L1** `[wip]` Phases through attacks and counters with intangibility + surprise teleports.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
+- **weapon class** `[wip]` Defensive
 - **weapon** `[wip]` Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage.
 - **weapon Lv1** `[wip]` Brief invulnerability and invisibility on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
@@ -350,6 +364,7 @@ where each one stands.
 - **attack L1** `[wip]` Sweeping fire/ice beam + fireball projectiles.
 - **attack L2** `[wip]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
 - **attack L3** `[wip]` The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst.
+- **weapon class** `[wip]` Offensive
 - **weapon** `[wip]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
 - **weapon Lv1** `[wip]` Short fixed-angle beam, high damage, held while the attack button is down.
 - **weapon Lv3** `[wip]` The beam can be angled with directional input and reaches noticeably further.
@@ -360,7 +375,7 @@ where each one stands.
 ## Eclipse Man — Dark
 
 `palette` #2A273F / #DC2626 / #0A0A12 · `scale` 1.75x player height (average build) · `id` eclipse
-`attack` Shadow Bind · `weapon` Eclipse Blade
+`attack` Shadow Bind · `weapon` Astral Cloak
 
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
@@ -369,6 +384,7 @@ where each one stands.
 - **attack L1** `[wip]` Creates darkness zones that slow the player and spawn shadow clones.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
+- **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; reduces aggro and become immune to stays affects.
 - **weapon Lv1** `[ready]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
@@ -388,6 +404,7 @@ where each one stands.
 - **attack L1** `[wip]` Fires homing metal blades + deploys temporary shields.
 - **attack L2** `[wip]` Blades are fired in a spread and ricochet twice instead of once; the deployed shield now orbits the boss rather than sitting in front of it.
 - **attack L3** `[wip]` The shield breaks into blades when destroyed, so removing it is itself an attack the player has to answer.
+- **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; Throws penetrative metal blades that ricochet multiple times. Per-level scaling: more ricochets + higher damage.
 - **weapon Lv1** `[ready]` Single blade, one ricochet, pierces the first enemy hit.
 - **weapon Lv3** `[ready]` Two ricochets and increased pierce; blades survive contact with terrain corners.

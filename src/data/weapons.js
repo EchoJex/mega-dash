@@ -338,7 +338,7 @@ export const WEAPON_LADDERS = {
     },
   },
 
-  // ── ECLIPSE BLADE — defensive, Dark ───────────────────────────────
+  // ── ASTRAL CLOAK — defensive, Dark ────────────────────────────────
   // "Reduces aggro and become immune to status effects."
   //  Lv1  enemies fire slightly less often and pause briefly at random while
   //       pursuing.
@@ -515,11 +515,16 @@ const DEFS = [
   { id: 'drake_breath', name: 'DRAKE BREATH', short: 'DRAKE', cls: OFFENSIVE, boss: 'drake',
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },
-  // RECLASSIFIED. This was a provisionally-offensive boomerang while its
-  // tracker field was `[wip]`; the field now reads "Defensive; reduces aggro and
-  // become immune to status effects", and the field wins. Id and name are
-  // unchanged so saves and the wheel are unaffected.
-  { id: 'eclipse_blade', name: 'ECLIPSE BLADE', short: 'ECLIPSE', cls: DEFENSIVE, boss: 'eclipse',
+  // RENAMED AND RECLASSIFIED. This was an offensive boomerang called the Eclipse
+  // Blade while its tracker field was `[wip]`; the field now reads "Defensive;
+  // reduces aggro and become immune to status effects", so it is a cloak and it
+  // is named like one.
+  //
+  // THE ID STAYS `eclipse_blade`. It is the join key for `BOSSES[].dropWeapon`
+  // and for every save's unlock set and weapon levels — the same reason the
+  // sidearm is still literally 'buster'. A rename is a display change and must
+  // never cost anyone their save.
+  { id: 'eclipse_blade', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
   // Provisional class — its tracker field is still `[wip]`.

@@ -1157,7 +1157,7 @@ const gale = {
   },
 };
 
-// ── ECLIPSE BLADE — Dark, defensive ──────────────────────────────────
+// ── ASTRAL CLOAK — Dark, defensive ───────────────────────────────────
 /**
  * "Reduces aggro and become immune to status effects."
  *  Lv1  "while active enemies will fire projectiles slightly less frequently
@@ -1167,9 +1167,11 @@ const gale = {
  *
  * Lv10's "Dark Mode" is still `[wip]`, so the ladder stops at Lv6.
  *
- * THE WEAPON WAS OFFENSIVE AND IS NOW DEFENSIVE. The tracker field used to
- * describe a returning boomerang; it now describes a cloak, and the field wins.
- * Its id and its name are unchanged so saves and the wheel are unaffected.
+ * THE WEAPON WAS AN OFFENSIVE BOOMERANG CALLED THE ECLIPSE BLADE. The tracker
+ * field now describes a defensive cloak, and the field wins, so it is a cloak
+ * and it is named like one. Only the ID is unchanged — `eclipse_blade` is the
+ * join key for the boss drop and for every save's unlock set, and a rename must
+ * never cost anyone their save.
  *
  * AGGRO IS A TAX ON THE ENEMY'S CLOCK, not a shield on the player. It slows the
  * rate at which things happen TO you rather than reducing what they do, which
@@ -1201,7 +1203,7 @@ const eclipse = {
     ctx.allies.push({
       owner: 'eclipse_blade', role: 'trail',
       x: p.x + 12, y: p.y + 12, w: 6, h: 6, vx: 0, vy: 0,
-      life: L.trailLife,
+      life: L.trailLife, maxLife: L.trailLife,
       damage: dmgOf('eclipse_blade', lv, ctx) * L.trailDmgMult,
       lifesteal: L.lifesteal,
       hitGap: 0, hitEvery: L.trailHitGap,
@@ -1414,10 +1416,35 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(b.x), b.y, b.w, 1);
   }
 
-  // SWARM CALLER allies. Interceptors carry a pale core so you can tell which
-  // half of the swarm is guarding you and which half is out hunting.
+  // ASTRAL CLOAK — a dark shroud over the player's own outline, and the only
+  // way to know the thing is on. Every other effect it has is a change to what
+  // the ENEMIES do, which is unreadable as feedback: fewer shots and the odd
+  // pause look exactly like a quiet moment. Drawn OVER the suit rather than
+  // instead of it, because the player is a fixed blue and must stay findable.
+  if (ctx.equipped.includes('eclipse_blade')) {
+    const bob = Math.sin(run.frame * 0.06) * 1.5;
+    g.fillStyle(0x2A273F, 0.5);
+    g.fillRect(sx(p.x) + 1, p.y + 2 + bob, 22, 22);
+    g.lineStyle(1, 0xA68DD8, 0.55);
+    g.strokeRect(sx(p.x) + 0.5, p.y + 1.5 + bob, 23, 23);
+  }
+
+  // ALLIES. The Swarm Caller's bugs, and the Astral Cloak's shadow trails —
+  // which are also allies but are emphatically NOT bugs, and were being painted
+  // lime green because this loop did not look at the owner.
   for (const a of run.allies) {
-    g.fillStyle(a.role === 'block' ? 0xE8F0A0 : 0xB8DC28, 1);
+    if (a.role === 'trail') {
+      const t = a.life / (a.maxLife || 90);
+      g.fillStyle(0x2A273F, 0.55 * t);
+      g.fillRect(sx(a.x) - 4, a.y - 10, 8, 20);
+      g.fillStyle(0xA68DD8, 0.35 * t);
+      g.fillRect(sx(a.x) - 1, a.y - 10, 2, 20);
+      continue;
+    }
+    // Interceptors carry a pale core so you can tell which half of the swarm is
+    // guarding you and which half is out hunting; a kamikaze bug runs hot.
+    g.fillStyle(a.role === 'block' ? 0xE8F0A0
+      : a.role === 'kamikaze' ? 0xF5D328 : 0xB8DC28, 1);
     g.fillRect(sx(a.x) - 2, a.y - 2, 5, 5);
     g.fillStyle(0x4D5C1A, 1);
     g.fillRect(sx(a.x) - 1, a.y + Math.sin(a.life * 0.5), 3, 1);

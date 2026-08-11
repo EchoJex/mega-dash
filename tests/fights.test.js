@@ -35,10 +35,22 @@ function harness(bossId, layer) {
     isBoss: true, status: {}, fs: null, hs: null,
   };
   const player = { x: 80, y: FLOOR - 24, vx: 0, vy: 0, onGround: true };
+  // A boss may summon, and a hazard may reach through what it summoned. The
+  // harness has to own a real list for both — the same lesson as `anim`: a
+  // missing field does not fail loudly, it just stops testing the code.
+  const minions = [];
   return {
-    arena, shots, shakes, hurts, shoves, blocks, status, boss, player,
+    arena, shots, shakes, hurts, shoves, blocks, status, boss, player, minions,
     ctx: {
       boss, player, layer, arena, floorY: FLOOR,
+      minions,
+      vaporise: (e) => { e.hp = 0; },
+      summon: (kind, x, y, cap = 99) => {
+        if (minions.filter((m) => m.hp > 0 && m.kind === kind).length >= cap) return null;
+        const m = { kind, x, y, w: 12, h: 12, hp: 10, vx: -0.5, vy: 0, status: {} };
+        minions.push(m);
+        return m;
+      },
       playerBox: { x: 86, y: FLOOR - 22, w: 12, h: 22 },
       bounds: { x0: 16, x1: VIEW_W - 16 },
       shoot: (s) => shots.push(s),

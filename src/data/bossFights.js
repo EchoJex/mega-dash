@@ -198,14 +198,14 @@ function coreHazard(layer) {
 // higher bounce heights and alternating firing angles". L3 adds the arena flood,
 // synchronised with the hazard.
 //
-// L1 WAS FOUR AND THE TRACKER NOW SAYS TWO, which forces L2 down to one: "fewer"
-// is L2's own word and it stops being true the moment L1 drops to L2's count.
-// One fireball that bounces high and alternates its launch angle is a coherent
-// shape for that layer — a persistent thing crossing the room rather than a
-// burst — but the number is an INFERENCE from L1's edit, not something the
-// owner wrote. Change it if that reads wrong on device.
+// THESE COUNTS ARE THE OWNER'S, SET DIRECTLY. L1 is two, L2 is three.
+//
+// L2's prose still opens "fewer fireballs" and is simply wrong about the count
+// now — what that layer actually buys is the second half of its own sentence,
+// the much higher bounce and the alternating launch angles. Do not read the
+// word "fewer" and quietly tune these back down.
 const BLAZE = {
-  count: { 1: 2, 2: 1, 3: 1 },
+  count: { 1: 2, 2: 3, 3: 3 },
   bounce: { 1: 0.62, 2: 0.86, 3: 0.86 },
   windup: 34,
   rest: { 1: [90, 150], 2: [80, 130], 3: [80, 130] },
@@ -901,11 +901,16 @@ function voltAttack(layer) {
  * and never a shorter warning — "same sweep" and "very slow" are both the
  * owner's words, and an earlier build quietly ran L2 and L3 half again as fast.
  *
- * NOTE ON THE LAYER-3 CHAIN: a boss arena is sealed and carries no ambient
- * minions, and Volt Man summons none, so the minion half of that sentence has
- * nothing to travel along today. It is written against `enemies` anyway so it
- * works the day he gains a summon — and a chained minion is DESTROYED outright
- * rather than damaged, because the arc is what kills it.
+ * THE LAYER-3 CHAIN NEEDS SOMETHING TO CHAIN THROUGH, so Volt Man summons.
+ * A sealed arena has no ambient minions by design, which left the first half of
+ * that sentence with nothing to travel along — so he now calls up to one
+ * airborne and one ground minion every thirty seconds, on every layer.
+ *
+ * ON EVERY LAYER, not only layer 3, and that is the owner's call: the summons
+ * are how the room gets tested, and having them appear only at the layer that
+ * consumes them would mean the other two fights never show what a minion does
+ * in a boss room. A chained minion is DESTROYED outright rather than damaged,
+ * because the arc is what kills it.
  */
 const VOLT_HAZ = {
   step: { 1: 40, 2: 40, 3: 40 },   // frames between panels — "same sweep"
@@ -918,14 +923,34 @@ const VOLT_HAZ = {
   arcTell: 34,
   arcLive: 24,
   chainRange: 34,                  // L3 only
+  // "Up to 1 airborne and 1 ground minion every 30 seconds." The cap is per
+  // plane and counts what is already alive, so a fight where nothing dies
+  // stays at two rather than accumulating one pair per cycle.
+  summonEvery: 1800,
+  summonCap: 1,
 };
 
 function voltHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a || !a.panels.length) return;
-    const hs = ctx.boss.hs || (ctx.boss.hs = { t: 90, i: 0, arc: VOLT_HAZ.arcBeat[layer] || 0 });
+    const hs = ctx.boss.hs || (ctx.boss.hs = {
+      t: 90, i: 0, arc: VOLT_HAZ.arcBeat[layer] || 0,
+      // First pair arrives early rather than half a minute in, so the room has
+      // something in it from the start of a playtest.
+      summon: 120,
+    });
     const n = a.panels.length;
+
+    // THE SUMMONS. Placed inside the room rather than at its edge: an arena has
+    // walls where the stream has open sides, and the ambient spawner's "just off
+    // the right of the screen" is a wall here.
+    if (--hs.summon <= 0) {
+      hs.summon = VOLT_HAZ.summonEvery;
+      const mid = (a.x0 + a.x1) / 2;
+      ctx.summon('air', mid + 40, a.ceilY + 40, VOLT_HAZ.summonCap);
+      ctx.summon('ground', mid + 60, a.floorY - 16, VOLT_HAZ.summonCap);
+    }
 
     // THE SWEEP. One panel at a time, and at layer 3 a second head runs the
     // other way so the two meet in the middle.

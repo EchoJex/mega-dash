@@ -36,7 +36,7 @@ const furnished = new Set(FURNISHED());
 const DESIGN_FIELDS = [
   'arena', 'hazard L1', 'hazard L2', 'hazard L3',
   'attack L1', 'attack L2', 'attack L3',
-  'weapon', 'weapon Lv1', 'weapon Lv3', 'weapon Lv6', 'weapon Lv10',
+  'weapon class', 'weapon', 'weapon Lv1', 'weapon Lv3', 'weapon Lv6', 'weapon Lv10',
 ];
 
 const layers = (table) => [1, 2, 3].filter((l) => table?.[l]).length;
@@ -83,7 +83,11 @@ for (const r of rows) {
   const notes = [];
   if (r.buildable) notes.push(`${r.buildable} to build`);
   if (r.unready) notes.push(`${r.unready} wip`);
-  const design = notes.length ? `${r.written}/12 (${notes.join(', ')})` : `${r.written}/12`;
+  // Derived, not typed: the denominator moved from 12 to 13 the day `weapon
+  // class` was added, and a hard-coded one would have quietly under-reported.
+  const total = DESIGN_FIELDS.length;
+  const design = notes.length
+    ? `${r.written}/${total} (${notes.join(', ')})` : `${r.written}/${total}`;
   const state = r.done ? 'DONE'
     : r.buildable > 0 ? 'READY TO BUILD'
       : r.built > 0 ? 'in progress'

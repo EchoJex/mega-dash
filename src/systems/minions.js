@@ -66,21 +66,45 @@ export function trySpawn(world, camX, viewW, frames, groundY) {
     y = 40 + Math.random() * (groundY - 80);
   }
 
+  return makeMinion(def, x, y, step, elite);
+}
+
+/**
+ * One minion, fully formed, at a given place.
+ *
+ * Split out of trySpawn because a BOSS CAN SUMMON. The ambient spawner picks
+ * where a minion appears from the camera and the terrain; a summon already
+ * knows, and must not inherit "off the right edge of the screen" — inside a
+ * sealed arena that is a wall. Everything about what a minion IS stays here so
+ * the two paths cannot drift into producing different creatures.
+ */
+export function makeMinion(def, x, y, step = 0, elite = false) {
   const hp = hpFor(def.hp, step) * (elite ? FEEL.eliteHpMult : 1);
   return {
     def, id: def.id, elite,
-    x, y, w, h,
-    vx: def.kind === 'ground' ? -def.speed : -def.speed,
+    x, y, w: def.w, h: def.h,
+    vx: -def.speed,
     vy: 0,
     hp: Math.round(hp), maxHp: Math.round(hp),
     anim: Math.floor(Math.random() * 120), // desync the bob between spawns
     onGround: false,
     // Elemental attributes live per actor, exactly as they do on the player.
-    // Empty for an ambient minion — nothing carries an element until a player
-    // weapon puts one on it.
+    // Empty at birth — nothing carries an element until something puts one on it.
     status: {},
     kbVx: 0,
   };
+}
+
+/**
+ * Summon a minion of a given plane at a point. Used by boss movesets.
+ *
+ * Returns null for an unknown kind rather than throwing, so a fight that names
+ * a plane that does not exist degrades to summoning nothing.
+ */
+export function spawnAt(kind, x, y, frames = 0, elite = false) {
+  const def = MINIONS.find((m) => m.kind === kind);
+  if (!def) return null;
+  return makeMinion(def, x, y, difficultyStep(frames), elite);
 }
 
 /**
