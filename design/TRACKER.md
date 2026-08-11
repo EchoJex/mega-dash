@@ -372,7 +372,7 @@ where each one stands.
 - **weapon** `[draft]` Defensive; reduces aggro and become immune to stays affects.
 - **weapon Lv1** `[draft]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
 - **weapon Lv3** `[wip]` Faster return and increased steal; the boomerang now passes through the first enemy rather than stopping.
-- **weapon Lv6** `[wip]` Lv7+: creates shadow trails that damage enemies.
+- **weapon Lv6** `[wip]` Lv6+: creates shadow trails that damage enemies.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
