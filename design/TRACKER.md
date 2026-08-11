@@ -238,7 +238,7 @@ where each one stands.
 - **attack L3** `[wip]` The stomp collapses part of the ceiling, adding falling debris to the shockwave, and pillars raised by the arena hazard are shattered into projectiles by the wave.
 - **weapon** `[draft]` Offensive; Large rock shaped hammer visible when active. Slow, delayed baseball-swing on tap for high damage and high knockback, long press 1.5s to hold hammer overhead and on release swing downward producing shockwaves and stuns nearby enemies. Per-level scaling: shockwave size + stun duration.
 - **weapon Lv1** `[draft]` Airborne swings cause the player to swing downward and rapidly travel downward where a shockwave will be generated on contact with the ground
-- **weapon Lv3** `[ready]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
+- **weapon Lv3** `[draft]` Larger shockwave and longer Stun; the wave now climbs low obstacles instead of stopping at them.
 - **weapon Lv6** `[wip]` Lv5+: can break certain floors or reveal hidden paths.
 - **weapon Lv10** `[wip]` Max: super stomp that causes falling debris from the ceiling.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
