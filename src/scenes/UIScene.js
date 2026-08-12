@@ -106,6 +106,14 @@ import { sfx, unlockAudio } from '../systems/sfx.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
 const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
+/**
+ * How long the in-situ wheel holds slow motion with nothing decided.
+ *
+ * A dead man's handle. Opening it stops time from moving at a useful rate, so
+ * an accidental touch with no way out would be a soft lock — and the player's
+ * hands are already occupied. Long enough to read four modules and choose.
+ */
+const SITU_TIMEOUT_MS = 7000;
 
 /**
  * TOUCH COORDINATES — always convert, never use pointer.x directly.
@@ -179,6 +187,9 @@ const FRAME_DARK = 0x2a323c;       // the grid frame when a module is not runnin
 const LOCKED_FILL = 0x3a3f4a;
 const LOCKED_ALPHA = 0.45;
 const BENCH_ALPHA = 0.55;          // unlocked but not carried
+// In the in-situ wheel the ring is context, not a menu. Low enough that the
+// eye goes to the four modules and stays there.
+const SITU_BENCH_ALPHA = 0.16;
 const IDLE_ALPHA = PAD_ALPHA; // RE-QUIP rests at the same opacity as the pads
 
 /**
@@ -307,8 +318,9 @@ export default class UIScene extends Phaser.Scene {
     this.scrim = this.add.rectangle(0, 0, w, VIEW_H, 0x2a2e3a, 0.55)
       .setOrigin(0).setVisible(false).setInteractive();
 
-    this.mode = null;   // null | 'open' (paused) | 'swipe' (slow motion)
-    this.aimIndex = -1;
+    // null | 'open' (post-boss, paused) | 'situ' (in-fight, slow motion)
+    this.mode = null;
+    this.aimSlot = null;
     this.press = null;
     this.buildWheel();
     this.buildRequip();
@@ -674,6 +686,12 @@ export default class UIScene extends Phaser.Scene {
     for (const s of this.active) if (s.abbr) this.wheel.bringToTop(s.abbr);
     for (const s of this.active) if (s.lvl) this.wheel.bringToTop(s.lvl);
 
+    // Under the discs, so a halo reads as light behind a weapon rather than a
+    // ring drawn over it.
+    this.haloG = this.add.graphics();
+    this.wheel.add(this.haloG);
+    this.wheel.sendToBack?.(this.haloG);
+
     // Padlocks and the off-switch cross sit ON TOP of everything else.
     this.lockG = this.add.graphics();
     this.wheel.add(this.lockG);
@@ -824,7 +842,9 @@ export default class UIScene extends Phaser.Scene {
     // control overlaps another and the middle of the screen stays clear.
     const gapL = this.z3.x + this.z3.w, gapR = this.z4.x;
     const bw = Math.max(44, Math.min(64, gapR - gapL - 6)), bh = this.padH - 6;
-    const x = Math.round((gapL + gapR) / 2 - bw / 2), y = VIEW_H - this.padH + 3;
+    // Nudged up off the very bottom edge — a thumb reaching the lowest few
+    // pixels of a phone screen is fighting the system gesture bar.
+    const x = Math.round((gapL + gapR) / 2 - bw / 2), y = VIEW_H - this.padH - 4;
     this.reqBox = this.add.rectangle(x, y, bw, bh, 0x0d1420).setOrigin(0)
       .setStrokeStyle(1, 0x5cadd5)
       .setAlpha(IDLE_ALPHA)
@@ -832,10 +852,26 @@ export default class UIScene extends Phaser.Scene {
     this.reqTxt = label(this, x + bw / 2, y + bh / 2, 'RE-QUIP',
       { color: '#5CADD5', origin: 0.5 }).setAlpha(IDLE_ALPHA);
 
+    /**
+     * THE SLOWDOWN STARTS ON CONTACT, not on the swipe.
+     *
+     * Waiting for a finger to travel past a deadzone before slowing time meant
+     * the most dangerous part of a re-quip — deciding — happened at full speed,
+     * and the slow-mo only arrived once you had already committed to a
+     * direction. Touching the button IS the decision to look, so that is where
+     * the world slows.
+     *
+     * From there the same touch can resolve two ways, and the player picks
+     * without being told which they are doing:
+     *   keep moving into a diagonal   the slot that direction owns toggles
+     *   lift the finger               the wheel stays up; tap a slot instead
+     */
     this.reqBox.on('pointerdown', (p) => {
       if (this.press) return;
       const v = vpt(this, p);
       this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
+      if (this.mode === 'situ') { this.closeWheel(); return; }
+      if (this.mode !== 'open') this.beginSitu();
     });
 
     // Move and release are tracked at SCENE level, not on the button: a swipe
@@ -843,25 +879,88 @@ export default class UIScene extends Phaser.Scene {
     // its own pointer the moment it does.
     this.input.on('pointermove', (p) => {
       const pr = this.press;
-      if (!pr || p.id !== pr.id || !p.isDown) return;
+      if (!pr || p.id !== pr.id || !p.isDown || this.mode !== 'situ') return;
       const v = vpt(this, p);
       const dx = v.x - pr.x, dy = v.y - pr.y;
-      if (!pr.swiping) {
-        if (this.mode === 'open') return; // already tapped open — ignore drags
-        if (Math.hypot(dx, dy) < SWIPE_DEADZONE) return;
-        pr.swiping = true;
-        this.beginSwipe();
-      }
+      if (Math.hypot(dx, dy) < SWIPE_DEADZONE) return;
+      pr.swiping = true;
       this.aimSwipe(dx, dy);
     });
     this.input.on('pointerup', (p) => {
       const pr = this.press;
       if (!pr || p.id !== pr.id) return;
       this.press = null;
-      if (pr.swiping) this.endSwipe();
-      else if (this.mode === 'open') this.closeWheel(); // tapping again backs out
-      else this.openWheel();
+      // A resolved diagonal acts and closes. Anything else LEAVES THE WHEEL UP:
+      // the finger lifting is not a cancel, it is the player switching from the
+      // swipe route to the tap route mid-gesture.
+      if (pr.swiping && this.aimSlot) this.commitSitu();
+      else if (this.mode === 'open') this.closeWheel();
+      else if (this.mode !== 'situ') this.openWheel();
     });
+
+    /**
+     * A TAP ANYWHERE ELSE CANCELS. Registered on the scrim rather than as a
+     * global handler so it can never swallow a press meant for a pad — the
+     * scrim only exists while a wheel is up.
+     */
+    this.scrim.on('pointerdown', () => {
+      if (this.mode === 'situ') this.closeWheel();
+    });
+  }
+
+  /**
+   * The in-situ wheel: time crawls, the ring ghosts in, nothing is committed.
+   *
+   * It is NOT the same control as the post-boss wheel and must not feel like
+   * it. Here the only thing you can touch is the four modules you are already
+   * carrying — the sidelined weapons are drawn right down, because changing
+   * what you CARRY is a between-fights decision and offering it here would be
+   * offering something the game is about to refuse.
+   */
+  beginSitu() {
+    this.mode = 'situ';
+    this.aimSlot = null;
+    this.refreshWheel();
+    this.wheel.setVisible(true).setAlpha(IDLE_ALPHA);
+    this.scrim.setVisible(true).setAlpha(0.25);
+    this.game_.setTimeScale(FEEL.requipSlowScale, FEEL.requipSlowInFrames);
+    this.setReadout(this.game_.run.activeWeapon);
+    // A DEAD MAN'S HANDLE. Slow motion with no way out would be a soft lock for
+    // anyone who opened this by accident, and the player's hands are already
+    // full. Seven seconds is long enough to read four modules and decide.
+    this.situTimer?.remove();
+    this.situTimer = this.time.delayedCall(SITU_TIMEOUT_MS, () => {
+      if (this.mode === 'situ') this.closeWheel();
+    });
+  }
+
+  /**
+   * Which slot a swipe direction owns. The four diagonals map onto the 2x2 grid
+   * exactly as it is drawn — up-left is the top-left module — so the gesture is
+   * readable off the screen rather than memorised.
+   */
+  aimSwipe(dx, dy) {
+    // BOTH axes have to be real. A flat horizontal or vertical flick is not one
+    // of the four, and guessing at the nearest diagonal would fire a slot the
+    // player never aimed at.
+    const min = SWIPE_DEADZONE * 0.6;
+    if (Math.abs(dx) < min || Math.abs(dy) < min) { this.aimSlot = null; this.drawAim(); return; }
+    const cls = dy < 0 ? OFFENSIVE : DEFENSIVE;
+    const index = dx < 0 ? 0 : 1;
+    const hit = this.active.find(
+      (s) => s.kind === 'slot' && s.cls === cls && s.index === index && !s.vacant,
+    );
+    this.aimSlot = hit || null;
+    if (hit) this.setReadout(hit.id, hit);
+    this.drawAim();
+  }
+
+  /** Resolve the aimed diagonal: toggle that slot, then get out of the way. */
+  commitSitu() {
+    const s = this.aimSlot;
+    this.aimSlot = null;
+    if (s) this.toggleSlot(s);
+    this.closeWheel();
   }
 
   /**
@@ -876,6 +975,11 @@ export default class UIScene extends Phaser.Scene {
     const r = this.game_.run, lo = r.loadout;
     this.lockG.clear();
     this.moduleG.clear();
+    this.haloG.clear();
+    // The padlocks ride the ring's emphasis. Left at full strength they were
+    // the brightest thing on an in-situ wheel whose whole point is that the
+    // ring is not available.
+    this.lockG.setAlpha(this.mode === 'situ' ? 0.2 : 1);
 
     // Where the arc discs SIT is recomputed every refresh from what is
     // unlocked — see layoutArc. Done first, because the swipe aim and the
@@ -1034,13 +1138,32 @@ export default class UIScene extends Phaser.Scene {
     }
   }
 
-  /** Paint a benched or locked special out on the ring. */
+  /**
+   * Paint a benched or locked special out on the ring.
+   *
+   * TWO WHEELS, INVERSE EMPHASIS. After a boss falls the sidelined weapons are
+   * the point, so they get a halo. In the in-situ wheel they are not available
+   * at all — you cannot change what you CARRY mid-fight — so they drop right
+   * back and stop reading as things to touch. The player never has to be told
+   * which wheel they are in; the brightness says it.
+   */
   paintDisc(s, { wd, unlocked }) {
     const fill = unlocked ? hexNum(wd.palette.primary || '#5CADD5') : LOCKED_FILL;
+    const situ = this.mode === 'situ';
     s.disc.setFillStyle(fill)
-      .setAlpha(unlocked ? BENCH_ALPHA : LOCKED_ALPHA)
+      .setAlpha(situ ? SITU_BENCH_ALPHA : unlocked ? BENCH_ALPHA : LOCKED_ALPHA)
       .setScale(1)
       .setStrokeStyle(1, hexNum(wd.palette.outline || '#0A0A12'));
+
+    // THE HALO — a ring around every weapon you could actually take right now.
+    // Only ever drawn in the post-boss wheel, and only on something unlocked
+    // and benched, so it means exactly one thing: this is the rare moment.
+    if (!situ && unlocked && this.mode === 'open' && this.game_.canRequip()) {
+      this.haloG.lineStyle(1, 0xF5D328, 0.55);
+      this.haloG.strokeCircle(s.x, s.y, s.r + 3);
+      this.haloG.lineStyle(1, 0xF5D328, 0.22);
+      this.haloG.strokeCircle(s.x, s.y, s.r + 5);
+    }
   }
 
   /** TAP route — hard pause, everything unlocked comes up to full opacity. */
@@ -1048,14 +1171,14 @@ export default class UIScene extends Phaser.Scene {
     this.mode = 'open';
     this.target = null;
     this.game_.paused = true;
-    // The HUD goes away for the TAP route only. The game is stopped, so score
-    // and energy are not telling you anything you need right now, and the dev
-    // diagnostic line runs straight through where the sidearm sits. The SWIPE
-    // route keeps it, because there the fight is still happening.
+    // The HUD goes away for the POST-BOSS route only. The game is stopped, so
+    // score and energy are not telling you anything you need right now, and the
+    // dev diagnostic line runs straight through where the sidearm sits. The
+    // in-situ route keeps it, because there the fight is still happening.
     this.hud.setVisible(false);
     this.refreshWheel();
-    this.aimIndex = -1;
-    this.scrim.setVisible(true);
+    this.aimSlot = null;
+    this.scrim.setVisible(true).setAlpha(0.55);
     this.wheel.setVisible(true).setAlpha(1);
     this.reqBox.setAlpha(1);
     this.reqTxt.setAlpha(1);
@@ -1064,8 +1187,17 @@ export default class UIScene extends Phaser.Scene {
   }
 
   closeWheel() {
+    const wasSitu = this.mode === 'situ';
     this.mode = null;
     this.target = null;
+    this.aimSlot = null;
+    this.situTimer?.remove();
+    this.situTimer = null;
+    this.aimG.clear();
+    // Time comes back whichever way the in-situ wheel was left — swiped,
+    // tapped, timed out or cancelled. Leaving slow motion running because a
+    // gesture ended down an unexpected branch would be unrecoverable.
+    if (wasSitu) this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
     this.hud.setVisible(true);
     // Closing on an unresolved acquire IS the answer: the new weapon goes to
     // the bench. It keeps its level and stays one tap away in the arc, so this
@@ -1078,83 +1210,27 @@ export default class UIScene extends Phaser.Scene {
     this.reqTxt.setAlpha(IDLE_ALPHA);
   }
 
-  /**
-   * SWIPE route — no pause, ghosted wheel, time drops to a crawl.
-   *
-   * The swipe only ever aims at what the fire button can actually use: the
-   * sidearm and the two offensive slots. Three targets instead of eighteen is
-   * what makes it usable under fire at all — the old wheel asked for a 20°
-   * flick accuracy while you were being shot at.
-   */
-  beginSwipe() {
-    this.mode = 'swipe';
-    this.refreshWheel();
-    this.aimIndex = -1;
-    this.wheel.setVisible(true).setAlpha(IDLE_ALPHA);
-    this.game_.setTimeScale(FEEL.requipSlowScale, FEEL.requipSlowInFrames);
-  }
 
-  endSwipe() {
-    const target = this.swipeTargets()[this.aimIndex];
-    if (target) { sfx('requip'); this.game_.selectWeapon(target.id); }
-    this.mode = null;
-    this.wheel.setVisible(false);
-    this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
-  }
+
+
+
 
   /**
-   * Slots the swipe can land on: filled, enabled, and firable.
-   *
-   * `vacant` matters here. The sidearm's bench dot carries the same id as the
-   * module it may be sitting in, so without this the swipe would offer the same
-   * weapon twice in two places.
-   */
-  swipeTargets() {
-    const usable = Loadout.firables(this.game_.run.loadout);
-    return this.active.filter((s) => s.id && !s.vacant && usable.includes(s.id));
-  }
-
-  /** Swipe vector -> whichever firable slot lies in that direction. */
-  aimSwipe(dx, dy) {
-    const a = Math.atan2(dy, dx);
-    const cx = this.w / 2;
-    const targets = this.swipeTargets();
-    let best = -1, bestD = Infinity;
-    targets.forEach((s, i) => {
-      const th = Math.atan2(s.y - SWIPE_CY, s.x - cx);
-      const d = Math.abs(((a - th + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-      if (d < bestD) { bestD = d; best = i; }
-    });
-    this.aimIndex = best;
-    this.highlight(best);
-  }
-
-  highlight(i) {
-    this.aimIndex = i;
-    const s = this.swipeTargets()[i];
-    if (s) this.setReadout(s.id);
-    this.drawAim();
-  }
-
-  /**
-   * The aim line and the marker around whatever it has landed on.
+   * The marker around the module a swipe has landed on.
    *
    * Drawn rather than scaled: a module is a rectangle with a top-left origin,
    * so growing it to show selection would slide it out of the grid instead of
-   * swelling in place.
+   * swelling in place. No aim LINE any more — the four diagonals are read off
+   * the grid itself, and a line drawn from a thumb at the bottom of the screen
+   * only crossed the thing it was pointing at.
    */
   drawAim() {
-    const g = this.aimG, cx = this.w / 2;
+    const g = this.aimG;
     g.clear();
-    const s = this.swipeTargets()[this.aimIndex];
+    const s = this.aimSlot;
     if (!s) return;
-    const tx = s.kind === 'slot' ? s.cxm : s.x;
-    const ty = s.kind === 'slot' ? s.y + MOD / 2 : s.y;
-    g.lineStyle(1, 0xf5d328, 0.75);
-    g.lineBetween(cx, SWIPE_CY, tx, ty);
     g.lineStyle(2, 0xf5d328, 0.95);
-    if (s.kind === 'slot') g.strokeRect(s.x - 2, s.y - 2, MOD + 4, MOD + 4);
-    else g.strokeCircle(s.x, s.y, s.r + 3);
+    g.strokeRect(s.x - 2, s.y - 2, MOD + 4, MOD + 4);
   }
 
   /**
@@ -1213,6 +1289,16 @@ export default class UIScene extends Phaser.Scene {
   tapSlot(s) {
     if (s.vacant) return;
     const r = this.game_.run;
+
+    // IN SITU THE RING IS SCENERY. Only the modules answer a touch, and a
+    // touch on one toggles it and gets out of the way — which is the whole
+    // interaction, and why it needs no instructions.
+    if (this.mode === 'situ') {
+      if (s.kind !== 'slot' || s.rankLocked || !s.id) return;
+      this.toggleSlot(s);
+      this.closeWheel();
+      return;
+    }
 
     if (s.kind === 'slot') {
       // A position past your Loadout Mastery rank is not selectable — there is
