@@ -60,12 +60,61 @@
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
 
 /**
- * Real art, once it exists. Empty today — every lookup falls through to a
- * placeholder, which is exactly how the game is meant to run until art lands.
+ * Real art. Anything not listed here falls through to a placeholder, which is
+ * exactly how the game is meant to run for every actor whose art has not landed.
+ *
+ * THE JUMP IS THREE ONE-FRAME CLIPS, NOT ONE THREE-FRAME CLIP. The sheet's
+ * frames 8/9/10 are rise, apex and fall — poses, not an animation. Registered
+ * as a single `jump: [8, 9, 10]` clip they would cycle rise→apex→fall→rise at
+ * 12fps for the whole jump, so the pose would contradict the arc roughly two
+ * thirds of the time. Split, GameScene picks the one that matches `vy` and the
+ * art actually reads. The frame indices are unchanged from the handoff sheet.
  */
-export const MANIFEST = {};
+export const MANIFEST = {
+  player: {
+    file: 'player.png', frameW: 24, frameH: 24, anchor: 'bottom',
+    anims: {
+      idle: [0, 1],
+      run: [2, 3, 4, 5, 6, 7],
+      jumpRise: [8],
+      jumpApex: [9],
+      jumpFall: [10],
+      slide: [11],
+    },
+    fps: 12,
+    // NOT tintable. The three colours are baked into the sheet; a Phaser tint
+    // multiplies the whole texture and would wreck it. See the palette note at
+    // the bottom of this file.
+  },
+};
 
 export const hasArt = (id) => Object.prototype.hasOwnProperty.call(MANIFEST, id);
+
+/**
+ * Which frame of the player sheet matches what he is actually doing.
+ *
+ * THE JUMP IS THREE POSES, NOT A LOOP. Frames 8/9/10 are rise, apex and fall;
+ * registered as one animation they would cycle through all three at 12fps for
+ * the whole jump, so the pose would contradict the arc most of the time. Read
+ * from `vy` instead and the art tells you where you are in the jump — which is
+ * information the player can use, in a game where jump height is variable and
+ * the double jump hangs before it launches.
+ *
+ * The apex band is deliberately wider than a single frame of hang: at the top
+ * of an arc `vy` crawls through zero, and a one-frame window there would flick
+ * between rise and fall instead of settling.
+ */
+const APEX_BAND = 1.2;
+export function playerClip(p) {
+  if (p.sliding) return 'slide';
+  if (!p.onGround) {
+    // The double jump's hang freezes vy outright, and that pause IS an apex.
+    if (p.djPause > 0 || Math.abs(p.vy) < APEX_BAND) return 'jumpApex';
+    return p.vy < 0 ? 'jumpRise' : 'jumpFall';
+  }
+  return p.vx !== 0 ? 'run' : 'idle';
+}
+
 
 /** '#RRGGBB' -> 0xRRGGBB */
 export const hexNum = (s) => parseInt(String(s).replace('#', ''), 16);
@@ -133,12 +182,27 @@ export class ActorLayer {
     this.depth = depth;
     this.g = scene.add.graphics();
     this.root.add(this.g);
+    /**
+     * A SECOND GRAPHICS THAT STAYS ABOVE THIS LAYER'S SPRITES.
+     *
+     * Sprites are added to the container after `g`, so within one layer every
+     * sprite draws on top of every shape. That was invisible while nothing had
+     * art and became a real problem the moment the player did: the status
+     * flash, the Astral Cloak's shroud and every piece of worn hardware are
+     * shapes drawn on the player's own layer, and all of them silently went
+     * behind him.
+     *
+     * Anything that must sit ON an actor rather than behind it goes here.
+     */
+    this.gOver = scene.add.graphics();
+    this.root.add(this.gOver);
     this.pools = new Map();   // manifest id -> Sprite[]
     this.cursor = new Map();  // manifest id -> how many used this frame
   }
 
   begin() {
     this.g.clear();
+    this.gOver.clear();
     this.cursor.clear();
   }
 
@@ -199,6 +263,9 @@ export class ActorLayer {
       : this.scene.add.image(0, 0, id);
     s.setOrigin(0.5, def.anchor === 'center' ? 0.5 : 1);
     this.root.add(s);
+    // The pool only grows, so this runs a handful of times per layer per run —
+    // and it is the one place a new sprite could get above the overlay.
+    this.root.bringToTop?.(this.gOver);
     arr.push(s);
     return s;
   }

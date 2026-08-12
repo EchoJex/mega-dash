@@ -12,6 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as Phys from '../src/systems/physics.js';
+import { playerClip } from '../src/systems/assets.js';
 import { FEEL } from '../src/config/feel.js';
 
 const GROUND_Y = 184;
@@ -152,4 +153,32 @@ test('the double jump reaches its stated fraction of the primary jump height', (
   // The second jump fires from mid-rise, so it reaches higher in absolute terms;
   // what is asserted is that it happens at all and adds height, not the total.
   assert.ok(peak(true) > single, 'the double jump must add height to the arc');
+});
+
+/**
+ * WHICH POSE THE ART SHOWS is a contract between the sheet and the sim, and it
+ * is the one part of landing the player's art that was NOT free. The jump is
+ * three separate one-frame clips precisely so this function can choose; if it
+ * ever went back to returning a single 'jump', the sheet would loop through
+ * rise/apex/fall regardless of what the player was doing and nobody would get
+ * a test failure telling them why.
+ */
+test('the player clip follows what the player is actually doing', () => {
+  const at = (over) => playerClip({ onGround: false, vx: 0, vy: 0, sliding: false, djPause: 0, ...over });
+
+  assert.equal(at({ onGround: true }), 'idle');
+  assert.equal(at({ onGround: true, vx: 1.4 }), 'run');
+  // The slide wins over everything, including running.
+  assert.equal(at({ onGround: true, vx: 1.4, sliding: true }), 'slide');
+
+  assert.equal(at({ vy: -4 }), 'jumpRise');
+  assert.equal(at({ vy: 4 }), 'jumpFall');
+  // A band around zero, not a single frame: vy crawls through zero at the top
+  // of an arc and a one-frame window would flicker between rise and fall.
+  assert.equal(at({ vy: 0 }), 'jumpApex');
+  assert.equal(at({ vy: 0.2 }), 'jumpApex');
+
+  // The double jump FREEZES vy for a few frames before it launches. That hang
+  // is an apex in every sense the player can see, so it has to look like one.
+  assert.equal(at({ vy: -6, djPause: 5 }), 'jumpApex');
 });

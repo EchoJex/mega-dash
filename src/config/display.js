@@ -118,23 +118,32 @@ export const PLAYER_SPRITE_W = 24;
 export const PLAYER_SPRITE_H = 24;
 
 /**
- * THE PLAYER'S COLOURS, FIXED FOREVER.
+ * THE PLAYER'S COLOURS, FIXED FOREVER — and now taken FROM the art.
  *
- * The suit used to be recoloured live from whichever weapon was equipped. That
- * is scrubbed: the player is this blue at rank 0 and this blue at the end of a
- * run, and what you are carrying is told by the hardware drawn on him instead.
+ * These three are the exact colours baked into `public/sprites/player.png`, so
+ * this constant and the sheet can never disagree about what the player looks
+ * like. The suit used to be recoloured live from whichever weapon was equipped;
+ * that is scrubbed, and a live recolour must never come back — a Phaser tint
+ * multiplies a 3-colour sprite and wrecks it, and a protagonist whose colour
+ * changes is one you have to re-find after every re-quip.
  *
- * Two reasons it had to go. A live recolour is something placeholders do for
- * free and real art cannot — a Phaser tint would wreck a 3-colour sprite, so
- * the feature was quietly blocking the art it was standing in for. And a player
- * whose colour changes is a player you have to re-find every time you re-quip,
- * which is the opposite of what a protagonist silhouette is for.
+ * IT WAS BLUE. The player was #1565C0 through the whole placeholder era and
+ * CLAUDE.md called that fixed forever; the owner's sheet arrived white and the
+ * art wins, because the art is the thing people actually see. White also
+ * happens to be the strongest possible answer to "never lose sight of the
+ * player" against arenas that run from Blaze Man's dark red to Eclipse Man's
+ * near-black.
+ *
+ * NOTHING READS THIS FOR THE PLAYER ANY MORE — `drawPlaceholder` is no longer
+ * reached for him now that `MANIFEST.player` exists. It is kept as the single
+ * place the decision lives, and as what the player would fall back to if the
+ * sheet ever failed to load.
  *
  * Same 3-colour NES rule as everything else: primary, secondary, shared outline.
  */
 export const PLAYER_PALETTE = {
-  primary: '#1565C0',
-  secondary: '#5CC8F0',
+  primary: '#FFFFFF',
+  secondary: '#BFC6D2',
   outline: '#0A0A12',
 };
 

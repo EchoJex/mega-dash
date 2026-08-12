@@ -39,9 +39,11 @@ import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
+  playerClip,
 } from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
+
 
 /** Copy of an array in random order. Used for the arsenal head start. */
 const shuffled = (arr) => [...arr].sort(() => Math.random() - 0.5);
@@ -1905,14 +1907,16 @@ export default class GameScene extends Phaser.Scene {
       drawBossRig(L.boss.g, b, sx(b.x));
       const bf = Attr.statusFlash(b.status);
       if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.boss.g.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
-        L.boss.g.fillRect(sx(b.x), b.y, b.w, b.h);
+        L.boss.gOver.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
+        L.boss.gOver.fillRect(sx(b.x), b.y, b.w, b.h);
       }
     }
 
     // A boss coming apart, on the boss layer and in world space, so it shakes
     // and scrolls with everything else and sits exactly where the body was.
-    for (const d of this.deaths) Death.drawDeath(L.boss.g, sx, d);
+    // Over the sprites for the same reason the player's flash is: a death that
+    // drew behind the body would be invisible the day bosses have art.
+    for (const d of this.deaths) Death.drawDeath(L.boss.gOver, sx, d);
 
     // player — flashes while invulnerable
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {
@@ -1922,7 +1926,7 @@ export default class GameScene extends Phaser.Scene {
         x: sx(p.x), y: p.y + (p.sliding ? 12 : 0),
         w: 24, h: p.sliding ? 12 : 24,
         facing: p.facing,
-        clip: p.sliding ? 'slide' : !p.onGround ? 'jump' : p.vx !== 0 ? 'run' : 'idle',
+        clip: playerClip(p),
         // THE PLAYER IS ALWAYS THIS BLUE. Equipping a weapon used to recolour
         // the suit from the source boss's palette; that is scrubbed. The suit
         // is the player's identity and does not change, and what you are
@@ -1932,14 +1936,18 @@ export default class GameScene extends Phaser.Scene {
       // An active attribute flashes its colour over the suit. Flashing rather
       // than tinting leaves the suit readable underneath, so a status never
       // makes the player harder to find on a busy screen.
+      //
+      // ON `gOver`, NOT `g`. The player has real art now, and within a layer
+      // sprites draw above shapes — so every one of these would have gone
+      // behind him and silently stopped existing.
       const pf = Attr.statusFlash(this.status);
       if (pf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.player.g.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
-        L.player.g.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
+        L.player.gOver.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
+        L.player.gOver.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
       }
       // Worn hardware, allies and hit feedback, on the player's own layer so
       // the drone and the shield sit above every world actor with him.
-      Wpn.drawWeaponry(L.player.g, sx, this.weaponCtx());
+      Wpn.drawWeaponry(L.player.gOver, sx, this.weaponCtx());
     }
 
     // A lightning or arc flash washes the whole room. Drawn on the topmost

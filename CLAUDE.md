@@ -165,13 +165,19 @@ construction order. **The player is always above every world actor** — hazards
 minions, projectiles, bosses — because losing sight of the player is losing the run. Only
 UI overlays go above, and those live in UIScene, a whole scene above this one.
 
-**Palette:** the player is a **fixed blue, forever** — `PLAYER_PALETTE` in
-`config/display.js`. Equipping a weapon used to recolour the suit live from its source
-boss's palette; **that is scrubbed, do not reintroduce it.** What you are carrying will be
-told by weapon hardware drawn on the player, not by his colour. A live recolour is
-something placeholders do for free and real 3-colour art cannot (a Phaser tint would wreck
-it), so the feature was quietly blocking the art it stood in for — and a protagonist whose
-colour changes is one you have to re-find after every re-quip.
+**Palette:** the player is a **fixed white**, taken from the art — `PLAYER_PALETTE` in
+`config/display.js` holds the three colours baked into `public/sprites/player.png`, so the
+constant and the sheet cannot disagree. He was blue (#1565C0) for the whole placeholder
+era and this file called that fixed forever; the owner's sheet arrived white and **the art
+wins.** White is also the strongest answer to "never lose sight of the player" against
+arenas running from Blaze Man's dark red to Eclipse Man's near-black.
+
+Equipping a weapon used to recolour the suit live from its source boss's palette; **that
+is scrubbed, do not reintroduce it.** What you are carrying is told by weapon hardware
+drawn on the player, not by his colour. A live recolour is something placeholders do for
+free and real 3-colour art cannot (a Phaser tint multiplies the whole texture), so the
+feature was quietly blocking the art it stood in for — and a protagonist whose colour
+changes is one you have to re-find after every re-quip.
 
 `NULL_WEAPON` is what an unresolvable weapon id falls back to: no primary and no
 secondary, so anything drawn from it is an **outline-only silhouette with every interior
@@ -542,6 +548,13 @@ An element is DONE when all of this is true for its boss:
 
 Art is NOT in the slice. Sprites and arena backdrops are the owner's to draw and land
 whenever they land, per actor, via `MANIFEST` — the game stays playable without them.
+
+**The player's sheet has landed** (`public/sprites/player.png`, 288×24, twelve 24×24
+frames). It is the first real art in the game and the proof the abstraction works: landing
+it changed no gameplay code. Two things it did need, and both are general rather than
+player-specific — an `ActorLayer.gOver` graphics that stays above the layer's sprites (a
+status flash drawn on `g` goes *behind* the art), and the jump registered as three
+one-frame clips so `playerClip()` can pick the pose from `vy` instead of looping.
 
 ### Order
 
