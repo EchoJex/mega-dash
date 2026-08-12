@@ -438,7 +438,18 @@ It holds the 17 element slices, the elemental attributes, a BUGS log and a BRAIN
 
 The owner edits it either directly or through the **tracker web app** (`docs/index.html`,
 served from GitHub Pages), which is a lens over the same file and autosaves straight into
-the repo. There is no export step and no download — that friction was the whole problem
+the repo.
+
+**Autosaves go to `tracker-draft/<branch>`, not to the working branch.** Typing produced a
+commit every couple of seconds and buried real history hundreds of lines deep. The
+**Publish** button fast-forwards the working branch onto the draft — or merges, if the
+working branch moved while they were typing — and then resets the draft. So the working
+branch gains one commit per publish however many times they paused.
+
+**This means unpublished edits are invisible to you.** A field marked `[draft]` that was
+never published is on `tracker-draft/main` and not in your checkout. If the owner says
+they wrote something and `npm run status` disagrees, that is the first thing to check —
+`git fetch origin tracker-draft/main` and look. There is no export step and no download — that friction was the whole problem
 with the old HTML tracker, along with a JSON export built on the false premise that Claude
 needed structured data to read a design doc. Both are gone.
 

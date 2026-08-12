@@ -30,6 +30,7 @@ import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
 import * as Pickups from '../systems/pickups.js';
 import * as Arena from '../systems/arena.js';
+import * as Death from '../systems/bossDeath.js';
 import * as Attr from '../systems/attributes.js';
 import * as Loadout from '../systems/loadout.js';
 import * as Wpn from '../systems/weaponry.js';
@@ -207,6 +208,7 @@ export default class GameScene extends Phaser.Scene {
     // about a status survives death, so it lives here and not in save.
     this.status = Attr.makeStatus();
     this.fx = Wpn.makeFx();
+    this.deaths = [];
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
     this.startArea();
   }
@@ -241,6 +243,7 @@ export default class GameScene extends Phaser.Scene {
     // are deliberately different: state is the weapon, allies are the room.
     this.run.allies.length = 0;
     this.fx = Wpn.makeFx();
+    this.deaths = [];
     this.arena = null;
     this.areaFrame = 0;
     Terrain.generate(this.world, 0, this.viewW);
@@ -330,6 +333,7 @@ export default class GameScene extends Phaser.Scene {
       this.pickups = [];
       this.run.allies.length = 0;
       this.fx = Wpn.makeFx();
+    this.deaths = [];
       this.world.doors = [];
       this.player.x = 24;
       this.player.y = GROUND_Y - 24;
@@ -566,6 +570,9 @@ export default class GameScene extends Phaser.Scene {
     // rule the fire button follows.
     if (this.jumpEvent) { this.jumpEvent = false; Wpn.notify(ctx, ids, 'jump'); }
     Wpn.stepFx(this.fx);
+    // Boss deaths outlive `this.boss` by design — the body keeps coming apart
+    // after the fight is over, which is the whole point of it.
+    this.deaths = this.deaths.filter((d) => Death.stepDeath(d));
   }
 
   /**
@@ -1228,17 +1235,19 @@ export default class GameScene extends Phaser.Scene {
         if (e.hp <= 0 || b.hitSet?.has(e)) continue;
         if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
 
-        // A GUARD STANCE REFLECTS THE FIRST SHOT IT TAKES, then drops. Strike
-        // Man's layer-2 stance is the only user so far. Resolved before damage
-        // and before the hit set, so a reflected shot neither hurts him nor
-        // burns a pierce charge — it simply comes back at you as YOUR bullet
-        // turned enemy, which is what makes chipping a walking boss from across
-        // the room stop being free.
+        // A GUARD STANCE EATS THE FIRST SHOT IT TAKES, then drops. Strike Man's
+        // layer-2 stance is the only user so far. Resolved before damage and
+        // before the hit set, so a guarded shot neither hurts him nor burns a
+        // pierce charge — it simply stops, which is what makes chipping a
+        // walking boss from across the room stop being free.
+        //
+        // IT FIZZLES RATHER THAN REFLECTING. Turning the player's own bullet
+        // around is a second thing to dodge arriving from a direction nothing
+        // else in the game shoots from, and the stance already does its job by
+        // denying the damage. Denial is legible; a surprise return shot is not.
         if (e.guard > 0) {
           e.guard = 0;
-          b.vx = -b.vx; b.vy = -b.vy;
-          b.enemy = true;
-          b.hitSet = null;
+          b.life = -1;
           sfx('select', { pitch: 0.7 });
           break;
         }
@@ -1515,6 +1524,12 @@ export default class GameScene extends Phaser.Scene {
   killBoss() {
     const b = this.boss;
     sfx('bossDie');
+    // The body comes apart in its own element. Purely cosmetic and deliberately
+    // NOT gated on anything below: the unlock, the drops and the wrap door all
+    // land on this frame, so a death sequence can never strand a run. The
+    // player may walk into the door while he is still falling.
+    this.deaths.push(Death.makeDeath(b));
+    this.shake = { mag: 2, dur: 24, t: 24 };
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);
     this.run.bossesDefeated.push(b.id);
@@ -1545,8 +1560,6 @@ export default class GameScene extends Phaser.Scene {
       }
       this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
     }
-    // The elemental death animation, fade and palette-swap reveal land in this
-    // boss's own element slice — see the plan in CLAUDE.md.
     // The WRAP DOOR out only exists once the boss is down.
     this.world.doors = [{
       x: this.viewW / 2 - 8, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
@@ -1896,6 +1909,10 @@ export default class GameScene extends Phaser.Scene {
         L.boss.g.fillRect(sx(b.x), b.y, b.w, b.h);
       }
     }
+
+    // A boss coming apart, on the boss layer and in world space, so it shakes
+    // and scrolls with everything else and sits exactly where the body was.
+    for (const d of this.deaths) Death.drawDeath(L.boss.g, sx, d);
 
     // player — flashes while invulnerable
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {

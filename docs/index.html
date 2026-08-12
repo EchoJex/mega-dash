@@ -91,7 +91,7 @@
 <header>
   <h1>Mega Dash — Dev Tracker</h1>
   <div class="row">
-    <button id="saveBtn" class="primary">Save</button>
+    <button id="saveBtn" class="primary" title="commit the draft branch onto the working branch">Publish</button>
     <button id="reloadBtn">Reload</button>
     <select id="branch" title="branch"></select>
     <span class="sp"></span>
@@ -162,8 +162,28 @@ const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';
 
 let doc = null;          // parsed model
-let sha = null;          // blob sha, for conflict-free writes
+let sha = null;          // blob sha ON `writeRef`, for conflict-free writes
 let dirty = false, saving = false, saveTimer = null;
+/**
+ * AUTOSAVE GOES TO A DRAFT BRANCH; PUBLISH PUTS IT ON THE REAL ONE.
+ *
+ * Typing produced a commit every couple of seconds, and a working branch's
+ * history was hundreds of "tracker: autosave" lines deep between two real
+ * commits. Keystroke saves now land on `tracker-draft/<branch>` and the SAVE
+ * button fast-forwards the working branch to whatever the draft has reached.
+ *
+ * The safety property is unchanged — nothing you type is ever only in a browser
+ * tab — but the cost moves to a branch nobody reads. CI already ignores
+ * `design/**`, so neither path was ever burning an APK build.
+ *
+ * THE COST IS THAT UNPUBLISHED EDITS ARE INVISIBLE TO THE BUILD. Claude reads
+ * the tracker off the working branch, so a slice marked `[draft]` and never
+ * published is a slice Claude cannot see. That is why the pending count is
+ * shown on the button itself rather than tucked into a status line.
+ */
+const draftRef = () => `tracker-draft/${branch()}`;
+let writeRef = null;     // the branch `sha` belongs to
+let pending = 0;         // autosaves not yet published to the working branch
 
 const $ = (s) => document.querySelector(s);
 const token = () => localStorage.getItem(TOKEN_KEY) || '';
@@ -234,11 +254,34 @@ async function load() {
   let lastErr = null;
   for (const br of order) {
     try {
-      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${br}&t=${Date.now()}`);
+      let r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${br}&t=${Date.now()}`);
+      writeRef = br;
+      pending = 0;
+
+      // THE DRAFT BRANCH WINS WHEN IT IS AHEAD. Autosaves land there, so the
+      // newest version of what you typed is on the draft and loading the
+      // working branch would silently hand you back an older tracker — which
+      // is the one way this scheme could lose work.
+      if (br === branch()) {
+        try {
+          const cmp = await gh(
+            `/repos/${OWNER}/${REPO}/compare/${br}...${draftRef()}?t=${Date.now()}`,
+          );
+          if (cmp.ahead_by > 0) {
+            r = await gh(
+              `/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${draftRef()}&t=${Date.now()}`,
+            );
+            writeRef = draftRef();
+            pending = cmp.ahead_by;
+          }
+        } catch { /* no draft branch yet — the working branch is the truth */ }
+      }
+
       sha = r.sha;
       doc = parse(b64decode(r.content));
       render();
       dirty = false;
+      refreshSaveBtn();
       if (br !== branch()) {
         localStorage.setItem(BRANCH_KEY, br);
         $('#branch').value = br;
@@ -248,7 +291,9 @@ async function load() {
       // an hour of edits fails to persist.
       setState(tokenBad
         ? 'loaded · ' + br + ' — TOKEN REJECTED, read-only. Tap 🔑.'
-        : 'loaded · ' + br, tokenBad ? 'err' : 'ok');
+        : pending
+          ? `loaded · ${br} + ${pending} unpublished draft edit(s)`
+          : 'loaded · ' + br, tokenBad ? 'err' : 'ok');
       loadBuilds();
       return;
     } catch (e) { lastErr = e; }
@@ -278,25 +323,131 @@ async function loadBuilds() {
   } catch { /* offline or no token — the static fallback list stands */ }
 }
 
+/** The commit a branch currently points at, or null if it does not exist. */
+async function headOf(ref) {
+  try {
+    const r = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${ref}?t=${Date.now()}`);
+    return r.object.sha;
+  } catch { return null; }
+}
+
+/**
+ * Make sure the draft branch exists, forking it from the working branch.
+ *
+ * Created lazily rather than up front: someone who only ever reads the tracker
+ * should not leave a branch behind on the repo for having opened a web page.
+ */
+async function ensureDraft() {
+  const ref = draftRef();
+  if (await headOf(ref)) return ref;
+  const base = await headOf(branch());
+  if (!base) throw new Error(`cannot find branch ${branch()}`);
+  await gh(`/repos/${OWNER}/${REPO}/git/refs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref: `refs/heads/${ref}`, sha: base }),
+  });
+  return ref;
+}
+
+/**
+ * Put the draft's work on the working branch, then start the draft over.
+ *
+ * FAST-FORWARD FIRST, MERGE IF THAT FAILS. A fast-forward keeps the history
+ * clean — one commit per publish, no merge bubble. But the working branch moves
+ * under you whenever Claude commits, and GitHub refuses a non-fast-forward ref
+ * update, which is exactly the right answer: forcing it would silently rewind
+ * somebody else's commits. So the refusal is caught and a real three-way merge
+ * is used instead, which keeps both sides.
+ *
+ * THE DRAFT IS RESET AFTERWARDS, always. Left alone it would drift further from
+ * the working branch with every publish, and the merges would get progressively
+ * more likely to conflict over a file both sides touch. Starting each drafting
+ * session from the published state means a conflict can only ever involve edits
+ * made since the last publish.
+ */
+async function publishDraft() {
+  const head = await headOf(draftRef());
+  if (!head) return false;
+  try {
+    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${branch()}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: head }),
+    });
+  } catch (e) {
+    if (!/422/.test(e.message)) throw e;
+    // The working branch moved on. Merge rather than clobber.
+    await gh(`/repos/${OWNER}/${REPO}/merges`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        base: branch(), head: draftRef(), commit_message: 'tracker: publish',
+      }),
+    });
+  }
+  // Re-point the draft at the published state so the next session forks clean.
+  const now = await headOf(branch());
+  if (now) {
+    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${draftRef()}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: now, force: true }),
+    });
+    // The blob sha we were holding belongs to a commit that is no longer the
+    // draft's head, so the next write has to look it up again.
+    writeRef = null;
+  }
+  return true;
+}
+
+/**
+ * `manual` is PUBLISH, not "save harder".
+ *
+ * An autosave commits to the draft branch and nothing else. A manual save
+ * commits any outstanding edit there too, then fast-forwards the working branch
+ * onto it — so the working branch gains ONE commit per publish however many
+ * times you paused while typing.
+ */
 async function save(manual) {
   if (!doc || saving) return;
   if (!token()) { setState('no token — read only', 'err'); return; }
   saving = true;
-  setState('saving…');
+  setState(manual ? 'publishing…' : 'saving…');
   try {
-    const body = {
-      message: manual ? 'tracker: manual save' : 'tracker: autosave',
-      content: b64encode(serialize(doc)),
-      sha, branch: branch(),
-    };
-    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    sha = r.content.sha;
+    const ref = await ensureDraft();
+    // The blob sha we hold belongs to whichever branch we last wrote; on the
+    // first write of a session that is the branch we LOADED from, which may not
+    // be the draft. Re-read it rather than sending a sha from another branch,
+    // which GitHub rejects as a conflict.
+    if (writeRef !== ref) {
+      const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${ref}&t=${Date.now()}`);
+      sha = cur.sha;
+      writeRef = ref;
+    }
+    if (dirty) {
+      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: manual ? 'tracker: publish' : 'tracker: autosave',
+          content: b64encode(serialize(doc)),
+          sha, branch: ref,
+        }),
+      });
+      sha = r.content.sha;
+      pending++;
+    }
     dirty = false;
-    setState('saved ' + new Date().toLocaleTimeString(), 'ok');
+
+    if (manual) {
+      await publishDraft();
+      pending = 0;
+      setState(`published to ${branch()} ${new Date().toLocaleTimeString()}`, 'ok');
+    } else {
+      setState(`draft saved ${new Date().toLocaleTimeString()}`, 'ok');
+    }
+    refreshSaveBtn();
   } catch (e) {
     // A 409 means the file moved under us — almost always because Claude
     // committed. Say so plainly rather than silently clobbering either side.
@@ -310,6 +461,19 @@ async function save(manual) {
   } finally {
     saving = false;
   }
+}
+
+/**
+ * The button carries the pending count, because unpublished edits are the one
+ * failure mode this design introduces: a slice marked `[draft]` that never left
+ * the draft branch is a slice the build cannot see. It has to be visible on the
+ * control that fixes it, not in a status line that scrolls away.
+ */
+function refreshSaveBtn() {
+  const b = $('#saveBtn');
+  if (!b) return;
+  b.textContent = pending ? `Publish (${pending})` : 'Publish';
+  b.classList.toggle('warn', pending > 0);
 }
 
 function touch() {
