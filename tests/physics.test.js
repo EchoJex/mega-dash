@@ -182,3 +182,58 @@ test('the player clip follows what the player is actually doing', () => {
   // is an apex in every sense the player can see, so it has to look like one.
   assert.equal(at({ vy: -6, djPause: 5 }), 'jumpApex');
 });
+
+/**
+ * JUMP-CANCEL-INTO-SLIDE — the rule, not the numbers.
+ *
+ * The jump owns the first tap so no latency is ever added to it; a second tap
+ * inside a tight window undoes that jump and slides instead. What matters and
+ * is asserted here is WHICH tap wins in each state — the window length in
+ * feel.js stays free to move.
+ */
+test('the slide window only ever eats a jump that is still rising', () => {
+  // Modelled on GameScene.tryCancelIntoSlide's guards, which are pure state
+  // questions: still airborne, still rising, still inside the window.
+  const canCancel = (p, since) => !p.onGround && p.vy < 0
+    && since <= FEEL.slideTapFrames && p.jumpFromY != null;
+
+  const rising = { onGround: false, vy: -4, jumpFromY: 160 };
+  assert.equal(canCancel(rising, 2), true, 'a fast second tap should slide');
+  assert.equal(canCancel(rising, FEEL.slideTapFrames + 1), false,
+    'past the window it must stay a double jump');
+
+  // At the top of an arc and on the way down, the second tap is a DOUBLE JUMP.
+  // Yanking a player back to the floor from there would be the worst possible
+  // reading of a tap they meant as a second jump.
+  assert.equal(canCancel({ onGround: false, vy: 0, jumpFromY: 160 }, 2), false);
+  assert.equal(canCancel({ onGround: false, vy: 3, jumpFromY: 160 }, 2), false);
+
+  // Grounded taps are plain jumps; there is nothing to cancel.
+  assert.equal(canCancel({ onGround: true, vy: 0, jumpFromY: 160 }, 2), false);
+});
+
+/**
+ * JUMP-CANCEL-INTO-SLIDE — the rule, not the numbers.
+ *
+ * The jump owns the first tap so no latency is ever added to it; a second tap
+ * inside a tight window undoes that jump and slides instead. What is asserted
+ * is WHICH tap wins in each state — the window length in feel.js stays free.
+ */
+test('the slide window only ever eats a jump that is still rising', () => {
+  // The same three state questions GameScene.tryCancelIntoSlide asks.
+  const canCancel = (p, since) => !p.onGround && p.vy < 0
+    && since <= FEEL.slideTapFrames && p.jumpFromY != null;
+
+  const rising = { onGround: false, vy: -4, jumpFromY: 160 };
+  assert.equal(canCancel(rising, 2), true, 'a fast second tap should slide');
+  assert.equal(canCancel(rising, FEEL.slideTapFrames + 1), false,
+    'past the window it must stay a double jump');
+
+  // At the apex and on the way down the second tap is a DOUBLE JUMP. Yanking a
+  // player back to the floor from there is the worst possible reading of it.
+  assert.equal(canCancel({ onGround: false, vy: 0, jumpFromY: 160 }, 2), false);
+  assert.equal(canCancel({ onGround: false, vy: 3, jumpFromY: 160 }, 2), false);
+
+  // Grounded taps are plain jumps; there is nothing to cancel.
+  assert.equal(canCancel({ onGround: true, vy: 0, jumpFromY: 160 }, 2), false);
+});

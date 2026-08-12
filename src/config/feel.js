@@ -281,6 +281,17 @@ export const FEEL = {
   // If you add projectiles or pierce to a weapon, rebalance its cooldown.
   dpsTarget: 7.5,
   weaponMaxLevel: 10,
+
+  /**
+   * How long after a jump a second tap still cancels it into a slide.
+   *
+   * TIGHT ON PURPOSE. The jump fires on the first tap, so every frame of this
+   * window is a frame in which an already-visible jump can be un-done. Too
+   * generous and ordinary double-jump inputs start eating themselves; too mean
+   * and the slide is unreachable on a touchscreen. 8 frames is about 130ms,
+   * which is a deliberate double-tap and not a fumbled one.
+   */
+  slideTapFrames: 8,
   weaponDamagePerLevel: 0.12, // placeholder until real Lv1/3/6/10 ladders land
 };
 

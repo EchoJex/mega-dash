@@ -154,7 +154,16 @@ const PAD_ALPHA_ON = 0;
  * rather than as a design. It fits because the modules moved inside it.
  */
 const SIDEARM_Y = 40, SIDEARM_R = 6;
-const RING_CY = 112, RING_R = 57;
+/**
+ * THE RING IS AN OVAL, not a circle.
+ *
+ * The playfield is 224 tall and 320-480 wide, so a circle big enough to hold
+ * seventeen discs at a comfortable spacing does not fit vertically while
+ * leaving most of the horizontal room unused. An ellipse spends the axis the
+ * screen actually has. Discs and the ring frame are placed from the SAME two
+ * radii, so they cannot disagree about where the ring is.
+ */
+const RING_CY = 112, RING_RX = 96, RING_RY = 52;
 const MOD = 26, MOD_GAP = 6;       // module size and the gap between columns
 // Pulled IN toward the grid rather than out toward the rim: the ring is
 // widest at its middle, so a label nearer the centre line has more clear
@@ -615,24 +624,26 @@ export default class UIScene extends Phaser.Scene {
    */
   buildWheel() {
     const cx = this.w / 2;
-    const r = Math.min(cx - 22, RING_R);
-    this.ringR = r;
+    // Clamped so the oval still fits the narrowest supported virtual width.
+    // Only the horizontal radius can ever be the binding one — the vertical is
+    // fenced by the labels above and below, not by the screen.
+    this.rx = Math.min(cx - 22, RING_RX);
+    this.ry = RING_RY;
     this.wheel = this.add.container(0, 0).setVisible(false);
 
     // The ring and its two labels never change, so they are painted once.
     this.frameG = this.add.graphics();
     this.wheel.add(this.frameG);
-    this.drawRing(cx, r);
+    this.drawRing(cx);
     this.wheel.add(label(this, cx, LABEL_OFF_Y, 'OFFENSIVE',
       { color: '#5CADD5', origin: 0.5 }));
     this.wheel.add(label(this, cx, LABEL_DEF_Y, 'DEFENSIVE',
       { color: '#5CADD5', origin: 0.5 }));
 
     // Benched and locked specials live on the ring, in their class's half.
-    this.arc = [
-      ...this.mkArc(OFFENSIVE, cx, RING_CY, r, -1),
-      ...this.mkArc(DEFENSIVE, cx, RING_CY, r, 1),
-    ];
+    this.arcOff = this.mkArc(OFFENSIVE, cx, RING_CY, -1);
+    this.arcDef = this.mkArc(DEFENSIVE, cx, RING_CY, 1);
+    this.arc = [...this.arcOff, ...this.arcDef];
 
     // THE FIVE THINGS YOU ARE CARRYING. `id` is filled in by refreshWheel: a
     // module shows whatever is in it, so unlike an arc position it does not
@@ -690,17 +701,26 @@ export default class UIScene extends Phaser.Scene {
    * two words inside it — the labels alone would not carry that. The lower arc
    * is dimmer because the defensive row is the passive half of the loadout.
    */
-  drawRing(cx, r) {
+  drawRing(cx) {
     const g = this.frameG;
     const gap = 0.16;
-    g.lineStyle(1, CYAN, 0.55);
-    g.beginPath();
-    g.arc(cx, RING_CY, r, Math.PI + gap, -gap, false);      // upper
-    g.strokePath();
-    g.lineStyle(1, CYAN, 0.32);
-    g.beginPath();
-    g.arc(cx, RING_CY, r, gap, Math.PI - gap, false);       // lower
-    g.strokePath();
+    // Phaser Graphics has no elliptical-arc primitive, so each half is stroked
+    // as a sampled polyline. 40 steps is smooth at this size and the whole
+    // thing is drawn once, not per frame.
+    const half = (a, b, alpha) => {
+      g.lineStyle(1, CYAN, alpha);
+      g.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const th = a + (i / 40) * (b - a);
+        const x = cx - Math.cos(th) * this.rx;
+        const y = RING_CY - Math.sin(th) * this.ry;
+        if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.strokePath();
+    };
+    half(gap, Math.PI - gap, 0.55);        // upper — the offensive half
+    // The lower arc is dimmer because the defensive row is the passive half.
+    half(-gap, -(Math.PI - gap), 0.32);
   }
 
   /**
@@ -740,28 +760,62 @@ export default class UIScene extends Phaser.Scene {
    * A class's benched specials, spread along a half-ellipse.
    *
    * `dir` is -1 for the arc above the offensive row and +1 for the one below
-   * the defensive row. The upper arc skips a wedge at 12 o'clock so it opens
-   * around the sidearm instead of burying it.
+   * the defensive row. Both arcs run unbroken — nothing has to be dodged,
+   * because the sidearm sits above the ring rather than on it and the readout
+   * sits below.
+   *
+   * POSITIONS ARE CREATED FOR EVERY SPECIAL, INCLUDING LOCKED ONES, but where
+   * each one SITS is decided per frame by layoutArc() from how many you have
+   * actually unlocked. The order along the arc never changes; only the spacing
+   * does.
    */
-  mkArc(cls, cx, cy, r, dir) {
-    const ids = specialsOfClass(cls);
-    const n = ids.length;
-    const lo = ARC_END, hi = Math.PI - ARC_END;
-    // Both arcs run unbroken. Nothing has to be dodged: the sidearm sits above
-    // the ring rather than on it, and the readout sits below it.
-    const spread = (i, count, a, b) =>
-      (count <= 1 ? (a + b) / 2 : a + (i / (count - 1)) * (b - a));
-
-    return ids.map((id, i) => {
-      const th = spread(i, n, lo, hi);
-      const x = cx - Math.cos(th) * r;
-      const y = cy + dir * Math.sin(th) * r;
+  mkArc(cls, cx, cy, dir) {
+    return specialsOfClass(cls).map((id) => {
       const slot = this.mkSlot(
-        { kind: 'arc', cls, index: -1, x, y, r: ARC_SLOT_R }, 3,
+        { kind: 'arc', cls, index: -1, x: cx, y: cy, r: ARC_SLOT_R, dir }, 3,
       );
       slot.id = id;
-      slot.fixed = true;          // an arc position belongs to one weapon forever
       return slot;
+    });
+  }
+
+  /**
+   * Place a class's UNLOCKED specials, centred on the arc and growing outward.
+   *
+   * They used to sit at absolute positions covering the full half-circle from
+   * the first run, so a new player saw two weapons marooned at opposite ends of
+   * a ring of padlocks. Now the arc holds only what you have, centred, and it
+   * spreads as you earn more — arriving at the full spread exactly when the
+   * class is complete.
+   *
+   * WHAT THIS TRADES, DELIBERATELY. Absolute position is no longer stable: a
+   * weapon shifts along the arc as its neighbours unlock. What IS stable is
+   * ORDER and therefore RELATIVE position — the Blaze Wheel is always left of
+   * the Volt Spark — which is what the owner asked for and what actually gets
+   * remembered. It only works because re-quipping is no longer a rushed thing
+   * done under fire; it happens after a boss falls, with time to look.
+   */
+  layoutArc(slots, unlocked) {
+    const cx = this.w / 2;
+    const live = slots.filter((s) => unlocked.has(s.id) || dev('unlockAnyWeapon'));
+    const n = live.length;
+    // The full arc, reached only when every special of the class is unlocked.
+    const lo = ARC_END, hi = Math.PI - ARC_END;
+    const full = specialsOfClass(live[0]?.cls || OFFENSIVE).length || 1;
+    // Spacing is the FULL arc's step, so positions land where they eventually
+    // will rather than sliding inward as the set grows.
+    const step = (hi - lo) / Math.max(1, full - 1);
+    const span = step * (n - 1);
+    const mid = (lo + hi) / 2;
+    const start = mid - span / 2;
+
+    live.forEach((s, i) => {
+      const th = n <= 1 ? mid : start + i * step;
+      s.x = cx - Math.cos(th) * this.rx;
+      s.y = RING_CY + s.dir * Math.sin(th) * this.ry;
+      s.disc.setPosition(s.x, s.y);
+      s.abbr.setPosition(s.x, s.y - 5);
+      s.lvl.setPosition(s.x, s.y + 3);
     });
   }
 
@@ -822,6 +876,12 @@ export default class UIScene extends Phaser.Scene {
     const r = this.game_.run, lo = r.loadout;
     this.lockG.clear();
     this.moduleG.clear();
+
+    // Where the arc discs SIT is recomputed every refresh from what is
+    // unlocked — see layoutArc. Done first, because the swipe aim and the
+    // readout both read positions back off these objects.
+    this.layoutArc(this.arcOff, r.unlocked);
+    this.layoutArc(this.arcDef, r.unlocked);
 
     // Modules take whatever is in them; an empty one keeps its frame and its
     // watermark rather than vanishing, so the two-per-class cap is always

@@ -1718,8 +1718,29 @@ export default class GameScene extends Phaser.Scene {
    * the cut fired on literally every jump and variable jump height — the genre
    * signature this engine is built around — never actually worked.
    */
+  /**
+   * A jump, and the double-tap that turns one into a slide.
+   *
+   * THE JUMP ALWAYS WINS THE FIRST TAP. Detecting a double-tap before jumping
+   * would put input latency on every jump in the game, which is the one thing a
+   * Mega Man-grade platformer cannot afford. So the jump fires immediately and a
+   * second tap inside a TIGHT window cancels it: the player is put back exactly
+   * where he launched from and dropped into a slide instead.
+   *
+   * The cancel window is deliberately short. A tap at the very tail of it
+   * un-does a jump that has visibly started, so the wider the window the more
+   * often you see a hop that should not have happened — and there is currently
+   * no art for those in-between frames.
+   *
+   * `jumpFromY` is captured while still GROUNDED, because that is the only
+   * moment the launch height is known; the jump itself is buffered and applied
+   * inside the fixed step, so reading `y` later would give a rising player.
+   */
   doJump() {
+    const p = this.player, r = this.run;
+    if (this.tryCancelIntoSlide()) return;
     this.intent.jumpHeld = true;
+    if (p.onGround) { p.jumpFromY = p.y; this.jumpTapFrame = r.frame; }
     // Only sound a jump that actually leaves the ground. A buffered press while
     // airborne may never become a jump at all.
     const kind = Phys.requestJump(this.player);
@@ -1733,9 +1754,40 @@ export default class GameScene extends Phaser.Scene {
   }
   endJump() { this.intent.jumpHeld = false; }
 
+  /**
+   * Second tap of a rapid double-tap: undo the jump, slide instead.
+   *
+   * Refuses unless the jump is still RISING and still inside the window, so a
+   * player who taps again at the top of an arc gets their double jump rather
+   * than being yanked to the floor. Refuses too if the slide would not start
+   * (Slide Mastery rank 0), in which case the second tap falls through to the
+   * double jump it would otherwise have been — never a dead input.
+   */
+  tryCancelIntoSlide() {
+    const p = this.player, r = this.run;
+    if (this.jumpTapFrame == null || p.onGround || p.vy >= 0) return false;
+    if (r.frame - this.jumpTapFrame > FEEL.slideTapFrames) return false;
+    if (p.jumpFromY == null) return false;
+
+    // Put him back on the ground he left, then slide from there.
+    const wasY = p.y, wasVy = p.vy;
+    p.y = p.jumpFromY;
+    p.vy = 0;
+    p.onGround = true;
+    p.airActions = FEEL.maxAirActions;
+    p.djPause = 0;
+    if (!this.toggleSlide()) {
+      p.y = wasY; p.vy = wasVy; p.onGround = false;   // rank 0: leave the jump alone
+      return false;
+    }
+    this.jumpTapFrame = null;
+    this.intent.jumpHeld = false;
+    return true;
+  }
+
   toggleSlide() {
     const r = this.run;
-    if (this.player.sliding) { Phys.cancelSlide(this.player); return; }
+    if (this.player.sliding) { Phys.cancelSlide(this.player); return true; }
     const started = Phys.startSlide(this.player, {
       rank: r.slideRank,             // rank 0 refuses outright — no slide yet
       durMult: r.slideDurMult,
@@ -1744,6 +1796,9 @@ export default class GameScene extends Phaser.Scene {
     // Rank 3 turns the slide into a dodge. Granted on the opening frames only,
     // so it rewards sliding INTO danger on purpose rather than parking in one.
     if (started && r.slideIframes > 0) r.invuln = Math.max(r.invuln, r.slideIframes);
+    if (started) sfx('slide');
+    // Reported so the jump-cancel can put the jump back when a slide refuses.
+    return started;
   }
   setMove(dir) { this.intent.moveDir = dir; }
 
