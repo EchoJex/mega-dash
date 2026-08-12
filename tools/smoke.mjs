@@ -127,7 +127,7 @@ await page.waitForTimeout(1400);
 const started = await page.evaluate(() => !!globalThis.__game.scene.getScene('Game')?.run);
 if (!started) fail('the run never started');
 
-await play(6, ['ArrowRight', 'KeyZ', 'Space', 'ArrowRight', 'KeyZ', 'ArrowLeft', 'KeyX']);
+await play(6, ['ArrowRight', 'Space', 'ShiftLeft', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyS']);
 await page.screenshot({ path: shot('area.png') });
 
 /**
@@ -166,7 +166,7 @@ for (const id of ['core', 'blaze', 'torrent', 'volt', 'strike']) {
 
   // Fight for a while. Both loops get frames, and the fixed seed makes it the
   // same fight on every run.
-  await play(11, ['ArrowRight', 'KeyZ', 'Space', 'KeyZ', 'ArrowLeft', 'Space', 'KeyX']);
+  await play(11, ['ArrowRight', 'Space', 'ShiftLeft', 'Space', 'ArrowLeft', 'ShiftLeft', 'KeyS']);
   await page.screenshot({ path: shot(`${id}.png`) });
 
   const crash = await crashText();
@@ -269,10 +269,10 @@ for (const level of [1, 3, 6, 10]) {
     if (!ok) { fail(`could not select ${off} at Lv${level}`); continue; }
 
     // Tap-fire, then a long hold — the two branches of a long-press weapon.
-    await play(3, ['KeyZ', 'ArrowRight', 'Space', 'KeyZ', 'ArrowLeft', 'KeyX']);
-    await page.keyboard.down('KeyZ');
+    await play(3, ['Space', 'ArrowRight', 'ShiftLeft', 'Space', 'ArrowLeft', 'KeyS']);
+    await page.keyboard.down('Space');
     await page.waitForTimeout(1100);
-    await page.keyboard.up('KeyZ');
+    await page.keyboard.up('Space');
     await page.waitForTimeout(400);
 
     const crash = await crashText();

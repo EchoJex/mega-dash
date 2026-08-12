@@ -671,8 +671,12 @@ it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to
 
 Playtest perks: HP floored at 1 (every hit still lands), **every weapon unlocked at level
 1**, **both Loadout Mastery ranks at 3** (four slots, all live), equipping padlocked
-weapons, re-quipping outside the between-fights window, cards drawn from locked weapons, a
-**boss selector** in the pause menu, and **layer cycling**.
+weapons, cards drawn from locked weapons, a **WEAPONS +1 LV** button, a **boss selector**
+in the pause menu, and **layer cycling**.
+
+**Dev mode does NOT bypass the re-quip window.** It used to, and that was wrong: a loadout
+change is an event you earn, and a playtest that could re-quip at will was never testing
+the thing being designed. Reach a boss defeat with the selector instead.
 
 **Level 1, not level 10.** The whole arsenal is on the table so it can be slotted and
 compared; the ladders still have to be climbed, because a weapon handed over at its top

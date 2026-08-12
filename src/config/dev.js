@@ -30,16 +30,6 @@ export const DEV = {
   /** Tapping a padlocked slot on the re-quip wheel equips it anyway. */
   unlockAnyWeapon: true,
 
-  /**
-   * Slots can be rearranged at any time, not only between a boss falling and
-   * the next arena. Testing a weapon otherwise costs a whole boss fight per
-   * change, which is the same tax bossSelect exists to remove.
-   *
-   * Loadout Mastery is NOT bypassed by this — the ranks are bought in the Hub
-   * like the slide is, and a playtest that quietly ignored the caps would tell
-   * you nothing about whether the ladder is worth buying.
-   */
-  freeRequip: true,
 
   /** Level-up cards may offer weapons you have not unlocked yet. */
   cardsFromAllWeapons: true,
@@ -80,6 +70,17 @@ export const DEV = {
    * single biggest tax on that loop.
    */
   bossSelect: true,
+
+  /**
+   * A WEAPONS +1 LV button in the pause menu.
+   *
+   * A ladder is the hardest thing in the game to reach on purpose: levels come
+   * from EXP you have to walk over, so seeing what a Lv10 rung does meant
+   * playing most of a run to get there. In the pause menu rather than on the
+   * HUD or the wheel — it must never be reachable by a thumb mid-fight, and the
+   * re-quip wheel is a shipping control that dev tools should stay out of.
+   */
+  levelButton: true,
 
   /**
    * Boss layers WRAP instead of clamping: the 4th encounter is the 1st again

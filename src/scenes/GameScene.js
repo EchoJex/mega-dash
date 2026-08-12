@@ -79,20 +79,33 @@ export default class GameScene extends Phaser.Scene {
     this.nextBoss = makeBossBag();
     this.startRun();
 
-    // Input intent is filled by UIScene (touch) and keyboard here.
-    // The `if (!jumpHeld)` guards matter: browsers repeat keydown while a key is
-    // held, and without them a held jump would burn the air dash instantly.
-    this.input.keyboard.on('keydown-SPACE', () => { if (!this.intent.jumpHeld) this.doJump(); });
-    this.input.keyboard.on('keyup-SPACE', () => this.endJump());
-    this.input.keyboard.on('keydown-UP', () => { if (!this.intent.jumpHeld) this.doJump(); });
-    this.input.keyboard.on('keyup-UP', () => this.endJump());
-    this.input.keyboard.on('keydown-X', () => this.toggleSlide());
-    // Routed through the same beginFire/endFire the touch pad uses so charging
-    // works identically on both. The guard matters: browsers repeat keydown
-    // while a key is held, and re-stamping fireStart would make a charged shot
-    // impossible to reach.
-    this.input.keyboard.on('keydown-Z', () => { if (!this.intent.fireHeld) this.beginFire(); });
-    this.input.keyboard.on('keyup-Z', () => this.endFire());
+    /**
+     * KEYBOARD — the owner's layout. Left hand on WASD and shift, right thumb
+     * on space, which is the shape a controller has and the one a keyboard can
+     * actually hold all at once.
+     *
+     *   A / D          walk            LSHIFT   jump
+     *   W              aim up          SPACE    fire
+     *   S              slide           Q / E    open the in-situ wheel
+     *   arrows         walk (kept)     ESC      close the wheel
+     *
+     * ARROWS STILL WALK. They are the only binding a person can find without
+     * being told, and the boss-defeat picker uses left/right for its cursor —
+     * so removing them would make the one screen that needs discovering the
+     * one screen with no obvious controls.
+     *
+     * The `if (!held)` guards matter: browsers repeat keydown while a key is
+     * held, and without them a held jump would burn the double jump instantly
+     * and a held fire would re-stamp `fireStart` so no charge could ever build.
+     */
+    const onJump = () => { if (!this.intent.jumpHeld) this.doJump(); };
+    this.input.keyboard.on('keydown-SHIFT', onJump);
+    this.input.keyboard.on('keyup-SHIFT', () => this.endJump());
+    this.input.keyboard.on('keydown-S', () => this.toggleSlide());
+    this.input.keyboard.on('keydown-SPACE', () => {
+      if (!this.intent.fireHeld) this.beginFire();
+    });
+    this.input.keyboard.on('keyup-SPACE', () => this.endFire());
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     this.scene.launch('UI', { game: this });
@@ -1772,11 +1785,16 @@ export default class GameScene extends Phaser.Scene {
    * build you walk into a fight with is the build you fight it with. Swapping
    * mid-fight would turn every hard attack pattern into a menu problem.
    *
+   * DEV MODE DOES NOT BYPASS THIS. It used to, and that was a mistake: the
+   * whole feel of the loadout is that a change is an event you earn, and a
+   * playtest that could re-quip whenever it liked was never testing the thing
+   * being designed. Use the boss selector to reach a defeat instead.
+   *
    * Switching a slotted weapon ON or OFF is NOT gated by this — that is a
    * moment-to-moment call (quieting the drone in a boss room) and it cannot
    * change what you are carrying.
    */
-  canRequip() { return !!this.run.requipOpen || dev('freeRequip'); }
+  canRequip() { return !!this.run.requipOpen; }
 
   /** Slot a weapon and keep the fire button pointed at something real. */
   equipSlot(id, index) {

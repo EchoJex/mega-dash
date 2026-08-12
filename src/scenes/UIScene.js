@@ -475,11 +475,56 @@ export default class UIScene extends Phaser.Scene {
       this.pausePanel.add(txt);
       const t = rect;
     };
-    btn(96, 'RESUME', '#5CADD5', () => this.closePause());
-    if (dev('bossSelect')) btn(120, 'BOSS SELECT', '#F5D328', () => this.openBossSelect());
-    btn(144, 'ABORT RUN', '#C04040', () => this.abortRun());
-    this.pausePanel.add(label(this, cx, 162, 'ends the run and banks your Chips',
+    btn(90, 'RESUME', '#5CADD5', () => this.closePause());
+    if (dev('bossSelect')) btn(112, 'BOSS SELECT', '#F5D328', () => this.openBossSelect());
+    /**
+     * DEV — climb every unlocked weapon one rung.
+     *
+     * A ladder is the hardest thing in the game to reach: real levels come from
+     * EXP you have to walk over, and seeing what Lv10 does meant playing a
+     * whole run to get there. Deliberately in the PAUSE MENU rather than on the
+     * HUD or the wheel — it must never be a thing a thumb can hit while playing,
+     * and the wheel is a shipping control that dev tools should stay out of.
+     */
+    if (dev('levelButton')) {
+      btn(134, 'WEAPONS +1 LV', '#B8DC28', () => this.devLevelUp());
+      this.devLvTxt = label(this, cx, 152, '', { color: '#6A7A4A', origin: 0.5 });
+      this.pausePanel.add(this.devLvTxt);
+    }
+    btn(174, 'ABORT RUN', '#C04040', () => this.abortRun());
+    this.pausePanel.add(label(this, cx, 192, 'ends the run and banks your Chips',
       { color: '#6A5A5A', origin: 0.5 }));
+    this.showDevLevels();
+  }
+
+  /**
+   * DEV — every unlocked weapon gains a level, capped at the real ceiling.
+   *
+   * Levels only, never unlocks: which weapons you HAVE is what `startUnlocked`
+   * decides, and conflating the two would make it impossible to playtest a
+   * ladder on a run where you deliberately left something locked.
+   */
+  devLevelUp() {
+    const r = this.game_.run;
+    for (const id of r.unlocked) {
+      r.wpLevels[id] = Math.min(FEEL.weaponMaxLevel, (r.wpLevels[id] || 1) + 1);
+    }
+    // The runtimes cache their ladder state at the rung they were created on,
+    // so they have to be rebuilt or the new rung would not take effect until
+    // the weapon was benched and re-slotted.
+    r.wstate = {};
+    sfx('levelUp');
+    this.showDevLevels();
+    this.refreshWheel();
+  }
+
+  /** The spread of levels, so the button says what it just did. */
+  showDevLevels() {
+    if (!this.devLvTxt) return;
+    const r = this.game_.run;
+    const lv = [...r.unlocked].map((id) => r.wpLevels[id] || 1);
+    const lo = Math.min(...lv), hi = Math.max(...lv);
+    this.devLvTxt.setText(lo === hi ? `all at LV ${lo}` : `LV ${lo} to ${hi}`);
   }
 
   /**
@@ -815,6 +860,23 @@ export default class UIScene extends Phaser.Scene {
       // because there is nothing you could do with it there.
       s.vacant = (s.kind === 'arc' || s.kind === 'sidearm')
         && Loadout.isEquipped(lo, s.id);
+
+      /**
+       * WHAT YOU HAVE NOT EARNED IS NOT DRAWN.
+       *
+       * A padlocked disc for every weapon you have not unlocked told a new
+       * player the size of the arsenal and nothing else — seventeen padlocks on
+       * a first run is a wall of things you cannot do. Same for a slot past
+       * your Loadout Mastery rank: at 0/0 the wheel should be ONE module
+       * holding the sidearm, not one module and three padlocks.
+       *
+       * Dev mode keeps them visible, because there the padlock is the point —
+       * `unlockAnyWeapon` equips straight through it.
+       */
+      if (!dev('unlockAnyWeapon')) {
+        if (s.kind === 'arc' && !unlocked) s.vacant = true;
+        if (s.rankLocked) s.vacant = true;
+      }
       s.disc.setVisible(!s.vacant);
       if (s.vacant) {
         s.abbr.setVisible(false);
