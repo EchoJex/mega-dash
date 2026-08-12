@@ -909,6 +909,31 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
+   * A slot chosen by key while the in-situ wheel is up: toggle it, then close.
+   * Same contract as tapping a module or swiping its diagonal.
+   */
+  situKey(cls, index) {
+    const s = this.active.find(
+      (a) => a.kind === 'slot' && a.cls === cls && a.index === index,
+    );
+    if (!s || s.vacant || s.rankLocked || !s.id) return;
+    this.toggleSlot(s);
+    this.closeWheel();
+  }
+
+  /**
+   * The post-boss wheel, opened for you once the death animation has resolved.
+   *
+   * ALWAYS opens, even when nothing can change — at mastery 0 with no benched
+   * weapon there is still a free weapon level to show, and a reward the player
+   * never saw is a reward that did not happen. Dismissable immediately.
+   */
+  promptRequip() {
+    if (this.mode) return;
+    this.openWheel();
+  }
+
+  /**
    * The in-situ wheel: time crawls, the ring ghosts in, nothing is committed.
    *
    * It is NOT the same control as the post-boss wheel and must not feel like
@@ -1203,6 +1228,7 @@ export default class UIScene extends Phaser.Scene {
     // the bench. It keeps its level and stays one tap away in the arc, so this
     // is a real third option rather than a way to get stuck.
     this.game_.run.pendingLoadout = null;
+    this.game_.run.bonusLevel = null;
     this.game_.paused = false;
     this.scrim.setVisible(false);
     this.wheel.setVisible(false);
@@ -1253,6 +1279,14 @@ export default class UIScene extends Phaser.Scene {
     if (r.pendingLoadout) {
       this.readName.setText(weaponOf(r.pendingLoadout).name);
       this.readLv.setText('CHOOSE A SLOT OR BENCH');
+      return;
+    }
+    // The consolation level from a boss you had already beaten. Announced here
+    // because this wheel opens for it — without a line saying so, a silent +1
+    // buried in a weapon's level is a reward nobody notices.
+    if (r.bonusLevel && this.mode === 'open') {
+      this.readName.setText(weaponOf(r.bonusLevel).name);
+      this.readLv.setText(`+1 LEVEL  NOW LV ${r.wpLevels[r.bonusLevel] || 1}`);
       return;
     }
     if (!id) {

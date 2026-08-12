@@ -108,6 +108,30 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keyup-SPACE', () => this.endFire());
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
+    /**
+     * THE IN-SITU WHEEL ON A KEYBOARD. Q or E opens it; then Q/E/Z/C pick a
+     * slot, toggle it and close. The four keys sit in the same 2x2 shape on the
+     * board that the modules do on screen — Q above Z on the left, E above C on
+     * the right — so the mapping is spatial rather than memorised, exactly like
+     * the four diagonals on a touchscreen.
+     */
+    const SITU_KEYS = { Q: ['offensive', 0], E: ['offensive', 1],
+      Z: ['defensive', 0], C: ['defensive', 1] };
+    for (const [key, [cls, index]] of Object.entries(SITU_KEYS)) {
+      this.input.keyboard.on(`keydown-${key}`, () => {
+        const ui = this.scene.get('UI');
+        if (!ui) return;
+        if (ui.mode === 'situ') ui.situKey(cls, index);
+        // Only Q and E open it. Z and C would be a surprise to anyone who
+        // pressed them with the wheel down and no way to know what they meant.
+        else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginSitu();
+      });
+    }
+    this.input.keyboard.on('keydown-ESC', () => {
+      const ui = this.scene.get('UI');
+      if (ui?.mode) ui.closeWheel();
+    });
+
     this.scene.launch('UI', { game: this });
   }
 
@@ -161,6 +185,9 @@ export default class GameScene extends Phaser.Scene {
       aggroPause: null,
       lastDamaged: null,
       pendingLoadout: null,
+      // A free level from re-beating a boss whose weapon you already own; the
+      // post-boss wheel announces it and then clears it.
+      bonusLevel: null,
     };
     applyUpgrades(save, run);
     if (dev('maxMastery')) run.offRank = run.defRank = Loadout.MAX_RANK;
@@ -587,7 +614,15 @@ export default class GameScene extends Phaser.Scene {
     Wpn.stepFx(this.fx);
     // Boss deaths outlive `this.boss` by design — the body keeps coming apart
     // after the fight is over, which is the whole point of it.
+    const dying = this.deaths.length;
     this.deaths = this.deaths.filter((d) => Death.stepDeath(d));
+    // THE WHEEL FOLLOWS THE DEATH, never interrupts it. Opening on the frame
+    // the boss died would cut the one animation the fight was building toward;
+    // waiting until the body has finished coming apart makes the two read as
+    // one sequence rather than as a menu popping over a cutscene.
+    if (dying && !this.deaths.length && this.run.requipOpen) {
+      this.scene.get('UI')?.promptRequip();
+    }
   }
 
   /**
@@ -1556,6 +1591,23 @@ export default class GameScene extends Phaser.Scene {
     // rearranging the loadout is something you do between fights — with or
     // without a drop to place. See canRequip.
     this.run.requipOpen = true;
+    /**
+     * ALREADY OWN IT? TAKE A LEVEL INSTEAD.
+     *
+     * A boss you have beaten before dropped literally nothing, which made the
+     * second and third clears of the same fight feel like a waste of a door.
+     * A level on that boss's own weapon keeps the reward tied to the thing you
+     * just beat — Chips are already the run-END payout and would read as the
+     * same generic trickle you get for existing.
+     */
+    if (b.dropWeapon && this.run.unlocked.has(b.dropWeapon)) {
+      const lv = this.run.wpLevels[b.dropWeapon] || 1;
+      if (lv < FEEL.weaponMaxLevel) {
+        this.run.wpLevels[b.dropWeapon] = lv + 1;
+        this.run.bonusLevel = b.dropWeapon;
+        this.run.wstate = {};   // runtimes cache their rung at creation
+      }
+    }
     // THE weapon unlock: this is the only way a special enters the run.
     if (b.dropWeapon && !this.run.unlocked.has(b.dropWeapon)) {
       this.run.unlocked.add(b.dropWeapon);
