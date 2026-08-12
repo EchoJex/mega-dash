@@ -395,6 +395,44 @@ warp into the next arena (`GameScene.canRequip`). Outside that window the wheel 
 opens, still reads, and still toggles what is running — switching a weapon on or off
 cannot change what you are carrying, so it is never gated.
 
+### The re-quip wheel — TWO modes, not one control
+
+The wheel was one control doing two unrelated jobs, and that is what made re-quipping
+feel wrong. They are now separate modes with **inverse emphasis**, so the player never has
+to be told which one they are in — the brightness says it.
+
+| | **IN-SITU** (mid-fight) | **POST-BOSS** (between fights) |
+|---|---|---|
+| opens | RE-QUIP button / `Q` / `E` | by itself, once the death animation resolves |
+| time | slow motion, HUD stays up | hard pause, HUD hidden |
+| the ring | 0.16 alpha, **not touchable** | every unlocked benched weapon wears a **gold halo** |
+| you may | toggle a slot on/off | change what you carry |
+| exits | diagonal swipe · slot tap · tap off the wheel · 7s timeout | Esc / tap away |
+
+**The slowdown starts on CONTACT, not once a finger passes a deadzone.** Touching the
+button IS the decision to look; waiting for travel meant the dangerous part — deciding —
+happened at full speed. From that one touch the player picks a route without being told
+they are choosing: keep moving into a diagonal and that slot toggles, or lift the finger
+and the wheel stays up to be tapped. **Lifting is not a cancel.**
+
+**The four diagonals map onto the 2×2 grid exactly as drawn** — up-left is the top-left
+module. Both axes must be real, so a flat flick can never fire a slot nobody aimed at. The
+keyboard mirrors the same shape: `Q` above `Z` on the left, `E` above `C` on the right.
+
+**The 7-second timeout is a dead man's handle.** Slow motion with no way out is a soft
+lock for anyone who opened it by accident, and the player's hands are already full.
+`closeWheel` restores time down every branch.
+
+**The ring is an OVAL** (`RING_RX` / `RING_RY`), because the playfield is 224 tall and
+320–480 wide. Arc positions **fan out from the centre as weapons unlock**, spreading at the
+full arc's step so a weapon lands where it will eventually live. That trades absolute
+position for **relative** position deliberately — the Blaze Wheel is always left of the
+Volt Spark — and it only works because re-quipping is no longer done under fire.
+
+**Nothing you have not earned is drawn** outside dev mode: no padlocks for un-unlocked
+weapons, no modules past your mastery rank. At 0/0 the wheel is one module holding the
+sidearm.
+
 The sidearm keeps a **fixed dot above the ring**, which is its *bench*, not a free weapon:
 below rank 3 it is welded into a module so the dot never appears, and at rank 3 trading it
 away makes the dot show up holding it, one tap from going back in. It stays off the arc so
@@ -575,6 +613,7 @@ These are global and land late, once the elements exist to tune against:
 | **Physics tuning overlay** | driven by `FEEL_GROUPS`; deliberately deferred |
 | **Boss defeat animations** | elemental death + weapon acquisition; cosmetic, folded into each slice when its element is built |
 | **Ship prep** | `DEV.enabled = false`, which disables every playtest perk at once |
+| **Run pacing** | the owner's targets: **early** ~5 min and 1 boss on minimal meta with weapons below Lv3 and it *should feel hard*; **mid** 10–15 min and 2–3 bosses at Lv3–6; **late** 15–35+ min and 4–6 bosses. They are explicitly unsure how to ramp difficulty without the player feeling it — read the boss COUNT as the real dial, since run length is boss count |
 
 ### Already complete (the foundation)
 
@@ -627,6 +666,27 @@ across several orbs so one bad pit does not eat the whole reward.
 from unlocked non-maxed weapons, plus an always-present E-Tank (refill) and Chips
 (`FEEL.cardChips`). Levels queue: one big orb can grant several, and each gets its own
 choice.
+
+### Controls — as bound
+
+| | keyboard | touch |
+|---|---|---|
+| walk | `A` / `D`, arrows | left pads |
+| aim up | `W` | the ↖ ↗ pads |
+| jump | `LSHIFT` | jump pad |
+| slide | `S` | **double-tap jump** |
+| fire | `SPACE` | fire pad |
+| in-situ wheel | `Q` / `E`, then `Q`/`E`/`Z`/`C` | RE-QUIP, then swipe a diagonal or tap a slot |
+| close a wheel | `ESC` | tap off the wheel |
+
+**The jump always wins the first tap.** Detecting a double-tap before jumping would put
+latency on every jump in the game, which this genre cannot afford — so the jump fires
+immediately and a second tap inside `FEEL.slideTapFrames` (8) puts the player back at the
+height he launched from and slides instead. The cancel refuses unless the jump is still
+**rising**, so a tap at the apex stays a double jump, and refuses when a slide could not
+start anyway (Slide Mastery rank 0), falling through to the double jump. Never a dead
+input. That window is the knob for the awkward in-between frames — art for them is still
+to come.
 
 ### Reporting a playtest — read this before asking the owner to describe a bug
 
@@ -759,6 +819,34 @@ and carries no tint, because there is nothing elemental to show.
 player, 30% off an enemy, duration reset by every re-application, cutting attack speed as
 well as movement. Constrict and freeze are still the "cannot act" pair. Older comments
 lumping all three together predate the tracker's current definition.
+
+---
+
+## PICK UP HERE — the re-quip redesign, unfinished
+
+The owner is mid-way through a redesign of the wheel and the control scheme. Three passes
+are built and pushed; **two pieces remain**, both post-boss-wheel input:
+
+1. **Post-boss keyboard/gamepad navigation.** No way to re-quip without a mouse or a
+   touchscreen right now. The owner sketched a cursor — left/right over the ring to pick a
+   weapon, fire to take it, cursor jumps to the slots, left/right to place, looping back —
+   then said *"i thought a cursor would be the right approach, but i sometimes over explain
+   simple things"* and asked for **whatever the standard practice is for a hybrid
+   touch/keyboard interface**. Treat the cursor sketch as one option, not a spec.
+2. **Post-boss drag-and-drop on touch.** Drag a weapon off the ring onto a module. The
+   owner asked for this by name and it should be the primary touch interaction there — the
+   current select-then-fill tap flow is the fallback, not the goal.
+
+Everything else on that list is done: the two wheel modes, the oval fanning ring, the
+in-situ swipe and key routes, hidden un-earned content, the dev level button, the
+auto-opening post-boss wheel, and the weapon-level consolation prize.
+
+**Playtest state:** the owner had not yet played pass 3 on device when the session ended.
+The in-situ gesture is the part their hands will have an opinion about, so ask before
+building further on top of it.
+
+**Two knobs they expect to tune after playing:** `FEEL.slideTapFrames` (the jump→slide
+cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).
 
 ### Hooks left deliberately empty — fill, don't delete
 - `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content
