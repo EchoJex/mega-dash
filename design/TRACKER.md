@@ -97,7 +97,7 @@ where each one stands.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
 - **attack L1** `[draft]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
-- **attack L2** `[wip]` 2 fireballs, but much higher bounce heights and alternating firing angles.
+- **attack L2** `[wip]` 2 fireballs, and much higher bounce heights and alternating firing angles.
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
