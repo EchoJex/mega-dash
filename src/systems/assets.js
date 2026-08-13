@@ -82,6 +82,9 @@ export const MANIFEST = {
       slide: [11],
     },
     fps: 12,
+    // The idle is a BREATH, not a cycle — two frames a second apart, not six a
+    // second. See the per-clip rate note in createAnims.
+    animFps: { idle: 1.5 },
     // NOT tintable. The three colours are baked into the sheet; a Phaser tint
     // multiplies the whole texture and would wreck it. See the palette note at
     // the bottom of this file.
@@ -152,7 +155,10 @@ export function createAnims(scene) {
       scene.anims.create({
         key,
         frames: frames.map((f) => ({ key: id, frame: f })),
-        frameRate: def.fps ?? 8,
+        // PER-CLIP RATE, falling back to the sheet's. One rate for a whole
+        // sheet cannot serve both a six-frame run and a two-frame breath: at
+        // the run's 12fps the idle blinks six times a second.
+        frameRate: def.animFps?.[name] ?? def.fps ?? 8,
         repeat: def.repeat ?? -1,
       });
     }

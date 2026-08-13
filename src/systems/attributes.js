@@ -56,6 +56,21 @@ export const ATTR = {
 /** How strongly an attribute washes over the actor it is on. 1 is the default. */
 export const flashOf = (id) => ATTR[id]?.flash ?? 1;
 
+/**
+ * THE STACK CEILING, and why an unbounded stack is a softlock.
+ *
+ * Stun is multiplicative per stack, so N stacks is 0.85^N of your speed — and
+ * it is re-applied by things that fire on a timer, like Volt Man's floor panels
+ * and his conductors. Stand in the wrong place for a few seconds and the
+ * exponent reaches the twenties, where the multiplier is effectively zero and
+ * the weapon cooldown it divides becomes minutes long. That is the reported
+ * "stun prevents the player from shooting ever again".
+ *
+ * Eight stacks is 0.27 of normal speed — punishing, survivable, and the point
+ * past which more stacks were only ever adding an outage.
+ */
+export const STUN_MAX_STACKS = 8;
+
 /** Statuses that stop an actor acting. */
 export const isHeld = (bag) => Object.keys(bag || {})
   .some((k) => ATTR[k]?.held && bag[k].t > 0);
@@ -74,9 +89,10 @@ export const makeStatus = () => ({});
  *
  * STUN IS THE ONE EXCEPTION, because the tracker asks for it explicitly:
  * re-applying adds a stack and resets the clock, and each stack multiplies what
- * is LEFT of the target's speed rather than subtracting from the original. That
- * shape is self-limiting — 0.7^n approaches zero without ever reaching it — so
- * no cap is needed to stop a chain weapon freezing something outright.
+ * is LEFT of the target's speed rather than subtracting from the original.
+ * That shape approaches zero without reaching it, which sounds self-limiting and
+ * is not: a source that re-applies on a timer drives the exponent up until the
+ * multiplier is indistinguishable from zero. See STUN_MAX_STACKS.
  *
  * `opts.step` is the per-stack multiplier, and it is passed in rather than read
  * from FEEL here because the same attribute hits the player at 15% and an enemy
@@ -196,7 +212,7 @@ export function statusIntensity(bag) {
 export function speedMult(bag) {
   const s = bag?.stun;
   if (!s || s.t <= 0) return 1;
-  return (s.step ?? 1) ** s.stacks;
+  return (s.step ?? 1) ** Math.min(s.stacks, STUN_MAX_STACKS);
 }
 
 /** Wet reduces contact friction; nothing else changes how the player moves. */

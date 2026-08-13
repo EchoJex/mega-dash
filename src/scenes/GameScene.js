@@ -537,7 +537,11 @@ export default class GameScene extends Phaser.Scene {
       if (!p.beam) Arena.clampToArena(this.arena, p);
       // The wrap door only exists once the boss is down.
       for (const d of this.world.doors) {
-        if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
+        if (!d.alive) continue;
+        const on = Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h });
+        // A door that spawned under the player arms only once they step off it.
+        if (!d.armed) { if (!on) d.armed = true; continue; }
+        if (on) {
           d.alive = false;
           this.warpToNextArea();
           return;
@@ -805,7 +809,16 @@ export default class GameScene extends Phaser.Scene {
     }
     // Stun cuts attack speed as well as movement, so it stretches the cooldown
     // by the same factor it shrinks the walk by.
-    r.cooldown = Math.max(1, Math.round(w.cooldown * r.cdMult / Attr.speedMult(this.status)));
+    /**
+     * Stun stretches the cooldown as well as movement — but the cooldown is
+     * computed ONCE, here, from the stun in effect at the instant you fired.
+     * That means a long one outlives the status that caused it, so it is capped
+     * at a multiple of the weapon's own rhythm. Without this a heavily stunned
+     * shot could bank a cooldown measured in minutes and the fire button simply
+     * never came back.
+     */
+    const slowed = w.cooldown * r.cdMult / Attr.speedMult(this.status);
+    r.cooldown = Math.max(1, Math.round(Math.min(slowed, w.cooldown * r.cdMult * 4)));
   }
 
   /**
@@ -1628,8 +1641,21 @@ export default class GameScene extends Phaser.Scene {
       this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
     }
     // The WRAP DOOR out only exists once the boss is down.
+    /**
+     * THE WRAP DOOR, on the RIGHT and initially INERT.
+     *
+     * It used to appear at mid-screen the instant the boss died, which meant
+     * finishing a fight while standing near the centre warped you straight out
+     * — no death animation, no re-quip, no choice. It now spawns `armed: false`
+     * and only becomes usable once the player is clear of it, so a door can
+     * never open under someone's feet.
+     *
+     * On the right because the whole game reads left to right; walking forward
+     * out of a room you have cleared is the direction the run already moves in.
+     */
     this.world.doors = [{
-      x: this.viewW / 2 - 8, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
+      x: this.viewW - 40, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
+      armed: false,
     }];
     this.boss = null;
   }
