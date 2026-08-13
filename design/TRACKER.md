@@ -187,7 +187,7 @@ where each one stands.
 - **weapon** `[draft]` Defensive; slowly forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
 - **weapon Lv1** `[draft]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[draft]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice projectiles that shot out from the top edge of the shield at a 45 deg angle; freezes the opponent if contacting a minion or the water boss.
-- **weapon Lv6** `[wip]` Shield now breaks
+- **weapon Lv6** `[wip]` Shield now breaks into 4
 - **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
