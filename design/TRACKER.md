@@ -472,7 +472,7 @@ still describing it, and `[ready]` means already fixed.
 | 1054 (main) | `[draft]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
 | 1054 (main) | `[ready]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
 | 1054 (main) | `[ready]` | Thorn lash has no animation so I can't play test it |
-| 1054 (main) | `[wip]` | Player idle animation cycles through |
+| 1054 (main) | `[wip]` | Player idle animation cycles through frames |
 
 # BRAINSTORM — context only, never implemented
 
