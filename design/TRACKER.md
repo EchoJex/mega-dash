@@ -469,7 +469,7 @@ still describing it, and `[ready]` means already fixed.
 | build | status | bug |
 |---|---|---|
 | other | `[draft]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
-| 1036 (main) | `[wip]` | Items that land on |
+| 1036 (main) | `[wip]` | Items that land on spikes should |
 | 1036 (main) | `[ready]` | Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height |
 
 # BRAINSTORM — context only, never implemented
