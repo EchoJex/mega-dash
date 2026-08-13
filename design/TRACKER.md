@@ -165,8 +165,8 @@ where each one stands.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
-- **weapon Lv1** `[wip]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
-- **weapon Lv3** `[ready]` Increased reach. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
+- **weapon Lv1** `[draft]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
+- **weapon Lv3** `[wip]` Increased reach. Each Hot applies a stack ofAffected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
