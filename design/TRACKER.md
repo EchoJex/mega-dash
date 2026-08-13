@@ -471,7 +471,7 @@ still describing it, and `[ready]` means already fixed.
 | other | `[draft]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
 | other | `[draft]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
 | other | `[ready]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
-| 1054 (main) | `[wip]` | Thorn lash  |
+| 1054 (main) | `[wip]` | Thorn lash has no |
 
 # BRAINSTORM — context only, never implemented
 
