@@ -448,7 +448,7 @@ interaction present on every hit.
 ## Constrict
 - **shared** `[wip]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
 - **boss-applied** `[wip]` See stun
-- **weapon-applied** `[wip]`
+- **weapon-applied** `[wip]` See stun
 
 ## Freeze
 - **shared** `[wip]` Functionally the same as stun/constrict; elementally correct colors flash while the target has this attribute.
