@@ -452,7 +452,7 @@ interaction present on every hit.
 
 ## Freeze
 - **shared** `[draft]` Functionally the same as stun/constrict; elementally correct color hue while the target has this attribute.
-- **boss-applied** `[todo]`
+- **boss-applied** `[wip]` See stun
 - **weapon-applied** `[wip]` Frost Guard: shield break on minion contact freezes; released icicles freeze.
 
 ---
