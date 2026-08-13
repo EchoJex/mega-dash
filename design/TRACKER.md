@@ -473,7 +473,7 @@ still describing it, and `[ready]` means already fixed.
 | 1054 (main) | `[draft]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
 | 1054 (main) | `[draft]` | Thorn lash has no animation so I can't play test it |
 | 1054 (main) | `[draft]` | Player idle animation cycles through frames way too quickly |
-| 1054 (main) | `[draft]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss deathbe visibly disabled during |
+| 1054 (main) | `[draft]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel be visibly disabled during |
 
 # BRAINSTORM — context only, never implemented
 
