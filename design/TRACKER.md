@@ -437,7 +437,7 @@ interaction present on every hit.
 
 ## Poisoned
 - **shared** `[wip]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments as the poison wears off. Mild damage with no flinch or knockback
-- **boss-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds and reduce player speed.
+- **boss-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds.
 - **weapon-applied** `[wip]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds and reduce enemy movement speed.
 
 ## Stun
