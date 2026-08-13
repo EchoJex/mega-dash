@@ -100,6 +100,16 @@ export const FEEL = {
   // short enough not to feel like a cutscene.
   beamSpeed: 8,
   invulnFrames: 90,
+  /**
+   * Invulnerability granted by a hazard beam touchdown — three seconds, twice
+   * the ordinary window, and it does not start counting until the player acts.
+   *
+   * A hazard costs a huge chunk of HP and then puts you somewhere you did not
+   * choose, usually well behind where you were. The ordinary 90 frames were
+   * being spent on the fall and on the moment afterward where you are still
+   * finding yourself, so a pit regularly cost two hits instead of one.
+   */
+  respawnInvulnFrames: 180,
   flinchFrames: 16,
   knockbackSpeed: 2.4,
   knockbackDecay: 0.86,
@@ -313,7 +323,7 @@ export const FEEL_GROUPS = {
   // `pickupExp` used to be listed here and has never existed in FEEL — a dead
   // key the overlay would have silently rendered as undefined.
   Pickups: ['pickupChance', 'expDropChance', 'pickupHeal', 'pickupMagnetRange', 'pickupMagnetSpeed'],
-  Hazards: ['hazardDamage', 'beamSpeed'],
+  Hazards: ['hazardDamage', 'beamSpeed', 'respawnInvulnFrames'],
   Exp: ['expPerLevel', 'expDropBias', 'expOrbsBoss'],
   Run: ['hpMax', 'comboDecayFrames', 'comboMax'],
   Bosses: ['doorIntervalSeconds', 'bossLayerHpMult'],

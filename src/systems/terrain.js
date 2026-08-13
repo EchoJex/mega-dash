@@ -62,6 +62,54 @@ export function jumpReach() {
  */
 export const maxPitWidth = () => Math.floor(jumpReach() * 0.75);
 
+/** Peak height an impulse of `v0` reaches under the live gravity. */
+function riseFrom(v0) {
+  let vy = v0, y = 0, peak = 0, guard = 0;
+  while (guard++ < 600) {
+    vy = Math.min(FEEL.maxFallSpeed, vy + FEEL.gravity);
+    y += vy;
+    peak = Math.min(peak, y);
+    if (y >= 0) break;
+  }
+  return -peak;
+}
+
+/**
+ * How high the player can actually GET, simulated from the live FEEL values for
+ * the same reason `jumpReach` is: a hand-written number becomes a lie the
+ * moment the motion constants are tuned.
+ *
+ * THIS IS THE PLATFORMING BUG. The ceiling here was hardcoded at 96px, and the
+ * band it clamped ran to 78 before a theme multiplier of up to 1.5 was applied
+ * — numbers from before the double jump's height was cut. The best case is now
+ * ~85px, and that is with the second jump fired exactly on the first one's
+ * apex and both held to full height. So the generator was emitting shelves that
+ * were flatly unreachable, and bunching a good share of the rest right at the
+ * edge of frame-perfect. It did not read as "that platform is too high", it
+ * read as the jump feeling wrong.
+ *
+ * The double is measured from the primary's apex, which is the best a player
+ * can time it. `maxAirActions` at 0 correctly collapses this to one jump.
+ */
+export function jumpRise() {
+  const first = riseFrom(FEEL.jumpVelocity);
+  if (FEEL.maxAirActions < 1) return first;
+  return first + riseFrom(FEEL.jumpVelocity * Math.sqrt(FEEL.doubleJumpHeightMult));
+}
+
+/**
+ * The highest platform the generator may emit.
+ *
+ * Same 0.75 margin as `maxPitWidth`, for the same reason: the simulated reach
+ * is the absolute best case, and a shelf that needs a frame-perfect apex double
+ * jump is not a platform, it is a trick. The slack is what leaves room to be
+ * slightly early, slightly late, or slightly off-centre and still make it.
+ */
+export const maxPlatformHeight = () => Math.floor(jumpRise() * 0.75);
+
+/** Lowest platform worth generating — below this it is a step, not a shelf. */
+const PLAT_MIN = 26;
+
 /**
  * TERRAIN THEMES — the overworld leans toward the boss whose door is coming.
  *
@@ -121,6 +169,7 @@ export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
 export function generate(world, camX, viewW) {
   const target = camX + viewW + LOOKAHEAD;
   const pitMax = maxPitWidth();
+  const platMax = maxPlatformHeight();
   const th = world.theme || NEUTRAL;
   const rng = world.rng || Math.random;
   // Themed chances are clamped so no theme can push the world past what the
@@ -160,9 +209,13 @@ export function generate(world, camX, viewW) {
     }
     if (rng() < platChance) {
       const pw = rand(rng, 28, 52);
+      // The theme biases the height WITHIN what a jump can reach; the cap binds
+      // absolutely, exactly like the pit-width guarantee above. Flavour never
+      // overrides reachability.
+      const h = Math.min(platMax, rand(rng, PLAT_MIN, platMax) * th.high);
       world.platforms.push({
         x: x1 + rand(rng, 0, Math.max(1, w - pw)),
-        y: world.groundY - Math.min(96, rand(rng, 26, 78) * th.high),
+        y: world.groundY - h,
         w: pw, h: 5,
       });
     }

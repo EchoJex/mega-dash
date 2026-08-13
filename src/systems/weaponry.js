@@ -1062,7 +1062,10 @@ function thornTip(la) {
 function thornProbe(st, lv, ctx, L) {
   const la = st.lash;
   const tip = thornTip(la);
-  ctx.arc({ x: la.ox, y: la.oy }, tip);
+  // No arc fx here any more. It was the Volt Spark's yellow chain hairline
+  // standing in for a vine, it faded in eight frames, and this function is not
+  // even called during the reel or the swing — so the lash vanished for half
+  // the move. drawWeaponry draws the real thing every frame it exists.
 
   // ENEMY FIRST. A boss is never reeled — it is not moved by anything (see
   // hitEnemy) — so it takes the damage and the lash ends there.
@@ -1401,6 +1404,51 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillStyle(0x39404E, 1);
     g.fillRect(bx - 3, by + 11, 2, 3);
     g.fillRect(bx + 1, by + 11, 2, 3);
+  }
+
+  /**
+   * THORN LASH — the vine itself, drawn every frame it exists.
+   *
+   * It had no animation of its own at all. The only thing on screen was the
+   * generic chain-arc fx it borrowed from the Volt Spark: one YELLOW hairline
+   * with an eight-frame fade, pushed from `thornProbe` — which is not called
+   * during the reel or during a Lv3 swing, both of which return early. So the
+   * lash blinked, went the wrong colour, and then disappeared for the whole
+   * interesting half of the move. It could not be playtested.
+   *
+   * A SHAPE, not art: a thick stem with a lighter core and a blunt head, in the
+   * weapon's own green. The barbs are the segment ticks — enough to read as a
+   * vine rather than a laser at 224px tall, and cheap enough to draw per frame.
+   */
+  const tl = run.wstate.thorn_lash;
+  if (tl?.lash && ctx.equipped.includes('thorn_lash')) {
+    const la = tl.lash;
+    // While reeling, the tip is the thing on the end of it — the vine has to
+    // follow its catch home or the grab reads as the enemy moving by itself.
+    const e = la.grabbed;
+    const tip = e
+      ? { x: e.x + e.w / 2, y: e.y + e.h / 2 }
+      : { x: la.ox + la.dir.x * la.len, y: la.oy + la.dir.y * la.len };
+    const x0 = sx(la.ox), y0 = la.oy, x1 = sx(tip.x), y1 = tip.y;
+    g.lineStyle(3, 0x1A6B12, 1);          // stem
+    g.lineBetween(x0, y0, x1, y1);
+    g.lineStyle(1, 0x2AAB1C, 1);          // lit core
+    g.lineBetween(x0, y0, x1, y1);
+    // Barbs, spaced along the stem so the vine reads as segmented.
+    const dx = x1 - x0, dy = y1 - y0;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    for (let d = 6; d < len; d += 6) {
+      const t = d / len, bx = x0 + dx * t, by = y0 + dy * t;
+      const s = (d / 6) % 2 ? 2 : -2;
+      g.fillStyle(0x2AAB1C, 1);
+      g.fillRect(Math.round(bx + nx * s) - 1, Math.round(by + ny * s) - 1, 2, 2);
+    }
+    // The head. Bigger and paler while it has hold of something, which is the
+    // only readout for "this grabbed" other than the enemy starting to move.
+    g.fillStyle(e ? 0x8FE07A : 0x2AAB1C, 1);
+    const hr = e ? 4 : 3;
+    g.fillRect(Math.round(x1) - hr, Math.round(y1) - hr, hr * 2, hr * 2);
   }
 
   // FROST GUARD — brighter as it bulks up, so "not yet at full strength" is

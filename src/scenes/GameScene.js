@@ -142,6 +142,9 @@ export default class GameScene extends Phaser.Scene {
       exp: 0, level: 1, expToNext: FEEL.expPerLevel, pendingLevelUps: 0,
       hp: FEEL.hpMax, hpBonus: 0, runHpBonus: 0,
       invuln: 0, kills: 0, maxCombo: 1,
+      // Set by a hazard beam touchdown: the i-frame countdown is parked until
+      // the player acts. See the grace note in step().
+      graceHeld: false,
       bossesDefeated: [],
       // meta-upgrade derived fields (applyUpgrades fills these)
       cdMult: 1, comboDecayMult: 1, magnetMult: 1, dmgMult: 1, projSpeedMult: 1,
@@ -568,7 +571,18 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    if (r.invuln > 0 && !p.beam) r.invuln--; // the beam must not eat the i-frames
+    /**
+     * I-FRAMES DO NOT TICK WHILE THE PLAYER IS NOT PLAYING.
+     *
+     * Two holds. The beam is the obvious one — mercy granted for a hazard must
+     * not be spent travelling to where the hazard put you. `graceHeld` is the
+     * subtler one: after touchdown the clock stays parked until the first thing
+     * the player DOES, or until something damages them anyway. Standing there
+     * getting your bearings is not a use of your invulnerability.
+     */
+    if (r.graceHeld && (moveDir !== 0 || this.intent.jumpHeld
+      || this.intent.fireHeld || p.sliding)) r.graceHeld = false;
+    if (r.invuln > 0 && !p.beam && !r.graceHeld) r.invuln--;
     if (r.cooldown > 0) r.cooldown--;
     if (p.hitAnim > 0) p.hitAnim--;
     if (r.comboTimer > 0 && --r.comboTimer === 0) r.combo = 1;
@@ -629,8 +643,13 @@ export default class GameScene extends Phaser.Scene {
     // the boss died would cut the one animation the fight was building toward;
     // waiting until the body has finished coming apart makes the two read as
     // one sequence rather than as a menu popping over a cutscene.
-    if (dying && !this.deaths.length && this.run.requipOpen) {
-      this.scene.get('UI')?.promptRequip();
+    // The door out arrives with the wheel, for the same reason — see
+    // spawnWrapDoor. Outside the `requipOpen` guard because a door the player
+    // cannot leave through would strand the run; the wheel is optional, the
+    // exit is not.
+    if (dying && !this.deaths.length) {
+      this.spawnWrapDoor();
+      if (this.run.requipOpen) this.scene.get('UI')?.promptRequip();
     }
   }
 
@@ -1645,24 +1664,38 @@ export default class GameScene extends Phaser.Scene {
       }
       this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
     }
-    // The WRAP DOOR out only exists once the boss is down.
-    /**
-     * THE WRAP DOOR, on the RIGHT and initially INERT.
-     *
-     * It used to appear at mid-screen the instant the boss died, which meant
-     * finishing a fight while standing near the centre warped you straight out
-     * — no death animation, no re-quip, no choice. It now spawns `armed: false`
-     * and only becomes usable once the player is clear of it, so a door can
-     * never open under someone's feet.
-     *
-     * On the right because the whole game reads left to right; walking forward
-     * out of a room you have cleared is the direction the run already moves in.
-     */
+    // The wrap door is NOT spawned here — see spawnWrapDoor, which runs once
+    // the death animation has finished coming apart.
+    this.boss = null;
+  }
+
+  /**
+   * THE WRAP DOOR OUT — late, on the RIGHT, and inert until the player steps
+   * clear of it.
+   *
+   * THREE separate things went wrong with it and all three are fixed here.
+   *
+   * It used to appear the instant the boss died, so finishing a fight standing
+   * on the spot warped you straight out — past the death animation and past the
+   * re-quip wheel, the two things the whole fight was building toward. It now
+   * spawns from the same moment the wheel does: when the body has finished
+   * coming apart.
+   *
+   * It used to appear at MID-SCREEN. The game reads left to right, so walking
+   * forward out of a room you have cleared is the direction the run already
+   * moves in; anywhere else asks the player to turn around.
+   *
+   * And it can still land under someone who happened to be standing there, so
+   * it spawns `armed: false` and only becomes usable once they are off it —
+   * drawn plainly grey and unlit until then, because a door that ignores you
+   * without saying why is indistinguishable from a broken one.
+   */
+  spawnWrapDoor() {
+    if (this.world.doors.length) return;
     this.world.doors = [{
       x: this.viewW - 40, y: GROUND_Y, w: 16, h: 28, alive: true, wrap: true,
       armed: false,
     }];
-    this.boss = null;
   }
 
   // ── Damage / death ──────────────────────────────────────────────────
@@ -1678,6 +1711,9 @@ export default class GameScene extends Phaser.Scene {
     // it just cannot finish you.
     if (dev('hpFloor')) r.hp = Math.max(1, r.hp);
     r.invuln = FEEL.invulnFrames + r.armorBonus;
+    // Taking a hit ends the respawn grace even if the player never moved: the
+    // hold is there so mercy is not wasted, and a hit is not it being wasted.
+    r.graceHeld = false;
     sfx('hurt');
     r.combo = 1; r.comboTimer = 0;
     p.hitAnim = 20;
@@ -1703,13 +1739,39 @@ export default class GameScene extends Phaser.Scene {
     p.vx = 0; p.vy = 0;
     p.sliding = false;
     p.flinchTimer = 0; p.knockbackVx = 0;     // the beam overrides the hit reaction
+    this.clearInput();
+  }
+
+  /**
+   * Drop every held and buffered input on the floor.
+   *
+   * A beam takes the better part of a second and the player's hands do not
+   * stop moving during it — so without this you touched down already walking,
+   * already firing, and with whatever you pressed mid-beam queued up behind a
+   * buffer that outlived the fall. Called at the start of a beam AND on
+   * touchdown, because a press made WHILE beaming has to be discarded too.
+   */
+  clearInput() {
+    const p = this.player;
     this.intent.moveDir = 0;
     this.intent.jumpHeld = false;
     this.intent.fireHeld = false;
+    this.intent.firePressed = false;
+    this.intent.fireReleased = false;
+    p.jumpBuffer = 0;
+    p.coyote = 0;
+    p.diagInput = null;
+    this.jumpTapFrame = null;
+    this.jumpEvent = false;
+    this.run.fireHeldFrames = 0;
   }
 
   stepBeam() {
     const p = this.player;
+    // Nothing pressed during the beam survives it — see clearInput. Held keys
+    // are re-read from the keyboard the frame control comes back, so a player
+    // who never let go simply carries on; a player mashing does not.
+    this.clearInput();
     if (p.beam.phase === 'up') {
       p.y -= FEEL.beamSpeed;
       if (p.y < -32) {
@@ -1726,6 +1788,17 @@ export default class GameScene extends Phaser.Scene {
       p.vx = 0; p.vy = 0;
       p.onGround = true;
       p.beam = null;
+      /**
+       * THE GRACE. Invulnerability does not start counting down until the
+       * player does something — see `run.graceHeld`.
+       *
+       * The beam is long, and the i-frames it hands you used to be burning
+       * through it and through the moment afterward where you are still working
+       * out where you have been put. Landing with two thirds of your mercy
+       * already spent is what made a pit feel like it cost two hits.
+       */
+      this.run.invuln = FEEL.respawnInvulnFrames;
+      this.run.graceHeld = true;
     }
   }
 
@@ -2001,9 +2074,15 @@ export default class GameScene extends Phaser.Scene {
     // Doors exist in both spaces: the boss door in an area, the wrap door out
     // of an arena. The wrap door is gold-cored to read as an exit, not a threat.
     for (const d of this.world.doors) {
-      g.fillStyle(0xf5d328, 0.6 + 0.4 * Math.sin(r.frame * 0.08));
-      g.fillRect(sx(d.x) - 2, d.y - d.h - 2 + sh.y, d.w + 4, d.h + 4);
-      g.fillStyle(d.wrap ? 0xf5d328 : 0x5cadd5, 1);
+      // AN UNARMED DOOR LOOKS UNARMED: no halo, no pulse, grey. It spawned
+      // under the player and will not answer until they step off it, and a door
+      // that silently ignores you is indistinguishable from a broken one.
+      const live = d.armed !== false;
+      if (live) {
+        g.fillStyle(0xf5d328, 0.6 + 0.4 * Math.sin(r.frame * 0.08));
+        g.fillRect(sx(d.x) - 2, d.y - d.h - 2 + sh.y, d.w + 4, d.h + 4);
+      }
+      g.fillStyle(live ? (d.wrap ? 0xf5d328 : 0x5cadd5) : 0x4a4a44, live ? 1 : 0.55);
       g.fillRect(sx(d.x), d.y - d.h + sh.y, d.w, d.h);
     }
 

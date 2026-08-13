@@ -13,7 +13,9 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeWorld, generate, jumpReach, maxPitWidth, THEMES } from '../src/systems/terrain.js';
+import {
+  makeWorld, generate, jumpReach, maxPitWidth, jumpRise, maxPlatformHeight, THEMES,
+} from '../src/systems/terrain.js';
 import { makeRng, areaRng, seedFromLocation } from '../src/systems/rng.js';
 import { BOSSES } from '../src/data/bosses.js';
 import { FEEL } from '../src/config/feel.js';
@@ -62,6 +64,31 @@ test('NO generated gap is wider than a running jump can clear', () => {
   const impassable = gaps.filter((g) => g.width > maxPitWidth() + 0.01);
   assert.equal(impassable.length, 0,
     `${impassable.length} impassable gaps; worst ${worst.toFixed(1)}px vs cap ${maxPitWidth()}px (reach ${reach.toFixed(1)}px)`);
+});
+
+/**
+ * The vertical twin of the gap guarantee, and the reason it exists: the
+ * platform ceiling was a hardcoded 96px written before the double jump's height
+ * was reduced, so the generator emitted shelves the player could not reach.
+ * Asserting the RELATIONSHIP rather than either number, so tuning the motion
+ * constants moves both together instead of failing the build.
+ */
+test('no generated platform is higher than a jump can reach', () => {
+  assert.ok(jumpRise() > 0 && Number.isFinite(jumpRise()));
+  assert.ok(maxPlatformHeight() < jumpRise(),
+    'the platform cap must leave a margin under the reachable height');
+
+  // Every theme, because `high` multiplies the band and the cap is what stops
+  // an airy theme from pushing a shelf out of reach.
+  for (const id of Object.keys(THEMES)) {
+    const { world } = survey(30000, id, 7);
+    assert.ok(world.platforms.length > 20,
+      `${id}: expected plenty of platforms to test, got ${world.platforms.length}`);
+    const worst = world.platforms.reduce((m, p) => Math.max(m, GROUND_Y - p.y), 0);
+    assert.ok(worst <= maxPlatformHeight() + 0.01,
+      `${id}: platform ${worst.toFixed(1)}px up vs cap ${maxPlatformHeight()}px `
+      + `(reach ${jumpRise().toFixed(1)}px)`);
+  }
 });
 
 test('every gap has ground wide enough to land on', () => {

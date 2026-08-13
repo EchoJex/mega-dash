@@ -104,6 +104,7 @@ export function stepPickups(list, player, playerBox, groundY, world, magnetMult 
       if (isOverGround(world, cx) && p.y + p.h >= groundY) {
         p.y = groundY - p.h;
         p.vy = 0;
+        slideOffSpikes(p, world);
       }
     }
 
@@ -114,6 +115,31 @@ export function stepPickups(list, player, playerBox, groundY, world, magnetMult 
   }
 
   return collected;
+}
+
+/**
+ * A pickup that settled on a spike bed walks off it, to whichever side is nearer.
+ *
+ * EXP and E-Tanks are earned, and a hazard is a place you cannot stand — so a
+ * drop landing in spikes was a reward the game showed you and then charged a
+ * hit for. Migrating it is the fix the tracker asks for rather than deleting
+ * it: the drop still has to be walked to, it is just walkable to.
+ *
+ * Runs on the landing frame only and re-checks after each hop, because spike
+ * beds are laid down as a run of adjacent segments — clearing one leaves you
+ * standing in its neighbour. Bounded so a bed wider than the loop allows for
+ * cannot spin; a pickup still stranded after that expires on its own timer.
+ */
+function slideOffSpikes(p, world) {
+  for (let hop = 0; hop < 12; hop++) {
+    const box = { x: p.x, y: p.y, w: p.w, h: p.h };
+    const s = world.spikes.find((sp) => overlaps(box, sp));
+    if (!s) return;
+    // Nearest horizontal edge, measured from the pickup's own edges so it ends
+    // up clear of the spike rather than centred on its boundary.
+    const left = s.x - p.w - 1, right = s.x + s.w + 1;
+    p.x = (p.x - left) <= (right - p.x) ? left : right;
+  }
 }
 
 export const prunePickups = (list, camX) =>

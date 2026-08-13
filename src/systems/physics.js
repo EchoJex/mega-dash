@@ -207,9 +207,42 @@ export function stepPlayer(p, world, input, groundY) {
     }
     // Clear of the plane again: any half-finished grab is forgotten.
     if (!p.onGround && depth < 0) p.cliffStick = null;
+    resolvePitWalls(p, world, groundY, input.cliffGrab ?? FEEL.cliffGrabDepth[0]);
   }
 
   if (p.y < 0) { p.y = 0; p.vy = 0; }
+}
+
+/**
+ * PITS HAVE SIDES.
+ *
+ * `groundSpans` are horizontal runs at one height, so nothing in this file ever
+ * stopped the player sideways — the arena's own walls are the only horizontal
+ * collision in the game. Fall into a pit at an angle and you carried straight
+ * on under the ledge you had just left, inside the terrain, which is the
+ * reported "falling diagonally into a pit passes through the wall".
+ *
+ * THE FACE IS SOLID ONLY BELOW THE CLIFF-GRAB REACH. Above that the lip has to
+ * stay permeable, or drifting back over it could never trigger the rescue that
+ * Cliff Edge Mastery buys — the grab works by being over a span while below the
+ * plane, which is exactly the state this would otherwise forbid.
+ *
+ * Pushing out the SHORTER way is right for the shape this can occur in: you are
+ * already inside the pit when you touch a wall, so the near edge is the one you
+ * fell past.
+ */
+function resolvePitWalls(p, world, groundY, reach) {
+  if (p.onGround) return;
+  const box = hitboxOf(p);
+  if ((box.y + box.h) - groundY <= reach) return;
+  for (const s of world.groundSpans) {
+    if (box.x + box.w <= s.x1 || box.x >= s.x2) continue;
+    const outLeft = s.x1 - (box.x + box.w);
+    const outRight = s.x2 - box.x;
+    p.x += Math.abs(outLeft) <= Math.abs(outRight) ? outLeft : outRight;
+    p.vx = 0;
+    return;
+  }
 }
 
 /**
