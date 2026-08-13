@@ -166,7 +166,7 @@ where each one stands.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
 - **weapon Lv1** `[draft]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
-- **weapon Lv3** `[wip]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
+- **weapon Lv3** `[draft]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
@@ -184,7 +184,7 @@ where each one stands.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[ready]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
+- **weapon** `[wip]` Defensive; slowly Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
 - **weapon Lv1** `[ready]` Shield blocks the equivalent of 1 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv6** `[wip]` Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
