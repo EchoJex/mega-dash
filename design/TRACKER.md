@@ -442,7 +442,7 @@ interaction present on every hit.
 
 ## Stun
 - **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
-- **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
+- **boss-applied** `[wip]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
 - **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
 ## Constrict
