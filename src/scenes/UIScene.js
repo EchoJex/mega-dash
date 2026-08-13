@@ -99,7 +99,7 @@ import {
 } from '../data/weapons.js';
 import * as Loadout from '../systems/loadout.js';
 import { BOSSES, bossLayer } from '../data/bosses.js';
-import { dev, DEV } from '../config/dev.js';
+import { dev, DEV, layerFor } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
 import { sfx, unlockAudio } from '../systems/sfx.js';
@@ -179,7 +179,16 @@ const MOD = 26, MOD_GAP = 6;       // module size and the gap between columns
 const LABEL_OFF_Y = 76, LABEL_DEF_Y = 148;
 const ARC_SLOT_R = 6;
 const ARC_END = 0.12;              // keep the arc ends a little clear of horizontal
-const READ_Y = 180;
+/**
+ * The readout, fenced between the bottom of the ring and the RE-QUIP button.
+ *
+ * The ring's lowest disc sits at RING_CY + RING_RY with ARC_SLOT_R below that
+ * (170), and the button's top edge is VIEW_H - padH - 4 (190). Two 7px lines
+ * with the font's 2px leading is 16px, so this is the only place they fit —
+ * at 180 the second line was drawing across the top of the button, which is
+ * exactly where a thumb rests through the whole in-situ gesture.
+ */
+const READ_Y = 172;
 const SWIPE_CY = 74;               // between the sidearm and the offensive row
 const HOLD_MS = 350;               // press-and-hold to switch a module off
 const CYAN = 0x5cadd5;
@@ -477,75 +486,201 @@ export default class UIScene extends Phaser.Scene {
    */
   togglePause() {
     if (this.pausePanel) return this.closePause();
-    if (this.cards || this.bossPanel || this.mode === 'open') return;
+    if (this.cards || this.bossPanel || this.devPanel || this.mode === 'open') return;
     this.openPause();
   }
 
+  /**
+   * The pause menu STACKS rather than placing each button at a hand-picked y.
+   *
+   * Which buttons exist depends on which dev perks are on, so fixed positions
+   * meant every combination was its own layout to get right — and two of them
+   * already overlapped. Each row measures the plate it just made and advances
+   * by that, so adding or removing an entry cannot collide with anything.
+   */
   openPause() {
     this.game_.paused = true;
     const cx = this.w / 2;
     this.pausePanel = this.add.container(0, 0).setDepth(60);
     this.pausePanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.9)
       .setOrigin(0).setInteractive());
-    this.pausePanel.add(label(this, cx, 60, 'PAUSED', { scale: 2, color: '#5CADD5', origin: 0.5 }));
+    this.pausePanel.add(label(this, cx, 34, 'PAUSED', { scale: 2, color: '#5CADD5', origin: 0.5 }));
 
-    const btn = (y, text, colour, fn) => {
-      const { rect, txt } = plate(this, cx, y, text, { color: colour, padX: 10, padY: 4 });
+    let y = 62;
+    const btn = (text, colour, fn) => {
+      const { rect, txt } = plate(this, cx, y + 8, text, { color: colour, padX: 10, padY: 4 });
       rect.on('pointerdown', fn);
-      this.pausePanel.add(rect);
-      this.pausePanel.add(txt);
-      const t = rect;
+      this.pausePanel.add([rect, txt]);
+      y += rect.height + 4;
     };
-    btn(90, 'RESUME', '#5CADD5', () => this.closePause());
-    if (dev('bossSelect')) btn(112, 'BOSS SELECT', '#F5D328', () => this.openBossSelect());
+    const note = (text, colour) => {
+      const t = label(this, cx, y, text, { color: colour, origin: 0.5 });
+      this.pausePanel.add(t);
+      y += t.height + 3;
+    };
+    btn('RESUME', '#5CADD5', () => this.closePause());
+    if (dev('bossSelect')) btn('BOSS SELECT', '#F5D328', () => this.openBossSelect());
     /**
-     * DEV — climb every unlocked weapon one rung.
+     * DEV — the layer, level and mastery dials.
      *
-     * A ladder is the hardest thing in the game to reach: real levels come from
-     * EXP you have to walk over, and seeing what Lv10 does meant playing a
-     * whole run to get there. Deliberately in the PAUSE MENU rather than on the
-     * HUD or the wheel — it must never be a thing a thumb can hit while playing,
-     * and the wheel is a shipping control that dev tools should stay out of.
+     * A panel rather than three more buttons here: they are dials with a value
+     * to READ BACK, not one-shot actions, and the pause menu is a menu. In the
+     * PAUSE MENU rather than on the HUD or the re-quip wheel — dev tools must
+     * never be reachable by a thumb mid-fight, and the wheel is a shipping
+     * control they should stay out of.
      */
-    if (dev('levelButton')) {
-      btn(134, 'WEAPONS +1 LV', '#B8DC28', () => this.devLevelUp());
-      this.devLvTxt = label(this, cx, 152, '', { color: '#6A7A4A', origin: 0.5 });
-      this.pausePanel.add(this.devLvTxt);
-    }
-    btn(174, 'ABORT RUN', '#C04040', () => this.abortRun());
-    this.pausePanel.add(label(this, cx, 192, 'ends the run and banks your Chips',
-      { color: '#6A5A5A', origin: 0.5 }));
-    this.showDevLevels();
+    if (dev('devPanel')) btn('DEV PANEL', '#F5D328', () => this.openDevPanel());
+    btn('ABORT RUN', '#C04040', () => this.abortRun());
+    note('ends the run and banks your Chips', '#6A5A5A');
+  }
+
+  // ── The dev panel ───────────────────────────────────────────────────
+
+  /**
+   * DEV — the three dials a playtest keeps reaching for, in one place.
+   *
+   *   BOSS LAYER    what layer the next fight runs at, or AUTO for the save's
+   *   WEAPON LV     every unlocked weapon's rung
+   *   OFF / DEF     both Loadout Mastery ranks
+   *
+   * All three are STEPPERS with the current value read back beside them, which
+   * is why they are a panel and not three more pause-menu buttons: a button
+   * fires an action, and none of these is an action — they are states you set
+   * and then want to confirm you set.
+   *
+   * The layer is an OVERRIDE, never a write to `save.bossKills`. Faking clears
+   * to reach layer 3 would permanently raise that boss's shipped layer on this
+   * device with no way back down short of a full reset.
+   *
+   * The mastery ranks apply to the RUN IN PROGRESS as well as to every run
+   * after, because the thing being tested is usually how the wheel behaves at
+   * that rank and restarting to see it is most of the cost.
+   */
+  openDevPanel() {
+    if (this.devPanel) return;
+    this.closePause();
+    this.game_.paused = true;
+    const cx = this.w / 2;
+    this.devPanel = this.add.container(0, 0).setDepth(70);
+    this.devPanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 1)
+      .setOrigin(0).setInteractive());
+    this.devPanel.add(label(this, cx, 8, 'DEV PANEL', { color: '#F5D328', origin: 0.5 }));
+    // Kept short deliberately: the font's advance is ~7px, so a caption much
+    // past 38 characters runs off both edges at the narrowest virtual width.
+    this.devPanel.add(label(this, cx, 20, 'layer beats the save · ranks apply now',
+      { color: '#6A6A5A', origin: 0.5 }));
+
+    // Laid out from MEASURED text rather than from assumed glyph pitch — the
+    // rendered line box is taller than the 7px glyph and the advance is wider
+    // than 5px, and guessing at either has put rows on top of each other twice.
+    const right = Math.min(this.w - 10, cx + 150);
+    let y = 38;
+    /**
+     * One stepper: a name, a minus, the value, a plus.
+     * `apply(d)` gets -1 or +1 and returns the string to show.
+     */
+    const row = (name, apply) => {
+      const nameTxt = label(this, 10, y + 5, name, { color: '#B8C4D0' });
+      // The value is the widest thing in the row ("RANK 3", "LV 1-10"), so the
+      // two plates are pushed out to clear its longest form rather than its
+      // current one — otherwise the row reflows every time you press it.
+      const value = label(this, right - 52, y + 5, '', { color: '#F5D328', origin: 0.5 });
+      const step = (d) => { value.setText(apply(d)); sfx('select'); };
+      const minus = plate(this, right - 94, y + 8, '-', { color: '#5CADD5', padX: 8, padY: 3 });
+      const plus = plate(this, right - 10, y + 8, '+', { color: '#5CADD5', padX: 8, padY: 3 });
+      minus.rect.on('pointerdown', () => step(-1));
+      plus.rect.on('pointerdown', () => step(1));
+      value.setText(apply(0));
+      this.devPanel.add([nameTxt, value, minus.rect, minus.txt, plus.rect, plus.txt]);
+      y += Math.max(nameTxt.height, minus.rect.height) + 6;
+    };
+
+    row('BOSS LAYER', (d) => {
+      // 0 is AUTO and sits below 1, so stepping down off layer 1 hands the
+      // save its own answer back rather than wrapping to 3.
+      DEV.nextLayer = Math.max(0, Math.min(3, DEV.nextLayer + d));
+      return DEV.nextLayer ? `L${DEV.nextLayer}` : 'AUTO';
+    });
+    row('WEAPON LV', (d) => this.devStepLevels(d));
+    row('OFF MASTERY', (d) => this.devStepRank(OFFENSIVE, d));
+    row('DEF MASTERY', (d) => this.devStepRank(DEFENSIVE, d));
+
+    /**
+     * The perks that are simply ON, listed rather than dialled.
+     *
+     * They are edited in config/dev.js and need a rebuild, so they are not
+     * controls — but they are the answer to "why is every weapon already
+     * unlocked" and "why did that hit not kill me", which are exactly the
+     * questions a playtest asks when it cannot tell dev behaviour from a bug.
+     */
+    // Short tokens, not the config keys: the full names run off the right edge
+    // at the widest supported virtual width and are hopeless at the narrowest.
+    const on = [
+      ['hpFloor', 'HP FLOOR'], ['startUnlocked', 'ALL WEAPONS'],
+      ['maxMastery', 'MAX MASTERY'], ['unlockAnyWeapon', 'NO LOCKS'],
+      ['cardsFromAllWeapons', 'ANY CARD'], ['cycleLayers', 'LAYER WRAP'],
+    ].filter(([k]) => dev(k)).map(([, n]) => n);
+    this.devPanel.add(label(this, 10, y + 6, 'ALSO ON', { color: '#6A6A5A' }));
+    this.devPanel.add(label(this, 10, y + 17, on.slice(0, 3).join('  ') || 'NOTHING',
+      { color: '#4A6A7A' }));
+    this.devPanel.add(label(this, 10, y + 28, on.slice(3).join('  '),
+      { color: '#4A6A7A' }));
+
+    const { rect, txt } = plate(this, cx, VIEW_H - 14, 'BACK',
+      { color: '#5CADD5', padX: 10, padY: 3 });
+    rect.on('pointerdown', () => { this.closeDevPanel(); this.openPause(); });
+    this.devPanel.add([rect, txt]);
+  }
+
+  closeDevPanel() {
+    this.devPanel?.destroy(true);
+    this.devPanel = null;
   }
 
   /**
-   * DEV — every unlocked weapon gains a level, capped at the real ceiling.
+   * DEV — shift every unlocked weapon one rung, and say where they all ended up.
    *
    * Levels only, never unlocks: which weapons you HAVE is what `startUnlocked`
    * decides, and conflating the two would make it impossible to playtest a
    * ladder on a run where you deliberately left something locked.
    */
-  devLevelUp() {
+  devStepLevels(d) {
     const r = this.game_.run;
-    for (const id of r.unlocked) {
-      r.wpLevels[id] = Math.min(FEEL.weaponMaxLevel, (r.wpLevels[id] || 1) + 1);
+    if (d) {
+      for (const id of r.unlocked) {
+        r.wpLevels[id] = Math.max(1,
+          Math.min(FEEL.weaponMaxLevel, (r.wpLevels[id] || 1) + d));
+      }
+      // The runtimes cache their ladder state at the rung they were built on,
+      // so they have to be dropped or the new rung would not take effect until
+      // the weapon was benched and re-slotted.
+      r.wstate = {};
+      this.refreshWheel();
     }
-    // The runtimes cache their ladder state at the rung they were created on,
-    // so they have to be rebuilt or the new rung would not take effect until
-    // the weapon was benched and re-slotted.
-    r.wstate = {};
-    sfx('levelUp');
-    this.showDevLevels();
-    this.refreshWheel();
-  }
-
-  /** The spread of levels, so the button says what it just did. */
-  showDevLevels() {
-    if (!this.devLvTxt) return;
-    const r = this.game_.run;
     const lv = [...r.unlocked].map((id) => r.wpLevels[id] || 1);
     const lo = Math.min(...lv), hi = Math.max(...lv);
-    this.devLvTxt.setText(lo === hi ? `all at LV ${lo}` : `LV ${lo} to ${hi}`);
+    return lo === hi ? `LV ${lo}` : `LV ${lo}-${hi}`;
+  }
+
+  /**
+   * DEV — set a Loadout Mastery rank on the run in progress.
+   *
+   * `DEV.offRank` / `DEV.defRank` hold it for later runs; `setRanks` puts the
+   * live loadout back into legal shape immediately, which can move weapons out
+   * of positions a lower rank no longer owns.
+   */
+  devStepRank(cls, d) {
+    const r = this.game_.run;
+    const key = cls === OFFENSIVE ? 'offRank' : 'defRank';
+    const rank = Math.max(0, Math.min(Loadout.MAX_RANK, (r[key] ?? 0) + d));
+    if (d) {
+      r[key] = rank;
+      DEV[key] = rank;
+      Loadout.setRanks(r.loadout, { [cls]: rank });
+      r.activeWeapon = Loadout.normaliseActive(r.loadout, r.activeWeapon);
+      this.refreshWheel();
+    }
+    return `RANK ${rank}`;
   }
 
   /**
@@ -579,7 +714,7 @@ export default class UIScene extends Phaser.Scene {
     BOSSES.forEach((b, i) => {
       const x = x0 + (i % cols) * (tw + 2);
       const y = 34 + Math.floor(i / cols) * (th + 3);
-      const layer = bossLayer(save, b.id, dev('cycleLayers'));
+      const layer = layerFor(bossLayer(save, b.id, dev('cycleLayers')));
       const tile = this.add.rectangle(x, y, tw, th, hexNum(b.primary), 0.85).setOrigin(0)
         .setStrokeStyle(1, hexNum(b.outline), 1)
         .setInteractive({ useHandCursor: true });
@@ -647,10 +782,13 @@ export default class UIScene extends Phaser.Scene {
     this.frameG = this.add.graphics();
     this.wheel.add(this.frameG);
     this.drawRing(cx);
-    this.wheel.add(label(this, cx, LABEL_OFF_Y, 'OFFENSIVE',
-      { color: '#5CADD5', origin: 0.5 }));
-    this.wheel.add(label(this, cx, LABEL_DEF_Y, 'DEFENSIVE',
-      { color: '#5CADD5', origin: 0.5 }));
+    // Kept as refs so the in-situ wheel can push the whole frame back — see
+    // the scenery note in refreshWheel.
+    this.clsLabels = [
+      label(this, cx, LABEL_OFF_Y, 'OFFENSIVE', { color: '#5CADD5', origin: 0.5 }),
+      label(this, cx, LABEL_DEF_Y, 'DEFENSIVE', { color: '#5CADD5', origin: 0.5 }),
+    ];
+    this.wheel.add(this.clsLabels);
 
     // Benched and locked specials live on the ring, in their class's half.
     this.arcOff = this.mkArc(OFFENSIVE, cx, RING_CY, -1);
@@ -1001,10 +1139,20 @@ export default class UIScene extends Phaser.Scene {
     this.lockG.clear();
     this.moduleG.clear();
     this.haloG.clear();
-    // The padlocks ride the ring's emphasis. Left at full strength they were
-    // the brightest thing on an in-situ wheel whose whole point is that the
-    // ring is not available.
-    this.lockG.setAlpha(this.mode === 'situ' ? 0.2 : 1);
+    /**
+     * IN SITU, EVERYTHING EXCEPT THE FOUR MODULES IS SCENERY.
+     *
+     * The padlocks already rode the ring's emphasis, and the ring frame and its
+     * two class captions did not — so a control whose whole claim is "only the
+     * 2x2 grid answers a touch" was drawing a bright oval and two headings
+     * across a fight in slow motion, and there was no way to tell whether the
+     * gesture felt good underneath all of it. They go to the same band as the
+     * benched discs: present enough to place the grid, quiet enough to ignore.
+     */
+    const scenery = this.mode === 'situ';
+    this.lockG.setAlpha(scenery ? 0.2 : 1);
+    this.frameG.setAlpha(scenery ? 0.25 : 1);
+    for (const t of this.clsLabels) t.setAlpha(scenery ? 0.3 : 1);
 
     // Where the arc discs SIT is recomputed every refresh from what is
     // unlocked — see layoutArc. Done first, because the swipe aim and the
@@ -1134,7 +1282,11 @@ export default class UIScene extends Phaser.Scene {
     // not bought yet gets the faintest of all: the shape is still there, so the
     // row's full size is visible as something to work toward, but it does not
     // invite a tap that would do nothing.
-    const markA = rankLocked ? 0.16 : !filled ? 0.75 : off ? 0.28 : 0.45;
+    // 0.45 was far too loud once something moved in: the crossguard sits at the
+    // module's centre, which is exactly where the level line goes, and the two
+    // read as one smudge. A filled module has already answered the question the
+    // watermark asks, so it drops to a texture.
+    const markA = rankLocked ? 0.16 : !filled ? 0.75 : 0.16;
     if (s.mark === 'sword') drawSword(g, cx, cy, 16, CYAN, markA);
     else drawShield(g, cx, cy, 16, CYAN, markA);
 
@@ -1542,7 +1694,8 @@ export default class UIScene extends Phaser.Scene {
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);
     // Card screen takes priority over every other overlay.
-    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel) this.openCards();
+    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel
+      && !this.bossPanel && !this.devPanel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as
@@ -1561,7 +1714,14 @@ export default class UIScene extends Phaser.Scene {
     // Only glyphs the bitmap font actually has — see FONT_CHARS in
     // systems/font.js. `fold()` silently DROPS anything missing, so an "@"
     // here renders as nothing and the line quietly lies about the DPR.
-    const diag = DEV.enabled
+    //
+    // IT IS DROPPED WHILE A WHEEL IS UP. Three stacked lines reach y=40, which
+    // is exactly where the wheel's sidearm dot and its caption sit, and the
+    // in-situ wheel deliberately keeps the HUD — so the one overlay in the game
+    // that is pure diagnostics was drawing straight through the control the
+    // owner was trying to judge. Energy and the live weapon stay; the build,
+    // seed and density are not things you read mid-gesture.
+    const diag = DEV.enabled && !this.mode
       ? `\nb${BUILD} s${gm.seed} ${DISPLAY_DIAG.scale}x `
         + `${DISPLAY_DIAG.cssW}x${DISPLAY_DIAG.cssH} dpr${DISPLAY_DIAG.dpr.toFixed(2)}`
       : '';
@@ -1588,7 +1748,7 @@ export default class UIScene extends Phaser.Scene {
         r.justUnlocked = null;
       }
     } else if (r.pendingLoadout && this.mode !== 'open'
-      && !this.cards && !this.pausePanel && !gm.warp) {
+      && !this.cards && !this.pausePanel && !this.bossPanel && !this.devPanel && !gm.warp) {
       // Deliberately after the banner has run its course, so the player has
       // read WHAT they got before being asked where to put it.
       this.openWheel();

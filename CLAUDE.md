@@ -731,8 +731,25 @@ it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to
 
 Playtest perks: HP floored at 1 (every hit still lands), **every weapon unlocked at level
 1**, **both Loadout Mastery ranks at 3** (four slots, all live), equipping padlocked
-weapons, cards drawn from locked weapons, a **WEAPONS +1 LV** button, a **boss selector**
-in the pause menu, and **layer cycling**.
+weapons, cards drawn from locked weapons, a **boss selector** in the pause menu,
+**layer cycling**, and the **DEV PANEL**.
+
+**DEV PANEL** — pause → DEV PANEL. Four steppers and a readback:
+
+| dial | does |
+|---|---|
+| **BOSS LAYER** | AUTO / L1 / L2 / L3. An override consulted by `layerFor()`, which every `bossLayer` caller goes through — it is deliberately **not** a write to `save.bossKills`, because faking clears to reach layer 3 would permanently raise that boss's shipped layer on the device with no way back |
+| **WEAPON LV** | shifts every unlocked weapon a rung, up or down, and reads back the spread. This replaced the old standalone **WEAPONS +1 LV** button — same job, and it steps down too |
+| **OFF / DEF MASTERY** | either Loadout Mastery rank, 0–3, applied to the **run in progress** via `setRanks` as well as to every run after. `DEV.offRank`/`defRank` override `maxMastery`, which is the whole point: that switch is all-or-nothing and ranks 0–2 are exactly what it cannot show you |
+
+Under them, a list of the perks that are simply **on**. They need a rebuild to change, so
+they are not controls — but they are the answer to "why is every weapon already unlocked"
+and "why did that hit not kill me", which is what a playtest asks when it cannot tell dev
+behaviour from a bug.
+
+The pause menu **stacks** its buttons from measured plate heights rather than hand-picked
+y values. Which buttons exist depends on which perks are on, so fixed positions meant
+every combination was its own layout to get right — and two of them already overlapped.
 
 **Dev mode does NOT bypass the re-quip window.** It used to, and that was wrong: a loadout
 change is an event you earn, and a playtest that could re-quip at will was never testing
@@ -838,12 +855,38 @@ are built and pushed; **two pieces remain**, both post-boss-wheel input:
    current select-then-fill tap flow is the fallback, not the goal.
 
 Everything else on that list is done: the two wheel modes, the oval fanning ring, the
-in-situ swipe and key routes, hidden un-earned content, the dev level button, the
+in-situ swipe and key routes, hidden un-earned content, the dev level dial, the
 auto-opening post-boss wheel, and the weapon-level consolation prize.
+
+**The overlays that made the in-situ wheel unjudgeable are cleared.** The owner reported
+they could not tell whether the gesture felt good because things were drawing over each
+other. Four things were:
+
+- the **dev HUD's diagnostic line**. In-situ deliberately keeps the HUD up — the fight is
+  still running — and three stacked lines reach y=40, which is exactly where the wheel's
+  sidearm dot and its caption live. Energy and the live weapon stay; build, seed and
+  density are dropped while either wheel is open. They are diagnostics, not something you
+  read mid-gesture.
+- the **ring frame and its two class captions**, which stayed at full strength while the
+  padlocks and benched discs were already pushed back. A control whose whole claim is
+  "only the 2×2 grid answers a touch" was painting a bright oval across a fight.
+- the **module watermark** at 0.45. The crossguard sits at the module's centre, which is
+  exactly where the level line goes, and the two read as one smudge. A filled module has
+  already answered the question the watermark asks, so it drops to 0.16.
+- the **readout's second line**, which was drawing across the top of the RE-QUIP button —
+  where a thumb rests for the entire in-situ gesture. `READ_Y` is 172, fenced between the
+  ring's lowest disc (170) and the button (190).
 
 **Playtest state:** the owner had not yet played pass 3 on device when the session ended.
 The in-situ gesture is the part their hands will have an opinion about, so ask before
 building further on top of it.
+
+**When touching wheel or menu layout, render it — do not compute it.** Pixel arithmetic
+off assumed glyph metrics has put things on top of each other three times in this file's
+history. The font's advance is ~7px, not the 5px the glyph suggests, and the rendered line
+box is taller than 7px. `tools/smoke.mjs` already serves `dist/` in Chromium; a throwaway
+script that opens a panel and screenshots it at both 320 and 480 virtual width costs a
+minute and settles it.
 
 **Two knobs they expect to tune after playing:** `FEEL.slideTapFrames` (the jump→slide
 cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).

@@ -16,7 +16,7 @@ import {
 } from '../config/display.js';
 import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
-import { dev } from '../config/dev.js';
+import { dev, DEV, layerFor } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf,
@@ -191,6 +191,11 @@ export default class GameScene extends Phaser.Scene {
     };
     applyUpgrades(save, run);
     if (dev('maxMastery')) run.offRank = run.defRank = Loadout.MAX_RANK;
+    // The dev panel's ranks are LAST, so setting one there overrides both the
+    // purchased rank and maxMastery's blanket 3. That is the whole point of the
+    // dial: maxMastery cannot show you how ranks 0-2 feel.
+    if (DEV.enabled && DEV.offRank != null) run.offRank = DEV.offRank;
+    if (DEV.enabled && DEV.defRank != null) run.defRank = DEV.defRank;
     // The ranks are copied onto the loadout ONCE, here. Nothing downstream
     // reads `save` again, so a purchase made in the Hub can never reshape a
     // run that is already in progress.
@@ -361,7 +366,7 @@ export default class GameScene extends Phaser.Scene {
   /** Door contact -> the boss's sealed arena. */
   warpToArena(def) {
     this.beginWarp(() => {
-      const layer = bossLayer(save, def.id, dev('cycleLayers'));
+      const layer = layerFor(bossLayer(save, def.id, dev('cycleLayers')));
       // A crash inside a fight should say WHICH fight. Boss and layer are the
       // two things that pick which code was running.
       setCrashContext({ where: `arena ${def.id} L${layer}` });

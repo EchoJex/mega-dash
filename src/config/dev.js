@@ -72,24 +72,62 @@ export const DEV = {
   bossSelect: true,
 
   /**
-   * A WEAPONS +1 LV button in the pause menu.
-   *
-   * A ladder is the hardest thing in the game to reach on purpose: levels come
-   * from EXP you have to walk over, so seeing what a Lv10 rung does meant
-   * playing most of a run to get there. In the pause menu rather than on the
-   * HUD or the wheel — it must never be reachable by a thumb mid-fight, and the
-   * re-quip wheel is a shipping control that dev tools should stay out of.
-   */
-  levelButton: true,
-
-  /**
    * Boss layers WRAP instead of clamping: the 4th encounter is the 1st again
    * (4=1, 5=2, 6=3). Shipped behaviour clamps at 3 forever, which is correct
    * for players and useless for testing, because layers 1 and 2 become
    * unreachable the moment you have beaten a boss three times.
    */
   cycleLayers: true,
+
+  /**
+   * A DEV panel in the pause menu holding the dials a playtest keeps wanting
+   * mid-session: the layer the next boss fights at, what level every weapon is,
+   * and both Loadout Mastery ranks.
+   *
+   * All of them were previously reachable only by reloading with a different
+   * save or by grinding, which is why a session testing a layer-3 hazard
+   * against a Lv10 ladder cost more setup than it cost to watch. In the PAUSE
+   * MENU with the rest of them — never on the HUD, never on the re-quip wheel.
+   *
+   * A ladder in particular is the hardest thing in the game to reach on
+   * purpose: levels come from EXP you have to walk over, so seeing what a Lv10
+   * rung does meant playing most of a run to get there. The old standalone
+   * WEAPONS +1 LV button is the WEAPON LV row of this panel now — same job,
+   * and it steps back down as well as up.
+   */
+  devPanel: true,
+
+  // ── Live dials, set from that panel. Not perks: these hold VALUES. ──
+
+  /**
+   * The layer every boss fights at, or 0 for "whatever the save says".
+   *
+   * An override rather than a save edit on purpose. Writing clears into
+   * `save.bossKills` to reach layer 3 would permanently raise the shipped
+   * layer of a boss on this device, and there would be no way back down to
+   * layer 1 without a full reset.
+   */
+  nextLayer: 0,
+
+  /**
+   * Loadout Mastery ranks to start a run at, or null for `maxMastery`'s answer.
+   *
+   * Separate from `maxMastery` because that switch is all-or-nothing and the
+   * ranks below 3 are exactly the ones it cannot show you. Set here, they take
+   * effect on the run in progress AND on every run after it.
+   */
+  offRank: null,
+  defRank: null,
 };
 
 /** True only when dev mode is on AND that specific perk is enabled. */
 export const dev = (perk) => DEV.enabled && DEV[perk] === true;
+
+/**
+ * The layer a boss actually fights at, given the one his clears earn him.
+ *
+ * Every caller of `bossLayer` goes through here so the panel's override lands
+ * in one place. Outside dev mode it is the identity function.
+ */
+export const layerFor = (earned) =>
+  (DEV.enabled && DEV.nextLayer ? DEV.nextLayer : earned);
