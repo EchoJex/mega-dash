@@ -448,7 +448,7 @@ interaction present on every hit.
 ## Constrict
 - **shared** `[wip]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
 - **boss-applied** `[wip]` Vine Lash: constricts the player for several seconds before reel-in and toss.
-- **weapon-applied** `[wip]` Applies aconstruct
+- **weapon-applied** `[wip]` con
 
 ## Freeze
 - **shared** `[wip]` Functionally the same as stun/constrict; elementally correct colors flash while the target has this attribute.
