@@ -468,7 +468,7 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[ready]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how far below a cliff edge you can go before you don't pop back up scales with mastery level. Levels 1 through 3 will have the player stick to the cliff wall for 0.25s before popping back up if the current master is sufficient to recover from. Mastery 3 of 3 should play like the big currently plays, plus that stick pause I mentioned. |
+| other | `[ready]` | R |
 | 1036 (main) | `[wip]` | Sometimes boss doors have spike hazards sharing the same space |
 | 1036 (main) | `[ready]` | Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height |
 
