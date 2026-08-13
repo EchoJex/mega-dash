@@ -188,6 +188,10 @@ export default class GameScene extends Phaser.Scene {
       aggroPause: null,
       lastDamaged: null,
       pendingLoadout: null,
+      // The weapon THIS re-quip window is about, whether or not it needed a
+      // decision. `justUnlocked` cannot do this job — the acquire banner clears
+      // it after 2.5s, and the halo has to survive as long as the window does.
+      freshWeapon: null,
       // A free level from re-beating a boss whose weapon you already own; the
       // post-boss wheel announces it and then clears it.
       bonusLevel: null,
@@ -376,6 +380,7 @@ export default class GameScene extends Phaser.Scene {
       // The build you walk in with is the build you fight with.
       this.run.requipOpen = false;
       this.run.pendingLoadout = null;
+      this.run.freshWeapon = null;
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
       this.cam = { x: 0 };
       this.minions = [];   // nothing follows you in
@@ -1650,6 +1655,8 @@ export default class GameScene extends Phaser.Scene {
       this.run.unlocked.add(b.dropWeapon);
       this.run.wpLevels[b.dropWeapon] = 1;
       this.run.justUnlocked = b.dropWeapon;   // UIScene surfaces this
+      // ...and the wheel haloes it for the whole window, banner or no banner.
+      this.run.freshWeapon = b.dropWeapon;
       // Slot it silently while there is room; make it a decision once there is
       // not. Benching a weapon the player just fought a boss for without saying
       // so would be the worst possible reading of the slot cap.
@@ -1977,15 +1984,38 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Point the fire button at a weapon. Only the sidearm and equipped, enabled
-   * OFFENSIVE weapons can be selected — a defensive weapon runs by itself and
-   * has nothing to aim.
+   * THE OFFENSIVE MODULE GESTURE: aim first, switch off second.
+   *
+   * Offensive weapons share one fire button, so "live" and "AIMED" are
+   * different states — a rank-2 or rank-3 loadout has two offensive weapons
+   * running and exactly one of them on the trigger. Nothing was ever changing
+   * which one, so a full offensive row still only ever fired its first weapon
+   * and the second slot looked broken. `normaliseActive` cannot do it: it only
+   * moves `activeWeapon` when the current one has stopped being firable.
+   *
+   * One gesture covers both jobs, and which one it does is the obvious one:
+   *
+   *   a live weapon you are NOT holding   becomes the one you are holding
+   *   the one you ARE holding             switches off, handing aim to the other
+   *   a switched-off weapon               switches on AND takes the trigger
+   *
+   * Where mastery caps the class at one live weapon this collapses back into
+   * the radio switch it already was — switching one on switches the other off,
+   * and the last one standing refuses, so the fire button is never dead.
    */
-  selectWeapon(id) {
-    const r = this.run;
+  aimWeapon(id) {
+    const r = this.run, lo = r.loadout;
     if (!r.unlocked.has(id) && !dev('unlockAnyWeapon')) return;
-    if (!Loadout.firables(r.loadout).includes(id)) return;
-    r.activeWeapon = id;
+    if (Loadout.firables(lo).includes(id) && r.activeWeapon !== id) {
+      r.activeWeapon = id;
+      return;
+    }
+    Loadout.toggleEnabled(lo, id);
+    r.activeWeapon = Loadout.normaliseActive(lo, r.activeWeapon);
+    // Switching one on is also a request to hold it — otherwise turning a
+    // weapon on would leave the trigger pointed at the one you turned it on
+    // instead of, which is never what the gesture meant.
+    if (Loadout.firables(lo).includes(id)) r.activeWeapon = id;
   }
 
   /**

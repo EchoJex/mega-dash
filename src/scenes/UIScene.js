@@ -17,15 +17,21 @@
  * special weapons are planned to fire from a standing diagonal, and the input
  * has to be a distinct press before a weapon can read it.
  *
- * THE RE-QUIP WHEEL
- * -----------------
- * One button, two ways in, deliberately priced differently:
+ * THE RE-QUIP WHEEL — TWO WHEELS, NOT ONE CONTROL WITH TWO MOODS
+ * -------------------------------------------------------------
+ * They do unrelated jobs and are reached in unrelated ways:
  *
- *   TAP    hard pause. Gameplay dims, the wheel comes up to full opacity. The
- *          safe read-everything-and-choose route.
- *   SWIPE  no pause. Time collapses to a crawl, a ghosted wheel appears, and
- *          the DIRECTION of the swipe picks the weapon. Fast, but it costs real
- *          seconds and you are still being shot at.
+ *   IN-SITU    the RE-QUIP button, mid-fight. Touching it slows time and
+ *              ghosts the wheel in. From there a diagonal swipe or a tap on a
+ *              module picks which of the weapons you are ALREADY CARRYING is
+ *              awake and which one the fire button is pointed at. A second
+ *              touch on the button puts it away. It can never change what you
+ *              carry, and it can never stop the game.
+ *   POST-BOSS  opens by itself when a boss falls, and closes when you warp into
+ *              the next arena. Hard pause, everything you own at full strength,
+ *              and this is the only place the loadout can be rearranged. THE
+ *              RE-QUIP BUTTON DOES NOT REACH IT — a control resting under a
+ *              thumb during a fight must not be able to stop the game.
  *
  * LAYOUT — the loadout is the wheel, and the wheel is the loadout:
  *
@@ -57,14 +63,33 @@
  * class. Everything you are carrying is large and central; everything you own
  * but are not carrying is small and out at the rim.
  *
- *   TAP a module              select it — white corners
- *   TAP a benched weapon      drop it into the selected module of its class
- *   PRESS AND HOLD a module   switch that weapon on or off
+ * EVERY GESTURE IS A TAP. There is no press-and-hold anywhere on the wheel: a
+ * hold that meant one thing and a tap that meant another, on the same disc, was
+ * two gestures the player had to tell apart by feel with no feedback until
+ * after they had committed.
+ *
+ *   POST-BOSS, TWO TAPS IN EITHER ORDER
+ *     TAP a weapon then a module    equips it there
+ *     TAP a module then a weapon    the same swap, said backwards
+ *     TAP the same thing twice      puts it back down
+ *   The first tap only ever SELECTS — white ring on a weapon, white corners on
+ *   a module, and the modules that will accept what you are holding outlined in
+ *   gold. Nothing moves until both halves of the sentence are on screen.
+ *
+ *   IN-SITU, ONE TAP
+ *     TAP or SWIPE to a module      offensive: put the fire button on it, or
+ *                                   switch it off if it is already there
+ *                                   defensive: switch it on or off
+ *
+ * THE HALO MEANS NEW. It rings the weapon the boss just dropped and nothing
+ * else. Everything you own is drawn at full strength in the post-boss wheel,
+ * which is what says "owned"; a halo on all of them said it twice and left the
+ * one weapon you had never seen looking like the rest.
  *
  * LOADOUT MASTERY IS DRAWN, NOT EXPLAINED. A module past your rank keeps its
  * shape and its watermark under a padlock, so the row's full size is always
  * visible as something to work toward. Where the rank caps how many may run at
- * once, press-and-hold becomes a radio switch between them — the gesture does
+ * once, the in-situ tap becomes a radio switch between them — the gesture does
  * not change and the cyan border always says which one won.
  *
  * SLOTS ONLY CHANGE BETWEEN FIGHTS. Equipping is live from a boss going down
@@ -76,10 +101,13 @@
  * meant "make this live", a tap on a defensive one meant nothing at all, and a
  * weapon tapped on the ring landed in whichever slot the game chose for you.
  *
- * BORDERS ARE STATE, and there are only two: a cyan border means the module is
- * carrying something and running it, and no border means it is not. A red cross
- * used to mark the switched-off case and read as an error rather than as a
- * choice the player had made. White corners are separate from all of that —
+ * BORDERS ARE STATE. A cyan border means the module is carrying something and
+ * running it, and no border means it is not. A solid cyan bar across the top of
+ * an OFFENSIVE module means that is the one the fire button is pointed at —
+ * from mastery rank 2 two offensive weapons run at once but only one is on the
+ * trigger, and "running" and "firing" needed to stop sharing one border. A red
+ * cross used to mark the switched-off case and read as an error rather than as
+ * a choice the player had made. White corners are separate from all of that —
  * they mark the SELECTED module, which is about what happens next rather than
  * about what is running.
  *
@@ -190,12 +218,20 @@ const ARC_END = 0.12;              // keep the arc ends a little clear of horizo
  */
 const READ_Y = 172;
 const SWIPE_CY = 74;               // between the sidearm and the offensive row
-const HOLD_MS = 350;               // press-and-hold to switch a module off
 const CYAN = 0x5cadd5;
+const GOLD = 0xf5d328;
 const FRAME_DARK = 0x2a323c;       // the grid frame when a module is not running
 const LOCKED_FILL = 0x3a3f4a;
 const LOCKED_ALPHA = 0.45;
-const BENCH_ALPHA = 0.55;          // unlocked but not carried
+/**
+ * A weapon you own but are not carrying, in the POST-BOSS wheel.
+ *
+ * Nearly full strength, because that wheel exists to offer exactly these and
+ * anything it half-hides it is half-offering. It was 0.55 back when the halo
+ * carried the "you could take this" signal for it; the halo now means NEW and
+ * only NEW, so the disc has to say owned by itself.
+ */
+const BENCH_ALPHA = 0.95;
 // In the in-situ wheel the ring is context, not a menu. Low enough that the
 // eye goes to the four modules and stays there.
 const SITU_BENCH_ALPHA = 0.16;
@@ -838,15 +874,26 @@ export default class UIScene extends Phaser.Scene {
     this.readLv = label(this, cx, READ_Y + 9, '', { color: '#5CADD5', origin: 0.5 });
     this.wheel.add([this.readName, this.readLv]);
 
-    // Press-and-hold is resolved at SCENE level, not on the disc: a thumb held
-    // for a third of a second drifts, and a disc stops seeing its own pointer
-    // the moment it does — the same reason the movement pads track holds here.
+    /**
+     * EVERY TOUCH ON THE WHEEL IS A TAP. There is no press-and-hold any more.
+     *
+     * A hold that meant one thing and a tap that meant another, on the same
+     * disc, in a control that also had a swipe route into it, was three
+     * gestures the player had to tell apart by feel with no feedback until
+     * after they had committed. Toggling what is RUNNING is the in-situ
+     * wheel's whole job and it is one tap there; rearranging what you CARRY is
+     * the post-boss wheel's whole job and it is two taps there, in either
+     * order. Nothing is timed.
+     *
+     * Still resolved at SCENE level rather than on the disc: a thumb drifts a
+     * few pixels between down and up, and a disc stops seeing its own pointer
+     * the moment it does — the same reason the movement pads track holds here.
+     */
     this.input.on('pointerup', () => {
       const sp = this.slotPress;
       this.slotPress = null;
-      if (!sp || this.mode !== 'open') return;
-      if (performance.now() - sp.t >= HOLD_MS) this.toggleSlot(sp.slot);
-      else this.tapSlot(sp.slot);
+      if (!sp || !this.mode) return;
+      this.tapSlot(sp.slot);
     });
   }
 
@@ -892,7 +939,7 @@ export default class UIScene extends Phaser.Scene {
     const abbr = label(this, cx, s.y + 5, '', { color: '#E0F0FF', origin: 0.5 });
     const lvl = label(this, cx, s.y + 15, '', { color: '#88AABB', origin: 0.5 });
     const slot = { ...s, chars: 3, disc: rect, abbr, lvl, id: null, cxm: cx };
-    rect.on('pointerdown', () => { this.slotPress = { slot, t: performance.now() }; });
+    rect.on('pointerdown', () => { this.slotPress = { slot }; });
     rect.on('pointerover', () => { if (this.mode === 'open') this.setReadout(slot.id); });
     this.wheel.add([rect, abbr, lvl]);
     return slot;
@@ -906,7 +953,7 @@ export default class UIScene extends Phaser.Scene {
     const abbr = label(this, s.x, s.y - 5, '', { color: '#E0F0FF', origin: 0.5 });
     const lvl = label(this, s.x, s.y + 3, '', { color: '#E0F0FF', origin: 0.5 });
     const slot = { ...s, chars, disc, abbr, lvl, id: null };
-    disc.on('pointerdown', () => { this.slotPress = { slot, t: performance.now() }; });
+    disc.on('pointerdown', () => { this.slotPress = { slot }; });
     disc.on('pointerover', () => { if (this.mode === 'open') this.setReadout(slot.id); });
     this.wheel.add([disc, abbr, lvl]);
     return slot;
@@ -1031,9 +1078,16 @@ export default class UIScene extends Phaser.Scene {
       // A resolved diagonal acts and closes. Anything else LEAVES THE WHEEL UP:
       // the finger lifting is not a cancel, it is the player switching from the
       // swipe route to the tap route mid-gesture.
+      //
+      // THE BUTTON NEVER OPENS THE POST-BOSS WHEEL. It used to, as a leftover
+      // from the era when tap and swipe were two ways into one control: the
+      // second tap closed the in-situ wheel on the way DOWN, and then this
+      // handler saw a mode that was neither 'open' nor 'situ' on the way UP and
+      // opened the hard-paused between-fights wheel on top of a live fight.
+      // That wheel is opened by `promptRequip` when a boss falls, and by
+      // nothing else.
       if (pr.swiping && this.aimSlot) this.commitSitu();
       else if (this.mode === 'open') this.closeWheel();
-      else if (this.mode !== 'situ') this.openWheel();
     });
 
     /**
@@ -1042,7 +1096,21 @@ export default class UIScene extends Phaser.Scene {
      * scrim only exists while a wheel is up.
      */
     this.scrim.on('pointerdown', () => {
-      if (this.mode === 'situ') this.closeWheel();
+      if (this.mode === 'situ') { this.closeWheel(); return; }
+      if (this.mode !== 'open') return;
+      // POST-BOSS, A TAP ON NOTHING IS A BACK BUTTON BEFORE IT IS AN EXIT.
+      // With half a swap on screen it puts that half down; only a tap with
+      // nothing in hand closes the wheel. Otherwise one fat-fingered miss
+      // between the two taps would shut the wheel and bench the weapon the
+      // player was in the middle of equipping.
+      if (this.pick || this.target) {
+        this.pick = null;
+        this.target = null;
+        this.refreshWheel();
+        this.setReadout(this.game_.run.activeWeapon);
+        return;
+      }
+      this.closeWheel();
     });
   }
 
@@ -1173,8 +1241,16 @@ export default class UIScene extends Phaser.Scene {
       if (s.rankLocked) s.id = null;
     }
 
-    const pending = r.pendingLoadout;
-    const wanted = pending ? classOf(pending) : null;
+    /**
+     * WHICH MODULES ARE WAITING FOR A TAP.
+     *
+     * The class of whatever is currently selected on the ring, if anything —
+     * so picking a weapon lights up every module that could take it. A drop
+     * still looking for a home selects itself when the wheel opens (see
+     * openWheel), so the acquire case needs no separate highlight of its own.
+     */
+    const held = this.mode === 'open' ? this.pick?.id || r.pendingLoadout : null;
+    const wanted = held ? classOf(held) : null;
 
     for (const s of [...this.active, ...this.arc]) {
       const wd = weaponOf(s.id);
@@ -1224,9 +1300,18 @@ export default class UIScene extends Phaser.Scene {
       if (s.kind === 'slot') {
         this.paintModule(s, {
           unlocked, off, wanted, selected: this.target === s, rankLocked: s.rankLocked,
+          // Which offensive module the fire button is actually pointed at.
+          // Meaningless for the defensive row, where every live slot acts at
+          // once and none is ever held.
+          aimed: s.cls === OFFENSIVE && !!s.id && s.id === r.activeWeapon,
+          // A module that could take the weapon currently selected on the ring.
+          open: !!wanted && s.cls === wanted && !s.rankLocked
+            && Loadout.canEquip(lo, held, s.index),
+          // Only in the post-boss wheel: mid-fight the drop has not happened.
+          fresh: this.mode === 'open' && !!s.id && s.id === r.freshWeapon,
         });
       } else {
-        this.paintDisc(s, { wd, unlocked });
+        this.paintDisc(s, { wd, unlocked, picked: this.pick === s, fresh: s.id === r.freshWeapon });
       }
 
       // ONLY MODULES CARRY TEXT. Eleven benched offensive weapons on a
@@ -1272,7 +1357,7 @@ export default class UIScene extends Phaser.Scene {
    * dark grid frame, which holds the 2x2 shape together without claiming the
    * weapon is doing anything.
    */
-  paintModule(s, { unlocked, off, selected, wanted, rankLocked }) {
+  paintModule(s, { unlocked, off, selected, wanted, rankLocked, aimed, open, fresh }) {
     const g = this.moduleG;
     const cx = s.cxm, cy = s.y + MOD / 2;
     const filled = !!s.id && unlocked;
@@ -1299,6 +1384,25 @@ export default class UIScene extends Phaser.Scene {
       rankLocked ? 0.4 : running ? 0.95 : 0.8);
     g.strokeRect(s.x + 0.5, s.y + 0.5, MOD - 1, MOD - 1);
 
+    /**
+     * THE TRIGGER BAR — a solid cyan cap on the offensive module the fire
+     * button is pointed at.
+     *
+     * Two offensive weapons can be live at once from mastery rank 2, and only
+     * one of them is on the trigger, so "running" and "the one that fires" had
+     * become two different facts sharing one cyan border. The bar is the
+     * second one. The defensive row never draws it: every live defensive slot
+     * acts at once, so there is nothing there to point at.
+     */
+    // Along the BOTTOM edge, not the top: the abbreviation's line box starts
+    // about 4px down from the module's top and a bar up there draws straight
+    // through it. The level line ends by y+19 and the module is 26 tall, so the
+    // bottom strip is the only clear band on a filled module.
+    if (aimed && running) {
+      g.fillStyle(CYAN, 0.95);
+      g.fillRect(s.x + 2, s.y + MOD - 4, MOD - 4, 2);
+    }
+
     // White corners mark the SELECTED module — the one a weapon tapped on the
     // ring will drop into. A second border colour would compete with the cyan;
     // corner ticks read as an annotation on top of it.
@@ -1308,9 +1412,21 @@ export default class UIScene extends Phaser.Scene {
         g.fillRect(s.x + dx, s.y + dy, 4, 2);
       }
     }
-    // The acquire-time picker pulses the class that just gained a weapon.
+    // WITH A WEAPON IN HAND, the modules that will take it say so. The whole
+    // class is outlined so the row reads as the answer to "where does this
+    // go", and the ones that can actually be tapped are outlined brighter —
+    // the sidearm's welded position is in the class but not available.
     if (wanted && s.cls === wanted) {
-      g.lineStyle(1, 0xF5D328, 0.9);
+      g.lineStyle(1, GOLD, open ? 0.9 : 0.3);
+      g.strokeRect(s.x - 2.5, s.y - 2.5, MOD + 4, MOD + 4);
+    }
+    // THE HALO FOLLOWS THE NEW WEAPON WHEREVER IT IS. A drop that found a free
+    // slot on its own never appears on the ring at all, so haloing only ring
+    // discs would hide the new weapon in exactly the case where the player was
+    // never asked about it. Same gold, one ring out — the two never collide,
+    // because a weapon in a module is not on the ring to be picked.
+    if (fresh) {
+      g.lineStyle(1, GOLD, 0.85);
       g.strokeRect(s.x - 2.5, s.y - 2.5, MOD + 4, MOD + 4);
     }
   }
@@ -1319,34 +1435,68 @@ export default class UIScene extends Phaser.Scene {
    * Paint a benched or locked special out on the ring.
    *
    * TWO WHEELS, INVERSE EMPHASIS. After a boss falls the sidelined weapons are
-   * the point, so they get a halo. In the in-situ wheel they are not available
-   * at all — you cannot change what you CARRY mid-fight — so they drop right
-   * back and stop reading as things to touch. The player never has to be told
-   * which wheel they are in; the brightness says it.
+   * the point, so every one you own burns at FULL strength — they are what the
+   * wheel opened to offer. In the in-situ wheel they are not available at all —
+   * you cannot change what you CARRY mid-fight — so they drop right back and
+   * stop reading as things to touch. The player never has to be told which
+   * wheel they are in; the brightness says it.
    */
-  paintDisc(s, { wd, unlocked }) {
+  paintDisc(s, { wd, unlocked, picked, fresh }) {
     const fill = unlocked ? hexNum(wd.palette.primary || '#5CADD5') : LOCKED_FILL;
     const situ = this.mode === 'situ';
     s.disc.setFillStyle(fill)
       .setAlpha(situ ? SITU_BENCH_ALPHA : unlocked ? BENCH_ALPHA : LOCKED_ALPHA)
-      .setScale(1)
-      .setStrokeStyle(1, hexNum(wd.palette.outline || '#0A0A12'));
+      // A picked weapon is held slightly off the ring — a size change survives
+      // being small, dark and next to seventeen other coloured dots in a way a
+      // colour change does not.
+      .setScale(picked ? 1.5 : 1)
+      .setStrokeStyle(picked ? 2 : 1,
+        picked ? 0xFFFFFF : hexNum(wd.palette.outline || '#0A0A12'));
 
-    // THE HALO — a ring around every weapon you could actually take right now.
-    // Only ever drawn in the post-boss wheel, and only on something unlocked
-    // and benched, so it means exactly one thing: this is the rare moment.
-    if (!situ && unlocked && this.mode === 'open' && this.game_.canRequip()) {
-      this.haloG.lineStyle(1, 0xF5D328, 0.55);
+    if (situ) return;
+
+    /**
+     * THE HALO — reserved for the weapon this boss just dropped.
+     *
+     * It used to ring every unlocked weapon on the wheel, which made it a
+     * second word for "you own this" that the disc's own brightness was
+     * already saying. Now brightness says owned and the halo says NEW, so the
+     * thing the player has never seen before is the one thing on the ring
+     * wearing a light — which is the whole reason a halo is worth having.
+     */
+    if (fresh && unlocked) {
+      this.haloG.lineStyle(1, GOLD, 0.85);
       this.haloG.strokeCircle(s.x, s.y, s.r + 3);
-      this.haloG.lineStyle(1, 0xF5D328, 0.22);
-      this.haloG.strokeCircle(s.x, s.y, s.r + 5);
+      this.haloG.lineStyle(1, GOLD, 0.35);
+      this.haloG.strokeCircle(s.x, s.y, s.r + 6);
+    }
+    // A picked weapon gets a white ring to match the module corners, so the
+    // two halves of the sentence are drawn in the same ink.
+    if (picked) {
+      this.haloG.lineStyle(1, 0xFFFFFF, 0.9);
+      this.haloG.strokeCircle(s.x, s.y, s.r + 4);
     }
   }
 
-  /** TAP route — hard pause, everything unlocked comes up to full opacity. */
+  /**
+   * THE POST-BOSS WHEEL — hard pause, everything you own at full strength.
+   *
+   * Opened when a boss falls (`promptRequip`) and by an unresolved drop, and by
+   * nothing else. The RE-QUIP button does not reach it: this wheel stops the
+   * game, and a control sitting under the player's thumb during a fight must
+   * never be able to do that.
+   */
   openWheel() {
     this.mode = 'open';
     this.target = null;
+    // A DROP LOOKING FOR A HOME ARRIVES ALREADY IN HAND. The wheel opened to
+    // ask exactly one question, so it starts with the new weapon selected and
+    // its class outlined — the player finishes the sentence with one tap on a
+    // module instead of being asked to start it by finding the weapon.
+    const pending = this.game_.run.pendingLoadout;
+    this.pick = pending
+      ? this.arc.find((a) => a.id === pending) || null
+      : null;
     this.game_.paused = true;
     // The HUD goes away for the POST-BOSS route only. The game is stopped, so
     // score and energy are not telling you anything you need right now, and the
@@ -1367,6 +1517,7 @@ export default class UIScene extends Phaser.Scene {
     const wasSitu = this.mode === 'situ';
     this.mode = null;
     this.target = null;
+    this.pick = null;
     this.aimSlot = null;
     this.situTimer?.remove();
     this.situTimer = null;
@@ -1428,6 +1579,25 @@ export default class UIScene extends Phaser.Scene {
       this.readLv.setText(`${slot.cls.toUpperCase()} MASTERY OPENS THIS`);
       return;
     }
+    /**
+     * MID-SENTENCE. Half of a two-tap swap is on screen and the line says what
+     * the other half is — which is the whole reason the second tap is
+     * discoverable without a tutorial. The picked weapon wins over the selected
+     * module because it is the half that moves.
+     */
+    if (this.mode === 'open' && (this.pick || this.target)) {
+      const held = this.pick?.id;
+      if (held) {
+        this.readName.setText(weaponOf(held).name);
+        this.readLv.setText(this.game_.canRequip()
+          ? 'TAP A SLOT TO EQUIP' : 'BEAT A BOSS TO RE QUIP');
+        return;
+      }
+      this.readName.setText(this.target.id ? weaponOf(this.target.id).name : 'EMPTY SLOT');
+      this.readLv.setText(this.game_.canRequip()
+        ? 'TAP A WEAPON TO EQUIP' : 'BEAT A BOSS TO RE QUIP');
+      return;
+    }
     if (r.pendingLoadout) {
       this.readName.setText(weaponOf(r.pendingLoadout).name);
       this.readLv.setText('CHOOSE A SLOT OR BENCH');
@@ -1461,24 +1631,30 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
-   * A tap, resolved by what was tapped.
+   * A tap, resolved by what was tapped. THE ONLY GESTURE EITHER WHEEL HAS.
    *
-   * TWO TAPS, ALWAYS THE SAME TWO. Tapping a module SELECTS it — white corners
-   * — and tapping a weapon then puts that weapon in it. One gesture for both
-   * classes and for every slot, rather than the old arrangement where an
-   * offensive module meant "make this live", a defensive one meant nothing at
-   * all, and a benched weapon landed in whichever slot the game picked for you.
+   * POST-BOSS — TWO TAPS, IN EITHER ORDER. Tap a weapon then a module, or a
+   * module then a weapon; the second tap of a matching pair does the swap. The
+   * first tap of the pair only ever SELECTS, and selecting is free — nothing
+   * moves until both halves of the sentence are on screen, and tapping the same
+   * thing twice takes it back.
    *
-   * Tapping the selected module again clears the selection, so the gesture is
-   * reversible without a second control.
+   * That symmetry is the whole fix. The old flow auto-equipped the moment a
+   * weapon was tapped, into whichever slot `landingSlot` chose, so "tap a
+   * weapon then tap a slot" was never a sentence you could finish — the weapon
+   * had already gone somewhere by the time you reached for the slot, and which
+   * somewhere depended on state the wheel never showed.
+   *
+   * IN SITU — ONE TAP. Only the four modules answer, and a touch on one takes
+   * the trigger or switches the slot, then gets out of the way. Same thing the
+   * four diagonals do, because they route through here.
    */
   tapSlot(s) {
     if (s.vacant) return;
     const r = this.game_.run;
 
-    // IN SITU THE RING IS SCENERY. Only the modules answer a touch, and a
-    // touch on one toggles it and gets out of the way — which is the whole
-    // interaction, and why it needs no instructions.
+    // IN SITU THE RING IS SCENERY. Nothing on it can be taken mid-fight, so
+    // nothing on it answers a touch.
     if (this.mode === 'situ') {
       if (s.kind !== 'slot' || s.rankLocked || !s.id) return;
       this.toggleSlot(s);
@@ -1487,98 +1663,87 @@ export default class UIScene extends Phaser.Scene {
     }
 
     if (s.kind === 'slot') {
-      // A position past your Loadout Mastery rank is not selectable — there is
-      // nothing to put in it. The readout says why rather than the tap simply
-      // doing nothing, which is how a padlock turns into a goal.
+      // A position past your Loadout Mastery rank holds nothing and takes
+      // nothing. The readout says WHICH upgrade opens it rather than the tap
+      // doing nothing at all, which is how a padlock turns into a goal.
       if (s.rankLocked) { this.setReadout(null, s); return; }
-      // A boss drop waiting for a home short-circuits the selection: the wheel
-      // opened to ask this exact question, so answer it.
-      if (r.pendingLoadout && classOf(r.pendingLoadout) === s.cls
-          && Loadout.canEquip(r.loadout, r.pendingLoadout, s.index)) {
-        this.installPending(s);
-        return;
-      }
+      // The second half of a sentence that started on the ring.
+      if (this.pick && this.placePick(s)) return;
+      this.pick = null;
       this.target = this.target === s ? null : s;
       this.refreshWheel();
       this.setReadout(s.id, s);
       return;
     }
 
-    // A benched or locked weapon — on the ring, or the sidearm on its own dot,
-    // which behaves identically now that the sidearm competes for a slot.
+    // A benched weapon — on the ring, or the sidearm on its own dot, which
+    // behaves identically now that the sidearm competes for a slot.
     if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
-    const cls = classOf(s.id);
-    // Into the selected module when the classes agree; otherwise fall back to
-    // the automatic landing slot, so tapping a weapon is never a dead end even
-    // if you have not selected anything.
-    const index = this.target && this.target.cls === cls && !this.target.rankLocked
-      ? this.target.index
-      : this.landingSlot(s.id);
-    if (this.game_.equipSlot(s.id, index)) {
-      sfx('requip');
-      this.target = null;
-    }
+    // The second half of a sentence that started on a module.
+    if (this.target && this.equipInto(s.id, this.target)) return;
+    this.target = null;
+    this.pick = this.pick === s ? null : s;
     this.refreshWheel();
     this.setReadout(s.id);
   }
 
-  /**
-   * Which slot a benched weapon should displace.
-   *
-   * An empty one if there is one; otherwise the slot that is NOT the weapon
-   * currently on the fire button, so a one-tap swap never silently disarms the
-   * thing you were shooting with.
-   */
-  landingSlot(id) {
-    const r = this.game_.run, lo = r.loadout, cls = classOf(id);
-    const legal = [];
-    for (let i = 0; i < Loadout.slotCount(lo, cls); i++) {
-      if (Loadout.canEquip(lo, id, i)) legal.push(i);
-    }
-    if (!legal.length) return -1;
-    const slots = Loadout.slotsOf(lo, cls);
-    const empty = legal.find((i) => !slots[i]);
-    if (empty != null) return empty;
-    const keep = legal.filter((i) => slots[i] !== r.activeWeapon);
-    return keep.length ? keep[0] : legal[0];
+  /** Put the selected ring weapon into a module, if that module will take it. */
+  placePick(mod) {
+    const id = this.pick?.id;
+    if (!id || classOf(id) !== mod.cls) return false;
+    return this.equipInto(id, mod);
   }
 
   /**
-   * Press-and-hold: switch a carried weapon off without giving up the slot.
+   * The one place a weapon actually moves. Returns false when the module
+   * refuses it — a mismatched class, the sidearm's welded position, or the
+   * re-quip window being shut — so the caller can fall back to selecting.
+   */
+  equipInto(id, mod) {
+    const r = this.game_.run;
+    if (classOf(id) !== mod.cls || mod.rankLocked) return false;
+    if (!Loadout.canEquip(r.loadout, id, mod.index)) return false;
+    if (!this.game_.equipSlot(id, mod.index)) return false;
+    sfx('requip');
+    // A drop that was waiting for a home has one now.
+    if (r.pendingLoadout === id) r.pendingLoadout = null;
+    this.pick = null;
+    this.target = null;
+    this.refreshWheel();
+    this.setReadout(id);
+    return true;
+  }
+
+  /**
+   * The in-situ tap: what a module does when you touch it mid-fight.
    *
-   * Works on both rows. A defensive weapon runs by itself, so switching it off
-   * is the ONLY way to quiet it; an offensive one keeps its slot and its levels
-   * while it sits out.
+   * OFFENSIVE modules AIM — see GameScene.aimWeapon. Offensive weapons share
+   * one fire button, so with two of them live the useful question is which one
+   * the button is pointed at, and touching a module is how you answer it.
+   * Touching the one already on the trigger switches it off instead, which is
+   * the on/off the owner asked for at ranks that allow two live weapons.
    *
-   * WHERE MASTERY CAPS HOW MANY MAY RUN, this is a radio switch instead: at
-   * offensive rank 1 it moves the one live position between the special and the
-   * sidearm, and at defensive rank 2 between the two defensive slots. Same
-   * gesture, and the cyan border always says which one won — so the player
-   * never has to know it changed meaning.
+   * DEFENSIVE modules are a plain on/off. A defensive weapon runs by itself
+   * and is never aimed, so there is nothing else the gesture could mean.
    *
-   * Unlike equipping, this is NOT gated to the post-boss window. It cannot
-   * change what you are carrying, only which of it is awake, and that is a
-   * moment-to-moment call.
+   * WHERE MASTERY CAPS HOW MANY MAY RUN, both collapse into a radio switch:
+   * switching one on switches the longest-untouched one off, and the last one
+   * standing refuses so the fire button is never dead. The gesture does not
+   * change and the cyan border always says which one won.
+   *
+   * Unlike equipping, none of this is gated to the post-boss window. It cannot
+   * change what you are carrying, only which of it is awake and which of it you
+   * are holding, and that is a moment-to-moment call.
    */
   toggleSlot(s) {
     const r = this.game_.run;
     if (!s.id || s.kind !== 'slot' || s.rankLocked) return;
     if (!r.unlocked.has(s.id) && !dev('unlockAnyWeapon')) return;
     sfx('select');
-    this.game_.toggleWeapon(s.id);
+    if (s.cls === OFFENSIVE) this.game_.aimWeapon(s.id);
+    else this.game_.toggleWeapon(s.id);
     this.refreshWheel();
     this.setReadout(s.id, s);
-  }
-
-  /** Resolve the post-boss loadout choice into the slot the player picked. */
-  installPending(s) {
-    const r = this.game_.run;
-    const id = r.pendingLoadout;
-    if (!this.game_.equipSlot(id, s.index)) return;
-    sfx('requip');
-    r.pendingLoadout = null;
-    this.refreshWheel();
-    this.setReadout(id);
   }
 
   /**

@@ -385,10 +385,20 @@ Read them as the same ladder offset by the sidearm: a slot, then simultaneity, t
 last restriction lifted. Rank 2 offensive looks smallest and is not — your thumb aims one
 weapon either way, but at rank 1 switching to the special *silences* the sidearm.
 
-**Where a rank caps how many may run, press-and-hold becomes a radio switch** rather than
+**Where a rank caps how many may run, the in-situ tap becomes a radio switch** rather than
 an on/off. The gesture never changes and the cyan border always says which one won, so the
 player never has to know it changed meaning. The offensive row is never allowed to reach
 zero live weapons; defensive is "up to N", so zero is legal there.
+
+**LIVE AND AIMED ARE DIFFERENT STATES, and the offensive row needs both.** Offensive
+weapons share one fire button, so from rank 2 two of them run at once and exactly one is on
+the trigger. Touching an offensive module in-situ **aims** it; touching the one already
+aimed switches it off and hands the trigger to the other. `GameScene.aimWeapon` is the only
+thing that moves the trigger — `normaliseActive` cannot, because it only reacts when the
+current weapon has stopped being firable. Without it a full offensive row still only ever
+fired its first weapon, which is exactly how it played at rank 3. A **solid cyan bar along
+the bottom of an offensive module** says which one the button is pointed at; the defensive
+row never draws it, because every live defensive slot acts at once and none is aimed.
 
 **Slots only change between fights.** Equipping is live from a boss going down until you
 warp into the next arena (`GameScene.canRequip`). Outside that window the wheel still
@@ -405,9 +415,18 @@ to be told which one they are in — the brightness says it.
 |---|---|---|
 | opens | RE-QUIP button / `Q` / `E` | by itself, once the death animation resolves |
 | time | slow motion, HUD stays up | hard pause, HUD hidden |
-| the ring | 0.16 alpha, **not touchable** | every unlocked benched weapon wears a **gold halo** |
-| you may | toggle a slot on/off | change what you carry |
-| exits | diagonal swipe · slot tap · tap off the wheel · 7s timeout | Esc / tap away |
+| the ring | 0.16 alpha, **not touchable** | every unlocked benched weapon at **full strength** |
+| you may | aim a slot, or toggle it on/off | change what you carry |
+| the gesture | one tap, or one diagonal swipe | **two taps, in either order** |
+| exits | RE-QUIP again · diagonal swipe · slot tap · tap off the wheel · 7s timeout | Esc / tap away |
+
+**The RE-QUIP button can never open the post-boss wheel.** It opens the in-situ wheel on
+contact and a second press puts it away. It used to do both — a leftover from the era when
+tap and swipe were two ways into one control — so the second tap closed the in-situ wheel
+on the way down and then opened the *hard-paused* between-fights wheel on the way up, in
+the middle of a live fight. A control resting under the player's thumb during a fight must
+not be able to stop the game. The post-boss wheel is opened by `promptRequip` when a boss
+falls, by an unresolved drop, and by nothing else.
 
 **The slowdown starts on CONTACT, not once a finger passes a deadzone.** Touching the
 button IS the decision to look; waiting for travel meant the dangerous part — deciding —
@@ -432,6 +451,28 @@ Volt Spark — and it only works because re-quipping is no longer done under fir
 **Nothing you have not earned is drawn** outside dev mode: no padlocks for un-unlocked
 weapons, no modules past your mastery rank. At 0/0 the wheel is one module holding the
 sidearm.
+
+### The post-boss wheel — two taps, in either order
+
+**Tap a weapon then a module, or a module then a weapon.** The first tap of the pair only
+ever *selects* — a white ring on a weapon, white corners on a module, and the modules that
+would take what you are holding outlined in gold — and the second does the swap. Tapping
+the same thing twice puts it down; a tap on empty space puts down whatever is in hand
+before it closes anything. **There is no press-and-hold anywhere on either wheel**, and no
+timed gesture at all: a hold that meant one thing and a tap that meant another, on the same
+disc, was two gestures told apart by feel with no feedback until after you had committed.
+
+The old flow equipped a weapon the instant it was tapped, into whichever slot a
+`landingSlot` heuristic chose, so "tap a weapon then tap a slot" was never a sentence you
+could finish — the weapon had already gone somewhere by the time you reached for the slot,
+and which somewhere depended on state the wheel never showed. That function is gone.
+
+**The gold halo means NEW, and only new.** It rings the weapon the boss just dropped —
+around its disc on the ring, or around its module if it auto-equipped — and nothing else.
+It used to ring every unlocked weapon, which made it a second word for "you own this" that
+the disc's own brightness was already saying, and left the one weapon the player had never
+seen looking like the other sixteen. `run.freshWeapon` carries it for the whole re-quip
+window; `justUnlocked` cannot, because the acquire banner clears that after 2.5 seconds.
 
 The sidearm keeps a **fixed dot above the ring**, which is its *bench*, not a free weapon:
 below rank 3 it is welded into a module so the dot never appears, and at rank 3 trading it
@@ -841,18 +882,22 @@ lumping all three together predate the tracker's current definition.
 
 ## PICK UP HERE — the re-quip redesign, unfinished
 
-The owner is mid-way through a redesign of the wheel and the control scheme. Three passes
-are built and pushed; **two pieces remain**, both post-boss-wheel input:
+The owner is mid-way through a redesign of the wheel and the control scheme. Four passes
+are built and pushed; **one piece remains**:
 
 1. **Post-boss keyboard/gamepad navigation.** No way to re-quip without a mouse or a
    touchscreen right now. The owner sketched a cursor — left/right over the ring to pick a
    weapon, fire to take it, cursor jumps to the slots, left/right to place, looping back —
    then said *"i thought a cursor would be the right approach, but i sometimes over explain
    simple things"* and asked for **whatever the standard practice is for a hybrid
-   touch/keyboard interface**. Treat the cursor sketch as one option, not a spec.
-2. **Post-boss drag-and-drop on touch.** Drag a weapon off the ring onto a module. The
-   owner asked for this by name and it should be the primary touch interaction there — the
-   current select-then-fill tap flow is the fallback, not the goal.
+   touch/keyboard interface**. Treat the cursor sketch as one option, not a spec. The
+   two-tap flow below is a good shape to mirror: select, then place, either order.
+
+**Drag-and-drop is OFF the list, by the owner's own call.** It was on it — "drag a weapon
+off the ring onto a module", asked for by name — and after playing it the owner asked
+instead to *"simply tap a weapon and then tap a slot or tap a slot and then tap a weapon"*.
+Two taps in either order is what is built. Do not reintroduce a drag as the primary
+interaction without them asking again.
 
 Everything else on that list is done: the two wheel modes, the oval fanning ring, the
 in-situ swipe and key routes, hidden un-earned content, the dev level dial, the
@@ -877,9 +922,20 @@ other. Four things were:
   where a thumb rests for the entire in-situ gesture. `READ_Y` is 172, fenced between the
   ring's lowest disc (170) and the button (190).
 
-**Playtest state:** the owner had not yet played pass 3 on device when the session ended.
-The in-situ gesture is the part their hands will have an opinion about, so ask before
-building further on top of it.
+**Playtest state:** pass 3 has now been played on device. What came back, and what pass 4
+did about it:
+
+- the RE-QUIP button's second tap opened the hard-paused post-boss wheel mid-fight —
+  **fixed**, the button cannot reach that wheel at all any more
+- the tap/hold/drag flow was unreadable — **replaced** by two taps in either order, no
+  timed gesture anywhere on the wheel
+- a rank-3 offensive row still only ever fired one weapon — **fixed** by `aimWeapon`
+- the newly dropped weapon looked like every other unlocked one — **fixed**, the halo now
+  means new and nothing else
+
+None of pass 4 has been played on device yet. The in-situ gesture and the two-tap swap are
+both things the owner's hands will have an opinion about; ask before building on top of
+either.
 
 **When touching wheel or menu layout, render it — do not compute it.** Pixel arithmetic
 off assumed glyph metrics has put things on top of each other three times in this file's
