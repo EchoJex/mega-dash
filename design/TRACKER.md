@@ -481,7 +481,8 @@ never suggests promoting an idea**. Move something into a slice yourself when
 it is ready to be real.
 
 ## Boss ideas
-Stealth guy. Weapon is defensive. Reduces aggro
+
+
 ## Game pacing
 Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which will now be called a sidearm and is placed above the offensive weapons in the requip wheel). Load out change is part of the weapon acquire sequence upon defeating boss. If boss was defensive special weapon unlock then allow requip of defensive slots with any unlocked defensive weapons while highlighting the newly acquired weapon and if boss was offensive special weapon unlock then allow requip of any unlocked offensive special weapons while highlighting the newly acquired weapon. Inactive weapons retain levels within the run. level up cards will still present randomly active or inactive weapons that have been unlocked this run for leveling up.
 ## Play feel
