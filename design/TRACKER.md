@@ -447,7 +447,7 @@ interaction present on every hit.
 
 ## Constrict
 - **shared** `[wip]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
-- **boss-applied** `[wip]` Show periodic damage
+- **boss-applied** `[wip]` Show periodic damage and flinch
 - **weapon-applied** `[wip]`
 
 ## Freeze
