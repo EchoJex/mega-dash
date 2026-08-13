@@ -96,7 +96,7 @@ where each one stands.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
-- **attack L1** `[wip]` Launches a 1 moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
+- **attack L1** `[wip]` Launches a 1 very bouncing fireballs toward the player that climb up walls and leave hot trails.
 - **attack L2** `[ready]` Fewer fireballs, but much higher bounce heights and alternating firing angles.
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
