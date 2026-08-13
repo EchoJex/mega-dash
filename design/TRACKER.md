@@ -96,8 +96,8 @@ where each one stands.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
-- **attack L1** `[ready]` Launches a couple moderately bouncing fireballs toward the player that climb up walls and leave hot trails.
-- **attack L2** `[ready]` Fewer fireballs, but much higher bounce heights and alternating firing angles.
+- **attack L1** `[draft]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
+- **attack L2** `[wip]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
@@ -165,8 +165,8 @@ where each one stands.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
-- **weapon Lv1** `[ready]` Short reach; can only reel in and damage minions; does not toss or constrict them.
-- **weapon Lv3** `[ready]` Increased reach. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
+- **weapon Lv1** `[draft]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
+- **weapon Lv3** `[draft]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
@@ -184,10 +184,10 @@ where each one stands.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[ready]` Defensive; Forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
-- **weapon Lv1** `[ready]` Shield blocks the equivalent of 1 minion attacks; breaks and freezes the opponent if contacting a minion instead.
-- **weapon Lv3** `[ready]` Shield blocks the equivalent of 3 minion attacks; breaks and freezes the opponent if contacting a minion instead.
-- **weapon Lv6** `[wip]` Releasing attack before the shield breaks releases 5 small icicles (moderate cooldown) doing 1/3 damage each; they freeze.
+- **weapon** `[draft]` Defensive; slowly forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
+- **weapon Lv1** `[draft]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
+- **weapon Lv3** `[draft]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
+- **weapon Lv6** `[draft]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
 - **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
@@ -197,9 +197,9 @@ where each one stands.
 `attack` Rush Combo · `weapon` Strike Gauntlet
 
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
-- **hazard L1** `[ready]` Weighted training bags swing across the room on ceiling rails at a steady pace, dealing knockback and light damage. Their path is fixed and learnable.
-- **hazard L2** `[wip]` Two bags on crossing paths, moving faster, plus a section of floor mat that gives way into a shallow pit for a few seconds at a time.
-- **hazard L3** `[wip]` Three bags at speed, and the ceiling rails now change direction mid-swing so the pattern has to be read live rather than memorised.
+- **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take moderate damage from
+- **hazard L2** `[draft]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
+- **hazard L3** `[draft]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
 - **attack L1** `[ready]` Dashes in on foot and throws a Vulcan Jab — a rapid flurry of short-range punches off a clear wind-up — finishing on a Rising Break uppercut that launches. He has nothing at range on this layer, so the whole fight is spacing: stay outside his reach and he simply keeps closing.
 - **attack L2** `[ready]` Adds a guard stance between combos that reflects the first shot it takes. The Rising Break now chases upward once before he lands, and he will throw it on its own as an anti-air the moment the player is above him — jumping over him stops being free.
 - **attack L3** `[ready]` Adds a thrown Force Blast when the player keeps their distance, and a spinning kick that crosses the room and cannot be cleanly jumped. The combo can also be cancelled into a dash mid-string, so he finishes it from the side he did not start on. Near gets jabbed, above gets the uppercut, far gets the blast, and the spin closes whatever gap is left.
@@ -436,24 +436,24 @@ interaction present on every hit.
 - **weapon-applied** `[wip]` the surface is slippery reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
 ## Poisoned
-- **shared** `[wip]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments
-- **boss-applied** `[wip]` Deal small damage to player in discrete 3 second intervals for 9 seconds and reduce player speed.
-- **weapon-applied** `[wip]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds and reduce enemy movement speed.
+- **shared** `[draft]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments as the poison wears off. Mild damage with no flinch or knockback
+- **boss-applied** `[draft]` Deal small damage to player in discrete 3 second intervals for 9 seconds.
+- **weapon-applied** `[draft]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds.
 
 ## Stun
 - **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
-- **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
+- **boss-applied** `[draft]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
 - **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
 ## Constrict
-- **shared** `[wip]` Functionally the same as stun/freeze; elementally correct colors flash while the target has this attribute.
-- **boss-applied** `[wip]` Vine Lash: constricts the player for several seconds before reel-in and toss.
-- **weapon-applied** `[wip]` Thorn Lash Lv10: constricts mini-bosses, 5s DPS.
+- **shared** `[draft]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
+- **boss-applied** `[draft]` See stun
+- **weapon-applied** `[draft]` See stun
 
 ## Freeze
-- **shared** `[wip]` Functionally the same as stun/constrict; elementally correct colors flash while the target has this attribute.
-- **boss-applied** `[todo]`
-- **weapon-applied** `[wip]` Frost Guard: shield break on minion contact freezes; released icicles freeze.
+- **shared** `[draft]` Functionally the same as stun/constrict; elementally correct color hue while the target has this attribute.
+- **boss-applied** `[draft]` See stun
+- **weapon-applied** `[draft]` See stun
 
 ---
 
@@ -468,9 +468,12 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1036 (main) | `[ready]` | When falling into a pit, the player will pop back onto safe ground so long as they are pushing toward the edge and haven't exceed their player height. By default I want there to be nearly zero tolerance for Cliff collision detection, similar to the almost-but-not-quite tolerance for incoming bullet hurt box detection. However! I love this current functionality as a meta progression feature called Cliff edge Mastery, where the tolerance for how far below a cliff edge you can go before you don't pop back up scales with mastery level. Levels 1 through 3 will have the player stick to the cliff wall for 0.25s before popping back up if the current master is sufficient to recover from. Mastery 3 of 3 should play like the big currently plays, plus that stick pause I mentioned. |
-| 1036 (main) | `[wip]` | Sometimes boss doors have spike hazards sharing the same space |
-| 1036 (main) | `[ready]` | Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height |
+| 1054 (main) | `[draft]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
+| 1054 (main) | `[draft]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
+| 1054 (main) | `[draft]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
+| 1054 (main) | `[draft]` | Thorn lash has no animation so I can't play test it |
+| 1054 (main) | `[draft]` | Player idle animation cycles through frames way too quickly |
+| 1054 (main) | `[draft]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel pop up, but if the player is standing in the doorway when it spawns in it should be visibly disabled until the player walks away from it. I also think that since this game is a left-to-right progression, the boss exit door should be near the right side of the arena |
 
 # BRAINSTORM — context only, never implemented
 
@@ -480,16 +483,16 @@ never suggests promoting an idea**. Move something into a slice yourself when
 it is ready to be real.
 
 ## Boss ideas
-Stealth guy. Weapon is defensive. Reduces aggro
+
+
 ## Game pacing
-Limit of 2 offensive weapons, 2 defensive weapons, plus the mega buster (which will now be called a sidearm and is placed above the offensive weapons in the requip wheel). Load out change is part of the weapon acquire sequence upon defeating boss. If boss was defensive special weapon unlock then allow requip of defensive slots with any unlocked defensive weapons while highlighting the newly acquired weapon and if boss was offensive special weapon unlock then allow requip of any unlocked offensive special weapons while highlighting the newly acquired weapon. Inactive weapons retain levels within the run. level up cards will still present randomly active or inactive weapons that have been unlocked this run for leveling up.
+
+
 ## Play feel
-Players primary jump acceleration and max hight feels good, but the double jump doesn't. On double jump input, There should be a brief pause in vertical velocity, preserving horizontal velocity, and a jump that borrows whatever the initial jumps physics feel has, only with a 20% reduction in max height
+
+
 ## Cosmetics
-Player sprite should be rather small and boring with offensive weapons and defensive weapons being visibly discernible when equipped as an active weapon. 
+ 
 
 
-Redo the requip wheel to emphasize two active offensive weapons and two active defensive weapons Large and in the center of the wheel with a press and hold feature While in the requip wheel to enable or disable their use. Inactive but unlocked offensive weapons will be shown as grayed out in a half circle above the active offensive weapons and inactive defensive weapons will be shown as grayed out in a half circle below the active defensive weapons slot. All icons should continue to display their levels as is currently in the requip wheel.
 
-
-Rename core man's core blaster "Nullfire Drone" in the weapon get pop-up, and "N-Drone" in the requip wheel and level up card. Rename core man "Proto Mk0"
