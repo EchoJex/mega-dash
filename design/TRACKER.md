@@ -446,7 +446,7 @@ interaction present on every hit.
 - **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
 ## Constrict
-- **shared** `[wip]` Functionally the same as stun/freeze; elementally correct colors hue while the target has this attribute.
+- **shared** `[wip]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
 - **boss-applied** `[wip]` Vine Lash: constricts the player for several seconds before reel-in and toss.
 - **weapon-applied** `[wip]` Thorn Lash Lv10: constricts mini-bosses, 5s DPS.
 
