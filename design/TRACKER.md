@@ -197,7 +197,7 @@ where each one stands.
 `attack` Rush Combo · `weapon` Strike Gauntlet
 
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
-- **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags
+- **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take
 - **hazard L2** `[draft]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
 - **hazard L3** `[draft]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
 - **attack L1** `[ready]` Dashes in on foot and throws a Vulcan Jab — a rapid flurry of short-range punches off a clear wind-up — finishing on a Rising Break uppercut that launches. He has nothing at range on this layer, so the whole fight is spacing: stay outside his reach and he simply keeps closing.
