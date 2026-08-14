@@ -126,8 +126,7 @@ import {
   weaponOf, WHEEL_ORDER, SIDEARM_ID, OFFENSIVE, DEFENSIVE, specialsOfClass, classOf,
 } from '../data/weapons.js';
 import * as Loadout from '../systems/loadout.js';
-import { BOSSES, bossLayer } from '../data/bosses.js';
-import { dev, DEV, layerFor } from '../config/dev.js';
+import { dev, DEV } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
 import { sfx, unlockAudio } from '../systems/sfx.js';
@@ -522,17 +521,26 @@ export default class UIScene extends Phaser.Scene {
    */
   togglePause() {
     if (this.pausePanel) return this.closePause();
-    if (this.cards || this.bossPanel || this.devPanel || this.mode === 'open') return;
+    if (this.cards || this.mode === 'open') return;
     this.openPause();
   }
 
   /**
-   * The pause menu STACKS rather than placing each button at a hand-picked y.
+   * THE PAUSE MENU IS THE SHIPPED PAUSE MENU, in every launch.
    *
-   * Which buttons exist depends on which dev perks are on, so fixed positions
-   * meant every combination was its own layout to get right — and two of them
-   * already overlapped. Each row measures the plate it just made and advances
-   * by that, so adding or removing an entry cannot collide with anything.
+   * It used to grow a BOSS SELECT and a DEV PANEL button in dev mode. Both are
+   * gone — every dev control now lives in the DEV MENU on the title screen, so
+   * a dev tool can no longer be reached by a thumb during a fight and what a
+   * playtester sees here is what everyone sees here.
+   *
+   * The cost is real and was the owner's call: adjusting anything mid-run means
+   * ABORT RUN and a trip through the title. The boss picker starts a run at a
+   * door, and `DEV.requipAtStart` opens the loadout wheel on the first frame,
+   * so getting back to where you were is two taps rather than a replay.
+   *
+   * It still STACKS from measured plate heights rather than hand-picked y
+   * values. That is not dead flexibility — it is what makes adding a row here
+   * safe, and fixed positions had already put two of them on top of each other.
    */
   openPause() {
     this.game_.paused = true;
@@ -555,227 +563,12 @@ export default class UIScene extends Phaser.Scene {
       y += t.height + 3;
     };
     btn('RESUME', '#5CADD5', () => this.closePause());
-    if (dev('bossSelect')) btn('BOSS SELECT', '#F5D328', () => this.openBossSelect());
-    /**
-     * DEV — the layer, level and mastery dials.
-     *
-     * A panel rather than three more buttons here: they are dials with a value
-     * to READ BACK, not one-shot actions, and the pause menu is a menu. In the
-     * PAUSE MENU rather than on the HUD or the re-quip wheel — dev tools must
-     * never be reachable by a thumb mid-fight, and the wheel is a shipping
-     * control they should stay out of.
-     */
-    if (dev('devPanel')) btn('DEV PANEL', '#F5D328', () => this.openDevPanel());
     btn('ABORT RUN', '#C04040', () => this.abortRun());
     note('ends the run and banks your Chips', '#6A5A5A');
-  }
-
-  // ── The dev panel ───────────────────────────────────────────────────
-
-  /**
-   * DEV — the three dials a playtest keeps reaching for, in one place.
-   *
-   *   BOSS LAYER    what layer the next fight runs at, or AUTO for the save's
-   *   WEAPON LV     every unlocked weapon's rung
-   *   OFF / DEF     both Loadout Mastery ranks
-   *
-   * All three are STEPPERS with the current value read back beside them, which
-   * is why they are a panel and not three more pause-menu buttons: a button
-   * fires an action, and none of these is an action — they are states you set
-   * and then want to confirm you set.
-   *
-   * The layer is an OVERRIDE, never a write to `save.bossKills`. Faking clears
-   * to reach layer 3 would permanently raise that boss's shipped layer on this
-   * device with no way back down short of a full reset.
-   *
-   * The mastery ranks apply to the RUN IN PROGRESS as well as to every run
-   * after, because the thing being tested is usually how the wheel behaves at
-   * that rank and restarting to see it is most of the cost.
-   */
-  openDevPanel() {
-    if (this.devPanel) return;
-    this.closePause();
-    this.game_.paused = true;
-    const cx = this.w / 2;
-    this.devPanel = this.add.container(0, 0).setDepth(70);
-    this.devPanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 1)
-      .setOrigin(0).setInteractive());
-    this.devPanel.add(label(this, cx, 8, 'DEV PANEL', { color: '#F5D328', origin: 0.5 }));
-    // Kept short deliberately: the font's advance is ~7px, so a caption much
-    // past 38 characters runs off both edges at the narrowest virtual width.
-    this.devPanel.add(label(this, cx, 20, 'layer beats the save · ranks apply now',
-      { color: '#6A6A5A', origin: 0.5 }));
-
-    // Laid out from MEASURED text rather than from assumed glyph pitch — the
-    // rendered line box is taller than the 7px glyph and the advance is wider
-    // than 5px, and guessing at either has put rows on top of each other twice.
-    const right = Math.min(this.w - 10, cx + 150);
-    let y = 38;
-    /**
-     * One stepper: a name, a minus, the value, a plus.
-     * `apply(d)` gets -1 or +1 and returns the string to show.
-     */
-    const row = (name, apply) => {
-      const nameTxt = label(this, 10, y + 5, name, { color: '#B8C4D0' });
-      // The value is the widest thing in the row ("RANK 3", "LV 1-10"), so the
-      // two plates are pushed out to clear its longest form rather than its
-      // current one — otherwise the row reflows every time you press it.
-      const value = label(this, right - 52, y + 5, '', { color: '#F5D328', origin: 0.5 });
-      const step = (d) => { value.setText(apply(d)); sfx('select'); };
-      const minus = plate(this, right - 94, y + 8, '-', { color: '#5CADD5', padX: 8, padY: 3 });
-      const plus = plate(this, right - 10, y + 8, '+', { color: '#5CADD5', padX: 8, padY: 3 });
-      minus.rect.on('pointerdown', () => step(-1));
-      plus.rect.on('pointerdown', () => step(1));
-      value.setText(apply(0));
-      this.devPanel.add([nameTxt, value, minus.rect, minus.txt, plus.rect, plus.txt]);
-      y += Math.max(nameTxt.height, minus.rect.height) + 6;
-    };
-
-    row('BOSS LAYER', (d) => {
-      // 0 is AUTO and sits below 1, so stepping down off layer 1 hands the
-      // save its own answer back rather than wrapping to 3.
-      DEV.nextLayer = Math.max(0, Math.min(3, DEV.nextLayer + d));
-      return DEV.nextLayer ? `L${DEV.nextLayer}` : 'AUTO';
-    });
-    row('WEAPON LV', (d) => this.devStepLevels(d));
-    row('OFF MASTERY', (d) => this.devStepRank(OFFENSIVE, d));
-    row('DEF MASTERY', (d) => this.devStepRank(DEFENSIVE, d));
-
-    /**
-     * The perks that are simply ON, listed rather than dialled.
-     *
-     * They are edited in config/dev.js and need a rebuild, so they are not
-     * controls — but they are the answer to "why is every weapon already
-     * unlocked" and "why did that hit not kill me", which are exactly the
-     * questions a playtest asks when it cannot tell dev behaviour from a bug.
-     */
-    // Short tokens, not the config keys: the full names run off the right edge
-    // at the widest supported virtual width and are hopeless at the narrowest.
-    const on = [
-      ['hpFloor', 'HP FLOOR'], ['startUnlocked', 'ALL WEAPONS'],
-      ['maxMastery', 'MAX MASTERY'], ['unlockAnyWeapon', 'NO LOCKS'],
-      ['cardsFromAllWeapons', 'ANY CARD'], ['cycleLayers', 'LAYER WRAP'],
-    ].filter(([k]) => dev(k)).map(([, n]) => n);
-    this.devPanel.add(label(this, 10, y + 6, 'ALSO ON', { color: '#6A6A5A' }));
-    this.devPanel.add(label(this, 10, y + 17, on.slice(0, 3).join('  ') || 'NOTHING',
-      { color: '#4A6A7A' }));
-    this.devPanel.add(label(this, 10, y + 28, on.slice(3).join('  '),
-      { color: '#4A6A7A' }));
-
-    const { rect, txt } = plate(this, cx, VIEW_H - 14, 'BACK',
-      { color: '#5CADD5', padX: 10, padY: 3 });
-    rect.on('pointerdown', () => { this.closeDevPanel(); this.openPause(); });
-    this.devPanel.add([rect, txt]);
-  }
-
-  closeDevPanel() {
-    this.devPanel?.destroy(true);
-    this.devPanel = null;
-  }
-
-  /**
-   * DEV — shift every unlocked weapon one rung, and say where they all ended up.
-   *
-   * Levels only, never unlocks: which weapons you HAVE is what `startUnlocked`
-   * decides, and conflating the two would make it impossible to playtest a
-   * ladder on a run where you deliberately left something locked.
-   */
-  devStepLevels(d) {
-    const r = this.game_.run;
-    if (d) {
-      for (const id of r.unlocked) {
-        r.wpLevels[id] = Math.max(1,
-          Math.min(FEEL.weaponMaxLevel, (r.wpLevels[id] || 1) + d));
-      }
-      // The runtimes cache their ladder state at the rung they were built on,
-      // so they have to be dropped or the new rung would not take effect until
-      // the weapon was benched and re-slotted.
-      r.wstate = {};
-      this.refreshWheel();
-    }
-    const lv = [...r.unlocked].map((id) => r.wpLevels[id] || 1);
-    const lo = Math.min(...lv), hi = Math.max(...lv);
-    return lo === hi ? `LV ${lo}` : `LV ${lo}-${hi}`;
-  }
-
-  /**
-   * DEV — set a Loadout Mastery rank on the run in progress.
-   *
-   * `DEV.offRank` / `DEV.defRank` hold it for later runs; `setRanks` puts the
-   * live loadout back into legal shape immediately, which can move weapons out
-   * of positions a lower rank no longer owns.
-   */
-  devStepRank(cls, d) {
-    const r = this.game_.run;
-    const key = cls === OFFENSIVE ? 'offRank' : 'defRank';
-    const rank = Math.max(0, Math.min(Loadout.MAX_RANK, (r[key] ?? 0) + d));
-    if (d) {
-      r[key] = rank;
-      DEV[key] = rank;
-      Loadout.setRanks(r.loadout, { [cls]: rank });
-      r.activeWeapon = Loadout.normaliseActive(r.loadout, r.activeWeapon);
-      this.refreshWheel();
-    }
-    return `RANK ${rank}`;
-  }
-
-  /**
-   * DEV — pick any boss and restart the area just outside his door.
-   *
-   * Element-slice development means fighting one boss over and over. Reaching
-   * him normally costs a 60-second door timer plus a shuffle bag that may not
-   * offer him for sixteen doors, which is the single biggest tax on that loop.
-   *
-   * Each tile shows the layer you will actually get. With `cycleLayers` on, that
-   * wraps 1-2-3-1 rather than sticking at 3, so every layer stays reachable
-   * however many times you have already won.
-   */
-  openBossSelect() {
-    if (this.bossPanel) return;
-    this.closePause();
-    this.game_.paused = true;
-    const cx = this.w / 2;
-    this.bossPanel = this.add.container(0, 0).setDepth(70);
-    // Fully opaque: this is a menu, not an overlay, and at 0.94 the HUD text
-    // underneath bled through and collided with the tile labels.
-    this.bossPanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 1)
-      .setOrigin(0).setInteractive());
-    this.bossPanel.add(label(this, cx, 8, 'BOSS SELECT', { color: '#F5D328', origin: 0.5 }));
-    this.bossPanel.add(label(this, cx, 20, 'drops you outside his door · number = layer',
-      { color: '#6A6A5A', origin: 0.5 }));
-
-    // 17 tiles laid out to fit the narrowest supported width without scrolling.
-    const cols = 6, tw = Math.floor((this.w - 12) / cols) - 2, th = 26;
-    const x0 = Math.round((this.w - (cols * (tw + 2) - 2)) / 2);
-    BOSSES.forEach((b, i) => {
-      const x = x0 + (i % cols) * (tw + 2);
-      const y = 34 + Math.floor(i / cols) * (th + 3);
-      const layer = layerFor(bossLayer(save, b.id, dev('cycleLayers')));
-      const tile = this.add.rectangle(x, y, tw, th, hexNum(b.primary), 0.85).setOrigin(0)
-        .setStrokeStyle(1, hexNum(b.outline), 1)
-        .setInteractive({ useHandCursor: true });
-      const ink = inkFor(b.primary);
-      // 7 chars, not 6 — TEMPEST, GRANITE and ECLIPSE all lose their last
-      // letter at 6 and read as TEMPES / GRANIT / ECLIPS.
-      const name = label(this, x + tw / 2, y + 5, b.name.split(' ')[0].slice(0, 7),
-        { color: ink, origin: 0.5 });
-      const lv = label(this, x + tw / 2, y + 16, 'L' + layer, { color: ink, origin: 0.5 });
-      tile.on('pointerdown', () => {
-        sfx('select');
-        this.closeBossSelect();
-        this.game_.devJumpToBoss(b);
-      });
-      this.bossPanel.add([tile, name, lv]);
-    });
-
-    const { rect, txt } = plate(this, cx, VIEW_H - 14, 'BACK', { color: '#5CADD5', padX: 10, padY: 3 });
-    rect.on('pointerdown', () => { this.closeBossSelect(); this.openPause(); });
-    this.bossPanel.add([rect, txt]);
-  }
-
-  closeBossSelect() {
-    this.bossPanel?.destroy(true);
-    this.bossPanel = null;
+    // The route back to every dial there used to be a button for. Said out
+    // loud, because "abort the run" is a strange instruction to arrive at on
+    // your own when the thing you want is a different weapon.
+    if (DEV.enabled) note('dev dials are on the title screen', '#6A6A5A');
   }
 
   closePause() {
@@ -1859,8 +1652,7 @@ export default class UIScene extends Phaser.Scene {
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);
     // Card screen takes priority over every other overlay.
-    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel
-      && !this.bossPanel && !this.devPanel) this.openCards();
+    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as
@@ -1886,7 +1678,14 @@ export default class UIScene extends Phaser.Scene {
     // that is pure diagnostics was drawing straight through the control the
     // owner was trying to judge. Energy and the live weapon stay; the build,
     // seed and density are not things you read mid-gesture.
-    const diag = DEV.enabled && !this.mode
+    //
+    // AND IT IS NOW A SWITCH — DEBUG HUD, in the dev menu. It is the one dev
+    // thing that has to be drawn over a live run to be any use, so it is the
+    // one dev thing that stayed in the run; a switch is what stops it being
+    // permanent. The [DEV] marker beside the score is NOT switchable: a
+    // playtest note that does not say it came from a dev build is a playtest
+    // note that gets misread as balance data.
+    const diag = DEV.enabled && DEV.debugHud && !this.mode
       ? `\nb${BUILD} s${gm.seed} ${DISPLAY_DIAG.scale}x `
         + `${DISPLAY_DIAG.cssW}x${DISPLAY_DIAG.cssH} dpr${DISPLAY_DIAG.dpr.toFixed(2)}`
       : '';
@@ -1895,6 +1694,24 @@ export default class UIScene extends Phaser.Scene {
         (DEV.enabled ? '  [DEV]' : '') + '\n' +
       `${w.name} L${r.wpLevels[r.activeWeapon] || 1}` + diag,
     );
+
+    /**
+     * DEV — THE LOADOUT WHEEL, HANDED OVER ON THE FIRST FRAME OF THE RUN.
+     *
+     * The real post-boss wheel, opened by the same call a boss death makes.
+     * Dev mode does not bypass `canRequip`, so without this the arsenal is
+     * unreachable until the first boss falls — which is the wrong order for a
+     * session that wants to test a weapon AGAINST a fight. Granted, not
+     * skipped: the window is genuinely open (GameScene sets `requipOpen`) and
+     * it shuts on the first arena warp like any other.
+     *
+     * Waits for the warp and the overlays for the same reason the acquire
+     * wheel does — a menu that opens over a transition reads as a bug.
+     */
+    if (r.devRequipPending && !this.mode && !this.cards && !this.pausePanel && !gm.warp) {
+      r.devRequipPending = false;
+      this.openWheel();
+    }
 
     // THE WEAPON-ACQUIRE SEQUENCE. The banner names what the boss dropped;
     // then, only if both slots of that class are already full, the wheel opens
@@ -1913,7 +1730,7 @@ export default class UIScene extends Phaser.Scene {
         r.justUnlocked = null;
       }
     } else if (r.pendingLoadout && this.mode !== 'open'
-      && !this.cards && !this.pausePanel && !this.bossPanel && !this.devPanel && !gm.warp) {
+      && !this.cards && !this.pausePanel && !gm.warp) {
       // Deliberately after the banner has run its course, so the player has
       // read WHAT they got before being asked where to put it.
       this.openWheel();

@@ -195,6 +195,9 @@ export default class GameScene extends Phaser.Scene {
       // A free level from re-beating a boss whose weapon you already own; the
       // post-boss wheel announces it and then clears it.
       bonusLevel: null,
+      // DEV — ask UIScene to open the post-boss wheel once the first frame has
+      // drawn. See DEV.requipAtStart; it is cleared the moment it is honoured.
+      devRequipPending: false,
     };
     applyUpgrades(save, run);
     if (dev('maxMastery')) run.offRank = run.defRank = Loadout.MAX_RANK;
@@ -234,6 +237,17 @@ export default class GameScene extends Phaser.Scene {
       Loadout.autoEquip(run.loadout, w.id);
     }
 
+    // The dev menu's START LV rung, applied to everything the run has — the
+    // sidearm included, since it is a weapon with a ladder like any other.
+    // Levels only, never unlocks: which weapons you HAVE is what `startUnlocked`
+    // decides, and conflating the two would make it impossible to test a ladder
+    // on a run where something was deliberately left locked.
+    if (DEV.enabled && DEV.startLevel > 1) {
+      for (const id of run.unlocked) {
+        run.wpLevels[id] = Math.min(FEEL.weaponMaxLevel, DEV.startLevel);
+      }
+    }
+
     this.run = run;
     // THE RUN'S WORLD SEED. Printed in the dev HUD and in the crash overlay so
     // any world you can see is a world I can rebuild — see systems/rng.js.
@@ -264,7 +278,30 @@ export default class GameScene extends Phaser.Scene {
     this.fx = Wpn.makeFx();
     this.deaths = [];
     this.intent = { moveDir: 0, jumpHeld: false, fireHeld: false, fireStart: 0 };
-    this.startArea();
+
+    /**
+     * DEV — THE GRANTED RE-QUIP WINDOW.
+     *
+     * The real thing, not a bypass: `requipOpen` is the same flag a boss death
+     * sets, `canRequip` is untouched, and it shuts on the first arena warp like
+     * any other window. Without it the arsenal is unreachable until a boss
+     * falls, which is the wrong order for a session testing a weapon against a
+     * fight — and it is the answer to re-quipping mid-run, since aborting drops
+     * you back here.
+     */
+    if (dev('requipAtStart')) {
+      this.run.requipOpen = true;
+      this.run.devRequipPending = true;
+    }
+
+    /**
+     * DEV — the boss picker's answer, CONSUMED so it cannot linger. A plain
+     * START from the title must never be quietly redirected to a boss chosen
+     * twenty minutes ago.
+     */
+    const want = DEV.enabled && DEV.startBoss ? BOSS_BY_ID[DEV.startBoss] : null;
+    DEV.startBoss = null;
+    this.startArea(want || null);
   }
 
   /**

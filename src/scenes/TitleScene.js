@@ -3,6 +3,7 @@ import { VIEW_H, viewWidthOf } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { save, fullReset } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
+import { DEV } from '../config/dev.js';
 
 const LONG_PRESS_MS = 500;
 
@@ -43,6 +44,16 @@ export default class TitleScene extends Phaser.Scene {
         label(this, cx, 116, `+${c.total} CHIPS`, { color: '#F5D328', origin: 0.5 });
         label(this, cx, 126, parts.join('  ·  '), { color: '#8A7A30', origin: 0.5 });
       }
+    }
+
+    /**
+     * THE DEV MENU LIVES HERE AND NOWHERE ELSE — top corner, out of the run of
+     * buttons, present only on a DEV MODE launch. Its presence IS the marker
+     * that says which branch you launched into; a playtester launch draws
+     * nothing here and has no way to reach any of it.
+     */
+    if (DEV.enabled) {
+      this.btn(w - 34, 12, 'DEV', () => this.scene.start('DevMenu'), '#F5D328');
     }
 
     this.btn(cx, 136, this.died ? 'TRY AGAIN' : 'START', () => this.scene.start('Game'));
@@ -92,8 +103,8 @@ export default class TitleScene extends Phaser.Scene {
     this.note?.setText(msg);
   }
 
-  btn(x, y, text, fn) {
-    const { rect } = plate(this, x, y, text, { color: '#5CADD5', padX: 8, padY: 4 });
+  btn(x, y, text, fn, colour = '#5CADD5') {
+    const { rect } = plate(this, x, y, text, { color: colour, padX: 8, padY: 4 });
     rect.on('pointerdown', fn);
     return rect;
   }

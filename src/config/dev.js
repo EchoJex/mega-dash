@@ -1,25 +1,54 @@
 /**
- * DEV MODE — playtest perks. All of this comes out late in development.
+ * DEV MODE — playtest perks, and the branch of the game they live on.
  *
- * The guiding rule: every interaction still HAPPENS. You still get hit, still
- * flinch, still take knockback, still burn your invulnerability frames, still
- * get thrown out of a pit. The only thing dev mode changes is that the run does
- * not end, so a session can reach the interesting part without replaying the
- * first two minutes each time.
+ * TWO SWITCHES, NOT ONE, AND THEY MEAN DIFFERENT THINGS.
  *
- * That matters more than blanket invincibility would: a playtest where damage
- * silently does nothing teaches you nothing about whether an attack is fair.
+ *   `available`  compile-time. Is the dev branch in this build AT ALL? Set it
+ *                false to ship: the launch dialog disappears, the dev menu
+ *                disappears, `enabled` can never become true, and every perk
+ *                below is dead code the moment the bundler can see it.
+ *   `enabled`    the choice a person made at launch. The game now opens on a
+ *                LAUNCH DIALOG — DEV MODE or PLAYTESTER — and that answer sets
+ *                this for the session. It is never persisted: picking is one
+ *                tap and a stale answer is a whole playtest misread.
  *
- * TO SHIP: set `enabled: false`. That is the single switch — every perk routes
- * through `dev()`, so one edit disables the lot. Delete the file and its imports
- * when the game is done with it.
+ * The split exists because "clean of any dev mode code" became a thing the
+ * owner wanted to be able to CHOOSE, not a thing that needed a rebuild. A
+ * playtester launch has to be indistinguishable from the shipped game, and the
+ * only honest way to check that is to be able to launch into it.
+ *
+ * The guiding rule for the perks themselves is unchanged: every interaction
+ * still HAPPENS. You still get hit, still flinch, still take knockback, still
+ * burn your invulnerability frames, still get thrown out of a pit. The only
+ * thing dev mode changes is that the run does not end, so a session can reach
+ * the interesting part without replaying the first two minutes each time.
+ *
+ * WHERE THE CONTROLS LIVE: the DEV MENU, on the title screen, and nowhere else.
+ * There is no dev panel in the pause menu and no boss picker in it either —
+ * both moved out. A dev tool reachable by a thumb mid-fight is a dev tool that
+ * gets pressed mid-fight, and the pause menu a playtester sees should be the
+ * pause menu the game ships with.
  *
  * The HUD shows a DEV marker whenever this is on, because a playtest misread as
  * "balanced" while unkillable is worse than no playtest at all.
  */
 
+const KEY = 'megadash_dev_v1';
+
 export const DEV = {
-  enabled: true,
+  /**
+   * COMPILE-TIME. The ship switch — set false and the whole dev branch goes,
+   * launch dialog included. `enabled` cannot be turned on without it.
+   */
+  available: true,
+
+  /**
+   * THE LAUNCH CHOICE. False until someone picks DEV MODE on the launch dialog.
+   * Deliberately not persisted — see the header.
+   */
+  enabled: false,
+
+  // ── Perks. Every one is a live toggle in the dev menu. ──
 
   /**
    * Damage lands in full — knockback, flinch, i-frames, the lot — but current
@@ -30,21 +59,21 @@ export const DEV = {
   /** Tapping a padlocked slot on the re-quip wheel equips it anyway. */
   unlockAnyWeapon: true,
 
-
   /** Level-up cards may offer weapons you have not unlocked yet. */
   cardsFromAllWeapons: true,
 
   /**
-   * Every weapon unlocked at level 1 from the first frame of a run.
+   * Every weapon unlocked from the first frame of a run, at `startLevel`.
    *
-   * Level 1 and not level 10 on purpose: the point is to have all eighteen
+   * That level defaults to 1 on purpose: the point is to have all eighteen
    * available to slot and compare, not to skip the ladder. A weapon handed over
    * at its top rung teaches you nothing about whether the rungs below it are
-   * worth climbing, and every ladder's shape is still being written.
+   * worth climbing. The dial is there for when a specific rung IS the thing
+   * being tested.
    *
    * THE ONE THING THIS HIDES: a boss only grants a weapon it has not already
    * given you, so with everything unlocked no boss ever fires the acquire
-   * banner or the slot-choice picker. Switch this off to test that sequence.
+   * banner or the slot-choice picker. Switch it off to test that sequence.
    */
   startUnlocked: true,
 
@@ -58,16 +87,16 @@ export const DEV = {
    * one weapon at a time — the slice loop would be gated behind a Chip grind
    * that has nothing to do with the slice being built.
    *
-   * The cost is that dev mode cannot tell you how ranks 0-2 FEEL. Switch this
-   * off when balancing the ladder itself.
+   * The cost is that it cannot tell you how ranks 0-2 FEEL. Set `offRank` /
+   * `defRank` to a number when that is what you are testing; they win over this.
    */
   maxMastery: true,
 
   /**
-   * A boss picker in the pause menu that drops you just outside any boss's
-   * door. Element-slice development means fighting one boss over and over;
-   * waiting out a 60-second door timer and a shuffle bag to reach him is the
-   * single biggest tax on that loop.
+   * The boss picker in the DEV MENU, which starts a run with that boss's door a
+   * short walk ahead. Element-slice development means fighting one boss over
+   * and over; waiting out a 60-second timer and a shuffle bag to reach him is
+   * the single biggest tax on that loop.
    */
   bossSelect: true,
 
@@ -80,24 +109,32 @@ export const DEV = {
   cycleLayers: true,
 
   /**
-   * A DEV panel in the pause menu holding the dials a playtest keeps wanting
-   * mid-session: the layer the next boss fights at, what level every weapon is,
-   * and both Loadout Mastery ranks.
+   * THE BOSS-DEFEAT RE-QUIP WINDOW, HANDED TO YOU AT RUN START.
    *
-   * All of them were previously reachable only by reloading with a different
-   * save or by grinding, which is why a session testing a layer-3 hazard
-   * against a Lv10 ladder cost more setup than it cost to watch. In the PAUSE
-   * MENU with the rest of them — never on the HUD, never on the re-quip wheel.
+   * Dev mode does not bypass `canRequip` — a loadout change is an event you
+   * earn, and a playtest that could re-quip at will was never testing the thing
+   * being designed. That leaves the arsenal unreachable until the first boss
+   * falls, which is exactly the wrong order for a session that wants to test a
+   * weapon against a fight.
    *
-   * A ladder in particular is the hardest thing in the game to reach on
-   * purpose: levels come from EXP you have to walk over, so seeing what a Lv10
-   * rung does meant playing most of a run to get there. The old standalone
-   * WEAPONS +1 LV button is the WEAPON LV row of this panel now — same job,
-   * and it steps back down as well as up.
+   * So the run OPENS on the real post-boss wheel: the same control, the same
+   * window, the same rules, just granted rather than earned. Set the loadout,
+   * tap away, walk. It shuts on the first arena warp like any other window.
+   *
+   * This is also the answer to re-quipping mid-run: abort the run, and the next
+   * one opens on the wheel again.
    */
-  devPanel: true,
+  requipAtStart: true,
 
-  // ── Live dials, set from that panel. Not perks: these hold VALUES. ──
+  /**
+   * The diagnostic line under the HUD — build, seed, render density — and
+   * nothing else. The [DEV] marker beside the score is NOT this: that one is on
+   * whenever dev mode is, because a playtest note that does not say it came
+   * from a dev build is a playtest note that gets misread.
+   */
+  debugHud: true,
+
+  // ── Live dials. Not perks: these hold VALUES. ──
 
   /**
    * The layer every boss fights at, or 0 for "whatever the save says".
@@ -109,16 +146,70 @@ export const DEV = {
    */
   nextLayer: 0,
 
+  /** What level `startUnlocked` hands the arsenal over at. */
+  startLevel: 1,
+
   /**
    * Loadout Mastery ranks to start a run at, or null for `maxMastery`'s answer.
    *
    * Separate from `maxMastery` because that switch is all-or-nothing and the
-   * ranks below 3 are exactly the ones it cannot show you. Set here, they take
-   * effect on the run in progress AND on every run after it.
+   * ranks below 3 are exactly the ones it cannot show you.
    */
   offRank: null,
   defRank: null,
+
+  /** Boss id the next run's first door leads to, or null for the shuffle bag. */
+  startBoss: null,
 };
+
+/**
+ * Everything the dev menu can change, and therefore everything worth keeping
+ * across a reload. `enabled` is deliberately absent — the launch dialog asks
+ * every time. `startBoss` is absent too: it is one run's intent, not a setting.
+ */
+const PERSISTED = [
+  'hpFloor', 'unlockAnyWeapon', 'cardsFromAllWeapons', 'startUnlocked',
+  'maxMastery', 'bossSelect', 'cycleLayers', 'requipAtStart', 'debugHud',
+  'nextLayer', 'startLevel', 'offRank', 'defRank',
+];
+
+/**
+ * Dev settings persist in their own localStorage key, NOT in the save.
+ *
+ * The APK updater reloads the app on every build, and re-setting a dozen
+ * toggles per build is friction that ends with them not being used. Keeping
+ * them out of `megadash_save_v1` means a playtester's save has no dev residue
+ * in it and can never be shaped by a setting they cannot see. `fullReset`
+ * clears all of localStorage, so this goes with everything else.
+ */
+export function loadDevSettings() {
+  if (!DEV.available) return;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    for (const k of PERSISTED) if (k in saved) DEV[k] = saved[k];
+  } catch { /* corrupt or unavailable — the defaults above are fine */ }
+}
+
+export function saveDevSettings() {
+  if (!DEV.available) return;
+  try {
+    const out = {};
+    for (const k of PERSISTED) out[k] = DEV[k];
+    localStorage.setItem(KEY, JSON.stringify(out));
+  } catch { /* private browsing / quota — settings just do not survive */ }
+}
+
+/**
+ * The launch dialog's answer. Refuses to turn dev mode on in a build that does
+ * not have it, so `available: false` really is the one switch that ships.
+ */
+export function setDevMode(on) {
+  DEV.enabled = !!on && DEV.available;
+  DEV.startBoss = null;
+  return DEV.enabled;
+}
 
 /** True only when dev mode is on AND that specific perk is enabled. */
 export const dev = (perk) => DEV.enabled && DEV[perk] === true;
@@ -126,7 +217,7 @@ export const dev = (perk) => DEV.enabled && DEV[perk] === true;
 /**
  * The layer a boss actually fights at, given the one his clears earn him.
  *
- * Every caller of `bossLayer` goes through here so the panel's override lands
+ * Every caller of `bossLayer` goes through here so the menu's override lands
  * in one place. Outside dev mode it is the identity function.
  */
 export const layerFor = (earned) =>

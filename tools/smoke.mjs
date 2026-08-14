@@ -95,11 +95,14 @@ page.on('response', (r) => {
 });
 page.on('pageerror', (e) => fail(`pageerror: ${e.message}\n${e.stack}`));
 
-await page.goto('http://localhost:4173/?seed=4821', { waitUntil: 'networkidle' });
+// `?dev=1` answers the launch dialog for us. The game now opens on a DEV MODE
+// vs PLAYTESTER choice, and every perk this script relies on — the whole
+// arsenal unlocked, the boss jump, the HP floor — lives down the dev branch.
+await page.goto('http://localhost:4173/?seed=4821&dev=1', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1200);
 
 const has = await page.evaluate(() => !!globalThis.__game);
-if (!has) { console.log('FAIL — no __game handle; is DEV.enabled off?'); process.exit(1); }
+if (!has) { console.log('FAIL — no __game handle; is DEV.available off?'); process.exit(1); }
 
 /** Hold real keys, so the input path is exercised rather than bypassed. */
 async function play(seconds, keys) {
@@ -126,6 +129,17 @@ await page.waitForTimeout(1400);
 
 const started = await page.evaluate(() => !!globalThis.__game.scene.getScene('Game')?.run);
 if (!started) fail('the run never started');
+
+/**
+ * Dismiss the loadout wheel. A dev-mode run opens on the post-boss re-quip
+ * window (DEV.requipAtStart), which is a hard pause — so without this every
+ * key press below lands on a stopped simulation and the whole script proves
+ * nothing. Esc is the shipping way out of it, so this exercises that too.
+ */
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
+const running = await page.evaluate(() => !globalThis.__game.scene.getScene('Game').paused);
+if (!running) fail('still paused after Esc — did the start-of-run wheel close?');
 
 await play(6, ['ArrowRight', 'Space', 'ShiftLeft', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyS']);
 await page.screenshot({ path: shot('area.png') });
@@ -208,26 +222,47 @@ const wheel = await page.evaluate(() => {
   }
   gs.run.loadout.rank.offensive = 3;
   gs.run.loadout.rank.defensive = 3;
+  gs.run.offRank = gs.run.defRank = 3;
   gs.run.requipOpen = true;
   ui.openWheel();
   out.slotsDrawn = ui.active.length + ui.arc.length;
-  for (const s of ui.arc) ui.tapSlot(s);   // fill both slots of both classes
+
+  /**
+   * TWO TAPS, IN EITHER ORDER — a weapon, then a module. A single tap on the
+   * arc only SELECTS now; it used to equip into a slot the wheel chose for
+   * you, and driving it that way here silently stopped filling anything.
+   */
+  for (const m of ui.active.filter((s) => s.kind === 'slot' && !s.rankLocked)) {
+    const cand = ui.arc.find((a) => a.cls === m.cls && !a.vacant);
+    if (!cand) continue;
+    ui.tapSlot(cand);
+    ui.tapSlot(m);
+  }
   out.offensive = [...gs.run.loadout.offensive];
   out.defensive = [...gs.run.loadout.defensive];
-  const live = gs.run.loadout.offensive.find(Boolean);
-  gs.selectWeapon(live);
+  /**
+   * MOVING THE TRIGGER. `aimWeapon` is a gesture, not a setter: aimed at the
+   * weapon already on the trigger it switches that one OFF. So aim at the one
+   * that is NOT held — which is the exact case a full offensive row used to
+   * get wrong, firing only ever its first weapon.
+   */
+  const [o0, o1] = gs.run.loadout.offensive;
+  const other = gs.run.activeWeapon === o0 ? o1 : o0;
+  out.wanted = other;
+  gs.aimWeapon(other);
   out.selected = gs.run.activeWeapon;
-  gs.toggleWeapon(live);                   // switching it off must re-point the button
+  gs.toggleWeapon(other);                  // switching it off must re-point the button
   out.afterDisable = gs.run.activeWeapon;
-  gs.toggleWeapon(live);
-  gs.selectWeapon(live);
+  gs.toggleWeapon(other);
   ui.closeWheel();
   return out;
 });
 if (wheel.slotsDrawn !== 22) fail(`wheel drew ${wheel.slotsDrawn} slots, expected 22`);
 if (wheel.offensive.filter(Boolean).length !== 2) fail(`offensive slots: ${wheel.offensive}`);
 if (wheel.defensive.filter(Boolean).length !== 2) fail(`defensive slots: ${wheel.defensive}`);
-if (wheel.selected !== wheel.offensive.find(Boolean)) fail(`select left ${wheel.selected}`);
+if (wheel.selected !== wheel.wanted) {
+  fail(`aiming at ${wheel.wanted} left the trigger on ${wheel.selected}`);
+}
 // At rank 3 the arc taps trade the sidearm away, so the fall-back is the OTHER
 // offensive slot. What matters is that the fire button never ends up pointed at
 // something it cannot fire.
@@ -263,7 +298,8 @@ for (const level of [1, 3, 6, 10]) {
       lo.disabled.clear();
       gs.run.wpLevels[o] = lv; gs.run.wpLevels[d] = lv;
       gs.run.wstate = {};            // re-init both runtimes at the new rung
-      gs.selectWeapon(o);
+      // Guarded: aiming at the weapon already held switches it OFF.
+      if (gs.run.activeWeapon !== o) gs.aimWeapon(o);
       return gs.run.activeWeapon === o;
     }, [off, def, level]);
     if (!ok) { fail(`could not select ${off} at Lv${level}`); continue; }

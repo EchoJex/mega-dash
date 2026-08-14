@@ -688,7 +688,7 @@ These are global and land late, once the elements exist to tune against:
 | **Balance pass** | weapon damage, boss/minion HP, the difficulty ramp — see the testing note below |
 | **Physics tuning overlay** | driven by `FEEL_GROUPS`; deliberately deferred |
 | **Boss defeat animations** | elemental death + weapon acquisition; cosmetic, folded into each slice when its element is built |
-| **Ship prep** | `DEV.enabled = false`, which disables every playtest perk at once |
+| **Ship prep** | `DEV.available = false`, which takes the launch dialog, the dev menu and every playtest perk out at once |
 | **Run pacing** | the owner's targets: **early** ~5 min and 1 boss on minimal meta with weapons below Lv3 and it *should feel hard*; **mid** 10–15 min and 2–3 bosses at Lv3–6; **late** 15–35+ min and 4–6 bosses. They are explicitly unsure how to ramp difficulty without the player feeling it — read the boss COUNT as the real dial, since run length is boss count |
 
 ### Already complete (the foundation)
@@ -805,61 +805,88 @@ it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to
 
 ### Dev mode — `src/config/dev.js`
 
-Playtest perks: HP floored at 1 (every hit still lands), **every weapon unlocked at level
-1**, **both Loadout Mastery ranks at 3** (four slots, all live), equipping padlocked
-weapons, cards drawn from locked weapons, a **boss selector** in the pause menu,
-**layer cycling**, and the **DEV PANEL**.
+**THE GAME OPENS ON A LAUNCH DIALOG: DEV MODE or PLAYTESTER.** That answer sets
+`DEV.enabled` for the session and nothing else does. A PLAYTESTER launch is the shipped
+game — `dev()` answers false to everything, the HUD carries no marker, the title screen
+has no dev button, the pause menu is RESUME and ABORT RUN, and the run starts with the
+sidearm at mastery 0. **The answer is deliberately not remembered**: a stale one is a whole
+playtest misread as balanced while unkillable, and re-picking costs one tap.
 
-**DEV PANEL** — pause → DEV PANEL. Four steppers and a readback:
+**Two switches, and they are not the same switch.**
 
-| dial | does |
+| | |
 |---|---|
-| **BOSS LAYER** | AUTO / L1 / L2 / L3. An override consulted by `layerFor()`, which every `bossLayer` caller goes through — it is deliberately **not** a write to `save.bossKills`, because faking clears to reach layer 3 would permanently raise that boss's shipped layer on the device with no way back |
-| **WEAPON LV** | shifts every unlocked weapon a rung, up or down, and reads back the spread. This replaced the old standalone **WEAPONS +1 LV** button — same job, and it steps down too |
-| **OFF / DEF MASTERY** | either Loadout Mastery rank, 0–3, applied to the **run in progress** via `setRanks` as well as to every run after. `DEV.offRank`/`defRank` override `maxMastery`, which is the whole point: that switch is all-or-nothing and ranks 0–2 are exactly what it cannot show you |
+| `DEV.available` | compile-time. **This is the ship switch** — set it false and the launch dialog, the dev menu and every perk go with it, and `enabled` can never become true. It replaced `enabled` in that role |
+| `DEV.enabled` | the launch dialog's answer, for this session only |
 
-Under them, a list of the perks that are simply **on**. They need a rebuild to change, so
-they are not controls — but they are the answer to "why is every weapon already unlocked"
-and "why did that hit not kill me", which is what a playtest asks when it cannot tell dev
-behaviour from a bug.
+`?dev=1` on the URL skips the dialog and `?dev=0` forces the clean branch. That exists for
+`tools/smoke.mjs`, which drives the real bundle through the keyboard and has no business
+clicking through a menu to reach what it came to test.
 
-The pause menu **stacks** its buttons from measured plate heights rather than hand-picked
-y values. Which buttons exist depends on which perks are on, so fixed positions meant
-every combination was its own layout to get right — and two of them already overlapped.
+**EVERY DEV CONTROL LIVES IN THE DEV MENU** — title screen, gold DEV plate in the corner,
+present only on a dev launch. The pause menu's **DEV PANEL and BOSS SELECT are gone**; so
+is the "ALSO ON" list of perks that needed a rebuild to change, because every one of them
+is now a live row. A dev tool reachable by a thumb mid-fight is a dev tool that gets
+pressed mid-fight, and the pause menu a playtester sees should be the one the game ships.
 
-**Dev mode does NOT bypass the re-quip window.** It used to, and that was wrong: a loadout
-change is an event you earn, and a playtest that could re-quip at will was never testing
-the thing being designed. Reach a boss defeat with the selector instead.
+**Every row is one tap** — name, current value, tap anywhere on the row to advance it,
+wrapping. Not steppers: a stepper is two targets and a value between them, three times the
+width for the same information, and this screen fits twenty rows into 224 virtual pixels.
+Row pitch is set by the thumb rather than the glyph, so a row is a 56–70 real-pixel band.
 
-**Level 1, not level 10.** The whole arsenal is on the table so it can be slotted and
-compared; the ladders still have to be climbed, because a weapon handed over at its top
-rung says nothing about whether the rungs below it are worth having.
+| row | does |
+|---|---|
+| **WEAPONS** | ALL / EARNED — `startUnlocked` |
+| **START LV** | the rung the arsenal arrives at, 1–10. Replaces the old WEAPON LV stepper |
+| **OFF / DEF RANK** | either Loadout Mastery rank, AUTO or 0–3. AUTO means `maxMastery`'s blanket 3; the numbers are the only way to feel ranks 0–2 |
+| **BOSS LAYER** | AUTO / L1 / L2 / L3. An override consulted by `layerFor()`, which every `bossLayer` caller goes through — deliberately **not** a write to `save.bossKills`, because faking clears to reach layer 3 would permanently raise that boss's shipped layer on the device with no way back |
+| **LAYER WRAP** | `cycleLayers` |
+| **LOADOUT NOW** | `requipAtStart` — see below |
+| **HP FLOOR · NO LOCKS · FREE CARDS** | `hpFloor`, `unlockAnyWeapon`, `cardsFromAllWeapons` |
+| **DEBUG HUD** | the diagnostic line only. The `[DEV]` marker beside the score is **not** switchable — a playtest note that does not say it came from a dev build gets misread as balance data |
+| **META rows** | CHIPS +250, WIPE CHIPS, MAX UPGRADE, WIPE UPGRADE, WIPE KILLS. These write to the save, which nothing else on the screen does |
+| **BOSS PICKER** | any of the 17 — starts a run with his door a short walk ahead |
+
+Settings persist in their own `megadash_dev_v1` key, **not in the save**, so a playtester's
+save can never be shaped by a setting they cannot see. `fullReset` clears both.
+
+**THE LOADOUT WHEEL IS GRANTED AT RUN START** (`requipAtStart`, the LOADOUT NOW row). Dev
+mode still does **not** bypass `canRequip` — a loadout change is an event you earn, and a
+playtest that could re-quip at will was never testing the thing being designed. So instead
+the run *opens* on the real post-boss wheel: same control, same window, same rules, granted
+rather than skipped, and it shuts on the first arena warp like any other. **That is also
+the answer to re-quipping mid-run — abort the run**, which is the trade the owner asked
+for. Esc or a tap off the wheel dismisses it.
+
+**Boss picker** — dev menu → BOSS PICKER → any of the 17. It starts a run with that boss's
+door a short walk ahead, deliberately outside the door rather than inside the arena: the
+warp, the fade and the room building on the far side all need testing too. The choice is
+**consumed**, so a plain START from the title is never quietly redirected to a boss picked
+twenty minutes ago. This exists because element-slice development means fighting one boss
+repeatedly, and reaching him normally costs a 60-second door timer plus a shuffle bag that
+might not offer him for sixteen doors.
+
+**Level 1, not level 10, by default.** The whole arsenal is on the table so it can be
+slotted and compared; the ladders still have to be climbed, because a weapon handed over
+at its top rung says nothing about whether the rungs below it are worth having. START LV
+is there for when a specific rung *is* the thing being tested.
 
 `maxMastery` is a genuine bypass of meta progression rather than a shortcut around grind,
 and it earns that because every weapon in the game is reached through the loadout — a
 rank-0 playtest can only ever see one weapon at a time, which would gate the slice loop
-behind a Chip grind unrelated to the slice being built. The cost is that dev mode cannot
-tell you how ranks 0–2 feel; switch it off when balancing the ladder itself.
+behind a Chip grind unrelated to the slice being built. The cost is that it cannot tell you
+how ranks 0–2 feel; set OFF/DEF RANK to a number when balancing the ladder itself.
 
 `startUnlocked` also hides the acquire sequence: a boss only grants a weapon you do not
 already have, so nothing ever fires the acquire banner or the slot-choice picker. Switch
 it off to test that.
 
-**Boss selector** — pause → BOSS SELECT → any of the 17. It restarts the area with that
-boss's door a short walk ahead, keeping the run's weapons, levels and Chips. Deliberately
-outside the door rather than inside the arena: the warp, the fade and the room building
-on the far side all need testing too. This exists because element-slice development means
-fighting one boss repeatedly, and reaching him normally costs a 60-second door timer plus
-a shuffle bag that might not offer him for sixteen doors.
-
 **Layer cycling** — `bossLayer(save, id, cycle)`. Shipped behaviour clamps at layer 3
 forever, because a boss beaten five times must not become easy again. Dev mode wraps
 instead: encounter 4 is encounter 1 again (4=1, 5=2, 6=3), so every layer stays reachable
 however many times you have already won. Each tile in the picker shows the layer you will
-actually get. **The game logic is written as if none of it exists** —
-weapons are genuinely gated, spikes genuinely kill. Set `enabled: false` to ship; that one
-switch disables everything. The HUD shows `[DEV]` whenever it is on, because a playtest
-misread as "balanced" while invincible is worse than no playtest.
+actually get. **The game logic is written as if none of it exists** — weapons are genuinely
+gated, spikes genuinely kill.
 
 ### The dual boss loop — as built
 

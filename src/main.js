@@ -13,7 +13,9 @@ import Phaser from 'phaser';
 import { VIEW_H, RENDER_SCALE, computeViewWidth, BUILD, DISPLAY_DIAG } from './config/display.js';
 import { DEV } from './config/dev.js';
 import BootScene from './scenes/BootScene.js';
+import LaunchScene from './scenes/LaunchScene.js';
 import TitleScene from './scenes/TitleScene.js';
+import DevMenuScene from './scenes/DevMenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import HubScene from './scenes/HubScene.js';
 import UIScene from './scenes/UIScene.js';
@@ -55,7 +57,11 @@ const game = new Phaser.Game({
   // control layout assumes at least three fingers (move + jump + fire), so
   // four gives a margin for a stray palm.
   input: { activePointers: 4 },
-  scene: [BootScene, TitleScene, GameScene, HubScene, UIScene],
+  // LaunchScene and DevMenuScene are the dev branch. They are registered
+  // unconditionally and reached conditionally — BootScene sends the game
+  // straight to Title when DEV.available is false, and nothing else links to
+  // either of them, so a shipped build never constructs one.
+  scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene],
 });
 
 /**
@@ -63,7 +69,9 @@ const game = new Phaser.Game({
  * a scene, read player state, jump straight to a boss. There is no other way to
  * verify touch controls or a boss fight without a human holding the phone.
  *
- * Gated on the same single switch as every other dev perk — shipping means
- * DEV.enabled = false, and this vanishes with the rest.
+ * Gated on `available`, the COMPILE-TIME switch, not on `enabled` — the launch
+ * dialog has not been answered yet when this line runs, and an automated
+ * playtest needs the handle in order to reach the dialog at all. Shipping means
+ * DEV.available = false, and this vanishes with the rest of the dev branch.
  */
-if (DEV.enabled) globalThis.__game = game;
+if (DEV.available) globalThis.__game = game;
