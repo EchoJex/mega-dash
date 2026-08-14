@@ -832,7 +832,19 @@ pressed mid-fight, and the pause menu a playtester sees should be the one the ga
 **Every row is one tap** — name, current value, tap anywhere on the row to advance it,
 wrapping. Not steppers: a stepper is two targets and a value between them, three times the
 width for the same information, and this screen fits twenty rows into 224 virtual pixels.
-Row pitch is set by the thumb rather than the glyph, so a row is a 56–70 real-pixel band.
+Row pitch is set by the thumb rather than the glyph, so a row is a 52–65 real-pixel band.
+
+**Touching a row describes it**, two lines in the band under the left column: what the
+setting does, then what its values mean. Every name here is an abbreviation — NO LOCKS,
+FREE CARDS, LOADOUT NOW mean nothing to anyone who has not read the code behind them, and
+a settings screen you have to be told about is one nobody uses past the rows they already
+know. Reading costs nothing because every row wraps, so a tap to find out is always a tap
+from where you were.
+
+**The three WIPE rows ARM instead** — the first tap turns the row gold and reads `SURE?`,
+the second does it, and a tap on any other row disarms. They delete save data that cannot
+be recovered, and "tap it to see what it says" would otherwise be the most natural way in
+the world to lose a save.
 
 | row | does |
 |---|---|
