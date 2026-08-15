@@ -97,7 +97,7 @@ where each one stands.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
 - **attack L1** `[draft]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
-- **attack L2** `[wip]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
+- **attack L2** `[draft]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
@@ -112,7 +112,7 @@ where each one stands.
 `palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
 `attack` Aqua Torrent · `weapon` Torrent Cannon
 
-- **palette notes** `[ready]` Blue yellow guy with a grey hydro jet pack
+- **palette notes** `[wip]` Blue yellow guy with a large grey hydro jet pack
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be knee-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have half the jump strength; midair jumps are only affected by the rain forces. Occasional large brown barrels float from the steel pipes which break open and despawn on contact with the spike ball. Player can stand on them or shoot them to destroy them.
@@ -468,12 +468,13 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1054 (main) | `[draft]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
-| 1054 (main) | `[draft]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
-| 1054 (main) | `[draft]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
-| 1054 (main) | `[draft]` | Thorn lash has no animation so I can't play test it |
-| 1054 (main) | `[draft]` | Player idle animation cycles through frames way too quickly |
-| 1054 (main) | `[draft]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel pop up, but if the player is standing in the doorway when it spawns in it should be visibly disabled until the player walks away from it. I also think that since this game is a left-to-right progression, the boss exit door should be near the right side of the arena |
+| 1054 (main) | `[ready]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
+| 1054 (main) | `[ready]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
+| 1054 (main) | `[ready]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
+| 1054 (main) | `[ready]` | Thorn lash has no animation so I can't play test it |
+| 1054 (main) | `[ready]` | Player idle animation cycles through frames way too quickly |
+| 1054 (main) | `[ready]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel pop up, but if the player is standing in the doorway when it spawns in it should be visibly disabled until the player walks away from it. I also think that since this game is a left-to-right progression, the boss exit door should be near the right side of the arena |
+| 1054 (main) | `[ready]` | Stun appears to prevent player from shooting ever again, long after not taking any damage |
 
 # BRAINSTORM — context only, never implemented
 
