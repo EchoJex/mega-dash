@@ -935,9 +935,9 @@ export default class GameScene extends Phaser.Scene {
       // Burning to death threw a TypeError inside step(), so the one way an
       // elemental attribute can finish you took the crash overlay instead of
       // the results screen. Burn is live on Blaze Man and the Blaze Wheel, so
-      // this was reachable in ordinary play. Found by the simulation harness on
-      // the sim-difficulty-harness branch, on its first real fight;
-      // tests/scenes.test.js now refuses to let it — or anything like it — back.
+      // this was reachable in ordinary play. Found by `npm run sim` on its very
+      // first simulated fight; tests/scenes.test.js now refuses to let it — or
+      // anything like it — back.
       if (r.hp <= 0) return this.die();
     }
 

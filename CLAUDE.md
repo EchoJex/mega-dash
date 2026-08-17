@@ -44,6 +44,75 @@ npx playwright@latest install chromium    # once
 npm run build && npm run smoke
 ```
 
+### `npm run sim` — the boss difficulty harness
+
+`tools/sim.mjs` plays a chosen fight thousands of times with a scripted player
+and reports what it cost. It builds a second Vite entry (`sim.html`, only when
+`SIM=1`, so a shipped APK carries none of it), opens it in headless Chromium and
+calls `GameScene.step()` directly — no `requestAnimationFrame`, no renderer in
+the loop, ~340,000 steps/sec, about 5,600x real time. **Nothing is mocked**: the
+physics, the boss state machines, the hazard loops and the weapon runtimes are
+the ones that ship. A 195-pairing sweep takes 38 seconds.
+
+```bash
+npm run sim -- --list                                   # what is built enough to test
+npm run sim -- --weapon=blaze_wheel --boss=blaze --layer=2 --level=3
+npm run sim -- --all --layer=1,2,3 --iterations=20      # every complete pairing
+```
+
+**It refuses incomplete content rather than scoring it.** 12 of the 17 bosses
+have no fight built and 6 weapons have no ladder; a boss with no behaviour
+stands still while the player shoots him, which is not an easy fight but NO
+fight. Those pairings are skipped and named. Where a layer falls back — Strike
+Man's hazard L2/L3 — it runs and says so in a CAVEATS block. The catalogue is
+derived from `fightFor` and `hasLadder`, so new content appears with no edit.
+
+**The dev branch is forced OFF and checked.** `DEV.enabled` goes on solely so
+`layerFor()` honours the layer override; every perk is set false and
+`assertClean()` throws if one survives. An `hpFloor` left on would silently make
+every win rate 100%.
+
+**The controller is a consistent player, not a good one.** Utility scoring over
+the same inputs a thumb has, with the engagement band read from the weapon's own
+ladder (`range`/`reach`/`jabReach`) — a fixed standoff had the Volt Spark, which
+zaps a 34px box, scoring 0% with zero shots fired. It also knows i-frames are
+free, because `hurt()` returns early during them and closing distance in that
+window is the only way melee ever lands.
+
+**SIX METRICS, TWO TABLES.** PER LOADOUT answers "can this weapon beat him";
+PER BOSS averages every loadout that fought him and answers "how hard is HE",
+which is the question a difficulty pass actually asks. Both print every run.
+
+| axis | weight | what it catches |
+|---|---|---|
+| loss rate | 30% | the loudest possible statement |
+| HP lost | 25% | what surviving cost |
+| **unavoidable share** | 15% | how much of that cost NO input could have prevented |
+| TTK | 15% | how long it took |
+| time-in-hitbox | 10% | how much was spent standing inside something |
+| inputs/sec | 5% | how busy your hands were |
+
+**UNAVOIDABLE DAMAGE FALLS OUT OF THE CONTROLLER FOR FREE**, and it is the axis
+worth having. The controller scores every action available each frame before
+picking one, so "was there an out?" is already computed — damage taken on a
+frame where no candidate was clean is the boss's design, damage taken when one
+was is the player's execution. Only the first kind means a fight is UNFAIR
+rather than merely hard.
+
+It measures FRAME-LOCAL unavoidability, not "could you have played the last two
+seconds better". That is a real limit and it is still the useful number: against
+Proto Mk0 the controller has an escape on 98.6% of frames yet takes 6.7 of its
+7.1 damage in the other 1.4%, which is a boss whose turrets create rare
+inescapable moments — a completely different shape from Blaze Man, where only
+0.6 of 8.2 damage is unavoidable.
+
+Inputs are counted as PRESSES, not frames: holding right for a second is one
+input. The score uses inputs per second rather than the total, because the total
+is mostly a restatement of duration and `ttk` already carries that.
+
+**Read the output as "does this weapon function against this boss", not as
+balance.** Weapon damage, boss HP and the ramp are all placeholders.
+
 ### The dev loop is the in-app updater, not a local server
 
 CI builds the APK on **every push to every branch** and publishes it as a GitHub Release.
