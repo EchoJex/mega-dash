@@ -137,7 +137,7 @@ where each one stands.
 
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **arena** `[wip]` A very large plasma lamp in the background; several platforms phase in and out in random locations
-- **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it energises. Contact deals moderate damage and a short Stun.
+- **hazard L1** `[wip]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[draft]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Arcs now chain through nearby minions and into the player of the player is close to them, destroying the minions and damage the player and applying stun
 - **attack L1** `[ready]` Infrequently fires up to 2 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size decrease at every bounce.
