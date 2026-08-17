@@ -687,6 +687,10 @@ const TEMPEST_HAZ = {
   },
   floatSpeed: 1.3,
   driftSpeed: 0.5,
+  // L3's flash bang. Long enough to be a real blind — about half a second of
+  // recovery — and bright enough that the room is gone while it burns.
+  bangFrames: 30,
+  bangHard: 0.92,
 };
 
 function tempestHazard(layer) {
@@ -704,10 +708,16 @@ function tempestHazard(layer) {
       hs.t = layer >= 3 ? rnd(...TEMPEST_HAZ.l3Hold) : TEMPEST_HAZ.cycle;
       hs.dir = (hs.dir + 1 + Math.floor(Math.random() * 2)) % TEMPEST_HAZ.dirs.length;
       hs.lull = layer >= 3 ? TEMPEST_HAZ.l3Lull : 0;
-      // "Bolts of lightning and screen flashes telegraph the rain direction
-      // changes." The flash IS the telegraph, so it fires on the change rather
-      // than as decoration.
-      ctx.flash(10, hs.dir === 1 ? 0.25 : hs.dir === 2 ? 0.75 : 0.5);
+      /**
+       * THE FLASH IS THE TELEGRAPH, so it fires on the change rather than as
+       * decoration — and at layer 3 it becomes the hazard itself. "Lightning
+       * bolts in the background are now bright enough to wash out the screen
+       * like a flash bang": the direction change still gets announced, but you
+       * cannot see the room while it lands.
+       */
+      const at = hs.dir === 1 ? 0.25 : hs.dir === 2 ? 0.75 : 0.5;
+      if (layer >= 3) ctx.flash(TEMPEST_HAZ.bangFrames, at, TEMPEST_HAZ.bangHard);
+      else ctx.flash(10, at);
     }
     if (hs.lull > 0) hs.lull--;
 

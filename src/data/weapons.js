@@ -187,7 +187,7 @@ export const WEAPON_LADDERS = {
   // Lv1  a knockback vent on landing.
   // Lv3  the same vent on jumping and double jumping too.
   // Lv6  a brief hover at the apex, venting two downward jets.
-  // Lv10 landing also throws a tidal wave both ways, sized by impact speed.
+  // Lv10 a straight-down nosedive out of the hover, paid for with the tank.
   torrent_cannon: {
     1: {
       tank: 100, refill: 2.2, burstCost: 34,
@@ -199,9 +199,26 @@ export const WEAPON_LADDERS = {
       tank: 150, refill: 2.8, hover: true,
       hoverFrames: 34, hoverCost: 30, jetDamage: 0.12, jetKnock: 1.1,
     },
+    /**
+     * "Add a straight down nosedive that produces a large tidal wave in both
+     * horizontal directions on contact with a surface. Activated by tapping
+     * jump after a water hover has started. Consumes all remaining water. Size
+     * is initially taller than the player, but scaled down based on the amount
+     * of water remaining in the tank."
+     *
+     * The rung used to fire a wave on EVERY landing, sized by impact speed.
+     * That is a different weapon: it costs nothing to aim, happens whether you
+     * wanted it or not, and never runs out. This one is a decision made in the
+     * air, paid for with the whole tank, and its size is the receipt for how
+     * much you had left.
+     */
     10: {
       tank: 180, refill: 3.2, tidal: true,
       tidalSpeed: 3.2, tidalDmgMult: 0.8, tidalLife: 120,
+      diveSpeed: 9,          // faster than terminal velocity — it is a dive
+      // Wave half-height in pixels at a full tank and at an empty one. The
+      // player is 24 tall, so even the floor of it is "taller than the player".
+      waveMax: 30, waveMin: 13,
     },
   },
 

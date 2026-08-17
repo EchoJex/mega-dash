@@ -148,7 +148,12 @@ export const FEEL = {
 
   // Wading: a jump launched from knee-deep water leaves at half strength.
   // Only the launch — a midair jump out of it is unaffected.
-  wadeJumpMult: 0.5,
+  // "Jumps while in contact with this knee deep water have 80% the jump
+  // strength; midair jumps are only affected by the rain forces." It was 0.5
+  // against an earlier field that said "half the jump strength" — the number
+  // is the owner's and it moved. It scales the IMPULSE, so 0.8 of the launch
+  // speed is 0.64 of the height.
+  wadeJumpMult: 0.8,
 
   // ── Camera ───────────────────────────────────────────────────────────
   // Follows once the player passes this fraction of screen width, and NEVER

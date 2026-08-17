@@ -309,6 +309,10 @@ const torrent = {
     }
     if (p.onGround) st.apexArmed = true;
 
+    // A dive in progress owns the player's vertical motion; the hover must not
+    // re-arm underneath it and lift him back out of it.
+    if (st.diving) { st.idle = 0; st.apexArmed = false; return; }
+
     if (st.hovering > 0) {
       st.hovering--;
       st.idle = 0;
@@ -329,8 +333,31 @@ const torrent = {
     }
   },
 
+  /**
+   * THE JUMP BUTTON MEANS TWO THINGS UP HERE, and which one is unambiguous:
+   * mid-hover it starts the nosedive, otherwise it vents.
+   *
+   * A tap during the hover is the only input in the weapon, and it can only
+   * happen in a window the player deliberately entered — so it needs no
+   * gesture, no hold, and nothing to tell it apart from an ordinary jump.
+   */
   jump(st, lv, ctx) {
     const L = ladderAt('torrent_cannon', lv);
+
+    if (L.tidal && st.hovering > 0) {
+      // THE SIZE IS THE RECEIPT. Captured before the tank is emptied, because
+      // the wave is "scaled down based on the amount of water remaining" and
+      // after this line there is none remaining.
+      st.diveFuel = st.tank / L.tank;
+      st.tank = 0;
+      st.hovering = 0;
+      st.diving = true;
+      st.idle = 0;
+      ctx.player.vy = L.diveSpeed;
+      ctx.sfx('shootBig', { pitch: 0.7 });
+      return;
+    }
+
     if (!L.onJump || st.tank < L.burstCost) return;
     st.tank -= L.burstCost;
     st.idle = 0;
@@ -339,14 +366,25 @@ const torrent = {
 
   land(st, lv, ctx) {
     const L = ladderAt('torrent_cannon', lv);
+
+    // "On contact with a surface" — the dive resolves wherever it lands, and it
+    // has already been paid for, so it never checks the tank.
+    if (st.diving) {
+      st.diving = false;
+      const fuel = st.diveFuel ?? 0;
+      st.diveFuel = 0;
+      tidalWave(ctx, lv, L, fuel);
+      ctx.shake(2, 20);
+      // The landing vent comes free with it: the dive IS an impact.
+      burst(ctx, lv, L, ctx.player.y + 24, 1.6);
+      return;
+    }
+
     if (st.tank < L.burstCost) return;
-    // Lv10 scales the wave with impact speed, so a long drop is a real weapon
-    // and a hop off a crate is not.
     const force = Math.min(1, Math.abs(ctx.landVy) / FEEL.maxFallSpeed);
     st.tank -= L.burstCost;
     st.idle = 0;
     burst(ctx, lv, L, ctx.player.y + 24, 1 + force);
-    if (L.tidal) tidalWave(ctx, lv, L, force);
   },
 };
 
@@ -374,15 +412,25 @@ function jetHit(ctx, lv, x, y, dmgMult, knock) {
 }
 
 /** Lv10: a ground-hugging wave each way, sized by how hard you hit the floor. */
-function tidalWave(ctx, lv, L, force) {
+/**
+ * The wave that resolves a nosedive: one each way along the floor.
+ *
+ * `fuel` is 0-1, the tank at the moment the dive began. It sets the height and
+ * nothing else — speed, life and pierce are the same wave however much water
+ * paid for it, so a nearly-empty tank still crosses the room. What you lose by
+ * diving early is REACH in the vertical, which is what decides how much of a
+ * boss the wave actually covers.
+ */
+function tidalWave(ctx, lv, L, fuel) {
   const p = ctx.player;
+  const r = L.waveMin + (L.waveMax - L.waveMin) * Math.max(0, Math.min(1, fuel));
   for (const dir of [-1, 1]) {
     ctx.spawn({
       x: p.x + 12, y: (ctx.arena ? ctx.arena.floorY : ctx.floorY) - 6,
       vx: dir * L.tidalSpeed, vy: 0,
-      radius: 4 + 4 * force, damage: dmgOf('torrent_cannon', lv, ctx) * L.tidalDmgMult,
+      radius: r, damage: dmgOf('torrent_cannon', lv, ctx) * L.tidalDmgMult,
       color: '#5CADD5', shape: 'stream', weapon: 'torrent_cannon',
-      life: L.tidalLife, pierce: 99, knockback: L.knock * (1 + force),
+      life: L.tidalLife, pierce: 99, knockback: L.knock * (1 + fuel),
       hugsFloor: true,
     });
   }

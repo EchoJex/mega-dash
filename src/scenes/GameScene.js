@@ -1659,9 +1659,21 @@ export default class GameScene extends Phaser.Scene {
       },
       // A whole-room light flash. `at` is 0-1 across the room width, for
       // placing the lightning bolt that goes with it.
-      flash: (frames, at) => {
+      /**
+       * A whole-room light flash. `at` is 0-1 across the room width, for
+       * placing the lightning bolt that goes with it. `hard` is how bright the
+       * wash burns, 0-1.
+       *
+       * ONE MECHANISM, TWO JOBS. At 0.34 it is a telegraph you read through —
+       * Tempest Man's rain about to turn, Volt Man earthing himself. At 0.92
+       * it is layer 3's "bright enough to wash out the screen like a flash
+       * bang", and the recovery is the part you play through.
+       */
+      flash: (frames, at, hard) => {
         if (!this.arena) return;
         this.arena.flash = Math.max(this.arena.flash, frames);
+        this.arena.flashN = frames;
+        this.arena.flashHard = hard ?? 0.34;
         if (at !== undefined) this.arena.boltX = at;
       },
       patch: (id, x, y, w, h, frames, opts = {}) => {
@@ -2299,7 +2311,11 @@ export default class GameScene extends Phaser.Scene {
     // world layer and WITHOUT the shake offset: light does not shake, and a
     // flash that moved would read as a second impact.
     if (this.arena?.flash > 0) {
-      L.player.g.fillStyle(0xBFD8FF, 0.34 * (this.arena.flash / 10));
+      const a = this.arena;
+      // Squared, so a flash bang blinds hard and then clears quickly rather
+      // than fading out through a long grey haze.
+      const t = a.flash / (a.flashN || 10);
+      L.player.g.fillStyle(0xBFD8FF, Math.min(0.95, a.flashHard * t * t));
       L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
     }
 

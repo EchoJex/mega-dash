@@ -73,6 +73,11 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     // the room but under the HUD, and it never moves with the shake — a flash
     // that shook would read as a second impact rather than as light.
     flash: 0,
+    // How many frames the CURRENT flash was set with, and how hard it burns.
+    // Together they let one mechanism cover both a telegraph and a flash bang:
+    // see ctx.flash in GameScene and the wash at the end of GameScene.draw.
+    flashN: 10,
+    flashHard: 0.34,
     // 0-1, how hard the backdrop is glowing right now. Blaze Man's layer-3
     // tell is "the red pixels of the background ebb rapidly" before the flood.
     ebb: 0,
