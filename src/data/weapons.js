@@ -165,10 +165,14 @@ export const WEAPON_LADDERS = {
   // Lv6 two per shot, so a volley must land before the next one goes out. Both
   // are exactly what the tracker says at that rung.
   blaze_wheel: {
+    // "Very slight rolling distance; up to 2 on screen; 3s Hot duration."
+    // The roll used to start at Lv3 and Lv1 simply stopped where it landed.
+    // A wheel that does not roll at all is not a wheel — 10px is enough to
+    // read as one without reaching anything the lob did not already.
     1: {
       cooldown: 30, maxLive: 2,
       lobVx: 2.4, lobVy: -2.4, gravity: 0.16,
-      roll: 0, rollSpeed: 0, rollDrag: 1,
+      roll: 10, rollSpeed: 1.4, rollDrag: 0.90,
       hotFrames: 180, burnFrames: 60, pierce: 0,
     },
     3: { hotFrames: 300, roll: 40, rollSpeed: 2.2, rollDrag: 0.94 },

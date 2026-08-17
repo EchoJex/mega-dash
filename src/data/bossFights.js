@@ -193,20 +193,45 @@ function coreHazard(layer) {
 }
 
 // ── BLAZE MAN — Fire ────────────────────────────────────────────────
-// Attack: "Launches A COUPLE of moderately bouncing fireballs toward the player
-// that climb up walls and leave hot trails." L2 fires "fewer fireballs, but much
-// higher bounce heights and alternating firing angles". L3 adds the arena flood,
-// synchronised with the hazard.
+// Attack L1: "Launches a 1 very bouncy fireball toward the player that climb up
+// walls and leave hot trails everywhere it contacts."
+// Attack L2: "2 fireballs, much higher bounce heights ; boss has multiple stem
+// angle to choose from."
+// Attack L3 (unchanged): "Same as Layer 2", plus the flood.
 //
-// THESE COUNTS ARE THE OWNER'S, SET DIRECTLY. L1 is two, L2 is three.
+// THE COUNT WENT DOWN AND THE BOUNCE WENT UP, twice over. An earlier revision
+// read "a couple" at L1 and this file inferred 2 and 3; the fields now say one
+// and two outright. Fewer, bouncier fireballs is a different attack from more,
+// flatter ones — one ball ricocheting around the room for a long time is a
+// thing you track and move around, three flat ones are a thing you hide from.
 //
-// L2's prose still opens "fewer fireballs" and is simply wrong about the count
-// now — what that layer actually buys is the second half of its own sentence,
-// the much higher bounce and the alternating launch angles. Do not read the
-// word "fewer" and quietly tune these back down.
+// L3 shares L2's numbers because its field says "same as Layer 2". Everything
+// layer 3 adds is the flood, below.
 const BLAZE = {
-  count: { 1: 2, 2: 3, 3: 3 },
-  bounce: { 1: 0.62, 2: 0.86, 3: 0.86 },
+  count: { 1: 1, 2: 2, 3: 2 },
+  // "Very bouncy" at L1, "much higher bounce heights" at L2. Restitution, so
+  // 0.95 keeps almost all of the impact speed — that ball is in the room for a
+  // long time, which is the point of it.
+  bounce: { 1: 0.80, 2: 0.95, 3: 0.95 },
+  /**
+   * THE STEM ANGLES — the lift added to the aim-at-the-player vector.
+   *
+   * L1 has ONE, so the single fireball always arrives on the same arc and can
+   * be learned. From L2 "the boss has multiple stem angle to choose from" and
+   * picks one per volley at random, which is what stops a bounce pattern from
+   * being memorised once and answered forever.
+   *
+   * This replaced a strict high/low alternation. Alternating is still a pattern
+   * — the second volley is knowable from the first — and the field asks for a
+   * choice, not a cycle.
+   */
+  stems: {
+    1: [-0.30],
+    2: [-1.05, -0.80, -0.55, -0.28],
+    3: [-1.05, -0.80, -0.55, -0.28],
+  },
+  // How far apart two balls in one volley sit around the chosen stem.
+  fan: 0.22,
   windup: 34,
   rest: { 1: [90, 150], 2: [80, 130], 3: [80, 130] },
   speed: 2.1,
@@ -266,7 +291,7 @@ function keepFootingDuringFlood(ctx, a, perch) {
 function blazeAttack(layer) {
   return (ctx) => {
     const b = ctx.boss, p = ctx.player, a = ctx.arena;
-    const fs = b.fs || (b.fs = { mode: 'patrol', t: rnd(...BLAZE.rest[layer]), dir: -1, alt: 1 });
+    const fs = b.fs || (b.fs = { mode: 'patrol', t: rnd(...BLAZE.rest[layer]), dir: -1 });
 
     // LAYER 3 ONLY — the flood. The boss claims a platform for itself a few
     // seconds before the shake, so the tell is "he got out of the way", which is
@@ -337,13 +362,16 @@ function blazeAttack(layer) {
       case 'windup': {
         if (--fs.t > 0) break;
         const n = BLAZE.count[layer];
+        // ONE STEM PER VOLLEY, chosen at random from the layer's set, and the
+        // balls fan around it. Choosing per volley rather than per ball keeps
+        // a volley reading as one action off one arm.
+        const stems = BLAZE.stems[layer];
+        const stem = stems[(Math.random() * stems.length) | 0];
         for (let i = 0; i < n; i++) {
-          // L1 fans toward the player; L2/L3 alternate high and low launch
-          // angles between volleys, which is what makes the bounce read.
           const toP = aimAt(b.x + b.w / 2, b.y + b.h * 0.5, p.x + 12, p.y + 12);
           const base = Math.atan2(toP.y, toP.x);
-          const lift = layer >= 2 ? (fs.alt > 0 ? -0.85 : -0.35) : -0.3 - i * 0.16;
-          const th = base + lift;
+          const spread = n > 1 ? (i - (n - 1) / 2) * BLAZE.fan : 0;
+          const th = base + stem + spread;
           ctx.shoot({
             x: b.x + b.w / 2, y: b.y + b.h * 0.5,
             vx: Math.cos(th) * BLAZE.speed, vy: Math.sin(th) * BLAZE.speed,
@@ -352,7 +380,6 @@ function blazeAttack(layer) {
             climbs: true, hot: BLAZE.hotFrames, burn: FEEL.burnFrames,
           });
         }
-        fs.alt = -fs.alt;
         fs.mode = 'patrol';
         fs.t = rnd(...BLAZE.rest[layer]);
         break;
