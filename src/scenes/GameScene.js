@@ -1388,6 +1388,15 @@ export default class GameScene extends Phaser.Scene {
           break;
         }
 
+        /**
+         * RANGED DAMAGE IS A DIFFERENT THING FROM DAMAGE, and only the bullet
+         * loop knows the difference. Strike Man's layer-2 bag shield answers
+         * shots specifically — a Strike Gauntlet jab or a Volt Spark zap calls
+         * hitEnemy directly and never becomes a projectile, so a boss reacting
+         * to raw HP loss would raise a shield against a weapon already inside
+         * his guard. Consumed and cleared by whoever reads it.
+         */
+        e.rangedHits = (e.rangedHits || 0) + 1;
         b.hitSet?.add(e);
         // Attributes land BEFORE the damage, so an enemy the shot kills still
         // shows the element that killed it rather than dying clean.
@@ -1570,6 +1579,10 @@ export default class GameScene extends Phaser.Scene {
       arena: this.arena,
       floorY: GROUND_Y,
       shoot: (spec) => this.spawnEnemyShot(spec),
+      // A fight makes its own noises. `shake` already plays the rumble that
+      // goes with it, but a hazard with a moment of its own — Strike Man
+      // hurling a bag — needs to be able to say so without shaking the room.
+      sfx: (name, opts) => sfx(name, opts),
       shake: (mag, dur) => {
         this.shake = { mag, dur, t: dur };
         // Stretch the rumble to EXACTLY the shake it is announcing, and drop its

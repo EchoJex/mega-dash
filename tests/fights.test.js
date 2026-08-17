@@ -156,14 +156,27 @@ test('every attack loop cycles back to its opening state, more than once', () =>
   }
 });
 
+/**
+ * Stated as a PROPERTY rather than as an example.
+ *
+ * It used to name Strike Man, whose hazard was written to layer 1 only — and
+ * then his layers 2 and 3 were built and the test failed for the best possible
+ * reason. Every boss with a fight now has all three of both, so there is no
+ * live example of a fallback left to point at, and picking a new one would
+ * only book the same appointment again. The rule holds whatever the table
+ * contains: a layer resolves to the hardest one WRITTEN at or below it.
+ */
 test('layer falls BACK to the hardest layer written, never forward', () => {
-  // Strike Man has hazard L1 only, because that is all his tracker fields
-  // define. A layer-3 encounter therefore reuses hazard L1 rather than
-  // borrowing another boss's behaviour — while his attack, which IS written to
-  // three layers, gets its own layer 3.
-  const s3 = fightFor('strike', 3);
-  assert.equal(s3.hazard, FIGHTS.strike.hazard[1]);
-  assert.equal(s3.attack, FIGHTS.strike.attack[3]);
+  for (const [id, entry] of Object.entries(FIGHTS)) {
+    for (const kind of ['attack', 'hazard']) {
+      for (const layer of [1, 2, 3]) {
+        const got = fightFor(id, layer)[kind];
+        let want = null;
+        for (let l = layer; l >= 1 && !want; l--) want = entry[kind][l] || null;
+        assert.equal(got, want, `${id} ${kind} L${layer}`);
+      }
+    }
+  }
   // A boss with no entry at all degrades instead of throwing.
   assert.deepEqual(fightFor('nope', 2), { attack: null, hazard: null });
 });
@@ -179,9 +192,7 @@ test('no boss has more built layers than the tracker defines', () => {
     blaze: { attack: 3, hazard: 3 },
     torrent: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
-    // Strike Man's attack layers were written to the owner's Fighter Joe / Ryu
-    // brief; his hazard L2/L3 are still `[wip]`.
-    strike: { attack: 3, hazard: 1 },
+    strike: { attack: 3, hazard: 3 },
   };
   assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
     'a boss gained or lost a fight entry — update the expected map with it');

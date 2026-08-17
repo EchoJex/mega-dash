@@ -1029,8 +1029,9 @@ function voltHazard(layer) {
  * "improve" it with a varied speed; the tracker calls the predictability out
  * by name.
  *
- * Hazard layers 2 and 3 are still `[wip]`, so both fall back to this one —
- * see fightFor. His ATTACK layers are built; they are below.
+ * ALL THREE HAZARD LAYERS ARE BUILT. Layer 1 is one bag. Layers 2 and 3 add a
+ * second bag and turn the furniture into something the BOSS uses — see
+ * strikeHazard below.
  */
 /**
  * THE BAG HAS TO HANG INTO THE PLAYER'S LANE OR IT IS SCENERY.
@@ -1048,16 +1049,164 @@ const STRIKE_HAZ = {
   w: 14,
   h: 40,
   drop: 106,        // how far the bag's TOP hangs below its rail
+  /**
+   * TWO BAGS FROM LAYER 2, ON CROSSING PATHS. They start at opposite ends of
+   * different rails and run at slightly different speeds, so where they cross
+   * drifts down the room instead of being one fixed spot to memorise. One bag
+   * is a rhythm; two is a rhythm you cannot stand still inside.
+   */
+  bags: { 1: 1, 2: 2, 3: 2 },
+  /**
+   * The chance he yanks a bag down to block, rolled on each RANGED hit.
+   *
+   * "Moderate" — a third. High enough that chipping him from across the room
+   * stops being free, low enough that it never feels like the answer to ranged
+   * damage is "there is no ranged damage". His layer-2 guard stance already
+   * punishes chip; this punishes the shots that get through it.
+   */
+  grabChance: { 1: 0, 2: 0.34, 3: 0.34 },
+  holdFrames: 84,     // how long the bag stays up
+  grabCooldown: 200,  // before he can reach for one again
+  // L3 ONLY: the bag comes back at you afterwards.
+  throwSpeed: 3.1,
+  throwGravity: 0.16,
+  throwDamage: 3,     // heavy, against the swinging bag's 1
+  returnFrames: 150,  // before a thrown bag is winched back onto its rail
 };
 
+/**
+ * STRIKE MAN'S ARENA HAZARD — the bags, and from layer 2 what he does with them.
+ *
+ * L1 "A heavy training bag swings across the room on a ceiling rail." One bag,
+ *    one speed, forever. Walk into it and you are knocked back; time a slide
+ *    and you pass underneath. That predictability is the design.
+ * L2 "Two bags on crossing paths, boss has a moderate chance of pulling one
+ *    down as a shield whenever taking ranged damage."
+ * L3 "Same as hazard l2 only now the boss will throw the bag at player for
+ *    heavy damage after using as a shield."
+ *
+ * THIS IS THE LAYER WHERE THE FURNITURE STOPS BEING FURNITURE. Layers 2 and 3
+ * do not make the bags hit harder or swing faster — they hand them to the boss.
+ * The room is the same room; what changed is that he is now allowed to use it,
+ * which is the same shape every other boss's layers take.
+ *
+ * THE SHIELD REUSES `boss.guard`, the stance mechanic the bullet loop already
+ * understands (see stepBullets). It is re-asserted every frame it is held,
+ * because the bullet loop zeroes it on each shot it eats — so the stance blocks
+ * ONE shot and the bag blocks everything for as long as he holds it up. The
+ * hazard loop runs after the attack loop, so this wins the frame it is set.
+ */
 function strikeHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a || !a.rails?.length) return;
-    const hs = ctx.boss.hs || (ctx.boss.hs = { spawned: false });
+    const b = ctx.boss;
+    const hs = b.hs || (b.hs = { spawned: false, held: null, hold: 0, cool: 0 });
 
     if (!hs.spawned) {
       hs.spawned = true;
+      const n = STRIKE_HAZ.bags[layer] || 1;
+      for (let i = 0; i < n; i++) {
+        const rail = a.rails[i + 1] || a.rails[0];
+        a.hazards.push({
+          kind: 'bag',
+          // Opposite ends, so the two paths cross rather than trail.
+          x: i === 0 ? a.x0 + 24 : a.x1 - 24 - STRIKE_HAZ.w,
+          y: rail.y + STRIKE_HAZ.drop,
+          w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
+          railY: rail.y,
+          // A shade apart so the crossing point moves down the room.
+          vx: i === 0 ? STRIKE_HAZ.speed : -STRIKE_HAZ.speed * 1.18,
+          damage: 1,          // "light damage"; hurt() supplies the knockback
+          mode: 'swing',
+        });
+      }
+    }
+
+    if (hs.cool > 0) hs.cool--;
+
+    /**
+     * RANGED DAMAGE IS THE TRIGGER, and `rangedHits` is the only way to know.
+     * A hit from the Strike Gauntlet or the Volt Spark calls hitEnemy directly
+     * and never becomes a projectile, so counting damage alone would have him
+     * grabbing a shield against a weapon that is already inside his guard.
+     */
+    const took = b.rangedHits || 0;
+    b.rangedHits = 0;
+    if (took && !hs.held && hs.cool === 0 && Math.random() < (STRIKE_HAZ.grabChance[layer] || 0)) {
+      // The nearest swinging bag — he reaches for the one he can actually
+      // reach, not for whichever happens to be first in the list.
+      const bags = a.hazards.filter((h) => h.kind === 'bag' && h.mode === 'swing');
+      let best = null, bestD = Infinity;
+      for (const h of bags) {
+        const d = Math.abs((h.x + h.w / 2) - (b.x + b.w / 2));
+        if (d < bestD) { bestD = d; best = h; }
+      }
+      if (best) {
+        best.mode = 'shield';
+        hs.held = best;
+        hs.hold = STRIKE_HAZ.holdFrames;
+      }
+    }
+
+    for (let i = a.hazards.length - 1; i >= 0; i--) {
+      const h = a.hazards[i];
+      if (h.kind !== 'bag') continue;
+
+      if (h.mode === 'shield') {
+        // Pinned to the front of him, at the height it hung at. The player can
+        // still walk into it, so a shield is also a wall.
+        const face = ctx.player.x < b.x ? -1 : 1;
+        h.x = face < 0 ? b.x - h.w - 2 : b.x + b.w + 2;
+        h.y = b.y + b.h - h.h;
+        b.guard = Math.max(b.guard || 0, hs.hold);
+        if (--hs.hold <= 0) {
+          hs.held = null;
+          hs.cool = STRIKE_HAZ.grabCooldown;
+          b.guard = 0;
+          if (layer >= 3) {
+            // THROWN, not dropped. Aimed at where the player is standing, with
+            // real gravity on it, so it is a projectile you read off its arc.
+            const px = ctx.player.x + 12, py = ctx.player.y + 12;
+            const dx = px - (h.x + h.w / 2);
+            const dy = py - (h.y + h.h / 2);
+            const d = Math.max(1, Math.hypot(dx, dy));
+            h.mode = 'thrown';
+            h.vx = (dx / d) * STRIKE_HAZ.throwSpeed;
+            h.vy = (dy / d) * STRIKE_HAZ.throwSpeed - 1.2;   // a lob, not a dart
+            h.damage = STRIKE_HAZ.throwDamage;
+            h.diesOnHit = true;
+            ctx.sfx('shootBig', { pitch: 0.6 });
+          } else {
+            h.mode = 'swing';
+          }
+        }
+        continue;
+      }
+
+      if (h.mode === 'thrown') {
+        h.vy += STRIKE_HAZ.throwGravity;
+        h.x += h.vx;
+        h.y += h.vy;
+        // It is spent on the first thing it meets: the floor, a wall, or the
+        // player (diesOnHit, resolved by stepArenaHazards).
+        if (h.y + h.h >= a.floorY || h.x <= a.x0 || h.x + h.w >= a.x1) {
+          a.hazards.splice(i, 1);
+          hs.respawn = STRIKE_HAZ.returnFrames;
+          ctx.shake(1, 6);
+        }
+        continue;
+      }
+
+      h.x += h.vx;
+      if (h.x <= a.x0 + 4) { h.x = a.x0 + 4; h.vx = Math.abs(h.vx); }
+      if (h.x + h.w >= a.x1 - 4) { h.x = a.x1 - 4 - h.w; h.vx = -Math.abs(h.vx); }
+    }
+
+    // A thrown bag is winched back up. Without this, layer 3 spends its own
+    // hazard: throw both and the room is empty for the rest of the fight.
+    if (hs.respawn !== undefined && --hs.respawn <= 0) {
+      hs.respawn = undefined;
       const rail = a.rails[1] || a.rails[0];
       a.hazards.push({
         kind: 'bag',
@@ -1065,15 +1214,9 @@ function strikeHazard(layer) {
         w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
         railY: rail.y,
         vx: STRIKE_HAZ.speed,
-        damage: 1,          // "light damage"; hurt() supplies the knockback
+        damage: 1,
+        mode: 'swing',
       });
-    }
-
-    for (const h of a.hazards) {
-      if (h.kind !== 'bag') continue;
-      h.x += h.vx;
-      if (h.x <= a.x0 + 4) { h.x = a.x0 + 4; h.vx = Math.abs(h.vx); }
-      if (h.x + h.w >= a.x1 - 4) { h.x = a.x1 - 4 - h.w; h.vx = -Math.abs(h.vx); }
     }
   };
 }
@@ -1329,14 +1472,14 @@ export const FIGHTS = {
     hazard: { 1: { step: voltHazard(1) }, 2: { step: voltHazard(2) }, 3: { step: voltHazard(3) } },
   },
 
-  // STRIKE MAN — all three attack layers built. His hazard L2 and L3 are still
-  // `[wip]`, so they stay null and fightFor() falls back to hazard L1's single
-  // swinging bag at every layer. Fill them in when the owner writes them.
+  // STRIKE MAN — all three attack layers and all three hazard layers built.
   strike: {
     attack: {
       1: { step: strikeAttack(1) }, 2: { step: strikeAttack(2) }, 3: { step: strikeAttack(3) },
     },
-    hazard: { 1: { step: strikeHazard(1) }, 2: null, 3: null },
+    hazard: {
+      1: { step: strikeHazard(1) }, 2: { step: strikeHazard(2) }, 3: { step: strikeHazard(3) },
+    },
   },
 };
 
