@@ -141,7 +141,7 @@ where each one stands.
 - **hazard L2** `[draft]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Bolts now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
 - **attack L1** `[draft]` Infrequently fires up to 2 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size and stun duration decrease with total travel distance
-- **attack L2** `[wip]` 2 sets of bolts with a longer bounce life, fired as a primary volley and a secondary volley which is shot on a slightly shallower angle causing the two paths to eventually overlap.
+- **attack L2** `[draft]` 2 sets of bolts with a longer bounce life, fired as a primary volley and a secondary volley which is shot on a slightly shallower angle causing the two paths to eventually intersect.
 - **attack L3** `[ready]` Bolts no longer lose size on bounce, only damage. Between volleys the boss discharges into the floor, briefly energising every panel the last bolt touched.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
