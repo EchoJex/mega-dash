@@ -560,9 +560,11 @@ const frost = {
     if (st.grow < L.growFrames) st.grow++;
     st.box = shieldBox(ctx.player, L, st.grow / L.growFrames);
 
-    // Body-blocking a minion: the shield breaks outright and freezes it.
+    // Body-blocking: the shield breaks outright and freezes what it hit.
+    // A boss shrugs it off, EXCEPT the ones the rung names — from Lv3 that is
+    // the water boss, which is the one matchup where ice is supposed to win.
     for (const e of enemiesIn(ctx, st.box)) {
-      if (e.isBoss) continue;                // a boss shrugs it off
+      if (e.isBoss && !(L.freezeBosses || []).includes(e.id)) continue;
       Attr.applyStatus(e.status, 'freeze', L.freezeFrames);
       ctx.sfx('hurt', { pitch: 1.6 });
       st.hits = 0;
@@ -582,6 +584,11 @@ const frost = {
     }
 
     if (st.hits <= 0) {
+      // "Breaks from damage or from contact cause shield to break into small
+      // ice shards" — one path, because the shield does not care which killed
+      // it. Fired from the TOP EDGE of the shield as written, so they clear
+      // the player's own head rather than raking along the floor.
+      shatter(ctx, lv, L, st.box);
       st.down = L.breakFrames;
       st.box = null;
     } else if (st.chip <= 0) {
@@ -589,6 +596,37 @@ const frost = {
     }
   },
 };
+
+/**
+ * The shield coming apart, as a fan of shards.
+ *
+ * Angles are degrees above the horizon in the direction the player is facing,
+ * straight off the rung — so the ladder states a SHAPE and this only has to
+ * point it the right way. Nothing here knows what Lv3 or Lv6 look like.
+ */
+function shatter(ctx, lv, L, box) {
+  if (!L.shards || !box) return;
+  const p = ctx.player;
+  const dir = p.facing > 0 ? 1 : -1;
+  ctx.sfx('hurt', { pitch: 2.4 });
+  for (const deg of L.shards) {
+    const th = (deg * Math.PI) / 180;
+    ctx.spawn({
+      x: box.x + box.w / 2, y: box.y,
+      vx: Math.cos(th) * L.shardSpeed * dir,
+      vy: -Math.sin(th) * L.shardSpeed,
+      radius: 2.5,
+      damage: dmgOf('frost_guard', lv, ctx) * L.shardDmgMult,
+      color: '#A0EFE7', shape: 'shard', weapon: 'frost_guard',
+      life: 90, pierce: L.shardPierce || 0,
+      // NO freeze on the shards. The rung puts the freeze on the SHIELD's
+      // contact — "freezes the opponent if contacting a minion or the water
+      // boss" — and the shards are what is left after that already happened.
+      // stepBullets has no freeze path either; adding one for a field nobody
+      // wrote would be inventing a rung.
+    });
+  }
+}
 
 function shieldBox(p, L, grown) {
   const w = Math.max(3, Math.round(L.w * grown));

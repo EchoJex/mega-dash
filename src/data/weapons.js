@@ -239,14 +239,42 @@ export const WEAPON_LADDERS = {
   // ── FROST GUARD — defensive, Ice ──────────────────────────────────
   // PARTIAL LADDER: Lv6 and Lv10 are still `[wip]` in the tracker, so levels
   // above 3 are damage-only. Do not invent the missing rungs.
+  /**
+   * FROST GUARD — defensive, Ice. "Slowly forms a large shield of ice in front
+   * of the player that slowly bulks up. Short cooldown if damaged; long
+   * cooldown if destroyed by damage."
+   *
+   * `hits` is the shield's whole strength: one enemy projectile costs one hit
+   * whatever its damage, which is what "the equivalent of N minion projectiles"
+   * means and why a boss's big shot is not worth three of a minion's.
+   *
+   * `shards` are degrees ABOVE the horizon, fired from the top edge when the
+   * shield breaks — by damage or by body-blocking something. Lv3's three sit at
+   * 22.5/45/67.5; Lv6 adds a fourth and slides the fan down so the lowest is
+   * 22.5 BELOW the horizon, keeping the same even 22.5-degree spacing.
+   */
   frost_guard: {
     1: {
-      hits: 1, w: 8, h: 22, growFrames: 60,
+      // "Full Shield blocks the equivalent of 3 minion projectile."
+      hits: 3, w: 8, h: 22,
+      // "VERY slow ice buildup" — two and a half seconds to reach full size,
+      // so re-forming after a break is a real window rather than a blink.
+      growFrames: 150,
       breakFrames: 240,     // destroyed outright — the long cooldown
       chipFrames: 90,       // merely damaged — the short one, per lost hit
       freezeFrames: 120,
+      shards: null, shardPierce: 0, shardDmgMult: 0.45, shardSpeed: 3.4,
+      // Which bosses the shield can freeze on contact. None at Lv1: a boss
+      // shrugs it off, and only the ice-vs-water matchup ever changes that.
+      freezeBosses: [],
     },
-    3: { hits: 3, w: 10, h: 26 },
+    3: {
+      hits: 4, w: 10, h: 26,
+      shards: [22.5, 45, 67.5],
+      // "Freezes the opponent if contacting a minion OR THE WATER BOSS."
+      freezeBosses: ['torrent'],
+    },
+    6: { shards: [-22.5, 0, 22.5, 45], shardPierce: 99 },
   },
 
   // ── STRIKE GAUNTLET — offensive, Fighting ─────────────────────────
