@@ -355,16 +355,40 @@ export const WEAPON_LADDERS = {
   // REACH IS THE WHOLE LADDER at Lv1/6, which is why nothing else moves there.
   // A whip that has to be aimed while standing still is priced in exposure, and
   // reach is what buys the exposure back.
+  /**
+   * THORN LASH — offensive, Grass.
+   * Lv1 "Short reach; can only reel in and damage minions; mild knockback but
+   *      does not toss or constrict them."
+   * Lv3 "Increased reach. Each hit applies a stack of constrict and if a minion
+   *      then tosses straight forward a moderate distance before being affected
+   *      by gravity and rolling to a stop. Check for lethal damage after
+   *      completing the toss and the minion comes to rest. Minion projectile
+   *      does not deal damage but has very large knockback. Affected by
+   *      diagonal inputs; [grapple and swing rules]."
+   *
+   * THE TOSS AND THE CONSTRICT MOVED FROM Lv10 TO Lv3. They used to be the top
+   * rung's whole payload; the field now puts both at Lv3, which changes what
+   * the weapon IS — a crowd tool from its second rung rather than a reel that
+   * eventually learns a trick.
+   */
   thorn_lash: {
     1: {
       cooldown: 36, reach: 34, lashFrames: 18, rootFrames: 22,
-      reelSpeed: 3.2, dmgMult: 1.4,
+      // "Mild knockback" on the reel, which it did not have at all.
+      reelSpeed: 3.2, dmgMult: 1.4, reelKnock: 1.4,
       toss: false, tossDmgMult: 0, constrictFrames: 0,
       grapple: false, diagonal: false,
     },
-    3: { reach: 52, diagonal: true, grapple: true, swingSpeed: 3.4, ledgeGrab: 0.2 },
+    3: {
+      reach: 52, diagonal: true, grapple: true, swingSpeed: 3.4, ledgeGrab: 0.2,
+      toss: true, constrictFrames: 300,
+      // The tossed minion is a BATTERING RAM, not a bullet: "does not deal
+      // damage but has very large knockback". The damage it is carrying is its
+      // OWN, resolved when it comes to rest.
+      tossDmgMult: 2.6, tossSpeed: 5, tossKnock: 9,
+    },
     6: { reach: 78 },
-    10: { toss: true, tossDmgMult: 2.6, tossSpeed: 5, constrictFrames: 300 },
+    10: { tossDmgMult: 3.4, tossSpeed: 6 },
   },
 
   // ── GALE VORTEX — defensive, Flying ───────────────────────────────

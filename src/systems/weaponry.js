@@ -1062,11 +1062,12 @@ function nearestEnemyShot(ctx, x, y, maxDist = 90) {
  * ground; a platform overhead swings you because you are not.
  */
 const thorn = {
-  init(st) { st.lash = null; st.root = 0; },
+  init(st) { st.lash = null; st.root = 0; st.tossed = []; },
 
   step(st, lv, ctx) {
     const L = ladderAt('thorn_lash', lv);
     if (st.root > 0) { st.root--; ctx.run.rootFrames = Math.max(ctx.run.rootFrames, 1); }
+    stepTossed(st, ctx);
     const la = st.lash;
     if (!la) return;
 
@@ -1085,20 +1086,11 @@ const thorn = {
       if (L.constrictFrames) {
         Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
       }
+      // "Mild knockback" even at Lv1, where the reel is the whole move.
+      if (L.reelKnock) e.kbVx = -Math.sign(dx || 1) * L.reelKnock;
       if (d < 18) {
-        // Lv10 throws it back as a projectile. Below that the reel is the whole
-        // move and the enemy simply arrives.
-        if (L.toss) {
-          e.hp = 0;
-          ctx.spawn({
-            x: e.x + e.w / 2, y: e.y + e.h / 2,
-            vx: L.tossSpeed * p.facing, vy: -0.6,
-            radius: 4, damage: dmgOf('thorn_lash', lv, ctx) * L.tossDmgMult,
-            color: '#2AAB1C', shape: 'rock', weapon: 'thorn_lash',
-            life: 120, pierce: 3, knockback: 3,
-          });
-          ctx.sfx('shootBig', { pitch: 0.95 });
-        }
+        // From Lv3 the minion is thrown rather than simply arriving.
+        if (L.toss) tossMinion(st, lv, ctx, L, e);
         st.lash = null;
       }
       return;
@@ -1139,6 +1131,69 @@ const thorn = {
     return true;
   },
 };
+
+/**
+ * THE MINION IS THE PROJECTILE, and it survives the flight.
+ *
+ * "Tosses straight forward a moderate distance before being affected by gravity
+ * and rolling to a stop. CHECK FOR LETHAL DAMAGE AFTER completing the toss and
+ * the minion comes to rest."
+ *
+ * So the damage is not dealt on the grab — it is carried. The old Lv10 version
+ * killed the minion outright and spawned a rock in its place, which meant the
+ * toss could never fail to kill and the enemy was gone before it had flown
+ * anywhere. Here it is the same body all the way through: still alive, still on
+ * the field, and only resolved once it stops.
+ *
+ * The CONSTRICT STACK is what makes that work rather than being decoration.
+ * Constrict holds an actor outright (see systems/attributes.js), so the minion
+ * cannot walk out of its own flight — which is exactly why the field puts the
+ * constrict and the toss on the same rung.
+ *
+ * The escort projectile is what other enemies feel: damage 0, very large
+ * knockback, per "minion projectile does not deal damage but has very large
+ * knockback". It carries the body along with it and hands the damage back when
+ * it stops.
+ */
+function tossMinion(st, lv, ctx, L, e) {
+  Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+  const p = ctx.player;
+  const shot = {
+    x: e.x + e.w / 2, y: e.y + e.h / 2,
+    vx: L.tossSpeed * p.facing, vy: -0.6,
+    radius: 4, damage: 0,
+    color: '#2AAB1C', shape: 'rock', weapon: 'thorn_lash',
+    life: 120, pierce: 99, knockback: L.tossKnock,
+    gravity: 0.22,
+  };
+  ctx.spawn(shot);
+  // The live bullet is the last one in the list — the ram to follow.
+  const live = ctx.bullets[ctx.bullets.length - 1];
+  (st.tossed || (st.tossed = [])).push({
+    e, ram: live, dmg: dmgOf('thorn_lash', lv, ctx) * L.tossDmgMult,
+  });
+  ctx.sfx('shootBig', { pitch: 0.95 });
+}
+
+/** Ride the body along with its ram, and settle up when the ram stops. */
+function stepTossed(st, ctx) {
+  if (!st.tossed?.length) return;
+  st.tossed = st.tossed.filter((t) => {
+    if (t.e.hp <= 0) return false;                  // died to something else
+    const flying = t.ram.life > 0 && ctx.bullets.includes(t.ram);
+    if (flying) {
+      t.e.x = t.ram.x - t.e.w / 2;
+      t.e.y = t.ram.y - t.e.h / 2;
+      t.e.kbVx = 0;
+      t.e.vy = 0;
+      return true;
+    }
+    // AT REST. Now the damage lands, through the normal path so a kill still
+    // scores, drops and counts toward the combo.
+    ctx.hitEnemy(t.e, t.dmg, { from: t.ram.x });
+    return false;
+  });
+}
 
 /** The tip of the lash, and what it has found there. */
 function thornTip(la) {
