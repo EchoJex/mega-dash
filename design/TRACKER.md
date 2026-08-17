@@ -127,7 +127,7 @@ where each one stands.
 - **weapon Lv1** `[draft]` Large Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[draft]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[draft]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
-- **weapon Lv10** `[wip]` Add straight down nosedive that produces a large tidal wave in both horizontal directions activated by tapping jump after a water hover has started. Size of tidal wave is scaled b
+- **weapon Lv10** `[wip]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions activated by tapping jump after a water hover has started. Size of tidal wave is scaled b
 - **silhouette** `[ready]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
 
 ## Volt Man — Electric
