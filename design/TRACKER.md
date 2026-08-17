@@ -126,7 +126,7 @@ where each one stands.
 - **weapon** `[ready]` Defensive; small, grey two-nozzle jetpack that has a blue layer on top that indicates a tank fill level. Rapidly self refilling water supply when not producing weapon affects. Tank capacity and refill rate level scalable
 - **weapon Lv1** `[wip]` Large Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[wip]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
-- **weapon Lv6** `[wip]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and knockback
+- **weapon Lv6** `[wip]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockbackknockback
 - **weapon Lv10** `[ready]` All previous effects plus a large high knocked tidal wave travels in both horizontal directions when landing on the ground. Size of tidal wave is scaled with downward velocity on impact.
 - **silhouette** `[ready]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
 
