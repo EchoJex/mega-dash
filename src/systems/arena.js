@@ -180,11 +180,16 @@ const FURNITURE = {
     // They phase on staggered timers for the same reason Blaze Man's do: the
     // player must never be left with nothing above the live panel. Height
     // alternates so a phased-out low platform still leaves a reachable high one.
+    // `roam` is what makes them land somewhere new each time they phase back
+    // in — see stepArena. Two heights, so a low one and a high one can coexist
+    // and a phased-out low platform still leaves a reachable high one.
+    const ys = [floorY - 38, floorY - 66];
     a.platforms = Array.from({ length: 4 }, (_, i) => ({
       x: Math.round(viewW * (0.14 + 0.24 * i)) - 20,
-      y: floorY - 38 - (i % 2) * 28,
+      y: ys[i % 2],
       w: 40, h: 5,
       on: true, t: 130 + i * 55, hot: 0,
+      roam: { x0: 12, x1: Math.max(13, viewW - 52), ys },
     }));
 
     const n = 8;
@@ -292,6 +297,20 @@ export function stepArena(arena) {
     if (--pl.t > 0) continue;
     pl.on = !pl.on;
     pl.t = pl.on ? 220 + Math.random() * 160 : 90 + Math.random() * 70;
+    /**
+     * "PLATFORMS PHASE IN AND OUT IN RANDOM LOCATIONS" — Volt Man's arena
+     * field. A platform that returns exactly where it left is a platform you
+     * can stand under and wait for; one that comes back somewhere else makes
+     * the room a thing you keep re-reading, which is the point when the FLOOR
+     * is the hazard.
+     *
+     * Only on the way IN, and only for a platform that opted in. Moving one
+     * out from under a standing player would be a trapdoor with no tell.
+     */
+    if (pl.on && pl.roam) {
+      pl.x = Math.round(pl.roam.x0 + Math.random() * (pl.roam.x1 - pl.roam.x0));
+      pl.y = pl.roam.ys[(Math.random() * pl.roam.ys.length) | 0];
+    }
   }
 
   for (const p of arena.panels) {

@@ -791,39 +791,58 @@ function tempestFloaters(ctx, a, hs, layer) {
 
 // ── VOLT MAN — Electric ─────────────────────────────────────────────
 /**
- * "Fires up to 3 sequential zigzag lightning bolts that bounce and arc on
- *  contact with surfaces or the player. Damage and size decrease at every
- *  bounce."
- *  L2 "Bolts increase to 3 and gain a longer bounce life, and the boss fires a
- *      second volley on a shallower angle before the first has finished, so two
- *      zigzag paths overlap."
- *  L3 "Bolts no longer lose size on bounce, only damage. Between volleys the
- *      boss discharges into the floor, briefly energising every panel the last
- *      bolt touched."
+ * L1 "Infrequently fires up to 2 sequential zigzag lightning bolts that bounce
+ *     and arc on contact with surfaces or the player. Damage and size and stun
+ *     duration decrease with TOTAL TRAVEL DISTANCE."
+ * L2 "2 sets of bolts with a longer bounce life, fired as a primary volley and
+ *     a secondary volley which is shot on a slightly shallower angle causing
+ *     the two paths to eventually intersect."
+ * L3 "Bolts no longer lose size on bounce, only reduce in damage delt.
+ *     Occasionally the boss jumps and slams into the floor, briefly energising
+ *     every panel destroying any ground minions that are on those panels."
  *
- * BOUNCES ARE A BUDGET, NOT A TIMER. Each bolt carries a count and spends one
- * per surface, so "longer bounce life" is a single number and a bolt's reach is
- * something the player can learn by watching rather than by counting seconds.
+ * FALLOFF IS BY DISTANCE, NOT BY BOUNCE, and that is a rewrite rather than a
+ * tune. Per-bounce decay meant a bolt crossing an open room stayed lethal
+ * forever while one fired into a corner died in a second — backwards, since the
+ * dangerous bolt is the one that has just been fired at you. Distance makes
+ * RANGE the thing the player reads. Stun now fades with it too, which it never
+ * did. See the fadeDist block in GameScene.stepBullets.
  *
- * The layer-3 discharge reads the marks bolts leave on the floor panels — see
- * the ricochet block in GameScene.stepBullets. That means the discharge is
- * literally where the last volley went, which is the point: it punishes the
- * ground you were just forced to stand on.
+ * BOUNCES ARE STILL A BUDGET, and that is what "longer bounce life" buys at L2:
+ * how many surfaces a bolt may spend before it expires, independent of how far
+ * it has flown.
+ *
+ * "2 SETS OF BOLTS" IS THE COUNT AT L2, not three. The previous field said
+ * "bolts increase to 3"; this one does not, and what it names instead is the
+ * second SET. So both layers fire two per volley and L2 fires two volleys, on
+ * angles shallow enough that the paths cross rather than run parallel.
  */
 const VOLT = {
-  // "up to 2" at L1, "increase to 3" at L2. L3 restates neither, so it inherits.
-  bolts: { 1: 2, 2: 3, 3: 3 },
+  // "up to 2" at L1; L2 keeps two per volley and adds a second volley.
+  bolts: { 1: 2, 2: 2, 3: 2 },
   bounces: { 1: 3, 2: 6, 3: 6 },
   gap: 12,                   // frames between bolts in a volley
   speed: 2.3,
   windup: 30,
   rest: { 1: [110, 170], 2: [90, 140], 3: [80, 125] },
-  bounceDmg: 0.72,
-  // "Bolts no longer lose size on bounce" at layer 3 — only their damage falls.
-  bounceShrink: { 1: 0.86, 2: 0.86, 3: 1 },
+  /**
+   * THE FALLOFF CURVE. `fadeK` is what a bolt keeps after travelling `fadeDist`
+   * pixels, so 0.55 over 220px means a bolt that has crossed the room twice is
+   * doing about a sixth of its opening damage. Applied to damage, radius and
+   * stun together — the field lists all three.
+   */
+  fadeDist: 220,
+  fadeK: 0.55,
+  // Layer 3 keeps its SIZE all the way out; only the damage falls.
+  fadeSize: { 1: true, 2: true, 3: false },
   zig: 9,                    // frames between kinks
   secondVolley: 34,          // L2+: the overlapping volley, fired before the first ends
-  dischargeLive: 70,
+  // L3's floor slam: how long every panel stays live afterwards. Brief, per
+  // "briefly energising every panel" — the whole floor at once is the harshest
+  // thing in the fight and the platforms are the only answer to it.
+  slamLive: 44,
+  slamRise: -6.2,
+  slamGravity: 0.55,
 };
 
 function voltBolt(ctx, layer, th, shallow) {
@@ -837,10 +856,15 @@ function voltBolt(ctx, layer, th, shallow) {
     // A corner costs ONE bounce, which is what his reach has always been tuned
     // against. Only the Alloy Blade's Lv1 rung spends a corner twice.
     cornerSafe: true,
-    bounceDmg: VOLT.bounceDmg,
-    bounceShrink: VOLT.bounceShrink[layer],
+    // NO per-bounce loss: the falloff is distance now, and letting both run
+    // would decay a cornered bolt twice for the same journey.
+    bounceDmg: 1,
+    bounceShrink: 1,
     bouncesOffPlayer: true,
     stun: 45,
+    // The originals the distance falloff reads back from every frame.
+    dmg0: 2, rad0: 3, stun0: 45,
+    fadeDist: VOLT.fadeDist, fadeK: VOLT.fadeK, fadeSize: VOLT.fadeSize[layer],
     life: 900,
   });
 }
@@ -882,24 +906,55 @@ function voltAttack(layer) {
         voltBolt(ctx, layer, fs.base + (Math.random() - 0.5) * 0.5, fs.shallow);
         if (--fs.left > 0) break;
         fs.shallow = false;
-        // Layer 3 earths itself between volleys, lighting up exactly the
-        // panels the bolts struck on their way round the room.
-        fs.mode = layer >= 3 ? 'discharge' : 'patrol';
-        fs.t = layer >= 3 ? 40 : rnd(...VOLT.rest[layer]);
+        /**
+         * LAYER 3 SLAMS, and only OCCASIONALLY. It used to earth itself after
+         * every single volley and light only the panels a bolt had touched;
+         * the field now says he "jumps and slams into the floor, briefly
+         * energising EVERY panel". Every panel is the whole floor, so it
+         * cannot be the punctuation on every volley — a third of the time
+         * leaves it a thing that happens to you rather than a metronome.
+         */
+        const slam = layer >= 3 && Math.random() < 0.34;
+        fs.mode = slam ? 'leap' : 'patrol';
+        if (slam) { fs.vy = VOLT.slamRise; fs.y0 = b.y; ctx.sfx('jump', { pitch: 0.6 }); }
+        else fs.t = rnd(...VOLT.rest[layer]);
         break;
       }
 
-      case 'discharge': {
-        if (--fs.t > 0) break;
+      /**
+       * THE JUMP IS THE TELEGRAPH. He leaves the floor, which is the one place
+       * the attack is about to cover, and the arc gives the player the better
+       * part of a second to get onto a platform. A floor-wide hazard with no
+       * warning would be unreadable; a floor-wide hazard announced by the boss
+       * physically vacating the floor explains itself.
+       */
+      case 'leap': {
+        fs.vy += VOLT.slamGravity;
+        b.y += fs.vy;
+        const rest = fs.y0;
+        if (b.y < rest) break;
+        b.y = rest;
+
         const a = ctx.arena;
         if (a) {
-          ctx.flash(8);
-          for (const pn of a.panels) {
-            if (!pn.marked) continue;
-            pn.marked = false;
-            pn.live = Math.max(pn.live, VOLT.dischargeLive);
+          // SOMEWHERE TO STAND, guaranteed. The whole floor going live at once
+          // is only survivable because the platforms are not part of the floor,
+          // so at least one has to be up when it lands.
+          const shelter = a.platforms.filter((pl) => !pl.lift);
+          if (shelter.length && !shelter.some((pl) => pl.on)) {
+            shelter[0].on = true; shelter[0].t = 180;
+          }
+          for (const pn of a.panels) pn.live = Math.max(pn.live, VOLT.slamLive);
+          ctx.flash(10);
+          // "Destroying any ground minions that are on those panels" — every
+          // panel is live, so every grounded minion is on one. Vaporised
+          // rather than damaged: the floor did it, not the player.
+          for (const m of ctx.minions) {
+            if (m.hp <= 0) continue;
+            if (m.y + m.h >= a.floorY - 6) ctx.vaporise(m);
           }
         }
+        ctx.shake(3, 34);
         fs.mode = 'patrol';
         fs.t = rnd(...VOLT.rest[layer]);
         break;

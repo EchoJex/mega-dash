@@ -1219,6 +1219,29 @@ export default class GameScene extends Phaser.Scene {
         if (b.x + b.radius >= this.arena.x1) { b.x = this.arena.x1 - b.radius; b.vx = 0; b.vy = -1.6; b.gravity = 0.02; }
       }
 
+      /**
+       * DISTANCE FALLOFF. Volt Man's bolts weaken with TOTAL TRAVEL DISTANCE,
+       * not per bounce: "damage and size and stun duration decrease with total
+       * travel distance". Those are different rules and they play differently —
+       * per-bounce means a bolt crossing an empty room stays lethal forever and
+       * a bolt in a corner dies instantly, which is backwards. Distance makes
+       * range the thing you read.
+       *
+       * Recomputed from the ORIGINALS every frame rather than multiplied down,
+       * so it cannot compound with the ricochet loss below or drift as the
+       * frame rate banks steps.
+       */
+      if (b.fadeDist) {
+        b.travelled = (b.travelled || 0) + Math.hypot(b.vx, b.vy);
+        const k = Math.pow(b.fadeK, b.travelled / b.fadeDist);
+        b.damage = Math.max(0.5, b.dmg0 * k);
+        // Layer 3 keeps its size: "bolts no longer lose size on bounce, only
+        // reduce in damage delt". Same switch, since size and damage are the
+        // two halves of the same falloff.
+        if (b.fadeSize) b.radius = Math.max(1.5, b.rad0 * Math.max(0.5, k));
+        if (b.stun0) b.stun = Math.round(b.stun0 * Math.max(0.25, k));
+      }
+
       // ZIGZAG. Volt Man's bolts do not travel in a line — they kink by a fixed
       // angle on an alternating beat, which is what makes their path readable
       // as a lightning bolt rather than as a slow projectile.

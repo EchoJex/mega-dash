@@ -54,6 +54,12 @@ function harness(bossId, layer) {
       playerBox: { x: 86, y: FLOOR - 22, w: 12, h: 22 },
       bounds: { x0: 16, x1: VIEW_W - 16 },
       shoot: (s) => shots.push(s),
+      // EVERY KEY THE REAL CONTEXT HAS. A fake that is missing one does not
+      // fail loudly, it fails as a TypeError deep inside a state machine that
+      // then wedges before reaching the line under test — which is exactly how
+      // a whole boss harness once ran green against a fight that died on a
+      // real device. `sfx` arrived with Strike Man's thrown bag.
+      sfx: () => {},
       shake: (mag, dur) => shakes.push({ mag, dur }),
       hurt: (x, d) => hurts.push({ x, d }),
       status: (id, f, o) => Attr.applyStatus(status, id, f, o),
