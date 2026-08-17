@@ -44,6 +44,44 @@ npx playwright@latest install chromium    # once
 npm run build && npm run smoke
 ```
 
+### `npm run sim` — the difficulty harness (experimental, on a branch)
+
+`tools/sim.mjs` plays a chosen fight thousands of times with a scripted player
+and reports what it cost. It builds a second Vite entry (`sim.html`, only when
+`SIM=1`, so a shipped APK carries none of it), opens it in headless Chromium and
+calls `GameScene.step()` directly — no `requestAnimationFrame`, no renderer in
+the loop, ~340,000 steps/sec, about 5,600x real time. **Nothing is mocked**: the
+physics, the boss state machines, the hazard loops and the weapon runtimes are
+the ones that ship. A 195-pairing sweep takes 38 seconds.
+
+```bash
+npm run sim -- --list                                   # what is built enough to test
+npm run sim -- --weapon=blaze_wheel --boss=blaze --layer=2 --level=3
+npm run sim -- --all --layer=1,2,3 --iterations=20      # every complete pairing
+```
+
+**It refuses incomplete content rather than scoring it.** 12 of the 17 bosses
+have no fight built and 6 weapons have no ladder; a boss with no behaviour
+stands still while the player shoots him, which is not an easy fight but NO
+fight. Those pairings are skipped and named. Where a layer falls back — Strike
+Man's hazard L2/L3 — it runs and says so in a CAVEATS block. The catalogue is
+derived from `fightFor` and `hasLadder`, so new content appears with no edit.
+
+**The dev branch is forced OFF and checked.** `DEV.enabled` goes on solely so
+`layerFor()` honours the layer override; every perk is set false and
+`assertClean()` throws if one survives. An `hpFloor` left on would silently make
+every win rate 100%.
+
+**The controller is a consistent player, not a good one.** Utility scoring over
+the same inputs a thumb has, with the engagement band read from the weapon's own
+ladder (`range`/`reach`/`jabReach`) — a fixed standoff had the Volt Spark, which
+zaps a 34px box, scoring 0% with zero shots fired. It also knows i-frames are
+free, because `hurt()` returns early during them and closing distance in that
+window is the only way melee ever lands.
+
+**Read the output as "does this weapon function against this boss", not as
+balance.** Weapon damage, boss HP and the ramp are all placeholders.
+
 ### The dev loop is the in-app updater, not a local server
 
 CI builds the APK on **every push to every branch** and publishes it as a GitHub Release.

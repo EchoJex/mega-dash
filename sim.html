@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MEGA DASH — simulation harness</title>
+    <!--
+      Not a page anyone looks at. It exists so Vite has a second entry to build
+      and so the headless browser has something to load; the CLI talks to
+      globalThis.__sim and never reads the DOM.
+    -->
+  </head>
+  <body style="margin:0;background:#060614;color:#5CADD5;font:12px monospace">
+    <div id="app"></div>
+    <p style="padding:8px">simulation harness — drive it from `npm run sim`</p>
+    <script type="module" src="/src/sim/boot.js"></script>
+  </body>
+</html>

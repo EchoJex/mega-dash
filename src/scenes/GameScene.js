@@ -931,7 +931,13 @@ export default class GameScene extends Phaser.Scene {
     if (dot > 0) {
       r.hp -= dot;
       if (dev('hpFloor')) r.hp = Math.max(1, r.hp);
-      if (r.hp <= 0) return this.gameOver();
+      // `this.gameOver()` — which has never existed — used to be called here.
+      // Burning to death threw a TypeError inside step(), so the one way an
+      // elemental attribute can finish you took the crash overlay instead of
+      // the results screen. Burn is live on Blaze Man and the Blaze Wheel, so
+      // this was reachable in ordinary play. Found by tools/sim.mjs on its
+      // first real fight; tests/scenes.test.js now refuses to let it back.
+      if (r.hp <= 0) return this.die();
     }
 
     if (!this.arena) return;
