@@ -96,12 +96,12 @@ where each one stands.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
-- **attack L1** `[draft]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
-- **attack L2** `[draft]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
+- **attack L1** `[ready]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
+- **attack L2** `[ready]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack that Lobs a small bouncing fireball in the direction the player is facing. like a catapult; applies Hot to ground or burn to enemy on contact for a scalable time. High Fireball contact damage, which is separate from burn DPS.
-- **weapon Lv1** `[draft]` Very slight rolling distance; up to 2 on screen; 3s Hot duration.
+- **weapon Lv1** `[ready]` Very slight rolling distance; up to 2 on screen; 3s Hot duration.
 - **weapon Lv3** `[ready]` 5s duration Hot trail on ground; moderate roll distance with rapid deceleration while on the ground. Affected by pits and platforms
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;Affected by pits and platforms
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs pierce through all enemies, applying 2s Burn to each on contact. Up to 2 fireballs on screen; fireballs rapidly accelerate while on the ground
@@ -114,20 +114,20 @@ where each one stands.
 
 - **palette notes** `[draft]` Blue yellow guy with a large grey hydro jet pack
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
-- **hazard L1** `[draft]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
+- **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with very strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this ankle deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Occasional very large brown barrels float from the steel pipes which break open and despawn on contact with the spike ball. Player can stand on them or shoot them to destroy them. Player moves with the barrel while standing on it, and takes heavy knockback but no damage if they are standing on the barrel when it breaks
-- **hazard L2** `[draft]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background telegraph the rain direction is about to change.
+- **hazard L2** `[ready]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background telegraph the rain direction is about to change.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this ankle deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Occasional large brown barrels or spike balls float from the steel pipes which break open and despawn on contact with the central drain spike ball. Player can stand on barrels or shoot the barrels to destroy them. Spike balls despawn on contact with the central spike ball, and are otherwise indestructible
-- **hazard L3** `[draft]` Rain changes direction with limited tapering down between direction changes, with a random duration of at least 3s. Lightning bolts in the background are now brought enough to wash it the screen like a flash bang. Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Semi frequent spike balls float from the steel pipes which despawn on contact with the central spike ball
+- **hazard L3** `[ready]` Rain changes direction with limited tapering down between direction changes, with a random duration of at least 3s. Lightning bolts in the background are now brought enough to wash it the screen like a flash bang. Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this knee deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Semi frequent spike balls float from the steel pipes which despawn on contact with the central spike ball
 - **attack L1** `[wip]` Boss flies around the stage just like the attack pattern of Queen B from DKC at full health. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L2** `[wip]` Boss flies around the stage just like the attack pattern of damaged Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **attack L3** `[wip]` Boss flies around the stage just like the attack pattern of critical health Queen B from DKC. Player takes moderate damage from contact with boss. Jetpack pushes the player in the direction of the water's travel and blocks player bullets.
 - **weapon class** `[ready]` Defensive
 - **weapon** `[ready]` Defensive; small, grey two-nozzle jetpack that has a blue layer on top that indicates a tank fill level. Rapidly self refilling water supply when not producing weapon affects. Tank capacity and refill rate level scalable
-- **weapon Lv1** `[draft]` Large Burst of mild damage large knockback water when landing on the ground
-- **weapon Lv3** `[draft]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
-- **weapon Lv6** `[draft]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
-- **weapon Lv10** `[draft]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
+- **weapon Lv1** `[ready]` Large Burst of mild damage large knockback water when landing on the ground
+- **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
+- **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
+- **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
 - **silhouette** `[ready]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
 
 ## Volt Man — Electric
@@ -136,13 +136,13 @@ where each one stands.
 `attack` Chain Spark · `weapon` Volt Spark
 
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
-- **arena** `[draft]` A very large plasma lamp in the background; several platforms phase in and out in random locations
-- **hazard L1** `[draft]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
-- **hazard L2** `[draft]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
-- **hazard L3** `[draft]` The sweep runs in both directions at once, meeting in the middle. Bolts now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
-- **attack L1** `[draft]` Infrequently fires up to 2 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size and stun duration decrease with total travel distance
-- **attack L2** `[draft]` 2 sets of bolts with a longer bounce life, fired as a primary volley and a secondary volley which is shot on a slightly shallower angle causing the two paths to eventually intersect.
-- **attack L3** `[draft]` Bolts no longer lose size on bounce, only reduce in damage delt. Occasionally the boss jumps and slams into the floor, briefly energising every panel destroying any ground minions that are on those panels.
+- **arena** `[ready]` A very large plasma lamp in the background; several platforms phase in and out in random locations
+- **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
+- **hazard L2** `[ready]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
+- **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Bolts now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
+- **attack L1** `[ready]` Infrequently fires up to 2 sequential zigzag lightning bolts that bounce and arc on contact with surfaces or the player. Damage and size and stun duration decrease with total travel distance
+- **attack L2** `[ready]` 2 sets of bolts with a longer bounce life, fired as a primary volley and a secondary volley which is shot on a slightly shallower angle causing the two paths to eventually intersect.
+- **attack L3** `[ready]` Bolts no longer lose size on bounce, only reduce in damage delt. Occasionally the boss jumps and slams into the floor, briefly energising every panel destroying any ground minions that are on those panels.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage.
 - **weapon Lv1** `[ready]` 0 chains; 1s stun on first enemy contact.
@@ -156,7 +156,7 @@ where each one stands.
 `palette` #2AAB1C / #5C4033 / #0A0A12 · `scale` 1.8x player height (average build) · `id` thorn
 `attack` Vine Lash · `weapon` Thorn Lash
 
-- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from.
+- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof; Thick root mass banks the left and right walls, which the vines emerge from.
 - **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
 - **hazard L2** `[wip]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
@@ -165,8 +165,8 @@ where each one stands.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Stand still while shooting a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. Moderately slow attack speed.
-- **weapon Lv1** `[draft]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
-- **weapon Lv3** `[draft]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
+- **weapon Lv1** `[ready]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
+- **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
@@ -184,10 +184,10 @@ where each one stands.
 - **attack L2** `[wip]` The blizzard now also pushes the player toward one wall for its duration, and the reflective armour holds through the whole icicle drop instead of subsiding partway.
 - **attack L3** `[wip]` Two blizzard cycles run back to back with no gap between them. During the second the boss slides along the frozen floor, so the armoured body is also a moving obstacle.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[draft]` Defensive; slowly forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
-- **weapon Lv1** `[draft]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
-- **weapon Lv3** `[draft]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
-- **weapon Lv6** `[draft]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
+- **weapon** `[ready]` Defensive; slowly forms a large shield of ice in front of the player that slowly bulks up. Short cooldown if damaged; long cooldown if destroyed by damage.
+- **weapon Lv1** `[ready]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
+- **weapon Lv3** `[ready]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
+- **weapon Lv6** `[ready]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
 - **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
@@ -198,8 +198,8 @@ where each one stands.
 
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take moderate damage from
-- **hazard L2** `[draft]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
-- **hazard L3** `[draft]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
+- **hazard L2** `[ready]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
+- **hazard L3** `[ready]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
 - **attack L1** `[ready]` Dashes in on foot and throws a Vulcan Jab — a rapid flurry of short-range punches off a clear wind-up — finishing on a Rising Break uppercut that launches. He has nothing at range on this layer, so the whole fight is spacing: stay outside his reach and he simply keeps closing.
 - **attack L2** `[ready]` Adds a guard stance between combos that reflects the first shot it takes. The Rising Break now chases upward once before he lands, and he will throw it on its own as an anti-air the moment the player is above him — jumping over him stops being free.
 - **attack L3** `[ready]` Adds a thrown Force Blast when the player keeps their distance, and a spinning kick that crosses the room and cannot be cleanly jumped. The combo can also be cancelled into a dash mid-string, so he finishes it from the side he did not start on. Near gets jabbed, above gets the uppercut, far gets the blast, and the spin closes whatever gap is left.
