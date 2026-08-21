@@ -602,6 +602,39 @@ wins, and fix the comment when you touch that file.
 The BUGS table uses the same three markers: fix `[draft]` bugs, leave `[wip]` alone, and
 `[ready]` means already fixed.
 
+### Comment threads on a design artifact — the `[draft]` protocol
+
+The owner runs design conversations as **comment threads on a published artifact**,
+and those threads are how a `[wip]` field becomes a `[draft]` one. The standing loop:
+
+1. The owner comments on a cell, **tagging Claude** so the thread is activated.
+2. Claude replies in that thread — `Artifact` with `action: "reply"`.
+3. They reply, Claude replies, for as long as it takes.
+4. The owner's final comment is **"move to draft"**.
+5. Claude then takes **the cell the thread is anchored to** plus **everything settled in
+   the dialogue**, writes it as actionable prose into the matching `design/TRACKER.md`
+   field, and marks that field `[draft]`.
+
+**"Move to draft" is a TRANSCRIPTION instruction, not a build order.** The owner reviews
+the field before it counts. So writing `[draft]` here does NOT license building it — wait
+to be told, even though `[draft]` is the build gate everywhere else in this file. That is
+the one place the marker means something narrower than usual.
+
+**One commit per "move to draft"**, naming the field, so a bad transcription is one revert.
+
+**Threads map to fields by their anchor.** An artifact card is a weapon and a row is a
+rung, e.g. `FROST GUARD / Lv 10` → `## Frost Man — Ice` → `- **weapon Lv10**`. Verify the
+anchor rather than guessing from the comment text: the anchor is a CSS path, so resolve it
+against the artifact HTML before writing anything. A slice has exactly fourteen fields —
+`arena`, `hazard L1/L2/L3`, `attack L1/L2/L3`, `weapon class`, `weapon`,
+`weapon Lv1/Lv3/Lv6/Lv10`, `silhouette`. **A weapon RENAME is not one of them**: display
+names live in the slice's meta line, which is what `npm run sync` reads.
+
+**CLAUDE IS NOT NOTIFIED OF NEW COMMENTS** from a remote Claude Code session — nothing
+arrives on its own. Either the owner says "check the comments" and Claude polls with
+`action: "comments"`, or they run `claude --watch-artifact <url>` from Claude Code on their
+own machine, which does deliver them. Do not promise to notice a comment as it lands.
+
 ### BRAINSTORM is off-limits
 
 Read it for context — it says where the game is heading and stops you building something
