@@ -602,25 +602,28 @@ wins, and fix the comment when you touch that file.
 The BUGS table uses the same three markers: fix `[draft]` bugs, leave `[wip]` alone, and
 `[ready]` means already fixed.
 
-### Comment threads on a design artifact — the `[draft]` protocol
+### Comment threads on a design artifact — the `[wip]` protocol
 
-The owner runs design conversations as **comment threads on a published artifact**,
-and those threads are how a `[wip]` field becomes a `[draft]` one. The standing loop:
+The owner runs design conversations as **comment threads on a published artifact**, and
+those threads are how an unwritten field becomes a written one. The standing loop:
 
 1. The owner comments on a cell, **tagging Claude** so the thread is activated.
 2. Claude replies in that thread — `Artifact` with `action: "reply"`.
 3. They reply, Claude replies, for as long as it takes.
-4. The owner's final comment is **"move to draft"**.
+4. The owner's final comment is **"move to WIP"**.
 5. Claude then takes **the cell the thread is anchored to** plus **everything settled in
    the dialogue**, writes it as actionable prose into the matching `design/TRACKER.md`
-   field, and marks that field `[draft]`.
+   field, and marks that field **`[wip]`**.
+6. The owner reviews it and moves it to `[draft]` **themselves**, in their own time.
 
-**"Move to draft" is a TRANSCRIPTION instruction, not a build order.** The owner reviews
-the field before it counts. So writing `[draft]` here does NOT license building it — wait
-to be told, even though `[draft]` is the build gate everywhere else in this file. That is
-the one place the marker means something narrower than usual.
+**CLAUDE NEVER WRITES `[draft]`.** That is the whole point of the handoff. `[draft]` stays
+exactly what it is everywhere else in this file — the owner's green light, applied by the
+owner — so a transcription can never be mistaken for permission to build it. `[wip]` is
+also the honest marker for what Claude is producing: prose that is still being written and
+has not been approved. The tracker web app already drops any edited field to `[wip]`, so
+this agrees with what the app would do anyway.
 
-**One commit per "move to draft"**, naming the field, so a bad transcription is one revert.
+**One commit per "move to WIP"**, naming the field, so a bad transcription is one revert.
 
 **Threads map to fields by their anchor.** An artifact card is a weapon and a row is a
 rung, e.g. `FROST GUARD / Lv 10` → `## Frost Man — Ice` → `- **weapon Lv10**`. Verify the
