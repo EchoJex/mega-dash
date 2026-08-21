@@ -156,7 +156,7 @@ where each one stands.
 `palette` #2AAB1C / #5C4033 / #0A0A12 · `scale` 1.8x player height (average build) · `id` thorn
 `attack` Vine Lash · `weapon` Thorn Lash
 
-- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof; light shafts fall in bands. Thick root mass banks the left and right walls, which the vines emerge from.
+- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
 - **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
 - **hazard L2** `[wip]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
