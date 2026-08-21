@@ -67,9 +67,14 @@ where each one stands.
 
 ## Proto Mk0 — Typeless
 
-`palette` #687380 / #2E3338 / #0A0A12 · `scale` 0.8x player height (prototype chassis) · `id` core
-`attack` Core Pulse · `weapon` Nullfire Drone
+`id` core
 
+- **palette primary** `[ready]` #687380
+- **palette secondary** `[ready]` #2E3338
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 0.8x player height (prototype chassis)
+- **attack name** `[ready]` Core Pulse
+- **weapon name** `[ready]` Nullfire Drone
 - **palette notes** `[ready]` Light grey / dark grey
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
@@ -88,9 +93,14 @@ where each one stands.
 
 ## Blaze Man — Fire
 
-`palette` #E11416 / #141414 / #0A0A12 · `scale` 1.75x player height (average build) · `id` blaze
-`attack` Inferno Wheel · `weapon` Blaze Wheel
+`id` blaze
 
+- **palette primary** `[ready]` #E11416
+- **palette secondary** `[ready]` #141414
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.75x player height (average build)
+- **attack name** `[ready]` Inferno Wheel
+- **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[todo]`
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -109,9 +119,14 @@ where each one stands.
 
 ## Tempest Man — Water
 
-`palette` #145DBD / #C09060 / #0A0A12 · `scale` 1.75x player height (average build) · `id` torrent
-`attack` Aqua Torrent · `weapon` Torrent Cannon
+`id` torrent
 
+- **palette primary** `[ready]` #145DBD
+- **palette secondary** `[ready]` #C09060
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.75x player height (average build)
+- **attack name** `[ready]` Aqua Torrent
+- **weapon name** `[ready]` Torrent Cannon
 - **palette notes** `[draft]` Blue yellow guy with a large grey hydro jet pack
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
@@ -132,9 +147,14 @@ where each one stands.
 
 ## Volt Man — Electric
 
-`palette` #F5D328 / #5B21B6 / #0A0A12 · `scale` 1.65x player height (average build) · `id` volt
-`attack` Chain Spark · `weapon` Volt Spark
+`id` volt
 
+- **palette primary** `[ready]` #F5D328
+- **palette secondary** `[ready]` #5B21B6
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.65x player height (average build)
+- **attack name** `[ready]` Chain Spark
+- **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **arena** `[ready]` A very large plasma lamp in the background; several platforms phase in and out in random locations
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
@@ -153,9 +173,14 @@ where each one stands.
 
 ## Thorn Man — Grass
 
-`palette` #2AAB1C / #5C4033 / #0A0A12 · `scale` 1.8x player height (average build) · `id` thorn
-`attack` Vine Lash · `weapon` Thorn Lash
+`id` thorn
 
+- **palette primary** `[ready]` #2AAB1C
+- **palette secondary** `[ready]` #5C4033
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.8x player height (average build)
+- **attack name** `[ready]` Vine Lash
+- **weapon name** `[ready]` Thorn Lash
 - **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
 - **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
 - **hazard L2** `[wip]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
@@ -173,9 +198,14 @@ where each one stands.
 
 ## Frost Man — Ice
 
-`palette` #A0EFE7 / #FFFFFF / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` frost
-`attack` Glacier Spike · `weapon` Frost Guard
+`id` frost
 
+- **palette primary** `[ready]` #A0EFE7
+- **palette secondary** `[ready]` #FFFFFF
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.85x player height (bulky build)
+- **attack name** `[ready]` Glacier Spike
+- **weapon name** `[ready]` Frost Guard
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
 - **hazard L2** `[wip]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
@@ -193,9 +223,14 @@ where each one stands.
 
 ## Strike Man — Fighting
 
-`palette` #EA6A34 / #7C2D12 / #0A0A12 · `scale` 1.85x player height (bulky build) · `id` strike
-`attack` Rush Combo · `weapon` Strike Gauntlet
+`id` strike
 
+- **palette primary** `[ready]` #EA6A34
+- **palette secondary** `[ready]` #7C2D12
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.85x player height (bulky build)
+- **attack name** `[ready]` Rush Combo
+- **weapon name** `[ready]` Strike Gauntlet
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take moderate damage from
 - **hazard L2** `[ready]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
@@ -213,9 +248,14 @@ where each one stands.
 
 ## Venom Man — Poison
 
-`palette` #A926D9 / #84CC16 / #0A0A12 · `scale` 1.7x player height (average build) · `id` venom
-`attack` Toxic Cloud · `weapon` Venom Spray
+`id` venom
 
+- **palette primary** `[ready]` #A926D9
+- **palette secondary** `[ready]` #84CC16
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.7x player height (average build)
+- **attack name** `[ready]` Toxic Cloud
+- **weapon name** `[ready]` Venom Spray
 - **palette notes** `[wip]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
 - **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
 - **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
@@ -234,9 +274,14 @@ where each one stands.
 
 ## Quake Man — Ground
 
-`palette` #A76625 / #EA580C / #0A0A12 · `scale` 1.95x player height (bulky build) · `id` quake
-`attack` Seismic Stomp · `weapon` Quake Hammer
+`id` quake
 
+- **palette primary** `[ready]` #A76625
+- **palette secondary** `[ready]` #EA580C
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.95x player height (bulky build)
+- **attack name** `[ready]` Seismic Stomp
+- **weapon name** `[ready]` Quake Hammer
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
@@ -254,9 +299,14 @@ where each one stands.
 
 ## Gale Man — Flying
 
-`palette` #5CADD5 / #F8FAFC / #0A0A12 · `scale` 1.5x player height (petite build) · `id` gale
-`attack` Wind Vortex · `weapon` Gale Vortex
+`id` gale
 
+- **palette primary** `[ready]` #5CADD5
+- **palette secondary** `[ready]` #F8FAFC
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.5x player height (petite build)
+- **attack name** `[ready]` Wind Vortex
+- **weapon name** `[ready]` Gale Vortex
 - **arena** `[wip]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
 - **hazard L2** `[wip]` The wind gusts rather than holding steady — short, strong bursts strong enough to break a jump arc, separated by calm.
@@ -274,9 +324,14 @@ where each one stands.
 
 ## Psi Man — Psychic
 
-`palette` #EA43BD / #F9A8D4 / #0A0A12 · `scale` 1.55x player height (petite build) · `id` psi
-`attack` Mind Lift · `weapon` Psi Orb
+`id` psi
 
+- **palette primary** `[ready]` #EA43BD
+- **palette secondary** `[ready]` #F9A8D4
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.55x player height (petite build)
+- **attack name** `[ready]` Mind Lift
+- **weapon name** `[ready]` Psi Orb
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
 - **hazard L2** `[wip]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
@@ -294,9 +349,14 @@ where each one stands.
 
 ## Swarm Man — Bug
 
-`palette` #B8DC28 / #4D5C1A / #0A0A12 · `scale` 1.6x player height (petite build) · `id` swarm
-`attack` Infestation · `weapon` Swarm Caller
+`id` swarm
 
+- **palette primary** `[ready]` #B8DC28
+- **palette secondary** `[ready]` #4D5C1A
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.6x player height (petite build)
+- **attack name** `[ready]` Infestation
+- **weapon name** `[ready]` Swarm Caller
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
 - **hazard L2** `[wip]` Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst.
@@ -314,9 +374,14 @@ where each one stands.
 
 ## Granite Man — Rock
 
-`palette` #5F443A / #A8A296 / #0A0A12 · `scale` 2.0x player height (bulky build) · `id` granite
-`attack` Boulder Roll · `weapon` Rock Buster
+`id` granite
 
+- **palette primary** `[ready]` #5F443A
+- **palette secondary** `[ready]` #A8A296
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 2.0x player height (bulky build)
+- **attack name** `[ready]` Boulder Roll
+- **weapon name** `[ready]` Rock Buster
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
 - **hazard L2** `[wip]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
@@ -334,9 +399,14 @@ where each one stands.
 
 ## Wraith Man — Ghost
 
-`palette` #A68DD8 / #2A1F4A / #0A0A12 · `scale` 1.6x player height (petite build) · `id` wraith
-`attack` Spectral Shift · `weapon` Wraith Cloak
+`id` wraith
 
+- **palette primary** `[ready]` #A68DD8
+- **palette secondary** `[ready]` #2A1F4A
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.6x player height (petite build)
+- **attack name** `[ready]` Spectral Shift
+- **weapon name** `[ready]` Wraith Cloak
 - **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
 - **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
@@ -354,9 +424,14 @@ where each one stands.
 
 ## Drake Man — Dragon
 
-`palette` #C3225D / #6B1220 / #0A0A12 · `scale` 1.9x player height (bulky build) · `id` drake
-`attack` Dragon Breath · `weapon` Drake Breath
+`id` drake
 
+- **palette primary** `[ready]` #C3225D
+- **palette secondary** `[ready]` #6B1220
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.9x player height (bulky build)
+- **attack name** `[ready]` Dragon Breath
+- **weapon name** `[ready]` Drake Breath
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
 - **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
 - **hazard L2** `[wip]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
@@ -374,9 +449,14 @@ where each one stands.
 
 ## Eclipse Man — Dark
 
-`palette` #2A273F / #DC2626 / #0A0A12 · `scale` 1.75x player height (average build) · `id` eclipse
-`attack` Shadow Bind · `weapon` Astral Cloak
+`id` eclipse
 
+- **palette primary** `[ready]` #2A273F
+- **palette secondary** `[ready]` #DC2626
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.75x player height (average build)
+- **attack name** `[ready]` Shadow Bind
+- **weapon name** `[ready]` Astral Cloak
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
 - **hazard L2** `[wip]` Larger and more numerous patches, and a shadow clone of an ordinary minion spawns inside each one.
@@ -394,9 +474,14 @@ where each one stands.
 
 ## Alloy Man — Steel
 
-`palette` #B2BABD / #4B5563 / #0A0A12 · `scale` 1.9x player height (bulky build) · `id` alloy
-`attack` Metal Barrage · `weapon` Alloy Blade
+`id` alloy
 
+- **palette primary** `[ready]` #B2BABD
+- **palette secondary** `[ready]` #4B5563
+- **palette outline** `[ready]` #0A0A12
+- **scale** `[ready]` 1.9x player height (bulky build)
+- **attack name** `[ready]` Metal Barrage
+- **weapon name** `[ready]` Alloy Blade
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **hazard L1** `[wip]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
 - **hazard L2** `[wip]` Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room.

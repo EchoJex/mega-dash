@@ -27,11 +27,32 @@ const out = { _note: 'GENERATED from design/TRACKER.md by tools/sync-tracker.js.
 for (const item of slices.items) {
   if (item.title === null) continue;                 // section intro, not a boss
   const meta = rawOf(item).join(' ');
-  const hexes = meta.match(HEX) || [];
-  const scale = /`scale`\s*([\d.]+)/.exec(meta);
-  const attack = /`attack`\s*([^·`]+)/.exec(meta);
-  const weapon = /`weapon`\s*([^·`]+)/.exec(meta);
   const name = item.title.split('—')[0].trim();
+
+  /**
+   * THE MECHANICAL VALUES ARE FIELDS NOW, not a meta line.
+   *
+   * They used to be one raw `palette ... scale ... id` strip, which meant the
+   * owner could read them in the tracker app but not change them — a colour is
+   * exactly the kind of thing that moves as a game finds itself, and it was the
+   * one part of a slice that needed a commit to edit. As fields they get a
+   * status marker and a textbox like every other design decision.
+   *
+   * The meta line is still read as a FALLBACK so a slice written in the old
+   * shape keeps working, and so this never becomes a flag day.
+   */
+  const f = (label) => fieldsOf(item).find((x) => x.label === label)?.text?.trim() || '';
+  // A NON-GLOBAL copy: `HEX` carries /g for `match`, and calling `.test` on a
+  // global regex advances its lastIndex, so the second hex of every boss failed
+  // and every boss was skipped.
+  const ONE_HEX = /^#[0-9A-Fa-f]{6}$/;
+  const fieldHexes = [f('palette primary'), f('palette secondary'), f('palette outline')]
+    .filter((h) => ONE_HEX.test(h));
+  const hexes = fieldHexes.length === 3 ? fieldHexes : (meta.match(HEX) || []);
+  const scaleText = f('scale') || meta;
+  const scale = /([\d.]+)\s*x/.exec(scaleText) || /`scale`\s*([\d.]+)/.exec(meta);
+  const attack = f('attack name') ? [null, f('attack name')] : /`attack`\s*([^·`]+)/.exec(meta);
+  const weapon = f('weapon name') ? [null, f('weapon name')] : /`weapon`\s*([^·`]+)/.exec(meta);
   // The id is stamped in the meta line rather than derived from the name:
   // Tempest Man ships as 'torrent' after a rename, and deriving it would break
   // silently. Fall back to the name only if the stamp is missing.

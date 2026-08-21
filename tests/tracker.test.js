@@ -52,8 +52,23 @@ test('every slice carries an id stamp linking it to the code', () => {
   for (const b of bosses) {
     const meta = rawOf(b).join(' ');
     assert.match(meta, /`id`\s*[a-z_]+/, `${b.title} has no \`id\` stamp`);
-    assert.equal((meta.match(/#[0-9A-Fa-f]{6}/g) || []).length, 3,
-      `${b.title} must list exactly 3 palette hexes`);
+
+    /**
+     * THE PALETTE IS THREE FIELDS NOW, not three hexes in the meta strip.
+     *
+     * It moved so the owner can edit a colour in the tracker app like any other
+     * design decision — a palette is exactly the kind of thing that moves as a
+     * game finds itself, and it used to be the one part of a slice that needed
+     * a commit to change. The `id` stays in the meta strip on purpose: it is the
+     * join key that saves and code depend on, so it is readable and not
+     * editable.
+     */
+    const f = (label) => fieldsOf(b).find((x) => x.label === label)?.text?.trim();
+    for (const part of ['primary', 'secondary', 'outline']) {
+      assert.match(f(`palette ${part}`) ?? '', /^#[0-9A-Fa-f]{6}$/,
+        `${b.title} needs a \`palette ${part}\` field holding one hex`);
+    }
+    assert.ok(f('scale'), `${b.title} has no \`scale\` field`);
   }
 });
 
