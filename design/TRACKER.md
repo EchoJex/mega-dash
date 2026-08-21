@@ -542,6 +542,70 @@ interaction present on every hit.
 
 ---
 
+# SYSTEMS
+
+Everything that is not one boss's slice. These are the decisions that cut across
+the whole game — the protagonist, the loadout, the wheel, the room, the meta —
+and they had no home here until now, which meant the biggest creative choices in
+the project were the only ones that could not be audited or edited from the app.
+
+Most of these start at `[ready]` because they describe what the game already
+does. That is not a claim they are settled forever; it is the honest marker for
+"built and untouched since". Edit one and the app drops it to `[wip]` like any
+other field, and it becomes a thing to build rather than a thing to read.
+
+## Player
+
+- **palette** `[ready]` Fixed white — the three colours baked into `public/sprites/player.png`, held in `PLAYER_PALETTE` so the constant and the sheet cannot disagree. He was blue (#1565C0) for the whole placeholder era and the owner's sheet arrived white; the art wins. White is also the strongest answer to "never lose sight of the player" against arenas running from Blaze Man's dark red to Eclipse Man's near-black.
+- **sprite grid** `[ready]` 24x24, the NES reference size. Twelve frames in one 288x24 sheet. The jump is registered as three one-frame clips rather than a loop, so the pose is picked from `vy` and the arc reads.
+- **equipment visuals** `[ready]` What the player is carrying is told by weapon hardware DRAWN ON him, never by his colour. Live recolouring of the suit from the source boss's palette is scrubbed and must not return: a tint multiplies the whole texture, so it was quietly blocking the real three-colour art, and a protagonist whose colour changes is one you have to re-find after every re-quip.
+- **collision box** `[ready]` The sprite box and the collision box are deliberately different. The silhouette changes constantly — arm cannon extends, legs tuck, slide flattens — and a hitbox that followed the art would make vulnerability change frame to frame. A stable narrower box is both precise and fair.
+- **movement** `[ready]` Walk, jump, gravity, terminal velocity, slide speed and duration are the classic NES Mega Man values converted from that game's 8.8 fixed point. A known-good reference feel to tune away from, not a finished tune.
+- **hazard response** `[ready]` Pits and spikes deal the same massive damage, never an instant kill, then beam the player up past the top of the screen and back down at the leftmost clear spot. The 90-frame invulnerability is preserved in full and its countdown is frozen while the beam travels.
+
+## Loadout
+
+- **slot budget** `[ready]` Up to two offensive positions and two defensive ones. The sidearm OCCUPIES an offensive position rather than riding above the loadout, so it is not a free extra.
+- **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away.
+- **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live.
+- **class split** `[ready]` Eleven offensive against seven defensive today, counting the sidearm inside the offensive half.
+- **re-quip window** `[ready]` Slots may only be rearranged from a boss going down until the player warps into the next arena. Switching a slotted weapon on or off is NOT gated by this — that cannot change what you are carrying.
+
+## The re-quip wheel
+
+- **in-situ mode** `[ready]` Opened by the RE-QUIP button mid-fight. Slow motion, HUD stays up, the ring is scenery at 0.16 alpha and not touchable. One tap or one diagonal swipe aims a slot or toggles it. Seven-second timeout as a dead man's handle.
+- **post-boss mode** `[ready]` Opens by itself when a boss falls. Hard pause, HUD hidden, every unlocked benched weapon at full strength, and the only place the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon.
+- **ring layout** `[ready]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately.
+- **keyboard and gamepad** `[todo]` There is no way to re-quip without a mouse or a touchscreen. The in-situ wheel has Q/E/Z/C; the post-boss wheel has nothing. Whatever is standard practice for a hybrid touch/keyboard interface, mirroring the two-tap select-then-place shape.
+
+## Minions
+
+- **roster** `[ready]` Exactly two, one per plane of movement. SCRAPPER walks its span and turns at pit edges; DRIFTER drifts left while tracking the player's altitude. Bosses are events; minions are weather.
+- **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
+- **spawn ramp** `[ready]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena.
+
+## HUD and controls
+
+- **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad.
+- **keyboard** `[ready]` A/D or arrows walk, W aims up, LSHIFT jumps, S slides, SPACE fires, Q/E open the in-situ wheel, ESC closes it.
+- **slide** `[ready]` Double-tap jump. The jump always wins the first tap — detecting a double-tap first would put latency on every jump in the game — and the second tap inside the window puts the player back where he launched and slides instead.
+- **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` silently drops any glyph it lacks, so HUD strings stay inside plain uppercase, digits and spaces.
+- **dev HUD** `[ready]` A `[DEV]` marker whenever dev mode is on, plus a diagnostic line carrying the build, the run's world seed, and render density with the viewport it was picked from. The marker is not switchable; the diagnostic line is.
+
+## Meta progression
+
+- **chips** `[ready]` Earned from score and boss kills at run end, spent on Upgrades. Score alone earns Chips, so a run that never reaches a boss still buys something.
+- **upgrades** `[ready]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities.
+- **boss layers** `[ready]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Shipped behaviour clamps at 3 forever.
+- **run progression** `[ready]` Weapons are earned by killing the boss that carries them. EXP is COLLECTED from enemy drops and never granted; distance grants nothing. A level is a flat 100 EXP and pauses for a card screen.
+
+## Run structure
+
+- **area** `[ready]` The endless procedural stream. Its background and its ground are themed to the boss whose door is coming, so the arena is foreshadowed before you reach it.
+- **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible.
+- **door and warp** `[ready]` The door does not open into the arena, it warps you there: contact freezes everything, fades to black, builds the room behind full black, then fades back in. Nothing is ever seen half-constructed.
+- **pacing targets** `[wip]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
+
 # BUGS
 
 Shorthand is fine. `build` is the versionCode shown on the title screen.

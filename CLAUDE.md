@@ -577,6 +577,40 @@ needed structured data to read a design doc. Both are gone.
 `tests/tracker.test.js` asserts `serialize(parse(x)) === x` byte for byte, so the app
 cannot silently rewrite or drop prose it did not understand.
 
+### Everything describable is a FIELD — the audit surface
+
+`design/TRACKER.md` has five editable sections, and the app renders **every**
+field an item carries, generically. Making something editable is therefore not a
+parser change or an app change — it is writing the line in field shape:
+
+```
+- **label** `[marker]` prose
+```
+
+**`# SYSTEMS` is the home for everything that is not one boss's slice** — the
+player, the loadout, the wheel, minions, HUD and controls, meta progression and
+run structure. It exists because the biggest creative decisions in the project
+were the only ones that could not be audited or edited from the app: the
+protagonist going from blue to white, and equipment being hardware drawn ON him
+rather than a palette swap, are both real design calls that lived only in code
+and in this file. Most of its fields start `[ready]`, which is the honest marker
+for "built and untouched since" rather than a claim they are settled forever.
+
+**A slice's palette, scale and display names are fields too.** They were a raw
+`palette ... scale ... id` strip, readable in the app and editable only by
+committing. A weapon RENAME is now the `weapon name` field, not a meta-line edit.
+
+**The `id` stamp stays raw on purpose.** It is the join key that boss-data.json,
+the status board and every save depend on, and Tempest Man ships as `torrent`
+after a rename — so it stays readable and not editable rather than becoming a
+footgun with a textbox around it. `tools/sync-tracker.js` reads the fields and
+still falls back to the old meta line, so a slice in the old shape keeps working.
+
+**`npm run status` deliberately does NOT count the identity fields.** Its board
+measures whether a boss's FIGHT is designed; folding palette and names into the
+denominator would make every boss read 19/19 and destroy the signal. `DESIGN_FIELDS`
+in `tools/status.js` is that list, and it stays the thirteen fight fields.
+
 ### Status markers — the implementation gate
 
 Every field carries one marker, and **Claude implements `[draft]` fields only**:
