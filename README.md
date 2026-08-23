@@ -1,15 +1,13 @@
 # Mega Dash
 
-> ## ⏸ `main` is PAUSED for playtesting
+> ## Work lands on `main`
 >
-> This build is the **dev base camp**: controls, physics, arenas, progression and
-> the updater all work, and it is meant to be played rather than changed. New work
-> is happening on **`boss-dev`** — boss attacks, arena hazards and the elemental
-> attribute system for Core Man, Blaze Man and Tempest Man.
->
-> Pull `boss-dev` from inside the game with **long-press UPDATE → pick the branch**.
-> `main` keeps its own rolling `latest` build, so tapping UPDATE always returns you
-> to this stable base camp.
+> Every push to every branch produces an installable build, so a feature branch is
+> never needed just to try something — but `main` is where work goes unless there is
+> a reason to isolate it. The in-app updater publishes its rolling `latest` channel
+> from `main` only, and the tracker web app is served from `main`, so a long-lived
+> side branch silently costs a channel pick on every playtest and hides the design
+> from the tool that edits it.
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
 **Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
@@ -50,20 +48,19 @@ npm run dev
 | `npm test` | code-integrity and data-shape checks |
 | `npm run status` | element slice board — what is built, per boss |
 | `npm run sync` | regenerate `design/boss-data.json` from TRACKER.md |
+| `npm run smoke` | OPT-IN: boots the real bundle in Chromium and plays it (~3 min) |
 | `npm run apk` | local APK build (CI does this automatically) |
 
 ## Controls
 
-| Zone | |
-|---|---|
-| bottom-left | 4 buttons — ◀ ◸ ◹ ▶; diagonals reserved for weapons; drag down = slide |
-| bottom-right | `[]` jump (again mid-air = air dash) · `()` shoot, hold = charge |
-| bottom-centre | RE-QUIP — **tap** to pause and open the weapon wheel · **swipe** for a slow-motion directional switch |
-| top-right | pause |
+Deliberately **not duplicated here.** They move with every playtest, and this table
+had drifted into describing an air dash the game does not have, a drag-down slide
+that is now a double-tap, and a RE-QUIP button that pauses the game — which is the
+exact thing it was rebuilt to be incapable of.
 
-Keyboard: arrows/AD move · Space jump (hold for height) · hold Z charge · X slide
+The bindings live in one place: **[CLAUDE.md → Controls — as bound](CLAUDE.md)**.
 
-The slide is **meta progression** — it is locked at Slide Mastery rank 0 and unlocked by
+The slide is **meta progression** — locked at Slide Mastery rank 0, unlocked by
 buying rank 1 in the Hub.
 
 ## Documentation

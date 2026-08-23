@@ -172,6 +172,11 @@ let dirty = false, saving = false, saveTimer = null;
  * commits. Keystroke saves now land on `tracker-draft/<branch>` and the SAVE
  * button fast-forwards the working branch to whatever the draft has reached.
  *
+ * THAT DELAYS THE NOISE, IT DOES NOT REMOVE IT. A fast-forward carries every
+ * commit the draft accumulated, so a publish moves all of them onto the working
+ * branch in one go — the history is batched, not squashed. Squashing would mean
+ * PUTting the file to the working branch directly rather than moving its ref.
+ *
  * The safety property is unchanged — nothing you type is ever only in a browser
  * tab — but the cost moves to a branch nobody reads. CI already ignores
  * `design/**`, so neither path was ever burning an APK build.

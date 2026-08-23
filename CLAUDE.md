@@ -446,6 +446,13 @@ cannot change what you are carrying, so it is never gated.
 
 ### The re-quip wheel — TWO modes, not one control
 
+**DRAG-AND-DROP IS OFF THE LIST, by the owner's own call.** It was on it — "drag a weapon
+off the ring onto a module", asked for by name — and after playing it they asked instead
+to *"simply tap a weapon and then tap a slot or tap a slot and then tap a weapon"*. Two
+taps in either order is what is built. Do not reintroduce a drag as the primary
+interaction without them asking again.
+
+
 The wheel was one control doing two unrelated jobs, and that is what made re-quipping
 feel wrong. They are now separate modes with **inverse emphasis**, so the player never has
 to be told which one they are in — the brightness says it.
@@ -591,8 +598,14 @@ the repo.
 **Autosaves go to `tracker-draft/<branch>`, not to the working branch.** Typing produced a
 commit every couple of seconds and buried real history hundreds of lines deep. The
 **Publish** button fast-forwards the working branch onto the draft — or merges, if the
-working branch moved while they were typing — and then resets the draft. So the working
-branch gains one commit per publish however many times they paused.
+working branch moved while they were typing — and then resets the draft.
+
+**IT DOES NOT SQUASH, AND THE HISTORY SHOWS IT.** A fast-forward brings every commit the
+draft has accumulated, so publishing 100 autosaves puts 100 autosave commits on the working
+branch at once — `main` currently carries 192 of them against 4 publishes. The draft branch
+therefore DELAYS the noise rather than removing it, which is not what this paragraph used
+to claim. Getting one commit per publish would mean writing the file to the working branch
+directly instead of moving the ref, and nobody has done that work.
 
 **This means unpublished edits are invisible to you.** A field marked `[draft]` that was
 never published is on `tracker-draft/main` and not in your checkout. If the owner says
@@ -1050,75 +1063,7 @@ lumping all three together predate the tracker's current definition.
 
 ---
 
-## PICK UP HERE — the re-quip redesign, unfinished
-
-The owner is mid-way through a redesign of the wheel and the control scheme. Four passes
-are built and pushed; **one piece remains**:
-
-1. **Post-boss keyboard/gamepad navigation.** Tracked as `SYSTEMS / The re-quip wheel /
-   keyboard and gamepad` in the tracker, which owns its status; this is the rationale.
-   No way to re-quip without a mouse or a touchscreen right now. The owner sketched a cursor — left/right over the ring to pick a
-   weapon, fire to take it, cursor jumps to the slots, left/right to place, looping back —
-   then said *"i thought a cursor would be the right approach, but i sometimes over explain
-   simple things"* and asked for **whatever the standard practice is for a hybrid
-   touch/keyboard interface**. Treat the cursor sketch as one option, not a spec. The
-   two-tap flow below is a good shape to mirror: select, then place, either order.
-
-**Drag-and-drop is OFF the list, by the owner's own call.** It was on it — "drag a weapon
-off the ring onto a module", asked for by name — and after playing it the owner asked
-instead to *"simply tap a weapon and then tap a slot or tap a slot and then tap a weapon"*.
-Two taps in either order is what is built. Do not reintroduce a drag as the primary
-interaction without them asking again.
-
-Everything else on that list is done: the two wheel modes, the oval fanning ring, the
-in-situ swipe and key routes, hidden un-earned content, the dev level dial, the
-auto-opening post-boss wheel, and the weapon-level consolation prize.
-
-**The overlays that made the in-situ wheel unjudgeable are cleared.** The owner reported
-they could not tell whether the gesture felt good because things were drawing over each
-other. Four things were:
-
-- the **dev HUD's diagnostic line**. In-situ deliberately keeps the HUD up — the fight is
-  still running — and three stacked lines reach y=40, which is exactly where the wheel's
-  sidearm dot and its caption live. Energy and the live weapon stay; build, seed and
-  density are dropped while either wheel is open. They are diagnostics, not something you
-  read mid-gesture.
-- the **ring frame and its two class captions**, which stayed at full strength while the
-  padlocks and benched discs were already pushed back. A control whose whole claim is
-  "only the 2×2 grid answers a touch" was painting a bright oval across a fight.
-- the **module watermark** at 0.45. The crossguard sits at the module's centre, which is
-  exactly where the level line goes, and the two read as one smudge. A filled module has
-  already answered the question the watermark asks, so it drops to 0.16.
-- the **readout's second line**, which was drawing across the top of the RE-QUIP button —
-  where a thumb rests for the entire in-situ gesture. `READ_Y` is 172, fenced between the
-  ring's lowest disc (170) and the button (190).
-
-**Playtest state:** pass 3 has now been played on device. What came back, and what pass 4
-did about it:
-
-- the RE-QUIP button's second tap opened the hard-paused post-boss wheel mid-fight —
-  **fixed**, the button cannot reach that wheel at all any more
-- the tap/hold/drag flow was unreadable — **replaced** by two taps in either order, no
-  timed gesture anywhere on the wheel
-- a rank-3 offensive row still only ever fired one weapon — **fixed** by `aimWeapon`
-- the newly dropped weapon looked like every other unlocked one — **fixed**, the halo now
-  means new and nothing else
-
-None of pass 4 has been played on device yet. The in-situ gesture and the two-tap swap are
-both things the owner's hands will have an opinion about; ask before building on top of
-either.
-
-**When touching wheel or menu layout, render it — do not compute it.** Pixel arithmetic
-off assumed glyph metrics has put things on top of each other three times in this file's
-history. The font's advance is ~7px, not the 5px the glyph suggests, and the rendered line
-box is taller than 7px. `tools/smoke.mjs` already serves `dist/` in Chromium; a throwaway
-script that opens a panel and screenshots it at both 320 and 480 virtual width costs a
-minute and settles it.
-
-**Two knobs they expect to tune after playing:** `FEEL.slideTapFrames` (the jump→slide
-cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).
-
-### Hooks left deliberately empty — fill, don't delete
+## Hooks left deliberately empty — fill, don't delete
 - `bossFights.js` `hazard:` / `attack:` entries set to `null` → per-boss, per-layer content
 - `WEAPON_LADDERS` rungs a weapon does not have → the tracker leaves them `[wip]`
 - `player.diagInput` (`'ul'` / `'ur'`) → reserved diagonal special moves
@@ -1128,6 +1073,17 @@ cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).
 ---
 
 ## Conventions
+
+**WHEN TOUCHING WHEEL OR MENU LAYOUT, RENDER IT — DO NOT COMPUTE IT.** Pixel arithmetic off
+assumed glyph metrics has put things on top of each other three times in this project's
+history. The font's advance is ~7px, not the 5px the glyph suggests, and the rendered line
+box is taller than 7px. `tools/smoke.mjs` already serves `dist/` in Chromium; a throwaway
+script that opens a panel and screenshots it at both 320 and 480 virtual width costs a
+minute and settles it.
+
+**Two knobs the owner expects to tune after playing:** `FEEL.slideTapFrames` (the
+jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).
+
 
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
   thumb drifting outside a 44px pad is normal on a phone; cancelling on it made movement
