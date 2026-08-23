@@ -7,7 +7,7 @@
       "secondary": "#2E3338",
       "outline": "#0A0A12",
       "scale": 0.8,
-      "attackName": "Core Pulse",
+      "attackName": "Ballistic barrage",
       "weaponName": "Nullfire Drone",
       "weaponClass": "defensive"
     },
@@ -26,7 +26,7 @@
       "primary": "#145DBD",
       "secondary": "#C09060",
       "outline": "#0A0A12",
-      "scale": 1.75,
+      "scale": 1.5,
       "attackName": "Aqua Torrent",
       "weaponName": "Torrent Cannon",
       "weaponClass": "defensive"

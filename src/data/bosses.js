@@ -42,7 +42,7 @@ export const BOSSES = [
     id: 'core', name: 'PROTO MK0', element: 'Typeless',
     primary: '#687380', secondary: '#2E3338', outline: '#0A0A12',
     scale: 0.8, baseHp: 60,
-    attackName: 'Core Pulse', dropWeapon: 'core_blaster',
+    attackName: 'Ballistic barrage', dropWeapon: 'core_blaster',
     silhouette: null,
   },
   {
@@ -56,7 +56,11 @@ export const BOSSES = [
     // renamed in the tracker; the id stays 'torrent' so save.bossKills survives
     id: 'torrent', name: 'TEMPEST MAN', element: 'Water',
     primary: '#145DBD', secondary: '#C09060', outline: '#0A0A12',
-    scale: 1.75, baseHp: 64,
+    // 1.5x — "below average build", down from the 1.75x average. The tracker's
+    // `scale` field is the source of truth and it moved; a boss's footprint is
+    // what every attack of his is spaced against, so this is a real change to
+    // how his fight reads, not a cosmetic one.
+    scale: 1.5, baseHp: 64,
     attackName: 'Aqua Torrent', dropWeapon: 'torrent_cannon',
     silhouette: null,
   },
