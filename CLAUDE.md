@@ -391,9 +391,13 @@ Every weapon carries a `cls`, taken from the first word of its tracker field:
 
 | class | count | how it plays |
 |---|---|---|
-| **sidearm** | 1 | the old Mega Buster, renamed. An **offensive** weapon that starts in an offensive slot — it is not a free extra |
-| **offensive** | 11 | shares the fire button; the wheel picks which one is aimed |
-| **defensive** | 6 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
+| **offensive** | 11 | shares the fire button; the wheel picks which one is aimed. **The sidearm is one of these** — the old Mega Buster, renamed, starting in an offensive slot. It is not a free extra riding above the loadout |
+| **defensive** | 7 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
+
+Eighteen in total: 17 specials, one per boss, plus the sidearm. The counts above
+are the live answer from `data/weapons.js` — an earlier version of this table
+listed the sidearm on a row of its own AND inside the eleven, which made it read
+as 1 + 11 + 6 and quietly lost a defensive weapon.
 
 `systems/loadout.js` owns the slots and is the only thing that may decide what is
 equipped; `systems/weaponry.js` owns what each weapon does. Everything unlocked but not
@@ -977,19 +981,17 @@ ambient hazard loop side by side every frame, both layer-synced, both fed from
 `data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
 work.
 
-**Five bosses are built from the tracker**, each to exactly the layers it defines — run
-`npm run status` for the live picture, which cannot go stale the way this table can:
+**Which bosses are built, and to which layers, is `npm run status`.** It reads
+`data/bossFights.js` and the tracker directly, so it cannot go stale — unlike the table
+that used to sit here, which said Strike Man had no attacks for a third of a year after
+they were built. This file states RULES; the board states STATE. Do not put a progress
+table back.
 
-| | attack | hazard | arena furniture |
-|---|---|---|---|
-| Proto Mk0 | L1–3 | L1–3 ceiling turrets, snapping to 45° / 22.5° / 11.25° | gear backdrop, 2 turrets |
-| Blaze Man | L1–3 incl. the L3 lava flood | L1–3 falling rocks | volcano, 3 phasing platforms, the boss's own lift, floodable floor |
-| Tempest Man | L1–3 flight-and-jetpack (no projectiles) | L1–3 rain, current, drain, barrels, spike balls | storm sky, corner pipes, grate + spike ball, floor water |
-| Volt Man | L1–3 zigzag ricochet bolts | L1–3 floor-panel sweep, conductors, L3 chain-through-minions | plasma lamp, 8 floor panels, 2 conductors, 4 phasing platforms |
-| Strike Man | none — his attack layers are `[wip]` | L1 swinging training bag | fight pit, cage walls, ceiling rails |
-
-Every other boss is `null` at every layer, as are Strike Man's attacks and his hazard
-L2/L3, because the tracker leaves those `[wip]`. **Do not invent content there.**
+**Arena furniture is a tracker field.** Every slice carries `arena furniture` beside its
+`arena`, because furniture is design — it varies per boss and can vary per layer (Blaze
+Man's lift exists only at L3, Volt Man's conductors only fire from L2) — and it belongs
+next to the hazards and attacks that need it rather than in a list over here. `FURNITURE`
+in `systems/arena.js` is what builds it.
 
 **Several entries have been rewritten rather than extended, and they matter as
 precedent — where working code and a `[draft]` field disagree, the field wins.** Tempest
@@ -1008,7 +1010,7 @@ drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at th
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
 panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
-Frost Guard; **Constrict** is live on the Thorn Lash at Lv10. Wet and Poisoned are defined
+Frost Guard; **Constrict** is live on the Thorn Lash from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
 and tested but nothing applies them yet, because their sources are weapons whose slices
 have not happened.
 

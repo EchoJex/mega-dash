@@ -77,6 +77,7 @@ where each one stands.
 - **weapon name** `[ready]` Nullfire Drone
 - **palette notes** `[ready]` Light grey / dark grey
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
+- **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[ready]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
 - **hazard L3** `[ready]` Same number of turrets; visibly track and aim within nearest 11.25°; further reduced cooldown.
@@ -103,6 +104,7 @@ where each one stands.
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[todo]`
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
+- **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
@@ -129,6 +131,7 @@ where each one stands.
 - **weapon name** `[ready]` Torrent Cannon
 - **palette notes** `[draft]` Blue yellow guy with a large grey hydro jet pack
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
+- **arena furniture** `[ready]` Two steel pipes protruding from the upper corners, a grate-covered central drain carrying a spike ball, and ankle-deep floor water. Barrels and spike balls come out of the pipes and are popped by the central ball, which is what caps their number.
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with very strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this ankle deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Occasional very large brown barrels float from the steel pipes which break open and despawn on contact with the spike ball. Player can stand on them or shoot them to destroy them. Player moves with the barrel while standing on it, and takes heavy knockback but no damage if they are standing on the barrel when it breaks
 - **hazard L2** `[ready]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background telegraph the rain direction is about to change.
@@ -157,6 +160,7 @@ where each one stands.
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **arena** `[ready]` A very large plasma lamp in the background; several platforms phase in and out in random locations
+- **arena furniture** `[ready]` Four phasing platforms that land somewhere new each time they phase back IN, eight floor panels, and two overhead conductors at 30% and 70%. The conductors are drawn at every layer and only fire from layer 2 — inert furniture you can stand under is the tell that they are not always inert.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[ready]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Bolts now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
@@ -182,6 +186,7 @@ where each one stands.
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Thorn Lash
 - **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
 - **hazard L2** `[wip]` Creepers grow faster and now climb the walls to about half height, so wall-adjacent footing is unsafe too. A few seed pods drop from the roof and burst into a short-lived thorn patch where they land.
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
@@ -207,6 +212,7 @@ where each one stands.
 - **attack name** `[ready]` Glacier Spike
 - **weapon name** `[ready]` Frost Guard
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
 - **hazard L2** `[wip]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
 - **hazard L3** `[wip]` A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it.
@@ -232,6 +238,7 @@ where each one stands.
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
+- **arena furniture** `[ready]` Three ceiling rails for the training bags to swing along. One bag at layer 1; two from layer 2, started at opposite ends of different rails so where they cross drifts down the room.
 - **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take moderate damage from
 - **hazard L2** `[ready]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
 - **hazard L3** `[ready]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
@@ -258,6 +265,7 @@ where each one stands.
 - **weapon name** `[ready]` Venom Spray
 - **palette notes** `[wip]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
 - **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
 - **hazard L2** `[wip]` More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it.
 - **hazard L3** `[wip]` The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots.
@@ -283,6 +291,7 @@ where each one stands.
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
 - **hazard L3** `[wip]` A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand.
@@ -308,6 +317,7 @@ where each one stands.
 - **attack name** `[ready]` Wind Vortex
 - **weapon name** `[ready]` Gale Vortex
 - **arena** `[wip]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
 - **hazard L2** `[wip]` The wind gusts rather than holding steady — short, strong bursts strong enough to break a jump arc, separated by calm.
 - **hazard L3** `[wip]` Gusts alternate with vacuum pockets that pull toward the rotor, so the player is fighting force in both directions within one cycle.
@@ -333,6 +343,7 @@ where each one stands.
 - **attack name** `[ready]` Mind Lift
 - **weapon name** `[ready]` Psi Orb
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
 - **hazard L2** `[wip]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
 - **hazard L3** `[wip]` The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest.
@@ -358,6 +369,7 @@ where each one stands.
 - **attack name** `[ready]` Infestation
 - **weapon name** `[ready]` Swarm Caller
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
 - **hazard L2** `[wip]` Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst.
 - **hazard L3** `[wip]` Hatching is continuous from both walls, and the ceiling drops sacs that burst into slowing resin where they land.
@@ -383,6 +395,7 @@ where each one stands.
 - **attack name** `[ready]` Boulder Roll
 - **weapon name** `[ready]` Rock Buster
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
 - **hazard L2** `[wip]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
 - **hazard L3** `[wip]` A sustained rockslide down one side of the room, changing sides between cycles.
@@ -408,6 +421,7 @@ where each one stands.
 - **attack name** `[ready]` Spectral Shift
 - **weapon name** `[ready]` Wraith Cloak
 - **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
 - **hazard L3** `[wip]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
@@ -433,6 +447,7 @@ where each one stands.
 - **attack name** `[ready]` Dragon Breath
 - **weapon name** `[ready]` Drake Breath
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
 - **hazard L2** `[wip]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
 - **hazard L3** `[wip]` Vents fire in a travelling sequence along the fissure, sweeping the room end to end.
@@ -458,6 +473,7 @@ where each one stands.
 - **attack name** `[ready]` Shadow Bind
 - **weapon name** `[ready]` Astral Cloak
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
 - **hazard L2** `[wip]` Larger and more numerous patches, and a shadow clone of an ordinary minion spawns inside each one.
 - **hazard L3** `[wip]` The room blacks out entirely on a slow cycle, leaving only silhouettes and the boss's own outline visible.
@@ -483,6 +499,7 @@ where each one stands.
 - **attack name** `[ready]` Metal Barrage
 - **weapon name** `[ready]` Alloy Blade
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
+- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
 - **hazard L2** `[wip]` Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room.
 - **hazard L3** `[wip]` The crane also drags a plate along the floor between drops, sweeping the ground the length of the room.
