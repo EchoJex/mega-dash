@@ -245,7 +245,7 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 |---|---|---|---|
 | **EXP** / **Level** | run only | **collected** from enemy drops | levelling weapons |
 | **Chips** | persistent | score + boss kills at run end | **Upgrades** |
-| **Upgrades** | persistent | bought with Chips | permanent stat boosts (18) |
+| **Upgrades** | persistent | bought with Chips | permanent stat boosts (19: 15 ordinary + 4 MASTERY ladders) |
 | **Weapon Level** | run only, per weapon, 1→10 | level-up choices | that weapon's feature ladder |
 | **Layer** | persistent, per boss, 1→3 | lifetime clears of that boss | how hard that boss fights |
 | **Slot** | run only, up to 2 offensive + 2 defensive | equipping a weapon you have unlocked | which weapons are actually in play |
@@ -558,7 +558,31 @@ unfinished, not broken. Fill the rung in when the owner writes it; do not invent
 ## Design source of truth
 
 **`design/TRACKER.md` is canonical.** Plain Markdown, readable and editable by both of us.
-It holds the 17 element slices, the elemental attributes, a BUGS log and a BRAINSTORM area.
+It holds the 17 element slices, the elemental attributes, the SYSTEMS section, a BUGS log
+and a BRAINSTORM area.
+
+### Which source wins — read this before "fixing" a disagreement
+
+Four things describe this game and they do NOT rank equally. When two disagree, the
+higher one is right and the lower one is the bug:
+
+| | owns | when it is wrong |
+|---|---|---|
+| **`design/TRACKER.md`** | what the game SHOULD be — every boss, weapon, attribute and system, field by field | never. It is the design. A `[draft]` field beats working code |
+| **the code** | what the game IS | when it disagrees with a `[draft]` field — then change the code |
+| **`npm run status`** | which slices are built, derived live from both | never. It computes, it does not remember |
+| **this file** | the RULES the code is written under, and why | often, and silently. It is prose maintained by hand |
+
+So CLAUDE.md states rules and rationale — "no weapon may be the meta", "sprite box is not
+collision box", "never derive a gameplay value from window size". It must not become a
+second copy of the design or a progress report, because both drift and neither announces
+it. Anything that is a COUNT, a ROSTER or a CURRENT STATE belongs in the tracker or in the
+board; anything that is a CONSTRAINT belongs here.
+
+**Where this file names a number, it is a rule with a reason** (the 3-colour palette, the
+224px playfield, Lv 1/3/6/10). Where it names an inventory, treat it as a convenience copy
+and verify against the code before relying on it — three separate inventories in this file
+had gone stale by the time anyone checked.
 
 The owner edits it either directly or through the **tracker web app** (`docs/index.html`,
 served from GitHub Pages), which is a lens over the same file and autosaves straight into
@@ -1031,8 +1055,9 @@ lumping all three together predate the tracker's current definition.
 The owner is mid-way through a redesign of the wheel and the control scheme. Four passes
 are built and pushed; **one piece remains**:
 
-1. **Post-boss keyboard/gamepad navigation.** No way to re-quip without a mouse or a
-   touchscreen right now. The owner sketched a cursor — left/right over the ring to pick a
+1. **Post-boss keyboard/gamepad navigation.** Tracked as `SYSTEMS / The re-quip wheel /
+   keyboard and gamepad` in the tracker, which owns its status; this is the rationale.
+   No way to re-quip without a mouse or a touchscreen right now. The owner sketched a cursor — left/right over the ring to pick a
    weapon, fire to take it, cursor jumps to the slots, left/right to place, looping back —
    then said *"i thought a cursor would be the right approach, but i sometimes over explain
    simple things"* and asked for **whatever the standard practice is for a hybrid
