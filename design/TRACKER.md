@@ -585,7 +585,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **slot budget** `[ready]` Up to two offensive positions and two defensive ones. The sidearm OCCUPIES an offensive position rather than riding above the loadout, so it is not a free extra.
 - **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away.
 - **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live.
-- **class split** `[wip]` Aiming for 9 and 9, plus side arm as the 10th
+- **class split** `[wip]` Aiming for 9 and 9
 - **re-quip window** `[ready]` Slots may only be rearranged from a boss going down until the player warps into the next arena. Switching a slotted weapon on or off is NOT gated by this — that cannot change what you are carrying.
 
 ## The re-quip wheel
