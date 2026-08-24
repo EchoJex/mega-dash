@@ -592,7 +592,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 - **in-situ mode** `[ready]` Opened by the RE-QUIP button mid-fight. Slow motion, HUD stays up, the ring is scenery at 0.16 alpha and not touchable. One tap or one diagonal swipe aims a slot or toggles it. Seven-second timeout as a dead man's handle.
 - **post-boss mode** `[ready]` Opens by itself when a boss falls. Hard pause, HUD hidden, every unlocked benched weapon at full strength, and the only place the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon.
-- **ring layout** `[ready]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately.
+- **ring layout** `[wip]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately.
 - **keyboard and gamepad** `[todo]` There is no way to re-quip without a mouse or a touchscreen. The in-situ wheel has Q/E/Z/C; the post-boss wheel has nothing. Whatever is standard practice for a hybrid touch/keyboard interface, mirroring the two-tap select-then-place shape.
 
 ## Minions
