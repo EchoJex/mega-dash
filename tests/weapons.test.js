@@ -181,7 +181,19 @@ test('the drone reloads when the clip runs dry and refills to full', () => {
   const h = harness('core_blaster', 1);
   const L = ladderAt('core_blaster', 1);
   let sawEmpty = false;
-  for (let i = 0; i < L.reloadFrames + 60 * L.clip + 200; i++) {
+  /**
+   * The budget is DERIVED, not guessed at. It used to assume roughly a shot a
+   * second and read `60 * clip`; Lv1 now fires one round every three seconds,
+   * so emptying the clip alone takes half a minute and the loop expired long
+   * before the drone had anything to reload.
+   */
+  const setFrames = L.pullFrames + L.burst * L.burstGap;
+  const emptyFrames = (L.clip / L.burst) * setFrames;
+  for (let i = 0; i < emptyFrames + L.reloadFrames + 200; i++) {
+    // A REAL FRAME IS coolWeapons THEN stepWeapons — see GameScene.stepEquipped.
+    // Leaving the first one out means `st.cool` never falls and the drone never
+    // fires a shot, which is a fake context quietly testing nothing.
+    Wpn.coolWeapons(h.run.wstate);
     Wpn.stepWeapons(h.ctx, ['core_blaster']);
     const st = h.run.wstate.core_blaster;
     if (st.reloading) sawEmpty = true;

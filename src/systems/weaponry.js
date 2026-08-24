@@ -158,7 +158,16 @@ const drone = {
       return;
     }
 
-    if (--st.cool > 0) return;
+    /**
+     * READ, DO NOT DECREMENT. `coolWeapons` already ticks `st.cool` once per
+     * frame for every weapon state, and this decremented it a second time — so
+     * the drone burned its cooldown at two frames per frame and had always
+     * fired at DOUBLE its stated rate. Invisible while the rung said "1 shot
+     * per second"; obvious the moment the tracker said "1 shot per 3 seconds"
+     * and it delivered one every 1.5. Every other runtime reads this flag
+     * without touching it.
+     */
+    if (st.cool > 0) return;
     // An empty clip with no reload running should be impossible — the clip only
     // empties inside the burst above, which starts one. Recovering rather than
     // spinning matters anyway: without this the drone would sit at cool <= 0
@@ -210,9 +219,13 @@ function droneShot(st, L, lv, ctx, target) {
       splitCount: 3,
       splitSpeed: L.speed * 0.8,
       splitRadius: 2,
-      splitSeekRank: st.burst,      // 0 for the last shot of the pair, 1 for the first
+      splitSeekRank: st.burst,      // which enemy in range order this set chases
       splitSeekTurn: L.splitSeekTurn,
       splitAccel: L.splitAccel,
+      // "Fragments can not change target mid flight." A seeking shot normally
+      // re-picks when its target dies; a fragment commits to the one it was
+      // born chasing and flies on if that target is gone.
+      splitLock: true,
     } : {}),
   });
 }
@@ -262,6 +275,12 @@ const blaze = {
         hot: L.hotFrames,
         burn: L.burnFrames,
         pierce: L.pierce ?? 0,
+        // Read by stepBullets when the arc becomes a roll, and when a rolling
+        // wheel meets an enemy. Both belong to the projectile rather than to
+        // this function, because both happen long after it returns.
+        rollDmgMult: L.rollDmgMult,
+        explodeR: L.explodeR,
+        explodeBurn: L.explodeBurn,
       });
     }
     return true;
@@ -565,7 +584,7 @@ const frost = {
     // the water boss, which is the one matchup where ice is supposed to win.
     for (const e of enemiesIn(ctx, st.box)) {
       if (e.isBoss && !(L.freezeBosses || []).includes(e.id)) continue;
-      Attr.applyStatus(e.status, 'freeze', L.freezeFrames);
+      Attr.applyStatus(e.status, 'freeze', L.freezeFrames, { step: FEEL.stunEnemyStep });
       ctx.sfx('hurt', { pitch: 1.6 });
       st.hits = 0;
       break;
@@ -1084,7 +1103,8 @@ const thorn = {
       e.x += (dx / d) * L.reelSpeed;
       e.y += (dy / d) * L.reelSpeed;
       if (L.constrictFrames) {
-        Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+        Attr.applyStatus(e.status, 'constrict', L.constrictFrames,
+          { step: FEEL.stunEnemyStep });
       }
       // "Mild knockback" even at Lv1, where the reel is the whole move.
       if (L.reelKnock) e.kbVx = -Math.sign(dx || 1) * L.reelKnock;
@@ -1145,10 +1165,13 @@ const thorn = {
  * anywhere. Here it is the same body all the way through: still alive, still on
  * the field, and only resolved once it stops.
  *
- * The CONSTRICT STACK is what makes that work rather than being decoration.
- * Constrict holds an actor outright (see systems/attributes.js), so the minion
- * cannot walk out of its own flight — which is exactly why the field puts the
- * constrict and the toss on the same rung.
+ * THE FLIGHT DOES NOT DEPEND ON THE CONSTRICT, and it used to. Constrict was a
+ * hold, so it pinned the minion for the duration; the tracker has since made it
+ * a stacking slow like stun, and a slowed minion can still walk. What keeps the
+ * body on its ram is `stepTossed` writing the position every frame, which was
+ * always the mechanism — the hold was belt to its braces. The constrict stack
+ * stays because the rung asks for it, and it now does what the other two slows
+ * do: taxes the minion once it lands.
  *
  * The escort projectile is what other enemies feel: damage 0, very large
  * knockback, per "minion projectile does not deal damage but has very large
@@ -1156,7 +1179,7 @@ const thorn = {
  * it stops.
  */
 function tossMinion(st, lv, ctx, L, e) {
-  Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+  Attr.applyStatus(e.status, 'constrict', L.constrictFrames, { step: FEEL.stunEnemyStep });
   const p = ctx.player;
   const shot = {
     x: e.x + e.w / 2, y: e.y + e.h / 2,
@@ -1473,6 +1496,15 @@ export function fireActive(ctx, id, held) {
 }
 
 /** Tick down the per-weapon cooldowns the fire path uses. */
+/**
+ * ONE TICK PER FRAME, AND IT HAPPENS HERE.
+ *
+ * `st.cool` belongs to this function. A runtime READS it — `if (st.cool > 0)
+ * return` — and sets it when it fires; a runtime that decrements it too burns
+ * its cooldown at two frames per frame and fires at double its stated rate.
+ * The Nullfire Drone did exactly that, invisibly, until a rung asked for one
+ * shot every three seconds and delivered one every one and a half.
+ */
 export function coolWeapons(store) {
   for (const st of Object.values(store)) if (st.cool > 0) st.cool--;
 }

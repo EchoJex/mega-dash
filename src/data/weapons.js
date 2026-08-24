@@ -115,70 +115,127 @@ export const SLOTS_PER_CLASS = 2;
  * `rate` is BULLETS per second, not trigger pulls — the reading under which all
  * three clip/rate pairs the tracker states land on the same duty cycle.
  */
-const droneReload = (clip, rate) => Math.round(1.5 * (clip / rate) * 60);
+/**
+ * The Nullfire Drone's reload, straight from the tracker's formula:
+ * `clip_cooldown = 1.5 x (clip_size / fire_rate)`.
+ *
+ * FIRE RATE IS DERIVED, NOT DECLARED. A rung states a burst size, a gap between
+ * rounds and a gap between sets; the bullets-per-second that falls out of those
+ * is what the clip actually empties at. Passing a nominal rate by hand was off
+ * by the burst spacing — Lv6's "one set per 3 seconds" is 0.909 bullets/sec,
+ * not 1 — and the duty cycle drifted with it.
+ *
+ * Computing it here makes every rung land on exactly the same uptime by
+ * construction: 1 / (1 + 1.5) = 40% firing, 60% reloading, whatever the numbers.
+ */
+const droneReload = (clip, burst, pullFrames, burstGap) => {
+  const setFrames = pullFrames + burst * burstGap;
+  const rate = (burst * 60) / setFrames;
+  return Math.round(1.5 * (clip / rate) * 60);
+};
 
 export const WEAPON_LADDERS = {
-  // ── NULLFIRE DRONE — defensive, Typeless ──────────────────────────
-  // Lv1  single shot, 1/s, 10-round clip. The weapon aims; the bullet does not.
-  // Lv3  3-round burst once a second, 9-round clip — "like a rifle".
-  // Lv6  2-round burst; each round splits into 3 mildly homing fragments, the
-  //      two sets chasing the nearest and next-nearest enemy.
-  // Lv10 fires straight up at 5/s from a 30-round clip; every bullet picks a
-  //      different target and arcs in under strong homing. No split.
+  /**
+   * NULLFIRE DRONE — defensive, Typeless. "A small gray drone hovers well above
+   * and in front of the player's shoulder... continuously auto aims at the
+   * nearest enemy and auto fires, only if an enemy is on screen."
+   *
+   * THE CLIP IS THE WHOLE BALANCE LEVER, and its reload is stated as a formula
+   * rather than a number: `clip_cooldown = 1.5 x (clip_size / fire_rate)`, so a
+   * reload always costs half again the time the clip took to empty. That means
+   * a rung cannot quietly buy a faster reload — it has to buy a bigger clip or
+   * a faster gun, and pay for either.
+   *
+   * `pullFrames` is the gap between SETS, not between rounds. Lv1 through Lv6
+   * all fire one set every three seconds; only Lv10 changes the rhythm.
+   *
+   * Lv1  one round every 3s, 10-round clip. The weapon aims; the bullet does not.
+   * Lv3  3-round burst every 3s, 9-round clip — "like a rifle".
+   * Lv6  3-round burst; each round splits into 3 fragments that home moderately
+   *      and MAY NOT change target once they are flying.
+   * Lv10 straight up at 5/s from a 30-round clip, every bullet on a different
+   *      target, arcing in under strong homing. No split.
+   */
   core_blaster: {
     1: {
-      clip: 10, burst: 1, burstGap: 1, pullFrames: 59,
-      reloadFrames: droneReload(10, 1),
+      // "1 shot per 3 seconds, 10 ammo clip."
+      clip: 10, burst: 1, burstGap: 1, pullFrames: 180,
+      // A third of a shot per second, so the clip takes half a minute to empty
+      // and the reload is long in proportion. That is the formula applied
+      // honestly: at this rate you will almost never reach the reload, which is
+      // what makes its length affordable.
+      reloadFrames: droneReload(10, 1, 180, 1),
       trickleFrames: 90,          // the very slow out-of-combat top-up
       speed: 3.2,
     },
     3: {
-      clip: 9, burst: 3, burstGap: 5, pullFrames: 45,
-      reloadFrames: droneReload(9, 3),
+      // "3-bullet burst. One set of bullets per 3 seconds, like a rifle."
+      clip: 9, burst: 3, burstGap: 5, pullFrames: 180,
+      reloadFrames: droneReload(9, 3, 180, 5),
     },
     6: {
-      burst: 2, burstGap: 6, pullFrames: 48,
-      reloadFrames: droneReload(9, 2),
+      // "3 bullet burst" — up from two, and the split arrives.
+      burst: 3, burstGap: 6,
+      reloadFrames: droneReload(9, 3, 180, 6),
       splitIn: 20, splitSeekTurn: 0.06, splitAccel: 1.03,
     },
     10: {
+      // "5 shots per second" — 12 frames apart, and the only rung that is not
+      // on the three-second beat.
+      // 11 + 1 = a 12-frame set, which is exactly 5 shots per second.
       clip: 30, burst: 1, burstGap: 1, pullFrames: 11,
-      reloadFrames: droneReload(30, 5),
+      reloadFrames: droneReload(30, 1, 11, 1),
       splitIn: 0,                 // "does not split" — clears the Lv6 rung
       skyward: true, speed: 2.2, seekTurn: 0.14, accel: 1.05, maxSpeed: 6,
     },
   },
 
-  // ── BLAZE WHEEL — offensive, Fire ─────────────────────────────────
-  // A lob that converts to a roller on landing, laying Hot behind it.
-  // Lv1  no roll at all, up to 2 on screen, 3s of Hot.
-  // Lv3  5s of Hot and a moderate roll that decelerates rapidly, obeying pits
-  //      and platforms.
-  // Lv6  a second fireball on a taller, much wider arc, landing about where the
-  //      first is projected to stop and rolling the same distance again.
-  // Lv10 half a screen of roll each (a full screen combined), piercing, and
-  //      the roll ACCELERATES instead of dying out.
-  //
-  // `maxLive` COUNTS FIREBALLS, NOT SHOTS, and that is what makes "up to 2 on
-  // screen" mean two different things at the two ends of the ladder without the
-  // number changing: at Lv1 one fireball per shot, so two shots may overlap; at
-  // Lv6 two per shot, so a volley must land before the next one goes out. Both
-  // are exactly what the tracker says at that rung.
+  /**
+   * BLAZE WHEEL — offensive, Fire. "Fire wheels are lobbed in the direction the
+   * player is facing, like a backpack catapult."
+   *
+   * THE FIRE RATE IS FIXED AT EVERY RUNG — "base fire rate fixed for all levels
+   * at once set per 3 seconds" — so `cooldown` is deliberately absent from every
+   * rung above Lv1. What the ladder buys is ROLL, and from Lv6 a second arc.
+   * That is unusual and it is the design: the weapon does not get faster, it
+   * gets more ground covered per throw.
+   *
+   * "High Fireball contact damage, LOW rolling contact damage" is `rollDmgMult`,
+   * applied the moment the arc becomes a roll. A wheel you catch in the air is
+   * the dangerous one; the burning trail is area denial, not a hit.
+   */
   blaze_wheel: {
-    // "Very slight rolling distance; up to 2 on screen; 3s Hot duration."
-    // The roll used to start at Lv3 and Lv1 simply stopped where it landed.
-    // A wheel that does not roll at all is not a wheel — 10px is enough to
-    // read as one without reaching anything the lob did not already.
     1: {
-      cooldown: 30, maxLive: 2,
+      cooldown: 180, maxLive: 2,
       lobVx: 2.4, lobVy: -2.4, gravity: 0.16,
+      // "Very slight rolling distance."
       roll: 10, rollSpeed: 1.4, rollDrag: 0.90,
-      hotFrames: 180, burnFrames: 60, pierce: 0,
+      // "2s Hot duration applied to surfaces and 2s burn applied on contact."
+      hotFrames: 120, burnFrames: 120, pierce: 0,
+      rollDmgMult: 0.35,
     },
+    // "5s Hot trail duration on ground; moderate roll distance with rapid
+    // deceleration while on the ground."
     3: { hotFrames: 300, roll: 40, rollSpeed: 2.2, rollDrag: 0.94 },
+    // The second arc is taller and much wider so it lands about where the first
+    // is projected to stop, then rolls its own equal distance.
     6: { secondArc: 1.45 },
-    // 200px each on a 320-480px screen — "full screen combined, half for each".
-    10: { roll: 200, rollDrag: 1.05, pierce: 99, burnFrames: 120 },
+    /**
+     * "Combined effective roll distance shall be full screen (half for each
+     * fireball)" — 200px each against a 320-480 screen. "Fireballs rapidly
+     * accelerate while on the ground" is drag above 1. Pierce goes away because
+     * they now EXPLODE on contact instead of passing through.
+     *
+     * `explodeR` IS LITERAL AND PROBABLY WANTS TUNING. The field says "a one
+     * fireball radius in all directions", and a fireball's radius is 3.5px on a
+     * 224px-tall screen — so the blast is about as wide as the wheel that made
+     * it. That is what was written, so that is what is built; raise this one
+     * number if it reads as nothing on device.
+     */
+    10: {
+      roll: 200, rollDrag: 1.08, pierce: 0, burnFrames: 120,
+      explodeR: 3.5, explodeBurn: 120,
+    },
   },
 
   // ── TORRENT CANNON — defensive, Water ─────────────────────────────

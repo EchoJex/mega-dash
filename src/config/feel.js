@@ -133,8 +133,16 @@ export const FEEL = {
   hotLingerFrames: 300,     // 5s — the tracker's default "unless reapplied"
   burnFrames: 180,
   burnDps: 1.6,             // mild, rapid, and scaled down by remaining duration
-  poisonFrames: 300,
-  poisonDps: 0.5,           // much less often than Burn, but it flinches
+  /**
+   * POISON IS A TICK, NOT A TRICKLE. "Deal small damage in discrete 3 second
+   * intervals for 9 seconds" — so it is three separate hits, not a per-frame
+   * rate banked until it crosses a point the way Burn is. Nine seconds is a
+   * long time to be carrying something, which is why each tick is small and why
+   * the shared field says it lands with no flinch and no knockback.
+   */
+  poisonFrames: 540,        // 9s
+  poisonTickFrames: 180,    // one tick every 3s — three over the duration
+  poisonTickDamage: 1,      // "small damage", and a whole point so it is felt
   wetFrames: 600,           // 10s
   wetFrictionMult: 0.32,    // reduced contact friction — you slide
 

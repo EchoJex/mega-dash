@@ -525,23 +525,40 @@ test('a permanent pool never weakens or expires', () => {
   assert.equal(Attr.patchFrac(pool), 1, 'and stays at full strength');
 });
 
-test('constrict and freeze are one behaviour with two tints', () => {
+/**
+ * THE THREE SLOWS ARE ONE MECHANIC IN THREE COLOURS.
+ *
+ * This test used to assert the opposite — that constrict and freeze HOLD the
+ * target — because that is what they did. The tracker now says both are
+ * "functionally the same as stun", differing only by "elementally correct color
+ * hue", so the contract inverted. What is guarded is the SHAPE: all three
+ * stack, none of them hold, and each reads as a different element.
+ */
+test('stun, constrict and freeze are one behaviour with three tints', () => {
   const tints = new Set();
-  for (const id of ['constrict', 'freeze']) {
-    assert.equal(Attr.ATTR[id].held, true, `${id} should hold the target`);
+  for (const id of ['stun', 'constrict', 'freeze']) {
+    assert.notEqual(Attr.ATTR[id].held, true, `${id} must not hold the target`);
+    assert.equal(Attr.ATTR[id].stacks, true, `${id} must stack like stun`);
     tints.add(Attr.ATTR[id].tint);
-    assert.equal(Attr.isHeld(Attr.applyStatus(Attr.makeStatus(), id, 30)), true);
+
+    const bag = Attr.applyStatus(Attr.makeStatus(), id, 30, { step: 0.7 });
+    assert.equal(Attr.isHeld(bag), false, `${id} must not read as held`);
+    assert.ok(Attr.speedMult(bag) < 1, `${id} must slow the target`);
   }
-  assert.equal(tints.size, 2, 'but each must read as a different element');
+  assert.equal(tints.size, 3, 'but each must read as a different element');
+
+  // The Astral Cloak's aggro pause is NOT elemental and is still a real hold —
+  // it is the only thing left that stops an actor outright.
+  assert.equal(Attr.ATTR.cloakHold.held, true);
 });
 
 /**
  * STUN IS A SLOW, NOT A HOLD, and it is the only attribute that stacks.
  *
- * It used to share the hold behaviour with constrict and freeze. The tracker
- * now defines it as a multiplicative speed cut that resets its own duration on
- * every re-application, which is a different mechanic — so this guards the
- * distinction rather than the numbers, which are still placeholders.
+ * Constrict and freeze have since joined it rather than opposing it — see the
+ * test above. What this guards is the arithmetic: a multiplicative cut that
+ * resets its own duration on every re-application, and a ceiling so a stack
+ * cannot reach the softlock it once did.
  */
 test('stun slows multiplicatively and stacks instead of holding', () => {
   assert.notEqual(Attr.ATTR.stun.held, true, 'stun must not hold the target');

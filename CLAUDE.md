@@ -1056,10 +1056,14 @@ not in the tracker's list — it is the Eclipse Blade's aggro pause, which is me
 hold and nothing else. It reuses the hold machinery so every consumer already honours it
 and carries no tint, because there is nothing elemental to show.
 
-**Stun is not a hold.** It is a stacking multiplicative slow — 15% per stack off the
-player, 30% off an enemy, duration reset by every re-application, cutting attack speed as
-well as movement. Constrict and freeze are still the "cannot act" pair. Older comments
-lumping all three together predate the tracker's current definition.
+**Stun, Constrict and Freeze are ONE mechanic in three colours.** All three are a stacking
+multiplicative slow — 15% per stack off the player, 30% off an enemy, duration reset by
+every re-application, cutting attack speed as well as movement. Constrict and freeze used
+to be the "cannot act" pair and the tracker reversed that: they are now "functionally the
+same as stun", differing only by an elementally correct tint.
+
+**Nothing elemental holds any more.** `cloakHold` is the only remaining hold, and it is
+deliberately not an elemental attribute.
 
 ---
 

@@ -1121,7 +1121,15 @@ export default class GameScene extends Phaser.Scene {
       // steer-don't-snap shape as `homing` above, but it also carries the
       // acceleration the Nullfire Drone's ladder asks for at Lv6 and Lv10.
       if (b.seek) {
-        if (b.seek.hp <= 0) b.seek = Wpn.nearestEnemy(enemyCtx(), b.x, b.y);
+        /**
+         * A DEAD TARGET NORMALLY MEANS PICK ANOTHER — except where the rung
+         * forbids it. The Nullfire Drone's Lv6 fragments "can not change target
+         * mid flight", so a locked shot whose target died simply stops steering
+         * and carries on where it was pointed.
+         */
+        if (b.seek.hp <= 0) {
+          b.seek = b.seekLock ? null : Wpn.nearestEnemy(enemyCtx(), b.x, b.y);
+        }
         if (b.seek) {
           const c = Wpn.centreOf(b.seek);
           const dx = c.x - b.x, dy = c.y - b.y;
@@ -1165,6 +1173,11 @@ export default class GameScene extends Phaser.Scene {
           b.rollG = b.rollG ?? b.gravity ?? 0.16; // kept, so it can fall again
           b.vy = 0; b.gravity = 0;
           b.vx = Math.sign(b.vx || 1) * b.roll.speed;
+          // "High Fireball contact damage, LOW rolling contact damage." The
+          // wheel you catch in the air is the dangerous one; the burning trail
+          // is area denial. Applied once, on the transition, so a long roll
+          // does not keep shedding damage.
+          if (b.rollDmgMult) b.damage *= b.rollDmgMult;
           if (b.roll.left <= 0) b.life = -1;      // Lv1: lands and stops dead
         }
         if (b.rolling) {
@@ -1316,6 +1329,7 @@ export default class GameScene extends Phaser.Scene {
               radius: b.splitRadius || 2.5,
               homing: b.splitHoming || 0,
               seek: target, seekTurn: b.splitSeekTurn, accel: b.splitAccel,
+              seekLock: b.splitLock,
               splitIn: 0, life: 240,
             });
           }
@@ -1421,12 +1435,35 @@ export default class GameScene extends Phaser.Scene {
          */
         e.rangedHits = (e.rangedHits || 0) + 1;
         b.hitSet?.add(e);
+
+        /**
+         * A SHOT THAT BURSTS RATHER THAN PASSING THROUGH. The Blaze Wheel's top
+         * rung trades pierce for this: everything inside the blast takes the
+         * same damage the direct hit did, and wears the same Burn.
+         *
+         * Resolved before the direct hit so the victim is not paid twice — it
+         * is inside its own blast by definition.
+         */
+        if (b.explodeR) {
+          const bx = b.x, by = b.y, r2 = (b.explodeR + 8) ** 2;
+          for (const o of this.boss ? [...this.minions, this.boss] : this.minions) {
+            if (o === e || o.hp <= 0) continue;
+            const ox = o.x + o.w / 2 - bx, oy = o.y + o.h / 2 - by;
+            if (ox * ox + oy * oy > r2) continue;
+            if (b.explodeBurn) {
+              Attr.applyStatus(o.status || (o.status = {}), 'burn', b.explodeBurn);
+            }
+            this.hitEnemy(o, b.damage, { from: bx });
+          }
+          Wpn.puff(this.fx, { x: bx, y: by, w: b.explodeR * 4, life: 10, color: 0xE8541A });
+        }
         // Attributes land BEFORE the damage, so an enemy the shot kills still
         // shows the element that killed it rather than dying clean.
         if (b.burn) Attr.applyStatus(e.status || (e.status = {}), 'burn', b.burn);
         this.hitEnemy(e, b.damage, {
           knockback: b.knockback, from: b.x, stun: b.stun,
         });
+        if (b.explodeR) { b.life = -1; break; }   // a burst is spent on one hit
         if (pierce-- <= 0) { b.life = -1; break; }
       }
     }

@@ -73,7 +73,7 @@ where each one stands.
 - **palette secondary** `[ready]` #2E3338
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 0.8x player height (prototype chassis)
-- **attack name** `[draft]` Ballistic barrage
+- **attack name** `[ready]` Ballistic barrage
 - **weapon name** `[ready]` Nullfire Drone
 - **palette notes** `[ready]` Light grey / dark grey
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
@@ -85,11 +85,11 @@ where each one stands.
 - **attack L2** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a 3 bullet spread directly forward toward the player with mild auto-aim or aim directly at the player and shoot a string of 5 bullets that do not auto aim. Boss stops tracking the player during the 5-bullet string, aiming where the player was at the time the first of 5 bullets comes out.
 - **attack L3** `[ready]` Moves back and forth across the stage, occasionally stopping, waiting a moment, then fire either a set of 2 3-bullet spread directly forward toward the player with mild auto-aim or aim directly at the player, tracking the players movements while continuously shooting a string of 5 bullets that do not auto aim, either way, dealing small damage.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[draft]` Defensive; a small gray drone hovers well above and in front of the player's shoulder. Very Slowly refills the current clip when no enemies present. When clip is fully depleted indicate this emergency reload by making the drone Dark grey and cease firing until clip colored completes. It continuously auto aims at the nearest enemy and auto fires, only if an enemy is on screen, a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
-- **weapon Lv1** `[draft]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per 3 seconds, 10 ammo clip.
-- **weapon Lv3** `[draft]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
-- **weapon Lv6** `[draft]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
-- **weapon Lv10** `[draft]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
+- **weapon** `[ready]` Defensive; a small gray drone hovers well above and in front of the player's shoulder. Very Slowly refills the current clip when no enemies present. When clip is fully depleted indicate this emergency reload by making the drone Dark grey and cease firing until clip colored completes. It continuously auto aims at the nearest enemy and auto fires, only if an enemy is on screen, a neutral bullet with clip cooldown time equal to one and a half times the current levels clip size divided by the current levels shot per second (clip_cooldown=1.5(clip_size/fire_rate)).
+- **weapon Lv1** `[ready]` Single shot, mild damage, weapon auto aims but bullet does not auto aim, 1 shot per 3 seconds, 10 ammo clip.
+- **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
+- **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
+- **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Blaze Man — Fire
@@ -112,11 +112,11 @@ where each one stands.
 - **attack L2** `[ready]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
 - **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
 - **weapon class** `[ready]` Offensive
-- **weapon** `[draft]` Offensive; orange/red glowing backpack sits high on the players back like a backpack. From that backpack fire wheels are lobbed in the direction the player is facing, like a backpack catapult; applies Hot to ground or burn to enemy on contact for a scalable time. Base fire rate fixed for all levels at once set per 3 seconds, and up to 2 fireballs on screen at once. High Fireball contact damage, low rolling contact damage. Standard burn dps standard response to gravity, pits, and platforms.
-- **weapon Lv1** `[draft]` Very slight rolling distance; up to 2 on screen; 2s Hot duration applied to surfaces and 2s burn applied on contact with enemies.
-- **weapon Lv3** `[draft]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
-- **weapon Lv6** `[draft]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
-- **weapon Lv10** `[draft]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
+- **weapon** `[ready]` Offensive; orange/red glowing backpack sits high on the players back like a backpack. From that backpack fire wheels are lobbed in the direction the player is facing, like a backpack catapult; applies Hot to ground or burn to enemy on contact for a scalable time. Base fire rate fixed for all levels at once set per 3 seconds, and up to 2 fireballs on screen at once. High Fireball contact damage, low rolling contact damage. Standard burn dps standard response to gravity, pits, and platforms.
+- **weapon Lv1** `[ready]` Very slight rolling distance; up to 2 on screen; 2s Hot duration applied to surfaces and 2s burn applied on contact with enemies.
+- **weapon Lv3** `[ready]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
+- **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
+- **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Tempest Man — Water
@@ -126,7 +126,7 @@ where each one stands.
 - **palette primary** `[ready]` #145DBD
 - **palette secondary** `[ready]` #C09060
 - **palette outline** `[ready]` #0A0A12
-- **scale** `[draft]` 1.5x player height (below average build)
+- **scale** `[ready]` 1.5x player height (below average build)
 - **attack name** `[ready]` Aqua Torrent
 - **weapon name** `[ready]` Torrent Cannon
 - **palette notes** `[draft]` Blue yellow guy with a large grey hydro jet pack
@@ -538,24 +538,24 @@ interaction present on every hit.
 - **weapon-applied** `[wip]` the surface is slippery reducing contact friction if terrain and reducing enemy movement speed if an enemy. visually indicated by an initially low transparency blue hue that fades until the attribute has expired. Lasts 10 seconds.
 
 ## Poisoned
-- **shared** `[draft]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments as the poison wears off. Mild damage with no flinch or knockback
-- **boss-applied** `[draft]` Deal small damage to player in discrete 3 second intervals for 9 seconds.
-- **weapon-applied** `[draft]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds.
+- **shared** `[ready]` The object has come in contact with toxins. Faint purple hue that fades in discrete increments as the poison wears off. Mild damage with no flinch or knockback
+- **boss-applied** `[ready]` Deal small damage to player in discrete 3 second intervals for 9 seconds.
+- **weapon-applied** `[ready]` Deal small damage to enemy in discrete 3 second intervals for 9 seconds.
 
 ## Stun
 - **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
-- **boss-applied** `[draft]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
+- **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
 - **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
 
 ## Constrict
-- **shared** `[draft]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
-- **boss-applied** `[draft]` See stun
-- **weapon-applied** `[draft]` See stun
+- **shared** `[ready]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
+- **boss-applied** `[ready]` See stun
+- **weapon-applied** `[ready]` See stun
 
 ## Freeze
-- **shared** `[draft]` Functionally the same as stun/constrict; elementally correct color hue while the target has this attribute.
-- **boss-applied** `[draft]` See stun
-- **weapon-applied** `[draft]` See stun
+- **shared** `[ready]` Functionally the same as stun/constrict; elementally correct color hue while the target has this attribute.
+- **boss-applied** `[ready]` See stun
+- **weapon-applied** `[ready]` See stun
 
 ---
 

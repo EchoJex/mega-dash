@@ -35,11 +35,25 @@ export const ATTR = {
   burn:      { form: 'character', tint: 0xE11416, label: 'BURN' },
   wet:       { form: 'both',      tint: 0x145DBD, label: 'WET' },
   poisoned:  { form: 'character', tint: 0xA926D9, label: 'POISON' },
-  // A stacking slow, not a hold. See the note above.
+  /**
+   * THE THREE SLOWS ARE ONE MECHANIC IN THREE COLOURS.
+   *
+   * The tracker now says Constrict and Freeze are "functionally the same as
+   * stun", differing only by "elementally correct color hue". They used to be
+   * the "cannot act" pair against Stun's slow, and that is a real reversal: a
+   * hold takes the player's turn away, a slow taxes it. Three attributes that
+   * behave identically and read differently is the design, and it is why the
+   * only per-attribute data left here is the tint.
+   *
+   * `stacks` is what makes them multiplicative and resettable — see
+   * applyStatus and speedMult, which now walk every stacking status rather
+   * than reading `stun` by name.
+   */
   stun:      { form: 'character', tint: 0xF5D328, label: 'STUN', stacks: true },
-  // Identical behaviour, different colour.
-  constrict: { form: 'character', tint: 0x2AAB1C, label: 'HELD', held: true },
-  freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', held: true },
+  // Not 'HELD' any more: it no longer holds anything, and a label that says it
+  // does is the kind of thing a future reader trusts over the code.
+  constrict: { form: 'character', tint: 0x2AAB1C, label: 'BOUND', stacks: true },
+  freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', stacks: true },
   // NOT AN ELEMENTAL ATTRIBUTE, and deliberately not in the tracker's list.
   // The Astral Cloak's aggro pause is "loses track of you for a beat", which is
   // mechanically a hold and nothing else — it reuses the hold machinery so every
@@ -157,9 +171,18 @@ export function stepStatus(bag) {
     if (id === 'burn') {
       s.accum += (FEEL.burnDps / 60) * frac;
     } else if (id === 'poisoned') {
-      // Poison is the opposite shape: infrequent but it flinches. The flinch is
-      // applied by the caller, which owns the hit reaction.
-      s.accum += (FEEL.poisonDps / 60) * frac;
+      /**
+       * DISCRETE TICKS, not a rate. "Small damage in discrete 3 second
+       * intervals for 9 seconds" is three hits you can count, and it does NOT
+       * diminish with remaining duration the way Burn does — the third tick
+       * hurts exactly as much as the first. Counted UP from application so the
+       * first tick lands three seconds in rather than instantly.
+       */
+      s.tick = (s.tick || 0) + 1;
+      if (s.tick >= FEEL.poisonTickFrames) {
+        s.tick = 0;
+        damage += FEEL.poisonTickDamage;
+      }
     }
     if (s.accum >= 1) { const n = Math.floor(s.accum); s.accum -= n; damage += n; }
   }
@@ -198,9 +221,13 @@ export const statusTint = (bag) => statusFlash(bag).tint;
  * stack" — so the number of stacks is readable without a HUD counter.
  */
 export function statusIntensity(bag) {
-  const s = bag?.stun;
-  if (!s || s.t <= 0) return 1;
-  return Math.min(1, 0.45 + 0.18 * s.stacks);
+  let most = 0;
+  for (const id of Object.keys(bag || {})) {
+    if (!ATTR[id]?.stacks) continue;
+    const s = bag[id];
+    if (s && s.t > 0) most = Math.max(most, s.stacks);
+  }
+  return most ? Math.min(1, 0.45 + 0.18 * most) : 1;
 }
 
 /**
@@ -210,9 +237,17 @@ export function statusIntensity(bag) {
  * each stack takes its cut of the speed that is LEFT, not of the original.
  */
 export function speedMult(bag) {
-  const s = bag?.stun;
-  if (!s || s.t <= 0) return 1;
-  return (s.step ?? 1) ** Math.min(s.stacks, STUN_MAX_STACKS);
+  let mult = 1;
+  for (const id of Object.keys(bag || {})) {
+    if (!ATTR[id]?.stacks) continue;
+    const s = bag[id];
+    if (!s || s.t <= 0) continue;
+    // A caller that did not name a step gets the player's 15%, which is the
+    // gentler of the two and therefore the safe default to guess wrong with.
+    const step = s.step ?? FEEL.stunPlayerStep;
+    mult *= step ** Math.min(s.stacks, STUN_MAX_STACKS);
+  }
+  return mult;
 }
 
 /** Wet reduces contact friction; nothing else changes how the player moves. */
