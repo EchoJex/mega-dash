@@ -586,7 +586,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away.
 - **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live.
 - **class split** `[wip]` Aiming for 9 offensive and 9 defensive
-- **re-quip window** `[wip]` Slots may only be rearranged after the boss defeat animation resolved, and remains freely open to adjustments until contact with boss exit door, whichuntil the player warps into the next arena. Switching a slotted weapon on or off is NOT gated by this — that cannot change what you are carrying.
+- **re-quip window** `[wip]` Slots may only be rearranged after the boss defeat animation resolved, and remains freely open to adjustments until contact with boss exit door, which generated a pop-upuntil the player warps into the next arena. Switching a slotted weapon on or off is NOT gated by this — that cannot change what you are carrying.
 
 ## The re-quip wheel
 
