@@ -329,26 +329,53 @@ export function drawPlaceholder(g, actor) {
  * lands via MANIFEST this goes away with it.
  */
 export function drawBossRig(g, boss, screenX) {
-  const jet = boss.jet;
-  if (!jet) return;
+  if (boss.rig !== 'jetpack') return;
+  /**
+   * THE PACK IS ALWAYS ON; THE PLUME IS NOT.
+   *
+   * It used to draw nothing at all without `boss.jet`, which his attack loop
+   * sets — so the pack blinked into existence when he started thrusting and
+   * vanished during his walk-on. A jetpack you only see mid-dive is not a
+   * jetpack, it is an effect. Hardware is hardware: it hangs on his back
+   * whatever he is doing, and only the exhaust is state.
+   *
+   * Hanging straight down is the resting orientation, which is also the one
+   * that holds him up when he hovers.
+   */
+  const jet = boss.jet || { dx: 0, dy: 1, len: 0 };
   const cx = screenX + boss.w / 2;
   const cy = boss.y + boss.h * 0.5;
 
   // The pack sits on his back — the side away from the plume.
   const px = cx - jet.dx * (boss.w * 0.35);
   const py = cy - jet.dy * (boss.h * 0.3);
+
+  /**
+   * "A LARGE grey hydro jet pack." Sized against his body rather than fixed, so
+   * it stays large if his `scale` moves again — it just went 1.75x to 1.5x, and
+   * a pack in absolute pixels would have quietly become a bigger share of a
+   * smaller boss.
+   */
+  const pw = Math.max(8, Math.round(boss.w * 0.52));
+  const ph = Math.max(10, Math.round(boss.h * 0.46));
   g.fillStyle(0x6B7686, 1);
-  g.fillRect(Math.round(px) - 4, Math.round(py) - 5, 8, 10);
+  g.fillRect(Math.round(px - pw / 2), Math.round(py - ph / 2), pw, ph);
+  // A darker band and a lighter tank highlight, so it reads as a machine
+  // rather than as a grey rectangle stuck to him.
   g.fillStyle(0x39404E, 1);
-  g.fillRect(Math.round(px) - 3, Math.round(py) - 3, 6, 2);
+  g.fillRect(Math.round(px - pw / 2) + 1, Math.round(py - ph / 2) + 2, pw - 2, 2);
+  g.fillStyle(0x8D97A6, 1);
+  g.fillRect(Math.round(px - pw / 2) + 1, Math.round(py - ph / 2) + 5, 2, ph - 7);
 
   // Two nozzles, offset perpendicular to the thrust so they read as a pair
   // whichever way the pack has swung.
   const nx = -jet.dy, ny = jet.dx;
-  for (const side of [-3, 3]) {
+  const spread = Math.max(3, Math.round(pw * 0.3));
+  for (const side of [-spread, spread]) {
     const bx = px + nx * side, by = py + ny * side;
     g.fillStyle(0x2A323C, 1);
-    g.fillRect(Math.round(bx + jet.dx * 5) - 1, Math.round(by + jet.dy * 5) - 1, 3, 3);
+    g.fillRect(Math.round(bx + jet.dx * (ph / 2)) - 2, Math.round(by + jet.dy * (ph / 2)) - 2, 4, 4);
+    if (jet.len <= 0) continue;              // parked: hardware only, no exhaust
     g.fillStyle(0x5CADD5, 0.5);
     for (let d = 7; d < jet.len; d += 5) {
       const w = 3 - Math.floor(d / (jet.len / 2));

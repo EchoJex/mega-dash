@@ -124,12 +124,12 @@ where each one stands.
 `id` torrent
 
 - **palette primary** `[ready]` #145DBD
-- **palette secondary** `[ready]` #C09060
+- **palette secondary** `[ready]` #F5C518
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.5x player height (below average build)
 - **attack name** `[ready]` Aqua Torrent
 - **weapon name** `[ready]` Torrent Cannon
-- **palette notes** `[draft]` Blue yellow guy with a large grey hydro jet pack
+- **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting.
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
 - **arena furniture** `[ready]` Two steel pipes protruding from the upper corners, a grate-covered central drain carrying a spike ball, and ankle-deep floor water. Barrels and spike balls come out of the pipes and are popped by the central ball, which is what caps their number.
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.

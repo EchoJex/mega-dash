@@ -55,13 +55,26 @@ export const BOSSES = [
   {
     // renamed in the tracker; the id stays 'torrent' so save.bossKills survives
     id: 'torrent', name: 'TEMPEST MAN', element: 'Water',
-    primary: '#145DBD', secondary: '#C09060', outline: '#0A0A12',
+    /**
+     * "Blue yellow guy with a large grey hydro jet pack."
+     *
+     * The grey is NOT in the palette, and cannot be: the NES rule is exactly
+     * three colours plus transparency, and blue, yellow and the shared outline
+     * spend all three. The jetpack is a SEPARATE OBJECT attached to his back —
+     * the same pattern as the weapon hardware drawn on the player — so it
+     * carries its own greys without costing him a palette slot. See
+     * `rig: 'jetpack'` below and drawBossRig in systems/assets.js.
+     */
+    primary: '#145DBD', secondary: '#F5C518', outline: '#0A0A12',
     // 1.5x — "below average build", down from the 1.75x average. The tracker's
     // `scale` field is the source of truth and it moved; a boss's footprint is
     // what every attack of his is spaced against, so this is a real change to
     // how his fight reads, not a cosmetic one.
     scale: 1.5, baseHp: 64,
     attackName: 'Aqua Torrent', dropWeapon: 'torrent_cannon',
+    // Hardware bolted on rather than painted in — drawn whether or not he is
+    // currently thrusting, because a pack you only see mid-dive is not a pack.
+    rig: 'jetpack',
     silhouette: null,
   },
   {

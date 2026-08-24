@@ -226,15 +226,17 @@ export const WEAPON_LADDERS = {
      * accelerate while on the ground" is drag above 1. Pierce goes away because
      * they now EXPLODE on contact instead of passing through.
      *
-     * `explodeR` IS LITERAL AND PROBABLY WANTS TUNING. The field says "a one
-     * fireball radius in all directions", and a fireball's radius is 3.5px on a
-     * 224px-tall screen — so the blast is about as wide as the wheel that made
-     * it. That is what was written, so that is what is built; raise this one
-     * number if it reads as nothing on device.
+     * THE BLAST IS THREE FIREBALL DIAMETERS ACROSS — equivalently, a border one
+     * fireball wide all the way around the one that burst. Read literally, "a
+     * one fireball radius in all directions" was 3.5px on a 224px screen, which
+     * is a blast the size of the wheel and reads as nothing; the owner clarified
+     * the intent. The wheel's radius is 3.5, so 3x that is a 21px-wide burst
+     * against a 24px-tall player — big enough to catch a neighbour, small enough
+     * that placement still matters.
      */
     10: {
       roll: 200, rollDrag: 1.08, pierce: 0, burnFrames: 120,
-      explodeR: 3.5, explodeBurn: 120,
+      explodeR: 3.5 * 3, explodeBurn: 120,
     },
   },
 
