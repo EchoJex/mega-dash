@@ -599,7 +599,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 - **roster** `[ready]` Exactly two, one per plane of movement. SCRAPPER walks its span and turns at pit edges; DRIFTER drifts left while tracking the player's altitude. Bosses are events; minions are weather.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
-- **spawn ramp** `[ready]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena.
+- **spawn ramp** `[wip]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may
 
 ## HUD and controls
 
