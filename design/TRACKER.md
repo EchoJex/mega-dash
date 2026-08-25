@@ -184,7 +184,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.8x player height (average build)
 - **attack name** `[ready]` Vine Lash
-- **weapon name** `[ready]` Thorn Lash
+- **weapon name** `[wip]`
 - **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Thorned creepers grow slowly across the floor from both walls, covering ground over about ten seconds before retracting. Standing on a covered tile deals light repeating damage.
