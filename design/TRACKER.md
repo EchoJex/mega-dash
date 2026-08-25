@@ -159,7 +159,7 @@ where each one stands.
 - **attack name** `[ready]` Chain Spark
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
-- **arena** `[ready]` A very large plasma lamp in the background; several platforms phase in and out in random locations
+- **arena** `[wip]` A very large plasma lamp in the background ; several platforms phase in and out in random locations
 - **arena furniture** `[ready]` Four phasing platforms that land somewhere new each time they phase back IN, eight floor panels, and two overhead conductors at 30% and 70%. The conductors are drawn at every layer and only fire from layer 2 — inert furniture you can stand under is the tell that they are not always inert.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[ready]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
