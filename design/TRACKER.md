@@ -160,7 +160,7 @@ where each one stands.
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **arena** `[wip]` A very large plasma lamp in the background with occasionally changing lightning lines; several platforms phase in and out slowly in genuinely random locations
-- **arena furniture** `[wip]` Four phasing platforms that phase in at a new location each time they phase IN. eight floor panels. and two overhead conductors at 30% and 70%. The conductors are drawn at every layer and only fire from layer 2 — inert furniture you can stand under is the tell that they are not always inert.
+- **arena furniture** `[wip]` Four phasing platforms that phase in at a new location each time they phase IN. eight floor panels. two overhead conductors at 30% and 70%. The conductors are drawn at every layer and only fire from layer 2 — inert furniture you can stand under is the tell that they are not always inert.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, telegraphed by a lamp on the panel a moment before it becomes electrified. Contact deals moderate damage and a short Stun.
 - **hazard L2** `[ready]` Same sweep, plus overhead wire bundles that regularly produce vertical bolts at fixed positions on a regular beat. The conductors are inert between arcs and can be stood under safely.
 - **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Bolts now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
