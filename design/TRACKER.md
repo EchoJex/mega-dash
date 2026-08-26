@@ -604,7 +604,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## HUD and controls
 
 - **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad.
-- **keyboard** `[wip]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the in-situ wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses.
+- **keyboard** `[wip]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the in-situ wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc
 - **slide** `[ready]` Double-tap jump. The jump always wins the first tap — detecting a double-tap first would put latency on every jump in the game — and the second tap inside the window puts the player back where he launched and slides instead.
 - **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` silently drops any glyph it lacks, so HUD strings stay inside plain uppercase, digits and spaces.
 - **dev HUD** `[ready]` A `[DEV]` marker whenever dev mode is on, plus a diagnostic line carrying the build, the run's world seed, and render density with the viewport it was picked from. The marker is not switchable; the diagnostic line is.
