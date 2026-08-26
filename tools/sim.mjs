@@ -26,7 +26,7 @@
  */
 
 import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -70,6 +70,7 @@ if (args.help) {
     --all               sweep every complete pairing
     --list              print what can be simulated today, and what cannot
     --json              raw JSON instead of a table
+    --save              write the run to design/sim/ and diff it against the last
 `);
   process.exit(0);
 }
@@ -308,3 +309,88 @@ console.log(`\nDIFF 0-100 = 30% loss rate + 25% HP lost + 15% unavoidable share`
 console.log(`weapon damage, boss HP and the ramp are all placeholders — read this as`);
 console.log(`"does this weapon function against this boss", not as balance.`);
 console.log(`\n${ran.length} simulated, ${skipped.length} skipped, ${secs}s\n`);
+
+/**
+ * --save — KEEP THE RESULTS IN THE REPO, NEXT TO THE DESIGN THEY JUDGE.
+ *
+ * The loop this exists for is: change the game, run the sim, read the numbers,
+ * change the game again. That only works if a run can be compared to the one
+ * before it, and a number in a terminal that has scrolled away cannot be. So a
+ * saved run is a FILE and therefore a commit: `git log design/sim/` is the
+ * history of how hard this game has been, and any two runs are a `git diff`.
+ *
+ * The JSON is the record; `latest.md` is the thing to actually read, and it
+ * carries the delta against the previous save so a tweak's effect is the first
+ * thing on screen rather than something to work out by eye.
+ */
+if (args.save && ran.length) {
+  const dir = join(REPO, 'design', 'sim');
+  mkdirSync(dir, { recursive: true });
+
+  // The previous save, for the delta — read BEFORE the new one lands.
+  const prior = readdirSync(dir).filter((f) => f.endsWith('.json')).sort().pop();
+  const before = prior
+    ? JSON.parse(readFileSync(join(dir, prior), 'utf8')).results || []
+    : [];
+  const key = (r) => `${r.weaponId}|${r.level}|${r.bossId}|${r.layer}`;
+  const wasBy = new Map(before.map((r) => [key(r), r]));
+
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
+  const head = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: REPO })
+    .toString().trim();
+
+  writeFileSync(join(dir, `${stamp}.json`), `${JSON.stringify({
+    stamp, commit: head, iterations: ITER, weights: null, results: ran,
+  }, null, 2)}\n`);
+
+  // The readable half, rewritten each save so `latest.md` is always the newest.
+  const md = [];
+  md.push(`# Simulation — ${stamp} (\`${head}\`)`, '');
+  md.push(`${ran.length} pairings x ${ITER} iterations. Higher DIFF is harder.`, '');
+  if (prior) md.push(`Delta is against \`${prior.replace('.json', '')}\`.`, '');
+  md.push('## Per boss, hardest first', '');
+  md.push('| boss | loadouts | win% | hp% | unfair% | ttk s | in/s | inputs | diff | vs last |');
+  md.push('|---|---|---|---|---|---|---|---|---|---|');
+
+  const groups = new Map();
+  for (const r of ran) {
+    const k = `${r.bossId} L${r.layer}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  const mean = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
+  const rows = [...groups.entries()].map(([k, rs]) => {
+    const now = mean(rs, (r) => r.difficulty);
+    const wasRs = rs.map((r) => wasBy.get(key(r))).filter(Boolean);
+    const was = wasRs.length ? mean(wasRs, (r) => r.difficulty) : null;
+    return { k, rs, now, was };
+  }).sort((a, b) => b.now - a.now);
+
+  for (const { k, rs, now, was } of rows) {
+    const d = was === null ? '—'
+      : `${now - was >= 0 ? '+' : ''}${(now - was).toFixed(1)}`;
+    md.push(`| ${k} | ${rs.length} | ${(100 * mean(rs, (r) => r.winRate)).toFixed(0)} `
+      + `| ${mean(rs, (r) => r.hpLostPct).toFixed(0)} `
+      + `| ${mean(rs, (r) => r.unfairPct).toFixed(0)} `
+      + `| ${(mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins) / 1000).toFixed(1)} `
+      + `| ${mean(rs, (r) => r.inputsPerSec).toFixed(1)} `
+      + `| ${mean(rs, (r) => r.inputs).toFixed(0)} `
+      + `| **${now.toFixed(1)}** | ${d} |`);
+  }
+
+  md.push('', '## Per loadout', '');
+  md.push('| weapon | lv | boss | l | win% | hp% | unfair% | ttk s | in/s | inputs | boss% | diff | vs last |');
+  md.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const r of [...ran].sort((a, b) => b.difficulty - a.difficulty)) {
+    const w = wasBy.get(key(r));
+    const d = w ? `${r.difficulty - w.difficulty >= 0 ? '+' : ''}${(r.difficulty - w.difficulty).toFixed(1)}` : '—';
+    md.push(`| ${r.weaponId} | ${r.level} | ${r.bossId} | ${r.layer} `
+      + `| ${(r.winRate * 100).toFixed(0)} | ${r.hpLostPct.toFixed(0)} | ${r.unfairPct.toFixed(0)} `
+      + `| ${r.winRate ? (r.avgTtkMsWins / 1000).toFixed(1) : '—'} `
+      + `| ${r.inputsPerSec.toFixed(1)} | ${r.inputs.toFixed(0)} | ${r.avgBossDealtPct.toFixed(0)} `
+      + `| **${r.difficulty.toFixed(1)}** | ${d} |`);
+  }
+  writeFileSync(join(dir, 'latest.md'), `${md.join('\n')}\n`);
+  console.log(`saved design/sim/${stamp}.json and refreshed design/sim/latest.md`);
+  if (prior) console.log(`  delta is against ${prior}`);
+}
