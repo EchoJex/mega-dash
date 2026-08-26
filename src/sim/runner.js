@@ -95,8 +95,9 @@ function runOnce(gs, spec) {
     // survives it. Checking the list rather than `!gs.boss` also refuses to
     // call a fight won if the reference vanished for any other reason.
     if (gs.run.bossesDefeated.includes(bossId)) { win = true; break; }
-    // A wrap door or a warp means the fight is over one way or another.
-    if (gs.warp) break;
+    // A wrap door, a warp, or the exit confirmation means the fight is over one
+    // way or another. The pop-up is a human question and there is no human.
+    if (gs.warp || gs.run.confirmExit) break;
   }
 
   const hpLostFrac = gs.simDied ? 1 : Math.max(0, (info.maxHp - gs.run.hp) / info.maxHp);

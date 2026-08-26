@@ -142,6 +142,9 @@ const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes 
  */
 const SITU_TIMEOUT_MS = 7000;
 
+/** The beat between the boss finishing coming apart and the wheel arriving. */
+const POST_BOSS_DELAY_MS = 550;
+
 /**
  * TOUCH COORDINATES — always convert, never use pointer.x directly.
  *
@@ -205,7 +208,17 @@ const MOD = 26, MOD_GAP = 6;       // module size and the gap between columns
 // space either side of it, not less.
 const LABEL_OFF_Y = 76, LABEL_DEF_Y = 148;
 const ARC_SLOT_R = 6;
-const ARC_END = 0.12;              // keep the arc ends a little clear of horizontal
+/**
+ * How far the arcs stop short of horizontal, in radians.
+ *
+ * "MAINTAIN A DISTINCT GAP between the top half and the bottom half separating
+ * offensive slots and offensive weapons vs defensive slots and defensive
+ * weapons." At 0.12 the two halves nearly met at the sides and the ring read as
+ * one continuous circle of weapons — which is exactly the thing the class split
+ * is not. The frame's own break uses the same number, so the gap in the outline
+ * and the gap in the discs cannot disagree about where the halves divide.
+ */
+const ARC_END = 0.34;
 /**
  * The readout, fenced between the bottom of the ring and the RE-QUIP button.
  *
@@ -699,7 +712,7 @@ export default class UIScene extends Phaser.Scene {
    */
   drawRing(cx) {
     const g = this.frameG;
-    const gap = 0.16;
+    const gap = ARC_END;
     // Phaser Graphics has no elliptical-arc primitive, so each half is stroked
     // as a sampled polyline. 40 steps is smooth at this size and the whole
     // thing is drawn once, not per frame.
@@ -908,6 +921,57 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
+   * THE POST-BOSS WHEEL ON A KEYBOARD — a cursor, per the field.
+   *
+   * "The post-boss wheel shall have a simple cursor to cycle through the weapon
+   * you want attached and the slot you want it attached to. Repeat until escape
+   * key or jump key."
+   *
+   * It drives the SAME two-tap state the touch route uses — `pick` then
+   * `target` — rather than being a second way to equip. Left and right cycle
+   * whatever list is currently in question, and the list is decided by how far
+   * through the sentence you are: nothing held means you are choosing a weapon,
+   * something held means you are choosing where it goes. That is the whole
+   * cursor, and it needs no mode indicator because the wheel already draws
+   * which half is selected.
+   */
+  cursorList() {
+    const r = this.game_.run;
+    // With a weapon in hand the question is WHICH SLOT — and only the ones that
+    // would actually take it, so the cursor cannot stop on a refusal.
+    if (this.pick) {
+      const cls = classOf(this.pick.id);
+      return this.active.filter((sl) => sl.kind === 'slot' && !sl.vacant
+        && sl.cls === cls && !sl.rankLocked
+        && Loadout.canEquip(r.loadout, this.pick.id, sl.index));
+    }
+    // Otherwise it is WHICH WEAPON: everything on the ring you own, plus the
+    // sidearm's bench and the modules, so a slot-first sentence still works.
+    return [...this.arc, ...this.active].filter(
+      (sl) => !sl.vacant && sl.id && (r.unlocked.has(sl.id) || dev('unlockAnyWeapon')),
+    );
+  }
+
+  /** Move the cursor `d` places through whatever list is in question. */
+  cursorStep(d) {
+    const list = this.cursorList();
+    if (!list.length) return;
+    const at = list.indexOf(this.cursorAt);
+    this.cursorAt = list[((at < 0 ? 0 : at + d) % list.length + list.length) % list.length];
+    this.refreshWheel();
+    this.setReadout(this.cursorAt.id, this.cursorAt);
+  }
+
+  /** Confirm: the same tap the touch route would have made. */
+  cursorPick() {
+    if (!this.cursorAt) { this.cursorStep(0); return; }
+    this.tapSlot(this.cursorAt);
+    // After a placement the sentence is over, so the cursor starts again rather
+    // than sitting on a module the player has finished with.
+    if (!this.pick) this.cursorAt = null;
+  }
+
+  /**
    * A slot chosen by key while the in-situ wheel is up: toggle it, then close.
    * Same contract as tapping a module or swiping its diagonal.
    */
@@ -929,7 +993,18 @@ export default class UIScene extends Phaser.Scene {
    */
   promptRequip() {
     if (this.mode) return;
-    this.openWheel();
+    /**
+     * A SMALL DELAY, per the field. The death animation resolving and a menu
+     * appearing on the same frame reads as the menu interrupting it; half a
+     * second of empty room lets the kill land before the game asks a question.
+     *
+     * Guarded so a second call inside the delay cannot queue two.
+     */
+    if (this.requipTimer) return;
+    this.requipTimer = this.time.delayedCall(POST_BOSS_DELAY_MS, () => {
+      this.requipTimer = null;
+      if (!this.mode && this.game_?.run) this.openWheel();
+    });
   }
 
   /**
@@ -1092,7 +1167,9 @@ export default class UIScene extends Phaser.Scene {
 
       if (s.kind === 'slot') {
         this.paintModule(s, {
-          unlocked, off, wanted, selected: this.target === s, rankLocked: s.rankLocked,
+          unlocked, off, wanted,
+          selected: this.target === s || this.cursorAt === s,
+          rankLocked: s.rankLocked,
           // Which offensive module the fire button is actually pointed at.
           // Meaningless for the defensive row, where every live slot acts at
           // once and none is ever held.
@@ -1104,7 +1181,10 @@ export default class UIScene extends Phaser.Scene {
           fresh: this.mode === 'open' && !!s.id && s.id === r.freshWeapon,
         });
       } else {
-        this.paintDisc(s, { wd, unlocked, picked: this.pick === s, fresh: s.id === r.freshWeapon });
+        this.paintDisc(s, {
+          wd, unlocked, picked: this.pick === s || this.cursorAt === s,
+          fresh: s.id === r.freshWeapon,
+        });
       }
 
       // ONLY MODULES CARRY TEXT. Eleven benched offensive weapons on a
@@ -1306,9 +1386,60 @@ export default class UIScene extends Phaser.Scene {
     this.drawAim();
   }
 
+  /**
+   * "A pop-up confirming the current loadout."
+   *
+   * It LISTS what is equipped rather than showing the wheel again, because the
+   * question is not "would you like to change something" — the player has had
+   * the whole room to do that — it is "is this the build you meant". A list is
+   * read in a glance; a ring has to be interpreted.
+   */
+  openExitConfirm() {
+    const r = this.game_.run, cx = this.w / 2;
+    this.exitPanel = this.add.container(0, 0).setDepth(80);
+    this.exitPanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.92)
+      .setOrigin(0).setInteractive());
+    this.exitPanel.add(label(this, cx, 26, 'LEAVE WITH THIS LOADOUT', {
+      color: '#F5D328', origin: 0.5,
+    }));
+
+    let y = 48;
+    for (const cls of [OFFENSIVE, DEFENSIVE]) {
+      const ids = Loadout.slotsOf(r.loadout, cls).filter(Boolean);
+      this.exitPanel.add(label(this, 24, y, cls.toUpperCase(), { color: '#6A6A5A' }));
+      y += 11;
+      if (!ids.length) {
+        this.exitPanel.add(label(this, 34, y, 'EMPTY', { color: '#4A5A6A' }));
+        y += 11;
+      }
+      for (const id of ids) {
+        const on = Loadout.isEnabled(r.loadout, id);
+        this.exitPanel.add(label(this, 34, y,
+          `${weaponOf(id).name}  LV ${r.wpLevels[id] || 1}${on ? '' : '  (OFF)'}`,
+          { color: on ? '#E0F0FF' : '#5A6A7A' }));
+        y += 11;
+      }
+      y += 4;
+    }
+
+    const yes = plate(this, cx - 52, VIEW_H - 22, 'GO', { color: '#2AAB1C', padX: 12, padY: 4 });
+    yes.rect.on('pointerdown', () => this.game_.confirmExit());
+    const no = plate(this, cx + 42, VIEW_H - 22, 'BACK', { color: '#5CADD5', padX: 10, padY: 4 });
+    no.rect.on('pointerdown', () => this.game_.cancelExit());
+    this.exitPanel.add([yes.rect, yes.txt, no.rect, no.txt]);
+    this.exitPanel.add(label(this, cx, VIEW_H - 8, 'BACK RETURNS TO THE ROOM, STILL FREE TO RE QUIP',
+      { color: '#6A6A5A', origin: 0.5 }));
+  }
+
+  closeExitConfirm() {
+    this.exitPanel?.destroy(true);
+    this.exitPanel = null;
+  }
+
   closeWheel() {
     const wasSitu = this.mode === 'situ';
     this.mode = null;
+    this.cursorAt = null;
     this.target = null;
     this.pick = null;
     this.aimSlot = null;
@@ -1708,6 +1839,19 @@ export default class UIScene extends Phaser.Scene {
      * Waits for the warp and the overlays for the same reason the acquire
      * wheel does — a menu that opens over a transition reads as a bug.
      */
+    /**
+     * THE EXIT CONFIRMATION. GameScene sets `confirmExit` when the player walks
+     * into the wrap door with the re-quip window still open; this turns it into
+     * a panel that says what they are about to leave with. The wheel is shut
+     * first — the question is "is this your build", and the answer is easier to
+     * give when the build is written out than when it is a ring of discs.
+     */
+    if (r.confirmExit && !this.exitPanel) {
+      if (this.mode) this.closeWheel();
+      this.openExitConfirm();
+    }
+    if (!r.confirmExit && this.exitPanel) this.closeExitConfirm();
+
     if (r.devRequipPending && !this.mode && !this.cards && !this.pausePanel && !gm.warp) {
       r.devRequipPending = false;
       this.openWheel();

@@ -98,11 +98,22 @@ export default class GameScene extends Phaser.Scene {
      * held, and without them a held jump would burn the double jump instantly
      * and a held fire would re-stamp `fireStart` so no charge could ever build.
      */
-    const onJump = () => { if (!this.intent.jumpHeld) this.doJump(); };
+    const onJump = () => {
+      // The jump key is the wheel's other exit while it is up — checked before
+      // the jump so leaving the menu never also launches the player.
+      const ui = this.scene.get('UI');
+      if (ui?.mode === 'open') { ui.closeWheel(); return; }
+      if (!this.intent.jumpHeld) this.doJump();
+    };
     this.input.keyboard.on('keydown-SHIFT', onJump);
     this.input.keyboard.on('keyup-SHIFT', () => this.endJump());
     this.input.keyboard.on('keydown-S', () => this.toggleSlide());
     this.input.keyboard.on('keydown-SPACE', () => {
+      // The post-boss wheel borrows SPACE as its confirm, so fire stands down
+      // while it is up. Both handlers are bound to the same key and both run;
+      // without this, confirming a swap also queued a shot for the frame the
+      // game resumed on.
+      if (this.scene.get('UI')?.mode === 'open') return;
       if (!this.intent.fireHeld) this.beginFire();
     });
     this.input.keyboard.on('keyup-SPACE', () => this.endFire());
@@ -127,6 +138,24 @@ export default class GameScene extends Phaser.Scene {
         else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginSitu();
       });
     }
+    /**
+     * THE POST-BOSS WHEEL'S CURSOR. Left/right cycle, fire confirms, and either
+     * Esc or the jump key leaves — "repeat until escape key or jump key".
+     *
+     * Bound here with the other keys rather than inside UIScene because this is
+     * where every keyboard binding in the game lives, and a second keyboard
+     * owner is how two handlers end up fighting over one key.
+     */
+    for (const [key, d] of [['LEFT', -1], ['RIGHT', 1], ['A', -1], ['D', 1]]) {
+      this.input.keyboard.on(`keydown-${key}`, () => {
+        const ui = this.scene.get('UI');
+        if (ui?.mode === 'open') ui.cursorStep(d);
+      });
+    }
+    this.input.keyboard.on('keydown-SPACE', () => {
+      const ui = this.scene.get('UI');
+      if (ui?.mode === 'open') ui.cursorPick();
+    });
     this.input.keyboard.on('keydown-ESC', () => {
       const ui = this.scene.get('UI');
       if (ui?.mode) ui.closeWheel();
@@ -195,6 +224,9 @@ export default class GameScene extends Phaser.Scene {
       // A free level from re-beating a boss whose weapon you already own; the
       // post-boss wheel announces it and then clears it.
       bonusLevel: null,
+      // Set when the player touches the exit door with the re-quip window still
+      // open; UIScene turns it into the confirmation pop-up.
+      confirmExit: null,
       // DEV — ask UIScene to open the post-boss wheel once the first frame has
       // drawn. See DEV.requipAtStart; it is cleared the moment it is honoured.
       devRequipPending: false,
@@ -414,8 +446,12 @@ export default class GameScene extends Phaser.Scene {
       // A crash inside a fight should say WHICH fight. Boss and layer are the
       // two things that pick which code was running.
       setCrashContext({ where: `arena ${def.id} L${layer}` });
-      // The build you walk in with is the build you fight with.
+      // The build you walk in with is the build you fight with. Closed here as
+      // a backstop only: the window is normally shut at the EXIT DOOR of the
+      // previous fight, by the confirmation pop-up. This catches the paths that
+      // never touch a door — the dev boss picker, a granted start-of-run window.
       this.run.requipOpen = false;
+      this.run.confirmExit = null;
       this.run.pendingLoadout = null;
       this.run.freshWeapon = null;
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
@@ -592,6 +628,23 @@ export default class GameScene extends Phaser.Scene {
         // A door that spawned under the player arms only once they step off it.
         if (!d.armed) { if (!on) d.armed = true; continue; }
         if (on) {
+          /**
+           * THE EXIT DOOR IS WHERE THE LOADOUT IS COMMITTED.
+           *
+           * "Remains freely open to adjustments until contact with boss exit
+           * door, which generates a pop-up confirming the current loadout."
+           * Walking into the door used to warp immediately, which meant the
+           * re-quip window ended by surprise — you left the room and found out
+           * afterwards that you were done choosing. Now the door ASKS, and the
+           * answer is what closes the window.
+           *
+           * Only while the window is open. Once it is shut the door is a door.
+           */
+          if (this.run.requipOpen && !this.run.confirmExit) {
+            this.run.confirmExit = d;
+            this.paused = true;
+            return;
+          }
           d.alive = false;
           this.warpToNextArea();
           return;
@@ -2165,6 +2218,30 @@ export default class GameScene extends Phaser.Scene {
    * change what you are carrying.
    */
   canRequip() { return !!this.run.requipOpen; }
+
+  /** The pop-up's YES: the loadout is committed and the door opens. */
+  confirmExit() {
+    const d = this.run.confirmExit;
+    this.run.confirmExit = null;
+    this.run.requipOpen = false;
+    this.paused = false;
+    if (d) d.alive = false;
+    this.warpToNextArea();
+  }
+
+  /**
+   * The pop-up's NO: back into the room with the window still open.
+   *
+   * The door is DISARMED on the way out, so standing in the doorway does not
+   * re-open the pop-up every frame — it re-arms once the player steps off it,
+   * which is the same rule a freshly spawned door already follows.
+   */
+  cancelExit() {
+    const d = this.run.confirmExit;
+    this.run.confirmExit = null;
+    this.paused = false;
+    if (d) d.armed = false;
+  }
 
   /** Slot a weapon and keep the fire button pointed at something real. */
   equipSlot(id, index) {

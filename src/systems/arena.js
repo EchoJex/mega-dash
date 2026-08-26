@@ -96,6 +96,9 @@ export function makeArena(bossDef, layer, viewW, floorY) {
  * arrives. Only the three bosses whose tracker entries are written have entries;
  * everything else gets a bare room, which is correct rather than missing.
  */
+/** Frames the plasma lamp holds one lightning shape before jumping to another. */
+const VOLT_LAMP_HOLD = 14;
+
 const FURNITURE = {
   /**
    * CORE MAN — "plain light grey room with a couple of small ceiling turrets".
@@ -206,8 +209,19 @@ const FURNITURE = {
     }));
     // "Inert between arcs and can be stood under safely" — so they are drawn
     // whatever the layer, and only layer 2 and up ever fire them.
+    /**
+     * "Two overhead cables with exposed conductors at 30% and 70% arena width.
+     * The cables are drawn at every layer but the conductors and the sparkle
+     * are only drawn at layer 2 and layer 3."
+     *
+     * So the CABLE is scenery and the CONDUCTOR is the threat, and they are
+     * separated: a layer-1 room already shows you the wiring that is going to
+     * matter later, without a live thing hanging off it. `live` is what the
+     * renderer reads to decide whether to draw the exposed part at all.
+     */
     a.conductors = [0.3, 0.7].map((f) => ({
       x: Math.round(viewW * f) - 4, y: a.ceilY, w: 8, h: 6, arc: 0, tell: 0,
+      live: layer >= 2,
     }));
   },
 
@@ -427,22 +441,50 @@ export function drawArena(g, arena, viewW, shake) {
   // glance: inert, lamp-warned, and live. The warning is the whole fairness of
   // the hazard, so it is the brightest thing on an unlit panel.
   for (const p of arena.panels) {
+    const discharging = p.live > 0 && p.live > p.liveMax - (p.discharge || 0);
     g.fillStyle(p.live > 0 ? 0xF5D328 : 0x232B36, 1);
     g.fillRect(p.x + sx, p.y + sy, p.w - 1, p.h);
-    if (p.live > 0) {
+    if (discharging) {
+      /**
+       * THE DISCHARGE IS A MOMENT, not the whole live window — "visually
+       * discharging before immediately going inert". It is the part that
+       * flinches you, so it has to look different from the current that
+       * lingers afterwards: a full-height crackle rather than a lit strip.
+       */
+      g.fillStyle(0xFFFFFF, 0.95);
+      for (let k = 0; k < 5; k++) {
+        const bx = p.x + 2 + Math.random() * (p.w - 5);
+        g.fillRect(Math.round(bx) + sx, p.y - 8 + sy, 2, 9);
+      }
+    } else if (p.live > 0) {
       g.fillStyle(0xFFF6C0, 0.8);
       g.fillRect(p.x + sx, p.y - 2 + sy, p.w - 1, 2);
     } else if (p.tell > 0) {
-      g.fillStyle(0xF5D328, 0.9);
-      g.fillRect(p.x + p.w / 2 - 2 + sx, p.y - 2 + sy, 3, 2);
+      // "A BLINKING RED AND YELLOW LIGHT." Two colours alternating is a
+      // hazard lamp; one steady colour is decoration. The blink is what makes
+      // it read as a warning from across the room.
+      g.fillStyle(Math.floor(p.tell / 5) % 2 ? 0xE11416 : 0xF5D328, 0.95);
+      g.fillRect(p.x + p.w / 2 - 2 + sx, p.y - 3 + sy, 4, 3);
     }
   }
 
   // ...and the conductors above them. Inert between arcs, per the tracker, so
   // the bolt is drawn only while `arc` is counting down.
   for (const c of arena.conductors) {
+    // The CABLE, at every layer — a layer-1 room shows the wiring that is
+    // going to matter later without a live thing hanging off it.
+    g.fillStyle(0x39404E, 1);
+    g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + sy, 2, 4);
+    if (!c.live) continue;
+    // The exposed conductor and everything it does, from layer 2.
     g.fillStyle(0x4B5563, 1);
     g.fillRect(c.x + sx, c.y + sy, c.w, c.h);
+    // The sparkle: a live conductor is never quite still.
+    if (Math.random() < 0.25) {
+      g.fillStyle(0xFFF6C0, 0.7);
+      g.fillRect(c.x + 1 + Math.floor(Math.random() * (c.w - 2)) + sx,
+        c.y + c.h - 1 + sy, 1, 1);
+    }
     if (c.tell > 0) {
       g.fillStyle(0xF5D328, 0.7);
       g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + c.h + sy, 2, 3);
@@ -450,11 +492,16 @@ export function drawArena(g, arena, viewW, shake) {
     if (c.arc > 0) {
       // A ragged vertical bolt rather than a bar: St Elmo's fire, per the
       // tracker's own description of what it should look like.
+      // "VERTICAL BOLTS ZIGZAG STRAIGHT DOWNWARD" — a regular alternating kink
+      // rather than a random wander, so it reads as a bolt and its column is
+      // exactly where the hurtbox is.
       g.fillStyle(0xFFF6C0, 0.95);
-      let bx = c.x + c.w / 2;
+      const cx0 = c.x + c.w / 2;
+      let k = 0;
       for (let y = c.y + c.h; y < arena.floorY; y += 4) {
-        bx += (Math.random() - 0.5) * 4;
+        const bx = cx0 + (k % 2 ? 3 : -3);
         g.fillRect(Math.round(bx) + sx, y + sy, 2, 4);
+        k++;
       }
     }
   }
@@ -610,20 +657,31 @@ function drawBackdrop(g, arena, viewW, sx, sy) {
       }
     }
   } else if (id === 'volt') {
-    // "A large plasma lamp in the background" — a globe with tendrils reaching
-    // out to its shell, redrawn every frame so they crawl.
+    /**
+     * "A very large plasma lamp in the background with OCCASIONALLY CHANGING
+     * lightning lines."
+     *
+     * The tendrils used to be re-randomised every frame, which reads as static
+     * rather than as lightning. They now hold a shape for a beat and then jump
+     * to a new one — `arena.t` quantised is the seed, so the pattern is stable
+     * between changes and the change itself is the event you notice.
+     */
     const gx = viewW * 0.5, gy = 78, r = 34;
+    const bolt = Math.floor(arena.t / VOLT_LAMP_HOLD);
     g.fillStyle(0x1A1030, 1);
     g.fillCircle(gx + sx * 0.25, gy + sy * 0.25, r);
     g.fillStyle(0x5B21B6, 0.55);
     g.fillCircle(gx + sx * 0.25, gy + sy * 0.25, r * 0.35);
     g.fillStyle(0xF5D328, 0.5);
     for (let i = 0; i < 6; i++) {
-      const th = (i / 6) * Math.PI * 2 + Math.sin(i * 2.3) * 0.3;
+      // Deterministic per (tendril, hold) so the line is steady until the hold
+      // expires. Sine of a large multiple is a cheap stable hash.
+      const wob = (n) => Math.sin((bolt * 7.3 + i * 11.7 + n * 3.1) * 12.9898) * 3;
+      const th = (i / 6) * Math.PI * 2 + Math.sin(bolt + i * 2.3) * 0.5;
       let px = gx + sx * 0.25, py = gy + sy * 0.25;
       for (let k = 0; k < 6; k++) {
-        px += Math.cos(th) * (r / 6) + (Math.random() - 0.5) * 3;
-        py += Math.sin(th) * (r / 6) + (Math.random() - 0.5) * 3;
+        px += Math.cos(th) * (r / 6) + wob(k);
+        py += Math.sin(th) * (r / 6) + wob(k + 20);
         g.fillRect(Math.round(px), Math.round(py), 2, 2);
       }
     }

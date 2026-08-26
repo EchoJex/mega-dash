@@ -1008,7 +1008,15 @@ const VOLT_HAZ = {
   step: { 1: 40, 2: 40, 3: 40 },   // frames between panels — "same sweep"
   tell: 28,
   live: 52,
+  // "Visually discharging before immediately going inert" — the discharge is a
+  // MOMENT at the head of the live window, not the whole of it.
+  discharge: 10,
+  // "Moderate damage" for the discharge itself...
   damage: 3,
+  // ...and "mild damage" for the current it leaves behind, on its own tick so
+  // crossing a spent panel is a cost rather than a wall.
+  mildDamage: 1,
+  mildTick: 24,
   stun: 90,
   // L3 does not restate the conductor beat, so it inherits L2's.
   arcBeat: { 1: 0, 2: 210, 3: 210 },
@@ -1060,13 +1068,40 @@ function voltHazard(layer) {
     for (const pn of a.panels) {
       // The lamp burns down, THEN the current arrives. Two counters rather than
       // one so the warning cannot be shortened by a fast sweep.
-      if (pn.pending > 0 && --pn.pending === 0) pn.live = VOLT_HAZ.live;
+      if (pn.pending > 0 && --pn.pending === 0) {
+        pn.live = VOLT_HAZ.live;
+        // Both stamped ONTO the panel rather than imported by the renderer:
+        // arena.js does not import this file and must not start, so the panel
+        // carries everything anyone needs to know about its own state.
+        pn.liveMax = VOLT_HAZ.live;
+        pn.discharge = VOLT_HAZ.discharge;
+        pn.tick = 0;
+      }
       if (pn.live <= 0) continue;
       const box = ctx.playerBox;
-      if (box.x + box.w > pn.x && box.x < pn.x + pn.w && box.y + box.h >= pn.y - 1) {
+      if (!(box.x + box.w > pn.x && box.x < pn.x + pn.w && box.y + box.h >= pn.y - 1)) continue;
+
+      /**
+       * TWO TIERS, and the difference is the whole point of the rung.
+       *
+       * "Discharge animation causes flinch and moderate damage and short stun
+       * on hit, hurtbox that isn't the discharge deals mild damage and a short
+       * Stun." So the panel firing is the dangerous instant and the current
+       * left behind is a tax — being caught mid-sweep costs you a hit, walking
+       * across a spent panel costs you a little.
+       *
+       * `hurt` supplies the flinch and the knockback for free; the mild tier
+       * asks for neither, which is why it goes through `status` and a direct
+       * damage tick rather than through the hit path.
+       */
+      const discharging = pn.live > pn.liveMax - pn.discharge;
+      if (discharging) {
         ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.damage);
-        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
+      } else if (--pn.tick <= 0) {
+        pn.tick = VOLT_HAZ.mildTick;
+        ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.mildDamage);
       }
+      ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
     }
 
     // OVERHEAD CONDUCTORS, layer 2 and up. Inert between arcs, so standing
