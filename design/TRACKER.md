@@ -302,7 +302,7 @@ where each one stands.
 - **weapon** `[wip]` Offensive; Large, slow, delayed baseball-swing on tap or start of long press for high damage and high knockback, long press 1.5s to visibly hold hammer overhead and on release swing downward producing shockwaves and stuns nearby enemies. Shaped like megaton hammer. Per-level scaling: shockwave size + stun duration.
 - **weapon Lv1** `[wip]` Standard home run swing and grounded overhead swing as described in weapon description
 - **weapon Lv3** `[wip]` Airborne swings cause the player to swing downward and rapidly travel downward where a shockwave will be generated on contact with the ground.
-- **weapon Lv6** `[wip]` Lv5+: if
+- **weapon Lv6** `[wip]` Lv5+: if slide
 - **weapon Lv10** `[wip]` Max: super stomp that causes falling debris from the ceiling.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
