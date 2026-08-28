@@ -80,14 +80,32 @@ export default class GameScene extends Phaser.Scene {
     this.startRun();
 
     /**
-     * KEYBOARD — the owner's layout. Left hand on WASD and shift, right thumb
-     * on space, which is the shape a controller has and the one a keyboard can
-     * actually hold all at once.
+     * KEYBOARD — the owner's layout, from the tracker's `keyboard` field.
      *
-     *   A / D          walk            LSHIFT   jump
-     *   W              aim up          SPACE    fire
-     *   S              slide           Q / E    open the in-situ wheel
-     *   arrows         walk (kept)     ESC      close the wheel
+     *   A / D          walk            SPACE    jump (double-tap to slide)
+     *   W              aim up          RSHIFT   fire
+     *   arrows         walk (kept)     Q / E    open the in-situ wheel
+     *   ESC / ENTER    pause           ESC      close a wheel
+     *
+     * JUMP AND FIRE SWAPPED SIDES, and the swap is the point. Space is the
+     * biggest key on the board and jumping is the input this genre asks for
+     * most often, so the two belong together; fire moves under the same little
+     * finger that used to jump. Everything the old layout is remembered by —
+     * "shift jumps" — is now wrong, which is why nothing accepts both.
+     *
+     * S NO LONGER SLIDES. The field lists no slide key, because the slide is
+     * "double tap jump to cancel into a slide" on a keyboard exactly as it is
+     * under a thumb: `doJump` owns that window and always has, so the keyboard
+     * gets the gesture for free the moment jump moves onto a key a person will
+     * actually double-tap. One rule on both surfaces, one place to tune it.
+     *
+     * EITHER SHIFT FIRES. The field names RSHIFT and that is the one the
+     * tracker documents; left shift is accepted too because nothing else in
+     * the game claims it, and a modifier that silently does nothing is a worse
+     * outcome than one that does the obvious thing. Phaser has no LSHIFT/RSHIFT
+     * event either — both arrive as `keydown-SHIFT` — so refusing the left one
+     * would mean reading `location` off the native event to turn a working key
+     * into a dead one.
      *
      * ARROWS STILL WALK. They are the only binding a person can find without
      * being told, and the boss-defeat picker uses left/right for its cursor —
@@ -98,25 +116,26 @@ export default class GameScene extends Phaser.Scene {
      * held, and without them a held jump would burn the double jump instantly
      * and a held fire would re-stamp `fireStart` so no charge could ever build.
      */
-    const onJump = () => {
-      // The jump key is the wheel's other exit while it is up — checked before
-      // the jump so leaving the menu never also launches the player.
+    this.input.keyboard.on('keydown-SPACE', () => {
+      // The jump key is the post-boss wheel's other exit while it is up —
+      // checked before the jump so leaving the menu never also launches the
+      // player.
       const ui = this.scene.get('UI');
       if (ui?.mode === 'open') { ui.closeWheel(); return; }
+      if (ui?.pausePanel || ui?.cards) return;
       if (!this.intent.jumpHeld) this.doJump();
-    };
-    this.input.keyboard.on('keydown-SHIFT', onJump);
-    this.input.keyboard.on('keyup-SHIFT', () => this.endJump());
-    this.input.keyboard.on('keydown-S', () => this.toggleSlide());
-    this.input.keyboard.on('keydown-SPACE', () => {
-      // The post-boss wheel borrows SPACE as its confirm, so fire stands down
-      // while it is up. Both handlers are bound to the same key and both run;
-      // without this, confirming a swap also queued a shot for the frame the
-      // game resumed on.
-      if (this.scene.get('UI')?.mode === 'open') return;
+    });
+    this.input.keyboard.on('keyup-SPACE', () => this.endJump());
+    this.input.keyboard.on('keydown-SHIFT', () => {
+      // The post-boss wheel borrows the fire key as its confirm, so firing
+      // stands down while it is up. Both handlers are bound to the same key and
+      // both run; without this, confirming a swap also queued a shot for the
+      // frame the game resumed on.
+      const ui = this.scene.get('UI');
+      if (ui?.mode === 'open' || ui?.pausePanel || ui?.cards) return;
       if (!this.intent.fireHeld) this.beginFire();
     });
-    this.input.keyboard.on('keyup-SPACE', () => this.endFire());
+    this.input.keyboard.on('keyup-SHIFT', () => this.endFire());
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     /**
@@ -135,7 +154,7 @@ export default class GameScene extends Phaser.Scene {
         if (ui.mode === 'situ') ui.situKey(cls, index);
         // Only Q and E open it. Z and C would be a surprise to anyone who
         // pressed them with the wheel down and no way to know what they meant.
-        else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginSitu();
+        else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginRequipKey();
       });
     }
     /**
@@ -150,15 +169,53 @@ export default class GameScene extends Phaser.Scene {
       this.input.keyboard.on(`keydown-${key}`, () => {
         const ui = this.scene.get('UI');
         if (ui?.mode === 'open') ui.cursorStep(d);
+        else if (ui?.pausePanel) ui.pauseStep(d);
       });
     }
-    this.input.keyboard.on('keydown-SPACE', () => {
+    for (const [key, d] of [['W', -1], ['UP', -1], ['S', 1], ['DOWN', 1]]) {
+      this.input.keyboard.on(`keydown-${key}`, () => {
+        // The pause menu is a column, so it takes the vertical pair as well as
+        // the horizontal one. Nothing else reads these while it is up.
+        const ui = this.scene.get('UI');
+        if (ui?.pausePanel) ui.pauseStep(d);
+      });
+    }
+    this.input.keyboard.on('keydown-SHIFT', () => {
       const ui = this.scene.get('UI');
       if (ui?.mode === 'open') ui.cursorPick();
     });
+
+    /**
+     * ESC AND ENTER — "Esc or Enter pauses and brings up pause menu. Esc or
+     * enter key while Resume is cursored closes and unpauses. Esc closes post
+     * boss requip wheel."
+     *
+     * One key, three jobs, resolved by what is on screen rather than by a mode
+     * the player has to track. Esc reads as BACK the whole way down: it leaves
+     * a wheel, it steps a pause cursor off ABORT RUN and back onto RESUME
+     * before it will close anything, and only then does it unpause. That last
+     * step is deliberate — an Esc that closed the menu from wherever the cursor
+     * happened to be would make the key next to ABORT RUN the one you press
+     * when you want out.
+     */
     this.input.keyboard.on('keydown-ESC', () => {
       const ui = this.scene.get('UI');
-      if (ui?.mode) ui.closeWheel();
+      if (!ui) return;
+      if (ui.mode) { ui.closeWheel(); return; }
+      // The exit door's confirmation is a two-button question and Esc is its
+      // BACK. Without this it fell through to the pause menu, which would have
+      // opened UNDER the confirm panel — both hard-pause, and the pause panel
+      // sits at a lower depth, so it would have been invisible and live at once.
+      if (this.run.confirmExit) { this.cancelExit(); return; }
+      if (ui.pausePanel) { ui.pauseBack(); return; }
+      ui.togglePause();
+    });
+    this.input.keyboard.on('keydown-ENTER', () => {
+      const ui = this.scene.get('UI');
+      if (!ui || ui.mode) return;
+      if (this.run.confirmExit) { this.confirmExit(); return; }
+      if (ui.pausePanel) { ui.pauseConfirm(); return; }
+      ui.togglePause();
     });
 
     this.scene.launch('UI', { game: this });
@@ -461,7 +518,7 @@ export default class GameScene extends Phaser.Scene {
       this.pickups = [];
       this.run.allies.length = 0;
       this.fx = Wpn.makeFx();
-    this.deaths = [];
+      this.deaths = [];
       this.world.doors = [];
       this.player.x = 24;
       this.player.y = GROUND_Y - 24;
@@ -2102,15 +2159,31 @@ export default class GameScene extends Phaser.Scene {
   /**
    * Second tap of a rapid double-tap: undo the jump, slide instead.
    *
-   * Refuses unless the jump is still RISING and still inside the window, so a
-   * player who taps again at the top of an arc gets their double jump rather
-   * than being yanked to the floor. Refuses too if the slide would not start
-   * (Slide Mastery rank 0), in which case the second tap falls through to the
-   * double jump it would otherwise have been — never a dead input.
+   * Refuses unless the jump is still going UP — either still rising, or cut
+   * short by the player letting go — and still inside the window, so a player
+   * who taps again at the top of an arc gets their double jump rather than
+   * being yanked to the floor. Refuses too if the slide would not start (Slide
+   * Mastery rank 0), in which case the second tap falls through to the double
+   * jump it would otherwise have been — never a dead input.
+   *
+   * `p.jumpCut` IS WHY A DOUBLE-TAP WORKS AT ALL. The test used to be `vy < 0`
+   * alone, and `FEEL.jumpCutMult` is 0 — releasing the jump key while rising
+   * sets vy to exactly zero, and gravity has it falling on the very next step.
+   * A double TAP is press, release, press, so by the second press the first
+   * jump was never rising any more and the cancel refused every time. It only
+   * ever fired for a player who held the button down through both taps, which
+   * is not a double-tap. Under a thumb that made the slide unreliable; on a
+   * keyboard, where the field now gives the slide no key of its own, it would
+   * have removed the move outright.
+   *
+   * The apex case the `vy` test was protecting is covered by the window: eight
+   * frames is nowhere near the top of a jump that rises for nineteen, and a
+   * HELD jump at its apex has `jumpCut` false, so it still gets its double jump.
    */
   tryCancelIntoSlide() {
     const p = this.player, r = this.run;
-    if (this.jumpTapFrame == null || p.onGround || p.vy >= 0) return false;
+    if (this.jumpTapFrame == null || p.onGround) return false;
+    if (p.vy >= 0 && !p.jumpCut) return false;
     if (r.frame - this.jumpTapFrame > FEEL.slideTapFrames) return false;
     if (p.jumpFromY == null) return false;
 

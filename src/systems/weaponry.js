@@ -1146,7 +1146,14 @@ const thorn = {
 
     st.lash = {
       ox: p.x + 12, oy: p.y + 12, len: 0, dir,
-      t: L.lashFrames, grabbed: null, swing: 0,
+      // Out in `lashFrames`, then held out for `holdFrames`. The hold is what
+      // gives the tip — and the Lv3 grapple, which only fires at full
+      // extension — a frame to actually be somewhere.
+      t: L.lashFrames + (L.holdFrames || 0), grabbed: null, swing: 0,
+      // Who the shaft has already brushed past. Body contact does not end the
+      // lash, so without this the vine would tick damage every frame it lay
+      // across a minion.
+      hit: new Set(),
     };
     return true;
   },
@@ -1231,11 +1238,26 @@ function thornProbe(st, lv, ctx, L) {
   // even called during the reel or the swing — so the lash vanished for half
   // the move. drawWeaponry draws the real thing every frame it exists.
 
-  // ENEMY FIRST. A boss is never reeled — it is not moved by anything (see
-  // hitEnemy) — so it takes the damage and the lash ends there.
+  /**
+   * THE TIP FIRST, and it is a small box on purpose — "small hit box high
+   * damage at the tip of the whip". Ten pixels square against a 34px reach, so
+   * landing it is a real aim rather than a consequence of pointing the right
+   * way. It is also the only part that CATCHES: a grab is the tip closing on
+   * something, and letting the shaft grab would make the aim worthless.
+   *
+   * A boss is never reeled — it is not moved by anything (see hitEnemy) — so it
+   * takes the damage and the lash ends there.
+   */
   const box = { x: tip.x - 5, y: tip.y - 5, w: 10, h: 10 };
-  const e = enemiesIn(ctx, box)[0];
+  // ONE CRACK PAYS A TARGET ONCE. The whip is out for ten frames and its two
+  // zones sweep past each other as it extends, so without the shared hit set a
+  // minion standing point-blank would take the shaft's medium hit early and the
+  // tip's high one a few frames later — the two tiers stacking into a third,
+  // best damage number for being as close as possible, which is the opposite of
+  // what aiming the tip is supposed to be worth.
+  const e = enemiesIn(ctx, box).find((o) => !la.hit.has(o));
   if (e) {
+    la.hit.add(e);
     ctx.hitEnemy(e, dmgOf('thorn_lash', lv, ctx) * L.dmgMult, { from: la.ox });
     if (e.isBoss) {
       if (L.constrictFrames) Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
@@ -1244,6 +1266,27 @@ function thornProbe(st, lv, ctx, L) {
       la.grabbed = e;
     }
     return;
+  }
+
+  /**
+   * THE SHAFT SECOND — "medium damage anywhere else". Sampled along the vine
+   * rather than as one long box, because a rotated AABB is not a thing this
+   * physics has and five samples over 34px cannot miss a 16px minion. Each
+   * enemy is paid once per crack: body contact does not end the lash, so
+   * without the hit set the whole move would tick every frame it lay across
+   * something and the tip bonus would be worth nothing.
+   */
+  if (L.bodyDmgMult) {
+    const steps = Math.max(2, Math.round(la.len / 7));
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const bx = la.ox + la.dir.x * la.len * t, by = la.oy + la.dir.y * la.len * t;
+      for (const o of enemiesIn(ctx, { x: bx - 4, y: by - 4, w: 8, h: 8 })) {
+        if (la.hit.has(o)) continue;
+        la.hit.add(o);
+        ctx.hitEnemy(o, dmgOf('thorn_lash', lv, ctx) * L.bodyDmgMult, { from: la.ox });
+      }
+    }
   }
 
   if (!L.grapple || la.len < L.reach) return;
@@ -1622,6 +1665,24 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillStyle(e ? 0x8FE07A : 0x2AAB1C, 1);
     const hr = e ? 4 : 3;
     g.fillRect(Math.round(x1) - hr, Math.round(y1) - hr, hr * 2, hr * 2);
+    /**
+     * THE GLINT — "a small glint to indicate that zone".
+     *
+     * The tip carries roughly twice the shaft's damage and it is the only part
+     * that catches, and none of that was visible: the head was the same green
+     * as the vine it was on the end of. A white cross with a lit centre is the
+     * arcade shorthand for "this is the business end", and it is drawn only
+     * while the whip is out and empty — once something is caught, the pale
+     * bigger head is already saying the more useful thing.
+     */
+    if (!e) {
+      const gx = Math.round(x1), gy = Math.round(y1);
+      g.fillStyle(0xFFFFFF, 0.9);
+      g.fillRect(gx - 4, gy, 9, 1);
+      g.fillRect(gx, gy - 4, 1, 9);
+      g.fillStyle(0xEAFBE4, 1);
+      g.fillRect(gx - 1, gy - 1, 3, 3);
+    }
   }
 
   // FROST GUARD — brighter as it bulks up, so "not yet at full strength" is

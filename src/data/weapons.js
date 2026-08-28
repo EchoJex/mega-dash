@@ -432,9 +432,35 @@ export const WEAPON_LADDERS = {
    */
   thorn_lash: {
     1: {
-      cooldown: 36, reach: 34, lashFrames: 18, rootFrames: 22,
+      /**
+       * A WHIP CRACK, NOT A REACH. "Needs to be much quicker, like a whip;
+       * small hit box high damage at the tip of the whip with a small glint to
+       * indicate that zone, medium damage anywhere else. Low fire rate."
+       *
+       * The two numbers moved in opposite directions on purpose. The vine used
+       * to take 18 frames to travel its own length, which is slower than a
+       * walking minion and made a 34px reach unusable — you aimed at where
+       * something had been. It now arrives in 6 and holds for 4, so the whole
+       * move is a sixth of a second. Paying for that with a cooldown half again
+       * as long is what keeps it a read rather than a stream: one crack, and
+       * you are committed to having been right.
+       *
+       * `holdFrames` is not decoration. `lashFrames` is only the extension, and
+       * without a hold the lash was destroyed on the very step it reached full
+       * length — so the Lv3 grapple, which fires only at full extension, could
+       * never fire at all. The hold is when the tip is where the player aimed.
+       */
+      cooldown: 54, reach: 34, lashFrames: 6, holdFrames: 4, rootFrames: 10,
       // "Mild knockback" on the reel, which it did not have at all.
-      reelSpeed: 3.2, dmgMult: 1.4, reelKnock: 1.4,
+      reelSpeed: 3.2, reelKnock: 1.4,
+      /**
+       * TWO ZONES ALONG ONE VINE. The tip is a 10x10 box carrying the high
+       * damage and it is the only part that catches anything; the shaft behind
+       * it deals medium damage and lets go. Landing the tip is worth about
+       * twice the shaft, which is enough to be worth aiming for and not so much
+       * that a body hit feels like a miss.
+       */
+      dmgMult: 2.2, bodyDmgMult: 1,
       toss: false, tossDmgMult: 0, constrictFrames: 0,
       grapple: false, diagonal: false,
     },
@@ -606,7 +632,7 @@ const DEFS = [
   // does not name one, and a whip you aim while standing still is not a thing
   // that runs itself. Confirmed if the owner ever writes the word.
   { id: 'thorn_lash', name: 'THORN LASH', short: 'THORN', cls: OFFENSIVE, boss: 'thorn',
-    cooldown: 36, projectiles: 1, shape: 'lash', speed: 2.8,
+    cooldown: 54, projectiles: 1, shape: 'lash', speed: 2.8,
     desc: 'Whip-vine that reels enemies in and throws them.' },
   { id: 'frost_guard', name: 'FROST GUARD', short: 'FROST', cls: DEFENSIVE, boss: 'frost',
     cooldown: 40, projectiles: 1, shape: 'shard', speed: 2.6,

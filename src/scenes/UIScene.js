@@ -534,7 +534,9 @@ export default class UIScene extends Phaser.Scene {
    */
   togglePause() {
     if (this.pausePanel) return this.closePause();
-    if (this.cards || this.mode === 'open') return;
+    // The exit confirmation joins the list for the same reason the others are
+    // on it: it already owns `paused`, and this panel would open beneath it.
+    if (this.cards || this.mode === 'open' || this.exitPanel) return;
     this.openPause();
   }
 
@@ -564,10 +566,15 @@ export default class UIScene extends Phaser.Scene {
     this.pausePanel.add(label(this, cx, 34, 'PAUSED', { scale: 2, color: '#5CADD5', origin: 0.5 }));
 
     let y = 62;
+    // The rows in order, so a key can walk them. Tapping one still works and is
+    // still the primary route — the cursor is the keyboard's way of reaching
+    // the same buttons, not a second set of them.
+    this.pauseRows = [];
     const btn = (text, colour, fn) => {
       const { rect, txt } = plate(this, cx, y + 8, text, { color: colour, padX: 10, padY: 4 });
       rect.on('pointerdown', fn);
       this.pausePanel.add([rect, txt]);
+      this.pauseRows.push({ rect, fn });
       y += rect.height + 4;
     };
     const note = (text, colour) => {
@@ -582,11 +589,56 @@ export default class UIScene extends Phaser.Scene {
     // loud, because "abort the run" is a strange instruction to arrive at on
     // your own when the thing you want is a different weapon.
     if (DEV.enabled) note('dev dials are on the title screen', '#6A6A5A');
+
+    /**
+     * RESUME IS CURSORED ON ARRIVAL, and that is what makes the field's
+     * sentence work: "Esc or enter key while Resume is cursored closes and
+     * unpauses" only reads as one gesture if opening the menu already put the
+     * cursor there. Pause and unpause are then the same key pressed twice.
+     */
+    this.pauseAt = 0;
+    this.pauseCaret = label(this, 0, 0, '>', { color: '#F5D328', origin: 0.5 });
+    this.pausePanel.add(this.pauseCaret);
+    this.drawPauseCursor();
+  }
+
+  /** Park the caret beside the cursored row. */
+  drawPauseCursor() {
+    const row = this.pauseRows?.[this.pauseAt];
+    if (!row || !this.pauseCaret) return;
+    this.pauseCaret.setPosition(row.rect.x - row.rect.width / 2 - 8, row.rect.y);
+  }
+
+  /** Walk the cursor, wrapping — the same one-tap-advances rule the dev menu has. */
+  pauseStep(d) {
+    if (!this.pauseRows?.length) return;
+    const n = this.pauseRows.length;
+    this.pauseAt = ((this.pauseAt + d) % n + n) % n;
+    sfx('select', { pitch: 1.1 });
+    this.drawPauseCursor();
+  }
+
+  /** Enter: do whatever the cursored row does when tapped. */
+  pauseConfirm() {
+    this.pauseRows?.[this.pauseAt]?.fn();
+  }
+
+  /**
+   * Esc: BACK before EXIT. Off any other row it returns to RESUME; from RESUME
+   * it closes. So the key you hammer to get out of a menu can never be the key
+   * that ends your run, which is the whole reason ABORT RUN is not simply
+   * fired by whatever the cursor is on.
+   */
+  pauseBack() {
+    if (this.pauseAt !== 0) { this.pauseAt = 0; sfx('select'); this.drawPauseCursor(); return; }
+    this.closePause();
   }
 
   closePause() {
     this.pausePanel?.destroy(true);
     this.pausePanel = null;
+    this.pauseRows = null;
+    this.pauseCaret = null;
     this.game_.paused = false;
   }
 
@@ -594,6 +646,8 @@ export default class UIScene extends Phaser.Scene {
   abortRun() {
     this.pausePanel?.destroy(true);
     this.pausePanel = null;
+    this.pauseRows = null;
+    this.pauseCaret = null;
     this.game_.paused = false;
     this.game_.die();
   }
@@ -859,10 +913,34 @@ export default class UIScene extends Phaser.Scene {
      */
     this.reqBox.on('pointerdown', (p) => {
       if (this.press) return;
+      /**
+       * DURING THE RE-QUIP WINDOW THIS BUTTON OPENS THE POST-BOSS WHEEL —
+       * "while in the boss room the player should be able to bring up the post
+       * boss wheel and requip as desired".
+       *
+       * The standing rule is that this button can never reach the hard-paused
+       * wheel, and the rule still holds where it was written: a control resting
+       * under the player's thumb must not be able to stop a LIVE FIGHT. From
+       * the boss going down to the next arena warp there is no live fight —
+       * that is exactly the window `canRequip` describes, the game opens this
+       * same wheel by itself at the start of it, and the only way back into it
+       * used to be to walk into the exit door and press BACK. So inside the
+       * window the button opens it, and a second press puts it away.
+       *
+       * No `press` is recorded on that branch: this is a tap, not the opening
+       * of a swipe gesture, and leaving a stale press behind is precisely how
+       * the wheel used to close itself (see the pointerup handler below).
+       */
+      if (this.mode === 'open') { this.closeWheel(); return; }
+      if (this.mode !== 'situ' && this.game_.canRequip()
+          && !this.cards && !this.pausePanel && !this.exitPanel && !this.game_.warp) {
+        this.openWheel();
+        return;
+      }
       const v = vpt(this, p);
       this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
       if (this.mode === 'situ') { this.closeWheel(); return; }
-      if (this.mode !== 'open') this.beginSitu();
+      this.beginSitu();
     });
 
     // Move and release are tracked at SCENE level, not on the button: a swipe
@@ -885,15 +963,25 @@ export default class UIScene extends Phaser.Scene {
       // the finger lifting is not a cancel, it is the player switching from the
       // swipe route to the tap route mid-gesture.
       //
-      // THE BUTTON NEVER OPENS THE POST-BOSS WHEEL. It used to, as a leftover
-      // from the era when tap and swipe were two ways into one control: the
-      // second tap closed the in-situ wheel on the way DOWN, and then this
-      // handler saw a mode that was neither 'open' nor 'situ' on the way UP and
-      // opened the hard-paused between-fights wheel on top of a live fight.
-      // That wheel is opened by `promptRequip` when a boss falls, and by
-      // nothing else.
+      /**
+       * THIS HANDLER CLOSED THE POST-BOSS WHEEL BY ITSELF, and that was the
+       * "the wheel is closing when I did not close out off it" bug.
+       *
+       * It is a SCENE-LEVEL pointerup, needed because a swipe leaves the 60x20
+       * RE-QUIP button within a few pixels. It used to end with
+       * `else if (this.mode === 'open') this.closeWheel()`. `this.press` is set
+       * on the button's pointerdown and cleared only by a pointerup whose id
+       * matches — so any press whose release went missing (a finger leaving the
+       * canvas, a touch id reused, the boss dying between down and up) left a
+       * stale press that the NEXT release anywhere on screen matched. If the
+       * post-boss wheel was up by then, that release shut it: the player let go
+       * of a movement pad and the menu vanished.
+       *
+       * The post-boss wheel already has four honest ways out — a tap on the
+       * scrim with nothing in hand, Esc, the jump key, and the RE-QUIP button.
+       * It does not need a fifth that fires on a release nobody aimed.
+       */
       if (pr.swiping && this.aimSlot) this.commitSitu();
-      else if (this.mode === 'open') this.closeWheel();
     });
 
     /**
@@ -975,6 +1063,17 @@ export default class UIScene extends Phaser.Scene {
    * A slot chosen by key while the in-situ wheel is up: toggle it, then close.
    * Same contract as tapping a module or swiping its diagonal.
    */
+  /**
+   * Q or E: the post-boss wheel inside the re-quip window, the in-situ one
+   * outside it. The same decision the RE-QUIP button makes, so the keyboard and
+   * the thumb reach the same control at the same moments.
+   */
+  beginRequipKey() {
+    if (this.cards || this.pausePanel || this.exitPanel || this.game_.warp) return;
+    if (this.game_.canRequip()) this.openWheel();
+    else this.beginSitu();
+  }
+
   situKey(cls, index) {
     const s = this.active.find(
       (a) => a.kind === 'slot' && a.cls === cls && a.index === index,
@@ -994,17 +1093,57 @@ export default class UIScene extends Phaser.Scene {
   promptRequip() {
     if (this.mode) return;
     /**
-     * A SMALL DELAY, per the field. The death animation resolving and a menu
-     * appearing on the same frame reads as the menu interrupting it; half a
-     * second of empty room lets the kill land before the game asks a question.
+     * IT WAITS FOR THE ROOM TO GO QUIET, not for a stopwatch.
      *
-     * Guarded so a second call inside the delay cannot queue two.
+     * GameScene calls this once the boss's body has finished coming apart, and
+     * that used to be the whole gate plus a fixed half-second. It still opened
+     * over the tail of the kill: the screen was shaking, the ACQUIRED banner
+     * was up, and the EXP the boss had just scattered was mid-air — which the
+     * hard pause then froze in place. "Popping up too early" is what all three
+     * look like from the outside, and none of them is the death animation.
+     *
+     * So the delay is a SETTLING TIME rather than a countdown. `update` pushes
+     * the deadline forward for as long as anything is still resolving, and the
+     * wheel opens after a clear beat with nothing left moving. Whatever runs
+     * longest decides, and a new thing that needs waiting for is one line in
+     * `requipBlocked` rather than a bigger number here.
      */
-    if (this.requipTimer) return;
-    this.requipTimer = this.time.delayedCall(POST_BOSS_DELAY_MS, () => {
-      this.requipTimer = null;
-      if (!this.mode && this.game_?.run) this.openWheel();
-    });
+    if (this.requipWait !== null && this.requipWait !== undefined) return;
+    this.requipWait = performance.now() + POST_BOSS_DELAY_MS;
+  }
+
+  /** Anything still resolving from the kill that the wheel must not land on. */
+  requipBlocked() {
+    const gm = this.game_;
+    if (!gm?.run) return true;
+    if (this.mode || this.cards || this.pausePanel || this.exitPanel || gm.warp) return true;
+    // The acquire banner names what the boss dropped. Asking where to put it
+    // before the player has read what it is puts the question first.
+    if (this.unlockMsg || gm.run.justUnlocked) return true;
+    // The kill's own shake, and the body if a second one is still coming
+    // apart. Deliberately NOT the scattered EXP: an orb that lands over a pit
+    // never stops falling, so waiting on "every pickup at rest" would be a gate
+    // that a bad drop could hold shut forever. The shake and the banner already
+    // cover the seconds the orbs are visibly in flight.
+    if (gm.shake && gm.shake.t > 0) return true;
+    if (gm.deaths?.length) return true;
+    return false;
+  }
+
+  /** Called every frame while a post-boss wheel is owed. */
+  stepRequipWait() {
+    if (this.requipWait === null || this.requipWait === undefined) return;
+    // THE WINDOW CLOSING CANCELS THE REQUEST. Warping into the next arena, or
+    // a run ending under it, both drop `requipOpen` — and a wheel that arrived
+    // after that would be a between-fights menu opening inside a fight.
+    if (!this.game_?.run?.requipOpen) { this.requipWait = null; return; }
+    if (this.requipBlocked()) {
+      this.requipWait = performance.now() + POST_BOSS_DELAY_MS;
+      return;
+    }
+    if (performance.now() < this.requipWait) return;
+    this.requipWait = null;
+    this.openWheel();
   }
 
   /**
@@ -1362,6 +1501,8 @@ export default class UIScene extends Phaser.Scene {
   openWheel() {
     this.mode = 'open';
     this.target = null;
+    // Opened by hand, so there is nothing left owed.
+    this.requipWait = null;
     // A DROP LOOKING FOR A HOME ARRIVES ALREADY IN HAND. The wheel opened to
     // ask exactly one question, so it starts with the new weapon selected and
     // its class outlined — the player finishes the sentence with one tap on a
@@ -1782,6 +1923,10 @@ export default class UIScene extends Phaser.Scene {
 
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);
+    // A post-boss wheel that has been asked for but is waiting on the room to
+    // settle. Checked every frame rather than fired off a timer — see
+    // promptRequip.
+    this.stepRequipWait();
     // Card screen takes priority over every other overlay.
     if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel) this.openCards();
     const r = gm.run, w = weaponOf(r.activeWeapon);

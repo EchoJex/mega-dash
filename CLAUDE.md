@@ -535,13 +535,29 @@ to be told which one they are in — the brightness says it.
 | the gesture | one tap, or one diagonal swipe | **two taps, in either order** |
 | exits | RE-QUIP again · diagonal swipe · slot tap · tap off the wheel · 7s timeout | Esc / tap away |
 
-**The RE-QUIP button can never open the post-boss wheel.** It opens the in-situ wheel on
-contact and a second press puts it away. It used to do both — a leftover from the era when
-tap and swipe were two ways into one control — so the second tap closed the in-situ wheel
-on the way down and then opened the *hard-paused* between-fights wheel on the way up, in
-the middle of a live fight. A control resting under the player's thumb during a fight must
-not be able to stop the game. The post-boss wheel is opened by `promptRequip` when a boss
-falls, by an unresolved drop, and by nothing else.
+**The RE-QUIP button can never open the post-boss wheel DURING A FIGHT.** In a fight it
+opens the in-situ wheel on contact and a second press puts it away. It used to do both — a
+leftover from the era when tap and swipe were two ways into one control — so the second tap
+closed the in-situ wheel on the way down and then opened the *hard-paused* between-fights
+wheel on the way up, in the middle of a live fight. A control resting under the player's
+thumb during a fight must not be able to stop the game.
+
+**Inside the re-quip window it does open it, and that is not an exception to the rule
+above — it is the rule's own boundary.** From the boss going down until the next arena
+warp (`canRequip`) there is no live fight to stop: the room is sealed, the boss is dead and
+nothing ambient spawns. The game opens this same wheel by itself at the start of that
+window, so refusing to reopen it only meant that dismissing it once cost the player the
+whole window. Outside the window the post-boss wheel is still opened by `promptRequip`,
+by an unresolved drop, and by nothing else.
+
+**It opens once the room has gone QUIET, not on a stopwatch.** `promptRequip` records that
+a wheel is owed and `stepRequipWait` opens it after a clear beat with nothing left
+resolving — no death animation, no screen shake, no acquire banner. Waiting on the death
+alone still landed the menu on the tail of the kill, which is what "popping up too early"
+looks like from the outside. A new thing worth waiting for goes in `requipBlocked`, not
+into a bigger delay. **Nothing that can fail to settle may go in there** — scattered EXP
+was tried and rejected, because an orb falling into a pit never comes to rest and would
+hold the gate shut for the rest of the run.
 
 **The slowdown starts on CONTACT, not once a finger passes a deadzone.** Touching the
 button IS the decision to look; waiting for travel meant the dangerous part — deciding —
@@ -929,20 +945,29 @@ choice.
 |---|---|---|
 | walk | `A` / `D`, arrows | left pads |
 | aim up | `W` | the ↖ ↗ pads |
-| jump | `LSHIFT` | jump pad |
-| slide | `S` | **double-tap jump** |
-| fire | `SPACE` | fire pad |
+| jump | `SPACE` | jump pad |
+| slide | **double-tap jump** | **double-tap jump** |
+| fire | `RSHIFT` (either shift) | fire pad |
+| pause | `ESC` / `ENTER` | the `||` plate |
 | in-situ wheel | `Q` / `E`, then `Q`/`E`/`Z`/`C` | RE-QUIP, then swipe a diagonal or tap a slot |
-| close a wheel | `ESC` | tap off the wheel |
+| close a wheel | `ESC`, or jump | tap off the wheel |
+
+**The slide has no key of its own on either surface.** Both get it from the double-tap,
+which is why the jump key has to be one a person will actually double-tap — the tracker's
+`keyboard` field puts jump on space for exactly that reason.
 
 **The jump always wins the first tap.** Detecting a double-tap before jumping would put
 latency on every jump in the game, which this genre cannot afford — so the jump fires
 immediately and a second tap inside `FEEL.slideTapFrames` (8) puts the player back at the
-height he launched from and slides instead. The cancel refuses unless the jump is still
-**rising**, so a tap at the apex stays a double jump, and refuses when a slide could not
-start anyway (Slide Mastery rank 0), falling through to the double jump. Never a dead
-input. That window is the knob for the awkward in-between frames — art for them is still
-to come.
+height he launched from and slides instead. It refuses when a slide could not start anyway
+(Slide Mastery rank 0), falling through to the double jump. Never a dead input.
+
+**The cancel accepts a jump that is rising OR one the player has already released.**
+`FEEL.jumpCutMult` is 0, so letting go mid-rise zeroes the velocity — and a double TAP is
+press, release, press, so a "still rising" test could only ever fire for someone holding
+the button down through both taps. The 8-frame window is what protects the apex case: you
+cannot be near the top of a nineteen-frame rise inside eight frames, and a HELD jump at
+its apex has not been cut, so it still gets its double jump.
 
 ### Reporting a playtest — read this before asking the owner to describe a bug
 

@@ -954,7 +954,21 @@ function voltAttack(layer) {
           if (shelter.length && !shelter.some((pl) => pl.on)) {
             shelter[0].on = true; shelter[0].t = 180;
           }
-          for (const pn of a.panels) pn.live = Math.max(pn.live, VOLT.slamLive);
+          /**
+           * THE SLAM RE-ENERGISES FROM SCRATCH rather than topping a panel up.
+           * `liveMax` and `discharge` are what the two damage tiers and the
+           * renderer both read, so a panel left mid-linger by the sweep has to
+           * be restamped or the slam would land on it as a mild tick — the
+           * whole floor going up would then be the gentlest thing in the fight.
+           * Every panel discharges together and the current it leaves is brief,
+           * per "BRIEFLY energising every panel".
+           */
+          for (const pn of a.panels) {
+            pn.live = VOLT.slamLive;
+            pn.liveMax = VOLT.slamLive;
+            pn.discharge = VOLT_HAZ.discharge;
+            pn.tick = 0;
+          }
           ctx.flash(10);
           // "Destroying any ground minions that are on those panels" — every
           // panel is live, so every grounded minion is on one. Vaporised
@@ -1007,10 +1021,22 @@ function voltAttack(layer) {
 const VOLT_HAZ = {
   step: { 1: 40, 2: 40, 3: 40 },   // frames between panels — "same sweep"
   tell: 28,
-  live: 52,
   // "Visually discharging before immediately going inert" — the discharge is a
   // MOMENT at the head of the live window, not the whole of it.
   discharge: 10,
+  /**
+   * "LINGERING ELECTRIFICATION OF THE PANEL LASTS 3S." Three seconds is 180
+   * fixed steps, and it is the field's number rather than a tuned one.
+   *
+   * It is much longer than it sounds. The sweep steps every 40 frames across
+   * eight panels, so a 180-frame linger leaves between four and five of them
+   * hot at any moment — more than half the floor. That is the point: the
+   * discharge is the thing you dodge and the current behind it is the thing you
+   * plan around, and a linger short enough to simply wait out would collapse
+   * the two back into one hazard.
+   */
+  linger: 180,
+  live: 190,                       // discharge + linger, and drawn as one window
   // "Moderate damage" for the discharge itself...
   damage: 3,
   // ...and "mild damage" for the current it leaves behind, on its own tick so
@@ -1084,11 +1110,17 @@ function voltHazard(layer) {
       /**
        * TWO TIERS, and the difference is the whole point of the rung.
        *
-       * "Discharge animation causes flinch and moderate damage and short stun
-       * on hit, hurtbox that isn't the discharge deals mild damage and a short
-       * Stun." So the panel firing is the dangerous instant and the current
-       * left behind is a tax — being caught mid-sweep costs you a hit, walking
+       * "Discharge animation causes flinch and moderate damage and but not
+       * stun. Lingering electrified panel deals mild damage and a short Stun."
+       * So the panel firing is the dangerous instant and the current left
+       * behind is a tax — being caught mid-sweep costs you a hit, walking
        * across a spent panel costs you a little.
+       *
+       * ONLY THE LINGER STUNS, and that reversal matters. Stunning on the
+       * discharge stacked a slow on top of the flinch and the knockback at the
+       * exact moment the sweep was arriving at the next panel, so one mistimed
+       * step could hand you the rest of the row. The linger is the tier you can
+       * choose to cross, so a slow there is a price you agreed to pay.
        *
        * `hurt` supplies the flinch and the knockback for free; the mild tier
        * asks for neither, which is why it goes through `status` and a direct
@@ -1097,11 +1129,13 @@ function voltHazard(layer) {
       const discharging = pn.live > pn.liveMax - pn.discharge;
       if (discharging) {
         ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.damage);
-      } else if (--pn.tick <= 0) {
-        pn.tick = VOLT_HAZ.mildTick;
-        ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.mildDamage);
+      } else {
+        if (--pn.tick <= 0) {
+          pn.tick = VOLT_HAZ.mildTick;
+          ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.mildDamage);
+        }
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
       }
-      ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
     }
 
     // OVERHEAD CONDUCTORS, layer 2 and up. Inert between arcs, so standing

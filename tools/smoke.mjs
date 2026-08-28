@@ -104,7 +104,15 @@ await page.waitForTimeout(1200);
 const has = await page.evaluate(() => !!globalThis.__game);
 if (!has) { console.log('FAIL — no __game handle; is DEV.available off?'); process.exit(1); }
 
-/** Hold real keys, so the input path is exercised rather than bypassed. */
+/**
+ * Hold real keys, so the input path is exercised rather than bypassed.
+ *
+ * These are the CURRENT bindings — Space jumps, right shift fires — and they
+ * have to stay in step with GameScene's keyboard block. When the two swapped,
+ * this script kept holding Space for fire and shift for jump: the run still
+ * moved, so nothing looked broken, and it quietly stopped testing whether the
+ * player could shoot at all.
+ */
 async function play(seconds, keys) {
   const end = Date.now() + seconds * 1000;
   while (Date.now() < end) {
@@ -141,7 +149,7 @@ await page.waitForTimeout(400);
 const running = await page.evaluate(() => !globalThis.__game.scene.getScene('Game').paused);
 if (!running) fail('still paused after Esc — did the start-of-run wheel close?');
 
-await play(6, ['ArrowRight', 'Space', 'ShiftLeft', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyS']);
+await play(6, ['ArrowRight', 'Space', 'ShiftRight', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyW']);
 await page.screenshot({ path: shot('area.png') });
 
 /**
@@ -180,7 +188,7 @@ for (const id of ['core', 'blaze', 'torrent', 'volt', 'strike']) {
 
   // Fight for a while. Both loops get frames, and the fixed seed makes it the
   // same fight on every run.
-  await play(11, ['ArrowRight', 'Space', 'ShiftLeft', 'Space', 'ArrowLeft', 'ShiftLeft', 'KeyS']);
+  await play(11, ['ArrowRight', 'Space', 'ShiftRight', 'Space', 'ArrowLeft', 'ShiftRight', 'KeyW']);
   await page.screenshot({ path: shot(`${id}.png`) });
 
   const crash = await crashText();

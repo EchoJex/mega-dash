@@ -210,17 +210,27 @@ const FURNITURE = {
     // "Inert between arcs and can be stood under safely" — so they are drawn
     // whatever the layer, and only layer 2 and up ever fire them.
     /**
-     * "Two overhead cables with exposed conductors at 30% and 70% arena width.
-     * The cables are drawn at every layer but the conductors and the sparkle
-     * are only drawn at layer 2 and layer 3."
+     * "Two LONG overhead cables with exposed conductors at 30% and 70% arena
+     * width. The cables are drawn at every layer but the conductors and the
+     * sparkle are only drawn at layer 2 and layer 3."
      *
      * So the CABLE is scenery and the CONDUCTOR is the threat, and they are
      * separated: a layer-1 room already shows you the wiring that is going to
      * matter later, without a live thing hanging off it. `live` is what the
      * renderer reads to decide whether to draw the exposed part at all.
+     *
+     * LONG MEANS THE CABLE SPANS THE ROOM. It used to be a 2x4 nub directly
+     * above the conductor, which read as a bracket rather than as wiring and
+     * said nothing about where the current came from. Each cable now runs wall
+     * to wall at its own height with one exposed spot along it, so the two
+     * never overlap and the room looks wired rather than fitted with two studs.
+     * `cableY` is the run; `y` stays the top of the exposed box that hangs off
+     * it, because that is what the hazard loop and the bolt column measure from.
      */
-    a.conductors = [0.3, 0.7].map((f) => ({
-      x: Math.round(viewW * f) - 4, y: a.ceilY, w: 8, h: 6, arc: 0, tell: 0,
+    a.conductors = [0.3, 0.7].map((f, i) => ({
+      x: Math.round(viewW * f) - 4, y: a.ceilY + 4 + i * 7, w: 8, h: 6,
+      cableY: a.ceilY + 3 + i * 7,
+      arc: 0, tell: 0,
       live: layer >= 2,
     }));
   },
@@ -472,9 +482,16 @@ export function drawArena(g, arena, viewW, shake) {
   // the bolt is drawn only while `arc` is counting down.
   for (const c of arena.conductors) {
     // The CABLE, at every layer — a layer-1 room shows the wiring that is
-    // going to matter later without a live thing hanging off it.
+    // going to matter later without a live thing hanging off it. A long run
+    // wall to wall, with a lit top edge so it reads as a cable in front of the
+    // backdrop rather than as a crack in it.
     g.fillStyle(0x39404E, 1);
-    g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + sy, 2, 4);
+    g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 2);
+    g.fillStyle(0x4B5563, 0.7);
+    g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 1);
+    // The drop from the cable down to whatever hangs off it.
+    g.fillStyle(0x39404E, 1);
+    g.fillRect(c.x + c.w / 2 - 1 + sx, c.cableY + sy, 2, (c.y - c.cableY) + 1);
     if (!c.live) continue;
     // The exposed conductor and everything it does, from layer 2.
     g.fillStyle(0x4B5563, 1);
