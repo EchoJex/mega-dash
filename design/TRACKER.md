@@ -641,7 +641,7 @@ still describing it, and `[ready]` means already fixed.
 | 1054 (main) | `[ready]` | Player idle animation cycles through frames way too quickly |
 | 1054 (main) | `[ready]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel pop up, but if the player is standing in the doorway when it spawns in it should be visibly disabled until the player walks away from it. I also think that since this game is a left-to-right progression, the boss exit door should be near the right side of the arena |
 | 1054 (main) | `[ready]` | Stun appears to prevent player from shooting ever again, long after not taking any damage |
-| 1079 (tracker-draft/main) | `[wip]` | Post Boss requip is still popping up to early. It should pop up after the entire boss death animation |
+| 1079 (tracker-draft/main) | `[wip]` | Post Boss requip is still popping up too early. It should pop up after the entire boss death animation |
 
 # BRAINSTORM — context only, never implemented
 
