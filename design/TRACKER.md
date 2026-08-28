@@ -159,7 +159,7 @@ where each one stands.
 - **attack name** `[ready]` Chain Spark
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
-- **arena** `[wip]` A very large plasma lamp in the background with slowly changing lightning lines; several platforms phase in and out slowly in genuinely random locations
+- **arena** `[draft]` A very large plasma lamp in the background with slowly changing lightning lines; several platforms phase in and out slowly in genuinely random locations
 - **arena furniture** `[ready]` Four phasing platforms that phase in at a new location each time they phase IN. eight floor panels. two long overhead cables with exposed conductors at 30% and 70% arena width. The cables are drawn at every layer and but the conductors and the sparkle are only drawn at layer 2 and layer 3.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, visually discharging before immediately going inert. The start of each panels hurt box will be telegraphed by a blinking red and yellow light on the panel a moment before it electrically discharges. Discharge animation causes flinch and moderate damage and but not stun. Lingering electrification of the panel lasts 3s. Lingering electrified panel deals mild damage and a short Stun.
 - **hazard L2** `[ready]` Same sweep, plus overhead wire bundles that occasionally produce vertical bolts zigzag straight downward on a regular beat. The conductors are inert between arcs and can be stood under safely.
