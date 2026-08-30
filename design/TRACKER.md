@@ -238,7 +238,7 @@ where each one stands.
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
-- **arena furniture** `[ready]` Three ceiling rails for the training bags to swing along. One bag at layer 1; two from layer 2, started at opposite ends of different rails so where they cross drifts down the room.
+- **arena furniture** `[wip]` Two training bags to swing along. One bag at layer 1; two from layer 2, started at opposite ends of different rails so where they cross drifts down the room.
 - **hazard L1** `[wip]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if bags take moderate damage from
 - **hazard L2** `[ready]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
 - **hazard L3** `[ready]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
