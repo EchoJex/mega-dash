@@ -234,7 +234,7 @@ where each one stands.
 - **palette primary** `[ready]` #EA6A34
 - **palette secondary** `[ready]` #7C2D12
 - **palette outline** `[ready]` #0A0A12
-- **scale** `[wip]` 1.95x player height (bulky build)
+- **scale** `[wip]` 1.95x player height (sumo bulk build)
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
