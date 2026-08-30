@@ -1151,6 +1151,26 @@ that used to sit here, which said Strike Man had no attacks for a third of a yea
 they were built. This file states RULES; the board states STATE. Do not put a progress
 table back.
 
+**A ROOM MAY HAVE A BEAT, and Volt Man's does.** `arena.beat` / `arena.beatN` are derived
+from the room's own clock (`arena.t`) rather than counted separately, so a second timer can
+never drift from the first, and every arena carries them at no cost to a room that ignores
+them. Volt Man's field asks that "all furniture, hazards, and boss layer attacks shall be
+synched to a common 1s beat": his platform sets, panel sweep, speaker membranes and attack
+wind-up are all whole multiples of it. **State a beat-locked duration in beats, not frames**
+— the tracker states them in seconds and a beat is a second, so the two then agree by
+construction instead of by arithmetic someone has to redo.
+
+**The speakers are the beat made visible, and that is not decoration.** A room where
+everything happens on a rhythm is only fair if the rhythm is something you can see without
+reading the hazard that is trying to kill you.
+
+**`arena.dim` is the room losing power; `arena.flash` is something in it going off.** They
+are opposite gestures and must stay separate — one subtracts light and holds, the other adds
+it and clears. **Anything that EMITS light draws after the dim**, which is why
+`drawArenaBolts` is exported and called from `GameScene.draw` rather than living inside
+`drawArena`: a bolt drawn with the rest of the room was the one thing in the scene being
+dimmed hardest, and "luminous" then meant nothing.
+
 **Arena furniture is a tracker field.** Every slice carries `arena furniture` beside its
 `arena`, because furniture is design — it varies per boss and can vary per layer (Blaze
 Man's lift exists only at L3, Volt Man's conductors only fire from L2) — and it belongs

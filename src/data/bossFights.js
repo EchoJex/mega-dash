@@ -828,13 +828,24 @@ function tempestFloaters(ctx, a, hs, layer) {
  * angles shallow enough that the paths cross rather than run parallel.
  */
 const VOLT = {
-  // "up to 2" at L1; L2 keeps two per volley and adds a second volley.
-  bolts: { 1: 2, 2: 2, 3: 2 },
+  /**
+   * ONE BOLT AT L1, TWO AT L2 — "up to 1 zigzag lightning bolt" and, at L2, "a
+   * primary bolt and a secondary bolt".
+   *
+   * Both counts came down. L1 fired two in sequence and L2 fired two volleys of
+   * two for four in the air at once, which against a room whose FLOOR is the
+   * other half of the fight left nowhere to read from. The field now describes
+   * a single bolt you track and, one layer up, a second one aimed to cross it —
+   * so the layer adds a geometry to solve rather than more objects to avoid.
+   */
+  bolts: { 1: 1, 2: 1, 3: 1 },
   bounces: { 1: 3, 2: 6, 3: 6 },
   gap: 12,                   // frames between bolts in a volley
   speed: 2.3,
-  windup: 30,
-  rest: { 1: [110, 170], 2: [90, 140], 3: [80, 125] },
+  // Beat-locked like the rest of the room: a beat of wind-up, and a rest that
+  // is a whole number of beats so a volley always lands on one.
+  windup: 60,
+  rest: { 1: [180, 300], 2: [120, 240], 3: [120, 180] },
   /**
    * THE FALLOFF CURVE. `fadeK` is what a bolt keeps after travelling `fadeDist`
    * pixels, so 0.55 over 220px means a bolt that has crossed the room twice is
@@ -846,7 +857,9 @@ const VOLT = {
   // Layer 3 keeps its SIZE all the way out; only the damage falls.
   fadeSize: { 1: true, 2: true, 3: false },
   zig: 9,                    // frames between kinks
-  secondVolley: 34,          // L2+: the overlapping volley, fired before the first ends
+  // L2+: the SECOND BOLT, fired before the first has finished so the two paths
+  // are in the air together and cross rather than arriving in sequence.
+  secondVolley: 34,
   // L3's floor slam: how long every panel stays live afterwards. Brief, per
   // "briefly energising every panel" — the whole floor at once is the harshest
   // thing in the fight and the platforms are the only answer to it.
@@ -1018,25 +1031,35 @@ function voltAttack(layer) {
  * in a boss room. A chained minion is DESTROYED outright rather than damaged,
  * because the arc is what kills it.
  */
+/**
+ * VOLT MAN'S HAZARD, STATED IN BEATS. "All furniture, hazards, and boss layer
+ * attacks shall be synched to a common 1s beat", and the beat is one second, so
+ * every number here is a whole multiple of `BEAT` and reads as the field's own
+ * seconds rather than as a tuning value someone landed on.
+ *
+ * THE SWEEP IS A CHAIN, NOT A METRONOME. "Next panel telegraph starts
+ * immediately after discharge duration" — so a panel owns two beats of the
+ * sweep's attention, one warning and one firing, and the next panel's lamp
+ * lights on the frame this one stops discharging. The three seconds of current
+ * it leaves behind run on past that, which is why two panels are hot at once
+ * and never more: the sweep hands over at 2s and the linger clears at 4s.
+ *
+ * The previous numbers were a 28-frame warning and a TEN-frame discharge on a
+ * 40-frame step, so the dangerous instant was a sixth of a second and the room
+ * had four or five panels lit at any moment. A full second of discharge is a
+ * thing you watch happen and step off; a sixth of one is a thing that has
+ * already hit you.
+ */
+const BEAT = 60;
 const VOLT_HAZ = {
-  step: { 1: 40, 2: 40, 3: 40 },   // frames between panels — "same sweep"
-  tell: 28,
-  // "Visually discharging before immediately going inert" — the discharge is a
-  // MOMENT at the head of the live window, not the whole of it.
-  discharge: 10,
-  /**
-   * "LINGERING ELECTRIFICATION OF THE PANEL LASTS 3S." Three seconds is 180
-   * fixed steps, and it is the field's number rather than a tuned one.
-   *
-   * It is much longer than it sounds. The sweep steps every 40 frames across
-   * eight panels, so a 180-frame linger leaves between four and five of them
-   * hot at any moment — more than half the floor. That is the point: the
-   * discharge is the thing you dodge and the current behind it is the thing you
-   * plan around, and a linger short enough to simply wait out would collapse
-   * the two back into one hazard.
-   */
-  linger: 180,
-  live: 190,                       // discharge + linger, and drawn as one window
+  // One beat of warning, one of discharge — and the next lamp lights as this
+  // discharge ends, which is what `step` is: telegraph + discharge.
+  tell: BEAT,
+  discharge: BEAT,
+  step: { 1: BEAT * 2, 2: BEAT * 2, 3: BEAT * 2 },
+  // "Lingering electrification of the panel lasts 3s."
+  linger: BEAT * 3,
+  live: BEAT * 4,                  // discharge + linger, one window to the renderer
   // "Moderate damage" for the discharge itself...
   damage: 3,
   // ...and "mild damage" for the current it leaves behind, on its own tick so
@@ -1044,10 +1067,26 @@ const VOLT_HAZ = {
   mildDamage: 1,
   mildTick: 24,
   stun: 90,
-  // L3 does not restate the conductor beat, so it inherits L2's.
-  arcBeat: { 1: 0, 2: 210, 3: 210 },
-  arcTell: 34,
-  arcLive: 24,
+  /**
+   * THE END-OF-SWEEP SEQUENCE, layer 2 and up. It replaced a bolt on a fixed
+   * 210-frame beat, which ran independently of everything else in the room and
+   * was therefore the one thing in it NOT on the beat.
+   *
+   * "After final panel has finished discharging, the arena brightness flickers
+   * dark normal dark, staying dark. Then after the last of the electrified
+   * panels have finished being electrified the two power lines sparkle for 1s
+   * then discharge ... bolts that stay still for 1s before fading over a second
+   * period while the arena brightness returns to normal equivalently."
+   *
+   * Read as a sequence of beats: flicker, wait out the last linger, sparkle,
+   * strike, fade. The waiting step is not a duration — it watches the panels,
+   * because the last one to finish is whichever the sweep lit last and the
+   * field ties the sparkle to that event rather than to a clock.
+   */
+  flicker: 30,                     // dark-normal-dark, three parts of ten frames
+  arcTell: BEAT,                   // "sparkle for 1s"
+  arcLive: BEAT,                   // "stay still for 1s"
+  arcFade: BEAT,                   // "fading over a second period"
   chainRange: 34,                  // L3 only
   // "Up to 1 airborne and 1 ground minion every 30 seconds." The cap is per
   // plane and counts what is already alive, so a fight where nothing dies
@@ -1061,7 +1100,12 @@ function voltHazard(layer) {
     const a = ctx.arena;
     if (!a || !a.panels.length) return;
     const hs = ctx.boss.hs || (ctx.boss.hs = {
-      t: 90, i: 0, arc: VOLT_HAZ.arcBeat[layer] || 0,
+      // A beat of empty room before the first lamp, so the player sees the
+      // speakers keep time once before anything is asking them to react to it.
+      t: 60, i: 0,
+      // The end-of-sweep sequence: null, or one of flicker/wait/sparkle/
+      // strike/fade. `hold` parks the sweep while it runs.
+      seq: null, seqT: 0, hold: 0,
       // First pair arrives early rather than half a minute in, so the room has
       // something in it from the start of a playtest.
       summon: 120,
@@ -1078,9 +1122,23 @@ function voltHazard(layer) {
       ctx.summon('ground', mid + 60, a.floorY - 16, VOLT_HAZ.summonCap);
     }
 
-    // THE SWEEP. One panel at a time, and at layer 3 a second head runs the
-    // other way so the two meet in the middle.
-    if (--hs.t <= 0) {
+    /**
+     * THE SWEEP, LOCKED TO THE ROOM'S BEAT. One panel at a time, and at layer 3
+     * a second head runs the other way so the two meet in the middle.
+     *
+     * `hs.t` is still a countdown rather than a `beatN` modulo, because the
+     * sweep has to be able to PAUSE — the layer-2 sequence at the end of a
+     * sweep takes several beats and the next sweep must not start underneath
+     * it. What keeps it on the beat is that every duration it is built from is
+     * a whole number of beats and it starts on one.
+     *
+     * At layer 3 the two heads meet in the middle, so a sweep is HALF the
+     * panels: the pass ends when the heads cross rather than when one of them
+     * has walked the whole floor.
+     */
+    const perSweep = layer >= 3 ? Math.ceil(n / 2) : n;
+    if (hs.hold > 0) hs.hold--;
+    else if (--hs.t <= 0) {
       hs.t = VOLT_HAZ.step[layer];
       const heads = layer >= 3 ? [hs.i, n - 1 - hs.i] : [hs.i];
       for (const k of heads) {
@@ -1088,7 +1146,24 @@ function voltHazard(layer) {
         pn.tell = VOLT_HAZ.tell;
         pn.pending = VOLT_HAZ.tell;
       }
-      hs.i = (hs.i + 1) % n;
+      hs.i++;
+      // END OF A SWEEP. At layer 1 it simply starts again; from layer 2 the
+      // lights go out and the power lines answer — see stepVoltSequence.
+      if (hs.i >= perSweep) {
+        hs.i = 0;
+        /**
+         * THE SEQUENCE IS ARMED HERE AND STARTS TWO BEATS LATER. "After final
+         * panel has FINISHED DISCHARGING" — and at this moment its lamp has
+         * only just lit, so the room is one beat of telegraph and one of
+         * discharge away from the event the field names. Flickering now would
+         * put the lights out over the top of the sweep's own last panel.
+         */
+        if (layer >= 2) {
+          hs.seq = 'settle';
+          hs.seqT = VOLT_HAZ.tell + VOLT_HAZ.discharge;
+          hs.hold = 1e9;
+        }
+      }
     }
 
     for (const pn of a.panels) {
@@ -1138,44 +1213,145 @@ function voltHazard(layer) {
       }
     }
 
-    // OVERHEAD CONDUCTORS, layer 2 and up. Inert between arcs, so standing
-    // under one is only a mistake on the beat.
-    const beat = VOLT_HAZ.arcBeat[layer];
-    if (!beat || !a.conductors.length) return;
-    if (--hs.arc <= 0) {
-      hs.arc = beat;
-      for (const c of a.conductors) c.tell = VOLT_HAZ.arcTell;
-    }
+    // THE END-OF-SWEEP SEQUENCE, layer 2 and up.
+    if (layer >= 2 && a.conductors.length) stepVoltSequence(hs, a, layer, ctx);
+
     for (const c of a.conductors) {
-      if (c.tell > 0) { if (c.tell === 1) c.arc = VOLT_HAZ.arcLive; continue; }
       if (c.arc <= 0) continue;
       const cxp = c.x + c.w / 2;
       const box = ctx.playerBox;
       let reach = box.x + box.w > cxp - 3 && box.x < cxp + 3;
-      // LAYER 3 CHAINS. The arc travels through any minion standing under it,
-      // destroying it, and carries on into the player if the player is near
-      // that minion — so a minion is not cover, it is a conductor. Standing
-      // clear of the strike is only safe if you are also clear of whatever the
-      // strike is about to earth itself through.
-      if (layer >= 3 && c.arc === VOLT_HAZ.arcLive) {
+      /**
+       * LAYER 3 CHAINS, ONCE, ON THE STRIKE. The arc travels through any minion
+       * standing under it, destroying it, and carries on into the player if the
+       * player is near that minion — so a minion is not cover, it is a
+       * conductor. Standing clear of the strike is only safe if you are also
+       * clear of whatever the strike is about to earth itself through.
+       *
+       * The chain fires on the opening frame and is remembered, because the
+       * bolt now STANDS for a whole second: vaporising every minion that
+       * wanders under it during that second would make it a broom rather than
+       * a strike, and it would keep re-earthing into the player long after the
+       * moment they failed to read.
+       */
+      if (layer >= 3 && !c.chained) {
+        c.chained = true;
         const pcx = box.x + box.w / 2;
         for (const m of ctx.minions) {
           if (m.hp <= 0) continue;
           const mcx = m.x + m.w / 2;
           if (Math.abs(mcx - cxp) > VOLT_HAZ.chainRange) continue;
           ctx.vaporise(m);
-          if (Math.abs(pcx - mcx) < VOLT_HAZ.chainRange) reach = true;
+          if (Math.abs(pcx - mcx) < VOLT_HAZ.chainRange) c.chainHit = true;
         }
         // ...and the arc itself reaches a little wider than the bolt it draws.
-        if (!reach) reach = Math.abs(pcx - cxp) < VOLT_HAZ.chainRange;
+        if (Math.abs(pcx - cxp) < VOLT_HAZ.chainRange) c.chainHit = true;
+        if (c.chainHit) ctx.flash(6);
       }
-      if (reach && c.arc === VOLT_HAZ.arcLive) {
-        ctx.flash(6);
+      /**
+       * THE COLUMN HURTS FOR AS LONG AS IT STANDS. It used to land on one frame
+       * only, which was right for a 24-frame flicker and wrong for a bolt that
+       * now holds for a full second — a hazard you can walk through unharmed
+       * for fifty-nine of its sixty frames is scenery. `hurt` returns early
+       * during i-frames, so standing in it costs one hit per invulnerability
+       * window rather than sixty.
+       */
+      if (reach || c.chainHit) {
         ctx.hurt(cxp, VOLT_HAZ.damage);
         ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
       }
     }
   };
+}
+
+/**
+ * THE LIGHTS GO OUT AND THE POWER LINES ANSWER — Volt Man's layer-2 hazard,
+ * run once at the end of every sweep.
+ *
+ * "After final panel has finished discharging, the arena brightness flickers
+ * dark normal dark, staying dark. then after the last of the electrified panels
+ * have finished being electrified the two power lines sparkle for 1s then
+ * discharge luminous, neon purple lightning bolts that stay still for 1s before
+ * fading over a second period while the arena brightness returns to normal
+ * equivalently."
+ *
+ * FIVE STEPS, AND ONLY ONE OF THEM IS A TIMER YOU CANNOT SEE. The flicker, the
+ * sparkle, the strike and the fade are all a beat each; the WAIT in the middle
+ * is not a duration at all — it watches the floor, because "after the last of
+ * the electrified panels have finished" names an event and the panel that
+ * finishes last is whichever one the sweep lit last. Timing it instead would
+ * have been a number that happened to be right until the sweep length changed.
+ *
+ * The dark is the whole reason the bolts are purple and the reason they stand
+ * still: this is the one moment in the fight when the room stops telling you
+ * where the floor is, and what it replaces the floor with has to be readable
+ * as a single object rather than as flicker.
+ */
+function stepVoltSequence(hs, a, layer, ctx) {
+  if (!hs.seq) return;
+  switch (hs.seq) {
+    case 'settle': {
+      // Waiting out the final panel's own telegraph and discharge. Two beats,
+      // stated as the two things it is waiting for rather than as "120".
+      if (--hs.seqT > 0) break;
+      hs.seq = 'flicker';
+      hs.seqT = VOLT_HAZ.flicker;
+      break;
+    }
+    case 'flicker': {
+      // Dark, normal, dark, in three equal parts — then it stays dark.
+      const part = Math.floor((VOLT_HAZ.flicker - hs.seqT) / (VOLT_HAZ.flicker / 3));
+      a.dim = part === 1 ? 0 : 1;
+      if (--hs.seqT > 0) break;
+      a.dim = 1;
+      hs.seq = 'wait';
+      break;
+    }
+    case 'wait': {
+      // The floor has to go quiet first. Nothing here is on a clock.
+      if (a.panels.some((pn) => pn.live > 0)) break;
+      hs.seq = 'sparkle';
+      hs.seqT = VOLT_HAZ.arcTell;
+      for (const c of a.conductors) c.tell = VOLT_HAZ.arcTell;
+      ctx.sfx('charge', { pitch: 0.7 });
+      break;
+    }
+    case 'sparkle': {
+      if (--hs.seqT > 0) break;
+      hs.seq = 'strike';
+      hs.seqT = VOLT_HAZ.arcLive;
+      for (const c of a.conductors) {
+        c.tell = 0; c.arc = VOLT_HAZ.arcLive; c.chained = false; c.chainHit = false;
+      }
+      ctx.sfx('shootBig', { pitch: 0.5 });
+      break;
+    }
+    case 'strike': {
+      if (--hs.seqT > 0) break;
+      hs.seq = 'fade';
+      hs.seqT = VOLT_HAZ.arcFade;
+      // The bolt stops HURTING the moment it stops standing still; what is left
+      // is the picture of it draining away, which must not still be a hitbox.
+      for (const c of a.conductors) {
+        c.arc = 0; c.fade = VOLT_HAZ.arcFade; c.fadeN = VOLT_HAZ.arcFade;
+      }
+      break;
+    }
+    case 'fade': {
+      // "...while the arena brightness returns to normal EQUIVALENTLY" — the
+      // light comes back on exactly the curve the bolt goes out on, so the two
+      // read as one thing ending rather than as two.
+      a.dim = hs.seqT / VOLT_HAZ.arcFade;
+      if (--hs.seqT > 0) break;
+      a.dim = 0;
+      hs.seq = null;
+      // Hand the floor back. The next sweep starts on the next beat.
+      hs.hold = 0;
+      hs.t = VOLT_HAZ.step[layer];
+      break;
+    }
+    default: hs.seq = null;
+  }
 }
 
 // ── STRIKE MAN — Fighting ───────────────────────────────────────────
@@ -1211,12 +1387,48 @@ const STRIKE_HAZ = {
   h: 40,
   drop: 106,        // how far the bag's TOP hangs below its rail
   /**
-   * TWO BAGS FROM LAYER 2, ON CROSSING PATHS. They start at opposite ends of
-   * different rails and run at slightly different speeds, so where they cross
-   * drifts down the room instead of being one fixed spot to memorise. One bag
-   * is a rhythm; two is a rhythm you cannot stand still inside.
+   * TWO BAGS AT EVERY LAYER — "two training bags swing along from above", from
+   * the furniture field, which now states the count and states it flat.
+   *
+   * It used to be one at layer 1 and two above, and the layers were doing the
+   * counting. They are not any more: layer 2 is "two bags on CROSSING PATHS"
+   * and layer 3 is the throw, so what the layers add is behaviour rather than
+   * quantity. That is the better split anyway — a room whose furniture appears
+   * a piece at a time is a room you have to relearn every layer.
    */
-  bags: { 1: 1, 2: 2, 3: 2 },
+  bags: { 1: 2, 2: 2, 3: 2 },
+  /**
+   * "BAGS CAN BE PUNCHED BY BOSS TO KNOCK YOU OFF THEM IF PLAYER STANDS ON THEM
+   * TOO LONG."
+   *
+   * The tops are footing, which makes a bag the one place in the room the
+   * electrified-floor logic of a fighter's pit does not reach — so without a
+   * limit it is a perch you win from. `standLimit` is how long that is allowed
+   * to last and `warn` is the part of it you can see coming.
+   *
+   * HE HAS TO BE ABLE TO REACH IT. The timer marks the bag; the punch waits
+   * until he is beside it. That is deliberately not the same thing as a timeout:
+   * a refuge that expires on a clock teaches you to count, and one that expires
+   * when the boss arrives teaches you to watch him, which is the fight.
+   */
+  standLimit: 150,
+  standWarn: 60,
+  punchReach: 26,
+  punchKnock: 5.2,
+  punchPop: -3.4,
+  /**
+   * THE PSYCHIC LIFT — "if damaged by psychic type gain a purple outline, slowly
+   * rise in the air, then slam the boss for 1/4 boss hp total damage".
+   *
+   * A quarter of his bar off one hit is enormous, and it is meant to be: it
+   * costs a weapon slot, the Psi Orb has to be the thing you are carrying, and
+   * you have to land it on a swinging bag rather than on him. This is the
+   * "fastest way, never the only way" rule doing its job — the fight is
+   * winnable with anything, and this is what knowing the room is worth.
+   */
+  psiRise: 0.55,
+  psiSlamSpeed: 6.5,
+  psiBossDamage: 0.25,
   /**
    * The chance he yanks a bag down to block, rolled on each RANGED hit.
    *
@@ -1280,6 +1492,18 @@ function strikeHazard(layer) {
           vx: i === 0 ? STRIKE_HAZ.speed : -STRIKE_HAZ.speed * 1.18,
           damage: 1,          // "light damage"; hurt() supplies the knockback
           mode: 'swing',
+          // "Tops of bags can be stood on." `solid` is the same one-way
+          // platform path Tempest Man's barrels use, so the footing behaves
+          // exactly like every other surface in the game rather than like a
+          // second kind of standing. Walking INTO one still hurts: the damage
+          // check needs a real overlap, and a player resting on top has none.
+          solid: true,
+          stood: 0,
+          // Only the Psi Orb registers on one — see the bullet branch in
+          // GameScene. Ordinary shots pass through, because two bags swinging
+          // across the room eating your damage would quietly make this fight
+          // about waiting for a gap.
+          psiTarget: true,
         });
       }
     }
@@ -1359,9 +1583,73 @@ function strikeHazard(layer) {
         continue;
       }
 
+      /**
+       * LIFTED — the psychic branch. It rises out of the fight, drifts over
+       * him, and comes down.
+       *
+       * IT TRACKS HIM ON THE WAY UP, NOT ON THE WAY DOWN. A bag that steered
+       * mid-drop would be a homing missile the player fired by accident and the
+       * boss could never answer; one that commits at the top is a thing he can
+       * still walk out from under, which is what makes the quarter-bar fair.
+       */
+      if (h.mode === 'psi') {
+        h.y -= STRIKE_HAZ.psiRise;
+        const bx = b.x + b.w / 2 - h.w / 2;
+        h.x += Math.sign(bx - h.x) * Math.min(1.1, Math.abs(bx - h.x));
+        if (h.y <= h.railY + 6) { h.mode = 'psiSlam'; h.vy = 0; ctx.sfx('charge', { pitch: 1.4 }); }
+        continue;
+      }
+      if (h.mode === 'psiSlam') {
+        h.vy = Math.min(STRIKE_HAZ.psiSlamSpeed, (h.vy || 0) + 0.9);
+        h.y += h.vy;
+        const onHim = h.x + h.w > b.x && h.x < b.x + b.w
+          && h.y + h.h >= b.y && h.y <= b.y + b.h;
+        if (onHim || h.y + h.h >= a.floorY) {
+          if (onHim) {
+            // "1/4 boss hp TOTAL damage" — of the bar he started with, so the
+            // move is worth the same whenever it lands rather than tapering
+            // into nothing as he gets low.
+            ctx.hitBoss(Math.max(1, Math.round((b.maxHp || b.hp) * STRIKE_HAZ.psiBossDamage)),
+              h.x + h.w / 2);
+            ctx.flash(8);
+          }
+          ctx.shake(2, 12);
+          ctx.sfx('shootBig', { pitch: 0.4 });
+          a.hazards.splice(i, 1);
+          hs.respawn = STRIKE_HAZ.returnFrames;
+        }
+        continue;
+      }
+
       h.x += h.vx;
       if (h.x <= a.x0 + 4) { h.x = a.x0 + 4; h.vx = Math.abs(h.vx); }
       if (h.x + h.w >= a.x1 - 4) { h.x = a.x1 - 4 - h.w; h.vx = -Math.abs(h.vx); }
+
+      /**
+       * STANDING ON IT, AND HIM NOTICING. The player is on this bag when his
+       * feet are level with its top and he is over it horizontally — the same
+       * test the one-way platform solver has already resolved, read back rather
+       * than re-derived, so the two can never disagree about what he is on.
+       */
+      const p = ctx.player;
+      const onTop = p.onGround && Math.abs((p.y + 24) - h.y) <= 2
+        && p.x + 18 > h.x && p.x + 6 < h.x + h.w;
+      if (!onTop) { h.stood = 0; h.warn = 0; continue; }
+      h.stood++;
+      h.warn = h.stood >= STRIKE_HAZ.standLimit - STRIKE_HAZ.standWarn ? 1 : 0;
+      if (h.stood < STRIKE_HAZ.standLimit) continue;
+      // Marked, and now it needs him. See standLimit for why the wait is the
+      // point rather than a compromise.
+      if (Math.abs((b.x + b.w / 2) - (h.x + h.w / 2)) > b.w / 2 + STRIKE_HAZ.punchReach) continue;
+      h.stood = 0;
+      h.warn = 0;
+      const away = Math.sign((p.x + 12) - (b.x + b.w / 2)) || 1;
+      p.kbVx = away * STRIKE_HAZ.punchKnock;
+      p.vy = STRIKE_HAZ.punchPop;
+      p.onGround = false;
+      h.vx = away * Math.abs(h.vx) * 1.6;
+      ctx.shake(2, 8);
+      ctx.sfx('hitEnemy', { pitch: 0.55 });
     }
 
     // A thrown bag is winched back up. Without this, layer 3 spends its own

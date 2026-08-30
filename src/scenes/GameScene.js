@@ -20,6 +20,7 @@ import { dev, DEV, layerFor } from '../config/dev.js';
 import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag, bossLayer } from '../data/bosses.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf, hasLadder,
+  elementOf,
 } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
@@ -1184,6 +1185,28 @@ export default class GameScene extends Phaser.Scene {
       const bb = this.bulletBox(b);
       for (let i = a.hazards.length - 1; i >= 0; i--) {
         const h = a.hazards[i];
+        /**
+         * A PSYCHIC HIT LIFTS A TRAINING BAG — "if damaged by psychic type gain
+         * a purple outline, slowly rise in the air, then slam the boss".
+         *
+         * ELEMENT, NOT WEAPON ID. Asking for `psi_orb` by name would be a rule
+         * about one weapon; asking for the element is a rule about a KIND, so
+         * anything psychic the game gains later works here with no edit. It
+         * reads through `elementOf`, which takes the answer from the boss the
+         * weapon came from rather than storing a second copy on the weapon.
+         *
+         * Only psychic registers. An ordinary shot passes straight through, so
+         * two bags swinging across the room never turn this fight into waiting
+         * for a gap in your own line of fire.
+         */
+        if (h.psiTarget && h.mode === 'swing') {
+          if (elementOf(b.weapon) !== 'Psychic' || !Phys.overlaps(bb, h)) continue;
+          b.life = -1;
+          h.mode = 'psi';
+          h.outline = 0x9B4DFF;
+          sfx('charge', { pitch: 1.1 });
+          break;
+        }
         if (h.hp === undefined) continue;
         if (!Phys.overlaps(bb, h)) continue;
         b.life = -1;
@@ -1783,6 +1806,19 @@ export default class GameScene extends Phaser.Scene {
         sfx('rumble', { dur: Math.max(0.7, dur / 96), pitch: mag >= 3 ? 0.72 : 0.9 });
       },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
+      /**
+       * THE ROOM HITTING ITS OWN BOSS. Strike Man's training bag is the first
+       * thing to need it: the player lifts it with a psychic shot and it comes
+       * down on him for a quarter of his bar.
+       *
+       * Routed through `hitEnemy` rather than subtracting from `hp`, so a slam
+       * that finishes him runs the whole death path — the drops, the wrap door,
+       * the weapon unlock. A boss killed by his own furniture must not be a
+       * boss whose room the player can never leave.
+       */
+      hitBoss: (dmg, from) => {
+        if (this.boss) this.hitEnemy(this.boss, dmg, { from });
+      },
       status: (id, frames, opts) => Attr.applyStatus(this.status, id, frames, opts),
       // The room's own enemies, for a hazard that travels THROUGH them —
       // Volt Man's layer-3 arc chains along whatever is standing in the way.
@@ -1927,6 +1963,19 @@ export default class GameScene extends Phaser.Scene {
         this.run.pendingLoadout = b.dropWeapon;
       }
       this.run.activeWeapon = Loadout.normaliseActive(this.run.loadout, this.run.activeWeapon);
+    }
+    /**
+     * THE ROOM GETS ITS LIGHTS BACK. Volt Man's layer-2 sweep parks `dim` at 1
+     * and only its own sequence clears it — and that sequence lives in the
+     * HAZARD loop, which stops the frame he dies. Kill him at the wrong moment
+     * and the room stayed dark through the death animation, the re-quip wheel
+     * and the whole walk to the door, with a live bolt column still standing in
+     * it. Anything the fight was mid-way through owning has to be handed back
+     * here, because there is no other frame on which to hand it back.
+     */
+    if (this.arena) {
+      this.arena.dim = 0;
+      for (const c of this.arena.conductors) { c.arc = 0; c.tell = 0; c.fade = 0; }
     }
     // The wrap door is NOT spawned here — see spawnWrapDoor, which runs once
     // the death animation has finished coming apart.
@@ -2511,6 +2560,30 @@ export default class GameScene extends Phaser.Scene {
       // the drone and the shield sit above every world actor with him.
       Wpn.drawWeaponry(L.player.gOver, sx, this.weaponCtx());
     }
+
+    /**
+     * THE ROOM LOSING POWER. Volt Man's layer-2 sweep ends by flickering the
+     * lights and leaving them out, so the bolts that follow arrive in the dark.
+     *
+     * UNDER the flash rather than over it, and they are opposite gestures on
+     * purpose: this one subtracts light from the whole room and holds, the
+     * flash adds it and clears. Drawn without the shake for the same reason the
+     * flash is — darkness is not an impact.
+     *
+     * It never reaches full black. At 1.0 the player would lose sight of
+     * himself, which is the one thing this game does not do; 0.72 is dark
+     * enough that a neon bolt is the brightest thing in the room and light
+     * enough that the floor is still readable.
+     */
+    if (this.arena?.dim > 0) {
+      L.player.g.fillStyle(0x02040C, Math.min(0.72, this.arena.dim * 0.72));
+      L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
+    }
+    // ...and the things that EMIT light go on top of it. Volt Man's power-line
+    // bolts are the only ones so far, and they are the whole reason the room
+    // turned its lights off. They keep the shake, because unlike the flash they
+    // are objects in the world rather than light cast across it.
+    Arena.drawArenaBolts(L.player.g, this.arena, Arena.shakeOffset(this.shake));
 
     // A lightning or arc flash washes the whole room. Drawn on the topmost
     // world layer and WITHOUT the shake offset: light does not shake, and a

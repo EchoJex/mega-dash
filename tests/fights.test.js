@@ -23,7 +23,7 @@ const VIEW_W = 400, FLOOR = 184;
 function harness(bossId, layer) {
   const def = BOSS_BY_ID[bossId];
   const arena = Arena.makeArena(def, layer, VIEW_W, FLOOR);
-  const shots = [], shakes = [], hurts = [], shoves = [], blocks = [];
+  const shots = [], shakes = [], hurts = [], shoves = [], blocks = [], bossHits = [];
   const status = Attr.makeStatus();
   // Must match what GameScene.spawnBoss actually builds. `anim` in particular
   // is not optional: behaviours bob and pulse off it, and a harness without it
@@ -46,6 +46,8 @@ function harness(bossId, layer) {
       boss, player, layer, arena, floorY: FLOOR,
       minions,
       vaporise: (e) => { e.hp = 0; },
+      // The room hitting its own boss — Strike Man's lifted training bag.
+      hitBoss: (dmg) => { bossHits.push(dmg); },
       summon: (kind, x, y, cap = 99) => {
         if (minions.filter((m) => m.hp > 0 && m.kind === kind).length >= cap) return null;
         const m = { kind, x, y, w: 12, h: 12, hp: 10, vx: -0.5, vy: 0, status: {} };
@@ -73,6 +75,7 @@ function harness(bossId, layer) {
         if (at !== undefined) arena.boltX = at;
       },
     },
+    bossHits,
   };
 }
 

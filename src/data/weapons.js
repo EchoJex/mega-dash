@@ -285,14 +285,27 @@ export const WEAPON_LADDERS = {
   // `fanout` is the chain SHAPE, one entry per depth. A flat list at Lv3/Lv6,
   // a 3-2-1 tree at Lv10 — both fall out of the same walk, which is why the
   // tracker can describe a topology instead of a hit count.
+  /**
+   * "CHAIN DISTANCE TOLERANCE SCALED WITH LEVEL" — so `chainRange` is now a
+   * rung rather than a constant, and it is what makes the fan-out counts on the
+   * rungs above mean anything.
+   *
+   * The weapon asks for three chains at Lv6 and six at Lv10 while the reach
+   * between links stayed at 44px, which is the width of two minions standing
+   * side by side. In an arena that is one screen across, "chain to six enemies"
+   * therefore described a crowd that would have to be almost touching — the
+   * count went up and the weapon did not, because the limit was never the
+   * count. Growing the tolerance with it is what turns a top rung into an
+   * area weapon instead of a bigger number in a table.
+   */
   volt_spark: {
     1: {
       cooldown: 12, range: 34, chainRange: 44, chainFalloff: 0.7,
       fanout: [], stunFrames: 60, chainStunFrames: 0,
     },
-    3: { fanout: [2] },
-    6: { fanout: [3], stunFrames: 120, chainStunFrames: 60 },
-    10: { fanout: [3, 2, 1] },
+    3: { fanout: [2], chainRange: 56 },
+    6: { fanout: [3], chainRange: 70, stunFrames: 120, chainStunFrames: 60 },
+    10: { fanout: [3, 2, 1], chainRange: 88 },
   },
 
   // ── FROST GUARD — defensive, Ice ──────────────────────────────────
@@ -759,6 +772,21 @@ export const isSidearm = (id) => !!WEAPON_BY_ID[id]?.sidearm;
 
 /** The class a weapon id belongs to, defaulting to the sidearm's. */
 export const classOf = (id) => (WEAPON_BY_ID[id]?.cls) || SIDEARM;
+
+/**
+ * A weapon's ELEMENT, taken from the boss who carries it.
+ *
+ * Elements live on the boss and nowhere else, and a special weapon IS its
+ * boss's element — so this reads it rather than duplicating it onto every
+ * weapon, where the two copies could disagree. The sidearm and any unresolvable
+ * id answer 'Typeless', which is also Proto Mk0's element and the correct answer
+ * for "carries no element" everywhere the attribute system asks.
+ *
+ * Strike Man's training bags are the first caller: they answer to a PSYCHIC hit
+ * specifically, and there is otherwise no way to ask what kind of shot just
+ * landed on one.
+ */
+export const elementOf = (id) => BOSS_BY_ID[WEAPON_BY_ID[id]?.boss]?.element || 'Typeless';
 
 /** Damage at a given weapon level. Placeholder curve until the weapon's slice. */
 export function damageAtLevel(weapon, level) {

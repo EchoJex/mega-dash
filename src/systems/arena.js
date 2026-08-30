@@ -62,12 +62,45 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     // the run frame — rain streaks, mainly. Arena-scoped so it restarts with
     // the room rather than carrying a run's worth of offset into it.
     t: 0,
+    /**
+     * THE ROOM'S BEAT. "All furniture, hazards, and boss layer attacks shall be
+     * synched to a common 1s beat" — Volt Man's arena field, and the first room
+     * to ask for one.
+     *
+     * DERIVED FROM `t` RATHER THAN COUNTED SEPARATELY, so a second counter can
+     * never drift from the first. `beat` is the frame within the current beat
+     * and `beatN` is how many have passed.
+     *
+     * A BEAT-LOCKED DURATION IS STATED IN BEATS, not in the frames it happens to
+     * come to. The tracker states them in seconds and a beat is a second, so
+     * written that way the code and the field agree by construction rather than
+     * by arithmetic somebody has to redo — see BEAT in bossFights.js, which is
+     * where Volt Man's sweep, wind-up and end-of-sweep sequence are all built
+     * from multiples of it. That agreement is the whole point: the platform
+     * sets, the panel sweep and the speaker membranes landing together is what
+     * makes the room read as one machine rather than as four timers.
+     *
+     * It exists on every arena and costs nothing in a room that ignores it.
+     */
+    beat: 0,
+    beatN: 0,
+    beatLen: 60,
+    /**
+     * HOW DARK THE ROOM IS, 0 to 1. Volt Man's layer-2 sweep ends by flickering
+     * the lights and leaving them out, so the bolts that follow arrive in the
+     * dark. Separate from `flash`, which is the opposite gesture and additive —
+     * one is the room losing power, the other is something in it going off.
+     */
+    dim: 0,
     // Hazard state lives here rather than on the boss, because the ambient loop
     // keeps running regardless of what the boss is doing.
     hazards: [],
     // Electrified floor panels and the conductors above them (Volt Man).
     panels: [],
     conductors: [],
+    // Visual-only cabinets whose membranes pulse on the beat, so a room built
+    // around a rhythm shows you the rhythm. Volt Man only, so far.
+    speakers: [],
     // A whole-room light flash, in frames. Tempest Man's lightning telegraphs
     // a rain direction change with one; Volt Man's arcs use it too. Drawn over
     // the room but under the HUD, and it never moves with the shake — a flash
@@ -98,6 +131,16 @@ export function makeArena(bossDef, layer, viewW, floorY) {
  */
 /** Frames the plasma lamp holds one lightning shape before jumping to another. */
 const VOLT_LAMP_HOLD = 14;
+
+/**
+ * VOLT MAN'S PLATFORM RHYTHM, in BEATS rather than frames — the field states it
+ * in seconds and the beat is a second, so the two agree by construction.
+ *
+ * `period` is not a free number: two sets three apart, each lasting five, only
+ * repeats cleanly on a six-beat cycle. Change `apart` or `on` and this has to
+ * move with them or the sets drift out of phase with each other.
+ */
+const VOLT_PLATFORM = { apart: 3, on: 5, period: 6 };
 
 const FURNITURE = {
   /**
@@ -185,20 +228,55 @@ const FURNITURE = {
     // the FLOOR, so a platform is the answer to it, and one too few would turn
     // the sweep from a thing you read into a thing you wait out.
     //
-    // They phase on staggered timers for the same reason Blaze Man's do: the
-    // player must never be left with nothing above the live panel. Height
-    // alternates so a phased-out low platform still leaves a reachable high one.
-    // `roam` is what makes them land somewhere new each time they phase back
-    // in — see stepArena. Two heights, so a low one and a high one can coexist
-    // and a phased-out low platform still leaves a reachable high one.
+    // Two heights, so a low one and a high one can coexist and a phased-out low
+    // platform still leaves a reachable high one. `roam` is what makes them land
+    // somewhere new each time they phase back in — see stepArena.
+    /**
+     * "TWO AT A TIME, THREE SECONDS APART, EACH SET LASTING FIVE SECONDS."
+     *
+     * Four platforms in two SETS of two, and the sets are what phase — not the
+     * individual platforms on their own scattered timers, which is what this
+     * was. Set 0 arrives on the beat, set 1 three beats later, each stays five,
+     * so the pattern repeats every six seconds with a two-second overlap where
+     * all four are up and a moment where only one set is. The player is never
+     * left with nothing above the live panel, and the rhythm is one they can
+     * count rather than one they have to watch.
+     *
+     * `beatSet` is what tells stepArena to drive this platform off the room's
+     * beat instead of its own countdown; see the phasing block there.
+     */
     const ys = [floorY - 38, floorY - 66];
     a.platforms = Array.from({ length: 4 }, (_, i) => ({
       x: Math.round(viewW * (0.14 + 0.24 * i)) - 20,
       y: ys[i % 2],
       w: 40, h: 5,
-      on: true, t: 130 + i * 55, hot: 0,
+      on: true, t: 0, hot: 0,
+      beatSet: { inAt: (i % 2) * VOLT_PLATFORM.apart, on: VOLT_PLATFORM.on,
+        every: VOLT_PLATFORM.period },
       roam: { x0: 12, x1: Math.max(13, viewW - 52), ys },
     }));
+
+    /**
+     * THE SPEAKERS ARE THE METRONOME MADE VISIBLE — "two industrial speakers
+     * with pulsing membrane pulse every 1s indicating this arena wide beat".
+     *
+     * A room where everything happens on a beat is only fair if the beat is
+     * something you can SEE. Without them the player would have to infer the
+     * tempo from the hazard that is already trying to kill them, which is
+     * learning the rhythm the expensive way.
+     *
+     * THEY HANG HIGH, IN THE BACKGROUND, flanking the plasma lamp — not on the
+     * floor. The field introduces them in the same breath as the lamp, and it
+     * says visual only; a cabinet at floor level is where the player STANDS, so
+     * the first thing it did was put him in silhouette against it and the
+     * second was look like furniture he ought to be able to land on. Up here
+     * they are clear of the highest platform and read as part of the room
+     * rather than as something in it.
+     */
+    a.speakers = [
+      { x: a.x0 + 4, y: a.ceilY + 20, w: 22, h: 54 },
+      { x: a.x1 - 26, y: a.ceilY + 20, w: 22, h: 54 },
+    ];
 
     const n = 8;
     const pw = Math.floor((a.x1 - a.x0) / n);
@@ -230,7 +308,7 @@ const FURNITURE = {
     a.conductors = [0.3, 0.7].map((f, i) => ({
       x: Math.round(viewW * f) - 4, y: a.ceilY + 4 + i * 7, w: 8, h: 6,
       cableY: a.ceilY + 3 + i * 7,
-      arc: 0, tell: 0,
+      arc: 0, tell: 0, fade: 0,
       live: layer >= 2,
     }));
   },
@@ -308,9 +386,27 @@ export function stepShake(shake) {
  * not a hazard is mid-cycle, and the boss's own attacks read the same state —
  * Blaze Man's layer-3 flood is triggered by his attack but owned by the arena.
  */
+/**
+ * "PLATFORMS PHASE IN AND OUT IN RANDOM LOCATIONS" — Volt Man's arena field. A
+ * platform that returns exactly where it left is a platform you can stand under
+ * and wait for; one that comes back somewhere else makes the room a thing you
+ * keep re-reading, which is the point when the FLOOR is the hazard.
+ *
+ * Only on the way IN, and only for a platform that opted in. Moving one out
+ * from under a standing player would be a trapdoor with no tell.
+ */
+function roamPlatform(pl) {
+  if (!pl.roam) return;
+  pl.x = Math.round(pl.roam.x0 + Math.random() * (pl.roam.x1 - pl.roam.x0));
+  pl.y = pl.roam.ys[(Math.random() * pl.roam.ys.length) | 0];
+}
+
 export function stepArena(arena) {
   if (!arena) return;
   arena.t++;
+  // The beat, off the room's own clock. See `beat` in makeArena.
+  arena.beat = arena.t % arena.beatLen;
+  arena.beatN = Math.floor(arena.t / arena.beatLen);
   Attr.stepPatches(arena.patches);
   if (arena.flash > 0) arena.flash--;
 
@@ -323,23 +419,27 @@ export function stepArena(arena) {
       pl.y = Math.round(pl.lift.base + Math.sin(pl.lift.phase) * pl.lift.amp);
       continue;
     }
+    /**
+     * A SET THAT PHASES ON THE ROOM'S BEAT rather than on its own countdown.
+     * Volt Man's four platforms are two sets of two, and a set is either up or
+     * down together — see VOLT_PLATFORM. Computed from `beatN` rather than
+     * counted down, so it cannot drift from the sweep or the speakers however
+     * long the fight runs.
+     */
+    if (pl.beatSet) {
+      const b = pl.beatSet;
+      const phase = ((arena.beatN - b.inAt) % b.every + b.every) % b.every;
+      const on = phase < b.on;
+      if (on !== pl.on) {
+        pl.on = on;
+        if (on) roamPlatform(pl);
+      }
+      continue;
+    }
     if (--pl.t > 0) continue;
     pl.on = !pl.on;
     pl.t = pl.on ? 220 + Math.random() * 160 : 90 + Math.random() * 70;
-    /**
-     * "PLATFORMS PHASE IN AND OUT IN RANDOM LOCATIONS" — Volt Man's arena
-     * field. A platform that returns exactly where it left is a platform you
-     * can stand under and wait for; one that comes back somewhere else makes
-     * the room a thing you keep re-reading, which is the point when the FLOOR
-     * is the hazard.
-     *
-     * Only on the way IN, and only for a platform that opted in. Moving one
-     * out from under a standing player would be a trapdoor with no tell.
-     */
-    if (pl.on && pl.roam) {
-      pl.x = Math.round(pl.roam.x0 + Math.random() * (pl.roam.x1 - pl.roam.x0));
-      pl.y = pl.roam.ys[(Math.random() * pl.roam.ys.length) | 0];
-    }
+    if (pl.on) roamPlatform(pl);
   }
 
   for (const p of arena.panels) {
@@ -349,6 +449,7 @@ export function stepArena(arena) {
   for (const c of arena.conductors) {
     if (c.tell > 0) c.tell--;
     if (c.arc > 0) c.arc--;
+    if (c.fade > 0) c.fade--;
   }
   // NEVER let every platform be gone at once — the tracker calls them shelter,
   // and shelter you cannot reach is just a death sentence with extra steps.
@@ -356,6 +457,14 @@ export function stepArena(arena) {
   // The boss's own lift does not count toward that guarantee. It is always on,
   // so counting it would silently satisfy the check while the player had
   // nowhere at all to stand.
+  //
+  // A BEAT-DRIVEN SET CANNOT TRIP IT, and that is worth stating rather than
+  // relying on: Volt Man's two sets are three beats apart and last five, so
+  // there is always at least one up by construction. The guard stays because it
+  // is a backstop against a future set of numbers that do NOT overlap, and
+  // because forcing one on is cheaper than the failure it prevents. It writes
+  // `on` directly rather than shifting the phase, so the set snaps back onto
+  // the beat by itself on the next transition.
   const shelter = arena.platforms.filter((p) => !p.lift);
   if (shelter.length && !shelter.some((p) => p.on)) {
     shelter[0].on = true; shelter[0].t = 200;
@@ -375,6 +484,50 @@ export function stepArena(arena) {
 /** Surface height of the arena's liquid, in world Y. Infinity when there is none. */
 export const liquidTop = (arena) =>
   arena?.liquid && arena.liquid.h > 0.5 ? arena.floorY - arena.liquid.h : Infinity;
+
+/**
+ * THE POWER-LINE BOLTS, DRAWN AFTER THE DARKNESS.
+ *
+ * "Luminous, neon purple lightning bolts that stay still for 1s before fading
+ * over a second period." They arrive in a room that has just turned its own
+ * lights off, and the dim wash is a flat rectangle over the whole world layer —
+ * so drawn inside `drawArena` with everything else, the one thing in the scene
+ * that is supposed to be a LIGHT SOURCE was the thing being dimmed hardest.
+ * GameScene calls this immediately after that wash, which is the only ordering
+ * under which "luminous" means anything.
+ *
+ * STAY STILL is what shapes the geometry. The kinks are a function of the
+ * conductor's own position and nothing else, so the same bolt is drawn every
+ * frame it exists — fine to re-randomise a flicker lasting a quarter second,
+ * wrong for a column that stands for a full one asking to be read as a solid
+ * object you must not be under.
+ *
+ * Neon purple rather than the yellow-white the rest of the room uses, because
+ * this is the only hazard that arrives in the dark and a colour nothing else in
+ * the arena owns is what stops it reading as one more panel discharge.
+ */
+export function drawArenaBolts(g, arena, shake) {
+  if (!arena?.conductors?.length) return;
+  const sx = shake?.x || 0, sy = shake?.y || 0;
+  for (const c of arena.conductors) {
+    if (!(c.arc > 0 || c.fade > 0)) continue;
+    const a1 = c.arc > 0 ? 1 : c.fade / Math.max(1, c.fadeN);
+    const cx0 = c.x + c.w / 2;
+    let k = 0;
+    for (let y = c.y + c.h; y < arena.floorY; y += 4) {
+      const bx = cx0 + (k % 2 ? 3 : -3);
+      // A wide soft body under a hard bright core: the two together are what
+      // read as glow at a resolution with no blur to spend.
+      g.fillStyle(0x7C2BD9, 0.55 * a1);
+      g.fillRect(Math.round(bx) + sx - 3, y + sy, 8, 4);
+      g.fillStyle(0xB86BFF, 0.95 * a1);
+      g.fillRect(Math.round(bx) + sx - 1, y + sy, 4, 4);
+      g.fillStyle(0xF3E8FF, a1);
+      g.fillRect(Math.round(bx) + sx, y + sy, 2, 4);
+      k++;
+    }
+  }
+}
 
 /** Draw the sealed room: walls, ceiling, floor, furniture, attributes. */
 export function drawArena(g, arena, viewW, shake) {
@@ -447,6 +600,39 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillRect(mx + sx, pipe.y + pipe.h + sy, 4, arena.floorY - pipe.y - pipe.h);
   }
 
+  /**
+   * VOLT MAN'S SPEAKERS — the beat, drawn. Visual only, so they are painted
+   * before everything that matters and never tested against anything.
+   *
+   * The membrane is the whole point: a cone that jumps on the beat and settles
+   * over about a quarter of a second reads as a speaker hitting a bass note,
+   * where a light that simply blinks would read as another warning lamp in a
+   * room that already has eight of them. It is drawn as concentric rings
+   * because a filled circle changing size by two pixels is not visible at this
+   * resolution and a ring moving outward is.
+   */
+  for (const sp of arena.speakers) {
+    const x = sp.x + sx, y = sp.y + sy;
+    g.fillStyle(0x1B2029, 1);
+    g.fillRect(x, y, sp.w, sp.h);
+    g.lineStyle(1, 0x39404E, 1);
+    g.strokeRect(x + 0.5, y + 0.5, sp.w - 1, sp.h - 1);
+    // The pulse decays from the beat rather than blinking on it.
+    const p = Math.max(0, 1 - arena.beat / 16);
+    const cx = x + sp.w / 2, cy = y + sp.h * 0.62, r = sp.w * 0.34;
+    g.fillStyle(0x2A313C, 1);
+    g.fillCircle(cx, cy, r + 2);
+    g.lineStyle(1, 0x4B5563, 1);
+    g.strokeCircle(cx, cy, r + 2);
+    g.fillStyle(0x39404E, 1);
+    g.fillCircle(cx, cy, r * (0.62 + 0.38 * p));
+    g.fillStyle(0xF5D328, 0.15 + 0.5 * p);
+    g.fillCircle(cx, cy, r * 0.3 * (0.5 + p));
+    // The port above the cone, so the cabinet does not read as one flat panel.
+    g.fillStyle(0x121820, 1);
+    g.fillRect(x + 3, y + 4, sp.w - 6, Math.max(3, sp.h * 0.22));
+  }
+
   // Volt Man's floor panels. THREE states and all three have to read at a
   // glance: inert, lamp-warned, and live. The warning is the whole fairness of
   // the hazard, so it is the brightest thing on an unlit panel.
@@ -496,31 +682,25 @@ export function drawArena(g, arena, viewW, shake) {
     // The exposed conductor and everything it does, from layer 2.
     g.fillStyle(0x4B5563, 1);
     g.fillRect(c.x + sx, c.y + sy, c.w, c.h);
-    // The sparkle: a live conductor is never quite still.
-    if (Math.random() < 0.25) {
-      g.fillStyle(0xFFF6C0, 0.7);
+    /**
+     * THE ELECTRIFIED TIP. Idle it sparks now and then, which is what says a
+     * live wire is hanging there at all; during the wind-up it sparks hard and
+     * in the bolt's own purple, which is "the two power lines sparkle for 1s
+     * then discharge". The colour change is the tell — the rate alone would be
+     * a difference you only notice in hindsight.
+     */
+    const winding = c.tell > 0;
+    if (Math.random() < (winding ? 0.9 : 0.25)) {
+      g.fillStyle(winding ? 0xC9A2FF : 0xFFF6C0, winding ? 0.95 : 0.7);
+      const sw = winding ? 2 : 1;
       g.fillRect(c.x + 1 + Math.floor(Math.random() * (c.w - 2)) + sx,
-        c.y + c.h - 1 + sy, 1, 1);
+        c.y + c.h - 1 + sy, sw, sw);
     }
-    if (c.tell > 0) {
-      g.fillStyle(0xF5D328, 0.7);
-      g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + c.h + sy, 2, 3);
+    if (winding) {
+      g.fillStyle(0x9B4DFF, 0.5 + 0.4 * Math.random());
+      g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + c.h + sy, 2, 3 + (Math.random() * 3 | 0));
     }
-    if (c.arc > 0) {
-      // A ragged vertical bolt rather than a bar: St Elmo's fire, per the
-      // tracker's own description of what it should look like.
-      // "VERTICAL BOLTS ZIGZAG STRAIGHT DOWNWARD" — a regular alternating kink
-      // rather than a random wander, so it reads as a bolt and its column is
-      // exactly where the hurtbox is.
-      g.fillStyle(0xFFF6C0, 0.95);
-      const cx0 = c.x + c.w / 2;
-      let k = 0;
-      for (let y = c.y + c.h; y < arena.floorY; y += 4) {
-        const bx = cx0 + (k % 2 ? 3 : -3);
-        g.fillRect(Math.round(bx) + sx, y + sy, 2, 4);
-        k++;
-      }
-    }
+    // The bolt itself is NOT drawn here — see drawArenaBolts.
   }
 
   // Strike Man's ceiling rails. The bags riding them are hazard entities and
@@ -612,12 +792,39 @@ export function drawHazards(g, arena, shake) {
       }
     } else if (h.kind === 'bag') {
       // A weighted bag on a rail: the strap up to the rail is what makes the
-      // path readable before the bag arrives.
-      g.fillStyle(0x2A323C, 1);
-      g.fillRect(x + h.w / 2 - 1, (h.railY || 0) + sy, 2, y - (h.railY || 0));
+      // path readable before the bag arrives. A lifted bag has left its rail,
+      // so it has no strap to draw.
+      if (h.mode !== 'psi' && h.mode !== 'psiSlam') {
+        g.fillStyle(0x2A323C, 1);
+        g.fillRect(x + h.w / 2 - 1, (h.railY || 0) + sy, 2, y - (h.railY || 0));
+      }
       g.fillStyle(0x7C2D12, 1); g.fillRect(x, y, h.w, h.h);
       g.fillStyle(0xEA6A34, 1); g.fillRect(x + 1, y + 3, h.w - 2, 2);
       g.fillStyle(0x3A1A10, 1); g.fillRect(x, y + h.h - 2, h.w, 2);
+      /**
+       * THE PURPLE OUTLINE — "gain a purple outline". It is the only thing
+       * saying this bag is now yours rather than his, and it has to survive the
+       * bag being the same brown it always was, so it is a ring rather than a
+       * tint. A second, dimmer ring outside it reads as the lift's own glow at
+       * a resolution with no blur.
+       */
+      if (h.outline) {
+        g.lineStyle(1, h.outline, 0.45);
+        g.strokeRect(x - 1.5, y - 1.5, h.w + 3, h.h + 3);
+        g.lineStyle(1, h.outline, 1);
+        g.strokeRect(x - 0.5, y - 0.5, h.w + 1, h.h + 1);
+      }
+      /**
+       * ABOUT TO BE PUNCHED. The player has been standing here long enough that
+       * the boss will hit it the moment he is beside it, and the top edge
+       * flashing is the whole warning — a hazard that punishes you with no tell
+       * is a hazard you learn by dying to, and this one is punishing you for
+       * doing something clever.
+       */
+      if (h.warn && Math.floor((h.stood || 0) / 5) % 2 === 0) {
+        g.fillStyle(0xF5D328, 0.9);
+        g.fillRect(x, y - 2, h.w, 2);
+      }
     }
   }
 }
