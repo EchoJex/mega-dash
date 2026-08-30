@@ -188,7 +188,7 @@ where each one stands.
 - **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
-- **hazard L2** `[wip]` Standing on a ground covered tile applied constrict status repeating damage.
+- **hazard L2** `[wip]` Standing on a ground covered tile applied constrict status
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
 - **attack L1** `[wip]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
 - **attack L2** `[wip]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
