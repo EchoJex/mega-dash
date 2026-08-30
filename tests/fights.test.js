@@ -10,8 +10,9 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FIGHTS, fightFor } from '../src/data/bossFights.js';
-import { BOSS_BY_ID } from '../src/data/bosses.js';
+import { FIGHTS, fightFor, hasFight } from '../src/data/bossFights.js';
+import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag } from '../src/data/bosses.js';
+import { hasLadder } from '../src/data/weapons.js';
 import * as Attr from '../src/systems/attributes.js';
 import * as Arena from '../src/systems/arena.js';
 import { FEEL } from '../src/config/feel.js';
@@ -773,4 +774,50 @@ test('a patch can never outlive its own duration however often the trail passes'
   let n = 0;
   while (list.length) { Attr.stepPatches(list); n++; }
   assert.ok(n <= 180, `Hot outlived its duration by ${n - 180} frames after the last application`);
+});
+
+/**
+ * A PLAYTESTER MEETS ONLY DEVELOPED CONTENT.
+ *
+ * Both halves of that rule are DERIVED — the boss roster from the fight table,
+ * the grantable weapons from the ladder table — so neither can go stale. What
+ * these guard is that the derivation is still wired to the thing it claims to
+ * read, which a refactor can quietly break with every list still looking right.
+ */
+test('the shipped boss roster is exactly the bosses that fight', () => {
+  const roster = PLAYABLE_BOSSES().map((b) => b.id);
+  assert.ok(roster.length > 0, 'a playtester would have no bosses at all');
+  for (const b of BOSSES) {
+    assert.equal(
+      roster.includes(b.id), hasFight(b.id),
+      `${b.id}: in the shipped roster? ${roster.includes(b.id)}, but has a fight? ${hasFight(b.id)}`,
+    );
+  }
+  // ...and every one of them fights at every layer, since fightFor falls back.
+  for (const id of roster) {
+    for (const layer of [1, 2, 3]) {
+      assert.ok(fightFor(id, layer).attack, `${id} L${layer} has no attack loop`);
+    }
+  }
+});
+
+test('the shuffle bag never leaves its pool, and an empty pool falls back', () => {
+  const pool = PLAYABLE_BOSSES();
+  const next = makeBossBag(pool);
+  const ids = new Set(pool.map((b) => b.id));
+  for (let i = 0; i < 200; i++) {
+    assert.ok(ids.has(next().id), 'the bag handed out a boss from outside its pool');
+  }
+  // A run with no doors is a worse failure than a run with an unfinished boss.
+  const fallback = makeBossBag([]);
+  assert.ok(fallback(), 'an empty pool produced no boss at all');
+});
+
+test('every boss a shipped run can reach drops a weapon with a real ladder', () => {
+  // This is why the weapon DROP needs no filter of its own: the boss gate
+  // already implies it. If a future boss breaks the implication, say so here
+  // rather than shipping a placeholder weapon as a reward.
+  for (const b of PLAYABLE_BOSSES()) {
+    assert.ok(hasLadder(b.dropWeapon), `${b.id} drops ${b.dropWeapon}, which has no ladder`);
+  }
 });

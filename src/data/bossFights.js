@@ -1656,3 +1656,22 @@ export const fightFor = (bossId, layer) => {
   };
   return { attack: pick(f.attack), hazard: pick(f.hazard) };
 };
+
+/**
+ * Does this boss actually FIGHT, or is he a rectangle you shoot at?
+ *
+ * Twelve of the seventeen have no attack loop written. Standing still while
+ * the player empties a clip into you is not an easy fight, it is NO fight, and
+ * a playtester who walks through that door has spent a minute of their session
+ * on content that cannot tell them anything. `PLAYABLE_BOSSES` in bosses.js is
+ * what keeps them out of a shipped run.
+ *
+ * LAYER 1 IS THE RIGHT QUESTION, not "any layer". `fightFor` falls back
+ * downward, so a boss with a layer-1 attack has one at every layer — checking
+ * the floor is therefore checking all three, and it is also the layer of a
+ * first encounter, which is the one a new save will actually meet.
+ *
+ * Derived, never listed. The day a boss gains an attack loop he appears in a
+ * playtester's bag with no edit here or anywhere else.
+ */
+export const hasFight = (bossId) => !!fightFor(bossId, 1).attack;

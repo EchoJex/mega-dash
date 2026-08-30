@@ -932,11 +932,7 @@ export default class UIScene extends Phaser.Scene {
        * the wheel used to close itself (see the pointerup handler below).
        */
       if (this.mode === 'open') { this.closeWheel(); return; }
-      if (this.mode !== 'situ' && this.game_.canRequip()
-          && !this.cards && !this.pausePanel && !this.exitPanel && !this.game_.warp) {
-        this.openWheel();
-        return;
-      }
+      if (this.mode !== 'situ' && this.inRequipRoom()) { this.openWheel(); return; }
       const v = vpt(this, p);
       this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
       if (this.mode === 'situ') { this.closeWheel(); return; }
@@ -1070,8 +1066,30 @@ export default class UIScene extends Phaser.Scene {
    */
   beginRequipKey() {
     if (this.cards || this.pausePanel || this.exitPanel || this.game_.warp) return;
-    if (this.game_.canRequip()) this.openWheel();
+    if (this.inRequipRoom()) this.openWheel();
     else this.beginSitu();
+  }
+
+  /**
+   * "WHILE IN THE BOSS ROOM" — both halves of that, and the room is the half
+   * that was missing.
+   *
+   * The re-quip WINDOW (`canRequip`) runs from the boss going down until the
+   * next arena warp, which includes the whole walk through the overworld to the
+   * next door — and `DEV.requipAtStart` opens it on the first frame of a dev
+   * run, before any arena has ever existed. Gating on the window alone
+   * therefore handed the RE-QUIP button the hard-paused wheel for most of a
+   * run, which is not what the field asks for and is not what the button is
+   * for: outside a sealed room the fight is live and this control must not be
+   * able to stop it.
+   *
+   * `arena` is the room. Inside it, with the boss dead, there is nothing to
+   * stop; outside it, the button is the in-situ wheel exactly as before.
+   */
+  inRequipRoom() {
+    const gm = this.game_;
+    return !!gm.arena && gm.canRequip()
+      && !this.cards && !this.pausePanel && !this.exitPanel && !gm.warp;
   }
 
   situKey(cls, index) {

@@ -17,9 +17,9 @@ import {
 import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { dev, DEV, layerFor } from '../config/dev.js';
-import { BOSSES, BOSS_BY_ID, makeBossBag, bossLayer } from '../data/bosses.js';
+import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag, bossLayer } from '../data/bosses.js';
 import {
-  WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf,
+  WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf, hasLadder,
 } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
@@ -76,7 +76,14 @@ export default class GameScene extends Phaser.Scene {
       boss: new ActorLayer(this, DEPTH.boss),
       player: new ActorLayer(this, DEPTH.player),
     };
-    this.nextBoss = makeBossBag();
+    /**
+     * A PLAYTESTER ONLY MEETS CONTENT THAT HAS BEEN DEVELOPED. Dev mode draws
+     * from all seventeen because testing the unbuilt is what it is for; the
+     * shipped branch draws only from the bosses that actually fight. See
+     * PLAYABLE_BOSSES — it is derived from the fight table, so this needs no
+     * edit when a boss gains his attack loop.
+     */
+    this.nextBoss = makeBossBag(DEV.enabled ? BOSSES : PLAYABLE_BOSSES());
     this.startRun();
 
     /**
@@ -316,8 +323,19 @@ export default class GameScene extends Phaser.Scene {
         run.wpLevels[w.id] = 1;
       }
     }
+    /**
+     * THE HEAD START IS SUBJECT TO THE SAME RULE AS THE BOSS BAG. Six weapons
+     * have no ladder and play as a flat damage step whatever their level, so
+     * handing a playtester one — bought with Chips, at the start of a run they
+     * are trying to read — spends a real purchase on a weapon that cannot
+     * answer the question. Dev mode keeps the whole arsenal available.
+     *
+     * The drops need no such filter: a special is unlocked by beating the boss
+     * that carries it, and a boss who can be reached is a boss who fights.
+     */
+    const grantable = DEV.enabled ? specials : specials.filter((w) => hasLadder(w.id));
     const headStart = run.twinArsenal ? 2 : run.starterArsenal ? 1 : 0;
-    for (const w of shuffled(specials).slice(0, headStart)) {
+    for (const w of shuffled(grantable).slice(0, headStart)) {
       run.unlocked.add(w.id);
       run.wpLevels[w.id] = 1;
       // A head start you have to go and equip is not a head start. It is still

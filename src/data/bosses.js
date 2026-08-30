@@ -29,6 +29,8 @@
  * via design/boss-data.json, so the two cannot drift apart.
  */
 
+import { hasFight } from './bossFights.js';
+
 export const BOSSES = [
   {
     // Renamed in the tracker from CORE MAN; the id stays 'core' so
@@ -183,13 +185,36 @@ export const BOSS_BY_ID = Object.fromEntries(BOSSES.map((b) => [b.id, b]));
 export const OUTLINE = '#0A0A12';
 
 /**
- * Encounter order: a shuffle bag. No boss repeats until all 17 have been seen
- * in the current run, then the bag reshuffles.
+ * THE BOSSES A SHIPPED RUN MAY SEND YOU TO — derived, never listed.
+ *
+ * A playtester must only meet content that has had some development. Twelve of
+ * the seventeen have no attack loop written and would stand still while you
+ * shot them; walking through that door costs a minute of a playtest session and
+ * teaches nothing, and worse, it reads as a broken fight rather than as an
+ * unbuilt one. Dev mode still sees all seventeen — testing the unbuilt is what
+ * dev mode is FOR.
+ *
+ * `hasFight` is read from `data/bossFights.js` rather than kept as a list here,
+ * so a boss joins this roster on the day his attack loop lands and nobody has
+ * to remember to add him. The same derivation the sim's catalogue uses.
  */
-export function makeBossBag() {
+export const PLAYABLE_BOSSES = () => BOSSES.filter((b) => hasFight(b.id));
+
+/**
+ * Encounter order: a shuffle bag. No boss repeats until every boss in the pool
+ * has been seen in the current run, then the bag reshuffles.
+ *
+ * The pool is a parameter rather than a constant because WHICH bosses may turn
+ * up is a policy question — dev mode wants all seventeen, a playtester wants
+ * only the ones that fight — and the caller is the only thing that knows which
+ * launch this is. An empty pool falls back to the full roster: a run with no
+ * doors at all is a worse failure than a run with an unfinished boss in it.
+ */
+export function makeBossBag(pool = BOSSES) {
+  const roster = pool.length ? pool : BOSSES;
   let bag = [];
   return function next() {
-    if (bag.length === 0) bag = [...BOSSES].sort(() => Math.random() - 0.5);
+    if (bag.length === 0) bag = [...roster].sort(() => Math.random() - 0.5);
     return bag.shift();
   };
 }

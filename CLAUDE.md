@@ -542,13 +542,19 @@ closed the in-situ wheel on the way down and then opened the *hard-paused* betwe
 wheel on the way up, in the middle of a live fight. A control resting under the player's
 thumb during a fight must not be able to stop the game.
 
-**Inside the re-quip window it does open it, and that is not an exception to the rule
-above — it is the rule's own boundary.** From the boss going down until the next arena
-warp (`canRequip`) there is no live fight to stop: the room is sealed, the boss is dead and
-nothing ambient spawns. The game opens this same wheel by itself at the start of that
-window, so refusing to reopen it only meant that dismissing it once cost the player the
-whole window. Outside the window the post-boss wheel is still opened by `promptRequip`,
-by an unresolved drop, and by nothing else.
+**Inside the boss room, with the window open, it does open it — and that is not an
+exception to the rule above, it is the rule's own boundary.** In a sealed room whose boss
+is dead there is no live fight to stop. The game opens this same wheel by itself at the
+start of that window, so refusing to reopen it only meant that dismissing it once cost the
+player the whole window. Anywhere else the post-boss wheel is still opened by
+`promptRequip`, by an unresolved drop, and by nothing else.
+
+**BOTH HALVES OF "IN THE BOSS ROOM" ARE LOAD-BEARING — `inRequipRoom`, not `canRequip`.**
+The window alone runs until the next *arena warp*, so it covers the entire walk through the
+overworld to the following door, and `DEV.requipAtStart` opens it on the first frame of a
+dev run before any arena has existed. Gating on the window alone therefore gave the button
+the hard-paused wheel for most of a run — which is the whole failure the rule above exists
+to prevent, arriving by a different door. `arena` is what makes it a room.
 
 **It opens once the room has gone QUIET, not on a stopwatch.** `promptRequip` records that
 a wheel is owed and `stepRequipWait` opens it after a clear beat with nothing left
@@ -1016,6 +1022,33 @@ game — `dev()` answers false to everything, the HUD carries no marker, the tit
 has no dev button, the pause menu is RESUME and ABORT RUN, and the run starts with the
 sidearm at mastery 0. **The answer is deliberately not remembered**: a stale one is a whole
 playtest misread as balanced while unkillable, and re-picking costs one tap.
+
+#### A PLAYTESTER ONLY ENCOUNTERS CONTENT THAT HAS BEEN DEVELOPED
+
+**Placeholder bosses, arenas and weapons must never reach a playtester run.** Most of this
+game is unbuilt: twelve of the seventeen bosses have no attack loop and would stand still
+while you shot them, and six weapons have no ladder and play as a flat damage step at every
+level. A door that opens onto a motionless rectangle costs a minute of a playtest session,
+teaches nothing, and reads as a BROKEN fight rather than an unfinished one — which is the
+worst outcome, because it puts a bug in the notes that was never a bug.
+
+**Dev mode still sees all of it. That is what dev mode is for.** The split is `DEV.enabled`,
+so `DEV.available = false` at ship makes the gate permanent.
+
+| | shipped path | derived from |
+|---|---|---|
+| **boss bag** | `PLAYABLE_BOSSES()` — only bosses with an attack loop | `hasFight` in `data/bossFights.js` |
+| **head-start arsenal** | only weapons with a real ladder | `hasLadder` in `data/weapons.js` |
+| **boss drops** | need no filter — a boss you can reach is a boss that fights, and every one of them carries a laddered weapon | asserted in `tests/fights.test.js` |
+
+**Both gates are DERIVED, never listed.** A boss joins the shipped roster on the day his
+attack loop lands and a weapon becomes grantable on the day it gains a ladder, with no edit
+anywhere — the same derivation `npm run sim`'s catalogue uses to refuse to score incomplete
+pairings. Do not replace either with a hand-maintained list; that list is what goes stale.
+
+`hasFight` asks about **layer 1** deliberately. `fightFor` falls back downward, so a boss
+with a layer-1 attack has one at every layer — checking the floor checks all three, and it
+is also the layer a new save actually meets.
 
 **Two switches, and they are not the same switch.**
 
