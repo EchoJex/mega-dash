@@ -168,7 +168,7 @@ where each one stands.
 - **attack L2** `[draft]` 2 sets of bolts with a longer bounce life, fired as a primary bolt and a secondary bolt which is shot on a slightly shallower angle causing the two paths to eventually intersect.
 - **attack L3** `[draft]` Bolts no longer lose size on bounce, only reduce in damage delt. Occasionally the boss jumps and slams into the floor, briefly energising every panel destroying any ground minions that are on those panels.
 - **weapon class** `[ready]` Offensive
-- **weapon** `[wip]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage. Chain distance look
+- **weapon** `[wip]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage. Chain distance tolerance scaled with level
 - **weapon Lv1** `[ready]` 0 chains; 1s stun on first enemy contact.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
