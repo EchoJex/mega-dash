@@ -184,7 +184,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.8x player height (average build)
 - **attack name** `[ready]` Vine Lash
-- **weapon name** `[wip]`
+- **weapon name** `[draft]` Simon's whip
 - **arena** `[draft]` Overgrown greenhouse with a shattered glass roof;
 - **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
 - **hazard L1** `[draft]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
