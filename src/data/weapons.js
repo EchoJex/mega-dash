@@ -644,7 +644,16 @@ const DEFS = [
   // Offensive by behaviour rather than by a class word: the tracker's field
   // does not name one, and a whip you aim while standing still is not a thing
   // that runs itself. Confirmed if the owner ever writes the word.
-  { id: 'thorn_lash', name: 'THORN LASH', short: 'THORN', cls: OFFENSIVE, boss: 'thorn',
+  /**
+   * RENAMED from THORN LASH by the tracker's `weapon name` field. The id stays
+   * `thorn_lash` — it is the join key every save, ladder and wheel position
+   * depends on, and renaming it would cost every player their unlock.
+   *
+   * The apostrophe is safe: `font.js` carries a `'` glyph, and `fold()` drops
+   * any character it lacks SILENTLY, so a display name is the one place in the
+   * game where punctuation has to be checked rather than assumed.
+   */
+  { id: 'thorn_lash', name: "SIMON'S WHIP", short: 'WHIP', cls: OFFENSIVE, boss: 'thorn',
     cooldown: 54, projectiles: 1, shape: 'lash', speed: 2.8,
     desc: 'Whip-vine that reels enemies in and throws them.' },
   { id: 'frost_guard', name: 'FROST GUARD', short: 'FROST', cls: DEFENSIVE, boss: 'frost',

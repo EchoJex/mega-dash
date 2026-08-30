@@ -24,6 +24,7 @@ function harness(bossId, layer) {
   const def = BOSS_BY_ID[bossId];
   const arena = Arena.makeArena(def, layer, VIEW_W, FLOOR);
   const shots = [], shakes = [], hurts = [], shoves = [], blocks = [], bossHits = [];
+  const bullets = [];
   const status = Attr.makeStatus();
   // Must match what GameScene.spawnBoss actually builds. `anim` in particular
   // is not optional: behaviours bob and pulse off it, and a harness without it
@@ -56,6 +57,10 @@ function harness(bossId, layer) {
       },
       playerBox: { x: 86, y: FLOOR - 22, w: 12, h: 22 },
       bounds: { x0: 16, x1: VIEW_W - 16 },
+      // Arrived with Thorn Man's ground cover, which reacts to the player's own
+      // shots and reads the Swarm Caller's allies off the run.
+      bullets,
+      run: { allies: [], coverSlow: 1 },
       shoot: (s) => shots.push(s),
       // EVERY KEY THE REAL CONTEXT HAS. A fake that is missing one does not
       // fail loudly, it fails as a TypeError deep inside a state machine that
@@ -76,6 +81,7 @@ function harness(bossId, layer) {
       },
     },
     bossHits,
+    bullets,
   };
 }
 
@@ -113,9 +119,17 @@ test('every defined fight layer runs a long stretch, without throwing and withou
         // Shoves and bullet-blocking count as acting: Tempest Man's attack
         // layers fire nothing at all — the jetpack plume IS the attack — and
         // scoring that as idle would be measuring the wrong thing.
+        //
+        // So does DRAGGING THE PLAYER'S FEET. Thorn Man's layer-1 ground cover
+        // spawns nothing, pushes nothing and hurts nobody — standing in it is
+        // "a slightly noticeable movement speed drop" and that is the entire
+        // layer. A hazard whose only effect is on the player's own movement is
+        // still a hazard, and the list has to be able to see it or the next one
+        // like it gets written off as idle.
+        const slowed = (h.ctx.run.coverSlow ?? 1) < 1 ? 1 : 0;
         const acted = h.shots.length + h.shakes.length + h.hurts.length
           + h.arena.hazards.length + h.arena.patches.length + (pushed ? 1 : 0)
-          + h.shoves.length + h.blocks.length;
+          + h.shoves.length + h.blocks.length + slowed;
         assert.ok(acted > 0, `${id} ${kind} L${layer} did nothing across 3000 frames`);
 
         // A NaN position is worse than a crash: the boss keeps "running", every
@@ -203,6 +217,11 @@ test('no boss has more built layers than the tracker defines', () => {
     torrent: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
     strike: { attack: 3, hazard: 3 },
+    // A ROOM WITH NO FIGHT IN IT IS A LEGAL STATE, and Thorn Man is the first.
+    // His ground cover is `[draft]` at L1 and L2; L3 and every attack layer are
+    // still `[wip]`. `hasFight` asks about the ATTACK table, so he stays out of
+    // a playtester's boss bag until his moveset lands — see PLAYABLE_BOSSES.
+    thorn: { attack: 0, hazard: 2 },
   };
   assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
     'a boss gained or lost a fight entry — update the expected map with it');

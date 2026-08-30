@@ -1930,7 +1930,188 @@ export const FIGHTS = {
       1: { step: strikeHazard(1) }, 2: { step: strikeHazard(2) }, 3: { step: strikeHazard(3) },
     },
   },
+
+  /**
+   * THORN MAN — HAZARD ONLY, and deliberately so. Layers 1 and 2 of the ground
+   * cover are `[draft]`; L3 and every attack layer are still `[wip]`, so he has
+   * a room and no fight in it yet.
+   *
+   * That is a legal state and the shipped roster already understands it:
+   * `hasFight` asks about the ATTACK table, so Thorn Man stays out of a
+   * playtester's boss bag until his moveset lands. Dev mode can walk into the
+   * room and read the floor, which is the whole point of building it first.
+   */
+  thorn: {
+    attack: {},
+    hazard: { 1: { step: thornHazard(1) }, 2: { step: thornHazard(2) } },
+  },
 };
+
+/**
+ * THORN MAN — the ground cover, which RETREATS from you rather than firing at
+ * you. It is the first hazard in the game that the player clears instead of
+ * dodges, and every part of it is a reaction to something they did.
+ *
+ * L1 "Arena starts with 8 Ground cover tiles fully grown on the floor, covering
+ *    the full width of the arena. Player damage sources that travel within 1
+ *    standing player height of a ground cover tile 'scare' the growth to
+ *    recede for 5 seconds. At level 1 ground cover will only cause a slightly
+ *    noticeable movement speed drop."
+ * L2 "First instance of player damage source nearby a tile causes the ground
+ *    cover to mostly recede instead of fully recede. 2nd damage source within
+ *    1s caused it to fully recede for the full duration. Standing on a ground
+ *    covered tile applied constrict status."
+ *
+ * THE SCARE IS PROXIMITY, NOT A HIT. "Travel within one standing player height"
+ * — so a shot that sails over the floor clears it, and the player is spending
+ * ammunition on the ROOM rather than on the boss. That is the whole trade the
+ * fight is built on, and it is why the test is against every live player bullet
+ * each frame rather than against a collision.
+ *
+ * LAYER 2 INVERTS THE COST. At L1 one shot buys a bare tile; at L2 one shot
+ * buys stubble and it takes two inside a second to bare it. The same input now
+ * costs twice as much, and standing in what is left applies constrict — so the
+ * layer does not make the floor faster or wider, it makes clearing it a
+ * decision about whether you can afford to.
+ */
+const THORN_HAZ = {
+  // "Player damage sources that travel within 1 standing player height" — the
+  // player is 24px tall, so that is the number, measured from the top of the
+  // grown cover rather than from the floor.
+  scareDist: 24,
+};
+// "Recede for 5 seconds."
+const COVER_HOLD = 300;
+// "Stay receded for 3 times the normal duration" when Hot lands on it.
+const COVER_BURN = 3;
+// Layer 2: the first scare leaves this much stubble, a second inside the window
+// bares it. 45% is "mostly recede" — visibly cut down, still visibly there.
+const COVER_PARTIAL = 0.45;
+const COVER_COMBO = 60;                 // "2nd damage source within 1s"
+// "A slightly noticeable movement speed drop", and nothing else at layer 1.
+const COVER_SLOW = 0.72;
+const COVER_CONSTRICT = 90;             // layer 2 only
+
+function thornHazard(layer) {
+  return (ctx) => {
+    const a = ctx.arena;
+    if (!a?.cover?.length) return;
+
+    /**
+     * THE BUGS KEEP THE FLOOR DOWN — "bug swarm prioritizes keeping all
+     * overgrowth recessed. For this arena the bug has unlimited duration, but
+     * new ones will continue to spawn at their normal rate."
+     *
+     * A GRASS ROOM ANSWERING TO A BUG WEAPON is the type chart showing up as a
+     * mechanic rather than as a damage multiplier, and it is the reason this
+     * arena is worth carrying a defensive slot into. The allies are the Swarm
+     * Caller's; the arena only tells them not to expire and gives them a second
+     * job, so a run without that weapon simply never sees this paragraph.
+     */
+    for (const ally of ctx.run.allies || []) {
+      if (ally.owner !== 'swarm_caller') continue;
+      // Standing over a tile is what puts it down; the bug does not have to
+      // shoot it, because a bug does not shoot.
+      const under = coverUnder(a, ally.x);
+      if (under && under.grow > 0.05 && ally.y > under.y - 14) {
+        scare(under, layer, ctx, true);
+      }
+      /**
+       * Steered at the tallest tile still standing, not the nearest. Nearest
+       * makes the swarm dither between two neighbours it has already flattened;
+       * tallest makes it work the room, which is what "keeping ALL overgrowth
+       * recessed" asks for. Ties break toward the closer one so it does not
+       * cross the arena past something it could have finished.
+       */
+      let best = null, bestScore = -1;
+      for (const c of a.cover) {
+        if (c.grow <= 0.15) continue;
+        const score = c.grow * 100 - Math.abs((c.x + c.w / 2) - ally.x) * 0.05;
+        if (score > bestScore) { bestScore = score; best = c; }
+      }
+      if (best) ally.job = { x: best.x + best.w / 2, y: best.y - 4 };
+    }
+
+    for (const c of a.cover) {
+      /**
+       * HOT BURNS IT BACK. "Applying Hot attribute to an overgrown tile causes
+       * the tile to stay receded for 3 times the normal duration."
+       *
+       * Read off the arena's own patch list rather than from whatever applied
+       * it, so ANY source of Hot works — the Blaze Wheel, a fireball the boss
+       * left behind, a future weapon nobody has written. Fire beating Grass is
+       * a rule about the elements, not about one weapon.
+       */
+      const hot = (a.patches || []).some((pt) => pt.id === 'hot' && pt.t > 0
+        && pt.x < c.x + c.w && pt.x + pt.w > c.x);
+      if (hot && c.grow > 0) {
+        c.down = Math.max(c.down, COVER_HOLD * COVER_BURN);
+        c.floor = 0;
+        c.burnt = Math.max(c.burnt, COVER_HOLD * COVER_BURN);
+      }
+
+      // THE SCARE. Every live player bullet, against every tile — eight tiles
+      // and a handful of bullets, so the pair loop is cheaper than any
+      // bookkeeping that would avoid it.
+      for (const b of ctx.bullets) {
+        if (b.enemy || b.life <= 0) continue;
+        if (b.x < c.x - 6 || b.x > c.x + c.w + 6) continue;
+        if (b.y < c.y - THORN_HAZ.scareDist || b.y > c.y + c.h + 4) continue;
+        /**
+         * ONE BULLET IS ONE DAMAGE SOURCE, and remembering that is what makes
+         * layer 2 work at all.
+         *
+         * "2nd damage source within 1s" — but a bullet is not an event, it is
+         * an object that exists for a stretch of frames, and a slow one passes
+         * a 50px tile for several of them. Without this set, the very next
+         * frame of the SAME shot arrived with `since` at 1, satisfied the
+         * inside-a-second test, and finished the combo by itself: layer 2 bared
+         * a tile in one shot exactly like layer 1, and the whole rung did
+         * nothing. Same shape as the Thorn Lash's per-crack hit set, and the
+         * same reason.
+         */
+        (b.scaredCover || (b.scaredCover = new Set()));
+        if (b.scaredCover.has(c)) break;
+        b.scaredCover.add(c);
+        scare(c, layer, ctx, false);
+        break;
+      }
+
+      // STANDING IN IT. Layer 1 is a drag on your feet and nothing more; layer
+      // 2 adds the constrict, which is the same stacking slow the rest of the
+      // game uses and therefore compounds with the drag rather than replacing it.
+      if (c.grow < 0.2) continue;
+      const box = ctx.playerBox;
+      if (!(box.x + box.w > c.x && box.x < c.x + c.w && box.y + box.h >= c.y - 1)) continue;
+      ctx.run.coverSlow = COVER_SLOW;
+      if (layer >= 2) {
+        ctx.status('constrict', COVER_CONSTRICT, { step: FEEL.stunPlayerStep });
+      }
+    }
+  };
+}
+
+/** The tile under a world x, or null. */
+function coverUnder(a, x) {
+  return a.cover.find((c) => x >= c.x && x < c.x + c.w) || null;
+}
+
+/**
+ * Push one tile down. Layer 1 bares it outright; layer 2 takes two scares
+ * inside a second, and `since` is what remembers the first one.
+ *
+ * A BUG ALWAYS BARES IT. The swarm's whole job here is "keeping all overgrowth
+ * recessed", and making it fight the same two-stage rule the player's own shots
+ * do would mean the answer to layer 2 was to bring more bugs rather than to
+ * bring bugs — which is a difference the player cannot see and would not enjoy.
+ */
+function scare(c, layer, ctx, byBug) {
+  const full = byBug || layer < 2 || c.since <= COVER_COMBO;
+  c.floor = full ? 0 : COVER_PARTIAL;
+  c.down = Math.max(c.down, COVER_HOLD);
+  if (c.since > 6) ctx.sfx('slide', { pitch: 1.5 });
+  c.since = 0;
+}
 
 /** The behaviour for a boss at a layer, or null if that layer is undesigned. */
 export const fightFor = (bossId, layer) => {

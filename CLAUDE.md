@@ -1171,6 +1171,32 @@ it and clears. **Anything that EMITS light draws after the dim**, which is why
 `drawArena`: a bolt drawn with the rest of the room was the one thing in the scene being
 dimmed hardest, and "luminous" then meant nothing.
 
+### Boss weaknesses — the Gen 3 type chart, and it must be the Gen 3 one
+
+Every slice carries **`boss weakness A`** and **`boss weakness B` (optional)**: the one or
+two elemental types that this boss's ARENA reacts to in a way no other type does. They are
+dropdowns in the tracker app, and they are design, not combat maths — nothing multiplies
+damage. Two are already built and both fall straight out of the chart: Thorn Man (Grass) is
+weak to **Fire** and **Bug**, so Hot burns his ground cover down for three times as long and
+a Swarm Caller bug never expires in his greenhouse; Strike Man (Fighting) is weak to
+**Psychic**, so a psychic hit lifts a training bag and drops it on him.
+
+**`src/data/typechart.js` is the chart, and the GENERATION is load-bearing.** Gen 2 through
+Gen 5 share one table; Gen 1 and Gen 6 do not. The rows that differ are exactly the rows a
+reconstruction gets wrong, so `tests/typechart.test.js` asserts them by name — **Steel
+resists Ghost and Dark** (dropped in Gen 6), **no Fairy**, **Poison beats Grass and nothing
+else**, **Bug is resisted by Poison** (reversed from Gen 1), **Ghost beats Psychic** (a Gen 2
+fix). A test also checks every pick in the tracker is a real weakness of that boss and that
+the app's copy of the type list has not drifted. Do not hand-edit the chart to match a
+modern one; the tests will name the generation you just moved to.
+
+**The seventeen bosses are this chart's own type list with Normal swapped for Typeless.**
+Normal is super effective against nothing, so nothing can be weak to it — which is why it is
+absent from the dropdown, and why Proto Mk0 carries no weakness at all.
+
+**`npm run status` does not count these fields.** Its board measures whether a boss's FIGHT
+is designed; the weakness is identity, like the palette and the scale.
+
 **Arena furniture is a tracker field.** Every slice carries `arena furniture` beside its
 `arena`, because furniture is design — it varies per boss and can vary per layer (Blaze
 Man's lift exists only at L3, Volt Man's conductors only fire from L2) — and it belongs

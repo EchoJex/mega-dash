@@ -76,6 +76,8 @@ where each one stands.
 - **attack name** `[ready]` Ballistic barrage
 - **weapon name** `[ready]` Nullfire Drone
 - **palette notes** `[ready]` Light grey / dark grey
+- **boss weakness A** `[na]` Typeless — no elemental weakness.
+- **boss weakness B** `[na]` None — this boss has no second weakness on the chart.
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
@@ -103,6 +105,8 @@ where each one stands.
 - **attack name** `[ready]` Inferno Wheel
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[todo]`
+- **boss weakness A** `[wip]` Water
+- **boss weakness B** `[wip]` Ground
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -130,6 +134,8 @@ where each one stands.
 - **attack name** `[ready]` Aqua Torrent
 - **weapon name** `[ready]` Torrent Cannon
 - **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting.
+- **boss weakness A** `[wip]` Electric
+- **boss weakness B** `[wip]` Grass
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
 - **arena furniture** `[ready]` Two steel pipes protruding from the upper corners, a grate-covered central drain carrying a spike ball, and ankle-deep floor water. Barrels and spike balls come out of the pipes and are popped by the central ball, which is what caps their number.
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
@@ -159,6 +165,8 @@ where each one stands.
 - **attack name** `[ready]` Chain Spark
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
+- **boss weakness A** `[wip]` Ground
+- **boss weakness B** `[na]` None — this boss has no second weakness on the chart.
 - **arena** `[ready]` All furniture, hazards, and boss layer attacks shall be synched to a common 1s beat. Two industrial speakers with pulsing membrane pulse every 1s indicating this arena wide beat; several platforms phase in and out slowly in genuinely random locations, 2 at a time, 3 seconds apart, each set lasting 5 seconds.
 - **arena furniture** `[ready]` Four phasing platforms that phase in at a new location each time they phase IN, 2 at a time, 3 seconds apart, each set lasting 5 seconds. eight floor panels. Two large industrial speakers that are visual only. two long industrial power lines at 30% and 70% arena width. The cables are drawn at every layer and but the conductors and the electrified tip are only drawn at layer 2 and layer 3.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, visually discharging and leaving that panel electrified. The start of each panels hurt box will be telegraphed by a blinking red and yellow light on the panel 1s before it electrically discharges. Discharge animation lasts 1s and causes flinch and moderate damage and but not stun. Lingering electrification of the panel lasts 3s. Lingering electrified panel deals mild damage and a short Stun. Next panel telegraph starts immediately after discharge duration.
@@ -184,11 +192,13 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.8x player height (average build)
 - **attack name** `[ready]` Vine Lash
-- **weapon name** `[draft]` Simon's whip
-- **arena** `[draft]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
-- **hazard L1** `[draft]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
-- **hazard L2** `[draft]` First instance of player damage source nearby a time causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile applied constrict status
+- **weapon name** `[ready]` Simon's whip
+- **boss weakness A** `[wip]` Fire
+- **boss weakness B** `[wip]` Bug
+- **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
+- **arena furniture** `[ready]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
+- **hazard L1** `[ready]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
+- **hazard L2** `[ready]` First instance of player damage source nearby a time causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile applied constrict status
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
 - **attack L1** `[wip]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
 - **attack L2** `[wip]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
@@ -211,6 +221,8 @@ where each one stands.
 - **scale** `[ready]` 1.85x player height (bulky build)
 - **attack name** `[ready]` Glacier Spike
 - **weapon name** `[ready]` Frost Guard
+- **boss weakness A** `[wip]` Fire
+- **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
@@ -237,6 +249,8 @@ where each one stands.
 - **scale** `[ready]` 1.95x player height (sumo bulk build)
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
+- **boss weakness A** `[wip]` Psychic
+- **boss weakness B** `[wip]` Flying
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **arena furniture** `[ready]` Two training bags swing along from above. They can be stood on by the player, and if damaged by psychic type gain a purple outline, slowly rise in the air, then slam the boss for 1/4 boss hp total damage
 - **hazard L1** `[ready]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if player stands on them too long
@@ -264,6 +278,8 @@ where each one stands.
 - **attack name** `[ready]` Toxic Cloud
 - **weapon name** `[ready]` Venom Spray
 - **palette notes** `[wip]` Violet primary; lime secondary. Violet is the standard poison read; the original sickly-green primary collided with Thorn.
+- **boss weakness A** `[wip]` Ground
+- **boss weakness B** `[wip]` Psychic
 - **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
@@ -290,6 +306,8 @@ where each one stands.
 - **scale** `[ready]` 1.95x player height (bulky build)
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
+- **boss weakness A** `[wip]` Water
+- **boss weakness B** `[wip]` Grass
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
@@ -316,6 +334,8 @@ where each one stands.
 - **scale** `[ready]` 1.5x player height (petite build)
 - **attack name** `[ready]` Wind Vortex
 - **weapon name** `[ready]` Gale Vortex
+- **boss weakness A** `[wip]` Electric
+- **boss weakness B** `[wip]` Rock
 - **arena** `[wip]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
@@ -342,6 +362,8 @@ where each one stands.
 - **scale** `[ready]` 1.55x player height (petite build)
 - **attack name** `[ready]` Mind Lift
 - **weapon name** `[ready]` Psi Orb
+- **boss weakness A** `[wip]` Dark
+- **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
@@ -368,6 +390,8 @@ where each one stands.
 - **scale** `[ready]` 1.6x player height (petite build)
 - **attack name** `[ready]` Infestation
 - **weapon name** `[ready]` Swarm Caller
+- **boss weakness A** `[wip]` Fire
+- **boss weakness B** `[wip]` Rock
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
@@ -394,6 +418,8 @@ where each one stands.
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
 - **weapon name** `[ready]` Rock Buster
+- **boss weakness A** `[wip]` Water
+- **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
@@ -420,6 +446,8 @@ where each one stands.
 - **scale** `[ready]` 1.6x player height (petite build)
 - **attack name** `[ready]` Spectral Shift
 - **weapon name** `[ready]` Wraith Cloak
+- **boss weakness A** `[wip]` Dark
+- **boss weakness B** `[wip]` Ghost
 - **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
@@ -446,6 +474,8 @@ where each one stands.
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Dragon Breath
 - **weapon name** `[ready]` Drake Breath
+- **boss weakness A** `[wip]` Ice
+- **boss weakness B** `[wip]` Dragon
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
@@ -472,6 +502,8 @@ where each one stands.
 - **scale** `[ready]` 1.75x player height (average build)
 - **attack name** `[ready]` Shadow Bind
 - **weapon name** `[ready]` Astral Cloak
+- **boss weakness A** `[wip]` Fighting
+- **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
@@ -498,6 +530,8 @@ where each one stands.
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Metal Barrage
 - **weapon name** `[ready]` Alloy Blade
+- **boss weakness A** `[wip]` Fire
+- **boss weakness B** `[wip]` Ground
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.

@@ -148,15 +148,44 @@ let BRANCHES = [...FALLBACK_BRANCHES];
 const MARKS = ['draft', 'wip', 'ready', 'todo', 'na'];
 
 /**
+ * THE SIXTEEN TYPES THAT CAN BE A WEAKNESS, in the chart's own order.
+ *
+ * NORMAL IS ABSENT ON PURPOSE and its absence is a fact about the chart, not an
+ * oversight: Normal is super effective against nothing in any generation, so no
+ * boss can be weak to it. The game's roster drops it too — seventeen bosses,
+ * sixteen real types plus Proto Mk0's Typeless.
+ *
+ * A COPY, and a checked one. The canonical list is `TYPES` in
+ * `src/data/typechart.js`, which this page cannot import — GitHub Pages serves
+ * `docs/` and nothing above it. `tests/typechart.test.js` reads both files and
+ * fails if they disagree, which is the same deal `design/boss-data.json` has.
+ */
+const WEAKNESS_TYPES = [
+  'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison',
+  'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel',
+];
+
+/**
  * Fields whose answer is a CHOICE rather than prose, rendered as a dropdown.
  *
  * `weapon class` is read by the build as a key — it decides which pair of
  * loadout slots the weapon competes for — so it must not be free text. Add a
  * field here only when the code genuinely consumes its value as an enum;
  * everything the code reads as prose belongs in a textbox.
+ *
+ * THE TWO WEAKNESS FIELDS are the second case. They name a Gen 3 type that this
+ * boss's room reacts to, and a typo there would be a reaction that silently
+ * never fires — so the list is closed. It is deliberately NOT filtered down to
+ * the boss's own legal weaknesses: the app has no idea which boss's card it is
+ * drawing, and a dropdown that quietly hid the right answer would be worse than
+ * one that offers a wrong one. `tests/typechart.test.js` is what catches a pick
+ * that is not a real weakness of that boss, with a message naming the ones that
+ * are.
  */
 const CHOICE_FIELDS = {
   'weapon class': ['Offensive', 'Defensive'],
+  'boss weakness A': WEAKNESS_TYPES,
+  'boss weakness B': WEAKNESS_TYPES,
 };
 const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';

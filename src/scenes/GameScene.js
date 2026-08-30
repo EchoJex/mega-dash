@@ -591,6 +591,15 @@ export default class GameScene extends Phaser.Scene {
   step() {
     const r = this.run, p = this.player;
     r.frame++;
+    /**
+     * REBUILT EVERY FRAME, exactly like `arena.push`. Thorn Man's ground cover
+     * writes it while the player is standing in overgrowth and never clears it,
+     * because a hazard that has to remember to switch itself off is a hazard
+     * that will one day forget — and a permanent 28% speed loss carried out of
+     * a boss room and into the rest of the run is the kind of bug that reads as
+     * "the game feels sluggish now" rather than as anything to do with a floor.
+     */
+    r.coverSlow = 1;
 
     // keyboard movement folded into the same intent object touch uses
     const k = this.keys;
@@ -618,9 +627,18 @@ export default class GameScene extends Phaser.Scene {
       Phys.stepPlayer(p, this.world, {
         moveDir,
         jumpHeld: this.intent.jumpHeld,
-        // Stun is a stacking slow on movement AND attack speed, so it is
-        // applied here and again to the weapon cooldown below.
-        speedMult: Attr.speedMult(this.status),
+        /**
+         * Stun is a stacking slow on movement AND attack speed, so it is
+         * applied here and again to the weapon cooldown below.
+         *
+         * `coverSlow` is Thorn Man's overgrowth dragging at your feet, and it
+         * MULTIPLIES rather than replaces: at layer 2 the same tile also applies
+         * constrict, and a floor that made you slow but immune to being slowed
+         * further would be the one place in his room worth standing. Rebuilt to
+         * 1 every frame by the hazard loop, exactly like `arena.push`, so
+         * stepping off it is instant and no state can be left behind.
+         */
+        speedMult: Attr.speedMult(this.status) * (this.run.coverSlow ?? 1),
         // "Jumps while in contact with knee-deep water have half the jump
         // strength; midair jumps are only affected by the rain forces." Wading
         // is the cost of standing in Tempest Man's floor water, and it does
@@ -1789,6 +1807,18 @@ export default class GameScene extends Phaser.Scene {
       layer: b.layer,
       arena: this.arena,
       floorY: GROUND_Y,
+      /**
+       * THE PLAYER'S OWN SHOTS AND THE RUN, for a hazard that reacts to what
+       * the player is DOING rather than to where they are standing.
+       *
+       * Thorn Man's ground cover is the first: it retreats from any damage
+       * source that passes near it, so the room has to be able to see the
+       * bullets. `run` comes with it because the same hazard reads the Swarm
+       * Caller's allies off it — a Bug weapon working a Grass room is the type
+       * chart showing up as a mechanic.
+       */
+      bullets: this.bullets,
+      run: this.run,
       shoot: (spec) => this.spawnEnemyShot(spec),
       // A fight makes its own noises. `shake` already plays the rumble that
       // goes with it, but a hazard with a moment of its own — Strike Man

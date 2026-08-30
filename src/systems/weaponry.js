@@ -876,6 +876,9 @@ const quake = {
  * stops the swarm being a stationary damage aura parked on one enemy, and it
  * is why a bug is worth watching.
  */
+/** How many bugs one room may accumulate. See the `bugsPersist` note below. */
+const SWARM_PERSIST_CAP = 12;
+
 const swarm = {
   init(st) { st.cool = 0; st.kami = 0; },
 
@@ -907,7 +910,23 @@ const swarm = {
       return;
     }
 
-    if (mine.length === 0 && --st.cool <= 0) {
+    /**
+     * A ROOM CAN ASK THE SWARM TO STAY. Thorn Man's greenhouse sets
+     * `arena.bugsPersist`: "for this arena the bug has unlimited duration, but
+     * NEW ONES WILL CONTINUE TO SPAWN at their normal rate."
+     *
+     * Both halves need a change here, and the second is the one that does the
+     * work. Below Lv10 a group is summoned only when the last one is gone, so
+     * unlimited duration on its own would have frozen the swarm at its opening
+     * three forever — the population has to be allowed to grow, because growing
+     * it IS the reward for bringing a Bug weapon into a Grass room.
+     *
+     * Capped anyway. A five-minute fight at the Lv6 recall rate is a hundred
+     * bugs, and "the room fills up" stops being a reward some way before that.
+     */
+    const persist = !!ctx.arena?.bugsPersist;
+    const room = persist ? mine.length < SWARM_PERSIST_CAP : mine.length === 0;
+    if (room && --st.cool <= 0) {
       st.cool = L.recallFrames;
       ctx.sfx('pickupExp', { pitch: 0.8 });
       for (let i = 0; i < L.count; i++) {
@@ -925,8 +944,9 @@ function makeBug(lv, ctx, L, role) {
     role,
     x: ctx.player.x + 12, y: ctx.player.y + 6,
     w: 5, h: 5, vx: 0, vy: 0,
-    // A standing swarm does not tick down; it is replaced when it dies.
-    life: L.shield ? Infinity : L.lifeFrames,
+    // A standing swarm does not tick down; it is replaced when it dies. Nor
+    // does one in a room that has asked them to stay — see `bugsPersist`.
+    life: (L.shield || ctx.arena?.bugsPersist) ? Infinity : L.lifeFrames,
     damage: dmgOf('swarm_caller', lv, ctx) * L.dmgMult,
     blastDamage: dmgOf('swarm_caller', lv, ctx) * (L.blastDmgMult || 0),
     blastRadius: L.blastRadius || 0,
@@ -949,6 +969,18 @@ export function stepAllies(ctx) {
     if (a.regroup > 0) a.regroup--;
 
     let tx, ty;
+    /**
+     * A JOB FROM THE ROOM, which outranks the bug's own role.
+     *
+     * Thorn Man's ground cover sets it every frame: "bug swarm prioritizes
+     * keeping all overgrowth recessed". The ARENA decides what the job is and
+     * this only flies there, which is the right split — a weapon that knew
+     * about greenhouse floors would be a weapon that had to learn every room.
+     * Cleared here rather than by the setter, so a bug whose room stops asking
+     * goes back to its role on the very next frame.
+     */
+    const job = a.job;
+    a.job = null;
     if (a.role === 'trail') {
       // A shadow left BEHIND the player, so it does not move at all. It hurts
       // whatever walks into it and returns a cut of that to the player, which
@@ -1020,6 +1052,16 @@ export function stepAllies(ctx) {
         ? focus : nearestEnemy(ctx, a.x, a.y);
       if (t) { const c = centreOf(t); tx = c.x; ty = c.y; }
     }
+    /**
+     * THE ROOM'S JOB OUTRANKS THE BUG'S OWN IDEA OF WHERE TO GO — but not a
+     * kamikaze already committed, and not an interceptor with a shot in front
+     * of it, because both of those are one-way trips already under way.
+     *
+     * Applied HERE rather than as an early return, so a bug on an errand still
+     * moves with the same acceleration and still hurts whatever it flies into.
+     * A second movement path would have been a second thing to tune.
+     */
+    if (job && a.role !== 'kamikaze' && tx === undefined) { tx = job.x; ty = job.y; }
     if (tx === undefined) { tx = ctx.player.x + 12; ty = ctx.player.y - 8; }
 
     const dx = tx - a.x, dy = ty - a.y;

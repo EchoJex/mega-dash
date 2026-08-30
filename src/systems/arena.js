@@ -101,6 +101,12 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     // Visual-only cabinets whose membranes pulse on the beat, so a room built
     // around a rhythm shows you the rhythm. Volt Man only, so far.
     speakers: [],
+    // Thorn Man's ground cover: floor tiles that grow back and retreat from
+    // damage. Empty everywhere else.
+    cover: [],
+    // A room that asks summoned allies to stay — Thorn Man's greenhouse. False
+    // everywhere else, and the Swarm Caller is the only weapon that reads it.
+    bugsPersist: false,
     // A whole-room light flash, in frames. Tempest Man's lightning telegraphs
     // a rain direction change with one; Volt Man's arcs use it too. Drawn over
     // the room but under the HUD, and it never moves with the shake — a flash
@@ -141,6 +147,22 @@ const VOLT_LAMP_HOLD = 14;
  * move with them or the sets drift out of phase with each other.
  */
 const VOLT_PLATFORM = { apart: 3, on: 5, period: 6 };
+
+/**
+ * HOW FAST THORN MAN'S GROUND COVER MOVES — and ONLY that.
+ *
+ * WHERE THE REST OF ITS NUMBERS LIVE MATTERS. This file owns the room, so it
+ * owns how quickly the picture catches up with a decision; `bossFights.js` owns
+ * the hazard, so it owns what MAKES the decision — how long a scare holds, what
+ * a burn multiplies it by, what standing in it costs. Splitting them that way
+ * is what keeps arena.js from having to import the fight table, which is the
+ * same boundary Volt Man's panels stamp their own state across.
+ *
+ * Receding is quick because it is a reaction; growing back is slow because it
+ * is the thing the player just bought with a shot, and a window that closes
+ * before you can use it was never a window.
+ */
+const COVER = { recedeRate: 0.14, regrowRate: 0.006 };
 
 const FURNITURE = {
   /**
@@ -325,6 +347,55 @@ const FURNITURE = {
   strike(a, layer, viewW, floorY) {
     a.rails = [{ y: a.ceilY + 10 }, { y: a.ceilY + 22 }, { y: a.ceilY + 34 }];
   },
+
+  /**
+   * THORN MAN — "thorny overgrowth tiles, referred below as ground cover",
+   * eight of them covering the full width of the arena.
+   *
+   * THE FLOOR IS THE FIGHT AND THE FLOOR ANSWERS BACK. Volt Man's panels light
+   * up on a schedule you read; these RETREAT from you, so the room is something
+   * you clear rather than something you dodge. Every tile is a little state
+   * machine — grown, receding, receded, regrowing — and the whole design lives
+   * in how long each of those lasts and what pushes a tile between them.
+   *
+   * `grow` is the single number the renderer and the hazard both read: 1 is
+   * fully grown, 0 is bare floor. Everything else is derived from it, so a tile
+   * cannot look grown while behaving bare.
+   */
+  thorn(a, layer, viewW, floorY) {
+    const n = 8;
+    const tw = Math.floor((a.x1 - a.x0) / n);
+    a.cover = Array.from({ length: n }, (_, i) => ({
+      x: a.x0 + i * tw,
+      // The last tile takes the rounding, so the cover reaches the far wall.
+      w: i === n - 1 ? a.x1 - (a.x0 + i * tw) : tw,
+      y: floorY - 6, h: 6,
+      // "Arena starts with 8 ground cover tiles FULLY GROWN."
+      grow: 1,
+      // Frames of being held down. Zero means it is growing back.
+      down: 0,
+      // How much of it is left when it is down — a full recede bares the tile,
+      // a partial one leaves stubble you still wade through. Layer 2 is what
+      // makes the difference matter.
+      floor: 0,
+      // Frames since the last scare, for the layer-2 "2nd damage source within
+      // 1s" test. Counts up, so a tile nobody has touched is not special-cased.
+      since: 999,
+      // Burnt by Hot: down three times as long, drawn black with embers.
+      burnt: 0,
+    }));
+    /**
+     * THE ROOM ASKS THE SWARM TO STAY — "for this arena the bug has unlimited
+     * duration, but new ones will continue to spawn at their normal rate".
+     *
+     * A property of the ROOM rather than of the weapon, so the Swarm Caller
+     * needs to know nothing about greenhouses: it reads one flag and the arena
+     * that sets it is the only thing that had to think about why. Fire and Bug
+     * are Grass's two answers on the type chart, and this is the Bug one
+     * arriving as a mechanic rather than as a damage multiplier.
+     */
+    a.bugsPersist = true;
+  },
 };
 
 /** Which bosses have their arena furniture built. Read by `npm run status`. */
@@ -445,6 +516,28 @@ export function stepArena(arena) {
   for (const p of arena.panels) {
     if (p.tell > 0) p.tell--;
     if (p.live > 0) p.live--;
+  }
+
+  /**
+   * THORN MAN'S GROUND COVER, growing back.
+   *
+   * A tile held down counts its hold out and then GROWS, rather than snapping
+   * back — the regrowth is the window the player is fighting for, so it has to
+   * be something they can see closing. Held here rather than in the hazard loop
+   * because it is the room's own behaviour: the cover creeps back whatever the
+   * boss is doing, and it should keep creeping if his loop ever stops.
+   */
+  for (const c of arena.cover) {
+    if (c.burnt > 0) c.burnt--;
+    if (c.since < 999) c.since++;
+    if (c.down > 0) {
+      c.down--;
+      // Down means down TO ITS FLOOR, not to nothing: a partial recede leaves
+      // stubble, which is what layer 2 spends its second damage source on.
+      if (c.grow > c.floor) c.grow = Math.max(c.floor, c.grow - COVER.recedeRate);
+      continue;
+    }
+    if (c.grow < 1) c.grow = Math.min(1, c.grow + COVER.regrowRate);
   }
   for (const c of arena.conductors) {
     if (c.tell > 0) c.tell--;
@@ -598,6 +691,59 @@ export function drawArena(g, arena, viewW, shake) {
     g.fillStyle(0x5CADD5, 0.45);
     const mx = pipe.dir > 0 ? pipe.x + pipe.w - 5 : pipe.x + 1;
     g.fillRect(mx + sx, pipe.y + pipe.h + sy, 4, arena.floorY - pipe.y - pipe.h);
+  }
+
+  /**
+   * THORN MAN'S GROUND COVER. Four readable states, and the player has to be
+   * able to tell them apart at a glance while something else is shooting at
+   * them: fully grown, cut back to stubble, bare, and BURNT.
+   *
+   * Height carries the state, because height is what a plant does. A tile at
+   * `grow` 1 stands nearly a player's knee high and the blades wave; cut to
+   * 0.45 it is a fringe you can still see over; at 0 there is nothing there.
+   * That means the same silhouette answers both "is this slowing me" and "how
+   * long until it is back", with no bar and no number.
+   *
+   * THE BURN IS BLACK WITH EMBERS, per the field, and it is the only state
+   * drawn in a colour that is not green — because it is the only one that says
+   * something about how long it will LAST rather than about how tall it is.
+   */
+  for (const c of arena.cover) {
+    const x = c.x + sx, base = c.y + c.h + sy;
+    if (c.burnt > 0) {
+      // "Burnt black with small red flowing embers." The embers drift upward
+      // and are seeded off the tile's own x, so each patch smoulders
+      // differently and none of them flickers.
+      g.fillStyle(0x140D0A, 1);
+      g.fillRect(x, base - 3, c.w, 3);
+      for (let i = 0; i < 3; i++) {
+        const ph = (arena.t * 0.7 + i * 37 + c.x) % 46;
+        const ex = x + ((c.x * 7 + i * 29) % Math.max(1, c.w - 2));
+        g.fillStyle(i % 2 ? 0xE8541A : 0xF5A623, Math.max(0, 0.85 - ph / 46));
+        g.fillRect(Math.round(ex), Math.round(base - 3 - ph * 0.4), 1, 1);
+      }
+    }
+    if (c.grow <= 0.02) continue;
+    const h = Math.max(1, Math.round(c.grow * 12));
+    // The mat, then blades standing out of it. Two greens so the cover has a
+    // top edge — a flat block of one colour reads as a wall, not as growth.
+    g.fillStyle(0x14401C, 1);
+    g.fillRect(x, base - Math.max(2, h * 0.4), c.w, Math.max(2, h * 0.4));
+    g.fillStyle(0x2AAB1C, 1);
+    for (let bx = 0; bx < c.w - 1; bx += 3) {
+      // A slow sway, and a per-blade phase so they do not move as one sheet.
+      const sway = Math.sin((arena.t * 0.03) + (c.x + bx) * 0.4) * (h * 0.12);
+      const bh = h - ((bx * 5) % 3);
+      g.fillRect(Math.round(x + bx + sway), base - bh, 1, bh);
+    }
+    // The thorns: the reason standing in it costs something. Only on cover that
+    // is still tall enough to be worth the warning.
+    if (c.grow > 0.6) {
+      g.fillStyle(0x5C4033, 1);
+      for (let bx = 1; bx < c.w - 2; bx += 7) {
+        g.fillRect(Math.round(x + bx), base - h + 1, 2, 2);
+      }
+    }
   }
 
   /**
@@ -932,6 +1078,55 @@ function drawBackdrop(g, arena, viewW, sx, sy) {
       g.fillCircle(lx, 26, 6);
       g.fillStyle(0xFFD08A, 0.5);
       g.fillCircle(lx, 26, 3);
+    }
+  } else if (id === 'thorn') {
+    /**
+     * "OVERGROWN GREENHOUSE WITH A SHATTERED GLASS ROOF."
+     *
+     * The roof is the whole picture, so it gets the detail: a lattice of glazing
+     * bars with panes missing from it. The gaps are what say SHATTERED — an
+     * unbroken grid would just be a window — and they are deterministic per
+     * pane rather than re-rolled each frame, because glass that keeps breaking
+     * differently is glass that is still breaking.
+     *
+     * Sunlight falls through the holes. That is the one thing tying the roof to
+     * the floor below it, and it is why the room reads as a greenhouse rather
+     * than as a warehouse with a pattern on the ceiling.
+     */
+    g.fillStyle(0x101A12, 1);
+    g.fillRect(0, 0, viewW, arena.floorY);
+    const paneW = 22, paneH = 14, roofH = 56;
+    for (let px = 0; px < viewW; px += paneW) {
+      for (let py = 0; py < roofH; py += paneH) {
+        // A stable hash per pane: same holes every frame, different per room.
+        const broken = Math.abs(Math.sin((px * 12.9898 + py * 78.233) * 43758.5453)) % 1 > 0.68;
+        const x = px + sx * 0.2, y = py + sy * 0.2;
+        if (!broken) {
+          g.fillStyle(0x1B3A2A, 0.55);
+          g.fillRect(x + 1, y + 1, paneW - 2, paneH - 2);
+          g.fillStyle(0x2E5C42, 0.4);
+          g.fillRect(x + 1, y + 1, paneW - 2, 1);
+        } else {
+          // A hole, and the light coming through it.
+          g.fillStyle(0xBFE8A0, 0.07);
+          g.fillRect(x + 1, y + 1, paneW - 2, arena.floorY - y - 2);
+          // Jagged glass still in the frame.
+          g.fillStyle(0x6E9E82, 0.5);
+          g.fillTriangle(x + 1, y + 1, x + 7, y + 1, x + 1, y + 6);
+          g.fillTriangle(x + paneW - 1, y + paneH - 1, x + paneW - 6, y + paneH - 1,
+            x + paneW - 1, y + paneH - 6);
+        }
+      }
+    }
+    // The glazing bars, over the panes so a broken one still reads as framed.
+    g.fillStyle(0x3A2A1C, 1);
+    for (let px = 0; px <= viewW; px += paneW) g.fillRect(px + sx * 0.2, 0, 1, roofH);
+    for (let py = 0; py <= roofH; py += paneH) g.fillRect(0, py + sy * 0.2, viewW, 1);
+    // Overgrowth climbing the back wall, so the room is losing to the garden.
+    g.fillStyle(0x18351F, 1);
+    for (let x = 0; x < viewW; x += 9) {
+      const h = 14 + ((x * 37) % 23);
+      g.fillRect(x + sx * 0.15, arena.floorY - h + sy * 0.15, 7, h);
     }
   }
 }
