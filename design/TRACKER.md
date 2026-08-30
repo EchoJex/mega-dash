@@ -185,8 +185,8 @@ where each one stands.
 - **scale** `[ready]` 1.8x player height (average build)
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[wip]` Simon's whip
-- **arena** `[wip]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[wip]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
+- **arena** `[draft]` Overgrown greenhouse with a shattered glass roof;
+- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
 - **hazard L1** `[draft]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
 - **hazard L2** `[draft]` First instance of player damage source nearby a time causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile applied constrict status
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
