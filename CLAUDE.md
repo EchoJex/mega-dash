@@ -953,39 +953,115 @@ He is also the only boss SMALLER than the player, at 0.8x rather than the 1.75x 
 
 After those three the order is the owner's call. Nothing technical forces it.
 
-### Cross-cutting work that is NOT part of any slice
+## THE ROADMAP — three tracks and one convergence
 
-These are global and land late, once the elements exist to tune against:
+**There are no phases and there is no schedule.** The dozen-phase plan is gone for the
+reasons above, and a dated one would rot the same way. What does NOT go stale is the
+DEPENDENCY SHAPE — what blocks what — so that is what this section is, and it is the thing
+to re-read when it is unclear what to do next. **`npm run status` says where you ARE; this
+says what is reachable from there.**
 
-| | |
+The work runs on three tracks. Two of them are the owner's and one is Claude's, and the
+important property is that **only one of the three can block the others.**
+
+### Track 1 — DESIGN. The owner writes fields. This is the pacing constraint.
+
+Everything downstream of a boss's fight waits on his fields reaching `[draft]`. Nothing
+Claude can do shortens this track: `[wip]` means "still being written", and building from
+it would be inventing the game rather than making it.
+
+**This is the live bottleneck and it is worth being blunt about.** When `npm run status`
+reports `[draft]: 0`, Claude has nothing to build on the slice track and every code-shaped
+suggestion is make-work. The honest answer at that moment is "write a field", not "let me
+refactor something".
+
+The comment-thread protocol is the pressure valve: a conversation on the artifact settles
+one field, the owner says **move to WIP**, Claude transcribes, and the owner promotes it
+when they are happy. That turns a blank field into a `[draft]` without the owner having to
+compose prose cold.
+
+### Track 2 — BUILD. Claude implements `[draft]`, one element end to end.
+
+One element, built through, playtested, pushed — the slice contents are listed above. This
+track is always exactly as far along as Track 1 lets it be. It is also the only track with
+a hard quality gate: `hasFight` decides whether a boss is in a playtester's bag at all, so
+an unfinished slice cannot leak into a playtest.
+
+### Track 3 — ART. Fully parallel. Blocks nothing and is blocked by nothing.
+
+This is the track most easily forgotten, because it is the one that never appears in
+`npm run status`. It does not need a single design field: the `MANIFEST` abstraction means
+a finished sprite drops into a game that was already playable without it, and landing the
+player's sheet changed no gameplay code at all.
+
+The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `.sprite`
+file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
+drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
+not a gap: silhouette design follows attack and arena design.
+
+### Where the three converge
+
+Only after enough slices exist to have something to tune:
+
+| | why it waits |
 |---|---|
-| **Balance pass** | weapon damage, boss/minion HP, the difficulty ramp — see the testing note below |
-| **Physics tuning overlay** | driven by `FEEL_GROUPS`; deliberately deferred |
-| **Boss defeat animations** | elemental death + weapon acquisition; cosmetic, folded into each slice when its element is built |
-| **Ship prep** | `DEV.available = false`, which takes the launch dialog, the dev menu and every playtest perk out at once |
-| **Run pacing** | the owner's targets: **early** ~5 min and 1 boss on minimal meta with weapons below Lv3 and it *should feel hard*; **mid** 10–15 min and 2–3 bosses at Lv3–6; **late** 15–35+ min and 4–6 bosses. They are explicitly unsure how to ramp difficulty without the player feeling it — read the boss COUNT as the real dial, since run length is boss count |
+| **Balance** | weapon damage, boss and minion HP, the ramp. `npm run sim` is the instrument and `design/sim/` is its history, so this is now a measure-change-measure loop rather than a feel. Meaningless before there are fights to compare |
+| **Physics overlay** | `FEEL_GROUPS` exists to drive it; deliberately not built early, because the motion constants are a known-good NES reference to tune AWAY from and there is nothing yet to tune them against |
+| **Palette spacing** | re-run the optimisation LATE, with sprites to judge it against — see the palette rule |
+| **Ship prep** | one switch. `DEV.available = false` takes the launch dialog, the dev menu and every perk out together |
+
+### The question this roadmap makes visible: how many bosses is ENOUGH?
+
+**Seventeen is the roster, not the ship gate, and nobody has decided what the gate is.**
+
+The owner's own pacing targets say a late run is 4–6 bosses and run length IS boss count.
+The shuffle bag has no repeats until it is exhausted, so a run never sees the same boss
+twice regardless. That means the number that actually matters is **how many distinct
+bosses a player meets before the game starts feeling like a rotation** — which is a
+playtest question, not an arithmetic one, and it is reachable NOW at five built fights.
+
+It is worth answering before building the tenth slice, because the answer changes what
+"done" means: finish seventeen, or finish eight and spend the rest of the effort on art,
+balance and polish. Claude should not decide this. It should ask once the fifth or sixth
+slice is playable, which it now is.
 
 ### Already complete (the foundation)
 
-Engine and port to Phaser · fixed timestep · hand-rolled physics · classic NES motion
-constants · sealed arenas with warp transitions · the dual boss loop · minions and the
-time-keyed ramp · pickups · EXP and level-up cards · meta upgrades and Chips · the
-2+2+sidearm loadout and the RE-QUIP wheel built around it · the per-weapon runtime
-(`systems/weaponry.js`) · the sprite path (`MANIFEST`) · the in-app updater and per-branch
-CI · touch controls · the bitmap font · procedural sound · the elemental attribute
-framework · themed overworld terrain · procedural terrain traversability guarantees.
+**Engine** — Phaser port, fixed timestep, hand-rolled physics, classic NES motion
+constants, procedural terrain with traversability guarantees, themed overworld.
 
-### Tuning pass
-The core **motion** constants in `config/feel.js` (walk, jump, gravity, terminal
-velocity, slide speed and duration) are now the **classic NES Mega Man values**, converted
-from that game's 8.8 fixed-point. They are a known-good reference feel to tune *away
-from*, not a finished tune.
+**The run** — sealed arenas and warp transitions, the dual boss loop, minions and the
+time-keyed ramp, pickups, EXP and level-up cards, Chips and meta upgrades, the 2+2+sidearm
+loadout and the RE-QUIP wheel, the per-weapon runtime, the elemental attribute framework.
 
-Everything else in that file is still an off-the-cuff prototype number and is not
-playtested. Treat those as a starting point, not as precious.
+**Presentation** — the sprite path (`MANIFEST`), the hand-authored bitmap font, procedural
+sound, boss death animations, touch controls.
 
-A live in-game tuning overlay is **deliberately deferred to late in development**.
-`FEEL_GROUPS` exists to drive it when that time comes — do not build it early.
+**The workshop** — and this is the part that grew most recently, because it is what makes
+the three tracks above independently runnable:
+
+| | |
+|---|---|
+| `design/TRACKER.md` + the tracker app | the design, editable from a phone, autosaving to a draft branch |
+| `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
+| `npm run sim` + `design/sim/` | headless difficulty measurement with a saved history and a delta against the last run |
+| `npm run smoke` | the real bundle, played in a browser, against every built fight |
+| the sprite editor + `npm run sprites*` | pixel-exact templates and a role-based sprite format that survives a palette change |
+| the in-app updater + per-branch CI | every push becomes an installable build; iterating costs one tap |
+| the playtester content gate | derived from `hasFight` and `hasLadder`, so unfinished content cannot reach a playtest |
+
+### What the numbers in `config/feel.js` actually are
+
+**Two different kinds of number live in one file, and they are not equally precious.**
+
+The core MOTION constants — walk, jump, gravity, terminal velocity, slide speed and
+duration — are the classic NES Mega Man values, converted from that game's 8.8
+fixed-point. They are a known-good reference feel to tune *away from*, and changing one
+should be a decision rather than a nudge.
+
+**Everything else in that file is an off-the-cuff prototype number that has never been
+playtested.** Damage, HP, cooldowns, drop rates, the ramp. Treat them as a starting point,
+not as data — and see the testing note on why no test asserts one.
 
 ### Run progression — as built
 
