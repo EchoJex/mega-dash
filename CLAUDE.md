@@ -20,6 +20,7 @@ npm test         # code-integrity + data-shape tests (~0.1s) — run before comm
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
+npm run sprites:build   # design/sprites/*.sprite -> the PNGs MANIFEST loads
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -306,6 +307,49 @@ to emit a template whose collision box overflows its sprite grid — the first v
 
 **This does not generate art.** It generates the empty paper and the guide lines, which is
 the one part of the job that is arithmetic.
+
+### The sprite editor — `docs/sprite-editor.html`
+
+A sibling of the tracker app, served from the same GitHub Pages site, sharing its token,
+its `tracker-draft/<branch>` autosave and its marker vocabulary. **It is deliberately not
+in the dev menu.** The game is entirely offline and its permission list is closed; an
+in-game editor that autosaved would put a GitHub token and a write path inside a sideloaded
+APK, which is a real cost to a trust surface paid so a drawing tool could sit one menu
+nearer the thing it draws for.
+
+**`design/sprites/*.sprite` is the source; `public/sprites/*.png` is the build output.**
+`npm run sprites:build` is the only step between them, and nothing downstream changes —
+adding art is still a PNG in `public/sprites/` plus one `MANIFEST` line, the PNG just has a
+source file now. Proven by round-tripping the shipped `player.png` through the format and
+back: **pixel-identical.**
+
+**A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
+seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
+change in the tracker recolours every sprite drawn against it with no art reopened. It also
+means the 3-colours-plus-transparency rule is the only thing the format can express.
+
+**Only `ready` and `draft` sprites build.** `wip` and `deferred` are skipped, so
+half-finished art cannot reach a playtest — the same gate the fight content has, applied to
+the thing that is actually visible.
+
+#### The fudge factors are TWO numbers and the vertical one is dangerous
+
+The ratio between the drawn silhouette and the collision box, per axis, in 0.05 steps.
+**The defaults are measured, not chosen**: the shipped player is 12 wide on a 17px
+silhouette standing and 16 on 21 sliding — 0.71 and 0.76 — against 22 on 23 and 11 on 11
+tall. So horizontal defaults to **0.70** and vertical to **1.00**, and applying 0.70 to that
+same silhouette reproduces the engine's own 12px box exactly. `tests/sprites.test.js`
+asserts that, so the default cannot drift from the art it came from.
+
+**Horizontal fudge is free fairness; vertical fudge is not its mirror.** A box narrower than
+the drawing means a near miss visibly misses. A box SHORTER than the drawing means the feet
+land somewhere other than where they look, or a jump passes through a ceiling it visibly
+hit — which reads as the game being wrong rather than as the game being kind. The editor
+shows a standing gold warning whenever vertical leaves 1.00, and it stays up, because the
+person who needs telling is whoever opens that sprite in a month.
+
+The collision box is per ACTOR, not per frame, so a fudge factor is read against one chosen
+reference frame — the player's own box matches `idle1` at 1.00 and `idle0` at 0.96.
 
 ### Sprite art is HUMAN-AUTHORED. Do not generate it.
 
