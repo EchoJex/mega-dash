@@ -28,6 +28,11 @@
   button:hover{filter:brightness(1.25)}
   button.primary{background:var(--ui);color:#06220f;border-color:transparent;font-weight:700}
   button.warn{background:#3a2430;color:#f0a0b0}
+  /* Styled as a button rather than a link, because it sits in a row of them
+     and a bare anchor here reads as prose that happens to be blue. */
+  .applink{background:#243044;color:var(--ink);border:1px solid var(--grid);padding:7px 12px;
+           border-radius:3px;text-decoration:none;font-size:13px;white-space:nowrap}
+  .applink:hover{filter:brightness(1.25)}
   #state{font-size:12px;color:var(--dim)}
   #state.err{color:#ff8080}
   #state.ok{color:var(--ui)}
@@ -96,6 +101,10 @@
     <select id="branch" title="branch"></select>
     <span class="sp"></span>
     <span id="state">…</span>
+    <!-- The two apps are siblings on one Pages site and share a token, so each
+         links to the other: one bookmark reaches both, and neither has to be
+         remembered as a URL. -->
+    <a class="applink" href="./sprite-editor.html" title="hand-draw sprites">✏️ Sprites</a>
     <button id="tokenBtn" title="GitHub token">🔑</button>
   </div>
   <nav id="nav"></nav>

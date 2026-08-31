@@ -1008,22 +1008,27 @@ Only after enough slices exist to have something to tune:
 | **Balance** | weapon damage, boss and minion HP, the ramp. `npm run sim` is the instrument and `design/sim/` is its history, so this is now a measure-change-measure loop rather than a feel. Meaningless before there are fights to compare |
 | **Physics overlay** | `FEEL_GROUPS` exists to drive it; deliberately not built early, because the motion constants are a known-good NES reference to tune AWAY from and there is nothing yet to tune them against |
 | **Palette spacing** | re-run the optimisation LATE, with sprites to judge it against — see the palette rule |
-| **Ship prep** | one switch. `DEV.available = false` takes the launch dialog, the dev menu and every perk out together |
+| **Handing someone a build** | one switch, whenever it is wanted. `DEV.available = false` takes the launch dialog, the dev menu and every perk out together. Not a milestone — see below |
 
-### The question this roadmap makes visible: how many bosses is ENOUGH?
+### THERE IS NO SHIP GATE. This is a personal hobby project.
 
-**Seventeen is the roster, not the ship gate, and nobody has decided what the gate is.**
+Stated plainly because the absence changes how everything above should be read. There is
+no release, no deadline, no minimum content bar to clear, and **no version of "behind"**.
+Seventeen is the roster because seventeen is the type chart, not because seventeen is owed.
 
-The owner's own pacing targets say a late run is 4–6 bosses and run length IS boss count.
-The shuffle bag has no repeats until it is exhausted, so a run never sees the same boss
-twice regardless. That means the number that actually matters is **how many distinct
-bosses a player meets before the game starts feeling like a rotation** — which is a
-playtest question, not an arithmetic one, and it is reachable NOW at five built fights.
+So the roadmap is a map of what is REACHABLE, never a list of what is outstanding. A boss
+with no fight is not a debt; the twelve `[wip]` slices are not a backlog. Claude should
+never frame them as one, never suggest a slice to "catch up", and never treat the board's
+4/17 as a shortfall — it is a position, and the only thing that makes one position better
+than another here is whether the owner enjoyed getting to it.
 
-It is worth answering before building the tenth slice, because the answer changes what
-"done" means: finish seventeen, or finish eight and spend the rest of the effort on art,
-balance and polish. Claude should not decide this. It should ask once the fifth or sixth
-slice is playable, which it now is.
+`DEV.available = false` still exists and still works as one switch. It is there for the
+day the owner wants to hand someone a build, not a milestone anybody is walking toward.
+
+**The one number still worth being curious about** is how many distinct bosses a run meets
+before it starts feeling like a rotation — the bag never repeats within a run, and a late
+run is 4–6 bosses, so five built fights may already be enough to notice. That is a
+playtest observation to enjoy, not a gate to pass.
 
 ### Already complete (the foundation)
 

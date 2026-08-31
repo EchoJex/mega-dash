@@ -64,6 +64,10 @@
   dialog { background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 6px; max-width: 92vw; }
   dialog input { width: 100%; margin: 8px 0; }
   .hint { color: var(--dim); font-size: 11px; }
+  .applink {
+    color: var(--sel); text-decoration: none; border: 1px solid var(--grid);
+    border-radius: 3px; padding: 5px 7px; white-space: nowrap;
+  }
   .fudgeGrp { display: inline-flex; gap: 4px; align-items: center; padding: 2px 4px; border-radius: 3px; }
   /* THE VERTICAL GROUP GOES GOLD THE MOMENT IT LEAVES 1.00 and stays gold.
      A transient toast would be gone by the time the artist came back to the
@@ -81,6 +85,7 @@
   <select id="status" title="status"></select>
   <span class="grow"></span>
   <span id="state" class="tag">…</span>
+  <a class="applink" href="./index.html" title="the design tracker">📋 Tracker</a>
   <button id="saveBtn" title="commit now and fast-forward the working branch">PUBLISH</button>
   <button id="tokenBtn" title="GitHub token">🔑</button>
 </header>
