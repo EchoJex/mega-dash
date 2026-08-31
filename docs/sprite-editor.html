@@ -1,0 +1,743 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MEGA DASH — sprite editor</title>
+<!--
+  THE SPRITE EDITOR — a sibling of the tracker app, and deliberately NOT part of
+  the game.
+
+  WHY IT LIVES HERE AND NOT IN THE DEV MENU. Two reasons, and the second is the
+  one that settles it.
+
+  The autosave already exists here. This page reuses the tracker's whole
+  GitHub path — the same token, the same `tracker-draft/<branch>` target, the
+  same 2.5s debounce — so "save like the tracker does" is a shared function
+  rather than a second implementation to keep in step.
+
+  And THE GAME IS OFFLINE. CLAUDE.md: it bundles every asset and fetches
+  nothing; there is no remote content and the manifest requests exactly two
+  permissions, both for the updater. An in-game editor that autosaved would put
+  a GitHub token and a write path inside a sideloaded APK with no store
+  reputation — a real cost to a trust surface that is currently closed, paid so
+  that a drawing tool could live one menu closer to the thing it draws for.
+  The fallback the owner offered (write a file, upload it every few days) is
+  exactly what that choice would have forced.
+
+  What the game keeps is the part it is good at: `MANIFEST` swaps a finished
+  PNG in with no code change, so the loop is draw here, build, tap UPDATE.
+-->
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --grid: #232833; --ink: #dfe6f2;
+    --dim: #7c879b; --ok: #4ec9a0; --err: #e5534b; --sel: #5cadd5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg); color: var(--ink); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
+    display: grid; grid-template-rows: auto 1fr auto; height: 100dvh;
+  }
+  header, footer { background: var(--panel); border-color: var(--grid); border-style: solid; }
+  header { border-width: 0 0 1px; padding: 6px 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  footer { border-width: 1px 0 0; padding: 6px 8px; }
+  select, button, input {
+    font: inherit; background: #0d1015; color: var(--ink);
+    border: 1px solid var(--grid); border-radius: 3px; padding: 5px 7px;
+  }
+  button { cursor: pointer; }
+  button.on { background: #1d3a4a; border-color: var(--sel); color: #cfeaff; }
+  button:active { transform: translateY(1px); }
+  #stage { position: relative; overflow: hidden; touch-action: none; background: #06070a; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1 1 auto; }
+  .tag { color: var(--dim); }
+  #state { font-size: 12px; }
+  #state.ok { color: var(--ok); } #state.err { color: var(--err); }
+  /* The palette: fixed 16-wide so the four hardware rows read as the four rows
+     they are on the chip, rather than reflowing into a meaningless block. */
+  #pal { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; max-width: 520px; }
+  #pal i { display: block; aspect-ratio: 1; cursor: pointer; border: 1px solid transparent; }
+  #pal i.sel { border-color: #fff; }
+  #pal i.unsafe::after { content: '!'; display: block; text-align: center; color: #f66; font-size: 9px; }
+  .swatch { width: 18px; height: 18px; border: 1px solid var(--grid); display: inline-block; vertical-align: middle; }
+  .roleRow { display: flex; gap: 5px; align-items: center; }
+  dialog { background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 6px; max-width: 92vw; }
+  dialog input { width: 100%; margin: 8px 0; }
+  .hint { color: var(--dim); font-size: 11px; }
+  .fudgeGrp { display: inline-flex; gap: 4px; align-items: center; padding: 2px 4px; border-radius: 3px; }
+  /* THE VERTICAL GROUP GOES GOLD THE MOMENT IT LEAVES 1.00 and stays gold.
+     A transient toast would be gone by the time the artist came back to the
+     sprite, and this is a decision that outlives the moment it was made. */
+  .fudgeGrp.warn { background: #3a2f0c; outline: 1px solid #f5d328; }
+  #vwarn {
+    margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
+    background: #3a2f0c; border: 1px solid #f5d328; color: #ffe9a3; font-size: 11px;
+  }
+</style>
+
+<header>
+  <select id="target" title="which sprite"></select>
+  <select id="frame" title="which frame"></select>
+  <select id="status" title="status"></select>
+  <span class="grow"></span>
+  <span id="state" class="tag">…</span>
+  <button id="saveBtn" title="commit now and fast-forward the working branch">PUBLISH</button>
+  <button id="tokenBtn" title="GitHub token">🔑</button>
+</header>
+
+<div id="stage"><canvas id="cv"></canvas></div>
+
+<footer>
+  <div class="row" style="margin-bottom:6px">
+    <div class="roleRow"><b>OUTLINE</b><span class="swatch" id="sw0"></span><select id="role0"></select></div>
+    <div class="roleRow"><b>PRIMARY</b><span class="swatch" id="sw1"></span><select id="role1"></select></div>
+    <div class="roleRow"><b>SECOND</b><span class="swatch" id="sw2"></span><select id="role2"></select></div>
+  </div>
+  <div class="row" style="margin-bottom:6px">
+    <button id="pen0">OUTLINE</button>
+    <button id="pen1">PRIMARY</button>
+    <button id="pen2">SECOND</button>
+    <button id="penE">ERASE</button>
+    <span class="tag">|</span>
+    <button id="tView" title="hide the grid, boxes and reference figures">EDITOR VIEW</button>
+    <button id="tBox" title="show the collision box">BOXES</button>
+    <span class="grow"></span>
+    <span class="tag">FUDGE</span>
+    <span class="fudgeGrp"><button id="fwm">−</button><span id="fw">0.70</span><button id="fwp">+</button>
+    <span class="tag">HORIZONTAL</span></span>
+    <span class="fudgeGrp" id="vgrp"><button id="fhm">−</button><span id="fh">1.00</span><button id="fhp">+</button>
+    <span class="tag">VERTICAL</span></span>
+    <button id="fudgeDef" title="the ratios measured off the shipped player art">RESET</button>
+  </div>
+  <div id="vwarn" hidden></div>
+  <div id="pal"></div>
+  <div class="hint" id="hint"></div>
+</footer>
+
+<dialog id="tok">
+  <form method="dialog">
+    <p>GitHub token with <b>repo</b> scope. Stored in this browser only.</p>
+    <input id="tokIn" type="password" placeholder="github_pat_..." autocomplete="off">
+    <div class="row"><button value="save">Save</button><button value="clear">Clear</button><button value="x">Cancel</button></div>
+  </form>
+</dialog>
+
+<script type="module">
+import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js';
+import { parse, serialize, blankFrame, bounds, proposedBox, STATUSES } from './sprite-fmt.js';
+
+const OWNER = 'EchoJex', REPO = 'mega-dash';
+const TOKEN_KEY = 'megadash_gh_token';        // SHARED with the tracker app
+const BRANCH = 'main';
+const draftRef = () => `tracker-draft/${BRANCH}`;
+const $ = (s) => document.querySelector(s);
+const token = () => localStorage.getItem(TOKEN_KEY) || '';
+
+let targets = null;      // design/sprite-targets.json
+let palettes = null;     // design/boss-data.json
+let doc = null;          // the sprite being edited
+let key = null;          // its id
+let sha = null, dirty = false, saving = false, timer = null;
+let frameIx = 0, pen = '1';
+let view = { editor: true, boxes: true };
+let cam = { z: 12, x: 0, y: 0 };
+
+// ── GitHub, the same shape the tracker uses ───────────────────────────
+
+async function gh(path, opts = {}) {
+  const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
+  if (token()) headers.Authorization = 'Bearer ' + token();
+  const res = await fetch('https://api.github.com' + path, { ...opts, headers });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  // A 204 has no body. The tracker learned this the hard way on /merges.
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+const unb64 = (s) => new TextDecoder().decode(Uint8Array.from(atob(s), (c) => c.charCodeAt(0)));
+
+function setState(msg, cls = '') { $('#state').textContent = msg; $('#state').className = cls || 'tag'; }
+
+const pathFor = (id) => `design/sprites/${id}.sprite`;
+
+/**
+ * THE DRAFT BRANCH IS THE TARGET, exactly as in the tracker: autosaves land
+ * there and only PUBLISH moves the working branch. Drawing produces a lot of
+ * small edits and none of them should be a commit on `main`.
+ */
+async function ensureDraft() {
+  try { await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${draftRef()}`); return draftRef(); } catch {}
+  const base = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+  await gh(`/repos/${OWNER}/${REPO}/git/refs`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref: `refs/heads/${draftRef()}`, sha: base.object.sha }),
+  });
+  return draftRef();
+}
+
+function touch() { dirty = true; clearTimeout(timer); timer = setTimeout(() => save(false), 2500); }
+
+async function save(manual) {
+  if (!doc || saving) return;
+  if (!token()) { setState('no token — read only', 'err'); return; }
+  saving = true;
+  setState(manual ? 'publishing…' : 'saving…');
+  try {
+    const ref = await ensureDraft();
+    if (dirty) {
+      const body = {
+        message: `sprite: ${manual ? 'publish' : 'autosave'} ${key}`,
+        content: b64(serialize(doc)), branch: ref,
+      };
+      if (sha) body.sha = sha;
+      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      sha = r.content.sha;
+      dirty = false;
+    }
+    if (manual) {
+      // Fast-forward the working branch onto the draft, and fall back to a
+      // merge when it has moved underneath us. Straight out of the tracker.
+      const head = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${draftRef()}`);
+      try {
+        await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sha: head.object.sha }),
+        });
+      } catch {
+        await gh(`/repos/${OWNER}/${REPO}/merges`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base: BRANCH, head: draftRef(), commit_message: `sprite: publish ${key}` }),
+        });
+      }
+      setState(`published ${new Date().toLocaleTimeString()}`, 'ok');
+    } else setState(`saved ${new Date().toLocaleTimeString()}`, 'ok');
+  } catch (e) {
+    setState(String(e.message || e).slice(0, 60), 'err');
+  } finally { saving = false; }
+}
+
+// ── Loading ───────────────────────────────────────────────────────────
+
+const rawUrl = (p) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${p}?t=${Date.now()}`;
+
+async function boot() {
+  setState('loading…');
+  [targets, palettes] = await Promise.all([
+    fetch(rawUrl('design/sprite-targets.json')).then((r) => r.json()),
+    fetch(rawUrl('design/boss-data.json')).then((r) => r.json()),
+  ]);
+  buildTargetList();
+  buildPalette();
+  buildRoleSelects();
+  await open($('#target').value);
+}
+
+function buildTargetList() {
+  const sel = $('#target');
+  const add = (v, label) => sel.add(new Option(label, v));
+  add('player', 'PLAYER');
+  for (const m of targets.minions) add(m.id, m.label);
+  for (const [id, b] of Object.entries(targets.bosses)) add(id, `${b.label}  ${b.scale}x`);
+}
+
+function targetOf(id) {
+  if (id === 'player') return targets.player;
+  const m = targets.minions.find((x) => x.id === id);
+  return m || targets.bosses[id];
+}
+
+/**
+ * The three colours this actor is drawn in. Bosses get theirs from
+ * `boss-data.json`, which is generated from the tracker — so the palette an
+ * artist sees here is the palette the design says, not a copy of it.
+ */
+function paletteOf(id) {
+  const b = palettes.bosses[id];
+  if (b) return { outline: b.outline, primary: b.primary, secondary: b.secondary };
+  if (id === 'player') return { outline: '#0A0A12', primary: '#FFFFFF', secondary: '#BFC6D2' };
+  return { outline: '#0A0A12', primary: '#8899AA', secondary: '#556677' };
+}
+
+async function open(id) {
+  key = id; sha = null; dirty = false; frameIx = 0;
+  const t = targetOf(id);
+  let text = null;
+  try {
+    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${draftRef()}&t=${Date.now()}`);
+    text = unb64(r.content.replace(/\n/g, '')); sha = r.sha;
+  } catch {
+    try {
+      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${BRANCH}&t=${Date.now()}`);
+      text = unb64(r.content.replace(/\n/g, '')); sha = null;
+    } catch { text = null; }
+  }
+
+  if (text) doc = parse(text);
+  else {
+    // A NEW SPRITE STARTS DEFERRED, per the owner's default: most of the
+    // roster is not being drawn today and a status that claimed otherwise
+    // would make the list useless as a to-do.
+    doc = {
+      id, status: 'deferred', w: t.grid.w, h: t.grid.h,
+      fudgeW: targets.fudge.w, fudgeH: targets.fudge.h, note: '',
+      frames: t.frames.map((n) => ({ name: n, rows: blankFrame(t.grid.w, t.grid.h) })),
+    };
+  }
+  // The grid always comes from the live target, never from the file: a class
+  // whose grid changed must not be edited at the old size.
+  doc.w = t.grid.w; doc.h = t.grid.h;
+
+  buildFrameList();
+  syncControls();
+  fitCam();
+  draw();
+  setState(text ? 'loaded' : 'new sprite', 'ok');
+}
+
+// ── Controls ──────────────────────────────────────────────────────────
+
+function buildFrameList() {
+  const sel = $('#frame'); sel.innerHTML = '';
+  doc.frames.forEach((f, i) => sel.add(new Option(f.name, String(i))));
+  sel.value = String(frameIx);
+}
+
+function buildPalette() {
+  const el = $('#pal'); el.innerHTML = '';
+  NES.forEach((hex, i) => {
+    const b = document.createElement('i');
+    if (hex === null) { b.style.visibility = 'hidden'; el.appendChild(b); return; }
+    b.style.background = hex;
+    b.title = `$${i.toString(16).toUpperCase().padStart(2, '0')}  ${hex}`
+      + (i === UNSAFE ? '  — blacker than black, avoid' : '');
+    if (i === UNSAFE) b.className = 'unsafe';
+    // Clicking a swatch assigns it to the ROLE currently held by the pen. That
+    // is the only thing a colour can mean here: a sprite has three of them and
+    // the file stores which role a pixel is, never a hex.
+    b.onclick = () => {
+      if (pen === EMPTY) { flash('pick a role first — ERASE has no colour'); return; }
+      const role = ROLES.find((r) => r.key === pen);
+      $(`#role${ROLES.indexOf(role)}`).value = hex;
+      applyRoles();
+    };
+    el.appendChild(b);
+  });
+}
+
+function buildRoleSelects() {
+  ROLES.forEach((r, i) => {
+    const sel = $(`#role${i}`); sel.innerHTML = '';
+    for (const s of USABLE) sel.add(new Option(`$${s.toString(16).toUpperCase().padStart(2, '0')} ${NES[s]}`, NES[s]));
+    sel.onchange = applyRoles;
+  });
+  const st = $('#status'); st.innerHTML = '';
+  for (const s of STATUSES) st.add(new Option(s.toUpperCase(), s));
+  st.onchange = () => { doc.status = st.value; touch(); };
+}
+
+/**
+ * The role colours are a VIEW, not part of the sprite. Changing one here shows
+ * the artist what the boss's palette would look like; it does not edit the
+ * file, because the file has no colours in it. The palette itself lives in the
+ * tracker, which is where a design decision belongs.
+ */
+function applyRoles() {
+  ROLES.forEach((r, i) => { $(`#sw${i}`).style.background = $(`#role${i}`).value; });
+  draw();
+}
+
+function syncControls() {
+  const p = paletteOf(key);
+  const set = (i, hex) => {
+    const sel = $(`#role${i}`);
+    const near = nearestSlot(hex);
+    sel.value = NES[near.slot];
+    if (!near.exact) {
+      // The design's colour is not on the chip. Say so rather than snapping
+      // silently — the seventeen primaries were optimised for separation, not
+      // for NES legality, and which one wins is the owner's call.
+      const o = new Option(`${hex} (off-palette)`, hex, false, true);
+      sel.insertBefore(o, sel.firstChild);
+      sel.value = hex;
+    }
+  };
+  set(0, p.outline); set(1, p.primary); set(2, p.secondary);
+  $('#status').value = doc.status;
+  $('#fw').textContent = doc.fudgeW.toFixed(2);
+  $('#fh').textContent = doc.fudgeH.toFixed(2);
+  applyRoles();
+  updatePenButtons();
+  warnVertical();
+}
+
+function updatePenButtons() {
+  for (const [id, k] of [['#pen0', '0'], ['#pen1', '1'], ['#pen2', '2'], ['#penE', EMPTY]]) {
+    $(id).classList.toggle('on', pen === k);
+  }
+  $('#tView').classList.toggle('on', !view.editor);
+  $('#tBox').classList.toggle('on', view.boxes);
+}
+
+/**
+ * VERTICAL FUDGE IS THE ONE THAT BREAKS PLATFORMING, and the editor says so
+ * every time it is touched rather than trusting anyone to remember.
+ *
+ * Horizontal fudge is FREE FAIRNESS: a box narrower than the drawing means a
+ * near miss to the side visibly misses, which is the thing Mega Man is famous
+ * for feeling right about. Vertical fudge is not symmetrical with it. The
+ * bottom edge of the box IS where the feet land, and the top edge is what
+ * decides whether a jump cleared something — so shortening it makes the player
+ * hover a pixel above the floor or pass through a ceiling they visibly hit, and
+ * both read as the game being wrong rather than as the game being kind.
+ *
+ * The measured evidence says the same: the shipped player is 0.71 and 0.76 wide
+ * against 0.96 and 1.00 tall. Somebody already tuned this by feel and left the
+ * vertical alone.
+ *
+ * The warning is STANDING, not a toast. A gold panel while the value is off
+ * 1.00 outlives the session it was set in, which is the point — the artist who
+ * finds this sprite in a month is the one who needs telling.
+ */
+function warnVertical() {
+  const off = Math.abs(doc.fudgeH - 1) > 0.001;
+  $('#vgrp').classList.toggle('warn', off);
+  const w = $('#vwarn');
+  w.hidden = !off;
+  if (off) {
+    w.innerHTML = `<b>VERTICAL FUDGE ${doc.fudgeH.toFixed(2)}</b> — be very selective here. `
+      + `The box's bottom edge is where the feet land and its top edge decides whether a jump `
+      + `cleared something, so a vertical lie reads as the game being WRONG rather than kind. `
+      + `Horizontal is the axis that buys fairness for free. `
+      + `The shipped player measures ${targets.fudge.measured.standing[1]} and `
+      + `${targets.fudge.measured.sliding[1]} tall against `
+      + `${targets.fudge.measured.standing[0]} and ${targets.fudge.measured.sliding[0]} wide.`;
+  }
+}
+
+let hintTimer = null;
+function flash(msg) {
+  $('#hint').textContent = msg;
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => { $('#hint').textContent = hintText(); }, 2600);
+}
+function hintText() {
+  const t = targetOf(key);
+  const f = doc.frames[frameIx];
+  const b = bounds(f, doc.w, doc.h);
+  const box = proposedBox(f, doc.w, doc.h, doc.fudgeW, doc.fudgeH);
+  const engine = `engine box ${t.box.w}x${t.box.h}`;
+  if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}`;
+  return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · `
+    + `fudged box ${box.w}x${box.h} · ${engine}`;
+}
+
+// ── The canvas ────────────────────────────────────────────────────────
+
+const cv = $('#cv'), ctx = cv.getContext('2d', { alpha: false });
+
+function resize() {
+  const r = $('#stage').getBoundingClientRect();
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  draw();
+}
+new ResizeObserver(resize).observe($('#stage'));
+
+/**
+ * Fit the canvas AND both reference figures, which is not the same as fitting
+ * the canvas.
+ *
+ * The largest boss is 48 cells tall against the player's 24, so on a player
+ * sprite the reference beside it is TWICE the height of the thing being drawn —
+ * budgeting for `doc.h` alone put it half off the screen at every zoom. The
+ * tallest figure on the baseline is what sets the vertical fit, and the three
+ * side by side set the horizontal one.
+ */
+function fitCam() {
+  const r = $('#stage').getBoundingClientRect();
+  const wide = doc.w + REF_GAP * 2 + PLAYER_REF.w + BOSS_REF.w;
+  const tall = Math.max(doc.h, PLAYER_REF.h, BOSS_REF.h) + 2;
+  cam.z = Math.max(2, Math.floor(Math.min(r.width / wide, (r.height - 30) / tall)));
+  /**
+   * CENTRE THE COMPOSITION, NOT THE CANVAS. The two references are different
+   * widths — 24 for the player against 36 for the largest boss — so centring
+   * the thing being drawn pushes the wider reference off the right edge. The
+   * offset is half the difference between them.
+   */
+  cam.x = r.width / 2 - (BOSS_REF.w - PLAYER_REF.w) * cam.z / 2;
+  // Baselines share a line, so centre on that line rather than on the canvas.
+  cam.y = r.height / 2 + (tall - doc.h) * cam.z / 2 - 12;
+}
+
+const REF_GAP = 6;
+let PLAYER_REF = { w: 24, h: 24 }, BOSS_REF = { w: 36, h: 48 };
+let refPlayer = null;   // the real player sprite, for the left-hand reference
+
+async function loadPlayerRef() {
+  try {
+    const r = await gh(`/repos/${OWNER}/${REPO}/contents/design/sprites/player.sprite`
+      + `?ref=${BRANCH}&t=${Date.now()}`);
+    const d = parse(unb64(r.content.replace(/\n/g, '')));
+    const p = paletteOf('player');
+    refPlayer = {
+      w: d.w, h: d.h, rows: d.frames[0].rows,
+      cols: { 0: p.outline, 1: p.primary, 2: p.secondary },
+    };
+  } catch { refPlayer = null; }   // a box is a fine fallback
+}
+
+function draw() {
+  if (!doc) return;
+  const r = $('#stage').getBoundingClientRect();
+  ctx.fillStyle = '#06070a';
+  ctx.fillRect(0, 0, r.width, r.height);
+  const z = cam.z;
+  const gw = doc.w * z, gh = doc.h * z;
+  const ox = Math.round(cam.x - gw / 2), oy = Math.round(cam.y - gh / 2);
+  const cols = ROLES.map((_, i) => $(`#role${i}`).value);
+  const baseY = oy + gh;   // every figure stands on the same line
+
+  /**
+   * THE TWO REFERENCE FIGURES, at true relative scale and always present.
+   *
+   * This is the whole reason to draw in an editor that knows the game rather
+   * than in a general one: a 48x48 canvas tells you nothing about whether the
+   * thing on it reads as bigger than the player. They stand on the same
+   * baseline as the canvas and zoom with it, so the comparison holds at every
+   * magnification — which is what makes pinching to zoom in on an eye still
+   * honest about how big the eye is.
+   */
+  if (view.editor) {
+    const label = (text, x, wCells) => {
+      ctx.fillStyle = '#7c879b';
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(text, x, baseY + 12);
+    };
+    /**
+     * THE PLAYER REFERENCE IS THE REAL PLAYER when his art is loadable, and a
+     * box when it is not.
+     *
+     * A box conveys height and nothing else. The question an artist is actually
+     * asking — does this boss read as bigger than the thing it is fighting —
+     * needs a silhouette, and the player is the one actor whose art exists. He
+     * is drawn in his own palette, greyed slightly so he never competes with
+     * the sprite under the cursor for attention.
+     */
+    const px0 = ox - (REF_GAP + PLAYER_REF.w) * z;
+    if (refPlayer) {
+      const pw = refPlayer.w, ph = refPlayer.h;
+      const rx = px0 + Math.round((PLAYER_REF.w - pw) / 2) * z;
+      ctx.globalAlpha = 0.75;
+      for (let y = 0; y < ph; y++) {
+        for (let x = 0; x < pw; x++) {
+          const ch = refPlayer.rows[y][x];
+          if (ch === EMPTY) continue;
+          ctx.fillStyle = refPlayer.cols[ch];
+          ctx.fillRect(rx + x * z, baseY - ph * z + y * z, z, z);
+        }
+      }
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = '#1a2029';
+      ctx.fillRect(px0, baseY - PLAYER_REF.h * z, PLAYER_REF.w * z, PLAYER_REF.h * z);
+    }
+    ctx.strokeStyle = '#3a4250'; ctx.lineWidth = 1;
+    ctx.strokeRect(px0 + 0.5, baseY - PLAYER_REF.h * z + 0.5, PLAYER_REF.w * z - 1, PLAYER_REF.h * z - 1);
+    label(`PLAYER ${PLAYER_REF.w}x${PLAYER_REF.h}`, px0);
+
+    // The largest boss has no art yet, so his reference stays an honest
+    // rectangle at true collision footprint — the same thing the game itself
+    // draws for a boss whose silhouette is not designed.
+    const bx0 = ox + gw + REF_GAP * z;
+    ctx.fillStyle = '#241a1a';
+    ctx.fillRect(bx0, baseY - BOSS_REF.h * z, BOSS_REF.w * z, BOSS_REF.h * z);
+    ctx.strokeStyle = '#5a3a3a';
+    ctx.strokeRect(bx0 + 0.5, baseY - BOSS_REF.h * z + 0.5, BOSS_REF.w * z - 1, BOSS_REF.h * z - 1);
+    label(`MAX BOSS ${BOSS_REF.w}x${BOSS_REF.h}`, bx0);
+  }
+
+  // The canvas ground: a checker, so transparency reads as transparency.
+  for (let y = 0; y < doc.h; y++) {
+    for (let x = 0; x < doc.w; x++) {
+      const px = doc.frames[frameIx].rows[y][x];
+      if (px === EMPTY) {
+        if (!view.editor) continue;                 // visible-pixels-only
+        ctx.fillStyle = ((x >> 1) + (y >> 1)) % 2 ? '#161a21' : '#1c212a';
+      } else ctx.fillStyle = cols[ROLES.findIndex((r2) => r2.key === px)] || '#f0f';
+      ctx.fillRect(ox + x * z, oy + y * z, z, z);
+    }
+  }
+
+  if (view.editor && z >= 4) {
+    ctx.strokeStyle = '#232833'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x <= doc.w; x++) {
+      ctx.moveTo(ox + x * z + 0.5, oy); ctx.lineTo(ox + x * z + 0.5, oy + gh);
+    }
+    for (let y = 0; y <= doc.h; y++) {
+      ctx.moveTo(ox, oy + y * z + 0.5); ctx.lineTo(ox + gw, oy + y * z + 0.5);
+    }
+    ctx.stroke();
+    // Every 8th line brighter, because that is how a pixel artist counts.
+    ctx.strokeStyle = '#3b4453'; ctx.beginPath();
+    for (let x = 0; x <= doc.w; x += 8) { ctx.moveTo(ox + x * z + 0.5, oy); ctx.lineTo(ox + x * z + 0.5, oy + gh); }
+    for (let y = 0; y <= doc.h; y += 8) { ctx.moveTo(ox, oy + y * z + 0.5); ctx.lineTo(ox + gw, oy + y * z + 0.5); }
+    ctx.stroke();
+  }
+
+  if (view.boxes) {
+    const t = targetOf(key);
+    // THE ENGINE'S box, in cyan: what the game uses TODAY.
+    const ex = ox + Math.round((doc.w - t.box.w) / 2) * z;
+    ctx.strokeStyle = '#5ccdd5'; ctx.lineWidth = 2;
+    ctx.strokeRect(ex, baseY - t.box.h * z, t.box.w * z, t.box.h * z);
+    // THE FUDGED box, in gold: what the drawing plus the current factors
+    // PROPOSE. Two boxes rather than one because the artist is deciding
+    // whether the second should become the first.
+    const box = proposedBox(doc.frames[frameIx], doc.w, doc.h, doc.fudgeW, doc.fudgeH);
+    if (box) {
+      ctx.strokeStyle = '#f5d328'; ctx.lineWidth = 2;
+      ctx.strokeRect(ox + box.x * z, oy + box.y * z, box.w * z, box.h * z);
+    }
+  }
+  $('#hint').textContent = hintText();
+}
+
+// ── Input: draw, pan, pinch ───────────────────────────────────────────
+
+const pointers = new Map();
+let pinch = null, painting = false, lastCell = null;
+
+function cellAt(cx, cy) {
+  const r = $('#stage').getBoundingClientRect();
+  const z = cam.z;
+  const ox = Math.round(cam.x - doc.w * z / 2), oy = Math.round(cam.y - doc.h * z / 2);
+  const x = Math.floor((cx - r.left - ox) / z), y = Math.floor((cy - r.top - oy) / z);
+  return (x >= 0 && y >= 0 && x < doc.w && y < doc.h) ? { x, y } : null;
+}
+
+function paint(c) {
+  if (!c) return;
+  if (lastCell && lastCell.x === c.x && lastCell.y === c.y) return;
+  lastCell = c;
+  const f = doc.frames[frameIx];
+  const row = f.rows[c.y];
+  if (row[c.x] === pen) return;
+  f.rows[c.y] = row.slice(0, c.x) + pen + row.slice(c.x + 1);
+  touch(); draw();
+}
+
+$('#stage').addEventListener('pointerdown', (e) => {
+  $('#stage').setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 2) {
+    // PINCH BEATS PAINT, and anything already painted this gesture stays.
+    // Undoing it would be worse: a second finger landing a frame late is a
+    // zoom the artist meant, not a stroke they want reverted.
+    painting = false;
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z,
+      mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, cx: cam.x, cy: cam.y };
+    return;
+  }
+  if (pointers.size === 1) { painting = true; lastCell = null; paint(cellAt(e.clientX, e.clientY)); }
+});
+
+$('#stage').addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    // Zoom about the pinch centre, then carry the pan the fingers did.
+    const nz = Math.max(1, Math.min(64, pinch.z * (d / (pinch.d || 1))));
+    const r = $('#stage').getBoundingClientRect();
+    const gx = (pinch.mx - r.left - pinch.cx) / pinch.z, gy = (pinch.my - r.top - pinch.cy) / pinch.z;
+    cam.z = nz;
+    cam.x = (mx - r.left) - gx * nz;
+    cam.y = (my - r.top) - gy * nz;
+    draw();
+    return;
+  }
+  if (painting) paint(cellAt(e.clientX, e.clientY));
+  else if (pointers.size === 1 && e.buttons === 4) {   // middle-drag pans
+    cam.x += e.clientX - prev.x; cam.y += e.clientY - prev.y; draw();
+  }
+});
+
+const endPointer = (e) => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (pointers.size === 0) { painting = false; lastCell = null; }
+};
+$('#stage').addEventListener('pointerup', endPointer);
+$('#stage').addEventListener('pointercancel', endPointer);
+
+$('#stage').addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = $('#stage').getBoundingClientRect();
+  const gx = (e.clientX - r.left - cam.x) / cam.z, gy = (e.clientY - r.top - cam.y) / cam.z;
+  cam.z = Math.max(1, Math.min(64, cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+  cam.x = (e.clientX - r.left) - gx * cam.z;
+  cam.y = (e.clientY - r.top) - gy * cam.z;
+  draw();
+}, { passive: false });
+
+// ── Wiring ────────────────────────────────────────────────────────────
+
+const setPen = (k) => { pen = k; updatePenButtons(); };
+$('#pen0').onclick = () => setPen('0');
+$('#pen1').onclick = () => setPen('1');
+$('#pen2').onclick = () => setPen('2');
+$('#penE').onclick = () => setPen(EMPTY);
+$('#tView').onclick = () => { view.editor = !view.editor; updatePenButtons(); draw(); };
+$('#tBox').onclick = () => { view.boxes = !view.boxes; updatePenButtons(); draw(); };
+
+const nudge = (which, d) => {
+  const k = which === 'w' ? 'fudgeW' : 'fudgeH';
+  doc[k] = Math.max(0.1, Math.min(1.5, Math.round((doc[k] + d) * 100) / 100));
+  $(`#f${which}`).textContent = doc[k].toFixed(2);
+  touch(); draw();
+};
+$('#fwm').onclick = () => nudge('w', -targets.fudge.step);
+$('#fwp').onclick = () => nudge('w', +targets.fudge.step);
+$('#fhm').onclick = () => { nudge('h', -targets.fudge.step); warnVertical(); };
+$('#fhp').onclick = () => { nudge('h', +targets.fudge.step); warnVertical(); };
+$('#fudgeDef').onclick = () => {
+  doc.fudgeW = targets.fudge.w; doc.fudgeH = targets.fudge.h;
+  $('#fw').textContent = doc.fudgeW.toFixed(2); $('#fh').textContent = doc.fudgeH.toFixed(2);
+  warnVertical();
+  flash(`measured off the shipped player: standing ${targets.fudge.measured.standing.join(' x ')}, `
+    + `sliding ${targets.fudge.measured.sliding.join(' x ')}`);
+  touch(); draw();
+};
+
+$('#target').onchange = async (e) => { if (dirty) await save(false); await open(e.target.value); };
+$('#frame').onchange = (e) => { frameIx = +e.target.value; draw(); };
+$('#saveBtn').onclick = () => save(true);
+$('#tokenBtn').onclick = () => { $('#tokIn').value = token(); $('#tok').showModal(); };
+$('#tok').addEventListener('close', () => {
+  const v = $('#tok').returnValue;
+  if (v === 'save') localStorage.setItem(TOKEN_KEY, $('#tokIn').value.trim());
+  if (v === 'clear') localStorage.removeItem(TOKEN_KEY);
+  if (v !== 'x') setState(token() ? 'token set' : 'no token — read only', token() ? 'ok' : 'err');
+});
+
+addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+// The reference figures are the real numbers, once the targets are in.
+boot().then(async () => {
+  await loadPlayerRef();
+  PLAYER_REF = targets.player.grid;
+  const big = Object.values(targets.bosses).reduce((a, b) => (b.scale > a.scale ? b : a));
+  BOSS_REF = big.box;
+  fitCam(); resize();
+}).catch((e) => setState(`load failed: ${e.message}`, 'err'));
+</script>
