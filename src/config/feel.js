@@ -54,7 +54,7 @@ export const FEEL = {
   // only ever rescue an input the player already meant, and removing them would
   // be reproducing a limitation rather than a feel. Zero them if you disagree.
   jumpBufferFrames: 6,    // press registered this early before landing
-  coyoteFrames: 5,        // jump still allowed this soon after leaving a ledge
+  coyoteFrames: 2,        // jump still allowed this soon after leaving a ledge
 
   // ── Double jump ──────────────────────────────────────────────────────
   // HANG, THEN LAUNCH. Pressing jump in mid-air first freezes vertical motion
@@ -98,7 +98,7 @@ export const FEEL = {
   // back down at the leftmost safe spot. Whole-screen travel at this speed is
   // roughly a third of a second each way — long enough to read as a teleport,
   // short enough not to feel like a cutscene.
-  beamSpeed: 8,
+  beamSpeed: 4,
   invulnFrames: 90,
   /**
    * Invulnerability granted by a hazard beam touchdown — three seconds, twice
