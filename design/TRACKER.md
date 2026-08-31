@@ -678,7 +678,7 @@ still describing it, and `[ready]` means already fixed.
 | 1079 (tracker-draft/main) | `[ready]` | Post Boss requip is still popping up too early. It should pop up after the entire boss death animation has resolved. Also the wheel is closing when I did not close out off it. Also while in the boss room the player should be able to bring up the post boss wheel and requip as desired |
 | 1079 (tracker-draft/main) | `[ready]` | Level 1 and level 2 grass vibe attack needs to be much quicker, like a whip; small hit box high damage at the tip of the whip with a small glint to indicate that zone, medium damage anywhere else. Low fire rate. Update the tracker to reflect this |
 | 1081 (tracker-draft/main) | `[wip]` | Now the requip wheel is acting like the post boss requip wheel at all times I think. |
-| 1095 (tracker-draft/main) | `[wip]` | Slightly improve the accuracy |
+| 1095 (tracker-draft/main) | `[wip]` | Psychic v fightingSlightly improve the accuracy |
 
 # BRAINSTORM — context only, never implemented
 
