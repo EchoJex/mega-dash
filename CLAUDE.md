@@ -758,6 +758,12 @@ The owner edits it either directly or through the **tracker web app** (`docs/ind
 served from GitHub Pages), which is a lens over the same file and autosaves straight into
 the repo.
 
+**TWO APPS, ONE PAGES SITE, ONE BOOKMARK.** Pages serves `docs/` from `main`, so the
+tracker is the site root and the sprite editor is `sprite-editor.html` beside it. They
+share the token, the draft branch and the marker vocabulary, and each links to the other in
+its header — so neither has to be remembered as a URL, and adding a third tool means adding
+one file plus one link.
+
 **Autosaves go to `tracker-draft/<branch>`, not to the working branch.** Typing produced a
 commit every couple of seconds and buried real history hundreds of lines deep. The
 **Publish** button fast-forwards the working branch onto the draft — or merges, if the
