@@ -19,6 +19,7 @@ npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
+npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -286,6 +287,25 @@ changes is one you have to re-find after every re-quip.
 `NULL_WEAPON` is what an unresolvable weapon id falls back to: no primary and no
 secondary, so anything drawn from it is an **outline-only silhouette with every interior
 cell transparent**. It is a fail-visible path, not the player's look.
+
+### `npm run sprites` — the drawing templates
+
+`tools/sprite-templates.mjs` writes pixel-exact canvases for hand-drawn art into
+`design/sprite-templates/`: an exact-size guide and an empty canvas per class, plus one
+magnified reference sheet at 8x with one cell per pixel.
+
+**Every number in them is READ OUT OF THE LIVE SOURCE** — the grids from `SPRITE_CLASS`,
+the player's hurtbox from `FEEL`, the minion boxes from `MINIONS`, and each boss footprint
+through the exact arithmetic `spawnBoss` uses (`h = round(24 * scale)`, `w = round(h *
+0.75)` — note the width comes off the ROUNDED height, and the two orders disagree for
+several bosses). Re-run it after any `scale` change rather than editing a PNG.
+
+It writes its own PNGs from `zlib` rather than taking an image dependency, and it refuses
+to emit a template whose collision box overflows its sprite grid — the first version read
+`miniboss` for `boss` and produced a 36x48 footprint on a 32x32 canvas without complaining.
+
+**This does not generate art.** It generates the empty paper and the guide lines, which is
+the one part of the job that is arithmetic.
 
 ### Sprite art is HUMAN-AUTHORED. Do not generate it.
 
