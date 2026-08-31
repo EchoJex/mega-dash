@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf } from '../config/display.js';
-import { fitCamera, label, plate } from '../systems/text.js';
+import { fitCamera, label, plate, inkFor } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { DEV, dev, layerFor, saveDevSettings } from '../config/dev.js';
 import { BOSSES, bossLayer } from '../data/bosses.js';
@@ -384,15 +384,4 @@ export default class DevMenuScene extends Phaser.Scene {
     rect.on('pointerdown', () => { this.picker.destroy(true); this.picker = null; });
     this.picker.add([rect, txt]);
   }
-}
-
-/**
- * Readable ink for a given fill. The 17 primaries deliberately span near-white
- * (Frost) to near-black (Eclipse), so one fixed label colour is illegible on
- * roughly half of them.
- */
-function inkFor(hex) {
-  const n = hexNum(hex);
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
 }

@@ -104,10 +104,10 @@ const G = {
   '◹': ['.....', '.####', '...##', '..#.#', '.#..#', '#....', '.....'],
 };
 
-export const GLYPH_W = 5;
+const GLYPH_W = 5;
 export const GLYPH_H = 7;
 /** One transparent column between glyphs; the font is drawn at 1:1, never scaled. */
-export const TRACKING = 1;
+const TRACKING = 1;
 export const FONT_KEY = 'megafont';
 
 const FALLBACK = ['#####', '#...#', '#...#', '#...#', '#...#', '#...#', '#####'];

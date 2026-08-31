@@ -161,8 +161,8 @@ export function applyUpgrades(save, run) {
  * boss ever falls: a run that ends badly still buys something, so the Hub is
  * never gated behind a win.
  */
-export const CHIPS_PER_SCORE = 50;   // score needed for one Chip
-export const CHIPS_PER_BOSS = 40;
+const CHIPS_PER_SCORE = 50;   // score needed for one Chip
+const CHIPS_PER_BOSS = 40;
 
 export function chipsBreakdown(score, bossCount, mult = 1) {
   const fromScore = Math.floor(score / CHIPS_PER_SCORE);
@@ -172,6 +172,3 @@ export function chipsBreakdown(score, bossCount, mult = 1) {
     total: Math.round((fromScore + fromBosses) * mult),
   };
 }
-
-export const chipsForRun = (score, bossCount, mult = 1) =>
-  chipsBreakdown(score, bossCount, mult).total;

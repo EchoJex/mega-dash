@@ -97,14 +97,14 @@ const MIN_ACTIVE = { [OFFENSIVE]: 1, [DEFENSIVE]: 0 };
 const clampRank = (n) => Math.max(0, Math.min(MAX_RANK, n | 0));
 
 /** The mastery row in force for a class. Unknown class -> nothing is allowed. */
-export const tierOf = (lo, cls) =>
+const tierOf = (lo, cls) =>
   MASTERY[cls]?.[clampRank(lo.rank?.[cls] ?? 0)] || { slots: 0, active: 0, pin: -1 };
 
 /** How many positions of a class are usable at the current rank. */
 export const slotCount = (lo, cls) => tierOf(lo, cls).slots;
 
 /** How many may run at once. */
-export const activeCap = (lo, cls) => tierOf(lo, cls).active;
+const activeCap = (lo, cls) => tierOf(lo, cls).active;
 
 /** The position the sidearm is welded into, or -1. */
 export const pinnedAt = (lo, cls) => (cls === OFFENSIVE ? tierOf(lo, cls).pin : -1);
@@ -226,7 +226,7 @@ export function toggleEnabled(lo, id) {
  * rank was read back in, would both be silent and both would be very hard to
  * see on a phone.
  */
-export function reconcile(lo) {
+function reconcile(lo) {
   for (const cls of CLASSES) {
     const slots = slotsOf(lo, cls);
     const n = slotCount(lo, cls);

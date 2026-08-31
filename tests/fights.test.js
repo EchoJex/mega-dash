@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FIGHTS, fightFor, hasFight } from '../src/data/bossFights.js';
+import { FIGHTS, fightFor, hasFight } from '../src/systems/bossFights.js';
 import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag } from '../src/data/bosses.js';
 import { hasLadder } from '../src/data/weapons.js';
 import * as Attr from '../src/systems/attributes.js';

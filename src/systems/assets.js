@@ -509,14 +509,6 @@ export function drawPickup(g, p, style, frame) {
   }
 }
 
-/** Sprite footprint for an actor id, falling back to its collision size. */
-export function spriteSize(id, fallbackW, fallbackH) {
-  const def = MANIFEST[id];
-  if (def?.frameW) return { w: def.frameW, h: def.frameH };
-  if (id === 'player') return { w: PLAYER_SPRITE_W, h: PLAYER_SPRITE_H };
-  return { w: fallbackW, h: fallbackH };
-}
-
 /**
  * PALETTE SWAPPING — the one gap this abstraction does not yet close.
  *

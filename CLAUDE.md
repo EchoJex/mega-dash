@@ -410,9 +410,17 @@ a slot; those are different states and an unlocked weapon on the bench still lev
 and a shared near-black outline (`#0A0A12`). The outline is not decoration — it stops
 dark bosses dissolving into the dark background.
 
-The 17 primaries are **perceptually optimised**: minimum CIELAB dE between any two is
-~27.7 while each still reads as its element. **Do not hand-edit one primary in
-isolation** — re-run the spacing optimisation so the set stays separated.
+The 17 primaries were **perceptually optimised**: minimum CIELAB dE between any two is
+~27.7 while each still reads as its element.
+
+**THE SPACING OPTIMISATION IS PAUSED, by the owner's call, until the game is far closer to
+finished.** Starting from a statistically separated set was worth doing and the set stays
+as the baseline — but re-running the optimisation on every edit makes each palette a
+seventeen-way negotiation, and the art is not far enough along to know which colours the
+game actually needs. So a primary may now be changed on its own, and the set is allowed to
+drift. Re-run the optimisation as a LATE pass, alongside balance and the physics overlay,
+when the sprites exist to judge it against. Do not re-tighten it early on your own
+initiative.
 
 `scale` is height relative to the 24px player, averaging 1.75× with ±0.3 for bulky vs
 petite builds.
@@ -509,7 +517,7 @@ Kills drive the combo counter and drop EXP (`systems/pickups.js`), plus a separa
 
 **No ambient minions during a boss fight.** A boss arena is sealed — the only enemies in
 it are the boss and whatever its own moveset summons, which comes from
-`data/bossFights.js`, never from the ambient spawner. Existing minions are cleared when
+`systems/bossFights.js`, never from the ambient spawner. Existing minions are cleared when
 the fight starts and the stream resumes when it ends.
 
 ---
@@ -913,7 +921,7 @@ An element is DONE when all of this is true for its boss:
 1. **Design marked `[draft]` by the owner.** That marker is the gate, not a formality —
    a slice does not begin until the owner has written that boss's fields and moved them
    to `[draft]`. Anything still `[wip]` is not ready and is skipped, even mid-slice.
-2. **Attack layers** — every layer the tracker defines, in `data/bossFights.js`.
+2. **Attack layers** — every layer the tracker defines, in `systems/bossFights.js`.
 3. **Arena** — theme, backdrop shapes, and the furniture its hazards need.
 4. **Hazard layers** — every layer the tracker defines, layer-synced with the attacks.
 5. **Elemental attribute** — terrain form and character form, in `systems/attributes.js`.
@@ -1101,7 +1109,7 @@ so `DEV.available = false` at ship makes the gate permanent.
 
 | | shipped path | derived from |
 |---|---|---|
-| **boss bag** | `PLAYABLE_BOSSES()` — only bosses with an attack loop | `hasFight` in `data/bossFights.js` |
+| **boss bag** | `PLAYABLE_BOSSES()` — only bosses with an attack loop | `hasFight` in `systems/bossFights.js` |
 | **head-start arsenal** | only weapons with a real ladder | `hasLadder` in `data/weapons.js` |
 | **boss drops** | need no filter — a boss you can reach is a boss that fights, and every one of them carries a laddered weapon | asserted in `tests/fights.test.js` |
 
@@ -1206,11 +1214,11 @@ gated, spikes genuinely kill.
 
 The dual-loop plumbing is live: `GameScene.stepBoss()` drives an attack loop and an
 ambient hazard loop side by side every frame, both layer-synced, both fed from
-`data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
+`systems/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
 work.
 
 **Which bosses are built, and to which layers, is `npm run status`.** It reads
-`data/bossFights.js` and the tracker directly, so it cannot go stale — unlike the table
+`systems/bossFights.js` and the tracker directly, so it cannot go stale — unlike the table
 that used to sit here, which said Strike Man had no attacks for a third of a year after
 they were built. This file states RULES; the board states STATE. Do not put a progress
 table back.
@@ -1313,6 +1321,29 @@ deliberately not an elemental attribute.
 
 ---
 
+## Where a file goes
+
+**`data/` is TABLES. `systems/` is BEHAVIOUR. `config/` is TUNING. `scenes/` ORCHESTRATES.**
+The codebase already had this pattern and stated it nowhere, so it drifted.
+
+Minions are the model: `data/minions.js` is the two rows, `systems/minions.js` is the
+spawning and the ramp. Weapons the same — `data/weapons.js` is the roster and the ladders,
+`systems/weaponry.js` is what each one does per frame.
+
+**`bossFights.js` broke it and has been moved to `systems/`.** It is 2,100 lines with
+twenty-four behaviour functions and one table; every other file in `data/` is the reverse.
+A reader who opened `data/` expecting tables found the largest state machine in the game.
+
+**A scene should read as a list of the things it coordinates**, not as the place the work
+happens. `GameScene` is the biggest file in the project and that is a smell rather than a
+rule violation — much of it is genuinely per-frame orchestration — but new pure logic goes
+in a system and gets called from the scene, never added to it.
+
+**An export is a promise.** A helper only its own module uses must not be exported: the
+export list is how a reader tells the module's API from its plumbing, and twenty-nine
+helpers were exported for no reason before anyone looked. Un-export by default; export when
+a second file genuinely needs it.
+
 ## Conventions
 
 **WHEN TOUCHING WHEEL OR MENU LAYOUT, RENDER IT — DO NOT COMPUTE IT.** Pixel arithmetic off
@@ -1329,11 +1360,12 @@ jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (curre
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
   thumb drifting outside a 44px pad is normal on a phone; cancelling on it made movement
   die in mid-air. A held input ends when the finger lifts, not when it wanders.
-- **HUD text sets `resolution: TEXT_RES`** and every scene calls `fitCamera()`
-  (`systems/text.js`). Text legibility comes from RENDER_SCALE giving the canvas real
-  pixels to draw into; `TEXT_RES` just matches the glyph texture to that density. Raising
-  `TEXT_RES` alone makes things WORSE — a larger glyph point-sampled back down into a
-  small buffer loses strokes and visibly fragments letters.
+- **Every scene calls `fitCamera()`** (`systems/text.js`). Text legibility comes from
+  RENDER_SCALE giving the canvas real pixels to draw into, and from the font being a
+  BITMAP — a bitmap glyph has no resolution to raise. This entry used to describe a
+  `TEXT_RES` that HUD text set as `resolution:`; that was true of the Phaser `Text`
+  objects the HUD used before the hand-authored font landed, and nothing has set
+  `resolution:` since. The constant outlived its callers by months and has been removed.
 - A hand-authored **bitmap font** is the eventual answer for a pixel game and is on the
   art list. The density fix holds until it lands.
 - Comments explain **why**, not what. Phase-boundary and deliberate-stub comments exist

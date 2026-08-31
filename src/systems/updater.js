@@ -22,7 +22,7 @@ const plugin = () => globalThis.Capacitor?.Plugins?.Updater;
 export const canUpdate = () => !!plugin();
 
 /** Reason the button is unavailable, or null when it works. */
-export const unavailableReason = () =>
+const unavailableReason = () =>
   canUpdate() ? null : 'Updates are APK-only — this is the browser build';
 
 /** TAP — check main for a newer build and install it. */

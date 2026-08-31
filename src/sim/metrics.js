@@ -43,7 +43,7 @@
  * score twice for being long. Per second is the part that is genuinely new —
  * how frantic the fight is, independent of how long it runs. Both are reported.
  */
-export const WEIGHTS = {
+const WEIGHTS = {
   win: 0.30,     // losing
   hp: 0.25,      // what surviving cost
   unfair: 0.15,  // the share of that cost no input could have prevented
@@ -53,14 +53,14 @@ export const WEIGHTS = {
 };
 
 /** The fraction of a fight spent inside a hitbox that scores a full 1.0. */
-export const ERR_REF = 0.15;
+const ERR_REF = 0.15;
 
 /**
  * Inputs per second that scores a full 1.0 on effort. Eight is roughly a press
  * every two frames sustained — past that a fight is asking for more than hands
  * reliably give, which is the point where "busy" becomes "difficult".
  */
-export const EFFORT_REF = 8;
+const EFFORT_REF = 8;
 
 /** How long a fight may run before it is called a loss, in sim seconds. */
 export const TIMEOUT_SEC = 90;

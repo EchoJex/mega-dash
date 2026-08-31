@@ -84,7 +84,7 @@ export function makeArena(bossDef, layer, viewW, floorY) {
      */
     beat: 0,
     beatN: 0,
-    beatLen: 60,
+    beatLen: BEAT_LEN,
     /**
      * HOW DARK THE ROOM IS, 0 to 1. Volt Man's layer-2 sweep ends by flickering
      * the lights and leaving them out, so the bolts that follow arrive in the
@@ -135,6 +135,14 @@ export function makeArena(bossDef, layer, viewW, floorY) {
  * arrives. Only the three bosses whose tracker entries are written have entries;
  * everything else gets a bare room, which is correct rather than missing.
  */
+/**
+ * ONE SECOND, IN FIXED STEPS. Exported because `bossFights.js` states Volt Man's
+ * whole sweep in multiples of it, and two declarations of the same 60 is how a
+ * hazard quietly stops landing on the beat it is supposed to be synchronised
+ * with. The arena owns it because the arena is what has a beat.
+ */
+export const BEAT_LEN = 60;
+
 /** Frames the plasma lamp holds one lightning shape before jumping to another. */
 const VOLT_LAMP_HOLD = 14;
 
@@ -409,7 +417,7 @@ export const FURNISHED = () => Object.keys(FURNITURE);
  * distinct and to make the foreshadowing legible — you can tell Blaze Man is
  * next because the area ahead of you is going red.
  */
-export function themeFor(bossDef) {
+export function themeFor(bossDef) {   // the ROOM's backdrop; terrain.js has its own
   if (!bossDef) return { fill: 0x060614, id: null };
   const n = hexNum(bossDef.primary);
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
@@ -573,10 +581,6 @@ export function stepArena(arena) {
   for (const t of arena.turrets) if (t.flash > 0) t.flash--;
   if (arena.drain) arena.drain.ball.bob += 0.06;
 }
-
-/** Surface height of the arena's liquid, in world Y. Infinity when there is none. */
-export const liquidTop = (arena) =>
-  arena?.liquid && arena.liquid.h > 0.5 ? arena.floorY - arena.liquid.h : Infinity;
 
 /**
  * THE POWER-LINE BOLTS, DRAWN AFTER THE DARKNESS.
