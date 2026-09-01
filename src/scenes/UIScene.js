@@ -413,6 +413,30 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
+   * A RELEASE IS A RELEASE, WHEREVER THE FINGER IS — bind both events, always.
+   *
+   * Phaser only emits POINTER_UP when `pointer.upElement === game.canvas`. Let
+   * go anywhere else — outside the letterboxed canvas, over browser chrome —
+   * and you get POINTER_UP_OUTSIDE instead, which nothing here listened for.
+   *
+   * Every held control in this scene is unlatched by a pointerup, and the
+   * movement strip deliberately allows unbounded DOWNWARD drift because that is
+   * the drag-to-slide gesture. So the ordinary way to trigger it was to hold a
+   * direction, drag toward the bottom edge, and lift: `owner` stayed set,
+   * `setMove(dir)` stayed latched, the player walked forever, and no movement
+   * button responded again for the rest of the run. The fire pad latched into
+   * endless auto-fire the same way, and the RE-QUIP button's stale `press`
+   * made the in-situ wheel permanently unreachable.
+   *
+   * One helper rather than three paired `.on` calls, so a handler added later
+   * cannot reintroduce this by forgetting the second line.
+   */
+  onRelease(fn) {
+    this.input.on('pointerup', fn);
+    this.input.on('pointerupoutside', fn);
+  }
+
+  /**
    * Zone 3 — four directional buttons plus drag-down-to-slide.
    *
    * The finger may slide BETWEEN the four movement buttons freely: they are one
@@ -450,7 +474,18 @@ export default class UIScene extends Phaser.Scene {
     };
 
     this.moveBtns.forEach((b) => b.rect.on('pointerdown', (p) => {
-      if (owner !== null) return;                 // already held by another finger
+      /**
+       * THE NEWEST FINGER OWNS THE STRIP — it does not queue behind the old one.
+       *
+       * This used to `return` when another finger already held it, which broke
+       * the ordinary two-thumb reversal: plant ▶ while ◀ is still down, lift ◀,
+       * and the player stopped dead with a thumb still on a direction. The
+       * second press was discarded, then the first release cleared movement.
+       *
+       * Handing ownership over instead needs nothing else: the release handler
+       * already ignores a pointer that is not the owner, so the lifted thumb
+       * passes through silently and the planted one keeps walking.
+       */
       owner = p.id; slid = false; tapT = performance.now();
       startY = vpt(this, p).y;
       aim(b);
@@ -467,7 +502,7 @@ export default class UIScene extends Phaser.Scene {
       aim(btnAt(v));
     });
 
-    this.input.on('pointerup', (p) => {
+    this.onRelease((p) => {
       if (owner === null || p.id !== owner) return;
       const quick = !slid && performance.now() - tapT < 150;
       release();
@@ -509,7 +544,7 @@ export default class UIScene extends Phaser.Scene {
       const b = held.get(p.id);
       if (b && p.isDown && !UIScene.within(b, vpt(this, p))) stop(p);
     });
-    this.input.on('pointerup', stop);
+    this.onRelease(stop);
   }
 
   // ── Pause ───────────────────────────────────────────────────────────
@@ -737,7 +772,7 @@ export default class UIScene extends Phaser.Scene {
      * few pixels between down and up, and a disc stops seeing its own pointer
      * the moment it does — the same reason the movement pads track holds here.
      */
-    this.input.on('pointerup', () => {
+    this.onRelease(() => {
       const sp = this.slotPress;
       this.slotPress = null;
       if (!sp || !this.mode) return;
@@ -939,7 +974,7 @@ export default class UIScene extends Phaser.Scene {
       pr.swiping = true;
       this.aimSwipe(dx, dy);
     });
-    this.input.on('pointerup', (p) => {
+    this.onRelease((p) => {
       const pr = this.press;
       if (!pr || p.id !== pr.id) return;
       this.press = null;
@@ -1590,6 +1625,12 @@ export default class UIScene extends Phaser.Scene {
     this.target = null;
     this.pick = null;
     this.aimSlot = null;
+    // In-flight gestures die with the wheel. `press` gates the RE-QUIP button
+    // and was cleared ONLY by an id-matching release, so one release the scene
+    // never saw left the button permanently dead; `slotPress` would otherwise
+    // fire a slot tap into the next wheel that opens.
+    this.press = null;
+    this.slotPress = null;
     this.situTimer?.remove();
     this.situTimer = null;
     this.aimG.clear();
@@ -1920,7 +1961,10 @@ export default class UIScene extends Phaser.Scene {
     r.pendingLevelUps = Math.max(0, r.pendingLevelUps - 1);
     // More levels banked (one big orb can grant several) — straight into the next.
     if (r.pendingLevelUps > 0) this.openCards();
-    else this.game_.paused = false;
+    // Only the overlay that paused the game may unpause it. The post-boss wheel
+    // is also a hard pause, so resuming here while one is open would run the
+    // game under a scrim that eats every input.
+    else if (!this.mode) this.game_.paused = false;
   }
 
   update() {
@@ -1934,7 +1978,18 @@ export default class UIScene extends Phaser.Scene {
     // promptRequip.
     this.stepRequipWait();
     // Card screen takes priority over every other overlay.
-    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel) this.openCards();
+    /**
+     * `!this.mode` IS PART OF THE GATE. `stepRequipWait` runs a few lines above
+     * this in the same update(), so without it a level-up card screen could be
+     * raised on top of an already-open post-boss wheel — and that wheel is a
+     * HARD pause. Taking the card then ran closeCards, which unconditionally
+     * sets `paused = false`, so the run resumed underneath a wheel whose scrim
+     * swallows every touch control: damage, hazards and death carried on and
+     * the player could only watch.
+     */
+    if (gm.run.pendingLevelUps > 0 && !this.cards && !this.pausePanel && !this.mode) {
+      this.openCards();
+    }
     const r = gm.run, w = weaponOf(r.activeWeapon);
     const maxHp = FEEL.hpMax + r.hpBonus + r.runHpBonus;
     // A DEV marker whenever perks are active — a playtest you misread as

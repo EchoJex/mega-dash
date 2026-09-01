@@ -143,7 +143,24 @@ export default class GameScene extends Phaser.Scene {
       if (ui?.mode === 'open' || ui?.pausePanel || ui?.cards) return;
       if (!this.intent.fireHeld) this.beginFire();
     });
-    this.input.keyboard.on('keyup-SHIFT', () => this.endFire());
+    /**
+     * THE RELEASE HAS TO STAND DOWN WHEREVER THE PRESS DID.
+     *
+     * The keydown above declines to `beginFire()` while a wheel, the pause menu
+     * or a card screen is up. The keyup did not decline to `endFire()`, so a
+     * release with no matching press still set `fireReleased` — and only step()
+     * clears that, which a paused game does not run.
+     *
+     * SHIFT is the post-boss wheel's confirm and sits next to the pause key, so
+     * this fired constantly: `releaseFire()` measured `now - fireStart` against
+     * a `fireStart` from seconds earlier (or 0), decided the shot was fully
+     * charged, and spat one out on the frame the game resumed. Exactly the bug
+     * the keydown comment above says it fixed — it only fixed half of it.
+     */
+    this.input.keyboard.on('keyup-SHIFT', () => {
+      if (!this.intent.fireHeld) return;
+      this.endFire();
+    });
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     /**
@@ -231,6 +248,9 @@ export default class GameScene extends Phaser.Scene {
 
   /** Build a fresh run. Everything here is run-scoped and resets on death. */
   startRun() {
+    // Cleared here rather than in create(), because a run can start again
+    // without the scene being rebuilt. See the guard in die().
+    this.dead = false;
     const run = {
       frame: 0, score: 0, dist: 0, combo: 1, comboTimer: 0,
       exp: 0, level: 1, expToNext: FEEL.expPerLevel, pendingLevelUps: 0,
@@ -583,6 +603,22 @@ export default class GameScene extends Phaser.Scene {
       this.step();
       this.acc -= FIXED_DT;
       steps++;
+      /**
+       * A STEP THAT PAUSES THE GAME ENDS THE FRAME. `this.paused` is checked on
+       * the way IN to update(), but a step can raise it — the boss-room exit
+       * door arms `confirmExit`, sets paused and returns, waiting for an answer.
+       *
+       * Without this the loop ran step() again immediately, `confirmExit` was
+       * now truthy so its own guard fell through, and the warp fired: the door
+       * asked "leave the room?" and left at the same time. Answering BACK only
+       * cleared `paused`, so the already-started warp then ran and threw the
+       * player out of the room they had just chosen to stay in.
+       *
+       * It needed two steps in one frame, so it never happened at a locked
+       * 60fps and always happened at 30 — which is the worst possible shape for
+       * a bug to have, because it is invisible on the machine it is written on.
+       */
+      if (this.paused || this.warp) break;
     }
     if (steps === MAX_STEPS_PER_FRAME) this.acc = 0; // spiral guard
     this.draw();
@@ -2178,6 +2214,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   die() {
+    /**
+     * ONCE PER RUN, AND THIS GUARD IS LOAD-BEARING — it writes to the save.
+     *
+     * `stepAttributes`' damage-over-time death does `return this.die()`, which
+     * returns from stepAttributes, NOT from step(). step() then carries on into
+     * half a dozen further `this.hurt()` calls — hot patches, arena hazards,
+     * enemy shots, contact — and dot damage never sets `invuln`, so burning to
+     * death while touching a minion or standing in a hazard reached here twice
+     * in one frame and banked the whole payout twice.
+     *
+     * That is permanent, silent save inflation: save.runs and save.chips both
+     * double-count, and it reads from the outside as "the Chip payout is
+     * inconsistent". scene.start() only queues, so it cannot stop the step.
+     */
+    if (this.dead) return;
+    this.dead = true;
     // The Mega Man 2 death burst replaces this during the finishing passes.
     save.runs++;
     save.dist += Math.floor(this.run.dist);
