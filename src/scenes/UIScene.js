@@ -120,7 +120,7 @@
 
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf, DISPLAY_DIAG, BUILD } from '../config/display.js';
-import { fitCamera, label, plate } from '../systems/text.js';
+import { fitCamera, label, plate, inkFor } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import {
   weaponOf, WHEEL_ORDER, SIDEARM_ID, OFFENSIVE, DEFENSIVE, specialsOfClass, classOf,
@@ -248,18 +248,6 @@ const BENCH_ALPHA = 0.95;
 // eye goes to the four modules and stays there.
 const SITU_BENCH_ALPHA = 0.16;
 const IDLE_ALPHA = PAD_ALPHA; // RE-QUIP rests at the same opacity as the pads
-
-/**
- * Readable label colour for a given fill. The 17 primaries deliberately span
- * near-white (Frost) to near-black (Eclipse), so a single fixed ink colour is
- * illegible on roughly half the wheel.
- */
-function inkFor(hex) {
-  if (!hex) return '#E0F0FF'; // transparent cell (NULL_WEAPON) — light ink on the void
-  const n = hexNum(hex);
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
-}
 
 /**
  * MODULE WATERMARKS — a sword for the offensive row, a shield for the

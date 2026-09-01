@@ -236,7 +236,7 @@ where each one stands.
 - **weapon Lv1** `[ready]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
 - **weapon Lv6** `[ready]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
-- **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
+- **weapon Lv10** `[wip]` Standing still briefly forms ice armour around the player: incoming damage and knockback are nulled and projectiles reflect back at whoever fired them. The armour FADES as it nulls damage, the same way the shield does at the lower rungs, rather than running on a timer. When it finally breaks it throws a 7-way spread of ice outward in all directions.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Strike Man — Fighting
@@ -372,7 +372,7 @@ where each one stands.
 - **attack L1** `[wip]` Levitates the player and drops them from height while firing homing psychic orbs.
 - **attack L2** `[wip]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
 - **attack L3** `[wip]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
-- **weapon class** `[wip]` Offensive
+- **weapon class** `[wip]` Defensive
 - **weapon** `[wip]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
 - **weapon Lv1** `[wip]` One slow homing orb at a time; steerable while the attack button is held.
 - **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
@@ -417,7 +417,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
-- **weapon name** `[ready]` Rock Buster
+- **weapon name** `[wip]` Granite Form
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
@@ -428,12 +428,12 @@ where each one stands.
 - **attack L1** `[wip]` Pushes massive rolling rocks that crush and block paths.
 - **attack L2** `[wip]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
 - **attack L3** `[wip]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
-- **weapon class** `[wip]` Offensive
-- **weapon** `[wip]` Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed.
-- **weapon Lv1** `[wip]` Single thrown boulder; rolls on landing and stops at the first wall.
+- **weapon class** `[wip]` Defensive
+- **weapon** `[wip]` Defensive; the player turns to stone — Kirby's Rock form. It is driven by the ABSENCE OF PLAYER INPUT, not by movement or momentum: stop giving the weapon input and it hardens. Heavy damage reduction and total knockback immunity while hardened, and anything the stone lands on is crushed. Needs sprite art for 3 to 5 distinct rock statue forms.
+- **weapon Lv1** `[wip]` On the ground, hardening takes about a second of no input. In the air it takes HALF that time, and hardening mid-air slams the player downward with only limited horizontal navigation on the way down. Once the statue contacts any horizontal surface it cannot move, and the form wears off after 5 seconds.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
-- **weapon Lv10** `[wip]` Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall.
+- **weapon Lv10** `[wip]` The player can now walk while hardened. Pressing jump while hardened cancels the form early and throws stone shards out in all directions. This 360 finish is deliberately the same shape as Frost Guard Lv10's — overlap between two weapons is accepted, especially at the deep rungs; no more than two may share a function.
 - **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
 
 ## Wraith Man — Ghost
@@ -677,7 +677,8 @@ still describing it, and `[ready]` means already fixed.
 | 1054 (main) | `[ready]` | Stun appears to prevent player from shooting ever again, long after not taking any damage |
 | 1079 (tracker-draft/main) | `[ready]` | Post Boss requip is still popping up too early. It should pop up after the entire boss death animation has resolved. Also the wheel is closing when I did not close out off it. Also while in the boss room the player should be able to bring up the post boss wheel and requip as desired |
 | 1079 (tracker-draft/main) | `[ready]` | Level 1 and level 2 grass vibe attack needs to be much quicker, like a whip; small hit box high damage at the tip of the whip with a small glint to indicate that zone, medium damage anywhere else. Low fire rate. Update the tracker to reflect this |
-| 1081 (tracker-draft/main) | `[wip]` | Now the requip wheel is acting like the post boss requip wheel at all times I think.  |
+| 1081 (tracker-draft/main) | `[wip]` | Now the requip wheel is acting like the post boss requip wheel at all times I think. |
+| 1095 (tracker-draft/main) | `[wip]` | Psychic v fighting, only the firstSlightly improve the accuracy |
 
 # BRAINSTORM — context only, never implemented
 

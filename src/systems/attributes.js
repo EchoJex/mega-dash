@@ -68,7 +68,7 @@ export const ATTR = {
 };
 
 /** How strongly an attribute washes over the actor it is on. 1 is the default. */
-export const flashOf = (id) => ATTR[id]?.flash ?? 1;
+const flashOf = (id) => ATTR[id]?.flash ?? 1;
 
 /**
  * THE STACK CEILING, and why an unbounded stack is a softlock.
@@ -83,7 +83,7 @@ export const flashOf = (id) => ATTR[id]?.flash ?? 1;
  * Eight stacks is 0.27 of normal speed — punishing, survivable, and the point
  * past which more stacks were only ever adding an outage.
  */
-export const STUN_MAX_STACKS = 8;
+const STUN_MAX_STACKS = 8;
 
 /** Statuses that stop an actor acting. */
 export const isHeld = (bag) => Object.keys(bag || {})
@@ -135,10 +135,6 @@ export function applyStatus(bag, id, frames, opts = {}) {
 }
 
 export const hasStatus = (bag, id) => !!(bag && bag[id] && bag[id].t > 0);
-
-/** Remaining strength, 1 at application falling to 0 at expiry. */
-export const statusFrac = (bag, id) =>
-  hasStatus(bag, id) ? bag[id].t / bag[id].tMax : 0;
 
 /**
  * Wipe every status. Immunity is expressed as a CONTINUOUS CLEAR rather than as
@@ -212,9 +208,6 @@ export function statusFlash(bag) {
   return { tint: best, alpha };
 }
 
-/** Just the colour. Kept for callers that only paint. */
-export const statusTint = (bag) => statusFlash(bag).tint;
-
 /**
  * How strongly to flash the tint, 0-1. Stun deepens with every stack, per the
  * tracker's "faint yellow hue that becomes more intense with each additional
@@ -277,7 +270,7 @@ export function makePatch(id, x, y, w, h, frames, source = 'boss') {
  * `srcX`/`srcW` are the SOURCE's own horizontal extent. The patch sits 3px into
  * the surface so it reads as scorched ground rather than a floating bar.
  */
-export const PATCH_H = 4;
+const PATCH_H = 4;
 export const surfacePatch = (id, srcX, srcW, surfaceY, frames, source = 'boss') =>
   makePatch(id, srcX, surfaceY - 3, Math.max(2, srcW), PATCH_H, frames, source);
 

@@ -24,7 +24,7 @@
 import { DEV } from '../config/dev.js';
 import { FEEL } from '../config/feel.js';
 import { BOSS_BY_ID } from '../data/bosses.js';
-import { fightFor } from '../data/bossFights.js';
+import { fightFor } from '../systems/bossFights.js';
 import { weaponOf, classOf, SIDEARM_ID, hasLadder, OFFENSIVE } from '../data/weapons.js';
 import { RUNTIME } from '../systems/weaponry.js';
 import * as Loadout from '../systems/loadout.js';
@@ -102,7 +102,7 @@ export function takeOverDev(layer) {
 }
 
 /** Throw rather than report a number that a stray perk quietly invented. */
-export function assertClean() {
+function assertClean() {
   const on = PERKS.filter((k) => DEV[k] === true);
   if (on.length) throw new Error(`dev perks left on: ${on.join(', ')}`);
 }

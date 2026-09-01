@@ -57,6 +57,29 @@ export function label(scene, x, y, str, opts = {}) {
 }
 
 /**
+ * READABLE INK FOR A GIVEN FILL, and it belongs here because it is a TEXT
+ * decision rather than a menu one.
+ *
+ * The seventeen boss primaries deliberately span near-white (Frost) to
+ * near-black (Eclipse), so one fixed label colour is illegible on roughly half
+ * of them. This was copy-pasted VERBATIM into both UIScene and DevMenuScene —
+ * same formula, same threshold, same comment — which is two places to fix when
+ * the palette rule changes and one of them to forget.
+ *
+ * Rec. 709 luma rather than a plain average, because the eye is not equally
+ * sensitive to the three channels: a flat mean calls a saturated green dark
+ * when it reads as bright, and green is most of this roster's middle.
+ */
+export function inkFor(hex) {
+  // No fill at all — a transparent cell, which NULL_WEAPON draws. Light ink on
+  // the void is the only readable answer.
+  if (!hex) return '#E0F0FF';
+  const n = hexNum(hex);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? '#0A0A12' : '#E0F0FF';
+}
+
+/**
  * A label on a filled plate — the button treatment.
  *
  * Returns { rect, txt } because a bitmap font has no backgroundColor of its own,
@@ -78,17 +101,6 @@ export function plate(scene, cx, cy, str, opts = {}) {
   rect.setInteractive({ useHandCursor: true });
   return { rect, txt };
 }
-
-/**
- * Match the texture resolution to how far the canvas is actually being scaled,
- * including device pixel ratio. Capped: past ~8x the textures get large for no
- * visible gain, and floored at 2 so even a small window is legible.
- */
-/**
- * Match the glyph texture exactly to the canvas density. Anything higher gets
- * point-sampled down and fragments; anything lower is upscaled and blurs.
- */
-export const TEXT_RES = RENDER_SCALE;
 
 /**
  * Zoom a scene's camera so the dense canvas shows exactly the virtual playfield.

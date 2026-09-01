@@ -40,8 +40,6 @@ export const MINIONS = [
   },
 ];
 
-export const MINION_BY_ID = Object.fromEntries(MINIONS.map((m) => [m.id, m]));
-
 /**
  * Elites reuse their base palette but swap the outline for UI gold. The
  * silhouette is already bigger; the rim is what makes "this one is dangerous"

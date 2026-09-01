@@ -42,7 +42,7 @@ const orb = (type, x, y, extra = {}) => ({
  * rare. The minimum is what scales with tier, so a better enemy is never worse
  * than a worse one even on an unlucky roll.
  */
-export function rollExpAmount(tier) {
+function rollExpAmount(tier) {
   const r = FEEL.expDrop[tier] || FEEL.expDrop.minion;
   const t = Math.random() ** FEEL.expDropBias;
   return Math.max(1, Math.round(r.min + t * (r.max - r.min)));

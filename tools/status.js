@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { parse, fieldsOf } from '../docs/tracker-md.js';
 import { BOSSES } from '../src/data/bosses.js';
-import { FIGHTS } from '../src/data/bossFights.js';
+import { FIGHTS } from '../src/systems/bossFights.js';
 import { FURNISHED } from '../src/systems/arena.js';
 import { WEAPON_BY_ID, hasLadder } from '../src/data/weapons.js';
 import { THEMES } from '../src/systems/terrain.js';

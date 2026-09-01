@@ -29,7 +29,7 @@ import { hexNum } from './assets.js';
 
 /** How long a death plays, in fixed steps. Long enough to watch, short enough
  *  that it never delays walking to the door. */
-export const DEATH_FRAMES = 100;
+const DEATH_FRAMES = 100;
 
 /**
  * Bits are seeded ONCE at death rather than spawned per frame, so the whole

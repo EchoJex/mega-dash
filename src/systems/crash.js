@@ -121,7 +121,7 @@ function show(kind, message, stack) {
  * Never throws: a crash reporter that can crash is worse than none, because it
  * would mask the error it exists to show.
  */
-export function installCrashHandler() {
+function installCrashHandler() {
   try {
     globalThis.addEventListener('error', (e) => {
       show('CRASH', e?.error?.message || e?.message, e?.error?.stack);
@@ -138,6 +138,3 @@ export function installCrashHandler() {
 
 // Installed on import — see the note on installCrashHandler above.
 installCrashHandler();
-
-/** For tests: what a report would look like, without touching the DOM. */
-export const _report = report;

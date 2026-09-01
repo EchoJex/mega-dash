@@ -25,7 +25,7 @@ import {
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
-import { fightFor } from '../data/bossFights.js';
+import { fightFor } from '../systems/bossFights.js';
 import * as Terrain from '../systems/terrain.js';
 import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
@@ -1124,7 +1124,7 @@ export default class GameScene extends Phaser.Scene {
    *
    * One list and one contract, because four bosses now need loose objects and
    * writing a bespoke loop per boss is how they end up disagreeing about what a
-   * hit is worth. The hazard loop in data/bossFights.js owns where each one
+   * hit is worth. The hazard loop in systems/bossFights.js owns where each one
    * goes and how it moves; this owns what happens when the player meets it.
    *
    * Fields, all optional except x/y/w/h and kind:
@@ -1647,7 +1647,7 @@ export default class GameScene extends Phaser.Scene {
 
     // NO AMBIENT MINIONS DURING A BOSS FIGHT. A boss arena is sealed: the only
     // enemies in it are the boss and anything its own moveset summons (which
-    // comes from data/bossFights.js, not from here). The ambient stream resumes
+    // comes from systems/bossFights.js, not from here). The ambient stream resumes
     // when the fight ends.
     //
     // ONLY THE SPAWNER IS SUPPRESSED. This used to return outright, which also
@@ -1754,7 +1754,7 @@ export default class GameScene extends Phaser.Scene {
       fight,
       isBoss: true,      // weapons that treat a boss differently check this
       status: {},        // elemental attributes, same bag shape as the player's
-      fs: null, // attack-loop state, owned by data/bossFights.js
+      fs: null, // attack-loop state, owned by systems/bossFights.js
       hs: null, // hazard-loop state
     };
   }
@@ -1795,7 +1795,7 @@ export default class GameScene extends Phaser.Scene {
    * Advance one of the boss's two loops. Called every frame so a boss can
    * patrol, telegraph and fire in sequence rather than teleporting between
    * cooldowns. A loop with no behaviour for this layer simply does nothing —
-   * see the null entries in data/bossFights.js.
+   * see the null entries in systems/bossFights.js.
    */
   stepFight(b, kind) {
     const beh = b.fight?.[kind];

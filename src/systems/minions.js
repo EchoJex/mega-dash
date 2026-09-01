@@ -30,7 +30,7 @@ export const difficultyStep = (frames) =>
 export const spawnIntervalFrames = (step) =>
   Math.max(18, Math.round((FEEL.spawnIntervalSeconds * 60) / (1 + step * FEEL.rampEnemyCount)));
 
-export const eliteChance = (step) =>
+const eliteChance = (step) =>
   Math.min(FEEL.eliteChanceMax, FEEL.eliteChanceBase + step * FEEL.rampEliteChance);
 
 const hpFor = (base, step) => Math.max(1, Math.round(base * (1 + step * FEEL.rampEnemyHp)));
@@ -78,7 +78,7 @@ export function trySpawn(world, camX, viewW, frames, groundY) {
  * sealed arena that is a wall. Everything about what a minion IS stays here so
  * the two paths cannot drift into producing different creatures.
  */
-export function makeMinion(def, x, y, step = 0, elite = false) {
+function makeMinion(def, x, y, step = 0, elite = false) {
   const hp = hpFor(def.hp, step) * (elite ? FEEL.eliteHpMult : 1);
   return {
     def, id: def.id, elite,

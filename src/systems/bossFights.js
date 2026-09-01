@@ -33,11 +33,20 @@
  */
 
 import { FEEL } from '../config/feel.js';
+/**
+ * ONE SECOND, IN FRAMES — and it is the ARENA's number, not this file's.
+ *
+ * `makeArena` sets `beatLen` from it and derives `arena.beat`, so a second 60
+ * declared here would be a second source for one fact: change either and Volt
+ * Man's sweep silently stops landing on the speaker pulses it is supposed to be
+ * synchronised with. One-way — arena.js must never import THIS file.
+ */
+import { BEAT_LEN as BEAT } from './arena.js';
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 /** Unit vector from a source toward the player's centre. */
-export function aimAt(sx, sy, px, py) {
+function aimAt(sx, sy, px, py) {
   const dx = px - sx, dy = py - sy;
   const d = Math.hypot(dx, dy) || 1;
   return { x: dx / d, y: dy / d };
@@ -1050,7 +1059,6 @@ function voltAttack(layer) {
  * thing you watch happen and step off; a sixth of one is a thing that has
  * already hit you.
  */
-const BEAT = 60;
 const VOLT_HAZ = {
   // One beat of warning, one of discharge — and the next lamp lights as this
   // discharge ends, which is what `step` is: telegraph + discharge.
@@ -1979,18 +1987,17 @@ const THORN_HAZ = {
   // player is 24px tall, so that is the number, measured from the top of the
   // grown cover rather than from the floor.
   scareDist: 24,
+  hold: BEAT * 5,          // "recede for 5 seconds"
+  burn: 3,                 // Hot: "stay receded for 3 times the normal duration"
+  // Layer 2's two-stage recede: the first scare leaves this much stubble, a
+  // second inside `combo` bares it. 45% is "mostly recede" — visibly cut down
+  // and still visibly there.
+  partial: 0.45,
+  combo: BEAT,             // "2nd damage source within 1s"
+  slow: 0.72,              // "a slightly noticeable movement speed drop"
+  constrict: 90,           // layer 2 only
 };
-// "Recede for 5 seconds."
-const COVER_HOLD = 300;
-// "Stay receded for 3 times the normal duration" when Hot lands on it.
-const COVER_BURN = 3;
-// Layer 2: the first scare leaves this much stubble, a second inside the window
-// bares it. 45% is "mostly recede" — visibly cut down, still visibly there.
-const COVER_PARTIAL = 0.45;
-const COVER_COMBO = 60;                 // "2nd damage source within 1s"
-// "A slightly noticeable movement speed drop", and nothing else at layer 1.
-const COVER_SLOW = 0.72;
-const COVER_CONSTRICT = 90;             // layer 2 only
+
 
 function thornHazard(layer) {
   return (ctx) => {
@@ -2045,9 +2052,9 @@ function thornHazard(layer) {
       const hot = (a.patches || []).some((pt) => pt.id === 'hot' && pt.t > 0
         && pt.x < c.x + c.w && pt.x + pt.w > c.x);
       if (hot && c.grow > 0) {
-        c.down = Math.max(c.down, COVER_HOLD * COVER_BURN);
+        c.down = Math.max(c.down, THORN_HAZ.hold * THORN_HAZ.burn);
         c.floor = 0;
-        c.burnt = Math.max(c.burnt, COVER_HOLD * COVER_BURN);
+        c.burnt = Math.max(c.burnt, THORN_HAZ.hold * THORN_HAZ.burn);
       }
 
       // THE SCARE. Every live player bullet, against every tile — eight tiles
@@ -2083,9 +2090,9 @@ function thornHazard(layer) {
       if (c.grow < 0.2) continue;
       const box = ctx.playerBox;
       if (!(box.x + box.w > c.x && box.x < c.x + c.w && box.y + box.h >= c.y - 1)) continue;
-      ctx.run.coverSlow = COVER_SLOW;
+      ctx.run.coverSlow = THORN_HAZ.slow;
       if (layer >= 2) {
-        ctx.status('constrict', COVER_CONSTRICT, { step: FEEL.stunPlayerStep });
+        ctx.status('constrict', THORN_HAZ.constrict, { step: FEEL.stunPlayerStep });
       }
     }
   };
@@ -2106,9 +2113,9 @@ function coverUnder(a, x) {
  * bring bugs — which is a difference the player cannot see and would not enjoy.
  */
 function scare(c, layer, ctx, byBug) {
-  const full = byBug || layer < 2 || c.since <= COVER_COMBO;
-  c.floor = full ? 0 : COVER_PARTIAL;
-  c.down = Math.max(c.down, COVER_HOLD);
+  const full = byBug || layer < 2 || c.since <= THORN_HAZ.combo;
+  c.floor = full ? 0 : THORN_HAZ.partial;
+  c.down = Math.max(c.down, THORN_HAZ.hold);
   if (c.since > 6) ctx.sfx('slide', { pitch: 1.5 });
   c.since = 0;
 }

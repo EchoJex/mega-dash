@@ -8,8 +8,14 @@
  *
  * The 17 primaries were optimised so the MINIMUM perceptual distance (CIELAB
  * dE) between any two is ~27.7 - comfortably distinguishable at a glance -
- * while each still reads as its element. Do not hand-edit one primary in
- * isolation; re-run the spacing optimisation so the whole set stays separated.
+ * while each still reads as its element.
+ *
+ * THE OPTIMISATION IS PAUSED until the game is far closer to finished — the
+ * owner's call, and the reason is that re-running it on every edit turns each
+ * palette into a seventeen-way negotiation before there is any art to judge the
+ * result against. A primary may be changed on its own now and the set is allowed
+ * to drift; the spacing pass comes back LATE, with balance and the physics
+ * overlay. Do not re-tighten it early.
  *
  * Secondaries are accent-only and may repeat freely.
  *
@@ -29,7 +35,7 @@
  * via design/boss-data.json, so the two cannot drift apart.
  */
 
-import { hasFight } from './bossFights.js';
+import { hasFight } from '../systems/bossFights.js';
 
 export const BOSSES = [
   {
@@ -198,7 +204,7 @@ export const OUTLINE = '#0A0A12';
  * unbuilt one. Dev mode still sees all seventeen — testing the unbuilt is what
  * dev mode is FOR.
  *
- * `hasFight` is read from `data/bossFights.js` rather than kept as a list here,
+ * `hasFight` is read from `systems/bossFights.js` rather than kept as a list here,
  * so a boss joins this roster on the day his attack loop lands and nobody has
  * to remember to add him. The same derivation the sim's catalogue uses.
  */

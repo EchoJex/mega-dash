@@ -42,7 +42,7 @@ export function makeRng(seed) {
 }
 
 /** A fresh seed for a new run. Short enough to read off a phone and type back. */
-export const randomSeed = () => Math.floor(Math.random() * 100000);
+const randomSeed = () => Math.floor(Math.random() * 100000);
 
 /**
  * The generator for one area of a run.

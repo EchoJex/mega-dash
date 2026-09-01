@@ -12,12 +12,12 @@
  */
 
 import { BOSSES } from '../data/bosses.js';
-import { fightFor } from '../data/bossFights.js';
+import { fightFor } from '../systems/bossFights.js';
 import { WEAPONS, SIDEARM_ID, hasLadder, classOf } from '../data/weapons.js';
 import { isPassive } from './encounter.js';
 
 /** Bosses with an attack loop at this layer — the ones worth fighting. */
-export const bossesAt = (layer) => BOSSES
+const bossesAt = (layer) => BOSSES
   .filter((b) => !!fightFor(b.id, layer).attack)
   .map((b) => b.id);
 
@@ -28,7 +28,7 @@ export const bossesAt = (layer) => BOSSES
  * baseline every other weapon is measured against, so excluding it would throw
  * away the only control in the experiment.
  */
-export const testableWeapons = () => WEAPONS
+const testableWeapons = () => WEAPONS
   .filter((w) => w.id === SIDEARM_ID || hasLadder(w.id))
   .map((w) => w.id);
 

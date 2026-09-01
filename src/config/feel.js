@@ -318,9 +318,6 @@ export const FEEL = {
   weaponDamagePerLevel: 0.12, // placeholder until real Lv1/3/6/10 ladders land
 };
 
-/** Frames -> seconds, for debug display. */
-export const toSeconds = (frames) => (frames / 60).toFixed(2) + 's';
-
 /**
  * Groupings for the debug overlay, so related values tune together.
  */

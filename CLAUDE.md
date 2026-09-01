@@ -19,6 +19,8 @@ npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
+npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
+npm run sprites:build   # design/sprites/*.sprite -> the PNGs MANIFEST loads
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -287,6 +289,92 @@ changes is one you have to re-find after every re-quip.
 secondary, so anything drawn from it is an **outline-only silhouette with every interior
 cell transparent**. It is a fail-visible path, not the player's look.
 
+### `npm run sprites` — the drawing templates
+
+`tools/sprite-templates.mjs` writes pixel-exact canvases for hand-drawn art into
+`design/sprite-templates/`: an exact-size guide and an empty canvas per class, plus one
+magnified reference sheet at 8x with one cell per pixel.
+
+**Every number in them is READ OUT OF THE LIVE SOURCE** — the grids from `SPRITE_CLASS`,
+the player's hurtbox from `FEEL`, the minion boxes from `MINIONS`, and each boss footprint
+through the exact arithmetic `spawnBoss` uses (`h = round(24 * scale)`, `w = round(h *
+0.75)` — note the width comes off the ROUNDED height, and the two orders disagree for
+several bosses). Re-run it after any `scale` change rather than editing a PNG.
+
+It writes its own PNGs from `zlib` rather than taking an image dependency, and it refuses
+to emit a template whose collision box overflows its sprite grid — the first version read
+`miniboss` for `boss` and produced a 36x48 footprint on a 32x32 canvas without complaining.
+
+**This does not generate art.** It generates the empty paper and the guide lines, which is
+the one part of the job that is arithmetic.
+
+### The sprite editor — `docs/sprite-editor.html`
+
+A sibling of the tracker app, served from the same GitHub Pages site, sharing its token,
+its `tracker-draft/<branch>` autosave and its marker vocabulary. **It is deliberately not
+in the dev menu.** The game is entirely offline and its permission list is closed; an
+in-game editor that autosaved would put a GitHub token and a write path inside a sideloaded
+APK, which is a real cost to a trust surface paid so a drawing tool could sit one menu
+nearer the thing it draws for.
+
+**`design/sprites/*.sprite` is the source; `public/sprites/*.png` is the build output.**
+`npm run sprites:build` is the only step between them, and nothing downstream changes —
+adding art is still a PNG in `public/sprites/` plus one `MANIFEST` line, the PNG just has a
+source file now. Proven by round-tripping the shipped `player.png` through the format and
+back: **pixel-identical.**
+
+**A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
+seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
+change in the tracker recolours every sprite drawn against it with no art reopened. It also
+means the 3-colours-plus-transparency rule is the only thing the format can express.
+
+**Only `ready` and `draft` sprites build.** `wip` and `deferred` are skipped, so
+half-finished art cannot reach a playtest — the same gate the fight content has, applied to
+the thing that is actually visible.
+
+#### The fudge factors are TWO numbers and the vertical one is dangerous
+
+The ratio between the drawn silhouette and the collision box, per axis, in 0.05 steps.
+**The defaults are measured, not chosen**: the shipped player is 12 wide on a 17px
+silhouette standing and 16 on 21 sliding — 0.71 and 0.76 — against 22 on 23 and 11 on 11
+tall. So horizontal defaults to **0.70** and vertical to **1.00**, and applying 0.70 to that
+same silhouette reproduces the engine's own 12px box exactly. `tests/sprites.test.js`
+asserts that, so the default cannot drift from the art it came from.
+
+**Horizontal fudge is free fairness; vertical fudge is not its mirror.** A box narrower than
+the drawing means a near miss visibly misses. A box SHORTER than the drawing means the feet
+land somewhere other than where they look, or a jump passes through a ceiling it visibly
+hit — which reads as the game being wrong rather than as the game being kind. The editor
+shows a standing gold warning whenever vertical leaves 1.00, and it stays up, because the
+person who needs telling is whoever opens that sprite in a month.
+
+The collision box is per ACTOR, not per frame, so a fudge factor is read against one chosen
+reference frame — the player's own box matches `idle1` at 1.00 and `idle0` at 0.96.
+
+#### THE TOOL ROW IS ONE LINE THAT SCROLLS, and that is a constraint, not a style
+
+It carries the four colour pens, five drawing tools, undo/redo, the frame buttons and the
+view toggles; the NES chip, the role dropdowns and the fudge dials are behind PAL. Left to
+WRAP, that same row was one line on a desktop and four on a phone in landscape — which took
+a 380px screen down to a **thirty-pixel canvas**, the exact opposite of what the layout is
+for. `flex-wrap: nowrap` with `overflow-x: auto` makes the footer's height a constant, and
+anything past the edge is a thumb-swipe. Two traps came with it and both are load-bearing:
+`body` needs `grid-template-columns: minmax(0, 1fr)` or an auto column inflates to the tool
+row's min-content and drags the stage off-centre with it, and `#drawer` needs an explicit
+`[hidden]` rule because its own `display: grid` outranks the UA sheet's.
+
+**The standing vertical-fudge warning lives OUTSIDE the drawer** so closing the drawer
+cannot close it. That is the whole point of it being standing.
+
+**The preview's rate is a control, and 60 is not what the game does.** `MANIFEST` plays the
+player at `fps: 12` with the idle slowed to 1.5, so a literal 60 on a two-frame idle is a
+30Hz strobe of an animation nobody will ever see. 60 is the default because it is what was
+asked for and it does read a fast cycle honestly; 12 is one tap away and is the truth.
+
+**Undo is one snapshot per STROKE.** A drag across twelve pixels is one thing the artist
+did, and twelve taps to take it back is how an undo stack becomes useless. Snapshotting the
+frame LIST rather than the current frame is what makes +FRAME and −FRAME undoable at all.
+
 ### Sprite art is HUMAN-AUTHORED. Do not generate it.
 
 Character art, silhouettes and boss arena backgrounds are the owner's to draw. Generated
@@ -346,9 +434,17 @@ a slot; those are different states and an unlocked weapon on the bench still lev
 and a shared near-black outline (`#0A0A12`). The outline is not decoration — it stops
 dark bosses dissolving into the dark background.
 
-The 17 primaries are **perceptually optimised**: minimum CIELAB dE between any two is
-~27.7 while each still reads as its element. **Do not hand-edit one primary in
-isolation** — re-run the spacing optimisation so the set stays separated.
+The 17 primaries were **perceptually optimised**: minimum CIELAB dE between any two is
+~27.7 while each still reads as its element.
+
+**THE SPACING OPTIMISATION IS PAUSED, by the owner's call, until the game is far closer to
+finished.** Starting from a statistically separated set was worth doing and the set stays
+as the baseline — but re-running the optimisation on every edit makes each palette a
+seventeen-way negotiation, and the art is not far enough along to know which colours the
+game actually needs. So a primary may now be changed on its own, and the set is allowed to
+drift. Re-run the optimisation as a LATE pass, alongside balance and the physics overlay,
+when the sprites exist to judge it against. Do not re-tighten it early on your own
+initiative.
 
 `scale` is height relative to the 24px player, averaging 1.75× with ±0.3 for bulky vs
 petite builds.
@@ -445,7 +541,7 @@ Kills drive the combo counter and drop EXP (`systems/pickups.js`), plus a separa
 
 **No ambient minions during a boss fight.** A boss arena is sealed — the only enemies in
 it are the boss and whatever its own moveset summons, which comes from
-`data/bossFights.js`, never from the ambient spawner. Existing minions are cleared when
+`systems/bossFights.js`, never from the ambient spawner. Existing minions are cleared when
 the fight starts and the stream resumes when it ends.
 
 ---
@@ -460,13 +556,21 @@ Every weapon carries a `cls`, taken from the first word of its tracker field:
 
 | class | count | how it plays |
 |---|---|---|
-| **offensive** | 11 | shares the fire button; the wheel picks which one is aimed. **The sidearm is one of these** — the old Mega Buster, renamed, starting in an offensive slot. It is not a free extra riding above the loadout |
-| **defensive** | 7 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
+| **offensive** | 9 | shares the fire button; the wheel picks which one is aimed. **The sidearm is one of these** — the old Mega Buster, renamed, starting in an offensive slot. It is not a free extra riding above the loadout |
+| **defensive** | 9 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
 
 Eighteen in total: 17 specials, one per boss, plus the sidearm. The counts above
 are the live answer from `data/weapons.js` — an earlier version of this table
-listed the sidearm on a row of its own AND inside the eleven, which made it read
-as 1 + 11 + 6 and quietly lost a defensive weapon.
+listed the sidearm on a row of its own AND inside the offensive count, which made
+it read as 1 + 11 + 6 and quietly lost a defensive weapon.
+
+**The split is deliberately EVEN, and that is a design decision rather than an
+accident of counting.** It was 11/7 while every weapon whose class field was
+unwritten sat in the offensive row by default. Two Loadout Mastery ladders gate
+the two halves, so a lopsided roster makes buying one of them the obvious
+purchase and the other a formality. Reaching 9/9 cost two reclassifications —
+**Psi Orb** and **Granite Form** — both taken on weapons whose ladders were
+entirely unwritten, so nothing settled was overruled.
 
 `systems/loadout.js` owns the slots and is the only thing that may decide what is
 equipped; `systems/weaponry.js` owns what each weapon does. Everything unlocked but not
@@ -686,6 +790,12 @@ The owner edits it either directly or through the **tracker web app** (`docs/ind
 served from GitHub Pages), which is a lens over the same file and autosaves straight into
 the repo.
 
+**TWO APPS, ONE PAGES SITE, ONE BOOKMARK.** Pages serves `docs/` from `main`, so the
+tracker is the site root and the sprite editor is `sprite-editor.html` beside it. They
+share the token, the draft branch and the marker vocabulary, and each links to the other in
+its header — so neither has to be remembered as a URL, and adding a third tool means adding
+one file plus one link.
+
 **Autosaves go to `tracker-draft/<branch>`, not to the working branch.** Typing produced a
 commit every couple of seconds and buried real history hundreds of lines deep. The
 **Publish** button fast-forwards the working branch onto the draft — or merges, if the
@@ -849,7 +959,7 @@ An element is DONE when all of this is true for its boss:
 1. **Design marked `[draft]` by the owner.** That marker is the gate, not a formality —
    a slice does not begin until the owner has written that boss's fields and moved them
    to `[draft]`. Anything still `[wip]` is not ready and is skipped, even mid-slice.
-2. **Attack layers** — every layer the tracker defines, in `data/bossFights.js`.
+2. **Attack layers** — every layer the tracker defines, in `systems/bossFights.js`.
 3. **Arena** — theme, backdrop shapes, and the furniture its hazards need.
 4. **Hazard layers** — every layer the tracker defines, layer-synced with the attacks.
 5. **Elemental attribute** — terrain form and character form, in `systems/attributes.js`.
@@ -881,39 +991,120 @@ He is also the only boss SMALLER than the player, at 0.8x rather than the 1.75x 
 
 After those three the order is the owner's call. Nothing technical forces it.
 
-### Cross-cutting work that is NOT part of any slice
+## THE ROADMAP — three tracks and one convergence
 
-These are global and land late, once the elements exist to tune against:
+**There are no phases and there is no schedule.** The dozen-phase plan is gone for the
+reasons above, and a dated one would rot the same way. What does NOT go stale is the
+DEPENDENCY SHAPE — what blocks what — so that is what this section is, and it is the thing
+to re-read when it is unclear what to do next. **`npm run status` says where you ARE; this
+says what is reachable from there.**
 
-| | |
+The work runs on three tracks. Two of them are the owner's and one is Claude's, and the
+important property is that **only one of the three can block the others.**
+
+### Track 1 — DESIGN. The owner writes fields. This is the pacing constraint.
+
+Everything downstream of a boss's fight waits on his fields reaching `[draft]`. Nothing
+Claude can do shortens this track: `[wip]` means "still being written", and building from
+it would be inventing the game rather than making it.
+
+**This is the live bottleneck and it is worth being blunt about.** When `npm run status`
+reports `[draft]: 0`, Claude has nothing to build on the slice track and every code-shaped
+suggestion is make-work. The honest answer at that moment is "write a field", not "let me
+refactor something".
+
+The comment-thread protocol is the pressure valve: a conversation on the artifact settles
+one field, the owner says **move to WIP**, Claude transcribes, and the owner promotes it
+when they are happy. That turns a blank field into a `[draft]` without the owner having to
+compose prose cold.
+
+### Track 2 — BUILD. Claude implements `[draft]`, one element end to end.
+
+One element, built through, playtested, pushed — the slice contents are listed above. This
+track is always exactly as far along as Track 1 lets it be. It is also the only track with
+a hard quality gate: `hasFight` decides whether a boss is in a playtester's bag at all, so
+an unfinished slice cannot leak into a playtest.
+
+### Track 3 — ART. Fully parallel. Blocks nothing and is blocked by nothing.
+
+This is the track most easily forgotten, because it is the one that never appears in
+`npm run status`. It does not need a single design field: the `MANIFEST` abstraction means
+a finished sprite drops into a game that was already playable without it, and landing the
+player's sheet changed no gameplay code at all.
+
+The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `.sprite`
+file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
+drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
+not a gap: silhouette design follows attack and arena design.
+
+### Where the three converge
+
+Only after enough slices exist to have something to tune:
+
+| | why it waits |
 |---|---|
-| **Balance pass** | weapon damage, boss/minion HP, the difficulty ramp — see the testing note below |
-| **Physics tuning overlay** | driven by `FEEL_GROUPS`; deliberately deferred |
-| **Boss defeat animations** | elemental death + weapon acquisition; cosmetic, folded into each slice when its element is built |
-| **Ship prep** | `DEV.available = false`, which takes the launch dialog, the dev menu and every playtest perk out at once |
-| **Run pacing** | the owner's targets: **early** ~5 min and 1 boss on minimal meta with weapons below Lv3 and it *should feel hard*; **mid** 10–15 min and 2–3 bosses at Lv3–6; **late** 15–35+ min and 4–6 bosses. They are explicitly unsure how to ramp difficulty without the player feeling it — read the boss COUNT as the real dial, since run length is boss count |
+| **Balance** | weapon damage, boss and minion HP, the ramp. `npm run sim` is the instrument and `design/sim/` is its history, so this is now a measure-change-measure loop rather than a feel. Meaningless before there are fights to compare |
+| **Physics overlay** | `FEEL_GROUPS` exists to drive it; deliberately not built early, because the motion constants are a known-good NES reference to tune AWAY from and there is nothing yet to tune them against |
+| **Palette spacing** | re-run the optimisation LATE, with sprites to judge it against — see the palette rule |
+| **Handing someone a build** | one switch, whenever it is wanted. `DEV.available = false` takes the launch dialog, the dev menu and every perk out together. Not a milestone — see below |
+
+### THERE IS NO SHIP GATE. This is a personal hobby project.
+
+Stated plainly because the absence changes how everything above should be read. There is
+no release, no deadline, no minimum content bar to clear, and **no version of "behind"**.
+Seventeen is the roster because seventeen is the type chart, not because seventeen is owed.
+
+So the roadmap is a map of what is REACHABLE, never a list of what is outstanding. A boss
+with no fight is not a debt; the twelve `[wip]` slices are not a backlog. Claude should
+never frame them as one, never suggest a slice to "catch up", and never treat the board's
+4/17 as a shortfall — it is a position, and the only thing that makes one position better
+than another here is whether the owner enjoyed getting to it.
+
+`DEV.available = false` still exists and still works as one switch. It is there for the
+day the owner wants to hand someone a build, not a milestone anybody is walking toward.
+
+**The one number still worth being curious about** is how many distinct bosses a run meets
+before it starts feeling like a rotation — the bag never repeats within a run, and a late
+run is 4–6 bosses, so five built fights may already be enough to notice. That is a
+playtest observation to enjoy, not a gate to pass.
 
 ### Already complete (the foundation)
 
-Engine and port to Phaser · fixed timestep · hand-rolled physics · classic NES motion
-constants · sealed arenas with warp transitions · the dual boss loop · minions and the
-time-keyed ramp · pickups · EXP and level-up cards · meta upgrades and Chips · the
-2+2+sidearm loadout and the RE-QUIP wheel built around it · the per-weapon runtime
-(`systems/weaponry.js`) · the sprite path (`MANIFEST`) · the in-app updater and per-branch
-CI · touch controls · the bitmap font · procedural sound · the elemental attribute
-framework · themed overworld terrain · procedural terrain traversability guarantees.
+**Engine** — Phaser port, fixed timestep, hand-rolled physics, classic NES motion
+constants, procedural terrain with traversability guarantees, themed overworld.
 
-### Tuning pass
-The core **motion** constants in `config/feel.js` (walk, jump, gravity, terminal
-velocity, slide speed and duration) are now the **classic NES Mega Man values**, converted
-from that game's 8.8 fixed-point. They are a known-good reference feel to tune *away
-from*, not a finished tune.
+**The run** — sealed arenas and warp transitions, the dual boss loop, minions and the
+time-keyed ramp, pickups, EXP and level-up cards, Chips and meta upgrades, the 2+2+sidearm
+loadout and the RE-QUIP wheel, the per-weapon runtime, the elemental attribute framework.
 
-Everything else in that file is still an off-the-cuff prototype number and is not
-playtested. Treat those as a starting point, not as precious.
+**Presentation** — the sprite path (`MANIFEST`), the hand-authored bitmap font, procedural
+sound, boss death animations, touch controls.
 
-A live in-game tuning overlay is **deliberately deferred to late in development**.
-`FEEL_GROUPS` exists to drive it when that time comes — do not build it early.
+**The workshop** — and this is the part that grew most recently, because it is what makes
+the three tracks above independently runnable:
+
+| | |
+|---|---|
+| `design/TRACKER.md` + the tracker app | the design, editable from a phone, autosaving to a draft branch |
+| `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
+| `npm run sim` + `design/sim/` | headless difficulty measurement with a saved history and a delta against the last run |
+| `npm run smoke` | the real bundle, played in a browser, against every built fight |
+| the sprite editor + `npm run sprites*` | pixel-exact templates and a role-based sprite format that survives a palette change |
+| the in-app updater + per-branch CI | every push becomes an installable build; iterating costs one tap |
+| the playtester content gate | derived from `hasFight` and `hasLadder`, so unfinished content cannot reach a playtest |
+
+### What the numbers in `config/feel.js` actually are
+
+**Two different kinds of number live in one file, and they are not equally precious.**
+
+The core MOTION constants — walk, jump, gravity, terminal velocity, slide speed and
+duration — are the classic NES Mega Man values, converted from that game's 8.8
+fixed-point. They are a known-good reference feel to tune *away from*, and changing one
+should be a decision rather than a nudge.
+
+**Everything else in that file is an off-the-cuff prototype number that has never been
+playtested.** Damage, HP, cooldowns, drop rates, the ramp. Treat them as a starting point,
+not as data — and see the testing note on why no test asserts one.
 
 ### Run progression — as built
 
@@ -1037,7 +1228,7 @@ so `DEV.available = false` at ship makes the gate permanent.
 
 | | shipped path | derived from |
 |---|---|---|
-| **boss bag** | `PLAYABLE_BOSSES()` — only bosses with an attack loop | `hasFight` in `data/bossFights.js` |
+| **boss bag** | `PLAYABLE_BOSSES()` — only bosses with an attack loop | `hasFight` in `systems/bossFights.js` |
 | **head-start arsenal** | only weapons with a real ladder | `hasLadder` in `data/weapons.js` |
 | **boss drops** | need no filter — a boss you can reach is a boss that fights, and every one of them carries a laddered weapon | asserted in `tests/fights.test.js` |
 
@@ -1142,11 +1333,11 @@ gated, spikes genuinely kill.
 
 The dual-loop plumbing is live: `GameScene.stepBoss()` drives an attack loop and an
 ambient hazard loop side by side every frame, both layer-synced, both fed from
-`data/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
+`systems/bossFights.js`. Sealed arenas, warp in/out, screen shake and enemy projectiles all
 work.
 
 **Which bosses are built, and to which layers, is `npm run status`.** It reads
-`data/bossFights.js` and the tracker directly, so it cannot go stale — unlike the table
+`systems/bossFights.js` and the tracker directly, so it cannot go stale — unlike the table
 that used to sit here, which said Strike Man had no attacks for a third of a year after
 they were built. This file states RULES; the board states STATE. Do not put a progress
 table back.
@@ -1220,7 +1411,7 @@ drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at th
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
 panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
-Frost Guard; **Constrict** is live on the Thorn Lash from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
+Frost Guard; **Constrict** is live on Simon's Whip (id `thorn_lash`) from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
 and tested but nothing applies them yet, because their sources are weapons whose slices
 have not happened.
 
@@ -1249,6 +1440,29 @@ deliberately not an elemental attribute.
 
 ---
 
+## Where a file goes
+
+**`data/` is TABLES. `systems/` is BEHAVIOUR. `config/` is TUNING. `scenes/` ORCHESTRATES.**
+The codebase already had this pattern and stated it nowhere, so it drifted.
+
+Minions are the model: `data/minions.js` is the two rows, `systems/minions.js` is the
+spawning and the ramp. Weapons the same — `data/weapons.js` is the roster and the ladders,
+`systems/weaponry.js` is what each one does per frame.
+
+**`bossFights.js` broke it and has been moved to `systems/`.** It is 2,100 lines with
+twenty-four behaviour functions and one table; every other file in `data/` is the reverse.
+A reader who opened `data/` expecting tables found the largest state machine in the game.
+
+**A scene should read as a list of the things it coordinates**, not as the place the work
+happens. `GameScene` is the biggest file in the project and that is a smell rather than a
+rule violation — much of it is genuinely per-frame orchestration — but new pure logic goes
+in a system and gets called from the scene, never added to it.
+
+**An export is a promise.** A helper only its own module uses must not be exported: the
+export list is how a reader tells the module's API from its plumbing, and twenty-nine
+helpers were exported for no reason before anyone looked. Un-export by default; export when
+a second file genuinely needs it.
+
 ## Conventions
 
 **WHEN TOUCHING WHEEL OR MENU LAYOUT, RENDER IT — DO NOT COMPUTE IT.** Pixel arithmetic off
@@ -1265,11 +1479,12 @@ jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (curre
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
   thumb drifting outside a 44px pad is normal on a phone; cancelling on it made movement
   die in mid-air. A held input ends when the finger lifts, not when it wanders.
-- **HUD text sets `resolution: TEXT_RES`** and every scene calls `fitCamera()`
-  (`systems/text.js`). Text legibility comes from RENDER_SCALE giving the canvas real
-  pixels to draw into; `TEXT_RES` just matches the glyph texture to that density. Raising
-  `TEXT_RES` alone makes things WORSE — a larger glyph point-sampled back down into a
-  small buffer loses strokes and visibly fragments letters.
+- **Every scene calls `fitCamera()`** (`systems/text.js`). Text legibility comes from
+  RENDER_SCALE giving the canvas real pixels to draw into, and from the font being a
+  BITMAP — a bitmap glyph has no resolution to raise. This entry used to describe a
+  `TEXT_RES` that HUD text set as `resolution:`; that was true of the Phaser `Text`
+  objects the HUD used before the hand-authored font landed, and nothing has set
+  `resolution:` since. The constant outlived its callers by months and has been removed.
 - A hand-authored **bitmap font** is the eventual answer for a pixel game and is on the
   art list. The density fix holds until it lands.
 - Comments explain **why**, not what. Phase-boundary and deliberate-stub comments exist

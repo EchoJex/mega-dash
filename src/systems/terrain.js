@@ -147,7 +147,19 @@ export const THEMES = {
 };
 
 const NEUTRAL = THEMES.core;
-export const themeFor = (bossId) => THEMES[bossId] || NEUTRAL;
+
+/**
+ * The TERRAIN shape multipliers for a boss's approach — how wide his pits are,
+ * how tall his platforms sit.
+ *
+ * NOT EXPORTED, AND NOT CALLED `themeFor`. `arena.js` exports a `themeFor` too
+ * and it answers a completely different question: the sealed room's BACKDROP
+ * colour. Two exported functions with one name across two modules the same
+ * scene imports is a trap that costs nothing to avoid — `import { themeFor }`
+ * from the wrong one type-checks, runs, and gives you a silently wrong world.
+ * Nothing outside this file ever needed it.
+ */
+const terrainShape = (bossId) => THEMES[bossId] || NEUTRAL;
 
 export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
   return {
@@ -160,7 +172,7 @@ export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
     // Whether the last thing emitted was a pit. Two pits in a row used to be
     // possible and compounded into an uncrossable gap — see generate().
     lastWasPit: false,
-    theme: themeFor(bossId),
+    theme: terrainShape(bossId),
     themeId: bossId,
     rng,
   };

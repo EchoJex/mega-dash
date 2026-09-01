@@ -73,7 +73,7 @@ export function enemiesByRange(ctx, x, y, seen = null, maxDist = Infinity) {
 }
 
 /** Every enemy overlapping a box. */
-export const enemiesIn = (ctx, box) => ctx.enemies.filter(
+const enemiesIn = (ctx, box) => ctx.enemies.filter(
   (e) => e.hp > 0
     && box.x < e.x + e.w && box.x + box.w > e.x
     && box.y < e.y + e.h && box.y + box.h > e.y,
@@ -89,7 +89,7 @@ const dmgOf = (id, lv, ctx) => damageAtLevel(weaponOf(id), lv) * ctx.run.dmgMult
  * must agree; if the drone and the jetpack drift apart by a pixel it reads as
  * one of them being attached wrong.
  */
-export function mountPoint(p, aheadX = 9, aboveY = -3) {
+function mountPoint(p, aheadX = 9, aboveY = -3) {
   return { x: p.x + 12 + aheadX * p.facing, y: p.y + 6 + aboveY };
 }
 

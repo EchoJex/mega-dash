@@ -25,10 +25,8 @@ export const VIEW_H = 224;
 // pillarboxing a square-ish 256 would waste half the screen. Wider devices
 // simply see further ahead/behind — harmless in a procedurally generated
 // sidescroller, and it keeps the whole screen filled.
-export const VIEW_W_MIN = 320; // 4:3-ish tablet
-export const VIEW_W_MAX = 480; // ultrawide phone
-export const VIEW_W_DEFAULT = 400;
-
+const VIEW_W_MIN = 320; // 4:3-ish tablet
+const VIEW_W_MAX = 480; // ultrawide phone
 /** Virtual width for a given physical aspect ratio, snapped to even pixels. */
 export function computeViewWidth(screenW, screenH) {
   const target = Math.round(VIEW_H * (screenW / screenH));
@@ -113,7 +111,7 @@ export const FIXED_DT = 1000 / 60;
 export const MAX_STEPS_PER_FRAME = 5; // spiral-of-death guard after tab-out
 
 /** Sprite grid. The player is 24x24 like the NES original. */
-export const TILE = 8;
+const TILE = 8;
 export const PLAYER_SPRITE_W = 24;
 export const PLAYER_SPRITE_H = 24;
 
