@@ -22,8 +22,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = new URL('../src/scenes/', import.meta.url).pathname;
+// `fileURLToPath`, NOT `.pathname`. On Windows a file: URL's pathname is
+// `/C:/Users/...`, which readdirSync then resolves against cwd — producing
+// `C:\C:\Users\...` and an ENOENT at import time. The whole file died before a
+// single test ran, so `node --test` showed one generic failure and the seven
+// per-scene checks below silently did not exist on the machine the game is
+// actually developed on. tools/sim.mjs and tools/smoke.mjs already do this.
+const DIR = fileURLToPath(new URL('../src/scenes/', import.meta.url));
 
 /**
  * Names that live on Phaser.Scene rather than on our subclass. Not a guess —
