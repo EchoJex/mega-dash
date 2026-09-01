@@ -24,6 +24,14 @@
 
   What the game keeps is the part it is good at: `MANIFEST` swaps a finished
   PNG in with no code change, so the loop is draw here, build, tap UPDATE.
+
+  LAYOUT: ONE TOOL ROW, EVERYTHING ELSE IN A DRAWER. The canvas is the only
+  part of this page doing work, and on a phone in landscape it was losing a
+  third of its height to a palette nobody looks at while drawing. The four
+  colour pens are the palette's handle — a swatch on each says what it is —
+  and the chip's 55 slots, the role dropdowns and the fudge dials live behind
+  one button. The standing vertical-fudge warning stays OUT of the drawer, so
+  it cannot be closed away.
 -->
 <style>
   :root {
@@ -35,7 +43,14 @@
   body {
     background: var(--bg); color: var(--ink); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
     display: grid; grid-template-rows: auto 1fr auto; height: 100dvh;
+    /* `minmax(0, 1fr)`, NOT the default `auto`. An auto column is at least its
+       widest row's MIN-CONTENT, and the tool row's min-content is every button
+       laid end to end — so on a phone the whole grid silently became ~1010px
+       wide, the stage with it, and `fitCam` centred the composition against a
+       width the screen did not have. It read as the sprite drifting right. */
+    grid-template-columns: minmax(0, 1fr);
   }
+  header, footer, #stage { min-width: 0; }
   header, footer { background: var(--panel); border-color: var(--grid); border-style: solid; }
   header { border-width: 0 0 1px; padding: 6px 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   footer { border-width: 1px 0 0; padding: 6px 8px; }
@@ -46,6 +61,7 @@
   button { cursor: pointer; }
   button.on { background: #1d3a4a; border-color: var(--sel); color: #cfeaff; }
   button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.35; cursor: default; }
   #stage { position: relative; overflow: hidden; touch-action: none; background: #06070a; }
   #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -55,7 +71,7 @@
   #state.ok { color: var(--ok); } #state.err { color: var(--err); }
   /* The palette: fixed 16-wide so the four hardware rows read as the four rows
      they are on the chip, rather than reflowing into a meaningless block. */
-  #pal { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; max-width: 520px; }
+  #pal { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; max-width: 360px; }
   #pal i { display: block; aspect-ratio: 1; cursor: pointer; border: 1px solid transparent; }
   #pal i.sel { border-color: #fff; }
   #pal i.unsafe::after { content: '!'; display: block; text-align: center; color: #f66; font-size: 9px; }
@@ -63,7 +79,7 @@
   .roleRow { display: flex; gap: 5px; align-items: center; }
   dialog { background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 6px; max-width: 92vw; }
   dialog input { width: 100%; margin: 8px 0; }
-  .hint { color: var(--dim); font-size: 11px; }
+  .hint { color: var(--dim); font-size: 11px; margin-top: 4px; }
   .applink {
     color: var(--sel); text-decoration: none; border: 1px solid var(--grid);
     border-radius: 3px; padding: 5px 7px; white-space: nowrap;
@@ -77,6 +93,39 @@
     margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
     background: #3a2f0c; border: 1px solid #f5d328; color: #ffe9a3; font-size: 11px;
   }
+
+  /* ── the one tool row ──
+     IT SCROLLS RATHER THAN WRAPS, and that is the whole trick. Left to wrap,
+     the same set of buttons was one line on a desktop and FOUR on a phone in
+     landscape — which took a 380px-tall screen down to a thirty-pixel canvas,
+     the exact opposite of consolidating for canvas space. Nowrap makes the
+     footer's height a constant the stage can rely on; anything that does not
+     fit is a thumb-swipe along the row, which is bounded and familiar. */
+  #tools { gap: 4px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #tools::-webkit-scrollbar { display: none; }
+  #tools > * { flex: 0 0 auto; }
+  #tools .grow { flex: 1 1 6px; min-width: 6px; }
+  #tools button { padding: 4px 6px; }
+  .sep { width: 1px; align-self: stretch; background: var(--grid); margin: 0 2px; }
+  /* A PEN IS ITS OWN SWATCH. Four buttons that each carry the colour they
+     paint replaces a row of role dropdowns plus a row of pen buttons, and
+     removes the question of which of the two you were meant to press. */
+  .pen { display: inline-flex; align-items: center; gap: 5px; padding: 4px 6px; }
+  .pen .swatch { width: 14px; height: 14px; }
+  .pen .swatch.x { background: repeating-conic-gradient(#3a4250 0 25%, #12151c 0 50%) 0 / 10px 10px; }
+  #drawer { margin-top: 6px; display: grid; gap: 6px; }
+  /* `display: grid` above outranks the UA sheet's `[hidden] { display: none }`,
+     so without this the drawer never actually closed — it just stopped being
+     called open, while still eating the canvas it was meant to give back. */
+  #drawer[hidden] { display: none; }
+  /* The preview sits ON the canvas, top-right: it is a second view of the
+     thing being drawn, so it belongs beside it rather than under the tools. */
+  #prev {
+    position: absolute; right: 8px; top: 8px; padding: 4px;
+    background: #0d1015e0; border: 1px solid var(--grid); border-radius: 4px; text-align: center;
+  }
+  #pcv { display: block; image-rendering: pixelated; }
+  #prate { font-size: 10px; padding: 2px 4px; margin-top: 3px; width: 100%; }
 </style>
 
 <header>
@@ -90,32 +139,59 @@
   <button id="tokenBtn" title="GitHub token">🔑</button>
 </header>
 
-<div id="stage"><canvas id="cv"></canvas></div>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="prev" hidden>
+    <canvas id="pcv"></canvas>
+    <button id="prate" title="the game plays this sheet at 12fps — 60 is a strobe on a 2-frame idle">60 FPS</button>
+  </div>
+</div>
 
 <footer>
-  <div class="row" style="margin-bottom:6px">
-    <div class="roleRow"><b>OUTLINE</b><span class="swatch" id="sw0"></span><select id="role0"></select></div>
-    <div class="roleRow"><b>PRIMARY</b><span class="swatch" id="sw1"></span><select id="role1"></select></div>
-    <div class="roleRow"><b>SECOND</b><span class="swatch" id="sw2"></span><select id="role2"></select></div>
-  </div>
-  <div class="row" style="margin-bottom:6px">
-    <button id="pen0">OUTLINE</button>
-    <button id="pen1">PRIMARY</button>
-    <button id="pen2">SECOND</button>
-    <button id="penE">ERASE</button>
-    <span class="tag">|</span>
-    <button id="tView" title="hide the grid, boxes and reference figures">EDITOR VIEW</button>
-    <button id="tBox" title="show the collision box">BOXES</button>
+  <div class="row" id="tools">
+    <button class="pen" data-pen="0" title="outline (1)"><span class="swatch" id="sw0"></span>OUT</button>
+    <button class="pen" data-pen="1" title="primary (2)"><span class="swatch" id="sw1"></span>PRI</button>
+    <button class="pen" data-pen="2" title="secondary (3)"><span class="swatch" id="sw2"></span>SEC</button>
+    <button class="pen" data-pen="." title="transparent (4)"><span class="swatch x"></span>ERASE</button>
+    <span class="sep"></span>
+    <button data-tool="pen" title="freehand (B)">PEN</button>
+    <button data-tool="fill" title="flood fill (G)">FILL</button>
+    <button data-tool="line" title="straight line (L)">LINE</button>
+    <button data-tool="rect" title="rectangle outline (U)">RECT</button>
+    <button data-tool="pick" title="eyedropper (I)">PICK</button>
+    <span class="sep"></span>
+    <button id="undo" title="undo (Ctrl+Z)">↶</button>
+    <button id="redo" title="redo (Ctrl+Shift+Z)">↷</button>
+    <button id="flipH" title="mirror this frame left-right">⇄</button>
+    <button id="flipV" title="mirror this frame top-bottom">⇅</button>
+    <button id="clearF" title="empty this frame">CLR</button>
     <span class="grow"></span>
-    <span class="tag">FUDGE</span>
-    <span class="fudgeGrp"><button id="fwm">−</button><span id="fw">0.70</span><button id="fwp">+</button>
-    <span class="tag">HORIZONTAL</span></span>
-    <span class="fudgeGrp" id="vgrp"><button id="fhm">−</button><span id="fh">1.00</span><button id="fhp">+</button>
-    <span class="tag">VERTICAL</span></span>
-    <button id="fudgeDef" title="the ratios measured off the shipped player art">RESET</button>
+    <button id="addFrame" title="add a copy of this frame after it">+FRAME</button>
+    <button id="delFrame" title="delete this frame">−FRAME</button>
+    <button id="play" title="cycle the frames (P)">▶</button>
+    <span class="sep"></span>
+    <button id="tView" title="art only — hide the grid, boxes and reference figures">VIEW</button>
+    <button id="tBox" title="show the engine box and the box this drawing proposes">BOX</button>
+    <button id="tDrawer" title="the NES palette, the role colours and the fudge dials">PAL ▾</button>
   </div>
+
+  <div id="drawer" hidden>
+    <div class="row">
+      <div class="roleRow"><b>OUTLINE</b><select id="role0"></select></div>
+      <div class="roleRow"><b>PRIMARY</b><select id="role1"></select></div>
+      <div class="roleRow"><b>SECOND</b><select id="role2"></select></div>
+      <span class="grow"></span>
+      <span class="tag">FUDGE</span>
+      <span class="fudgeGrp"><button id="fwm">−</button><span id="fw">0.70</span><button id="fwp">+</button>
+      <span class="tag">HORIZONTAL</span></span>
+      <span class="fudgeGrp" id="vgrp"><button id="fhm">−</button><span id="fh">1.00</span><button id="fhp">+</button>
+      <span class="tag">VERTICAL</span></span>
+      <button id="fudgeDef" title="the ratios measured off the shipped player art">RESET</button>
+    </div>
+    <div id="pal"></div>
+  </div>
+
   <div id="vwarn" hidden></div>
-  <div id="pal"></div>
   <div class="hint" id="hint"></div>
 </footer>
 
@@ -143,7 +219,7 @@ let palettes = null;     // design/boss-data.json
 let doc = null;          // the sprite being edited
 let key = null;          // its id
 let sha = null, dirty = false, saving = false, timer = null;
-let frameIx = 0, pen = '1';
+let frameIx = 0, pen = '1', tool = 'pen';
 let view = { editor: true, boxes: true };
 let cam = { z: 12, x: 0, y: 0 };
 
@@ -268,6 +344,7 @@ function paletteOf(id) {
 
 async function open(id) {
   key = id; sha = null; dirty = false; frameIx = 0;
+  stopPlay();
   const t = targetOf(id);
   let text = null;
   try {
@@ -295,6 +372,7 @@ async function open(id) {
   // whose grid changed must not be edited at the old size.
   doc.w = t.grid.w; doc.h = t.grid.h;
 
+  resetHistory();
   buildFrameList();
   syncControls();
   fitCam();
@@ -302,7 +380,57 @@ async function open(id) {
   setState(text ? 'loaded' : 'new sprite', 'ok');
 }
 
+// ── Undo history ──────────────────────────────────────────────────────
+
+/**
+ * SNAPSHOTS, NOT A COMMAND LOG, and one per STROKE rather than per pixel.
+ *
+ * A frame is a dozen short strings; a whole sprite is a few kilobytes of them,
+ * so copying the lot costs less than the machinery of inverse operations would
+ * — and it is the only shape that undoes a flood fill, a frame deletion and a
+ * mirror with the same two lines. Snapshotting the frame LIST rather than the
+ * current frame is what makes +FRAME and −FRAME undoable at all.
+ *
+ * Per stroke is the unit a hand thinks in: dragging the pen across twelve
+ * pixels is one thing you did, and twelve taps of undo to take it back is the
+ * classic way an undo stack becomes useless.
+ */
+const HIST_MAX = 80;
+let hist = [], histIx = -1;
+
+const snapshot = () => ({
+  frameIx,
+  frames: doc.frames.map((f) => ({ name: f.name, rows: f.rows.slice() })),
+});
+
+function resetHistory() { hist = [snapshot()]; histIx = 0; }
+
+/** Called once a change is FINISHED: banks it, marks dirty, redraws. */
+function commit() {
+  hist = hist.slice(0, histIx + 1);
+  hist.push(snapshot());
+  if (hist.length > HIST_MAX) hist.shift();
+  histIx = hist.length - 1;
+  touch();
+  syncButtons();
+  draw();
+}
+
+function restore(s) {
+  doc.frames = s.frames.map((f) => ({ name: f.name, rows: f.rows.slice() }));
+  frameIx = Math.min(s.frameIx, doc.frames.length - 1);
+  buildFrameList();
+  touch();
+  syncButtons();
+  draw();
+}
+
+function undo() { if (histIx > 0) restore(hist[--histIx]); }
+function redo() { if (histIx < hist.length - 1) restore(hist[++histIx]); }
+
 // ── Controls ──────────────────────────────────────────────────────────
+
+const cur = () => doc.frames[frameIx];
 
 function buildFrameList() {
   const sel = $('#frame'); sel.innerHTML = '';
@@ -374,16 +502,20 @@ function syncControls() {
   $('#fw').textContent = doc.fudgeW.toFixed(2);
   $('#fh').textContent = doc.fudgeH.toFixed(2);
   applyRoles();
-  updatePenButtons();
+  syncButtons();
   warnVertical();
 }
 
-function updatePenButtons() {
-  for (const [id, k] of [['#pen0', '0'], ['#pen1', '1'], ['#pen2', '2'], ['#penE', EMPTY]]) {
-    $(id).classList.toggle('on', pen === k);
-  }
+function syncButtons() {
+  for (const b of document.querySelectorAll('.pen')) b.classList.toggle('on', b.dataset.pen === pen);
+  for (const b of document.querySelectorAll('[data-tool]')) b.classList.toggle('on', b.dataset.tool === tool);
   $('#tView').classList.toggle('on', !view.editor);
   $('#tBox').classList.toggle('on', view.boxes);
+  $('#tDrawer').classList.toggle('on', !$('#drawer').hidden);
+  $('#play').classList.toggle('on', !!player);
+  $('#undo').disabled = histIx <= 0;
+  $('#redo').disabled = histIx >= hist.length - 1;
+  $('#delFrame').disabled = !doc || doc.frames.length < 2;
 }
 
 /**
@@ -402,9 +534,10 @@ function updatePenButtons() {
  * against 0.96 and 1.00 tall. Somebody already tuned this by feel and left the
  * vertical alone.
  *
- * The warning is STANDING, not a toast. A gold panel while the value is off
- * 1.00 outlives the session it was set in, which is the point — the artist who
- * finds this sprite in a month is the one who needs telling.
+ * The warning is STANDING, not a toast, and it lives OUTSIDE the drawer so
+ * closing the drawer cannot close it. A gold panel while the value is off 1.00
+ * outlives the session it was set in, which is the point — the artist who finds
+ * this sprite in a month is the one who needs telling.
  */
 function warnVertical() {
   const off = Math.abs(doc.fudgeH - 1) > 0.001;
@@ -434,9 +567,111 @@ function hintText() {
   const b = bounds(f, doc.w, doc.h);
   const box = proposedBox(f, doc.w, doc.h, doc.fudgeW, doc.fudgeH);
   const engine = `engine box ${t.box.w}x${t.box.h}`;
-  if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}`;
+  /**
+   * A FRAME COUNT THAT NO LONGER MATCHES THE MANIFEST IS WORTH SAYING OUT
+   * LOUD. The sheet is one strip and the game addresses it by INDEX, so
+   * inserting a frame in the middle silently renumbers every animation after
+   * it. Adding frames is legitimate — the manifest is the owner's to update —
+   * but it is not free, and this is the only place it would ever show up.
+   */
+  const drift = doc.frames.length !== t.frames.length
+    ? ` · ${doc.frames.length} frames, MANIFEST expects ${t.frames.length}` : '';
+  if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}${drift}`;
   return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · `
-    + `fudged box ${box.w}x${box.h} · ${engine}`;
+    + `fudged box ${box.w}x${box.h} · ${engine}${drift}`;
+}
+
+// ── Editing operations ────────────────────────────────────────────────
+
+/** Write one cell. Returns whether anything actually changed. */
+function setCell(f, x, y, ch) {
+  if (x < 0 || y < 0 || x >= doc.w || y >= doc.h) return false;
+  const row = f.rows[y];
+  if (row[x] === ch) return false;
+  f.rows[y] = row.slice(0, x) + ch + row.slice(x + 1);
+  return true;
+}
+
+/** Bresenham. The pen uses it too, so a fast drag cannot leave gaps. */
+function lineCells(a, b) {
+  const out = [];
+  let x = a.x, y = a.y;
+  const dx = Math.abs(b.x - x), dy = -Math.abs(b.y - y);
+  const sx = x < b.x ? 1 : -1, sy = y < b.y ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    out.push({ x, y });
+    if (x === b.x && y === b.y) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+  return out;
+}
+
+function rectCells(a, b) {
+  const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
+  const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+  const out = [];
+  for (let x = x0; x <= x1; x++) { out.push({ x, y: y0 }); out.push({ x, y: y1 }); }
+  for (let y = y0 + 1; y < y1; y++) { out.push({ x: x0, y }); out.push({ x: x1, y }); }
+  return out;
+}
+
+/** Four-way flood over the role under the seed. */
+function fillFrom(f, seed, ch) {
+  const from = f.rows[seed.y][seed.x];
+  if (from === ch) return false;
+  const stack = [seed];
+  let changed = false;
+  while (stack.length) {
+    const { x, y } = stack.pop();
+    if (x < 0 || y < 0 || x >= doc.w || y >= doc.h) continue;
+    if (f.rows[y][x] !== from) continue;
+    setCell(f, x, y, ch);
+    changed = true;
+    stack.push({ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 });
+  }
+  return changed;
+}
+
+const paintCells = (cells) => {
+  let changed = false;
+  for (const c of cells) changed = setCell(cur(), c.x, c.y, pen) || changed;
+  return changed;
+};
+
+function flipH() { const f = cur(); f.rows = f.rows.map((r) => [...r].reverse().join('')); commit(); }
+function flipV() { const f = cur(); f.rows = f.rows.slice().reverse(); commit(); }
+function clearFrame() { cur().rows = blankFrame(doc.w, doc.h); commit(); }
+
+/** A name nothing else in this sprite is using. */
+function uniqueName(base) {
+  const taken = new Set(doc.frames.map((f) => f.name));
+  if (!taken.has(base)) return base;
+  for (let i = 2; ; i++) if (!taken.has(`${base}${i}`)) return `${base}${i}`;
+}
+
+/**
+ * ADD FRAME COPIES THE CURRENT ONE, which is what animating actually is: the
+ * next pose is the last pose with something moved. A blank frame would make
+ * every addition start by redrawing the parts that were not supposed to change.
+ */
+function addFrame() {
+  const f = cur();
+  doc.frames.splice(frameIx + 1, 0, { name: uniqueName(`${f.name}_b`), rows: f.rows.slice() });
+  frameIx++;
+  buildFrameList();
+  commit();
+  flash(`copied to ${cur().name} — remember MANIFEST addresses frames by index`);
+}
+
+function delFrame() {
+  if (doc.frames.length < 2) { flash('a sprite needs at least one frame'); return; }
+  doc.frames.splice(frameIx, 1);
+  frameIx = Math.min(frameIx, doc.frames.length - 1);
+  buildFrameList();
+  commit();
 }
 
 // ── The canvas ────────────────────────────────────────────────────────
@@ -463,7 +698,16 @@ new ResizeObserver(resize).observe($('#stage'));
  * tallest figure on the baseline is what sets the vertical fit, and the three
  * side by side set the horizontal one.
  */
+/**
+ * True while the camera is still exactly what `fitCam` left. Any zoom or pan
+ * clears it, and that is what lets the drawer do the right thing in both
+ * cases: re-fit for someone looking at the whole sprite, hold the zoom for
+ * someone who has gone in on an eye.
+ */
+let fitted = false;
+
 function fitCam() {
+  fitted = true;
   const r = $('#stage').getBoundingClientRect();
   const wide = doc.w + REF_GAP * 2 + PLAYER_REF.w + BOSS_REF.w;
   const tall = Math.max(doc.h, PLAYER_REF.h, BOSS_REF.h) + 2;
@@ -496,6 +740,9 @@ async function loadPlayerRef() {
   } catch { refPlayer = null; }   // a box is a fine fallback
 }
 
+const roleColours = () => ROLES.map((_, i) => $(`#role${i}`).value);
+const colourOf = (ch, cols) => cols[ROLES.findIndex((r) => r.key === ch)] || '#f0f';
+
 function draw() {
   if (!doc) return;
   const r = $('#stage').getBoundingClientRect();
@@ -504,7 +751,7 @@ function draw() {
   const z = cam.z;
   const gw = doc.w * z, gh = doc.h * z;
   const ox = Math.round(cam.x - gw / 2), oy = Math.round(cam.y - gh / 2);
-  const cols = ROLES.map((_, i) => $(`#role${i}`).value);
+  const cols = roleColours();
   const baseY = oy + gh;   // every figure stands on the same line
 
   /**
@@ -518,7 +765,7 @@ function draw() {
    * honest about how big the eye is.
    */
   if (view.editor) {
-    const label = (text, x, wCells) => {
+    const label = (text, x) => {
       ctx.fillStyle = '#7c879b';
       ctx.font = '10px ui-monospace, monospace';
       ctx.fillText(text, x, baseY + 12);
@@ -573,9 +820,21 @@ function draw() {
       if (px === EMPTY) {
         if (!view.editor) continue;                 // visible-pixels-only
         ctx.fillStyle = ((x >> 1) + (y >> 1)) % 2 ? '#161a21' : '#1c212a';
-      } else ctx.fillStyle = cols[ROLES.findIndex((r2) => r2.key === px)] || '#f0f';
+      } else ctx.fillStyle = colourOf(px, cols);
       ctx.fillRect(ox + x * z, oy + y * z, z, z);
     }
+  }
+
+  /**
+   * THE GHOST: a line or rectangle that has been started and not let go of.
+   * Drawn over the frame at half strength and never written into it, so the
+   * artist drags until it looks right instead of undoing until it does.
+   */
+  if (ghost) {
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = pen === EMPTY ? '#e5534b' : colourOf(pen, cols);
+    for (const c of ghostCells()) ctx.fillRect(ox + c.x * z, oy + c.y * z, z, z);
+    ctx.globalAlpha = 1;
   }
 
   if (view.editor && z >= 4) {
@@ -611,30 +870,114 @@ function draw() {
     }
   }
   $('#hint').textContent = hintText();
+  drawPreview();
+}
+
+// ── The preview ───────────────────────────────────────────────────────
+
+/**
+ * FRAMES, PLAYED. A sprite sheet is a strip of stills until something runs it,
+ * and the only question that matters about a walk cycle — does the weight land
+ * — cannot be answered one frame at a time.
+ *
+ * THE RATE IS A CONTROL, and 60 is not what the game does. `MANIFEST` plays the
+ * player's sheet at 12fps with the idle slowed to 1.5, so a literal 60 on a
+ * two-frame idle is a 30Hz strobe of an animation nobody will ever see. 60 is
+ * the default because it is what was asked for and it is genuinely useful for
+ * reading a fast cycle; 12 is one tap away and is the truth.
+ */
+const RATES = [60, 24, 12, 6, 1.5];
+const pcv = $('#pcv'), pctx = pcv.getContext('2d');
+let player = null;   // { raf, last, rate }
+let rateIx = 0;
+
+function stopPlay() {
+  if (player) cancelAnimationFrame(player.raf);
+  player = null;
+  $('#prev').hidden = true;
+  syncButtons();
+}
+
+function togglePlay() {
+  if (player) { stopPlay(); return; }
+  if (doc.frames.length < 2) { flash('one frame — nothing to cycle'); return; }
+  player = { raf: 0, last: performance.now(), i: frameIx };
+  $('#prev').hidden = false;
+  drawPreview();
+  const tick = (now) => {
+    if (!player) return;
+    const step = 1000 / RATES[rateIx];
+    if (now - player.last >= step) {
+      player.last = now;
+      player.i = (player.i + 1) % doc.frames.length;
+      drawPreview();
+    }
+    player.raf = requestAnimationFrame(tick);
+  };
+  player.raf = requestAnimationFrame(tick);
+  syncButtons();
+}
+
+function drawPreview() {
+  if (!player || !doc) return;
+  const z = Math.max(1, Math.floor(96 / Math.max(doc.w, doc.h)));
+  const w = doc.w * z, h = doc.h * z;
+  if (pcv.width !== w || pcv.height !== h) { pcv.width = w; pcv.height = h; }
+  pctx.clearRect(0, 0, w, h);
+  const cols = roleColours();
+  const rows = doc.frames[Math.min(player.i, doc.frames.length - 1)].rows;
+  for (let y = 0; y < doc.h; y++) {
+    for (let x = 0; x < doc.w; x++) {
+      const ch = rows[y][x];
+      if (ch === EMPTY) continue;
+      pctx.fillStyle = colourOf(ch, cols);
+      pctx.fillRect(x * z, y * z, z, z);
+    }
+  }
 }
 
 // ── Input: draw, pan, pinch ───────────────────────────────────────────
 
 const pointers = new Map();
-let pinch = null, painting = false, lastCell = null;
+let pinch = null, painting = false, lastCell = null, panning = false;
+let ghost = null;          // { a, b } while a line or rect is being dragged
+let strokeChanged = false;
 
-function cellAt(cx, cy) {
+/** The cell under a client point — `clamp` keeps a drag that left the grid useful. */
+function cellAt(cx, cy, clamp = false) {
   const r = $('#stage').getBoundingClientRect();
   const z = cam.z;
   const ox = Math.round(cam.x - doc.w * z / 2), oy = Math.round(cam.y - doc.h * z / 2);
-  const x = Math.floor((cx - r.left - ox) / z), y = Math.floor((cy - r.top - oy) / z);
+  let x = Math.floor((cx - r.left - ox) / z), y = Math.floor((cy - r.top - oy) / z);
+  if (clamp) {
+    x = Math.max(0, Math.min(doc.w - 1, x));
+    y = Math.max(0, Math.min(doc.h - 1, y));
+    return { x, y };
+  }
   return (x >= 0 && y >= 0 && x < doc.w && y < doc.h) ? { x, y } : null;
 }
 
-function paint(c) {
-  if (!c) return;
-  if (lastCell && lastCell.x === c.x && lastCell.y === c.y) return;
-  lastCell = c;
-  const f = doc.frames[frameIx];
-  const row = f.rows[c.y];
-  if (row[c.x] === pen) return;
-  f.rows[c.y] = row.slice(0, c.x) + pen + row.slice(c.x + 1);
-  touch(); draw();
+const ghostCells = () => (tool === 'rect' ? rectCells(ghost.a, ghost.b) : lineCells(ghost.a, ghost.b));
+
+function beginStroke(c) {
+  strokeChanged = false;
+  if (tool === 'pick') {
+    // THE EYEDROPPER PICKS A ROLE, not a colour — there are only ever four
+    // things a pixel can be here, and the file stores which one.
+    const ch = cur().rows[c.y][c.x];
+    pen = ch;
+    syncButtons();
+    flash(ch === EMPTY ? 'picked TRANSPARENT' : `picked ${ROLES.find((r) => r.key === ch).label}`);
+    return;
+  }
+  if (tool === 'fill') {
+    if (fillFrom(cur(), c, pen)) commit(); else draw();
+    return;
+  }
+  if (tool === 'line' || tool === 'rect') { ghost = { a: c, b: c }; draw(); return; }
+  painting = true; lastCell = c;
+  strokeChanged = paintCells([c]);
+  draw();
 }
 
 $('#stage').addEventListener('pointerdown', (e) => {
@@ -644,13 +987,19 @@ $('#stage').addEventListener('pointerdown', (e) => {
     // PINCH BEATS PAINT, and anything already painted this gesture stays.
     // Undoing it would be worse: a second finger landing a frame late is a
     // zoom the artist meant, not a stroke they want reverted.
-    painting = false;
+    endStroke();
     const [a, b] = [...pointers.values()];
     pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z,
       mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, cx: cam.x, cy: cam.y };
     return;
   }
-  if (pointers.size === 1) { painting = true; lastCell = null; paint(cellAt(e.clientX, e.clientY)); }
+  if (pointers.size !== 1) return;
+  const c = cellAt(e.clientX, e.clientY);
+  // A ONE-FINGER DRAG THAT STARTS OFF THE GRID PANS. On a phone the second
+  // finger is the one holding the device, so pinch cannot be the only way to
+  // move the view.
+  if (!c) { panning = true; return; }
+  beginStroke(c);
 });
 
 $('#stage').addEventListener('pointermove', (e) => {
@@ -668,19 +1017,41 @@ $('#stage').addEventListener('pointermove', (e) => {
     cam.z = nz;
     cam.x = (mx - r.left) - gx * nz;
     cam.y = (my - r.top) - gy * nz;
+    fitted = false;
     draw();
     return;
   }
-  if (painting) paint(cellAt(e.clientX, e.clientY));
-  else if (pointers.size === 1 && e.buttons === 4) {   // middle-drag pans
-    cam.x += e.clientX - prev.x; cam.y += e.clientY - prev.y; draw();
+  if (panning || (pointers.size === 1 && e.buttons === 4)) {   // middle-drag also pans
+    cam.x += e.clientX - prev.x; cam.y += e.clientY - prev.y;
+    fitted = false;
+    draw();
+    return;
+  }
+  if (ghost) { ghost = { a: ghost.a, b: cellAt(e.clientX, e.clientY, true) }; draw(); return; }
+  if (painting) {
+    // Interpolate: a fast drag reports a handful of points, and a pen that
+    // only paints those leaves a dotted line.
+    const c = cellAt(e.clientX, e.clientY, true);
+    strokeChanged = paintCells(lineCells(lastCell, c)) || strokeChanged;
+    lastCell = c;
+    draw();
   }
 });
+
+/** Bank whatever the gesture was building. The only place a stroke commits. */
+function endStroke() {
+  if (ghost) {
+    const changed = paintCells(ghostCells());
+    ghost = null;
+    if (changed) commit(); else draw();
+  } else if (painting && strokeChanged) commit();
+  painting = false; lastCell = null; strokeChanged = false;
+}
 
 const endPointer = (e) => {
   pointers.delete(e.pointerId);
   if (pointers.size < 2) pinch = null;
-  if (pointers.size === 0) { painting = false; lastCell = null; }
+  if (pointers.size === 0) { endStroke(); panning = false; }
 };
 $('#stage').addEventListener('pointerup', endPointer);
 $('#stage').addEventListener('pointercancel', endPointer);
@@ -692,18 +1063,62 @@ $('#stage').addEventListener('wheel', (e) => {
   cam.z = Math.max(1, Math.min(64, cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
   cam.x = (e.clientX - r.left) - gx * cam.z;
   cam.y = (e.clientY - r.top) - gy * cam.z;
+  fitted = false;
   draw();
 }, { passive: false });
 
 // ── Wiring ────────────────────────────────────────────────────────────
 
-const setPen = (k) => { pen = k; updatePenButtons(); };
-$('#pen0').onclick = () => setPen('0');
-$('#pen1').onclick = () => setPen('1');
-$('#pen2').onclick = () => setPen('2');
-$('#penE').onclick = () => setPen(EMPTY);
-$('#tView').onclick = () => { view.editor = !view.editor; updatePenButtons(); draw(); };
-$('#tBox').onclick = () => { view.boxes = !view.boxes; updatePenButtons(); draw(); };
+for (const b of document.querySelectorAll('.pen')) {
+  b.onclick = () => { pen = b.dataset.pen; syncButtons(); };
+}
+for (const b of document.querySelectorAll('[data-tool]')) {
+  b.onclick = () => { tool = b.dataset.tool; ghost = null; syncButtons(); draw(); };
+}
+$('#undo').onclick = undo;
+$('#redo').onclick = redo;
+$('#flipH').onclick = flipH;
+$('#flipV').onclick = flipV;
+$('#clearF').onclick = clearFrame;
+$('#addFrame').onclick = addFrame;
+$('#delFrame').onclick = delFrame;
+$('#play').onclick = togglePlay;
+/**
+ * THE PREVIEW SITS ON THE CANVAS, so its own pointer events have to be stopped
+ * before they reach it. The stage calls `setPointerCapture` on pointerdown,
+ * which retargets the rest of the gesture at itself — so a tap on the rate
+ * button was never becoming a click on the rate button, and it painted a pixel
+ * behind the preview instead.
+ */
+for (const ev of ['pointerdown', 'pointerup', 'pointermove', 'wheel']) {
+  $('#prev').addEventListener(ev, (e) => e.stopPropagation());
+}
+$('#prate').onclick = () => {
+  rateIx = (rateIx + 1) % RATES.length;
+  $('#prate').textContent = `${RATES[rateIx]} FPS`;
+};
+$('#tView').onclick = () => { view.editor = !view.editor; syncButtons(); draw(); };
+$('#tBox').onclick = () => { view.boxes = !view.boxes; syncButtons(); draw(); };
+/**
+ * OPENING THE DRAWER TAKES A THIRD OF THE STAGE, and the camera has to answer
+ * for it or the sprite ends up behind the palette.
+ *
+ * WHICH ANSWER DEPENDS ON WHERE THE ARTIST WAS. Still on the fitted view: fit
+ * again, because that is what fitting means and the composition is 50 cells
+ * tall on a stage that just lost 170 pixels — half a shift would not be
+ * enough. Zoomed in on an eye: keep the zoom and shift by half the difference,
+ * because re-fitting would throw away the thing they were looking at to solve
+ * a problem they did not have.
+ */
+$('#tDrawer').onclick = () => {
+  const before = $('#stage').getBoundingClientRect().height;
+  const wasFitted = fitted;
+  $('#drawer').hidden = !$('#drawer').hidden;
+  syncButtons();
+  if (wasFitted) fitCam();
+  else cam.y += ($('#stage').getBoundingClientRect().height - before) / 2;
+  resize();
+};
 
 const nudge = (which, d) => {
   const k = which === 'w' ? 'fudgeW' : 'fudgeH';
@@ -733,6 +1148,30 @@ $('#tok').addEventListener('close', () => {
   if (v === 'save') localStorage.setItem(TOKEN_KEY, $('#tokIn').value.trim());
   if (v === 'clear') localStorage.removeItem(TOKEN_KEY);
   if (v !== 'x') setState(token() ? 'token set' : 'no token — read only', token() ? 'ok' : 'err');
+});
+
+/**
+ * THE ASEPRITE LETTERS, because they are the ones a pixel artist's hand
+ * already knows: B pencil, G fill, L line, U rectangle, I eyedropper.
+ */
+const TOOL_KEYS = { b: 'pen', g: 'fill', l: 'line', u: 'rect', i: 'pick' };
+addEventListener('keydown', (e) => {
+  if (!doc || e.target.matches('input, select, textarea')) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z') {
+    e.preventDefault(); e.shiftKey ? redo() : undo(); return;
+  }
+  if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (TOOL_KEYS[k]) { tool = TOOL_KEYS[k]; ghost = null; syncButtons(); draw(); return; }
+  if ('1234'.includes(k)) { pen = ['0', '1', '2', EMPTY]['1234'.indexOf(k)]; syncButtons(); return; }
+  if (k === 'p') { togglePlay(); return; }
+  if (k === ',' || k === '.') {
+    const d = k === ',' ? -1 : 1;
+    frameIx = (frameIx + d + doc.frames.length) % doc.frames.length;
+    $('#frame').value = String(frameIx);
+    draw();
+  }
 });
 
 addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });

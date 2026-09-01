@@ -351,6 +351,30 @@ person who needs telling is whoever opens that sprite in a month.
 The collision box is per ACTOR, not per frame, so a fudge factor is read against one chosen
 reference frame — the player's own box matches `idle1` at 1.00 and `idle0` at 0.96.
 
+#### THE TOOL ROW IS ONE LINE THAT SCROLLS, and that is a constraint, not a style
+
+It carries the four colour pens, five drawing tools, undo/redo, the frame buttons and the
+view toggles; the NES chip, the role dropdowns and the fudge dials are behind PAL. Left to
+WRAP, that same row was one line on a desktop and four on a phone in landscape — which took
+a 380px screen down to a **thirty-pixel canvas**, the exact opposite of what the layout is
+for. `flex-wrap: nowrap` with `overflow-x: auto` makes the footer's height a constant, and
+anything past the edge is a thumb-swipe. Two traps came with it and both are load-bearing:
+`body` needs `grid-template-columns: minmax(0, 1fr)` or an auto column inflates to the tool
+row's min-content and drags the stage off-centre with it, and `#drawer` needs an explicit
+`[hidden]` rule because its own `display: grid` outranks the UA sheet's.
+
+**The standing vertical-fudge warning lives OUTSIDE the drawer** so closing the drawer
+cannot close it. That is the whole point of it being standing.
+
+**The preview's rate is a control, and 60 is not what the game does.** `MANIFEST` plays the
+player at `fps: 12` with the idle slowed to 1.5, so a literal 60 on a two-frame idle is a
+30Hz strobe of an animation nobody will ever see. 60 is the default because it is what was
+asked for and it does read a fast cycle honestly; 12 is one tap away and is the truth.
+
+**Undo is one snapshot per STROKE.** A drag across twelve pixels is one thing the artist
+did, and twelve taps to take it back is how an undo stack becomes useless. Snapshotting the
+frame LIST rather than the current frame is what makes +FRAME and −FRAME undoable at all.
+
 ### Sprite art is HUMAN-AUTHORED. Do not generate it.
 
 Character art, silhouettes and boss arena backgrounds are the owner's to draw. Generated
