@@ -556,13 +556,21 @@ Every weapon carries a `cls`, taken from the first word of its tracker field:
 
 | class | count | how it plays |
 |---|---|---|
-| **offensive** | 11 | shares the fire button; the wheel picks which one is aimed. **The sidearm is one of these** — the old Mega Buster, renamed, starting in an offensive slot. It is not a free extra riding above the loadout |
-| **defensive** | 7 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
+| **offensive** | 9 | shares the fire button; the wheel picks which one is aimed. **The sidearm is one of these** — the old Mega Buster, renamed, starting in an offensive slot. It is not a free extra riding above the loadout |
+| **defensive** | 9 | runs by itself — a drone that auto-fires, a shield that maintains itself, a jetpack that vents on landing. Never aimed |
 
 Eighteen in total: 17 specials, one per boss, plus the sidearm. The counts above
 are the live answer from `data/weapons.js` — an earlier version of this table
-listed the sidearm on a row of its own AND inside the eleven, which made it read
-as 1 + 11 + 6 and quietly lost a defensive weapon.
+listed the sidearm on a row of its own AND inside the offensive count, which made
+it read as 1 + 11 + 6 and quietly lost a defensive weapon.
+
+**The split is deliberately EVEN, and that is a design decision rather than an
+accident of counting.** It was 11/7 while every weapon whose class field was
+unwritten sat in the offensive row by default. Two Loadout Mastery ladders gate
+the two halves, so a lopsided roster makes buying one of them the obvious
+purchase and the other a formality. Reaching 9/9 cost two reclassifications —
+**Psi Orb** and **Granite Form** — both taken on weapons whose ladders were
+entirely unwritten, so nothing settled was overruled.
 
 `systems/loadout.js` owns the slots and is the only thing that may decide what is
 equipped; `systems/weaponry.js` owns what each weapon does. Everything unlocked but not
@@ -1403,7 +1411,7 @@ drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at th
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
 panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
-Frost Guard; **Constrict** is live on the Thorn Lash from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
+Frost Guard; **Constrict** is live on Simon's Whip (id `thorn_lash`) from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
 and tested but nothing applies them yet, because their sources are weapons whose slices
 have not happened.
 

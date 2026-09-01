@@ -109,7 +109,7 @@
       "scale": 1.55,
       "attackName": "Mind Lift",
       "weaponName": "Psi Orb",
-      "weaponClass": "offensive"
+      "weaponClass": "defensive"
     },
     "swarm": {
       "name": "Swarm Man",
@@ -128,8 +128,8 @@
       "outline": "#0A0A12",
       "scale": 2,
       "attackName": "Boulder Roll",
-      "weaponName": "Rock Buster",
-      "weaponClass": "offensive"
+      "weaponName": "Granite Form",
+      "weaponClass": "defensive"
     },
     "wraith": {
       "name": "Wraith Man",

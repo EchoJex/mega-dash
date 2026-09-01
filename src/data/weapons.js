@@ -669,24 +669,32 @@ const DEFS = [
   { id: 'quake_hammer', name: 'QUAKE HAMMER', short: 'QUAKE', cls: OFFENSIVE, boss: 'quake',
     cooldown: 40, projectiles: 1, shape: 'wave', speed: 2.0,
     desc: 'Rock hammer; long-press for a stunning ground pound.' },
-  // Provisional class — its tracker field is still `[wip]`.
   // The tracker replaced the tornado with a fall-arresting glide; the name and
   // id stayed. Higher rungs of its ladder still describe the tornado and are
   // `[wip]`, so only Lv1 is built.
   { id: 'gale_vortex', name: 'GALE VORTEX', short: 'GALE', cls: DEFENSIVE, boss: 'gale',
     cooldown: 45, projectiles: 1, shape: 'tornado', speed: 1.8,
     desc: 'Smoke puffs that cancel a fall and widen air control.' },
-  // Provisional class — its tracker field is still `[wip]`.
-  { id: 'psi_orb', name: 'PSI ORB', short: 'PSI', cls: OFFENSIVE, boss: 'psi',
+  // RECLASSIFIED, confirmed by the owner. A steerable orb wants a held thumb,
+  // which is the one thing a defensive weapon may not ask for; orbs that circle
+  // the player on their own keep the psychic read and cost no input. The ladder
+  // itself is still `[wip]` and unbuilt.
+  { id: 'psi_orb', name: 'PSI ORB', short: 'PSI', cls: DEFENSIVE, boss: 'psi',
     cooldown: 30, projectiles: 1, shape: 'orb', speed: 1.6,
-    desc: 'Slow steerable homing psychic orb.' },
+    desc: 'Psychic orbs that orbit the player and eat incoming shots.' },
   { id: 'swarm_caller', name: 'SWARM CALLER', short: 'SWARM', cls: DEFENSIVE, boss: 'swarm',
     cooldown: 24, projectiles: 3, shape: 'swarm', speed: 2.6,
     desc: 'Summons temporary bug allies that fight for you.' },
-  // Provisional class — its tracker field is still `[wip]`.
-  { id: 'rock_buster', name: 'ROCK BUSTER', short: 'ROCK', cls: OFFENSIVE, boss: 'granite',
+  // RENAMED AND RECLASSIFIED, confirmed by the owner, exactly as the Eclipse
+  // Blade was. Thrown boulders overlapped the Quake Hammer's swing and the Alloy
+  // Blade's throw; stone ARMOUR is the thing neither of them does. "Buster" also
+  // sat one row from SIDE ARM in the wheel and read as a variant of it.
+  //
+  // THE ID STAYS `rock_buster` — the join key for `BOSSES[].dropWeapon` and for
+  // every save's unlock set. A rename must never cost anyone their save.
+  { id: 'rock_buster', name: 'GRANITE FORM', short: 'GRANITE', cls: DEFENSIVE, boss: 'granite',
     cooldown: 20, projectiles: 1, shape: 'rock', speed: 2.8,
-    desc: 'Heavy stone shot that shatters on impact.' },
+    desc: 'Hardens the player into stone while no input is given.' },
   // Provisional class — its tracker field is still `[wip]`.
   { id: 'wraith_cloak', name: 'WRAITH CLOAK', short: 'WRAITH', cls: DEFENSIVE, boss: 'wraith',
     cooldown: 30, projectiles: 1, shape: 'wisp', speed: 3.0,
@@ -707,7 +715,6 @@ const DEFS = [
   { id: 'eclipse_blade', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
-  // Provisional class — its tracker field is still `[wip]`.
   { id: 'alloy_blade', name: 'ALLOY BLADE', short: 'ALLOY', cls: OFFENSIVE, boss: 'alloy',
     cooldown: 20, projectiles: 1, shape: 'blade', speed: 3.4,
     desc: 'Ricocheting metal blade that pierces armour.' },
