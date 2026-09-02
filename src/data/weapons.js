@@ -579,14 +579,33 @@ export const hasLadder = (id) => Object.prototype.hasOwnProperty.call(WEAPON_LAD
  * Rungs are applied in ascending order so a later rung overrides an earlier
  * field and leaves everything it does not mention alone.
  */
+/**
+ * MEMOISED, because this is called several times per frame per weapon.
+ *
+ * `stepWeapons` calls it once per equipped weapon per frame, `drawWeaponry`
+ * three more times, and every shot once — and each call allocated a keys array,
+ * mapped it, SORTED it, and built a fresh merged object. It is a pure function
+ * of (id, level) over a module constant that cannot change at runtime, so the
+ * answer is the same every time until the player levels up.
+ *
+ * The cached object is shared, so callers must treat it as read-only. Nothing
+ * mutates a ladder result today and nothing should start: a rung is design
+ * data, and a runtime that needs to remember something has `st` for it.
+ */
+const LADDER_CACHE = new Map();
+
 export function ladderAt(id, level) {
   const ladder = WEAPON_LADDERS[id];
   if (!ladder) return null;
+  const key = `${id}@${level}`;
+  const hit = LADDER_CACHE.get(key);
+  if (hit) return hit;
   const out = {};
   for (const rung of Object.keys(ladder).map(Number).sort((a, b) => a - b)) {
     if (rung > level) break;
     Object.assign(out, ladder[rung]);
   }
+  LADDER_CACHE.set(key, out);
   return out;
 }
 

@@ -1588,13 +1588,27 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Shots flagged `blocks` eat player fire, so cover matters.
-    for (const w of this.bullets) {
-      if (!w.blocks || w.life <= 0) continue;
-      const wb = this.bulletBox(w);
-      for (const b of this.bullets) {
-        if (b.enemy || b.life <= 0) continue;
-        if (Phys.overlaps(this.bulletBox(b), wb)) b.life = -1;
+    /**
+     * Shots flagged `blocks` eat player fire, so cover matters.
+     *
+     * A DELIBERATE HOOK, kept per CLAUDE.md's fill-don't-delete rule — the
+     * design has a jetpack that "blocks player bullets" and a shield rung that
+     * blocks projectiles, and neither is built. But NOTHING sets `blocks` on a
+     * bullet today, so this walked the whole bullet list every frame to run an
+     * inner loop that could never execute, and the shape it walks it in is
+     * O(n^2).
+     *
+     * One `.some()` decides whether the pass is worth entering at all, so the
+     * hook stays live and costs a single scan instead of a nested one.
+     */
+    if (this.bullets.some((w) => w.blocks && w.life > 0)) {
+      for (const w of this.bullets) {
+        if (!w.blocks || w.life <= 0) continue;
+        const wb = this.bulletBox(w);
+        for (const b of this.bullets) {
+          if (b.enemy || b.life <= 0) continue;
+          if (Phys.overlaps(this.bulletBox(b), wb)) b.life = -1;
+        }
       }
     }
 
@@ -1612,6 +1626,23 @@ export default class GameScene extends Phaser.Scene {
     // it and a multi-projectile weapon triggered it most times. `hitEnemy`
     // owns the null now, and the `!this.boss` re-check below is what keeps a
     // pierce shot from carrying on into a boss that no longer exists.
+    /**
+     * ONE TARGET LIST PER FRAME, NOT ONE PER BULLET.
+     *
+     * The spread below used to sit inside the bullet loop and again inside the
+     * explosion branch, so a busy fight allocated a fresh array of every minion
+     * plus the boss for EVERY bullet, every frame — dozens of throwaway arrays
+     * a frame, thousands a second, which is steady GC pressure that surfaces as
+     * periodic hitches on a phone.
+     *
+     * Hoisting is safe for exactly the reason the snapshot existed: holding the
+     * boss OBJECT is fine after `hitEnemy` nulls `this.boss`, because the object
+     * still exists and the `hp <= 0` guard below is what actually stops a pierce
+     * shot carrying on into a corpse. What was never safe was re-reading
+     * `this.boss` off the scene mid-loop, and nothing here does that.
+     */
+    const targets = this.boss ? [...this.minions, this.boss] : this.minions;
+
     for (const b of this.bullets) {
       if (b.enemy || b.life <= 0) continue;
       const box = this.bulletBox(b);
@@ -1627,7 +1658,7 @@ export default class GameScene extends Phaser.Scene {
       // A snapshot: hitEnemy can null `this.boss` mid-loop, and reading it
       // again from the scene after that is exactly the crash described above.
       // The `hp <= 0` guard is what stops a pierce shot hitting a corpse.
-      for (const e of this.boss ? [...this.minions, this.boss] : this.minions) {
+      for (const e of targets) {
         if (e.hp <= 0 || b.hitSet?.has(e)) continue;
         if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
 
@@ -1669,7 +1700,7 @@ export default class GameScene extends Phaser.Scene {
          */
         if (b.explodeR) {
           const bx = b.x, by = b.y, r2 = (b.explodeR + 8) ** 2;
-          for (const o of this.boss ? [...this.minions, this.boss] : this.minions) {
+          for (const o of targets) {
             if (o === e || o.hp <= 0) continue;
             const ox = o.x + o.w / 2 - bx, oy = o.y + o.h / 2 - by;
             if (ox * ox + oy * oy > r2) continue;
