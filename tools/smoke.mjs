@@ -88,6 +88,20 @@ page.on('console', (m) => {
   // same event WITH one, so this would only ever be a duplicate.
   if (m.type() !== 'error') return;
   if (/favicon/i.test(t) || /Failed to load resource/i.test(t)) return;
+  /**
+   * THE HOST HAVING NO SPEAKERS IS NOT A BUG IN THE GAME.
+   *
+   * "The AudioContext encountered an error from the audio device or the WebAudio
+   * renderer" is Chromium reporting that there is no output device to open —
+   * which is the normal state of a headless browser, a CI runner and a desktop
+   * with audio disabled. It failed the whole run on this machine while every
+   * boss, every weapon and every arena passed.
+   *
+   * Deliberately narrow: it matches the DEVICE message only. An exception
+   * thrown by systems/sfx.js still arrives through `pageerror` and still fails,
+   * so the audio path itself is as covered as it was.
+   */
+  if (/AudioContext encountered an error from the audio device/i.test(t)) return;
   fail(`console.error: ${t}`);
 });
 page.on('response', (r) => {
