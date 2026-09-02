@@ -50,8 +50,14 @@
       Capacitor's own manifest declares none and there are no Cordova plugins.
       There are also no <service> and no <receiver> declarations anywhere: the
       only component beyond MainActivity is the FileProvider below, and the
-      updater's install-status receiver is registered at runtime and unregistered
-      when the install finishes, so nothing of this app runs in the background.
+      updater's install-status receiver is registered at RUNTIME, on the
+      application context, and only when an install is actually started — so it
+      exists for the life of that process and dies with it. Nothing of this app
+      runs in the background, and nothing survives the process, which is the
+      property that matters here. (This used to claim it was unregistered when
+      the install finished; there is no unregisterReceiver call and there never
+      was. A manifest comment that describes code that does not exist is worse
+      than no comment, because this file is the thing people audit.)
 
       Keep it that way. Every permission added here is a Play Protect heuristic
       taken on, and this app is sideloaded, so it has no store reputation to

@@ -80,6 +80,45 @@ public final class Updater {
         }
     }
 
+    /**
+     * WHICH CHANNEL THE INSTALLED BUILD CAME FROM.
+     *
+     * versionCode alone cannot answer this, and that is what made the update
+     * button lie. GITHUB_RUN_NUMBER increments per WORKFLOW, not per branch, so
+     * a branch build gets a higher code than the last main build. Install one by
+     * long-press, tap UPDATE, and `latest.code <= installed` was true — so the
+     * game said "Already up to date" to somebody sitting on a feature branch,
+     * and the only way back handed PackageInstaller an older APK, which it
+     * refuses as a downgrade.
+     *
+     * Renumbering cannot fix it: Android requires versionCode to increase for
+     * ANY install, so putting branch builds in a lower band would stop them
+     * installing over main at all. Remembering the channel and saying something
+     * true is the fix.
+     */
+    private static final String PREFS = "megadash_updater";
+    private static final String KEY_BRANCH = "installed_branch";
+
+    private static void rememberChannel(Context c, String branch) {
+        if (branch == null || branch.isEmpty()) return;
+        try {
+            c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .edit().putString(KEY_BRANCH, branch).apply();
+        } catch (Throwable ignored) {
+            // Worst case we forget and fall back to the old message.
+        }
+    }
+
+    /** The remembered channel, or null if this build predates the memory. */
+    private static String installedBranch(Context c) {
+        try {
+            return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .getString(KEY_BRANCH, null);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     /** Installed versionCode, or 0 if it cannot be read. */
     private static long installedCode(Context c) {
         try {
@@ -123,13 +162,27 @@ public final class Updater {
             try {
                 Channel latest = fetchLatest();
                 long installed = installedCode(app);
+                String on = installedBranch(app);
                 if (latest == null || latest.apkUrl == null) {
                     toast(app, "No build published yet");
                 } else if (latest.code <= installed) {
-                    toast(app, "Already up to date (build " + installed + ")");
+                    // The honest version. If this build came from a branch, it
+                    // is NOT "up to date with main" — main's newest is simply
+                    // numbered lower, and Android will refuse to install it over
+                    // this one. Saying so is the difference between a
+                    // playtester who knows to reinstall and one who believes
+                    // they are on main for the rest of the week.
+                    if (on != null && !"main".equals(on)) {
+                        toast(app, "You are on branch '" + on + "' (build " + installed
+                                + "). Main's newest is " + latest.code
+                                + ", which is older, so it cannot install over this."
+                                + " Uninstall first to go back to main.");
+                    } else {
+                        toast(app, "Already up to date (build " + installed + ")");
+                    }
                 } else {
                     toast(app, "Downloading build " + latest.code + "…");
-                    install(app, download(latest.apkUrl), latest.code);
+                    downloadAndInstall(app, latest.apkUrl, latest.code, latest.branch);
                 }
             } catch (Throwable t) {
                 toast(app, "Update check failed: " + describe(t));
@@ -197,10 +250,29 @@ public final class Updater {
     }
 
     private static void installChannel(final Context app, final Channel c) {
+        /**
+         * REFUSE BEFORE THE DOWNLOAD, NOT AFTER IT.
+         *
+         * The picker already labels a channel "older", and then let you select
+         * it and press Update: the whole APK came down over mobile data and
+         * PackageInstaller rejected it as a downgrade at the very end. Several
+         * megabytes and a wait, to be told something the label had already said.
+         *
+         * Equal codes are allowed through — reinstalling the build you are on is
+         * a legitimate way to recover a bad install.
+         */
+        long installed = installedCode(app);
+        if (c.code < installed) {
+            toast(app, c.branch + " build " + c.code + " is older than the installed build "
+                    + installed + ". Android will not install over a newer one —"
+                    + " uninstall first if you need to go back.");
+            busy = false;
+            return;
+        }
         toast(app, "Downloading " + c.branch + " build " + c.code + "…");
         new Thread(() -> {
             try {
-                install(app, download(c.apkUrl), c.code);
+                downloadAndInstall(app, c.apkUrl, c.code, c.branch);
             } catch (Throwable t) {
                 toast(app, "Update failed: " + describe(t));
             } finally {
@@ -307,8 +379,11 @@ public final class Updater {
         return m.find() ? m.group(1) : null;
     }
 
-    /** Downloads the APK, following GitHub's redirect to its asset host. */
-    private static byte[] download(String urlStr) throws Exception {
+    /**
+     * Opens the APK for reading, following GitHub's redirect to its asset host.
+     * The caller owns the connection and must disconnect it.
+     */
+    private static HttpURLConnection openForDownload(String urlStr) throws Exception {
         URL url = new URL(urlStr);
         int redirects = 0;
         while (true) {
@@ -329,35 +404,63 @@ public final class Updater {
                 conn.disconnect();
                 throw new RuntimeException("download HTTP " + code);
             }
-            try {
-                InputStream in = conn.getInputStream();
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                byte[] buf = new byte[16384];
-                int n;
-                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-                in.close();
-                return out.toByteArray();
-            } finally {
-                conn.disconnect();
-            }
+            return conn;
         }
     }
 
     // ── Install ───────────────────────────────────────────────────────
 
-    /** Streams the APK into a PackageInstaller session and commits it. */
-    private static void install(Context context, byte[] apk, long code) throws Exception {
+    /**
+     * Streams the APK from the network straight into a PackageInstaller session.
+     *
+     * IT USED TO BUFFER THE WHOLE FILE TWICE. `download()` grew a
+     * ByteArrayOutputStream to the full APK and then `toByteArray()` copied it,
+     * so a Phaser-sized APK sat in the heap twice over before a single byte
+     * reached the installer — on a phone, for no benefit, since the session is
+     * a stream and always was.
+     *
+     * The progress toasts are the other half of the fix. There was one message
+     * when the download started and then nothing at all for up to the 60-second
+     * read timeout, which is indistinguishable from the button having done
+     * nothing.
+     */
+    private static void downloadAndInstall(Context context, String urlStr, long code, String branch)
+            throws Exception {
+        // Recorded BEFORE the install hands off: the session completes
+        // asynchronously and the process is replaced, so writing it afterwards
+        // is not guaranteed to happen at all.
+        rememberChannel(context, branch);
         registerStatusReceiver(context);
+
+        HttpURLConnection conn = openForDownload(urlStr);
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params =
                 new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         int sessionId = installer.createSession(params);
         PackageInstaller.Session session = installer.openSession(sessionId);
         try {
-            OutputStream out = session.openWrite("megadash-" + code, 0, apk.length);
-            out.write(apk);
+            // getContentLength() rather than the long variant: that is API 24+,
+            // and an APK is comfortably inside int range. -1 (unknown) is a
+            // legal length for openWrite.
+            int total = conn.getContentLength();
+            InputStream in = conn.getInputStream();
+            OutputStream out = session.openWrite("megadash-" + code, 0, total > 0 ? total : -1);
+            byte[] buf = new byte[65536];
+            int n;
+            long done = 0, nextMark = 0;
+            while ((n = in.read(buf)) > 0) {
+                out.write(buf, 0, n);
+                done += n;
+                // A word every quarter, so a slow connection still shows life.
+                if (total > 0 && done >= nextMark) {
+                    int pct = (int) (done * 100 / total);
+                    toast(context, "Downloading build " + code + "… " + pct + "%");
+                    nextMark = (long) total * (pct / 25 + 1) / 4;
+                }
+            }
             session.fsync(out);
             out.close();
+            in.close();
 
             Intent intent = new Intent(INSTALL_ACTION).setPackage(context.getPackageName());
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
@@ -366,6 +469,7 @@ public final class Updater {
             session.commit(pi.getIntentSender());
         } finally {
             session.close();
+            conn.disconnect();
         }
     }
 
@@ -404,7 +508,20 @@ public final class Updater {
         }
     }
 
+    /**
+     * A message a person can act on, not the exception's own words.
+     *
+     * UnknownHostException.getMessage() is the bare hostname, so a playtester on
+     * a plane got a toast reading "Update check failed: api.github.com" — which
+     * names the thing that worked (we resolved what to call) rather than the
+     * thing that did not (there is no network).
+     */
     private static String describe(Throwable t) {
+        if (t instanceof java.net.UnknownHostException
+                || t instanceof java.net.ConnectException) {
+            return "no internet connection";
+        }
+        if (t instanceof java.net.SocketTimeoutException) return "the network timed out";
         String m = t.getMessage();
         return m != null ? m : t.getClass().getSimpleName();
     }

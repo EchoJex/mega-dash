@@ -31,9 +31,34 @@ on:
 permissions:
   contents: write
 
+# ONE PUBLISH AT A TIME PER BRANCH. The release step deletes a channel and
+# recreates it, so two overlapping runs on the same branch race: whichever
+# reaches that block LAST wins, and run 1051 finishing after 1052 leaves the
+# channel serving the older build until somebody pushes again.
+#
+# NOT cancel-in-progress: a superseded run has usually already published, and
+# killing it mid-publish is how a channel ends up deleted but not recreated.
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # ONE NUMBER, COMPUTED ONCE. It is the APK's versionCode, the value
+      # stamped into the JS bundle for the dev HUD and crash reports, and the
+      # `versionCode=` line in the release notes that the updater compares
+      # against. It was written out longhand in three places, which is three
+      # chances for them to disagree about which build this is.
+      #
+      # NOTE the counter is per-WORKFLOW, not per-branch, so a branch build gets
+      # a higher code than the last main build. Android's versionCode must
+      # increase for an install to proceed, so this cannot be fixed by
+      # renumbering — a lower band would stop branch builds installing over main
+      # entirely. It is fixed in the updater instead, which now says what is
+      # actually true rather than "Already up to date". See Updater.java.
+      BUILD_CODE: ${{ 1000 + github.run_number }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,6 +71,13 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          # Gradle's dependency cache. Without it every push to every branch
+          # re-resolved and re-downloaded the whole Android Gradle Plugin graph
+          # before compiling a line — and "push a branch, pull it into the game"
+          # IS the dev loop here, so that cost was paid on every iteration.
+          # setup-node above has cached npm since the beginning; this is the
+          # same idea for the half of the build that actually takes minutes.
+          cache: gradle
 
       # compileSdk 35 and a matching apksigner. AGP can usually fetch a missing
       # platform itself, but the runner image's contents move around and a build
@@ -68,7 +100,7 @@ jobs:
       # report can name the build they came from — a playtest note that cannot
       # be pinned to a build is an anecdote.
       - name: Build web bundle
-        run: BUILD_CODE=$((1000 + GITHUB_RUN_NUMBER)) npm run build
+        run: npm run build
 
       # android/ is committed (it carries the updater's native code), so this
       # only copies the fresh web build in and refreshes the plugin wiring.
@@ -82,11 +114,19 @@ jobs:
       # came before it — no uninstall, no lost save.
       - name: Assemble release APK
         run: |
+          # versionName was hardcoded "1.0" on every build ever shipped, because
+          # nothing passed the override and package.json's version was wired to
+          # nothing. Android Settings -> Apps -> Mega Dash is the one place a
+          # playtester can check what they are running from outside the game,
+          # and it was useless. Taken from package.json so there is one place to
+          # bump it, with the build code appended to keep every build distinct.
+          VERSION_NAME="$(node -p "require('./package.json').version").$BUILD_CODE"
           cd android
           chmod +x gradlew
           # Unique, increasing versionCode per run so the updater can order builds.
           ./gradlew assembleRelease --no-daemon \
-            -PversionCodeOverride=$((1000 + GITHUB_RUN_NUMBER))
+            -PversionCodeOverride=$BUILD_CODE \
+            -PversionNameOverride="$VERSION_NAME"
 
       # An unsigned release APK installs nowhere, and one signed with the WRONG
       # key installs only after an uninstall — which loses the save on every
@@ -117,25 +157,47 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          CODE=$((1000 + GITHUB_RUN_NUMBER))
+          CODE=$BUILD_CODE
           BRANCH="$GITHUB_REF_NAME"
           SLUG=$(printf '%s' "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9-')
           APK=android/app/build/outputs/apk/release/app-release.apk
           cp "$APK" "MegaDash-$CODE.apk"
           NOTES="versionCode=$CODE"$'\n'"branch=$BRANCH"$'\n'"$GITHUB_SHA"
 
+          # UPDATE IN PLACE, NEVER DELETE-THEN-CREATE.
+          #
+          # This used to `gh release delete --cleanup-tag` and then create the
+          # channel again. Between those two commands the channel did not
+          # exist — and the delete was guarded with `|| true`, so a failure in
+          # the gap (rate limit, transient 5xx) silently left the phone's update
+          # channel GONE until somebody pushed again. For `latest` that is the
+          # plain-tap target every playtester uses.
+          #
+          # Editing an existing release keeps the tag and the URL stable, so
+          # there is never a moment when the channel is missing.
+          publish() {
+            local tag="$1" title="$2" mark="$3"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "MegaDash-$CODE.apk" --clobber
+              gh release edit "$tag" --title "$title" --notes "$NOTES" "$mark"
+            else
+              gh release create "$tag" "MegaDash-$CODE.apk" \
+                --title "$title" --notes "$NOTES" "$mark"
+            fi
+          }
+
           # Per-branch channel for the long-press picker — every branch.
-          gh release delete "ch-$SLUG" --cleanup-tag --yes || true
-          gh release create "ch-$SLUG" "MegaDash-$CODE.apk" \
-            --title "$BRANCH — build $CODE" \
-            --notes "$NOTES" \
-            --latest=false
+          publish "ch-$SLUG" "$BRANCH — build $CODE" --latest=false
 
           # Rolling 'latest' (the plain-tap target) only from main.
           if [ "$BRANCH" = "main" ]; then
-            gh release delete latest --cleanup-tag --yes || true
-            gh release create latest "MegaDash-$CODE.apk" \
-              --title "latest — main build $CODE" \
-              --notes "$NOTES" \
-              --latest
+            publish latest "latest — main build $CODE" --latest
           fi
+
+          # The old APK assets accumulate under a tag we now reuse rather than
+          # recreate, so drop everything that is not this build's.
+          for tag in "ch-$SLUG" $([ "$BRANCH" = "main" ] && echo latest); do
+            gh release view "$tag" --json assets --jq '.assets[].name' 2>/dev/null \
+              | grep -v "^MegaDash-$CODE.apk$" \
+              | while read -r old; do gh release delete-asset "$tag" "$old" --yes || true; done
+          done

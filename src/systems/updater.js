@@ -25,7 +25,15 @@ export const canUpdate = () => !!plugin();
 const unavailableReason = () =>
   canUpdate() ? null : 'Updates are APK-only — this is the browser build';
 
-/** TAP — check main for a newer build and install it. */
+/**
+ * TAP — check main for a newer build and install it.
+ *
+ * The return value only ever answers "could I start this", not "did it work".
+ * Everything after the handoff — no network, nothing newer, a rejected
+ * downgrade, the install itself — is reported by the native side as a toast,
+ * because that is the only surface that still exists once the system installer
+ * takes the screen. TitleScene must not present its own label as the outcome.
+ */
 export function checkForUpdate() {
   const p = plugin();
   if (!p) return unavailableReason();
