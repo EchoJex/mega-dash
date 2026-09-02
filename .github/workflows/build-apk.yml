@@ -45,7 +45,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
+    steps:
+      - uses: actions/checkout@v4
+
       # ONE NUMBER, COMPUTED ONCE. It is the APK's versionCode, the value
       # stamped into the JS bundle for the dev HUD and crash reports, and the
       # `versionCode=` line in the release notes that the updater compares
@@ -58,9 +60,12 @@ jobs:
       # renumbering — a lower band would stop branch builds installing over main
       # entirely. It is fixed in the updater instead, which now says what is
       # actually true rather than "Already up to date". See Updater.java.
-      BUILD_CODE: ${{ 1000 + github.run_number }}
-    steps:
-      - uses: actions/checkout@v4
+      #
+      # GitHub Actions expressions have no arithmetic operator, so `1000 +
+      # github.run_number` cannot live in an `env:` expression — it has to be
+      # computed in a shell step instead.
+      - name: Compute build code
+        run: echo "BUILD_CODE=$((1000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
