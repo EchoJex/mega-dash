@@ -52,6 +52,20 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2));
 const num = (v, d) => (v === undefined ? d : Number(v));
 
+/**
+ * Mean of `f` over `xs`, 0 for an empty list.
+ *
+ * ONE COPY. This existed twice in this file under two names — `avg` in the
+ * terminal table and `mean` in the Markdown writer — byte-identical, which is
+ * how the two tables drifted apart on the no-wins case: the terminal one
+ * guarded it and the Markdown one did not, so design/sim/latest.md committed
+ * "0% win rate, 0.0s to kill".
+ *
+ * It returns 0 for an empty list, so a CALLER that can legitimately be handed
+ * nothing has to say what that means. See the ttk columns.
+ */
+const mean = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
+
 const ITER = num(args.iterations, 100);
 const LEVELS = args.level ? String(args.level).split(',').map(Number) : [1];
 const LAYERS = args.layer ? String(args.layer).split(',').map(Number) : [1];
@@ -313,22 +327,21 @@ if (ran.length) {
     byBoss.get(k).push(r);
   }
   if (byBoss.size) {
-    const avg = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
     const bossRows = [...byBoss.entries()]
-      .map(([k, rs]) => ({ k, rs, d: avg(rs, (r) => r.difficulty) }))
+      .map(([k, rs]) => ({ k, rs, d: mean(rs, (r) => r.difficulty) }))
       .sort((a, b) => b.d - a.d)
       .map(({ k, rs, d }) => ({
         BOSS: k,
         LOADOUTS: String(rs.length),
         ...metricCells({
-          winRate: avg(rs, (r) => r.winRate),
-          hpLostPct: avg(rs, (r) => r.hpLostPct),
-          unfairPct: avg(rs, (r) => r.unfairPct),
-          avgTtkMsWins: avg(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins),
-          inputsPerSec: avg(rs, (r) => r.inputsPerSec),
-          inputs: avg(rs, (r) => r.inputs),
-          errorFramesPerSec: avg(rs, (r) => r.errorFramesPerSec),
-          avgBossDealtPct: avg(rs, (r) => r.avgBossDealtPct),
+          winRate: mean(rs, (r) => r.winRate),
+          hpLostPct: mean(rs, (r) => r.hpLostPct),
+          unfairPct: mean(rs, (r) => r.unfairPct),
+          avgTtkMsWins: mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins),
+          inputsPerSec: mean(rs, (r) => r.inputsPerSec),
+          inputs: mean(rs, (r) => r.inputs),
+          errorFramesPerSec: mean(rs, (r) => r.errorFramesPerSec),
+          avgBossDealtPct: mean(rs, (r) => r.avgBossDealtPct),
           difficulty: d,
         }),
       }));
@@ -413,7 +426,6 @@ if (args.save && ran.length) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
   }
-  const mean = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
   const rows = [...groups.entries()].map(([k, rs]) => {
     const now = mean(rs, (r) => r.difficulty);
     const wasRs = rs.map((r) => wasBy.get(key(r))).filter(Boolean);
