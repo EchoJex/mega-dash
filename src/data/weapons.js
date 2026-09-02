@@ -103,36 +103,57 @@ export const SLOTS_PER_CLASS = 2;
  * the owner marking that boss's ladder `[draft]`.
  */
 /**
- * The Nullfire Drone's emergency reload, straight off the tracker's formula:
+ * THE NULLFIRE DRONE'S POWER CORE — frames to refill one round from empty.
  *
- *     clip_cooldown = 1.5 * (clip_size / fire_rate)
+ * The emergency reload is `clip x this`, so a bigger clip costs proportionally
+ * more to recover. 18 frames keeps Lv10 — the only rung that can realistically
+ * empty its clip — at the 9 seconds it already had.
  *
- * DERIVED, NEVER TYPED IN. Firing a clip takes clip/rate seconds and reloading
- * takes 1.5x that, so the drone is live exactly 40% of the time at every level.
- * Levelling it buys burst shape and targeting, not uptime. Hand-tuning either
- * side of this would quietly turn a clip-size change into a balance change.
- *
- * `rate` is BULLETS per second, not trigger pulls — the reading under which all
- * three clip/rate pairs the tracker states land on the same duty cycle.
+ * This is the tuning knob. Raising it lengthens every rung's blackout together,
+ * which is the property the whole formula exists to preserve.
  */
+const EMERGENCY_PER_ROUND = 18;
+
 /**
- * The Nullfire Drone's reload, straight from the tracker's formula:
- * `clip_cooldown = 1.5 x (clip_size / fire_rate)`.
+ * The Nullfire Drone's emergency reload: a POWER CORE, not a duty cycle.
  *
- * FIRE RATE IS DERIVED, NOT DECLARED. A rung states a burst size, a gap between
- * rounds and a gap between sets; the bullets-per-second that falls out of those
- * is what the clip actually empties at. Passing a nominal rate by hand was off
- * by the burst spacing — Lv6's "one set per 3 seconds" is 0.909 bullets/sec,
- * not 1 — and the duty cycle drifted with it.
+ * WHAT THE TRACKER ASKED FOR, AND WHY IT WAS REPLACED. The field states
+ * `clip_cooldown = 1.5 x (clip_size / fire_rate)`, which makes the reload
+ * proportional to TIME-TO-EMPTY and gives every rung the same 40%-firing /
+ * 60%-reloading uptime. That is genuinely formulaic — and it is the wrong
+ * quantity, because time-to-empty is dominated by fire rate, and this ladder
+ * moves fire rate by 15x:
  *
- * Computing it here makes every rung land on exactly the same uptime by
- * construction: 1 / (1 + 1.5) = 40% firing, 60% reloading, whatever the numbers.
+ *   rung   clip   rate     empties in   OLD reload
+ *   Lv1     10    0.33/s      30.2 s      45.3 s      <- three quarters of a minute
+ *   Lv3      9    0.92/s       9.8 s      14.6 s
+ *   Lv6      9    0.91/s       9.9 s      14.9 s
+ *   Lv10    30    5.0 /s       6.0 s       9.0 s
+ *
+ * So the SLOWEST rung was punished hardest, which is backwards, and 45 seconds
+ * of a dark silent drone reads as a broken weapon rather than as a cost.
+ *
+ * THE WING DIVER SHAPE (the owner's reference). A power core recharges at a
+ * rate belonging to the CORE, not to the gun bolted to it: firing draws it
+ * down, emptying it triggers a slower penalty recharge, and how fast you
+ * happened to pull the trigger does not enter into it. So the fire-rate terms
+ * come out entirely and the reload is a function of clip size alone:
+ *
+ *   Lv1  3.0 s      Lv3  2.7 s      Lv6  2.7 s      Lv10  9.0 s
+ *
+ * The property the tracker's 1.5 was protecting survives: a rung still cannot
+ * buy itself a shorter reload, because the only lever is clip size and a bigger
+ * clip costs proportionally more to refill. What changes is WHERE the pain
+ * lands. At Lv1 you fire once per 3s from a 10-round clip, so emptying it takes
+ * 30 seconds of sustained combat and the blackout was near-unreachable anyway —
+ * its length was never doing any work. At Lv10 you empty 30 rounds in 6
+ * seconds, so 9 seconds of silence is a real decision in every fight.
+ *
+ * `trickleFrames` is the other half and is unchanged: one round per 1.5s out of
+ * combat is the passive core recharge, and "very slowly refills the current
+ * clip when no enemies present" is exactly what the tracker asks of it.
  */
-const droneReload = (clip, burst, pullFrames, burstGap) => {
-  const setFrames = pullFrames + burst * burstGap;
-  const rate = (burst * 60) / setFrames;
-  return Math.round(1.5 * (clip / rate) * 60);
-};
+const droneReload = (clip) => clip * EMERGENCY_PER_ROUND;
 
 export const WEAPON_LADDERS = {
   /**
@@ -164,19 +185,19 @@ export const WEAPON_LADDERS = {
       // and the reload is long in proportion. That is the formula applied
       // honestly: at this rate you will almost never reach the reload, which is
       // what makes its length affordable.
-      reloadFrames: droneReload(10, 1, 180, 1),
+      reloadFrames: droneReload(10),
       trickleFrames: 90,          // the very slow out-of-combat top-up
       speed: 3.2,
     },
     3: {
       // "3-bullet burst. One set of bullets per 3 seconds, like a rifle."
       clip: 9, burst: 3, burstGap: 5, pullFrames: 180,
-      reloadFrames: droneReload(9, 3, 180, 5),
+      reloadFrames: droneReload(9),
     },
     6: {
       // "3 bullet burst" — up from two, and the split arrives.
       burst: 3, burstGap: 6,
-      reloadFrames: droneReload(9, 3, 180, 6),
+      reloadFrames: droneReload(9),
       splitIn: 20, splitSeekTurn: 0.06, splitAccel: 1.03,
     },
     10: {
@@ -184,7 +205,7 @@ export const WEAPON_LADDERS = {
       // on the three-second beat.
       // 11 + 1 = a 12-frame set, which is exactly 5 shots per second.
       clip: 30, burst: 1, burstGap: 1, pullFrames: 11,
-      reloadFrames: droneReload(30, 1, 11, 1),
+      reloadFrames: droneReload(30),
       splitIn: 0,                 // "does not split" — clears the Lv6 rung
       skyward: true, speed: 2.2, seekTurn: 0.14, accel: 1.05, maxSpeed: 6,
     },

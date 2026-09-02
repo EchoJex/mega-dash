@@ -513,6 +513,20 @@ export function stepArena(arena) {
         pl.on = on;
         if (on) roamPlatform(pl);
       }
+      /**
+       * KEEP `t` MEANING "FRAMES LEFT IN THIS STATE" on a beat platform too.
+       *
+       * This branch `continue`s before the `--pl.t` below, so `t` sat at its
+       * initial 0 for the whole fight — and the draw code reads `pl.t < 45` to
+       * decide whether to render a platform hollow as an "about to leave" tell.
+       * Every beat platform therefore drew as permanently departing, which
+       * turns the one warning the player gets into a constant, and left the
+       * real beat-driven departure with no tell at all.
+       *
+       * Derived from the room's own clock rather than counted separately, for
+       * the same reason `beat`/`beatN` are: a second counter can drift.
+       */
+      pl.t = ((on ? b.on : b.every) - phase) * arena.beatLen - arena.beat;
       continue;
     }
     if (--pl.t > 0) continue;
@@ -575,7 +589,12 @@ export function stepArena(arena) {
   if (q) {
     if (q.h < q.target) q.h = Math.min(q.target, q.h + q.rise);
     else if (q.h > q.target) q.h = Math.max(q.target, q.h - q.rise * 0.7);
-    if (q.hold > 0 && --q.hold === 0) q.target = q.kind === 'lava' ? 0 : q.target;
+    // Only Blaze Man's lava ever sets `hold` (bossFights.js:338) — it is the
+    // 20-second dwell before the flood recedes. Tempest Man's water is static
+    // and never holds. This used to read `q.target = q.kind === 'lava' ? 0 :
+    // q.target`, whose else-branch assigned the field to itself: dead, and it
+    // read as though a water hold were a thing that did something.
+    if (q.kind === 'lava' && q.hold > 0 && --q.hold === 0) q.target = 0;
   }
 
   for (const t of arena.turrets) if (t.flash > 0) t.flash--;

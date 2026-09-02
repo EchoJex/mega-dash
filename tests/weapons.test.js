@@ -162,18 +162,40 @@ test('a weapon with no enemies on screen still runs without throwing', () => {
 });
 
 /**
- * The one number worth pinning. The tracker DERIVES the reload from the clip
- * and the fire rate, so every rung has to land on the same uptime; a rung that
- * does not is an arithmetic slip, not a balance choice.
+ * THE DRONE'S EMERGENCY RELOAD IS A POWER CORE — clip size alone.
+ *
+ * This used to assert a 40% duty cycle, because the reload was
+ * `1.5 x (clip / fire_rate)`. That is formulaic but keys off TIME-TO-EMPTY,
+ * which fire rate dominates, and this ladder moves fire rate 15x — so Lv1 sat
+ * on a 45-second blackout while Lv10 had 9. The slowest rung was punished
+ * hardest, which is backwards.
+ *
+ * The property that replaced it: a rung cannot buy a shorter reload, because
+ * the only lever is clip size and a bigger clip costs proportionally more to
+ * refill. That is what is pinned here — the RATIO, never the constant, so
+ * EMERGENCY_PER_ROUND stays free to tune.
  */
-test('the Nullfire Drone holds a 40% duty cycle at every rung', () => {
-  for (const level of [1, 3, 6, 10]) {
-    const L = ladderAt('core_blaster', level);
-    const bulletsPerSecond = (L.burst * 60) / (L.pullFrames + L.burst * L.burstGap);
-    const emptyFrames = (L.clip / bulletsPerSecond) * 60;
-    const ratio = emptyFrames / (emptyFrames + L.reloadFrames);
-    assert.ok(Math.abs(ratio - 0.4) < 0.02,
-      `Lv${level} is live ${(ratio * 100).toFixed(1)}% of the time, not 40%`);
+test('the Nullfire Drone reload is proportional to clip size, not fire rate', () => {
+  const rungs = [1, 3, 6, 10].map((level) => ladderAt('core_blaster', level));
+  const perRound = rungs.map((L) => L.reloadFrames / L.clip);
+
+  for (const [i, r] of perRound.entries()) {
+    assert.ok(Math.abs(r - perRound[0]) < 1e-6,
+      `rung ${i} refills at ${r} frames/round, the first at ${perRound[0]}`);
+  }
+
+  // And the direction that makes it a trade: the biggest clip pays the longest
+  // blackout. Lv10 holds 30 rounds against Lv1's 10.
+  const lv1 = rungs[0], lv10 = rungs[3];
+  assert.ok(lv10.clip > lv1.clip, 'Lv10 should carry the larger clip');
+  assert.ok(lv10.reloadFrames > lv1.reloadFrames,
+    'the larger clip must cost more to refill from empty');
+
+  // No rung may sit on a blackout long enough to read as a broken weapon. The
+  // old formula put Lv1 at 2715 frames — three quarters of a minute.
+  for (const [i, L] of rungs.entries()) {
+    assert.ok(L.reloadFrames <= 600,
+      `rung ${i} blacks the drone out for ${(L.reloadFrames / 60).toFixed(1)}s`);
   }
 });
 

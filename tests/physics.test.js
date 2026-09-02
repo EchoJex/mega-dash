@@ -237,3 +237,49 @@ test('the slide window only ever eats a jump that is still rising', () => {
   // Grounded taps are plain jumps; there is nothing to cancel.
   assert.equal(canCancel({ onGround: true, vy: 0, jumpFromY: 160 }, 2), false);
 });
+
+/**
+ * RIDING A MOVING SURFACE.
+ *
+ * There was no ride logic in the project at all, so Tempest Man's floating
+ * barrels and Strike Man's swinging bags — both of which join world.platforms
+ * through their `solid` flag — slid out from under a standing player. With no
+ * input at all the player drifted backwards across the room, which reads as the
+ * controls having died rather than as the floor moving.
+ *
+ * Asserts the RELATIONSHIP, not a speed: the player keeps station with whatever
+ * they are standing on. The prop speeds in bossFights.js stay free to move.
+ */
+test('a moving platform carries the player standing on it', () => {
+  const w = world();
+  const pad = { x: 90, y: GROUND_Y - 40, w: 40, h: 6, vx: 2 };
+  w.platforms = [pad];
+
+  const p = player(100);
+  // The hitbox is inset (offY 2, h 22), so the feet sit at p.y + 24. Start one
+  // step short of the surface so that this step is the landing step.
+  p.y = pad.y - 24;
+  p.vy = 2;
+
+  const before = p.x;
+  step(p, w, { moveDir: 0 });        // no input whatsoever
+
+  assert.ok(p.onGround, 'should have landed on the platform');
+  assert.equal(p.x - before, pad.vx,
+    'a landed player moves with the surface, not across it');
+});
+
+test('a stationary platform does not move the player', () => {
+  const w = world();
+  const pad = { x: 90, y: GROUND_Y - 40, w: 40, h: 6 };   // no vx at all
+  w.platforms = [pad];
+
+  const p = player(100);
+  p.y = pad.y - 24;
+  p.vy = 2;
+
+  const before = p.x;
+  step(p, w, { moveDir: 0 });
+  assert.ok(p.onGround);
+  assert.equal(p.x, before, 'no vx on the surface means no drift');
+});

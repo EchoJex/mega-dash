@@ -328,7 +328,7 @@ export function drawPlaceholder(g, actor) {
  * attack loop), so the picture and the physics cannot disagree. When real art
  * lands via MANIFEST this goes away with it.
  */
-export function drawBossRig(g, boss, screenX) {
+export function drawBossRig(g, boss, screenX, screenY = boss.y) {
   if (boss.rig !== 'jetpack') return;
   /**
    * THE PACK IS ALWAYS ON; THE PLUME IS NOT.
@@ -344,7 +344,7 @@ export function drawBossRig(g, boss, screenX) {
    */
   const jet = boss.jet || { dx: 0, dy: 1, len: 0 };
   const cx = screenX + boss.w / 2;
-  const cy = boss.y + boss.h * 0.5;
+  const cy = screenY + boss.h * 0.5;
 
   // The pack sits on his back — the side away from the plume.
   const px = cx - jet.dx * (boss.w * 0.35);
