@@ -75,14 +75,28 @@ test('every slice carries an id stamp linking it to the code', () => {
 test('every field uses a known status marker', () => {
   const OK = new Set(['ready', 'wip', 'draft', 'todo', 'na']);
   const doc = parse(raw);
+  let checked = 0;
   for (const sec of doc.sections) {
     for (const item of sec.items) {
       for (const f of fieldsOf(item)) {
+        checked++;
         assert.ok(OK.has(f.mark),
           `${item.title} / ${f.label} has unknown marker [${f.mark}]`);
       }
     }
   }
+  /**
+   * THE LOOP HAS TO HAVE RUN. Without this the test passes hardest when the
+   * parser is most broken: on a CRLF checkout `fieldsOf` returned NOTHING for
+   * every item, so the body never executed and this was the one test in the
+   * file that stayed green while `npm run status` reported 0/13 design fields
+   * for all seventeen bosses and `npm run sync` blanked three fields on each.
+   *
+   * A count, not an exact number — fields are added as the design grows, and
+   * pinning the total would make writing a new one fail the build.
+   */
+  assert.ok(checked > 300,
+    `only ${checked} fields parsed — the parser is not reading TRACKER.md`);
 });
 
 test('the tracker still has its non-slice sections', () => {
@@ -111,4 +125,61 @@ test('an edit survives a round-trip and cannot stay marked ready', () => {
   ).find((f) => f.label === field.label);
   assert.match(again.text, /EDITED BY TEST$/);
   assert.equal(again.mark, 'wip', 'editing must revoke the ready assertion');
+});
+
+/**
+ * CRLF MUST NOT BE ABLE TO KILL THE TOOLCHAIN AGAIN.
+ *
+ * Git for Windows sets core.autocrlf=true in its SYSTEM gitconfig, so before
+ * .gitattributes existed every Windows checkout got CRLF while the index stayed
+ * LF. `\r` is a line terminator in JavaScript — `.` will not match it and `$`
+ * will not sit before it — so splitting on '\n' left FIELD_RE unable to match
+ * anything at all, and it matched NOTHING.
+ *
+ * Nothing reported an error. `npm run status` printed 0/13 design fields for
+ * all seventeen bosses while calling five of them DONE; `npm run sync`
+ * overwrote design/boss-data.json with attackName, weaponName and weaponClass
+ * blanked on every boss and then printed a success line and exited 0. CI runs
+ * on Ubuntu, so none of it could ever go red there — which is why this belongs
+ * in the suite rather than in a note somewhere.
+ */
+test('the parser reads CRLF exactly as it reads LF', () => {
+  const lf = raw.replace(/\r\n/g, '\n');
+  const crlf = lf.replace(/\n/g, '\r\n');
+
+  const fieldsIn = (text) => {
+    const doc = parse(text);
+    const out = [];
+    for (const sec of doc.sections) {
+      for (const item of sec.items) {
+        for (const f of fieldsOf(item)) out.push(`${item.title}/${f.label}=[${f.mark}]`);
+      }
+    }
+    return out;
+  };
+
+  const a = fieldsIn(lf);
+  const b = fieldsIn(crlf);
+  assert.ok(a.length > 300, `LF parse found only ${a.length} fields`);
+  assert.deepEqual(b, a, 'a CRLF file must parse to exactly the same fields as LF');
+});
+
+/**
+ * The guard tools/sync-tracker.js uses before it overwrites boss-data.json: a
+ * line that LOOKS like a field must have parsed as one. If this can be true
+ * while fields exist, the tool would happily write a file built from nothing.
+ */
+test('a field line always parses as a field, never as raw prose', () => {
+  const doc = parse(raw);
+  const stragglers = [];
+  for (const sec of doc.sections) {
+    for (const item of sec.items) {
+      for (const c of item.content) {
+        if (c.type === 'raw' && /^- \*\*.+\*\* `\[\w+\]`/.test(c.line)) {
+          stragglers.push(`${item.title}: ${c.line.slice(0, 60)}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(stragglers, [], 'these look like fields but parsed as raw lines');
 });

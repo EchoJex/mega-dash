@@ -102,10 +102,29 @@ jobs:
       - name: Build web bundle
         run: npm run build
 
+      # THE SOURCEMAP IS FOR US, NOT FOR THE PHONE. It is ~11MB against a 1.6MB
+      # bundle, and `cap sync` below copies dist/ wholesale into the APK — which
+      # would put an 11MB tax on every update pulled through the in-app button.
+      # Moved aside here and uploaded as an artifact, so a stack trace from
+      # build N can be decoded against build N's map without shipping it.
+      - name: Set the sourcemaps aside
+        run: |
+          mkdir -p sourcemaps
+          mv dist/assets/*.map sourcemaps/ 2>/dev/null || true
+          ls -la sourcemaps/ || true
+
       # android/ is committed (it carries the updater's native code), so this
       # only copies the fresh web build in and refreshes the plugin wiring.
       - name: Sync web assets into the Android project
         run: npx cap sync android
+
+      - name: Upload sourcemaps
+        uses: actions/upload-artifact@v4
+        with:
+          name: sourcemaps-${{ env.BUILD_CODE }}
+          path: sourcemaps/
+          retention-days: 30
+          if-no-files-found: ignore
 
       # RELEASE, not debug. A debug build carries android:debuggable="true",
       # which is one of the clearest triggers for Play Protect's "Harmful app

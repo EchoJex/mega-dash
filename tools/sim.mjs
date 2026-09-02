@@ -30,6 +30,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from 
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { WEIGHTS } from '../src/sim/metrics.js';
 
 const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
 const REPO = fileURLToPath(new URL('..', import.meta.url));
@@ -144,8 +145,7 @@ try {
  * The sim page only exists when the build was told to make it, so build it
  * rather than telling the reader to. SIM=1 adds `sim.html` as a second Vite
  * entry; a plain `npm run build` — and therefore `npm run apk` — never does.
- */
-/**
+ *
  * REBUILD EVERY RUN UNLESS TOLD NOT TO. This used to build only when
  * `dist/sim.html` was ABSENT, so the loop this tool exists for — change the
  * game, run the sim, read the numbers — silently scored the FIRST build
@@ -395,7 +395,7 @@ if (args.save && ran.length) {
     .toString().trim();
 
   writeFileSync(join(dir, `${stamp}.json`), `${JSON.stringify({
-    stamp, commit: head, iterations: ITER, weights: null, results: ran,
+    stamp, commit: head, iterations: ITER, weights: WEIGHTS, results: ran,
   }, null, 2)}\n`);
 
   // The readable half, rewritten each save so `latest.md` is always the newest.
@@ -427,7 +427,15 @@ if (args.save && ran.length) {
     md.push(`| ${k} | ${rs.length} | ${(100 * mean(rs, (r) => r.winRate)).toFixed(0)} `
       + `| ${mean(rs, (r) => r.hpLostPct).toFixed(0)} `
       + `| ${mean(rs, (r) => r.unfairPct).toFixed(0)} `
-      + `| ${(mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins) / 1000).toFixed(1)} `
+      // NO WINS MEANS NO TIME-TO-KILL, so say so rather than printing 0.0.
+      // `mean([])` returns 0, and the terminal table already guards this the
+      // same way — only the Markdown writer did not, so `design/sim/latest.md`
+      // committed rows reading "win% 0 ... ttk 0.0", which reads as an INSTANT
+      // KILL and is now permanent history in a directory kept precisely so
+      // difficulty can be compared across runs.
+      + `| ${rs.some((r) => r.winRate)
+        ? (mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins) / 1000).toFixed(1)
+        : '—'} `
       + `| ${mean(rs, (r) => r.inputsPerSec).toFixed(1)} `
       + `| ${mean(rs, (r) => r.inputs).toFixed(0)} `
       + `| **${now.toFixed(1)}** | ${d} |`);

@@ -110,7 +110,11 @@ const buildable = rows.reduce((s, r) => s + r.buildable, 0);
 const unready = rows.reduce((s, r) => s + r.unready, 0);
 
 console.log('-'.repeat(82));
-console.log(`slices complete: ${done}/17   started: ${started}/17`);
+// `rows.length`, not a typed-in 17. Two lines of comment above explain that the
+// design-field denominator is DERIVED precisely so it cannot go stale — and
+// then the boss count on the summary line was hardcoded anyway. It is the
+// roster length; ask the roster.
+console.log(`slices complete: ${done}/${rows.length}   started: ${started}/${rows.length}`);
 console.log(`design fields ready to build [draft]: ${buildable}   `
   + `still being written [wip]: ${unready}`);
 console.log(`\nATK/HAZ show which of the 3 layers are built, not which are designed —`);
