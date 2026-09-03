@@ -92,7 +92,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
-- **silhouette** `[wip]` Rename silhouette in this tracker to Sprite sheet. With small check boxes for furniture, Arena background,
+- **silhouette** `[wip]` Rename silhouette in this tracker to Sprite sheet. With small check boxes for furniture, Arena background, Boss,
 
 ## Blaze Man — Fire
 
