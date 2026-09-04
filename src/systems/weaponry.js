@@ -120,6 +120,12 @@ const drone = {
     st.burst = 0;
     st.burstGap = 0;
     st.trickle = 0;
+    // The Lv10 round-robin cursor. Unseeded it was `undefined % n` -> NaN ->
+    // `ranked[NaN]` -> undefined, so the first shot of every engagement fell
+    // through to the `|| target` nearest-enemy fallback and broke the rung's
+    // one rule: each bullet targets a DIFFERENT enemy. It never threw, so
+    // nothing surfaced it.
+    st.skyIndex = 0;
   },
 
   step(st, lv, ctx) {
@@ -674,6 +680,22 @@ function shieldBox(p, L, grown) {
  * is worth that.
  */
 const strike = {
+  /**
+   * TWO MOVES ON ONE BUTTON, so the trigger must wait for the RELEASE.
+   *
+   * `fire` below already branches on `held >= LONG_PRESS_FRAMES` — press for a
+   * jab, hold for a finisher — but without this flag GameScene took the
+   * auto-repeat path instead and fired on every eligible frame while the button
+   * was down. Past frame 24 that made EVERY shot a finisher, so the jab chain
+   * (`jabChain`, `chainWindow`, and the rule that only the last jab knocks
+   * back) was unreachable for anyone holding the button, and releasing on
+   * exactly the right frame was the only way to land a jab.
+   *
+   * GameScene's own docblock names the two weapons on this path — "Strike
+   * Gauntlet, Quake Hammer" — and only the Quake Hammer had the flag.
+   */
+  longPress: true,
+
   init(st) { st.chain = 0; st.chainTimer = 0; st.anim = 0; st.lunge = null; },
 
   step(st, lv, ctx) {
@@ -1302,7 +1324,14 @@ function thornProbe(st, lv, ctx, L) {
     la.hit.add(e);
     ctx.hitEnemy(e, dmgOf('thorn_lash', lv, ctx) * L.dmgMult, { from: la.ox });
     if (e.isBoss) {
-      if (L.constrictFrames) Attr.applyStatus(e.status, 'constrict', L.constrictFrames);
+      // `step` is what makes constrict DO anything. applyStatus defaults it to
+      // 1, and speedMult computes `1 ** stacks === 1` — so this one call site,
+      // alone among every application in the codebase, tinted a boss green and
+      // slowed it by exactly nothing. This is the branch that fires on a boss,
+      // which is precisely where the rung says it should bite.
+      if (L.constrictFrames) {
+        Attr.applyStatus(e.status, 'constrict', L.constrictFrames, { step: FEEL.stunEnemyStep });
+      }
       st.lash = null;
     } else {
       la.grabbed = e;

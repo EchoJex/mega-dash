@@ -43,7 +43,14 @@
  * score twice for being long. Per second is the part that is genuinely new —
  * how frantic the fight is, independent of how long it runs. Both are reported.
  */
-const WEIGHTS = {
+/**
+ * Exported because `tools/sim.mjs` stamps them into every saved run. A saved
+ * result is only comparable to another one computed under the SAME weights, and
+ * the run record used to write `weights: null` — so the `vs last` delta column
+ * would silently compare scores from two different formulas after any tuning
+ * here, while looking authoritative.
+ */
+export const WEIGHTS = {
   win: 0.30,     // losing
   hp: 0.25,      // what surviving cost
   unfair: 0.15,  // the share of that cost no input could have prevented

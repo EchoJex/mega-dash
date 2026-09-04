@@ -63,7 +63,7 @@ npm run sim -- --all --layer=1,2,3 --iterations=20      # every complete pairing
 ```
 
 **It refuses incomplete content rather than scoring it.** 12 of the 17 bosses
-have no fight built and 6 weapons have no ladder; a boss with no behaviour
+have no fight built and 5 weapons have no ladder; a boss with no behaviour
 stands still while the player shoots him, which is not an easy fight but NO
 fight. Those pairings are skipped and named. Where a layer falls back — Strike
 Man's hazard L2/L3 — it runs and says so in a CAVEATS block. The catalogue is
@@ -819,6 +819,24 @@ needed structured data to read a design doc. Both are gone.
 `tests/tracker.test.js` asserts `serialize(parse(x)) === x` byte for byte, so the app
 cannot silently rewrite or drop prose it did not understand.
 
+**LINE ENDINGS ARE LOAD-BEARING, AND `.gitattributes` IS WHY.** Git for Windows sets
+`core.autocrlf=true` in its SYSTEM gitconfig, so before that file existed every Windows
+clone checked out CRLF while the index stayed LF. `\r` is a line terminator in JavaScript
+— `.` will not match it and `$` will not sit before it — so `FIELD_RE` matched **nothing**,
+and the whole tracker toolchain went quietly wrong rather than failing:
+
+| | reported | actually |
+|---|---|---|
+| `npm run status` | `0/13` for all 17 bosses, five of them `DONE`, `[draft]: 0` | 126 fields `[wip]` |
+| `npm run sync` | `boss-data.json: 17 bosses` and exit 0 | `attackName`, `weaponName`, `weaponClass` blanked on all 17 |
+| `npm test` | 3 failures | — |
+
+CI runs on Ubuntu and therefore always had LF, so none of it could ever go red there.
+`.gitattributes` pins `* text=auto eol=lf`, `parse()` normalises defensively the way
+`docs/sprite-fmt.js` already did, `sync-tracker.js` refuses to write when a field line
+fails to parse, and `tests/tracker.test.js` asserts CRLF and LF parse identically.
+**Do not remove `.gitattributes`, and do not "simplify" that normalise away.**
+
 ### Everything describable is a FIELD — the audit surface
 
 `design/TRACKER.md` has five editable sections, and the app renders **every**
@@ -1202,7 +1220,7 @@ shift the worlds after it. Scope: this seeds the WORLD only. Minion spawns, drop
 attack choices still use `Math.random`. Full replay needs recorded input — a separate job,
 and the fixed timestep already makes it reachable.
 
-Text in the HUD goes through a 5×7 bitmap font whose `fold()` **silently drops any glyph
+Text in the HUD goes through a 5×7 bitmap font whose `fold()` **substitutes `?` for any glyph
 it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to a HUD string.
 
 ### Dev mode — `src/config/dev.js`
@@ -1218,7 +1236,7 @@ playtest misread as balanced while unkillable, and re-picking costs one tap.
 
 **Placeholder bosses, arenas and weapons must never reach a playtester run.** Most of this
 game is unbuilt: twelve of the seventeen bosses have no attack loop and would stand still
-while you shot them, and six weapons have no ladder and play as a flat damage step at every
+while you shot them, and five weapons have no ladder and play as a flat damage step at every
 level. A door that opens onto a motionless rectangle costs a minute of a playtest session,
 teaches nothing, and reads as a BROKEN fight rather than an unfinished one — which is the
 worst outcome, because it puts a bug in the notes that was never a bug.

@@ -1,0 +1,34 @@
+# LINE ENDINGS ARE PART OF THE BUILD HERE, not a style preference.
+#
+# Git for Windows ships `core.autocrlf=true` in its SYSTEM gitconfig, so every
+# Windows clone of this repo used to check out CRLF while the index stayed LF.
+# `docs/tracker-md.js` splits on '\n', and in JavaScript `\r` is a line
+# terminator — `.` does not match it and `$` does not sit before it — so
+# FIELD_RE matched NOTHING and the whole tracker toolchain went quietly wrong:
+#
+#   npm run status   printed 0/13 design fields for all 17 bosses AND "DONE"
+#                    on five of them, and reported zero outstanding design work
+#                    while 165 fields were actually [wip]
+#   npm run sync     blanked attackName/weaponName/weaponClass on all 17 bosses
+#                    in design/boss-data.json, then printed a success line
+#   npm test         three failures in tests/tracker.test.js
+#
+# None of it was visible in CI, which runs on Ubuntu and therefore always had LF.
+#
+# This file makes the working tree match the index everywhere. The index is
+# already LF, so adding it produces no commit noise — it only changes what a
+# checkout writes to disk.
+* text=auto eol=lf
+
+# The two exceptions, both because something other than git reads them.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary, so git never touches the bytes. The keystore especially: it is the
+# project's one stable signing identity, and a single mangled byte would mean
+# every phone with the game installed has to uninstall first and lose its save.
+*.png binary
+*.jpg binary
+*.keystore binary
+*.jar binary
+*.apk binary

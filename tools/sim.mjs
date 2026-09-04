@@ -30,7 +30,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from 
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { chromium } from 'playwright';
+import { WEIGHTS } from '../src/sim/metrics.js';
 
 const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
 const REPO = fileURLToPath(new URL('..', import.meta.url));
@@ -52,6 +52,20 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2));
 const num = (v, d) => (v === undefined ? d : Number(v));
 
+/**
+ * Mean of `f` over `xs`, 0 for an empty list.
+ *
+ * ONE COPY. This existed twice in this file under two names — `avg` in the
+ * terminal table and `mean` in the Markdown writer — byte-identical, which is
+ * how the two tables drifted apart on the no-wins case: the terminal one
+ * guarded it and the Markdown one did not, so design/sim/latest.md committed
+ * "0% win rate, 0.0s to kill".
+ *
+ * It returns 0 for an empty list, so a CALLER that can legitimately be handed
+ * nothing has to say what that means. See the ttk columns.
+ */
+const mean = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
+
 const ITER = num(args.iterations, 100);
 const LEVELS = args.level ? String(args.level).split(',').map(Number) : [1];
 const LAYERS = args.layer ? String(args.layer).split(',').map(Number) : [1];
@@ -69,10 +83,74 @@ if (args.help) {
     --force             simulate an incomplete pairing anyway
     --all               sweep every complete pairing
     --list              print what can be simulated today, and what cannot
+                        (needs no browser and no build — answers from source)
+    --no-build          skip the SIM=1 rebuild and score the existing dist/
     --json              raw JSON instead of a table
     --save              write the run to design/sim/ and diff it against the last
 `);
   process.exit(0);
+}
+
+/** What `--list` prints. Kept beside the flag so both paths read as one thing. */
+function printCatalogue(cat) {
+  console.log('\nWEAPONS THAT CAN BE SIMULATED');
+  for (const w of cat.weapons) {
+    console.log(`  ${w.id.padEnd(17)} ${w.cls.padEnd(10)}`
+      + `${w.passive ? 'passive (fires itself)' : 'active (uses the trigger)'}`);
+  }
+  console.log('\nSKIPPED — no ladder, so level changes only damage');
+  for (const w of cat.skippedWeapons) console.log(`  ${w.id.padEnd(17)} ${w.why}`);
+
+  console.log('\nBOSSES  (A = attack loop, H = hazard loop, = repeats the layer below)');
+  for (const b of cat.bosses) {
+    const cells = b.layers.map((l) => {
+      if (!l.attack && !l.hazard) return ' -- ';
+      return (l.attack ? (l.attackRepeat ? 'a' : 'A') : '.')
+        + (l.hazard ? (l.hazardRepeat ? 'h' : 'H') : '.');
+    });
+    const any = b.layers.some((l) => l.attack);
+    console.log(`  ${b.id.padEnd(9)} L1 ${cells[0]}  L2 ${cells[1]}  L3 ${cells[2]}`
+      + (any ? '' : '   no fight built — skipped'));
+  }
+  console.log('\nlowercase a/h = fightFor fell back; that layer adds nothing new.\n');
+}
+
+// ── --list, before anything expensive ─────────────────────────────────
+
+/**
+ * `--list` ANSWERS FROM THE SOURCE, not from a running game.
+ *
+ * The catalogue is a pure derivation over `bosses.js`, `bossFights.js` and
+ * `weapons.js` — it imports nothing that touches a DOM — so listing what can be
+ * simulated needs no browser, no bundle and no server. It used to read
+ * `globalThis.__sim.catalogue()` out of the page, which meant the one command
+ * that exists to tell you what this tool can do was the one command you could
+ * not run without first installing 150MB of Chromium and waiting out a build.
+ *
+ * Handled here, above the build and the playwright import, so it stays instant.
+ */
+if (args.list) {
+  const { catalogue } = await import('../src/sim/catalogue.js');
+  printCatalogue(catalogue());
+  process.exit(0);
+}
+
+/**
+ * PLAYWRIGHT IS DELIBERATELY NOT A DEPENDENCY — its postinstall would pull
+ * ~150MB of browsers onto every APK build for a job CI does not run. So it may
+ * genuinely be absent, and a bare top-level import turned that into eight lines
+ * of `ERR_MODULE_NOT_FOUND` Node internals. `tools/smoke.mjs` already says the
+ * useful thing instead; this is the same message.
+ */
+let chromium;
+try {
+  ({ chromium } = await import('playwright'));
+} catch {
+  console.log('playwright is not installed — this tool is deliberately opt-in.\n');
+  console.log('  npx playwright@latest install chromium');
+  console.log('  npm i --no-save playwright');
+  console.log('  npm run sim -- --list      (this one needs neither)\n');
+  process.exit(1);
 }
 
 // ── The bundle ────────────────────────────────────────────────────────
@@ -81,12 +159,28 @@ if (args.help) {
  * The sim page only exists when the build was told to make it, so build it
  * rather than telling the reader to. SIM=1 adds `sim.html` as a second Vite
  * entry; a plain `npm run build` — and therefore `npm run apk` — never does.
+ *
+ * REBUILD EVERY RUN UNLESS TOLD NOT TO. This used to build only when
+ * `dist/sim.html` was ABSENT, so the loop this tool exists for — change the
+ * game, run the sim, read the numbers — silently scored the FIRST build
+ * forever after. Getting the same difficulty score back from code you just
+ * changed is the most misleading thing a measurement tool can do.
+ *
+ * A build is ~25s against a sweep that runs for minutes, so paying it by
+ * default is the right trade. `--no-build` is the escape hatch when you are
+ * re-reading a sweep rather than testing a change.
  */
-if (!existsSync(join(ROOT, 'sim.html')) || args.build) {
+if (!args['no-build']) {
   console.log('building dist/sim.html (SIM=1 vite build)...');
+  // `shell: true` because on Windows the executable is `npx.cmd`, and
+  // execFileSync without a shell cannot resolve it — the auto-build died with
+  // ENOENT on the platform the game is developed on.
   execFileSync('npx', ['vite', 'build'], {
-    cwd: REPO, env: { ...process.env, SIM: '1' }, stdio: 'inherit',
+    cwd: REPO, env: { ...process.env, SIM: '1' }, stdio: 'inherit', shell: true,
   });
+} else if (!existsSync(join(ROOT, 'sim.html'))) {
+  console.error('--no-build, but dist/sim.html does not exist. Drop the flag.');
+  process.exit(1);
 }
 
 const server = createServer((req, res) => {
@@ -121,31 +215,6 @@ await page.waitForFunction(() => globalThis.__sim?.ready === true, null, { timeo
 const cat = await page.evaluate(() => globalThis.__sim.catalogue());
 
 // ── --list ────────────────────────────────────────────────────────────
-
-if (args.list) {
-  console.log('\nWEAPONS THAT CAN BE SIMULATED');
-  for (const w of cat.weapons) {
-    console.log(`  ${w.id.padEnd(17)} ${w.cls.padEnd(10)}`
-      + `${w.passive ? 'passive (fires itself)' : 'active (uses the trigger)'}`);
-  }
-  console.log('\nSKIPPED — no ladder, so level changes only damage');
-  for (const w of cat.skippedWeapons) console.log(`  ${w.id.padEnd(17)} ${w.why}`);
-
-  console.log('\nBOSSES  (A = attack loop, H = hazard loop, = repeats the layer below)');
-  for (const b of cat.bosses) {
-    const cells = b.layers.map((l) => {
-      if (!l.attack && !l.hazard) return ' -- ';
-      return (l.attack ? (l.attackRepeat ? 'a' : 'A') : '.')
-        + (l.hazard ? (l.hazardRepeat ? 'h' : 'H') : '.');
-    });
-    const any = b.layers.some((l) => l.attack);
-    console.log(`  ${b.id.padEnd(9)} L1 ${cells[0]}  L2 ${cells[1]}  L3 ${cells[2]}`
-      + (any ? '' : '   no fight built — skipped'));
-  }
-  console.log('\nlowercase a/h = fightFor fell back; that layer adds nothing new.\n');
-  await browser.close(); server.close();
-  process.exit(0);
-}
 
 // ── Planning ──────────────────────────────────────────────────────────
 
@@ -258,22 +327,21 @@ if (ran.length) {
     byBoss.get(k).push(r);
   }
   if (byBoss.size) {
-    const avg = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
     const bossRows = [...byBoss.entries()]
-      .map(([k, rs]) => ({ k, rs, d: avg(rs, (r) => r.difficulty) }))
+      .map(([k, rs]) => ({ k, rs, d: mean(rs, (r) => r.difficulty) }))
       .sort((a, b) => b.d - a.d)
       .map(({ k, rs, d }) => ({
         BOSS: k,
         LOADOUTS: String(rs.length),
         ...metricCells({
-          winRate: avg(rs, (r) => r.winRate),
-          hpLostPct: avg(rs, (r) => r.hpLostPct),
-          unfairPct: avg(rs, (r) => r.unfairPct),
-          avgTtkMsWins: avg(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins),
-          inputsPerSec: avg(rs, (r) => r.inputsPerSec),
-          inputs: avg(rs, (r) => r.inputs),
-          errorFramesPerSec: avg(rs, (r) => r.errorFramesPerSec),
-          avgBossDealtPct: avg(rs, (r) => r.avgBossDealtPct),
+          winRate: mean(rs, (r) => r.winRate),
+          hpLostPct: mean(rs, (r) => r.hpLostPct),
+          unfairPct: mean(rs, (r) => r.unfairPct),
+          avgTtkMsWins: mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins),
+          inputsPerSec: mean(rs, (r) => r.inputsPerSec),
+          inputs: mean(rs, (r) => r.inputs),
+          errorFramesPerSec: mean(rs, (r) => r.errorFramesPerSec),
+          avgBossDealtPct: mean(rs, (r) => r.avgBossDealtPct),
           difficulty: d,
         }),
       }));
@@ -340,7 +408,7 @@ if (args.save && ran.length) {
     .toString().trim();
 
   writeFileSync(join(dir, `${stamp}.json`), `${JSON.stringify({
-    stamp, commit: head, iterations: ITER, weights: null, results: ran,
+    stamp, commit: head, iterations: ITER, weights: WEIGHTS, results: ran,
   }, null, 2)}\n`);
 
   // The readable half, rewritten each save so `latest.md` is always the newest.
@@ -358,7 +426,6 @@ if (args.save && ran.length) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
   }
-  const mean = (xs, f) => (xs.length ? xs.reduce((a, b) => a + f(b), 0) / xs.length : 0);
   const rows = [...groups.entries()].map(([k, rs]) => {
     const now = mean(rs, (r) => r.difficulty);
     const wasRs = rs.map((r) => wasBy.get(key(r))).filter(Boolean);
@@ -372,7 +439,15 @@ if (args.save && ran.length) {
     md.push(`| ${k} | ${rs.length} | ${(100 * mean(rs, (r) => r.winRate)).toFixed(0)} `
       + `| ${mean(rs, (r) => r.hpLostPct).toFixed(0)} `
       + `| ${mean(rs, (r) => r.unfairPct).toFixed(0)} `
-      + `| ${(mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins) / 1000).toFixed(1)} `
+      // NO WINS MEANS NO TIME-TO-KILL, so say so rather than printing 0.0.
+      // `mean([])` returns 0, and the terminal table already guards this the
+      // same way — only the Markdown writer did not, so `design/sim/latest.md`
+      // committed rows reading "win% 0 ... ttk 0.0", which reads as an INSTANT
+      // KILL and is now permanent history in a directory kept precisely so
+      // difficulty can be compared across runs.
+      + `| ${rs.some((r) => r.winRate)
+        ? (mean(rs.filter((r) => r.winRate), (r) => r.avgTtkMsWins) / 1000).toFixed(1)
+        : '—'} `
       + `| ${mean(rs, (r) => r.inputsPerSec).toFixed(1)} `
       + `| ${mean(rs, (r) => r.inputs).toFixed(0)} `
       + `| **${now.toFixed(1)}** | ${d} |`);

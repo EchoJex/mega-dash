@@ -88,6 +88,20 @@ page.on('console', (m) => {
   // same event WITH one, so this would only ever be a duplicate.
   if (m.type() !== 'error') return;
   if (/favicon/i.test(t) || /Failed to load resource/i.test(t)) return;
+  /**
+   * THE HOST HAVING NO SPEAKERS IS NOT A BUG IN THE GAME.
+   *
+   * "The AudioContext encountered an error from the audio device or the WebAudio
+   * renderer" is Chromium reporting that there is no output device to open —
+   * which is the normal state of a headless browser, a CI runner and a desktop
+   * with audio disabled. It failed the whole run on this machine while every
+   * boss, every weapon and every arena passed.
+   *
+   * Deliberately narrow: it matches the DEVICE message only. An exception
+   * thrown by systems/sfx.js still arrives through `pageerror` and still fails,
+   * so the audio path itself is as covered as it was.
+   */
+  if (/AudioContext encountered an error from the audio device/i.test(t)) return;
   fail(`console.error: ${t}`);
 });
 page.on('response', (r) => {
@@ -156,8 +170,26 @@ await page.screenshot({ path: shot('area.png') });
  * Visit every boss whose fight is built. This is the point of the exercise:
  * arenas, hazard loops and attack state machines only run inside a sealed room
  * and none of it is reachable from the scrolling area.
+ *
+ * DERIVED, NEVER LISTED — and derived from FURNISHED rather than hasFight.
+ *
+ * The hardcoded five it replaced matched `hasFight`, which is the SHIPPED gate:
+ * a boss with no layer-1 attack loop stays out of a playtester's bag. But this
+ * script is not a playtester. It exists to run real code in a browser and see
+ * whether it throws, and an arena with hazard layers built is real code whether
+ * or not its boss has learned to fight yet — Thorn Man's greenhouse is exactly
+ * that today, six rooms against five fights, and it was the newest content in
+ * the repo with nothing exercising it.
+ *
+ * So this takes the wider set on purpose. A boss joins the sweep on the day his
+ * ROOM lands, with no edit here, which is the same rule CLAUDE.md states for
+ * both content gates: derive it, never keep a list.
  */
-for (const id of ['core', 'blaze', 'torrent', 'volt', 'strike']) {
+const { FURNISHED } = await import('../src/systems/arena.js');
+const BUILT_BOSSES = FURNISHED();
+console.log(`  bosses with a room built: ${BUILT_BOSSES.join(', ')}`);
+
+for (const id of BUILT_BOSSES) {
   const jumped = await page.evaluate((want) => {
     const gs = globalThis.__game.scene.getScene('Game');
     // Draw from the shuffle bag until the wanted boss turns up, then use the
@@ -284,7 +316,9 @@ if (!wheel.offensive.includes(wheel.afterDisable)) {
  * Tapping the whole arc above left two weapons with no runtime in the slots,
  * so it proved the wheel worked and nothing about the weapons. This pairs each
  * offensive weapon with a defensive one, sets both to a rung, and plays — so
- * all eight runtimes step, draw and fire against a live boss.
+ * every laddered runtime steps, draws and fires against a live boss. The
+ * count is deliberately not written down here: it was 'eight' above a list of
+ * twelve by the time anyone checked.
  */
 const PAIRS = [
   ['blaze_wheel', 'core_blaster'],
@@ -344,5 +378,5 @@ if (problems.length) {
   for (const p of problems.slice(0, 8)) console.log(p + '\n');
   process.exit(1);
 }
-console.log('OK — booted, fought all five built bosses, exercised the loadout');
+console.log(`OK — booted, fought ${BUILT_BOSSES.length} built boss(es) (${BUILT_BOSSES.join(', ')}), exercised the loadout`);
 console.log(`screenshots: ${OUT}`);

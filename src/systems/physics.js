@@ -143,6 +143,23 @@ export function stepPlayer(p, world, input, groundY) {
       p.onGround = true;
       p.airActions = FEEL.maxAirActions;
       p.djPause = 0;
+      /**
+       * A MOVING SURFACE CARRIES WHAT IS STANDING ON IT.
+       *
+       * There was no ride logic anywhere in the project: the landing was
+       * resolved and nothing else. Tempest Man's floating barrels and Strike
+       * Man's swinging bags both join `world.platforms` via their `solid` flag,
+       * so both slid out from under a standing player — who then appeared to
+       * drift backwards across the room with no input, which reads as the
+       * controls having stopped responding rather than as the floor moving.
+       *
+       * Here rather than per-prop, because every current and future moving
+       * solid routes through this one loop. `vx` is enough: it is what every
+       * moving solid in the game is driven by, and the vertically-driven ones
+       * (Blaze Man's layer-3 lift) are already kept attached by the landing
+       * resolution above re-seating the player each frame.
+       */
+      if (pl.vx) p.x += pl.vx;
       break;
     }
   }

@@ -612,6 +612,72 @@ test('an expired stun drops its stacks rather than resuming from them', () => {
   assert.equal(bag.stun.stacks, 1, 'a fresh stun starts over at one stack');
 });
 
+/**
+ * THE TWO RULES A CONTINUOUS HAZARD DEPENDS ON.
+ *
+ * Volt Man's linger panels and Thorn Man's ground cover both apply their status
+ * EVERY FRAME the player is touching them. Under the old single-timer model
+ * that meant the stack count climbed without bound and, far worse, the shared
+ * clock was reset to full sixty times a second — so the status could not begin
+ * expiring until contact ended. Standing on a live panel bought a stun that
+ * only started counting down once you stepped off it.
+ */
+test('a named source holds ONE stack however long the contact lasts', () => {
+  const bag = Attr.makeStatus();
+  for (let i = 0; i < 120; i++) {
+    Attr.applyStatus(bag, 'stun', 60, { step: 0.7, src: 'panel:40' });
+  }
+  assert.equal(bag.stun.stacks, 1, 'contact duration must not deepen a status');
+  assert.ok(Math.abs(Attr.speedMult(bag) - 0.7) < 1e-9);
+});
+
+/**
+ * A source keeps its ONE stack alive while you are touching it — a hazard you
+ * can stand in unpunished is scenery — but it must not bank duration. The old
+ * model reset the shared clock every frame, so a long stand meant the status
+ * ran its FULL duration again from the moment you left. The stack now ages
+ * continuously, so stepping off is the end of it.
+ */
+test('a long contact does not extend the status past the moment you leave', () => {
+  const bag = Attr.makeStatus();
+  let deepest = 0;
+  for (let i = 0; i < 600; i++) {          // ten seconds of standing in it
+    Attr.applyStatus(bag, 'stun', 30, { step: 0.7, src: 'cover:8' });
+    Attr.stepStatus(bag);
+    deepest = Math.max(deepest, bag.stun?.stacks ?? 0);
+  }
+  assert.equal(deepest, 1,
+    `one source reached ${deepest} stacks over ten seconds of contact`);
+
+  // Step off. It must be gone inside its own stated duration, never restart one.
+  let frames = 0;
+  while (Attr.hasStatus(bag, 'stun') && frames < 300) { Attr.stepStatus(bag); frames++; }
+  assert.ok(frames <= 30,
+    `took ${frames} frames to clear after contact ended; the duration is 30`);
+});
+
+test('different sources stack independently, each on its own clock', () => {
+  const bag = Attr.makeStatus();
+  Attr.applyStatus(bag, 'stun', 4, { step: 0.7, src: 'panel:a' });   // short
+  Attr.applyStatus(bag, 'stun', 90, { step: 0.7, src: 'panel:b' });  // long
+  assert.equal(bag.stun.stacks, 2, 'two panels are two stacks');
+  assert.ok(Math.abs(Attr.speedMult(bag) - 0.49) < 1e-9);
+
+  // The short one expires on its own without taking the long one with it.
+  for (let i = 0; i < 5; i++) Attr.stepStatus(bag);
+  assert.equal(bag.stun.stacks, 1, 'the short stack should have aged out alone');
+  assert.ok(Math.abs(Attr.speedMult(bag) - 0.7) < 1e-9);
+  assert.equal(Attr.hasStatus(bag, 'stun'), true, 'the long stack must survive');
+});
+
+test('an unnamed source still stacks — a discrete hit is a new application', () => {
+  const bag = Attr.makeStatus();
+  Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  Attr.applyStatus(bag, 'stun', 300, { step: 0.7 });
+  assert.equal(bag.stun.stacks, 2,
+    'two shots landing are two stacks; only continuous emitters dedupe');
+});
+
 test('other statuses still refuse to stack with themselves', () => {
   const bag = Attr.makeStatus();
   Attr.applyStatus(bag, 'burn', 120);

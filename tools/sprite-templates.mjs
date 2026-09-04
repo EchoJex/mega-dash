@@ -27,37 +27,13 @@
  *                    an eighth of a pixel in the game.
  */
 
-import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { encodePng } from './png.mjs';
 
-// ── A minimal PNG writer ──────────────────────────────────────────────
-
-const CRC_TABLE = (() => {
-  const t = new Int32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c;
-  }
-  return t;
-})();
-
-function crc32(buf) {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([len, body, crc]);
-}
+// The PNG writer lives in tools/png.mjs — one copy, shared with
+// tools/sprites-build.mjs, which carried a verbatim duplicate of it.
 
 /**
  * An RGBA canvas that knows nothing about the game — set a pixel, write a file.
@@ -108,31 +84,7 @@ class Canvas {
     for (let j = 0; j < h; j++) { this.set(x, y + j, c); this.set(x + w - 1, y + j, c); }
   }
 
-  png() {
-    const ihdr = Buffer.alloc(13);
-    ihdr.writeUInt32BE(this.w, 0);
-    ihdr.writeUInt32BE(this.h, 4);
-    ihdr[8] = 8;    // bit depth
-    ihdr[9] = 6;    // colour type: RGBA
-    // 10, 11, 12 stay 0: deflate, adaptive filtering, no interlace.
-
-    // One filter byte per scanline. Filter 0 (None) throughout — these images
-    // are flat colour and compress fine, and it keeps the writer readable.
-    const raw = Buffer.alloc(this.h * (this.w * 4 + 1));
-    for (let y = 0; y < this.h; y++) {
-      const src = y * this.w * 4;
-      const dst = y * (this.w * 4 + 1);
-      raw[dst] = 0;
-      Buffer.from(this.px.buffer, src, this.w * 4).copy(raw, dst + 1);
-    }
-
-    return Buffer.concat([
-      Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-      chunk('IHDR', ihdr),
-      chunk('IDAT', deflateSync(raw, { level: 9 })),
-      chunk('IEND', Buffer.alloc(0)),
-    ]);
-  }
+  png() { return encodePng(this.w, this.h, this.px); }
 }
 
 // ── What the game says the sizes are ──────────────────────────────────

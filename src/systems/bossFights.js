@@ -478,6 +478,28 @@ function blazeHazard(layer) {
     }
     hs.wasFlooding = flooding;
 
+    /**
+     * ROCKS FALL. This is what `vy` on the spawn below was always for, and
+     * nothing had ever applied it.
+     *
+     * stepArenaHazards owns what happens when the player MEETS a hazard and
+     * says so explicitly — "Motion is NOT here... a rock falls, a barrel floats
+     * and a training bag swings on a rail, those are the hazards' designs".
+     * Tempest's floaters and Strike's bags both got their loop; the rock never
+     * did, so it spawned at `ceilY - s` and stayed there.
+     *
+     * Everything downstream then failed quietly rather than loudly. The rock
+     * sat at y = -size, hidden behind the ceiling bar, so it was invisible; its
+     * bottom edge was 0, so `h.y + h.h >= floorY` never fired and it never
+     * crumbled; it carries no `ttl`, and the crumble branch is the only splice,
+     * so it never despawned. Three of them then filled `airborne` and the
+     * spawner returned early every frame FOREVER — `hs.left` could not drain,
+     * so the shower never ran again. Blaze Man's arena hazard was dead about
+     * three seconds into every fight, on all three layers, which left him with
+     * one danger source where the design calls for two concurrent ones.
+     */
+    for (const h of a.hazards) if (h.kind === 'rock') h.y += h.vy;
+
     // `cycle` is the WHOLE period, so this runs during the shower too. Ticking
     // it only between showers meant the real interval was cycle + however long
     // the rocks took to clear, which stretched the tracker's "every 20 seconds
@@ -883,7 +905,13 @@ function voltBolt(ctx, layer, th, shallow) {
     x: b.x + b.w / 2, y: b.y + b.h * 0.45,
     vx: Math.cos(th) * VOLT.speed, vy: Math.sin(th) * VOLT.speed,
     radius: 3, damage: 2, color: b.primary, shape: 'spark',
-    zigzag: VOLT.zig, zigAngle: shallow ? 0.5 : 0.75,
+    // `zigT` is the countdown to the next kink and MUST be seeded here. Its
+    // only other mention is the consumer in GameScene, which does
+    // `--b.zigT <= 0` and then resets it — so on an unseeded bolt the first
+    // frame evaluated `--undefined`, got NaN, and `NaN <= 0` is false forever.
+    // Volt Man's signature zigzag bolt flew dead straight at every layer, which
+    // also made the layer-2 design — two shallow paths crossing — impossible.
+    zigzag: VOLT.zig, zigT: VOLT.zig, zigAngle: shallow ? 0.5 : 0.75,
     ricochet: VOLT.bounces[layer],
     // A corner costs ONE bounce, which is what his reach has always been tuned
     // against. Only the Alloy Blade's Lv1 rung spends a corner twice.
@@ -1217,7 +1245,11 @@ function voltHazard(layer) {
           pn.tick = VOLT_HAZ.mildTick;
           ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.mildDamage);
         }
-        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
+        // NAMED SOURCE: a live panel re-applies every single frame you stand
+        // on it. Unnamed, that re-armed the stun's clock sixty times a second,
+        // so it could not begin expiring until you stepped off. One panel is
+        // one stack; a second panel is a second stack, which is the point.
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep, src: `panel:${pn.x}` });
       }
     }
 
@@ -1266,7 +1298,8 @@ function voltHazard(layer) {
        */
       if (reach || c.chainHit) {
         ctx.hurt(cxp, VOLT_HAZ.damage);
-        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep });
+        // Per conductor, for the same reason as the panels above.
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep, src: `conductor:${c.x}` });
       }
     }
   };
@@ -1477,43 +1510,62 @@ const STRIKE_HAZ = {
  * ONE shot and the bag blocks everything for as long as he holds it up. The
  * hazard loop runs after the attack loop, so this wins the frame it is set.
  */
+/**
+ * ONE FACTORY FOR EVERY TRAINING BAG. Bags differ only in which rail they hang
+ * from and which way they swing — everything else about them is identical.
+ *
+ * They used to be built in two places: the opening spawn, which is what the
+ * fields below describe, and the winch-back after a bag is thrown or
+ * psi-slammed, which rebuilt a bare object with no `solid`, no `stood` and no
+ * `psiTarget`. So a returned bag could not be stood on and could not be lifted
+ * by the Psi Orb — two of the three things a bag is FOR — and nothing on screen
+ * said which of the bags in the room was the diminished one.
+ */
+function makeBag(a, i) {
+  const rail = a.rails[i + 1] || a.rails[0];
+  return {
+    kind: 'bag',
+    // Opposite ends, so the two paths cross rather than trail.
+    x: i === 0 ? a.x0 + 24 : a.x1 - 24 - STRIKE_HAZ.w,
+    y: rail.y + STRIKE_HAZ.drop,
+    w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
+    railY: rail.y,
+    // A shade apart so the crossing point moves down the room.
+    vx: i === 0 ? STRIKE_HAZ.speed : -STRIKE_HAZ.speed * 1.18,
+    damage: 1,          // "light damage"; hurt() supplies the knockback
+    mode: 'swing',
+    // "Tops of bags can be stood on." `solid` is the same one-way
+    // platform path Tempest Man's barrels use, so the footing behaves
+    // exactly like every other surface in the game rather than like a
+    // second kind of standing. Walking INTO one still hurts: the damage
+    // check needs a real overlap, and a player resting on top has none.
+    solid: true,
+    stood: 0,
+    // Only the Psi Orb registers on one — see the bullet branch in
+    // GameScene. Ordinary shots pass through, because two bags swinging
+    // across the room eating your damage would quietly make this fight
+    // about waiting for a gap.
+    psiTarget: true,
+    // Which bag this is, so a winched-back one returns to its own rail.
+    bagIndex: i,
+  };
+}
+
 function strikeHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a || !a.rails?.length) return;
     const b = ctx.boss;
-    const hs = b.hs || (b.hs = { spawned: false, held: null, hold: 0, cool: 0 });
+    // `respawn` is a QUEUE, not a slot. It used to be one scalar, so throwing
+    // or slamming both bags overwrote the first pending return with the second
+    // and only one ever came back.
+    const hs = b.hs || (b.hs = { spawned: false, held: null, hold: 0, cool: 0, respawn: [] });
+    if (!hs.respawn) hs.respawn = [];
 
     if (!hs.spawned) {
       hs.spawned = true;
       const n = STRIKE_HAZ.bags[layer] || 1;
-      for (let i = 0; i < n; i++) {
-        const rail = a.rails[i + 1] || a.rails[0];
-        a.hazards.push({
-          kind: 'bag',
-          // Opposite ends, so the two paths cross rather than trail.
-          x: i === 0 ? a.x0 + 24 : a.x1 - 24 - STRIKE_HAZ.w,
-          y: rail.y + STRIKE_HAZ.drop,
-          w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
-          railY: rail.y,
-          // A shade apart so the crossing point moves down the room.
-          vx: i === 0 ? STRIKE_HAZ.speed : -STRIKE_HAZ.speed * 1.18,
-          damage: 1,          // "light damage"; hurt() supplies the knockback
-          mode: 'swing',
-          // "Tops of bags can be stood on." `solid` is the same one-way
-          // platform path Tempest Man's barrels use, so the footing behaves
-          // exactly like every other surface in the game rather than like a
-          // second kind of standing. Walking INTO one still hurts: the damage
-          // check needs a real overlap, and a player resting on top has none.
-          solid: true,
-          stood: 0,
-          // Only the Psi Orb registers on one — see the bullet branch in
-          // GameScene. Ordinary shots pass through, because two bags swinging
-          // across the room eating your damage would quietly make this fight
-          // about waiting for a gap.
-          psiTarget: true,
-        });
-      }
+      for (let i = 0; i < n; i++) a.hazards.push(makeBag(a, i));
     }
 
     if (hs.cool > 0) hs.cool--;
@@ -1585,7 +1637,7 @@ function strikeHazard(layer) {
         // player (diesOnHit, resolved by stepArenaHazards).
         if (h.y + h.h >= a.floorY || h.x <= a.x0 || h.x + h.w >= a.x1) {
           a.hazards.splice(i, 1);
-          hs.respawn = STRIKE_HAZ.returnFrames;
+          hs.respawn.push({ i: h.bagIndex ?? 0, t: STRIKE_HAZ.returnFrames });
           ctx.shake(1, 6);
         }
         continue;
@@ -1624,7 +1676,7 @@ function strikeHazard(layer) {
           ctx.shake(2, 12);
           ctx.sfx('shootBig', { pitch: 0.4 });
           a.hazards.splice(i, 1);
-          hs.respawn = STRIKE_HAZ.returnFrames;
+          hs.respawn.push({ i: h.bagIndex ?? 0, t: STRIKE_HAZ.returnFrames });
         }
         continue;
       }
@@ -1662,18 +1714,14 @@ function strikeHazard(layer) {
 
     // A thrown bag is winched back up. Without this, layer 3 spends its own
     // hazard: throw both and the room is empty for the rest of the fight.
-    if (hs.respawn !== undefined && --hs.respawn <= 0) {
-      hs.respawn = undefined;
-      const rail = a.rails[1] || a.rails[0];
-      a.hazards.push({
-        kind: 'bag',
-        x: a.x0 + 24, y: rail.y + STRIKE_HAZ.drop,
-        w: STRIKE_HAZ.w, h: STRIKE_HAZ.h,
-        railY: rail.y,
-        vx: STRIKE_HAZ.speed,
-        damage: 1,
-        mode: 'swing',
-      });
+    // Each pending bag counts down on its own, and comes back as a FULL bag on
+    // its own rail — same factory as the opening spawn, so a returned bag is
+    // stood on and psi-lifted exactly like the one it replaces.
+    for (let k = hs.respawn.length - 1; k >= 0; k--) {
+      if (--hs.respawn[k].t <= 0) {
+        a.hazards.push(makeBag(a, hs.respawn[k].i));
+        hs.respawn.splice(k, 1);
+      }
     }
   };
 }
@@ -2092,7 +2140,11 @@ function thornHazard(layer) {
       if (!(box.x + box.w > c.x && box.x < c.x + c.w && box.y + box.h >= c.y - 1)) continue;
       ctx.run.coverSlow = THORN_HAZ.slow;
       if (layer >= 2) {
-        ctx.status('constrict', THORN_HAZ.constrict, { step: FEEL.stunPlayerStep });
+        // Per cover tile. This applied every frame the player stood in
+        // overgrowth, so the constrict could never begin expiring until they
+        // walked out of it.
+        ctx.status('constrict', THORN_HAZ.constrict,
+          { step: FEEL.stunPlayerStep, src: `cover:${c.x}` });
       }
     }
   };

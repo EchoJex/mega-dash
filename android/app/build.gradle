@@ -10,10 +10,19 @@ android {
         // CI passes -PversionCodeOverride=<n>, monotonically increasing per run.
         // The in-app updater compares that number against the installed build to
         // decide whether there is anything newer, so it must never go backwards.
+        //
+        // THE LOCAL DEFAULT IS HIGH, NOT 1. `npm run apk` passes no override,
+        // and a versionCode of 1 against CI's 1000+ meant a locally built APK
+        // could not install over any CI build at all — Android refuses a
+        // downgrade, so the one command a developer would reach for to test a
+        // change on a real phone produced an APK that would not go on it.
+        // 900000 sits above every CI build the run counter will realistically
+        // reach and below Android's 2100000000 ceiling, so a local build always
+        // installs — and is obviously a local build when you read the number.
         versionCode project.hasProperty('versionCodeOverride')
-                ? project.versionCodeOverride.toInteger() : 1
+                ? project.versionCodeOverride.toInteger() : 900000
         versionName project.hasProperty('versionNameOverride')
-                ? project.versionNameOverride : "1.0"
+                ? project.versionNameOverride : "local"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

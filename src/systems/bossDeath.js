@@ -96,11 +96,13 @@ const fade = (d) => Math.max(0, 1 - d.t / d.max);
  * Draw one death. `sx` converts a world x to a screen x, exactly as every other
  * draw path in GameScene does, so shake and camera come for free.
  */
-export function drawDeath(g, sx, d) {
+// `sy` is the vertical half of the screen shake, matching `sx`. Defaulted to
+// identity so a caller that does not shake needs no argument.
+export function drawDeath(g, sx, d, sy = (v) => v) {
   if (!d) return;
   const p = d.t / d.max;
   const a = fade(d);
-  const cx = sx(d.x) + d.w / 2, cy = d.y + d.h / 2;
+  const cx = sx(d.x) + d.w / 2, cy = sy(d.y) + d.h / 2;
 
   switch (d.element) {
     // ── FIGHTING — a knockout, not an explosion ──────────────────────
@@ -111,7 +113,7 @@ export function drawDeath(g, sx, d) {
       const h = d.h * (1 - lean * 0.72);        // folding down
       const w = d.w * (1 + lean * 0.55);        // and spreading out
       const x = sx(d.x) - (w - d.w) / 2;
-      const y = d.y + (d.h - h);
+      const y = sy(d.y) + (d.h - h);
       g.fillStyle(d.primary, Math.min(1, a + 0.35));
       g.fillRect(x, y, w, h);
       g.fillStyle(d.secondary, Math.min(1, a + 0.2));
@@ -133,7 +135,7 @@ export function drawDeath(g, sx, d) {
     case 'Electric': {
       const strobe = Math.floor(d.t / Math.max(1, 5 - Math.floor(p * 4))) % 2 === 0;
       g.fillStyle(strobe ? 0xFFFFFF : d.primary, a);
-      g.fillRect(sx(d.x), d.y, d.w, d.h);
+      g.fillRect(sx(d.x), sy(d.y), d.w, d.h);
       g.lineStyle(1, d.primary, a);
       for (const bit of d.bits) {
         if (d.t < bit.delay) continue;
@@ -152,7 +154,7 @@ export function drawDeath(g, sx, d) {
     case 'Water': {
       const left = 1 - p;
       g.fillStyle(d.primary, a);
-      g.fillRect(sx(d.x), d.y + d.h * (1 - left), d.w, d.h * left);
+      g.fillRect(sx(d.x), sy(d.y) + d.h * (1 - left), d.w, d.h * left);
       for (const bit of d.bits) {
         if (d.t < bit.delay) continue;
         g.fillStyle(0x8FC7F0, a * 0.85);
@@ -168,11 +170,11 @@ export function drawDeath(g, sx, d) {
       const left = Math.max(0, 1 - p * 1.2);
       const h = d.h * left;
       g.fillStyle(0x1A0E08, a);
-      g.fillRect(sx(d.x), d.y + d.h - (d.h - h), d.w, d.h - h);
+      g.fillRect(sx(d.x), sy(d.y) + d.h - (d.h - h), d.w, d.h - h);
       g.fillStyle(d.primary, a);
-      g.fillRect(sx(d.x), d.y, d.w, h);
+      g.fillRect(sx(d.x), sy(d.y), d.w, h);
       g.fillStyle(0xF5A623, a);
-      g.fillRect(sx(d.x), d.y + h - 2, d.w, 2);
+      g.fillRect(sx(d.x), sy(d.y) + h - 2, d.w, 2);
       for (const bit of d.bits) {
         if (d.t < bit.delay) continue;
         g.fillStyle(bit.size > 3 ? 0xF5D328 : 0xE8541A, a * 0.9);
@@ -188,7 +190,7 @@ export function drawDeath(g, sx, d) {
     default: {
       if (p < 0.35) {
         g.fillStyle(d.t % 6 < 3 ? 0xFFFFFF : d.primary, 1);
-        g.fillRect(sx(d.x), d.y, d.w, d.h);
+        g.fillRect(sx(d.x), sy(d.y), d.w, d.h);
       }
       for (const bit of d.bits) {
         if (d.t < bit.delay) continue;

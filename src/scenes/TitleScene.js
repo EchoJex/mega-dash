@@ -89,7 +89,11 @@ export default class TitleScene extends Phaser.Scene {
     });
     const release = () => {
       if (timer) { timer.remove(); timer = null; }
-      if (!fired) this.say(checkForUpdate() || 'Checking main for a newer build…');
+      // "Checking…" and nothing after it. The result — up to date, downloading,
+      // no network, a branch build that main cannot install over — arrives as a
+      // native toast, because the system installer takes the screen and this
+      // label would otherwise sit on "Checking" as the last thing said.
+      if (!fired) this.say(checkForUpdate() || 'Checking main… watch for the toast');
     };
     t.on('pointerup', release);
     t.on('pointerout', () => { if (timer) { timer.remove(); timer = null; } });

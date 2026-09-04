@@ -317,7 +317,37 @@ async function load() {
             writeRef = draftRef();
             pending = cmp.ahead_by;
           }
-        } catch { /* no draft branch yet — the working branch is the truth */ }
+        } catch (e) {
+          /**
+           * A 404 MEANS NO DRAFT BRANCH. ANYTHING ELSE MEANS WE DO NOT KNOW,
+           * AND NOT KNOWING MUST NOT LOOK LIKE "NOTHING THERE".
+           *
+           * A bare catch here swallowed a 403 rate limit and a 5xx as readily
+           * as the 404 it was written for. When that happened while the draft
+           * WAS ahead, `writeRef` stayed on the working branch and the app
+           * loaded the older file — and the first autosave then re-read the
+           * draft's sha and PUT the stale content over it with a matching sha,
+           * which GitHub accepts. Every unpublished edit since the last publish
+           * was gone, and the comment above calls that "the one way this scheme
+           * could lose work".
+           *
+           * So: only a 404 is "no draft yet". Any other failure refuses to load
+           * rather than guessing, because a refusal costs a reload and a wrong
+           * guess costs the writing.
+           */
+          if (!/^404\b/.test(e.message || '')) {
+            const fatal = new Error(
+              `Could not check the draft branch (${e.message}). Not loading, because `
+              + 'the draft may hold newer work than this branch and saving over it '
+              + 'would lose it. Reload to try again.',
+            );
+            // Marked fatal so the branch loop below does not treat this as
+            // "that branch did not work, try the next one" and quietly load a
+            // different branch's tracker instead.
+            fatal.fatal = true;
+            throw fatal;
+          }
+        }
       }
 
       sha = r.sha;
@@ -339,7 +369,12 @@ async function load() {
           : 'loaded · ' + br, tokenBad ? 'err' : 'ok');
       loadBuilds();
       return;
-    } catch (e) { lastErr = e; }
+    } catch (e) {
+      lastErr = e;
+      // A fatal error is a refusal, not a miss. Trying the next branch after
+      // one would load somebody else's tracker and point saving at it.
+      if (e.fatal) break;
+    }
   }
   setState('load failed: ' + (lastErr ? lastErr.message : 'unknown'), 'err');
 }
@@ -453,7 +488,21 @@ async function publishDraft() {
  * times you paused while typing.
  */
 async function save(manual) {
-  if (!doc || saving) return;
+  if (!doc) return;
+  /**
+   * A SAVE THAT ARRIVES MID-SAVE MUST BE RESCHEDULED, NOT DROPPED.
+   *
+   * The autosave timer is single-shot and cleared on every keystroke. If it
+   * fired while a save was already in flight, this returned silently with
+   * `dirty` still true and NO new timer armed — so the owner typed a last
+   * sentence, stopped, and the status line went on showing the previous save's
+   * timestamp. That sentence lived only in the tab until the next keystroke,
+   * and closing the tab lost it.
+   */
+  if (saving) {
+    if (!manual) queueSave();
+    return;
+  }
   if (!token()) { setState('no token — read only', 'err'); return; }
   saving = true;
   setState(manual ? 'publishing…' : 'saving…');
@@ -497,7 +546,29 @@ async function save(manual) {
     if (e.message === 'TOKEN_REJECTED') {
       setState('token rejected — your edits are NOT saved. Tap 🔑 and paste a new one.', 'err');
     } else if (/409/.test(e.message)) {
-      setState('conflict — someone else changed it. Reload, then re-apply your edit.', 'err');
+      /**
+       * A 409 IS A STALE SHA, AND IT USED TO WEDGE AUTOSAVE FOREVER.
+       *
+       * `dirty = false` sits inside the try and is never reached on a throw, so
+       * every later autosave retried with the SAME stale sha and 409'd again —
+       * the status line flashed "saving…" then this message on every pause in
+       * typing, and nothing ever recovered on its own.
+       *
+       * Re-reading the sha is the whole fix and it is safe: `doc` in this tab
+       * is still the newest text, the conflict is only about which blob the
+       * write claims to replace. What is NOT safe is doing it silently, so the
+       * message says the remote moved and the next save will take this tab's
+       * version — which is the choice the owner would make anyway, because the
+       * other side of a draft-branch conflict is their own earlier autosave.
+       */
+      try {
+        const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${writeRef}&t=${Date.now()}`);
+        sha = cur.sha;
+        setState('conflict — the draft moved. Re-syncing; your text will save next.', 'warn');
+        if (!manual) queueSave();
+      } catch {
+        setState('conflict — someone else changed it. Reload, then re-apply your edit.', 'err');
+      }
     } else {
       setState('save failed: ' + e.message, 'err');
     }
@@ -519,11 +590,16 @@ function refreshSaveBtn() {
   b.classList.toggle('warn', pending > 0);
 }
 
+/** Arm the autosave. One place, so a save can re-arm it after a collision. */
+function queueSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => save(false), 2500);
+}
+
 function touch() {
   dirty = true;
   setState('unsaved…');
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => save(false), 2500);
+  queueSave();
 }
 
 // ── Parse / serialize ─────────────────────────────────────────────────
@@ -597,7 +673,16 @@ function card(sec, it) {
     free.contentEditable = 'true';
     free.textContent = rawOf(it).join('\n').trim();
     free.oninput = () => {
-      it.content = free.innerText.split('\n').map((line) => ({ type: 'raw', line }));
+      // KEEP ANY FIELDS THIS ITEM CARRIES. The editor only ever shows raw
+      // lines, so rebuilding the whole content list from its text silently
+      // DELETED any `- **label** \`[marker]\`` line in a BRAINSTORM intro on the
+      // first keystroke. They go back at the end rather than in place, because
+      // free text has no position to map them onto — preserved and moved beats
+      // gone.
+      const fields = it.content.filter((c) => c.type === 'field');
+      it.content = free.innerText.split('\n')
+        .map((line) => ({ type: 'raw', line }))
+        .concat(fields);
       touch();
     };
     body.appendChild(free);
@@ -722,16 +807,47 @@ function parseBugs(sec) {
 
 function writeBugs(sec, rows) {
   const it = bugsItem(sec);
-  const prose = rawOf(it).filter((l) => !/^\|/.test(l));
-  // Drop trailing blanks so repeated saves cannot grow the gap.
-  while (prose.length && !prose[prose.length - 1].trim()) prose.pop();
+  /**
+   * REBUILD THE TABLE IN PLACE, AND KEEP EVERYTHING THAT IS NOT THE TABLE.
+   *
+   * This used to take `rawOf(it)` — raw lines ONLY — strip every `|` line and
+   * re-append a fresh table at the end. Two things fell out of that, and both
+   * contradict what tracker-md.js's header promises ("Order-preserving means
+   * the app physically cannot rearrange your writing"):
+   *
+   *   any `type:'field'` entry in the BUGS intro was silently DELETED, because
+   *   it never made it into `prose`;
+   *
+   *   prose written BELOW the table jumped above it on the next edit, because
+   *   the table always went back at the bottom.
+   *
+   * Filtering the content list rather than rebuilding it from strings keeps
+   * fields; remembering where the table was keeps the order.
+   */
+  const isTableLine = (c) => c.type === 'raw' && /^\|/.test(c.line);
+  const keep = it.content.filter((c) => !isTableLine(c));
+  // How many surviving entries came before the table, so it goes back there.
+  const firstTable = it.content.findIndex(isTableLine);
+  let at = firstTable < 0 ? keep.length
+    : it.content.slice(0, firstTable).filter((c) => !isTableLine(c)).length;
+  // Drop blank lines immediately above the table so repeated saves cannot grow
+  // the gap. Only the ones adjacent to it — a blank line further up is a
+  // paragraph break somebody typed on purpose.
+  while (at > 0 && keep[at - 1].type === 'raw' && !keep[at - 1].line.trim()) {
+    keep.splice(at - 1, 1);
+    at--;
+  }
   const table = ['', '| build | status | bug |', '|---|---|---|'].concat(
     rows.length
       ? rows.map((b) => `| ${b.build} | \`[${b.mark}]\` | ${b.note} |`)
       : ['| — | `[todo]` | _no open bugs_ |'],
     [''],
   );
-  it.content = prose.concat(table).map((line) => ({ type: 'raw', line }));
+  it.content = [
+    ...keep.slice(0, at),
+    ...table.map((line) => ({ type: 'raw', line })),
+    ...keep.slice(at),
+  ];
 }
 function bugRow(b, onDel, onChange) {
   const row = document.createElement('div');
@@ -837,9 +953,30 @@ $('#tokenSave').onclick = async () => {
   // Prove it works NOW rather than letting the first real save fail.
   setState('checking token…');
   try {
-    await gh(`/repos/${OWNER}/${REPO}`);
-    setState(tokenBad ? 'token rejected — check it and try again' : 'token OK — saving enabled',
-      tokenBad ? 'err' : 'ok');
+    /**
+     * CHECK FOR WRITE, NOT FOR REACHABILITY.
+     *
+     * This repo is PUBLIC, so a plain GET of it succeeds for a token with no
+     * Contents permission at all, for a token scoped to the wrong repository,
+     * and for a read-only one. The dialog asks for "Contents: Read and write"
+     * and then said "token OK — saving enabled" to every wrong answer; only an
+     * outright malformed token (a 401) was ever caught — which is exactly the
+     * failure this check exists to prevent, arriving an hour later as a save
+     * that does not save.
+     *
+     * The same response already carries `permissions`, populated from the
+     * token's effective access, so proving write costs no extra request.
+     */
+    const repo = await gh(`/repos/${OWNER}/${REPO}`);
+    const canPush = !!(repo.permissions && (repo.permissions.push || repo.permissions.admin));
+    if (tokenBad) {
+      setState('token rejected — check it and try again', 'err');
+    } else if (!canPush) {
+      setState('token has no WRITE access to this repo — read only. '
+        + 'It needs Contents: Read and write, on EchoJex/mega-dash.', 'err');
+    } else {
+      setState('token OK — saving enabled', 'ok');
+    }
   } catch {
     setState('token rejected — check it and try again', 'err');
   }

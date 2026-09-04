@@ -112,20 +112,68 @@ export const makeStatus = () => ({});
  * from FEEL here because the same attribute hits the player at 15% and an enemy
  * at 30%. The applier knows who it is hitting; this function does not.
  */
+/**
+ * Refresh the container fields that everything OUTSIDE this file reads —
+ * `t`, `tMax` and `stacks` — from the live stack list.
+ *
+ * `t`/`tMax` come from the stack with the most time left, so `hasStatus`,
+ * `statusFrac` and the HUD tint keep working unchanged: "how afflicted am I"
+ * is answered by the affliction that will outlast the others.
+ */
+/** Ticket dispenser for callers that do not name a source — see applyStatus. */
+let nextAnonSrc = 0;
+
+function resync(s) {
+  s.list = s.list.filter((k) => k.t > 0);
+  let best = null;
+  for (const k of s.list) if (!best || k.t > best.t) best = k;
+  s.t = best ? best.t : 0;
+  s.tMax = best ? best.tMax : 0;
+  s.stacks = s.list.length;
+  return s;
+}
+
 export function applyStatus(bag, id, frames, opts = {}) {
   const def = ATTR[id];
   if (!def) return bag;
   const cur = bag[id];
 
   if (def.stacks) {
-    const step = opts.step ?? 1;
-    bag[id] = {
-      t: frames,
-      tMax: frames,
-      accum: cur?.accum || 0,
-      stacks: (cur && cur.t > 0 ? cur.stacks : 0) + 1,
-      step,
-    };
+    /**
+     * EVERY STACK HAS ITS OWN CLOCK, AND A SOURCE MAY ONLY HOLD ONE.
+     *
+     * This used to be a single shared timer plus a count, and both halves
+     * failed under a source that re-applies every frame — Volt Man's linger
+     * panel and Thorn Man's ground cover both do. The count climbed to four
+     * digits (its EFFECT was clamped, so it never showed), and far worse, `t`
+     * was reset to full on every one of those frames, so the status could not
+     * begin expiring until contact ended. Standing on a live panel meant a stun
+     * that started counting down only once you stepped off it.
+     *
+     * `src` is what makes the second half work: while a source's own stack is
+     * still alive it applies nothing at all — no new stack, and NO refresh of
+     * the one it already owns. Contact duration therefore cannot extend or
+     * deepen anything, however many frames two objects overlap. A different
+     * source stacks normally, which is what stacking is for.
+     *
+     * NAMING A SOURCE IS OPT-IN, AND THAT IS DELIBERATE. A discrete hit — a
+     * shot landing, a melee connecting — SHOULD stack every time, because two
+     * shots are two separate applications and the whole point of stacking is
+     * that they add up. Only a CONTINUOUS emitter needs deduping, and only it
+     * knows a stable name for itself.
+     *
+     * So an unnamed caller gets a fresh anonymous source each call and stacks
+     * exactly as before; passing `src` is what opts into "one stack at a time
+     * from me". That keeps every un-migrated call site behaving identically and
+     * confines the change to the appliers that actually run every frame.
+     */
+    const src = opts.src ?? (nextAnonSrc += 1);
+    const s = cur?.list ? cur : { list: [], accum: cur?.accum || 0 };
+    s.list = s.list.filter((k) => k.t > 0);
+    if (!s.list.some((k) => k.src === src)) {
+      s.list.push({ t: frames, tMax: frames, step: opts.step ?? 1, src });
+    }
+    bag[id] = resync(s);
     return bag;
   }
 
@@ -161,6 +209,15 @@ export function stepStatus(bag) {
   let damage = 0;
   for (const id of Object.keys(bag)) {
     const s = bag[id];
+    // A stacking status ages each stack on its own clock and drops them
+    // individually, so a long stack outlives a short one instead of the whole
+    // affliction sharing one timer.
+    if (s.list) {
+      for (const k of s.list) k.t--;
+      resync(s);
+      if (s.list.length === 0) { delete bag[id]; continue; }
+      continue;
+    }
     if (s.t <= 0) { delete bag[id]; continue; }
     s.t--;
     const frac = s.t / s.tMax;
@@ -235,10 +292,18 @@ export function speedMult(bag) {
     if (!ATTR[id]?.stacks) continue;
     const s = bag[id];
     if (!s || s.t <= 0) continue;
-    // A caller that did not name a step gets the player's 15%, which is the
-    // gentler of the two and therefore the safe default to guess wrong with.
-    const step = s.step ?? FEEL.stunPlayerStep;
-    mult *= step ** Math.min(s.stacks, STUN_MAX_STACKS);
+    // Each live stack takes its own cut, capped at STUN_MAX_STACKS. Applied per
+    // stack rather than as one exponent because stacks now carry their own
+    // `step` — the same attribute hits the player at 15% and an enemy at 30%,
+    // and a bag could in principle hold both.
+    let n = 0;
+    for (const k of (s.list || [])) {
+      if (k.t <= 0) continue;
+      if (++n > STUN_MAX_STACKS) break;
+      // A caller that did not name a step gets the player's 15%, which is the
+      // gentler of the two and therefore the safe default to guess wrong with.
+      mult *= k.step ?? FEEL.stunPlayerStep;
+    }
   }
   return mult;
 }

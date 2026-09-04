@@ -143,7 +143,24 @@ export default class GameScene extends Phaser.Scene {
       if (ui?.mode === 'open' || ui?.pausePanel || ui?.cards) return;
       if (!this.intent.fireHeld) this.beginFire();
     });
-    this.input.keyboard.on('keyup-SHIFT', () => this.endFire());
+    /**
+     * THE RELEASE HAS TO STAND DOWN WHEREVER THE PRESS DID.
+     *
+     * The keydown above declines to `beginFire()` while a wheel, the pause menu
+     * or a card screen is up. The keyup did not decline to `endFire()`, so a
+     * release with no matching press still set `fireReleased` — and only step()
+     * clears that, which a paused game does not run.
+     *
+     * SHIFT is the post-boss wheel's confirm and sits next to the pause key, so
+     * this fired constantly: `releaseFire()` measured `now - fireStart` against
+     * a `fireStart` from seconds earlier (or 0), decided the shot was fully
+     * charged, and spat one out on the frame the game resumed. Exactly the bug
+     * the keydown comment above says it fixed — it only fixed half of it.
+     */
+    this.input.keyboard.on('keyup-SHIFT', () => {
+      if (!this.intent.fireHeld) return;
+      this.endFire();
+    });
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     /**
@@ -231,6 +248,9 @@ export default class GameScene extends Phaser.Scene {
 
   /** Build a fresh run. Everything here is run-scoped and resets on death. */
   startRun() {
+    // Cleared here rather than in create(), because a run can start again
+    // without the scene being rebuilt. See the guard in die().
+    this.dead = false;
     const run = {
       frame: 0, score: 0, dist: 0, combo: 1, comboTimer: 0,
       exp: 0, level: 1, expToNext: FEEL.expPerLevel, pendingLevelUps: 0,
@@ -583,6 +603,22 @@ export default class GameScene extends Phaser.Scene {
       this.step();
       this.acc -= FIXED_DT;
       steps++;
+      /**
+       * A STEP THAT PAUSES THE GAME ENDS THE FRAME. `this.paused` is checked on
+       * the way IN to update(), but a step can raise it — the boss-room exit
+       * door arms `confirmExit`, sets paused and returns, waiting for an answer.
+       *
+       * Without this the loop ran step() again immediately, `confirmExit` was
+       * now truthy so its own guard fell through, and the warp fired: the door
+       * asked "leave the room?" and left at the same time. Answering BACK only
+       * cleared `paused`, so the already-started warp then ran and threw the
+       * player out of the room they had just chosen to stay in.
+       *
+       * It needed two steps in one frame, so it never happened at a locked
+       * 60fps and always happened at 30 — which is the worst possible shape for
+       * a bug to have, because it is invisible on the machine it is written on.
+       */
+      if (this.paused || this.warp) break;
     }
     if (steps === MAX_STEPS_PER_FRAME) this.acc = 0; // spiral guard
     this.draw();
@@ -598,7 +634,20 @@ export default class GameScene extends Phaser.Scene {
      * that will one day forget — and a permanent 28% speed loss carried out of
      * a boss room and into the rest of the run is the kind of bug that reads as
      * "the game feels sluggish now" rather than as anything to do with a floor.
+     *
+     * LATCHED, THEN CLEARED — and that is the whole fix. `thornHazard` is the
+     * only writer and it runs from stepBoss(), ~150 lines BELOW the only
+     * reader; this clear then ran at the top of the next frame, before the read
+     * again. So the value was destroyed every single frame before anything
+     * could use it and THORN_HAZ.slow had never once applied — his layer-1
+     * hazard, whose entire designed content is a movement speed drop, did
+     * nothing at all.
+     *
+     * Reading one frame late is imperceptible at 60Hz and keeps the property
+     * the comment above is protecting: the hazard still just writes while you
+     * stand in it and never has to remember to switch itself off.
      */
+    r.coverSlowActive = r.coverSlow ?? 1;
     r.coverSlow = 1;
 
     // keyboard movement folded into the same intent object touch uses
@@ -638,7 +687,7 @@ export default class GameScene extends Phaser.Scene {
          * 1 every frame by the hazard loop, exactly like `arena.push`, so
          * stepping off it is instant and no state can be left behind.
          */
-        speedMult: Attr.speedMult(this.status) * (this.run.coverSlow ?? 1),
+        speedMult: Attr.speedMult(this.status) * (this.run.coverSlowActive ?? 1),
         // "Jumps while in contact with knee-deep water have half the jump
         // strength; midair jumps are only affected by the rain forces." Wading
         // is the cost of standing in Tempest Man's floor water, and it does
@@ -1456,11 +1505,12 @@ export default class GameScene extends Phaser.Scene {
         if (b.y - b.radius <= ceil) { b.y = ceil + b.radius; b.vy = Math.abs(b.vy); bounced++; }
         if (b.y + b.radius >= floor) {
           b.y = floor - b.radius; b.vy = -Math.abs(b.vy); bounced++;
-          // Layer 3 discharges into "every panel the last bolt touched", so
-          // the floor remembers where it was struck.
-          for (const pn of (a?.panels || [])) {
-            if (b.x >= pn.x && b.x < pn.x + pn.w) pn.marked = true;
-          }
+          // `pn.marked` used to be set here, scanning every panel on every
+          // floor bounce, and nothing ever read it. Its comment claimed layer 3
+          // discharges into "every panel the last bolt touched" — but the slam
+          // in voltAttack energises EVERY panel unconditionally, which is what
+          // the tracker actually asks for ("BRIEFLY energising every panel").
+          // A leftover from a superseded design, not a hook.
         }
         if (bounced) {
           b.damage *= b.bounceDmg ?? 0.75;
@@ -1538,13 +1588,27 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Shots flagged `blocks` eat player fire, so cover matters.
-    for (const w of this.bullets) {
-      if (!w.blocks || w.life <= 0) continue;
-      const wb = this.bulletBox(w);
-      for (const b of this.bullets) {
-        if (b.enemy || b.life <= 0) continue;
-        if (Phys.overlaps(this.bulletBox(b), wb)) b.life = -1;
+    /**
+     * Shots flagged `blocks` eat player fire, so cover matters.
+     *
+     * A DELIBERATE HOOK, kept per CLAUDE.md's fill-don't-delete rule — the
+     * design has a jetpack that "blocks player bullets" and a shield rung that
+     * blocks projectiles, and neither is built. But NOTHING sets `blocks` on a
+     * bullet today, so this walked the whole bullet list every frame to run an
+     * inner loop that could never execute, and the shape it walks it in is
+     * O(n^2).
+     *
+     * One `.some()` decides whether the pass is worth entering at all, so the
+     * hook stays live and costs a single scan instead of a nested one.
+     */
+    if (this.bullets.some((w) => w.blocks && w.life > 0)) {
+      for (const w of this.bullets) {
+        if (!w.blocks || w.life <= 0) continue;
+        const wb = this.bulletBox(w);
+        for (const b of this.bullets) {
+          if (b.enemy || b.life <= 0) continue;
+          if (Phys.overlaps(this.bulletBox(b), wb)) b.life = -1;
+        }
       }
     }
 
@@ -1562,18 +1626,39 @@ export default class GameScene extends Phaser.Scene {
     // it and a multi-projectile weapon triggered it most times. `hitEnemy`
     // owns the null now, and the `!this.boss` re-check below is what keeps a
     // pierce shot from carrying on into a boss that no longer exists.
+    /**
+     * ONE TARGET LIST PER FRAME, NOT ONE PER BULLET.
+     *
+     * The spread below used to sit inside the bullet loop and again inside the
+     * explosion branch, so a busy fight allocated a fresh array of every minion
+     * plus the boss for EVERY bullet, every frame — dozens of throwaway arrays
+     * a frame, thousands a second, which is steady GC pressure that surfaces as
+     * periodic hitches on a phone.
+     *
+     * Hoisting is safe for exactly the reason the snapshot existed: holding the
+     * boss OBJECT is fine after `hitEnemy` nulls `this.boss`, because the object
+     * still exists and the `hp <= 0` guard below is what actually stops a pierce
+     * shot carrying on into a corpse. What was never safe was re-reading
+     * `this.boss` off the scene mid-loop, and nothing here does that.
+     */
+    const targets = this.boss ? [...this.minions, this.boss] : this.minions;
+
     for (const b of this.bullets) {
       if (b.enemy || b.life <= 0) continue;
       const box = this.bulletBox(b);
-      let pierce = b.pierce || 0;
+      // Normalised to a NUMBER before the loop below decrements it. Not all
+      // spawners set `pierce` (weaponry.js:1497 passes `L.pierce` straight
+      // through, which is undefined for most rungs), and `undefined--` is NaN —
+      // which fails `<= 0` and would leave an ordinary shot immortal.
+      b.pierce = b.pierce || 0;
       // Only a piercing shot needs to remember who it has already passed
       // through; everything else dies on first contact and cannot hit twice.
-      if (pierce > 0 && !b.hitSet) b.hitSet = new Set();
+      if (b.pierce > 0 && !b.hitSet) b.hitSet = new Set();
 
       // A snapshot: hitEnemy can null `this.boss` mid-loop, and reading it
       // again from the scene after that is exactly the crash described above.
       // The `hp <= 0` guard is what stops a pierce shot hitting a corpse.
-      for (const e of this.boss ? [...this.minions, this.boss] : this.minions) {
+      for (const e of targets) {
         if (e.hp <= 0 || b.hitSet?.has(e)) continue;
         if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
 
@@ -1615,7 +1700,7 @@ export default class GameScene extends Phaser.Scene {
          */
         if (b.explodeR) {
           const bx = b.x, by = b.y, r2 = (b.explodeR + 8) ** 2;
-          for (const o of this.boss ? [...this.minions, this.boss] : this.minions) {
+          for (const o of targets) {
             if (o === e || o.hp <= 0) continue;
             const ox = o.x + o.w / 2 - bx, oy = o.y + o.h / 2 - by;
             if (ox * ox + oy * oy > r2) continue;
@@ -1633,11 +1718,36 @@ export default class GameScene extends Phaser.Scene {
           knockback: b.knockback, from: b.x, stun: b.stun,
         });
         if (b.explodeR) { b.life = -1; break; }   // a burst is spent on one hit
-        if (pierce-- <= 0) { b.life = -1; break; }
+        /**
+         * PIERCE IS SPENT ON THE BULLET, NOT ON THE FRAME. This decremented a
+         * local re-read from `b.pierce` at the top of every frame, so the
+         * budget silently reset sixty times a second: a `pierce: 2` blade
+         * passed through an UNLIMITED number of enemies as long as no more than
+         * three of them overlapped it on the same frame — which is the normal
+         * case for a shot travelling through a spread-out row. The Lv1 -> Lv3
+         * pierce step was invisible in play because level 1 was already
+         * effectively infinite.
+         */
+        if (b.pierce-- <= 0) { b.life = -1; break; }
       }
     }
+    /**
+     * CULLED ON BOTH AXES. This tested X only, and inside an arena `cam.x` is 0
+     * and the room is exactly 0..viewW — so the horizontal test could never
+     * fire in a boss room and nothing culled vertically anywhere. A Blaze
+     * fireball that wall-bounces gets `vy = -1.6` against `gravity = 0.02`,
+     * climbs off the top of the screen and then lives out its full 420-frame
+     * life: seven seconds of invisible bullet still being stepped, drawn and
+     * collision-tested every frame, several at a time in a long fight.
+     *
+     * The vertical margin is generous because lobbed arcs — the Blaze Wheel's
+     * catapult, the drone's Lv10 skyward shot — legitimately leave the top of
+     * the screen and come back down.
+     */
     this.bullets = this.bullets.filter(
-      (b) => b.life > 0 && b.x > this.cam.x - 40 && b.x < this.cam.x + this.viewW + 40,
+      (b) => b.life > 0
+        && b.x > this.cam.x - 40 && b.x < this.cam.x + this.viewW + 40
+        && b.y > -200 && b.y < VIEW_H + 120,
     );
   }
 
@@ -2178,6 +2288,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   die() {
+    /**
+     * ONCE PER RUN, AND THIS GUARD IS LOAD-BEARING — it writes to the save.
+     *
+     * `stepAttributes`' damage-over-time death does `return this.die()`, which
+     * returns from stepAttributes, NOT from step(). step() then carries on into
+     * half a dozen further `this.hurt()` calls — hot patches, arena hazards,
+     * enemy shots, contact — and dot damage never sets `invuln`, so burning to
+     * death while touching a minion or standing in a hazard reached here twice
+     * in one frame and banked the whole payout twice.
+     *
+     * That is permanent, silent save inflation: save.runs and save.chips both
+     * double-count, and it reads from the outside as "the Chip payout is
+     * inconsistent". scene.start() only queues, so it cannot stop the step.
+     */
+    if (this.dead) return;
+    this.dead = true;
     // The Mega Man 2 death burst replaces this during the finishing passes.
     save.runs++;
     save.dist += Math.floor(this.run.dist);
@@ -2449,6 +2575,20 @@ export default class GameScene extends Phaser.Scene {
 
     const g = L.world.g;
     const sx = (wx) => wx - cam + sh.x; // world -> screen, shaken
+    /**
+     * THE VERTICAL HALF OF THE SAME SHAKE, and it was missing.
+     *
+     * `sx` folded in `sh.x` so every world actor shook horizontally, but there
+     * was no `sy` — only the arena backdrop and the doors moved vertically, and
+     * the doors did it by hand-adding `sh.y` at two call sites. So on every
+     * boss telegraph the room and the doors bounced up and down while the
+     * ground, the player, the boss, the minions and every projectile stayed put
+     * on that axis: the door visibly detached from the ground line it stands on.
+     *
+     * Shake still moves the WORLD and never the HUD — the HUD is a whole scene
+     * above this one.
+     */
+    const sy = (wy) => wy + sh.y;
 
     if (this.arena) {
       Arena.drawArena(g, this.arena, this.viewW, sh);
@@ -2459,21 +2599,21 @@ export default class GameScene extends Phaser.Scene {
     for (const s of this.world.groundSpans) {
       if (s.x2 < cam - 8 || s.x1 > cam + this.viewW + 8) continue;
       g.fillStyle(0x0a1628, 1);
-      g.fillRect(sx(s.x1), GROUND_Y, s.x2 - s.x1, VIEW_H - GROUND_Y);
+      g.fillRect(sx(s.x1), sy(GROUND_Y), s.x2 - s.x1, VIEW_H - GROUND_Y);
       g.fillStyle(0x1a3050, 1);
-      g.fillRect(sx(s.x1), GROUND_Y, s.x2 - s.x1, 2);
+      g.fillRect(sx(s.x1), sy(GROUND_Y), s.x2 - s.x1, 2);
     }
     for (const s of this.world.spikes) {
       g.fillStyle(0xc0c0c8, 1);
       const n = Math.max(1, Math.round(s.w / 5));
       for (let i = 0; i < n; i++) {
         const tx = sx(s.x + i * (s.w / n));
-        g.fillTriangle(tx, s.y + s.h, tx + s.w / n / 2, s.y, tx + s.w / n, s.y + s.h);
+        g.fillTriangle(tx, sy(s.y + s.h), tx + s.w / n / 2, sy(s.y), tx + s.w / n, sy(s.y + s.h));
       }
     }
     for (const p of this.world.platforms) {
       g.fillStyle(0x1a3a60, 1);
-      g.fillRect(sx(p.x), p.y, p.w, p.h);
+      g.fillRect(sx(p.x), sy(p.y), p.w, p.h);
     }
     }
 
@@ -2486,23 +2626,23 @@ export default class GameScene extends Phaser.Scene {
       const live = d.armed !== false;
       if (live) {
         g.fillStyle(0xf5d328, 0.6 + 0.4 * Math.sin(r.frame * 0.08));
-        g.fillRect(sx(d.x) - 2, d.y - d.h - 2 + sh.y, d.w + 4, d.h + 4);
+        g.fillRect(sx(d.x) - 2, sy(d.y - d.h - 2), d.w + 4, d.h + 4);
       }
       g.fillStyle(live ? (d.wrap ? 0xf5d328 : 0x5cadd5) : 0x4a4a44, live ? 1 : 0.55);
-      g.fillRect(sx(d.x), d.y - d.h + sh.y, d.w, d.h);
+      g.fillRect(sx(d.x), sy(d.y - d.h), d.w, d.h);
     }
 
     for (const p of this.pickups) {
       const style = Pickups.PICKUP_STYLE[p.type];
       L.pickups.draw(
-        { ...p, id: `pickup:${p.type}`, x: sx(p.x), palette: style },
+        { ...p, id: `pickup:${p.type}`, x: sx(p.x), y: sy(p.y), palette: style },
         (gg, a) => drawPickup(gg, a, style, r.frame),
       );
     }
 
     for (const e of this.minions) {
       L.minions.draw({
-        id: e.id, x: sx(e.x), y: e.y, w: e.w, h: e.h,
+        id: e.id, x: sx(e.x), y: sy(e.y), w: e.w, h: e.h,
         facing: Math.sign(e.vx) || 1,
         clip: e.def.kind === 'ground' ? 'walk' : 'fly',
         palette: {
@@ -2519,37 +2659,37 @@ export default class GameScene extends Phaser.Scene {
       const ef = Attr.statusFlash(e.status);
       if (ef.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
         L.minions.g.fillStyle(ef.tint, 0.5 * ef.alpha * Attr.statusIntensity(e.status));
-        L.minions.g.fillRect(sx(e.x), e.y, e.w, e.h);
+        L.minions.g.fillRect(sx(e.x), sy(e.y), e.w, e.h);
       }
     }
 
     for (const b of this.bullets) {
-      const cx = sx(b.x);
+      const cx = sx(b.x), cy = sy(b.y);
       L.bullets.draw(
         {
           ...b, id: `shot:${b.weapon}`,
-          x: cx - b.radius, y: b.y - b.radius, w: b.radius * 2, h: b.radius * 2,
+          x: cx - b.radius, y: cy - b.radius, w: b.radius * 2, h: b.radius * 2,
           facing: Math.sign(b.vx) || 1,
           palette: { primary: b.color, secondary: b.color },
         },
-        (gg, a) => drawProjectile(gg, { ...a, x: cx, y: b.y }, r.frame),
+        (gg, a) => drawProjectile(gg, { ...a, x: cx, y: cy }, r.frame),
       );
     }
 
     if (this.boss) {
       const b = this.boss;
       L.boss.draw({
-        id: b.id, x: sx(b.x), y: b.y, w: b.w, h: b.h,
+        id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
         facing: -1, clip: b.state,
         palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
       });
       // Hardware whose orientation is game state — see drawBossRig. Not a
       // silhouette: the rectangle underneath is still the honest footprint.
-      drawBossRig(L.boss.g, b, sx(b.x));
+      drawBossRig(L.boss.g, b, sx(b.x), sy(b.y));
       const bf = Attr.statusFlash(b.status);
       if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
         L.boss.gOver.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
-        L.boss.gOver.fillRect(sx(b.x), b.y, b.w, b.h);
+        L.boss.gOver.fillRect(sx(b.x), sy(b.y), b.w, b.h);
       }
     }
 
@@ -2557,14 +2697,14 @@ export default class GameScene extends Phaser.Scene {
     // and scrolls with everything else and sits exactly where the body was.
     // Over the sprites for the same reason the player's flash is: a death that
     // drew behind the body would be invisible the day bosses have art.
-    for (const d of this.deaths) Death.drawDeath(L.boss.gOver, sx, d);
+    for (const d of this.deaths) Death.drawDeath(L.boss.gOver, sx, d, sy);
 
     // player — flashes while invulnerable
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {
       const p = this.player;
       L.player.draw({
         id: 'player',
-        x: sx(p.x), y: p.y + (p.sliding ? 12 : 0),
+        x: sx(p.x), y: sy(p.y + (p.sliding ? 12 : 0)),
         w: 24, h: p.sliding ? 12 : 24,
         facing: p.facing,
         clip: playerClip(p),
@@ -2584,12 +2724,24 @@ export default class GameScene extends Phaser.Scene {
       const pf = Attr.statusFlash(this.status);
       if (pf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
         L.player.gOver.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
-        L.player.gOver.fillRect(sx(p.x), p.y + (p.sliding ? 12 : 0), 24, p.sliding ? 12 : 24);
+        L.player.gOver.fillRect(sx(p.x), sy(p.y + (p.sliding ? 12 : 0)), 24, p.sliding ? 12 : 24);
       }
-      // Worn hardware, allies and hit feedback, on the player's own layer so
-      // the drone and the shield sit above every world actor with him.
-      Wpn.drawWeaponry(L.player.gOver, sx, this.weaponCtx());
     }
+
+    /**
+     * WEAPONRY IS DRAWN OUTSIDE THE I-FRAME FLASH, and that is the whole fix.
+     *
+     * This used to sit inside the branch above, so for the 90 frames after
+     * every hit the drone, the shield and every summoned ally strobed at 10Hz
+     * along with the player. None of them is the player: the flash says "you
+     * are briefly invulnerable", and blinking a drone hovering three feet away
+     * says nothing at all — it just makes the screen harder to read at exactly
+     * the moment the player is trying to recover.
+     *
+     * Still on the player's layer, so the drone and the shield sit above every
+     * world actor with him.
+     */
+    Wpn.drawWeaponry(L.player.gOver, sx, this.weaponCtx());
 
     /**
      * THE ROOM LOSING POWER. Volt Man's layer-2 sweep ends by flickering the
@@ -2613,7 +2765,12 @@ export default class GameScene extends Phaser.Scene {
     // bolts are the only ones so far, and they are the whole reason the room
     // turned its lights off. They keep the shake, because unlike the flash they
     // are objects in the world rather than light cast across it.
-    Arena.drawArenaBolts(L.player.g, this.arena, Arena.shakeOffset(this.shake));
+    // THE SAME OFFSET THE REST OF THE FRAME USED. `shakeOffset` re-rolls its
+    // random on every call, so calling it a second time here gave the bolts a
+    // different displacement from the room they are attached to — during a
+    // shake Volt Man's power-line arcs visibly detached from their own
+    // conductors. One roll per frame, shared.
+    Arena.drawArenaBolts(L.player.g, this.arena, sh);
 
     // A lightning or arc flash washes the whole room. Drawn on the topmost
     // world layer and WITHOUT the shake offset: light does not shake, and a

@@ -513,6 +513,20 @@ export function stepArena(arena) {
         pl.on = on;
         if (on) roamPlatform(pl);
       }
+      /**
+       * KEEP `t` MEANING "FRAMES LEFT IN THIS STATE" on a beat platform too.
+       *
+       * This branch `continue`s before the `--pl.t` below, so `t` sat at its
+       * initial 0 for the whole fight — and the draw code reads `pl.t < 45` to
+       * decide whether to render a platform hollow as an "about to leave" tell.
+       * Every beat platform therefore drew as permanently departing, which
+       * turns the one warning the player gets into a constant, and left the
+       * real beat-driven departure with no tell at all.
+       *
+       * Derived from the room's own clock rather than counted separately, for
+       * the same reason `beat`/`beatN` are: a second counter can drift.
+       */
+      pl.t = ((on ? b.on : b.every) - phase) * arena.beatLen - arena.beat;
       continue;
     }
     if (--pl.t > 0) continue;
@@ -575,7 +589,12 @@ export function stepArena(arena) {
   if (q) {
     if (q.h < q.target) q.h = Math.min(q.target, q.h + q.rise);
     else if (q.h > q.target) q.h = Math.max(q.target, q.h - q.rise * 0.7);
-    if (q.hold > 0 && --q.hold === 0) q.target = q.kind === 'lava' ? 0 : q.target;
+    // Only Blaze Man's lava ever sets `hold` (bossFights.js:338) — it is the
+    // 20-second dwell before the flood recedes. Tempest Man's water is static
+    // and never holds. This used to read `q.target = q.kind === 'lava' ? 0 :
+    // q.target`, whose else-branch assigned the field to itself: dead, and it
+    // read as though a water hold were a thing that did something.
+    if (q.kind === 'lava' && q.hold > 0 && --q.hold === 0) q.target = 0;
   }
 
   for (const t of arena.turrets) if (t.flash > 0) t.flash--;
@@ -1067,12 +1086,25 @@ function drawBackdrop(g, arena, viewW, sx, sy) {
     // mesh at 224px without turning into moire.
     g.fillStyle(0x141018, 1);
     g.fillRect(0, 0, viewW, arena.floorY);
-    g.fillStyle(0x2A2430, 1);
-    for (let x = -arena.floorY; x < viewW; x += 12) {
-      for (let k = 0; k < arena.floorY; k += 6) {
-        g.fillRect(x + k + sx * 0.2, k + sy * 0.2, 2, 2);
-        g.fillRect(x + arena.floorY - k + sx * 0.2, k + sy * 0.2, 2, 2);
-      }
+    /**
+     * DIAGONALS, NOT 3,400 LITTLE SQUARES.
+     *
+     * This was a nested loop stamping a 2x2 fillRect per lattice point: at
+     * viewW 480 and floorY 184 that is 55 x 31 x 2 = ~3,410 draw calls EVERY
+     * FRAME, for a pattern that never changes shape — by a wide margin the most
+     * expensive draw path in the game, on a phone that is already
+     * integer-scaling a 224px buffer up to a full screen.
+     *
+     * The same lattice is 110 line segments. Each diagonal was already a
+     * straight run of dots 6px apart, so drawing it as a line is the same mesh
+     * with the gaps closed — which at this scale reads as chain-link at least as
+     * well, and cannot moire.
+     */
+    g.lineStyle(2, 0x2A2430, 1);
+    const ox = sx * 0.2, oy = sy * 0.2, fy = arena.floorY;
+    for (let x = -fy; x < viewW; x += 12) {
+      g.lineBetween(x + ox, oy, x + fy + ox, fy + oy);        // "/" run
+      g.lineBetween(x + fy + ox, oy, x + ox, fy + oy);        // "\" run
     }
     for (const f of [0.22, 0.5, 0.78]) {
       const lx = Math.round(viewW * f) + sx * 0.25;

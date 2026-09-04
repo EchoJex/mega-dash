@@ -19,7 +19,23 @@ export const FIELD_RE = /^- \*\*(.+?)\*\* `\[(\w+)\]`\s?(.*)$/;
  * Order-preserving means the app physically cannot rearrange your writing.
  */
 export function parse(text) {
-  const lines = text.split('\n');
+  /**
+   * NORMALISE LINE ENDINGS FIRST — the same first move `docs/sprite-fmt.js`
+   * makes, and for a reason this file learned the hard way.
+   *
+   * In JavaScript `\r` is a line TERMINATOR: `.` does not match it and `$` does
+   * not sit before it. So a CRLF file split on '\n' leaves a trailing `\r` that
+   * FIELD_RE cannot get past, and it matches NOTHING — every field silently
+   * becomes a raw line. `npm run status` then reported 0/13 design fields for
+   * all 17 bosses while calling five of them DONE, and `npm run sync` blanked
+   * three fields on every boss and printed a success message.
+   *
+   * `.gitattributes` is the real fix and stops the file arriving that way. This
+   * is here so a file pasted in from a Windows editor cannot take the toolchain
+   * down a second time. Round-tripping such a file returns LF, which is correct:
+   * LF is what the repo stores.
+   */
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   const d = { pre: [], sections: [] };
   let sec = null, item = null, field = null;
 

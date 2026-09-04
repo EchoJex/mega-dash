@@ -22,52 +22,19 @@
  * forever, and that is not something anybody notices while drawing.
  */
 
-import { deflateSync } from 'node:zlib';
 import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { parse } from '../docs/sprite-fmt.js';
+import { encodePng } from './png.mjs';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
 const SRC = join(REPO, 'design/sprites');
 const OUT = join(REPO, 'public/sprites');
 
-// ── PNG, same writer as tools/sprite-templates.mjs ────────────────────
-
-const CRC = (() => {
-  const t = new Int32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c;
-  }
-  return t;
-})();
-const crc32 = (b) => {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-};
-function chunk(type, data) {
-  const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([len, body, crc]);
-}
-function png(w, h, px) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; ihdr[9] = 6;
-  const raw = Buffer.alloc(h * (w * 4 + 1));
-  for (let y = 0; y < h; y++) {
-    raw[y * (w * 4 + 1)] = 0;
-    Buffer.from(px.buffer, y * w * 4, w * 4).copy(raw, y * (w * 4 + 1) + 1);
-  }
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-    chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
+// PNG writing lives in tools/png.mjs — one copy, shared with
+// tools/sprite-templates.mjs. It used to be duplicated here verbatim, under a
+// comment that said so instead of fixing it.
 
 // ── The live palettes ─────────────────────────────────────────────────
 
@@ -175,7 +142,7 @@ for (const file of files) {
     }
   });
 
-  writeFileSync(join(OUT, `${id}.png`), png(w, h, px));
+  writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
   built++;
   console.log(`  ${id.padEnd(10)} ${w}x${h}  ${doc.frames.length} frame(s)  [${doc.status}]`);
 }

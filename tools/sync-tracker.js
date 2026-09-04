@@ -21,6 +21,30 @@ const doc = parse(readFileSync(SRC, 'utf8'));
 const slices = doc.sections.find((s) => s.title === 'SLICES');
 if (!slices) throw new Error('TRACKER.md has no "# SLICES" section');
 
+/**
+ * REFUSE TO RUN IF THE PARSER READ NOTHING. This tool OVERWRITES a committed
+ * file, so "produced garbage quietly" is its worst possible failure and it
+ * happened: on a CRLF checkout FIELD_RE matched nothing, every field degraded
+ * into a raw line, the meta-line fallback below still found the palette hexes in
+ * that raw text — so the `hexes.length < 3` skip never fired — and this wrote
+ * `attackName`, `weaponName` and `weaponClass` BLANK on all seventeen bosses,
+ * then printed `boss-data.json: 17 bosses from TRACKER.md` and exited 0.
+ *
+ * A slice with a `- **label** \`[mark]\`` line in it MUST parse as a field. If
+ * none of them do, the parser is broken, not the design — so stop before the
+ * write rather than after it.
+ */
+const fieldLines = slices.items
+  .flatMap((it) => rawOf(it))
+  .filter((l) => /^- \*\*.+\*\* `\[\w+\]`/.test(l));
+if (fieldLines.length) {
+  throw new Error(
+    `${fieldLines.length} field lines did not parse as fields — the parser is not `
+    + 'reading TRACKER.md correctly, so boss-data.json was NOT written.\n'
+    + `First unparsed: ${fieldLines[0]}`,
+  );
+}
+
 const HEX = /#[0-9A-Fa-f]{6}/g;
 const out = { _note: 'GENERATED from design/TRACKER.md by tools/sync-tracker.js. Do not edit.', bosses: {} };
 
