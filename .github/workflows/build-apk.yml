@@ -46,7 +46,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # ONE NUMBER, COMPUTED ONCE. It is the APK's versionCode, the value
       # stamped into the JS bundle for the dev HUD and crash reports, and the
@@ -67,12 +67,12 @@ jobs:
       - name: Compute build code
         run: echo "BUILD_CODE=$((1000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -124,7 +124,7 @@ jobs:
         run: npx cap sync android
 
       - name: Upload sourcemaps
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sourcemaps-${{ env.BUILD_CODE }}
           path: sourcemaps/
@@ -171,7 +171,7 @@ jobs:
           fi
           echo "Signed with the project key ($GOT)"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: mega-dash-apk
           path: android/app/build/outputs/apk/release/*.apk
