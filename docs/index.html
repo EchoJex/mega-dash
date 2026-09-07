@@ -63,6 +63,13 @@
     appearance:none;cursor:pointer;padding-left:14px}
   select.txt option{background:var(--bg);color:var(--fg)}
   .txt:focus{box-shadow:inset 0 0 0 1px var(--ui)}
+  /* A CHECK FIELD WEARS THE SAME .txt SKIN so the marker stripe down the left
+     edge still reads across every row. The boxes are 16px and the label is the
+     tap target, because this app is used on a phone in one hand. */
+  .checks{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center}
+  .checks label{display:inline-flex;gap:6px;align-items:center;padding:4px 0;
+    font-size:12px;color:var(--ink);text-transform:capitalize;cursor:pointer;user-select:none}
+  .checks input{width:16px;height:16px;accent-color:var(--ui);margin:0}
   .f-ready .txt{background:rgba(74,143,216,.09);box-shadow:inset 3px 0 0 var(--ready)}
   .f-wip   .txt{background:rgba(242,181,61,.09);box-shadow:inset 3px 0 0 var(--wip)}
   .f-draft .txt{box-shadow:inset 3px 0 0 var(--draft)}
@@ -196,6 +203,29 @@ const CHOICE_FIELDS = {
   'boss weakness A': WEAKNESS_TYPES,
   'boss weakness B': WEAKNESS_TYPES,
 };
+/**
+ * A FIELD THAT TRACKS ART, NOT PROSE. `sprite sheet` answers "which pieces of
+ * this boss's art exist" — four yes/no facts, not a sentence — so it renders as
+ * four checkboxes rather than a text box, which is what the owner asked for when
+ * this field stopped being `silhouette`.
+ *
+ * It still serialises as ONE ORDINARY FIELD LINE, `[x] furniture · [ ] boss …`,
+ * so `docs/tracker-md.js` needs no change and the round-trip test still holds.
+ * The separator is what makes it unambiguous: `boss` is a prefix of `boss atk`,
+ * so the reader splits on `·` and compares whole segments instead of searching
+ * for a substring that would report `boss` ticked whenever `boss atk` was.
+ */
+const CHECK_FIELDS = {
+  'sprite sheet': ['furniture', 'arena background', 'boss', 'boss atk'],
+};
+
+const readChecks = (text, names) => {
+  const segs = String(text || '').split('·').map((x) => x.trim().toLowerCase());
+  return names.map((n) => segs.includes(`[x] ${n}`));
+};
+const writeChecks = (names, on) =>
+  names.map((n, i) => `[${on[i] ? 'x' : ' '}] ${n}`).join(' · ');
+
 const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';
 
@@ -718,8 +748,9 @@ function fieldRow(f, head) {
   // is only an opportunity to typo something the build then classifies wrong.
   // Everything else stays prose, because everything else IS prose.
   const choices = CHOICE_FIELDS[f.label];
+  const boxes = CHECK_FIELDS[f.label];
   const txt = document.createElement(choices ? 'select' : 'div');
-  txt.className = 'txt';
+  txt.className = boxes ? 'txt checks' : 'txt';
   const dirty = () => {
     // THE ASSERTION RULE: editing a field drops it back to wip. Moving it to
     // draft again is a deliberate act, and that act is the go-ahead to build it.
@@ -729,7 +760,24 @@ function fieldRow(f, head) {
     touch();
   };
 
-  if (choices) {
+  if (boxes) {
+    // The value is rewritten WHOLE on every tick rather than patched, so the
+    // line's order and spacing can never drift from what writeChecks emits.
+    const on = readChecks(f.text, boxes);
+    boxes.forEach((name, i) => {
+      const lab = document.createElement('label');
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = on[i];
+      box.onchange = () => {
+        on[i] = box.checked;
+        f.text = writeChecks(boxes, on);
+        dirty();
+      };
+      lab.append(box, document.createTextNode(name));
+      txt.appendChild(lab);
+    });
+  } else if (choices) {
     for (const c of choices) {
       const o = document.createElement('option');
       o.value = c; o.textContent = c;
