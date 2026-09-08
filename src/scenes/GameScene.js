@@ -40,7 +40,7 @@ import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
-  playerClip,
+  playerClip, hexNum,
 } from '../systems/assets.js';
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
@@ -506,13 +506,23 @@ export default class GameScene extends Phaser.Scene {
    * The warp advances on REAL time, not sim time, because the sim is stopped
    * for its duration.
    */
-  beginWarp(build) {
+  beginWarp(build, staged = false) {
     if (this.warp) return;
     sfx('warp');
     // The pool is shared and position-based, so puffs left in the old room
     // would reappear at those coordinates in the new one.
     Attr.clearSmoke();
-    this.warp = { phase: 'out', t: Arena.WARP.out, alpha: 0, build };
+    const W = staged ? Arena.ARENA_WARP : Arena.WARP;
+    /**
+     * `reveal` is the furniture's alpha and `beam` the boss's arrival, both 0
+     * until their stage. A plain warp sets them to 1 and never touches them
+     * again, so `draw` reads the same two fields either way and needs no branch
+     * on which kind of warp is running.
+     */
+    this.warp = {
+      phase: 'out', t: W.out, alpha: 0, build, staged,
+      reveal: staged ? 0 : 1, beam: staged ? 0 : 1,
+    };
     this.intent.moveDir = 0;
     this.intent.fireHeld = false;
     this.intent.jumpHeld = false;
@@ -520,20 +530,34 @@ export default class GameScene extends Phaser.Scene {
 
   stepWarp(delta) {
     const w = this.warp;
+    const W = w.staged ? Arena.ARENA_WARP : Arena.WARP;
     const step = delta / FIXED_DT;
     w.t -= step;
     if (w.phase === 'out') {
-      w.alpha = Math.min(1, 1 - w.t / Arena.WARP.out);
-      if (w.t <= 0) { w.phase = 'hold'; w.t = Arena.WARP.hold; w.alpha = 1; }
+      w.alpha = Math.min(1, 1 - w.t / W.out);
+      if (w.t <= 0) { w.phase = 'hold'; w.t = W.hold; w.alpha = 1; }
     } else if (w.phase === 'hold') {
       w.alpha = 1;
       if (w.t <= 0) {
         w.build();                       // everything loads behind full black
-        w.phase = 'in';
-        w.t = Arena.WARP.in;
+        w.phase = w.staged ? 'bg' : 'in';
+        w.t = w.staged ? W.bg : W.in;
       }
+    } else if (w.phase === 'bg') {
+      // The room itself, and nothing in it yet.
+      w.alpha = Math.max(0, w.t / W.bg);
+      if (w.t <= 0) { w.phase = 'furn'; w.t = W.furn; w.alpha = 0; }
+    } else if (w.phase === 'furn') {
+      // What the fight needs, arriving into a room that is already there.
+      w.alpha = 0;
+      w.reveal = Math.min(1, 1 - w.t / W.furn);
+      if (w.t <= 0) { w.phase = 'beam'; w.t = W.beam; w.reveal = 1; }
+    } else if (w.phase === 'beam') {
+      // And last, who you came for.
+      w.beam = Math.min(1, 1 - w.t / W.beam);
+      if (w.t <= 0) this.warp = null;    // time resumes
     } else {
-      w.alpha = Math.max(0, w.t / Arena.WARP.in);
+      w.alpha = Math.max(0, w.t / W.in);
       if (w.t <= 0) this.warp = null;    // time resumes
     }
   }
@@ -566,7 +590,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.y = GROUND_Y - 24;
       this.player.vx = 0; this.player.vy = 0;
       this.spawnBoss(def, layer);
-    });
+    }, true);   // staged: room, then furniture, then the boss beams down
   }
 
   /** Wrap door contact -> out of the arena into a fresh area. */
@@ -2608,7 +2632,8 @@ export default class GameScene extends Phaser.Scene {
     const sy = (wy) => wy + sh.y;
 
     if (this.arena) {
-      Arena.drawArena(g, this.arena, this.viewW, sh);
+      // `reveal` is 1 except during a staged arena warp's furniture beat.
+      Arena.drawArena(g, this.arena, this.viewW, sh, this.warp?.reveal ?? 1);
       // After the room, so a barrel floats ON the water rather than under it.
       Arena.drawHazards(g, this.arena, sh);
     } else {
@@ -2703,14 +2728,42 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.boss) {
       const b = this.boss;
-      L.boss.draw({
-        id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
-        facing: -1, clip: b.state,
-        palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
-      });
-      // Hardware whose orientation is game state — see drawBossRig. Not a
-      // silhouette: the rectangle underneath is still the honest footprint.
-      drawBossRig(L.boss.g, b, sx(b.x), sy(b.y));
+      /**
+       * THE BEAM IS THE ARRIVAL, so the boss is not drawn until it reaches him.
+       * A column of his own primary comes down from the ceiling and he is
+       * standing in it when it lands — "beam down as an elementally appropriate
+       * beam of light". Outside a staged warp `beam` is 1 and none of this runs.
+       *
+       * BOTH HALVES OF HIM HAVE TO BE GATED. The body is an ActorLayer draw and
+       * the hardware is drawBossRig, and gating only the second left an honest
+       * rectangle standing in the room through the whole reveal — which is
+       * precisely the thing the beam exists to introduce.
+       */
+      const beam = this.warp?.beam ?? 1;
+      if (beam < 1) {
+        const bcx = sx(b.x) + b.w * 0.5;
+        const top = sy(0);
+        // The column's leading edge travels down to his feet over the beat.
+        const reach = (sy(b.y + b.h) - top) * Math.min(1, beam / 0.75);
+        const bw = Math.max(4, Math.round(b.w * 0.7));
+        const col = hexNum(b.primary || '#FFFFFF');
+        L.boss.g.fillStyle(col, 0.30);
+        L.boss.g.fillRect(Math.round(bcx - bw * 0.5), top, bw, Math.round(reach));
+        L.boss.g.fillStyle(0xFFFFFF, 0.55);
+        L.boss.g.fillRect(Math.round(bcx - 1), top, 2, Math.round(reach));
+      }
+      // He materialises out of the last quarter of the beam rather than
+      // appearing when it is already gone.
+      if (beam >= 0.75) {
+        L.boss.draw({
+          id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
+          facing: -1, clip: b.state,
+          palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
+        });
+        // Hardware whose orientation is game state — see drawBossRig. Not a
+        // silhouette: the rectangle underneath is still the honest footprint.
+        drawBossRig(L.boss.g, b, sx(b.x), sy(b.y));
+      }
       const bf = Attr.statusFlash(b.status);
       if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
         L.boss.gOver.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));

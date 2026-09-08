@@ -29,6 +29,24 @@ import * as Attr from './attributes.js';
 export const WARP = { out: 16, hold: 6, in: 18 };
 
 /**
+ * THE BOSS DOOR IS A CEREMONY, AND THE TRACKER TIMES IT.
+ *
+ * "Slow fade to black over 3s, builds the room behind full black, then fades
+ * back in 3s. Fade in the boss arena background for 1s then fade in arena
+ * furniture for 1s, then have the boss beam down as an elementally appropriate
+ * beam of light before unfreezing everything."
+ *
+ * So the three seconds back in are the three stages, one second each — the room
+ * first, then what is in it, then who. Read the sentence that way and the "3s"
+ * and the "1s then 1s" agree instead of adding up to five.
+ *
+ * ONLY THE BOSS DOOR GETS THIS. The wrap door back out to the overworld keeps
+ * WARP above: it is the same mechanism but the opposite moment — leaving a room
+ * you have finished, with no room to introduce and nobody to arrive.
+ */
+export const ARENA_WARP = { out: 180, hold: 6, bg: 60, furn: 60, beam: 60 };
+
+/**
  * Build the sealed room for a boss.
  *
  * `floorY` matches the area's ground line so the player's footing does not jump
@@ -646,7 +664,7 @@ export function drawArenaBolts(g, arena, shake) {
 }
 
 /** Draw the sealed room: walls, ceiling, floor, furniture, attributes. */
-export function drawArena(g, arena, viewW, shake) {
+export function drawArena(g, arena, viewW, shake, reveal = 1) {
   const sx = shake?.x || 0, sy = shake?.y || 0;
 
   g.fillStyle(arena.theme.fill, 1);
@@ -667,17 +685,29 @@ export function drawArena(g, arena, viewW, shake) {
   g.fillStyle(0x1a3050, 1);
   g.fillRect(sx, sy, viewW, 1);
 
+  /**
+   * EVERYTHING ABOVE IS THE ROOM; EVERYTHING BELOW IS ITS FURNITURE, and the
+   * warp reveals them a beat apart — "fade in the boss arena background for 1s
+   * then fade in arena furniture for 1s".
+   *
+   * `rv` multiplies every furniture alpha rather than the whole Graphics,
+   * because `g` is the shared world layer: fading the object would take the
+   * terrain and the smoke with it.
+   */
+  const rv = reveal;
+  if (rv <= 0) return;
+
   // Drain and its spike ball sit IN the floor, so they draw before the liquid.
   if (arena.drain) {
     const d = arena.drain;
-    g.fillStyle(0x061020, 1);
+    g.fillStyle(0x061020, (1) * rv);
     g.fillRect(d.x + sx, d.y + sy, d.w, VIEW_H - d.y);
-    g.fillStyle(d.grateHurts ? 0x8a3040 : 0x2a4a70, 1);
+    g.fillStyle(d.grateHurts ? 0x8a3040 : 0x2a4a70, (1) * rv);
     for (let i = 2; i < d.w; i += 5) g.fillRect(d.x + i + sx, d.y + sy, 2, 3);
     const by = d.ball.y + Math.sin(d.ball.bob) * 1.5;
-    g.fillStyle(0x9aa4b4, 1);
+    g.fillStyle(0x9aa4b4, (1) * rv);
     g.fillCircle(d.ball.x + sx, by + sy, d.ball.r);
-    g.fillStyle(0xd8dee8, 1);
+    g.fillStyle(0xd8dee8, (1) * rv);
     for (let i = 0; i < 8; i++) {
       const th = (i / 8) * Math.PI * 2;
       g.fillRect(d.ball.x + Math.cos(th) * d.ball.r - 1 + sx, by + Math.sin(th) * d.ball.r - 1 + sy, 2, 2);
@@ -689,29 +719,29 @@ export function drawArena(g, arena, viewW, shake) {
   for (const pl of arena.platforms) {
     const going = pl.on && pl.t < 45;
     if (!pl.on) {
-      g.lineStyle(1, 0x1a3a60, 0.35);
+      g.lineStyle(1, 0x1a3a60, (0.35) * rv);
       g.strokeRect(pl.x + sx + 0.5, pl.y + sy + 0.5, pl.w - 1, pl.h - 1);
       continue;
     }
-    g.fillStyle(pl.hot > 0 ? 0xB03018 : 0x1a3a60, going ? 0.55 : 1);
+    g.fillStyle(pl.hot > 0 ? 0xB03018 : 0x1a3a60, (going ? 0.55 : 1) * rv);
     g.fillRect(pl.x + sx, pl.y + sy, pl.w, pl.h);
   }
 
   // Ceiling turrets, with a muzzle flash while firing.
   for (const t of arena.turrets) {
-    g.fillStyle(0x39404e, 1);
+    g.fillStyle(0x39404e, (1) * rv);
     g.fillRect(t.x + sx, t.y + sy, t.w, t.h);
-    g.fillStyle(t.flash > 0 ? 0xffd070 : 0x6b7686, 1);
+    g.fillStyle(t.flash > 0 ? 0xffd070 : 0x6b7686, (1) * rv);
     g.fillRect(t.x + t.w / 2 - 1 + sx, t.y + t.h + sy, 2, 3);
   }
 
   // Tempest Man's corner pipes, and the cascade pouring out of them.
   for (const pipe of arena.pipes || []) {
-    g.fillStyle(0x4A5460, 1);
+    g.fillStyle(0x4A5460, (1) * rv);
     g.fillRect(pipe.x + sx, pipe.y + sy, pipe.w, pipe.h);
-    g.fillStyle(0x2A323C, 1);
+    g.fillStyle(0x2A323C, (1) * rv);
     g.fillRect(pipe.x + sx, pipe.y + 2 + sy, pipe.w, 2);
-    g.fillStyle(0x5CADD5, 0.45);
+    g.fillStyle(0x5CADD5, (0.45) * rv);
     const mx = pipe.dir > 0 ? pipe.x + pipe.w - 5 : pipe.x + 1;
     g.fillRect(mx + sx, pipe.y + pipe.h + sy, 4, arena.floorY - pipe.y - pipe.h);
   }
@@ -737,12 +767,12 @@ export function drawArena(g, arena, viewW, shake) {
       // "Burnt black with small red flowing embers." The embers drift upward
       // and are seeded off the tile's own x, so each patch smoulders
       // differently and none of them flickers.
-      g.fillStyle(0x140D0A, 1);
+      g.fillStyle(0x140D0A, (1) * rv);
       g.fillRect(x, base - 3, c.w, 3);
       for (let i = 0; i < 3; i++) {
         const ph = (arena.t * 0.7 + i * 37 + c.x) % 46;
         const ex = x + ((c.x * 7 + i * 29) % Math.max(1, c.w - 2));
-        g.fillStyle(i % 2 ? 0xE8541A : 0xF5A623, Math.max(0, 0.85 - ph / 46));
+        g.fillStyle(i % 2 ? 0xE8541A : 0xF5A623, (Math.max(0, 0.85 - ph / 46)) * rv);
         g.fillRect(Math.round(ex), Math.round(base - 3 - ph * 0.4), 1, 1);
       }
     }
@@ -750,9 +780,9 @@ export function drawArena(g, arena, viewW, shake) {
     const h = Math.max(1, Math.round(c.grow * 12));
     // The mat, then blades standing out of it. Two greens so the cover has a
     // top edge — a flat block of one colour reads as a wall, not as growth.
-    g.fillStyle(0x14401C, 1);
+    g.fillStyle(0x14401C, (1) * rv);
     g.fillRect(x, base - Math.max(2, h * 0.4), c.w, Math.max(2, h * 0.4));
-    g.fillStyle(0x2AAB1C, 1);
+    g.fillStyle(0x2AAB1C, (1) * rv);
     for (let bx = 0; bx < c.w - 1; bx += 3) {
       // A slow sway, and a per-blade phase so they do not move as one sheet.
       const sway = Math.sin((arena.t * 0.03) + (c.x + bx) * 0.4) * (h * 0.12);
@@ -762,7 +792,7 @@ export function drawArena(g, arena, viewW, shake) {
     // The thorns: the reason standing in it costs something. Only on cover that
     // is still tall enough to be worth the warning.
     if (c.grow > 0.6) {
-      g.fillStyle(0x5C4033, 1);
+      g.fillStyle(0x5C4033, (1) * rv);
       for (let bx = 1; bx < c.w - 2; bx += 7) {
         g.fillRect(Math.round(x + bx), base - h + 1, 2, 2);
       }
@@ -782,23 +812,23 @@ export function drawArena(g, arena, viewW, shake) {
    */
   for (const sp of arena.speakers) {
     const x = sp.x + sx, y = sp.y + sy;
-    g.fillStyle(0x1B2029, 1);
+    g.fillStyle(0x1B2029, (1) * rv);
     g.fillRect(x, y, sp.w, sp.h);
-    g.lineStyle(1, 0x39404E, 1);
+    g.lineStyle(1, 0x39404E, (1) * rv);
     g.strokeRect(x + 0.5, y + 0.5, sp.w - 1, sp.h - 1);
     // The pulse decays from the beat rather than blinking on it.
     const p = Math.max(0, 1 - arena.beat / 16);
     const cx = x + sp.w / 2, cy = y + sp.h * 0.62, r = sp.w * 0.34;
-    g.fillStyle(0x2A313C, 1);
+    g.fillStyle(0x2A313C, (1) * rv);
     g.fillCircle(cx, cy, r + 2);
-    g.lineStyle(1, 0x4B5563, 1);
+    g.lineStyle(1, 0x4B5563, (1) * rv);
     g.strokeCircle(cx, cy, r + 2);
-    g.fillStyle(0x39404E, 1);
+    g.fillStyle(0x39404E, (1) * rv);
     g.fillCircle(cx, cy, r * (0.62 + 0.38 * p));
-    g.fillStyle(0xF5D328, 0.15 + 0.5 * p);
+    g.fillStyle(0xF5D328, (0.15 + 0.5 * p) * rv);
     g.fillCircle(cx, cy, r * 0.3 * (0.5 + p));
     // The port above the cone, so the cabinet does not read as one flat panel.
-    g.fillStyle(0x121820, 1);
+    g.fillStyle(0x121820, (1) * rv);
     g.fillRect(x + 3, y + 4, sp.w - 6, Math.max(3, sp.h * 0.22));
   }
 
@@ -807,7 +837,7 @@ export function drawArena(g, arena, viewW, shake) {
   // the hazard, so it is the brightest thing on an unlit panel.
   for (const p of arena.panels) {
     const discharging = p.live > 0 && p.live > p.liveMax - (p.discharge || 0);
-    g.fillStyle(p.live > 0 ? 0xF5D328 : 0x232B36, 1);
+    g.fillStyle(p.live > 0 ? 0xF5D328 : 0x232B36, (1) * rv);
     g.fillRect(p.x + sx, p.y + sy, p.w - 1, p.h);
     if (discharging) {
       /**
@@ -816,19 +846,19 @@ export function drawArena(g, arena, viewW, shake) {
        * flinches you, so it has to look different from the current that
        * lingers afterwards: a full-height crackle rather than a lit strip.
        */
-      g.fillStyle(0xFFFFFF, 0.95);
+      g.fillStyle(0xFFFFFF, (0.95) * rv);
       for (let k = 0; k < 5; k++) {
         const bx = p.x + 2 + Math.random() * (p.w - 5);
         g.fillRect(Math.round(bx) + sx, p.y - 8 + sy, 2, 9);
       }
     } else if (p.live > 0) {
-      g.fillStyle(0xFFF6C0, 0.8);
+      g.fillStyle(0xFFF6C0, (0.8) * rv);
       g.fillRect(p.x + sx, p.y - 2 + sy, p.w - 1, 2);
     } else if (p.tell > 0) {
       // "A BLINKING RED AND YELLOW LIGHT." Two colours alternating is a
       // hazard lamp; one steady colour is decoration. The blink is what makes
       // it read as a warning from across the room.
-      g.fillStyle(Math.floor(p.tell / 5) % 2 ? 0xE11416 : 0xF5D328, 0.95);
+      g.fillStyle(Math.floor(p.tell / 5) % 2 ? 0xE11416 : 0xF5D328, (0.95) * rv);
       g.fillRect(p.x + p.w / 2 - 2 + sx, p.y - 3 + sy, 4, 3);
     }
   }
@@ -840,16 +870,16 @@ export function drawArena(g, arena, viewW, shake) {
     // going to matter later without a live thing hanging off it. A long run
     // wall to wall, with a lit top edge so it reads as a cable in front of the
     // backdrop rather than as a crack in it.
-    g.fillStyle(0x39404E, 1);
+    g.fillStyle(0x39404E, (1) * rv);
     g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 2);
-    g.fillStyle(0x4B5563, 0.7);
+    g.fillStyle(0x4B5563, (0.7) * rv);
     g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 1);
     // The drop from the cable down to whatever hangs off it.
-    g.fillStyle(0x39404E, 1);
+    g.fillStyle(0x39404E, (1) * rv);
     g.fillRect(c.x + c.w / 2 - 1 + sx, c.cableY + sy, 2, (c.y - c.cableY) + 1);
     if (!c.live) continue;
     // The exposed conductor and everything it does, from layer 2.
-    g.fillStyle(0x4B5563, 1);
+    g.fillStyle(0x4B5563, (1) * rv);
     g.fillRect(c.x + sx, c.y + sy, c.w, c.h);
     /**
      * THE ELECTRIFIED TIP. Idle it sparks now and then, which is what says a
@@ -860,13 +890,13 @@ export function drawArena(g, arena, viewW, shake) {
      */
     const winding = c.tell > 0;
     if (Math.random() < (winding ? 0.9 : 0.25)) {
-      g.fillStyle(winding ? 0xC9A2FF : 0xFFF6C0, winding ? 0.95 : 0.7);
+      g.fillStyle(winding ? 0xC9A2FF : 0xFFF6C0, (winding ? 0.95 : 0.7) * rv);
       const sw = winding ? 2 : 1;
       g.fillRect(c.x + 1 + Math.floor(Math.random() * (c.w - 2)) + sx,
         c.y + c.h - 1 + sy, sw, sw);
     }
     if (winding) {
-      g.fillStyle(0x9B4DFF, 0.5 + 0.4 * Math.random());
+      g.fillStyle(0x9B4DFF, (0.5 + 0.4 * Math.random()) * rv);
       g.fillRect(c.x + c.w / 2 - 1 + sx, c.y + c.h + sy, 2, 3 + (Math.random() * 3 | 0));
     }
     // The bolt itself is NOT drawn here — see drawArenaBolts.
@@ -875,7 +905,7 @@ export function drawArena(g, arena, viewW, shake) {
   // Strike Man's ceiling rails. The bags riding them are hazard entities and
   // are drawn with the rest of those below.
   for (const rail of arena.rails || []) {
-    g.fillStyle(0x2A323C, 1);
+    g.fillStyle(0x2A323C, (1) * rv);
     g.fillRect(sx, rail.y + sy, viewW, 1);
   }
 
@@ -890,9 +920,9 @@ export function drawArena(g, arena, viewW, shake) {
   for (const p of arena.patches) {
     const tint = Attr.ATTR[p.id]?.tint ?? 0xffffff;
     const a = Attr.patchAlpha(p);
-    g.fillStyle(tint, a);
+    g.fillStyle(tint, (a) * rv);
     g.fillRect(p.x + sx, p.y + sy, p.w, p.h);
-    g.fillStyle(tint, Math.min(1, a * 2.2));
+    g.fillStyle(tint, (Math.min(1, a * 2.2)) * rv);
     g.fillRect(p.x + sx, p.y + sy, p.w, 1);
   }
 
@@ -903,7 +933,7 @@ export function drawArena(g, arena, viewW, shake) {
   if (arena.rainDir !== null) {
     const rx = arena.rainDir;
     const len = 7;
-    g.lineStyle(1, 0x9AD8F0, 0.35);
+    g.lineStyle(1, 0x9AD8F0, (0.35) * rv);
     // A fixed lattice scrolled by the clock rather than particles: the streaks
     // have to be dense enough to read as heavy rain, and 60 tracked objects
     // per frame for something purely decorative is not a trade worth making.
@@ -922,9 +952,9 @@ export function drawArena(g, arena, viewW, shake) {
     const top = arena.floorY - q.h;
     const body = q.kind === 'lava' ? 0xC0300C : 0x14508A;
     const skin = q.kind === 'lava' ? 0xFF9A2E : 0x5CADD5;
-    g.fillStyle(body, q.kind === 'lava' ? 1 : 0.55);
+    g.fillStyle(body, (q.kind === 'lava' ? 1 : 0.55) * rv);
     g.fillRect(sx, top + sy, viewW, arena.floorY - top + 2);
-    g.fillStyle(skin, 0.9);
+    g.fillStyle(skin, (0.9) * rv);
     g.fillRect(sx, top + sy, viewW, 1);
   }
 }
