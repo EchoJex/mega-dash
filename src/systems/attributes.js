@@ -406,3 +406,76 @@ export const patchFrac = (p) => (p.permanent ? 1 : p.t / p.tMax);
 
 /** Blend a patch's tint toward transparent as it subsides, for drawing. */
 export const patchAlpha = (p, peak = 0.55) => peak * patchFrac(p);
+
+/**
+ * ── Burn's smoke trail ──────────────────────────────────────────────────
+ *
+ * "Smoke trails behind the character" is the one part of the Burn field that is
+ * neither damage nor tint, and a tint alone could not carry it: the hue says
+ * how much burn is LEFT, and the trail says the character is moving while on
+ * fire. The two answer different questions, which is why both exist.
+ *
+ * A TRAIL NEEDS HISTORY, so unlike Thorn Man's embers this cannot be derived
+ * from the actor's current position — a puff computed from where the actor IS
+ * would travel with them and read as an attached cloud rather than as something
+ * left behind. So there is a ring buffer, and it is the only state here.
+ *
+ * ONE FIXED-SIZE POOL, ALLOCATED ONCE, SHARED BY EVERY BURNING ACTOR. Puffs are
+ * pure decoration with no owner and no collision, so nothing needs to know
+ * whose they were; the oldest is overwritten when the ring wraps. That keeps a
+ * room full of burning minions costing exactly what one burning player costs,
+ * and it never allocates during a fight.
+ */
+const SMOKE_MAX = 64;
+const SMOKE_LIFE = 42;
+const SMOKE_EVERY = 6;
+const smoke = Array.from({ length: SMOKE_MAX }, () => ({ t: 0, x: 0, y: 0, seed: 0 }));
+let smokeHead = 0;
+let smokeClock = 0;
+
+/** Age every live puff. Once per sim step, before the emitters run. */
+export function stepSmoke() {
+  smokeClock++;
+  for (const p of smoke) if (p.t > 0) p.t--;
+}
+
+/**
+ * Emit for one burning actor, on a cadence.
+ *
+ * THE PHASE COMES FROM THE ACTOR'S OWN X so two burning actors do not puff on
+ * the same frame — in lockstep they read as one effect stuttering rather than
+ * as two things on fire.
+ */
+export function trailSmoke(bag, x, y) {
+  if (!hasStatus(bag, 'burn')) return;
+  if ((smokeClock + (Math.round(x) & 7)) % SMOKE_EVERY) return;
+  const p = smoke[smokeHead];
+  smokeHead = (smokeHead + 1) % SMOKE_MAX;
+  p.t = SMOKE_LIFE;
+  p.x = x;
+  p.y = y;
+  // Seeded once, at birth, so a puff drifts one consistent way for its whole
+  // life instead of jittering every frame.
+  p.seed = smokeHead * 13 + (Math.round(x) & 15);
+}
+
+/** Every live puff, rising and thinning. Drawn behind the actors. */
+export function drawSmoke(g, sx = 0, sy = 0) {
+  for (const p of smoke) {
+    if (p.t <= 0) continue;
+    const age = 1 - p.t / SMOKE_LIFE;
+    // Rises and spreads as it ages, and drifts to one side by its own seed.
+    const drift = ((p.seed % 5) - 2) * 0.6;
+    const px = Math.round(p.x + sx + drift * age * 6);
+    const py = Math.round(p.y + sy - age * 14);
+    const size = age < 0.5 ? 1 : 2;
+    // Pale at birth, darker and fainter as it thins out into the room.
+    g.fillStyle(age < 0.35 ? 0x9AA0A8 : 0x5A6068, 0.5 * (1 - age));
+    g.fillRect(px, py, size, size);
+  }
+}
+
+/** Drop every puff. A warp or a new run must not trail smoke from the last one. */
+export function clearSmoke() {
+  for (const p of smoke) p.t = 0;
+}

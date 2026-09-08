@@ -509,6 +509,9 @@ export default class GameScene extends Phaser.Scene {
   beginWarp(build) {
     if (this.warp) return;
     sfx('warp');
+    // The pool is shared and position-based, so puffs left in the old room
+    // would reappear at those coordinates in the new one.
+    Attr.clearSmoke();
     this.warp = { phase: 'out', t: Arena.WARP.out, alpha: 0, build };
     this.intent.moveDir = 0;
     this.intent.fireHeld = false;
@@ -1123,6 +1126,20 @@ export default class GameScene extends Phaser.Scene {
    */
   stepAttributes(box) {
     const r = this.run;
+    /**
+     * ONE AGEING PASS FOR THE WHOLE ROOM, here rather than per actor, because
+     * the pool is shared: ageing it inside each emitter would age it once per
+     * burning actor and the trail would thin out faster the more things were
+     * on fire.
+     */
+    Attr.stepSmoke();
+    Attr.trailSmoke(this.status, this.player.x + this.player.w * 0.5,
+      this.player.y + this.player.h * 0.6);
+    for (const e of this.minions) {
+      if (e.hp > 0 && e.status) Attr.trailSmoke(e.status, e.x + e.w * 0.5, e.y + e.h * 0.6);
+    }
+    const b = this.boss;
+    if (b && b.hp > 0) Attr.trailSmoke(b.status, b.x + b.w * 0.5, b.y + b.h * 0.6);
     const dot = Attr.stepStatus(this.status);
     if (dot > 0) {
       r.hp -= dot;
@@ -2631,6 +2648,14 @@ export default class GameScene extends Phaser.Scene {
       g.fillStyle(live ? (d.wrap ? 0xf5d328 : 0x5cadd5) : 0x4a4a44, live ? 1 : 0.55);
       g.fillRect(sx(d.x), sy(d.y - d.h), d.w, d.h);
     }
+
+    /**
+     * Burn's smoke, on the WORLD layer so it sits behind every actor that can
+     * be on fire — a puff drawn over the player would read as damage rather
+     * than as something he is trailing. Last thing on this layer, so it is
+     * above the terrain it drifts across.
+     */
+    Attr.drawSmoke(g, -cam + sh.x, sh.y);
 
     for (const p of this.pickups) {
       const style = Pickups.PICKUP_STYLE[p.type];
