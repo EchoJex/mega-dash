@@ -9,6 +9,7 @@
     "preview": "vite preview --host",
     "test": "node --test tests/*.test.js",
     "smoke": "node tools/smoke.mjs",
+    "tracker-test": "node tools/tracker-publish.mjs",
     "sim": "node tools/sim.mjs",
     "apk": "npm run build && npx cap sync android && node -e \"require('child_process').execFileSync(process.platform==='win32'?'gradlew.bat':'./gradlew',['assembleRelease'],{cwd:'android',stdio:'inherit'})\"",
     "status": "node tools/status.js",

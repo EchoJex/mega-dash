@@ -473,10 +473,19 @@ async function ensureDraft() {
  * more likely to conflict over a file both sides touch. Starting each drafting
  * session from the published state means a conflict can only ever involve edits
  * made since the last publish.
+ *
+ * IT RETURNS WHICH PATH IT TOOK, AND THE CALLER MUST ACT ON IT. A fast-forward
+ * leaves the working branch holding exactly what this tab is holding. A MERGE
+ * does not: the result contains the other side's changes too, and this tab has
+ * never seen them. Every write here is a whole-file PUT, so the next autosave
+ * would serialise this tab's `doc` straight over the merge and revert the other
+ * side — which is exactly how seven transcribed tracker fields were lost between
+ * 1 and 3 Sep 2026. `save()` re-bases onto the merge; see adoptPublished().
  */
 async function publishDraft() {
   const head = await headOf(draftRef());
   if (!head) return false;
+  let how = 'ff';
   try {
     await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${branch()}`, {
       method: 'PATCH',
@@ -486,13 +495,22 @@ async function publishDraft() {
   } catch (e) {
     if (!/422/.test(e.message)) throw e;
     // The working branch moved on. Merge rather than clobber.
-    await gh(`/repos/${OWNER}/${REPO}/merges`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        base: branch(), head: draftRef(), commit_message: 'tracker: publish',
-      }),
-    });
+    try {
+      await gh(`/repos/${OWNER}/${REPO}/merges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base: branch(), head: draftRef(), commit_message: 'tracker: publish',
+        }),
+      });
+    } catch (m) {
+      // A 409 HERE IS A REAL MERGE CONFLICT, not the stale-blob 409 that
+      // save()'s handler is written for. Tagged so it cannot be mistaken for
+      // one and "re-synced" into a write that would clobber the other side.
+      if (/409/.test(m.message)) throw new Error('MERGE_CONFLICT');
+      throw m;
+    }
+    how = 'merge';
   }
   // Re-point the draft at the published state so the next session forks clean.
   const now = await headOf(branch());
@@ -506,7 +524,30 @@ async function publishDraft() {
     // draft's head, so the next write has to look it up again.
     writeRef = null;
   }
-  return true;
+  return how;
+}
+
+/**
+ * Re-base this tab onto what was actually published.
+ *
+ * Only needed after a MERGE. The merged file holds both sides; `doc` holds one.
+ * Re-reading it is the whole fix — without it the next whole-file PUT reverts
+ * whatever the merge brought in, silently, with a valid sha that GitHub accepts.
+ *
+ * It reads the WORKING branch rather than the draft even though publishDraft
+ * has just reset one onto the other: the draft ref was moved with a force PATCH
+ * and the working branch is the thing whose content we actually care about, so
+ * reading the source rather than the copy removes a race that would be
+ * invisible if it ever happened.
+ */
+async function adoptPublished() {
+  const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${branch()}&t=${Date.now()}`);
+  doc = parse(b64decode(r.content));
+  render();
+  dirty = false;
+  // Both belong to the pre-merge write; save() re-reads them against the draft.
+  sha = null;
+  writeRef = null;
 }
 
 /**
@@ -563,9 +604,28 @@ async function save(manual) {
     dirty = false;
 
     if (manual) {
-      await publishDraft();
+      const how = await publishDraft();
       pending = 0;
-      setState(`published to ${branch()} ${new Date().toLocaleTimeString()}`, 'ok');
+      if (how === 'merge') {
+        /**
+         * THE MERGE BROUGHT IN WORK THIS TAB HAS NEVER SEEN, so this tab must
+         * stop being the newest thing in the room before it writes again.
+         * Adopting re-renders, which loses which cards were open — a cheap
+         * price for not reverting somebody's commits.
+         *
+         * `dirty` here means keystrokes landed during the publish round-trip,
+         * AFTER the flush above put everything on the draft. Those few seconds
+         * are the only thing adopting can cost, and they are named out loud
+         * rather than swallowed: the alternative is keeping them and silently
+         * reverting the whole other side of the merge, which is the bug.
+         */
+        const typedDuringPublish = dirty;
+        await adoptPublished();
+        setState(mergePublishMessage(typedDuringPublish, branch()),
+          typedDuringPublish ? 'warn' : 'ok');
+      } else {
+        setState(`published to ${branch()} ${new Date().toLocaleTimeString()}`, 'ok');
+      }
     } else {
       setState(`draft saved ${new Date().toLocaleTimeString()}`, 'ok');
     }
@@ -573,7 +633,13 @@ async function save(manual) {
   } catch (e) {
     // A 409 means the file moved under us — almost always because Claude
     // committed. Say so plainly rather than silently clobbering either side.
-    if (e.message === 'TOKEN_REJECTED') {
+    if (e.message === 'MERGE_CONFLICT') {
+      // Nothing was published and nothing was clobbered. Both sides changed the
+      // same lines, and a browser is the wrong place to resolve that.
+      setState(`${branch()} and your draft both changed the same lines. Nothing `
+        + 'was published and nothing was lost — your text is safe on the draft '
+        + 'branch. Resolve it in the repo, then publish again.', 'err');
+    } else if (e.message === 'TOKEN_REJECTED') {
       setState('token rejected — your edits are NOT saved. Tap 🔑 and paste a new one.', 'err');
     } else if (/409/.test(e.message)) {
       /**
@@ -618,6 +684,16 @@ function refreshSaveBtn() {
   if (!b) return;
   b.textContent = pending ? `Publish (${pending})` : 'Publish';
   b.classList.toggle('warn', pending > 0);
+}
+
+/** The two things a merge publish can have to say, kept out of the call site. */
+function mergePublishMessage(typed, br) {
+  const t = new Date().toLocaleTimeString();
+  return typed
+    ? `published to ${br} ${t} — ${br} had moved, so this tab reloaded onto the `
+      + 'merge. Anything you typed in the last second or two is not in it; '
+      + 're-check the field you were on.'
+    : `published to ${br} ${t} — merged with newer work and reloaded.`;
 }
 
 /** Arm the autosave. One place, so a save can re-arm it after a collision. */

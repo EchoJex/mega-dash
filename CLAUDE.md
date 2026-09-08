@@ -19,6 +19,7 @@ npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
+npm run tracker-test    # OPT-IN: drive the tracker app against a fake GitHub (~15s)
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
 npm run sprites:build   # design/sprites/*.sprite -> the PNGs MANIFEST loads
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
@@ -45,6 +46,27 @@ after any change to a fight, a weapon runtime or the render loop:
 npx playwright@latest install chromium    # once
 npm run build && npm run smoke
 ```
+
+### `npm run tracker-test` — the one bug the tracker app cannot afford
+
+`tools/tracker-publish.mjs` serves `docs/index.html` in Chromium and drives a real
+PUBLISH against a faked api.github.com. Only the network is stubbed; the app under
+test is the one that ships.
+
+**It exists because this already happened.** On 3 Sep 2026 a drafting session held a
+document forked before Claude's 1 Sep commits. `tracker: publish` merged correctly,
+and the autosave 26 seconds later PUT the editor's whole in-memory copy back over the
+merge — seven transcribed tracker fields gone, with a valid sha and no error anywhere.
+
+**EVERY WRITE IN THAT APP IS A WHOLE-FILE PUT**, so "the tab's document is older than
+the branch" can never surface as a conflict; it is always a silent revert. That is why
+`publishDraft()` returns whether it fast-forwarded or merged, and why `save()` re-bases
+the tab onto the merge before it is allowed to write again. Do not remove either — the
+return value looks unused until you notice what reads it.
+
+Opt-in and not in CI, on the same terms as `npm run smoke`. Reverting `docs/index.html`
+to the pre-fix version makes it exit 1, which is how it was verified rather than
+assumed.
 
 ### `npm run sim` — the boss difficulty harness
 
