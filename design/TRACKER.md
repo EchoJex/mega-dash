@@ -562,7 +562,7 @@ interaction present on every hit.
 - **weapon-applied** `[ready]` Does not affect player; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; mild damage and moderate flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
 
 ## Burn
-- **shared** `[wip]` Character attribute: Faint red hue that gets more faint until the attribute subsides. Smoke tailsThe player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
+- **shared** `[wip]` Character attribute: Faint red hue that gets more faint until the attribute subsides. Smoke trails behindThe player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
 - **boss-applied** `[ready]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **weapon-applied** `[ready]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
