@@ -669,17 +669,19 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1054 (main) | `[ready]` | Falling diagonally into a pit, player should not pass through wall. With spike and pit respawn, player should not be able to act or buffer inputs. Base Invulnerability time after respawn should be 3 after first post respawn button press or passive damage delt |
-| 1054 (main) | `[ready]` | Items that land on spikes should migrate to the nearest horizontal edge of the spikes for safe pickup |
-| 1054 (main) | `[ready]` | After reducing double jump Max height, platforming feels off, I think the seed generator didn't adjust for new typical jumping. |
-| 1054 (main) | `[ready]` | Thorn lash has no animation so I can't play test it |
-| 1054 (main) | `[ready]` | Player idle animation cycles through frames way too quickly |
-| 1054 (main) | `[ready]` | Too many times I will defeat a boss only to be close enough to the for that it immediately warps me out. Exit door should not appear until after boss death animation and requip wheel pop up, but if the player is standing in the doorway when it spawns in it should be visibly disabled until the player walks away from it. I also think that since this game is a left-to-right progression, the boss exit door should be near the right side of the arena |
-| 1054 (main) | `[ready]` | Stun appears to prevent player from shooting ever again, long after not taking any damage |
-| 1079 (tracker-draft/main) | `[ready]` | Post Boss requip is still popping up too early. It should pop up after the entire boss death animation has resolved. Also the wheel is closing when I did not close out off it. Also while in the boss room the player should be able to bring up the post boss wheel and requip as desired |
-| 1079 (tracker-draft/main) | `[ready]` | Level 1 and level 2 grass vibe attack needs to be much quicker, like a whip; small hit box high damage at the tip of the whip with a small glint to indicate that zone, medium damage anywhere else. Low fire rate. Update the tracker to reflect this |
-| 1081 (tracker-draft/main) | `[ready]` | Now the requip wheel is acting like the post boss requip wheel at all times I think. |
-| 1095 (tracker-draft/main) | `[wip]` |  |
+| 1108 (main) | `[wip]` |  |
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
