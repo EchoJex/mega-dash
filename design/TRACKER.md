@@ -669,7 +669,11 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1108 (main) | `[wip]` | Dev mode boss picker does not work when after returning to Dev mode |
+| 1108 (main) | `[wip]` | Dev mode boss picker does not work when after returning to Dev mode options screen |
+
+
+
+
 
 
 
