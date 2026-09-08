@@ -579,7 +579,7 @@ interaction present on every hit.
 ## Stun
 - **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
 - **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
-- **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
+- **weapon-applied** `[wip]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds. Stun stacks Using a multiplicative reduction of remaining speed
 - **stacking** `[draft]` Applies to Stun, Constrict and Freeze — they are one mechanic in three colours and share this rule. EACH STACK CARRIES ITS OWN TIMER and expires on it alone, so a short stack ages out from under a long one instead of the whole affliction sharing a single clock. A SOURCE MAY APPLY ONLY ONE STACK ON A TARGET AT A TIME: while its stack is alive that source applies nothing further — no second stack, and no refresh of the one it owns — so how many frames the two objects stay in contact cannot deepen or extend the effect. A different source stacks normally, which is what stacking is for; two live panels are two stacks. A discrete hit is a new application every time, so repeated shots still stack.
 
 ## Constrict
