@@ -647,7 +647,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Meta progression
 
 - **chips** `[ready]` Earned from score and boss kills at run end, spent on Upgrades. Score alone earns Chips, so a run that never reaches a boss still buys something.
-- **upgrades** `[wip]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities. Need more ideas here, like from vampire
+- **upgrades** `[wip]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities. Need more ideas here, like from vampire survivor meta
 - **boss layers** `[ready]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Shipped behaviour clamps at 3 forever.
 - **run progression** `[ready]` Weapons are earned by killing the boss that carries them. EXP is COLLECTED from enemy drops and never granted; distance grants nothing. A level is a flat 100 EXP and pauses for a card screen.
 
