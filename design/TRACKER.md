@@ -193,11 +193,11 @@ where each one stands.
 - **scale** `[ready]` 1.8x player height (average build)
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
-- **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[wip]` Bug
+- **boss weakness A** `[draft]` Fire
+- **boss weakness B** `[draft]` Bug
 - **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[ready]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. Bug swarm prioritizes keeping all overgrowth recessed. For this arena the bug has unlimited duration, but new ones will continue to spawn at their normal rate. Applying Hot attribute to an overgrown tile causes the tile to stay receded for 3 times the normal duration indicated by that tile being burnt black with small red flowing embers.
-- **hazard L1** `[ready]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to received for 5 seconds. At level 1 ground cover will only cause a slightly noticing movement speed drop.
+- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal. Applying Hot attribute to an overgrown tile causes the tile to have a regrowth rate of 0.25 the normal duration, and be visually indicated by that tile turning black with small red glowing embers. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and start burned for 2x normal burn duration.
+- **hazard L1** `[wip]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. At level 1 ground cover will only cause a noticeable movement speed drop.
 - **hazard L2** `[ready]` First instance of player damage source nearby a time causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile applied constrict status
 - **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
 - **attack L1** `[wip]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
@@ -562,7 +562,7 @@ interaction present on every hit.
 - **weapon-applied** `[ready]` Does not affect player; Spot is 'red hot'. add a low transparency red hue that becomes more transparent as the effect diminishes; mild damage and moderate flinch/knockback on touch and applies burn, all of which scale down until Hot subsides. Hot affect shall last for 5s unless reapplied
 
 ## Burn
-- **shared** `[ready]` Character attribute: Faint red hue that gets more faint until the attribute subsides. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
+- **shared** `[draft]` Character attribute: Faint red hue that gets more faint until the attribute subsides. Smoke trails behind the character. The player or enemy is on fire: rapid but weak burn DPS, no flinch or knockback, scaling down until the duration concludes.
 - **boss-applied** `[ready]` The player is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 - **weapon-applied** `[ready]` The enemy is on fire. Deal very mild damage very rapidly, while rapidly diminishing. No flinch or knockback.
 
@@ -578,9 +578,9 @@ interaction present on every hit.
 
 ## Stun
 - **shared** `[ready]` Very mild flinch with a faint yellow hue that becomes more intense with each additional stack
-- **boss-applied** `[ready]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
-- **weapon-applied** `[ready]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds unless additional Stun gets applied, resetting the 5 seconds duration. Stun stacks Using a multiplicative reduction of remaining speed
-- **stacking** `[wip]` Applies to Stun, Constrict and Freeze — they are one mechanic in three colours and share this rule. EACH STACK CARRIES ITS OWN TIMER and expires on it alone, so a short stack ages out from under a long one instead of the whole affliction sharing a single clock. A SOURCE MAY HOLD ONLY ONE STACK ON A TARGET AT A TIME: while its stack is alive that source applies nothing further — no second stack, and no refresh of the one it owns — so how many frames the two objects stay in contact cannot deepen or extend the effect. A different source stacks normally, which is what stacking is for; two live panels are two stacks. A discrete hit is a new application every time, so repeated shots still stack. Supersedes the "resetting the 5 seconds duration" wording above, which a per-frame emitter (Volt Man's linger panels, Thorn Man's ground cover) turned into a status that could never begin expiring until the player stepped off.
+- **boss-applied** `[draft]` Player movement and attack speed reduced by 15 percent. Return to normal after 5 seconds. Stun stacks Using a multiplicative reduction of remaining movement and attack speed
+- **weapon-applied** `[draft]` Enemy movement and attack speed reduced by 30 percent. Return to normal after 5 seconds. Stun stacks Using a multiplicative reduction of remaining speed
+- **stacking** `[draft]` Applies to Stun, Constrict and Freeze — they are one mechanic in three colours and share this rule. EACH STACK CARRIES ITS OWN TIMER and expires on it alone, so a short stack ages out from under a long one instead of the whole affliction sharing a single clock. A SOURCE MAY APPLY ONLY ONE STACK ON A TARGET AT A TIME: while its stack is alive that source applies nothing further — no second stack, and no refresh of the one it owns — so how many frames the two objects stay in contact cannot deepen or extend the effect. A different source stacks normally, which is what stacking is for; two live panels are two stacks. A discrete hit is a new application every time, so repeated shots still stack.
 
 ## Constrict
 - **shared** `[ready]` Functionally the same as stun/freeze; elementally correct color hue while the target has this attribute.
@@ -647,16 +647,16 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Meta progression
 
 - **chips** `[ready]` Earned from score and boss kills at run end, spent on Upgrades. Score alone earns Chips, so a run that never reaches a boss still buys something.
-- **upgrades** `[ready]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities.
-- **boss layers** `[ready]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Shipped behaviour clamps at 3 forever.
+- **upgrades** `[draft]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities. Need more ideas here, like from vampire survivor meta upgrades or other rogue lite meta upgrades
+- **boss layers** `[draft]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Game over once lifetime kill of all bosses at level 1-3 is >0
 - **run progression** `[ready]` Weapons are earned by killing the boss that carries them. EXP is COLLECTED from enemy drops and never granted; distance grants nothing. A level is a flat 100 EXP and pauses for a card screen.
 
 ## Run structure
 
 - **area** `[ready]` The endless procedural stream. Its background and its ground are themed to the boss whose door is coming, so the arena is foreshadowed before you reach it.
 - **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible.
-- **door and warp** `[ready]` The door does not open into the arena, it warps you there: contact freezes everything, fades to black, builds the room behind full black, then fades back in. Nothing is ever seen half-constructed.
-- **pacing targets** `[wip]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
+- **door and warp** `[draft]` The door does not open into the arena, it warps you there: contact freezes everything even player position, slow fade to black over 3s, builds the room behind full black, then fades back in 3s. Fade in the boss arena background for 1s then fade in arena furniture for 1s, then have the boss beam down as an elementally appropriate beam of light before unfreezing everything
+- **pacing targets** `[ready]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
 
 # BUGS
 
