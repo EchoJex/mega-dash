@@ -13,17 +13,29 @@ const LONG_PRESS_MS = 500;
  */
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
-  init(data) { this.died = data?.died; this.run = data?.run; }
+  init(data) { this.died = data?.died; this.won = data?.won; this.run = data?.run; }
 
   create() {
     const w = viewWidthOf(this.scale), cx = w / 2;
     fitCamera(this, w);
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);
 
-    const title = this.died ? 'GAME OVER' : 'MEGA DASH';
-    label(this, cx, 46, title, { scale: 3, color: '#5CADD5', origin: 0.5 });
-    label(this, cx, 68, this.died ? '' : 'FIND THE DOOR · BEAT THE BOSS',
-      { color: '#3A6A8A', origin: 0.5 });
+    /**
+     * THREE STATES, NOT TWO. A run that finished the game reads its own words
+     * and its own colour — landing on GAME OVER after beating all seventeen at
+     * every layer would be the game's worst-timed lie.
+     *
+     * A FINAL BOSS IS PLANNED TO OCCUPY THIS MOMENT after release. This screen
+     * is the placeholder for it, which is why it says what was achieved rather
+     * than trying to feel like an ending.
+     */
+    const title = this.won ? 'ALL LAYERS CLEAR' : this.died ? 'GAME OVER' : 'MEGA DASH';
+    label(this, cx, 46, title,
+      { scale: 3, color: this.won ? '#F5D328' : '#5CADD5', origin: 0.5 });
+    label(this, cx, 68,
+      this.won ? 'EVERY BOSS BEATEN AT LAYERS 1, 2 AND 3'
+        : this.died ? '' : 'FIND THE DOOR · BEAT THE BOSS',
+      { color: this.won ? '#8A7A30' : '#3A6A8A', origin: 0.5 });
 
     if (this.died && this.run) {
       const s = this.run;
@@ -41,8 +53,16 @@ export default class TitleScene extends Phaser.Scene {
         const parts = [`score ${c.fromScore}`];
         if (c.fromBosses) parts.push(`bosses ${c.fromBosses}`);
         if (c.mult !== 1) parts.push(`x${c.mult.toFixed(2)}`);
-        label(this, cx, 116, `+${c.total} CHIPS`, { color: '#F5D328', origin: 0.5 });
-        label(this, cx, 126, parts.join('  ·  '), { color: '#8A7A30', origin: 0.5 });
+        /**
+         * 112/122, NOT 116/126. The breakdown line was running UNDER the first
+         * button: both are origin 0.5, the plate is ~15px tall so its top edge
+         * sits at ~128, and a 126-centred line reaches ~130. Every run has
+         * ended on a half-hidden line since the breakdown was added — found by
+         * screenshotting the screen rather than by reading the numbers, which
+         * is the whole reason CLAUDE.md says to render menu layout.
+         */
+        label(this, cx, 112, `+${c.total} CHIPS`, { color: '#F5D328', origin: 0.5 });
+        label(this, cx, 122, parts.join('  ·  '), { color: '#8A7A30', origin: 0.5 });
       }
     }
 
@@ -56,7 +76,8 @@ export default class TitleScene extends Phaser.Scene {
       this.btn(w - 34, 12, 'DEV', () => this.scene.start('DevMenu'), '#F5D328');
     }
 
-    this.btn(cx, 136, this.died ? 'TRY AGAIN' : 'START', () => this.scene.start('Game'));
+    this.btn(cx, 136, this.won ? 'PLAY AGAIN' : this.died ? 'TRY AGAIN' : 'START',
+      () => this.scene.start('Game'));
     this.btn(cx, 158, `HUB   (${save.chips} chips)`, () => this.scene.start('Hub'));
     this.updateBtn(cx, 176);
 

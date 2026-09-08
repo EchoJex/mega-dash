@@ -242,6 +242,31 @@ export function makeBossBag(pool = BOSSES) {
  * Hazards and attacks are ALWAYS layer-synced: a layer-2 boss uses layer-2
  * arena hazards and layer-2 attacks together.
  */
+/**
+ * Clears needed for a boss to have been beaten at every layer.
+ *
+ * Falls out of `bossLayer` rather than being chosen: layer is `clears + 1`
+ * clamped to 3, so the FIRST kill happens at layer 1, the second at layer 2 and
+ * the third at layer 3. Three clears is therefore "beaten at 1, 2 and 3", and
+ * anything past that is a rematch at layer 3.
+ */
+export const MASTERY_CLEARS = 3;
+
+/**
+ * Has every boss been beaten at layers 1, 2 AND 3? — "game over once lifetime
+ * kill of all bosses at level 1-3 is >0".
+ *
+ * DELIBERATELY ALL SEVENTEEN, not the playable subset. Twelve bosses have no
+ * fight yet, so this cannot fire today, and that is the correct behaviour: the
+ * condition is "you have finished the game", and finishing it means all of it.
+ * Deriving it from `PLAYABLE_BOSSES` would declare the game complete the moment
+ * the few built fights were exhausted, which would be wrong now and would
+ * silently stop being wrong later — the worst shape a bug can have.
+ */
+export const allBossesMastered = (save) => BOSSES.every(
+  (b) => ((save?.bossKills && save.bossKills[b.id]) || 0) >= MASTERY_CLEARS,
+);
+
 export function bossLayer(save, id, cycle = false) {
   const clears = (save.bossKills && save.bossKills[id]) || 0;
   // SHIPPED BEHAVIOUR: layers only ever go up, then stay at 3. A boss you have

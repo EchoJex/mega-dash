@@ -7,7 +7,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MINIONS, ELITE_OUTLINE } from '../src/data/minions.js';
-import { BOSSES, bossLayer } from '../src/data/bosses.js';
+import {
+  BOSSES, bossLayer, allBossesMastered, MASTERY_CLEARS,
+} from '../src/data/bosses.js';
 import { UPGRADES } from '../src/data/upgrades.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER,
@@ -253,4 +255,45 @@ test('every boss is reachable from the dev selector', () => {
   for (const b of BOSSES) {
     assert.ok(b.name && b.primary && b.outline, `${b.id} cannot render a tile`);
   }
+});
+
+/**
+ * THE RUN-ENDING CONDITION, which nobody can reach by playing yet.
+ *
+ * Twelve of the seventeen bosses have no fight, so `allBossesMastered` cannot
+ * become true in a real run today — which makes it exactly the kind of code
+ * that rots unnoticed until the day it matters. These assert the shape it has
+ * to keep: all seventeen, and the third clear is the one that counts.
+ */
+const killsFor = (n) => ({ bossKills: Object.fromEntries(BOSSES.map((b) => [b.id, n])) });
+
+test('the game is not over on a fresh save', () => {
+  assert.equal(allBossesMastered({ bossKills: {} }), false);
+  assert.equal(allBossesMastered({}), false);
+  assert.equal(allBossesMastered(undefined), false);
+});
+
+test('mastery needs every boss beaten at all three layers', () => {
+  assert.equal(allBossesMastered(killsFor(MASTERY_CLEARS - 1)), false);
+  assert.equal(allBossesMastered(killsFor(MASTERY_CLEARS)), true);
+  // Rematches past layer 3 must not un-finish the game.
+  assert.equal(allBossesMastered(killsFor(MASTERY_CLEARS + 4)), true);
+});
+
+test('one boss short is not finished, whichever boss it is', () => {
+  for (const b of BOSSES) {
+    const s = killsFor(MASTERY_CLEARS);
+    s.bossKills[b.id] = MASTERY_CLEARS - 1;
+    assert.equal(allBossesMastered(s), false, `${b.id} left one clear short`);
+  }
+});
+
+test('MASTERY_CLEARS is the clear count that reaches layer 3', () => {
+  // Derived, not chosen: the Nth kill happens at the layer bossLayer reports
+  // after N-1 clears, so three clears means layers 1, 2 and 3 were each fought.
+  const seen = [];
+  for (let clears = 0; clears < MASTERY_CLEARS; clears++) {
+    seen.push(bossLayer({ bossKills: { blaze: clears } }, 'blaze'));
+  }
+  assert.deepEqual(seen, [1, 2, 3]);
 });

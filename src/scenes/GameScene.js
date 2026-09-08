@@ -17,7 +17,9 @@ import {
 import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
 import { dev, DEV, layerFor } from '../config/dev.js';
-import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag, bossLayer } from '../data/bosses.js';
+import {
+  BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag, bossLayer, allBossesMastered,
+} from '../data/bosses.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf, hasLadder,
   elementOf,
@@ -913,6 +915,10 @@ export default class GameScene extends Phaser.Scene {
     // cannot leave through would strand the run; the wheel is optional, the
     // exit is not.
     if (dying && !this.deaths.length) {
+      // A run that just finished the game ends here rather than opening a door
+      // out and a wheel: there is nothing left to walk to and nothing left to
+      // carry. See the note at recordBossKill.
+      if (this.run.won) { this.endRun(true); return; }
       this.spawnWrapDoor();
       if (this.run.requipOpen) this.scene.get('UI')?.promptRequip();
     }
@@ -2103,6 +2109,19 @@ export default class GameScene extends Phaser.Scene {
       'boss', b.x + b.w / 2 - 3, b.y + b.h / 2, this.run.luckMult,
     ));
     recordBossKill(b.id);
+    /**
+     * DID THAT FINISH THE GAME? — "game over once lifetime kill of all bosses
+     * at level 1-3 is >0".
+     *
+     * Recorded here and ACTED ON when the death animation resolves, a few lines
+     * down in step(). The kill is the moment it becomes true, but cutting to a
+     * results screen on that frame would clip the one animation the whole fight
+     * was building toward — the same reason the re-quip wheel waits.
+     *
+     * A final boss is planned to occupy this moment after release; until then
+     * the victory screen is what stands in its place.
+     */
+    if (allBossesMastered(save)) this.run.won = true;
     // THE RE-QUIP WINDOW. Open from here until the next arena is entered, so
     // rearranging the loadout is something you do between fights — with or
     // without a drop to place. See canRequip.
@@ -2328,7 +2347,16 @@ export default class GameScene extends Phaser.Scene {
     return true;
   }
 
-  die() {
+  die() { this.endRun(false); }
+
+  /**
+   * THE RUN IS OVER — by death, or by having finished the game.
+   *
+   * One function for both because the PAYOUT is identical: a victory run still
+   * banks its score, its distance and its Chips, and splitting that in two is
+   * how the two copies drift. Only the screen differs.
+   */
+  endRun(won) {
     /**
      * ONCE PER RUN, AND THIS GUARD IS LOAD-BEARING — it writes to the save.
      *
@@ -2358,7 +2386,10 @@ export default class GameScene extends Phaser.Scene {
     save.chips += earned.total;
     persist();
     this.scene.stop('UI');
-    this.scene.start('Title', { died: true, run: this.run });
+    // `died` stays true either way: it is what the Title screen reads to know a
+    // run just ended and to draw the results at all. `won` picks which words go
+    // above them.
+    this.scene.start('Title', { died: true, won, run: this.run });
   }
 
   // ── Progression ─────────────────────────────────────────────────────
