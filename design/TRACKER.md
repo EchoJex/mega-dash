@@ -655,7 +655,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 - **area** `[ready]` The endless procedural stream. Its background and its ground are themed to the boss whose door is coming, so the arena is foreshadowed before you reach it.
 - **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible.
-- **door and warp** `[wip]` The door does not open into the arena, it warps you there: contact freezes everything even player position, slow fade to black over 3s, builds the room behind full black, then fades back in 3s. Fade in the boss arena background for 1s then fade in arena furniture for 1s, then have the boss beam down as an elementally appropriate beam of light before undressing
+- **door and warp** `[wip]` The door does not open into the arena, it warps you there: contact freezes everything even player position, slow fade to black over 3s, builds the room behind full black, then fades back in 3s. Fade in the boss arena background for 1s then fade in arena furniture for 1s, then have the boss beam down as an elementally appropriate beam of light before unfreezing
 - **pacing targets** `[wip]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
 
 # BUGS
