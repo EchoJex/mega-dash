@@ -92,7 +92,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
-- **silhouette** `[draft]` Rename silhouette in this tracker for all bosses to Sprite sheet. No text field, only small check boxes for furniture, Arena background, Boss, Boss ATK.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Blaze Man — Fire
 
@@ -121,7 +121,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Tempest Man — Water
 
@@ -137,7 +137,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Electric
 - **boss weakness B** `[wip]` Grass
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
-- **arena furniture** `[ready]` Two steel pipes protruding from the upper corners, a grate-covered central drain carrying a spike ball, and ankle-deep floor water. Barrels and spike balls come out of the pipes and are popped by the central ball, which is what caps their number.
+- **arena furniture** `[ready]` Two steel pipes protruding from the upper corners, a grate-covered central drain carrying a spike ball, and ankle-deep floor water. Barrels and spike balls come out of the pipes and are popped by the central ball, which is what caps their number. The boss's placeholder also carries a small grey jetpack with two downward nozzles that pivot appropriately in the direction opposite the boss.
 - **hazard L1** `[ready]` Heavy rain pouring straight down top-to-bottom, applies a continuous directional force vector / velocity bias that pushes player in the direction of the rain.
   Steady, powerful water flows out of large steel pipes that are protruding from the walls in the upper corners of the stage. The water cascades down and across the floor toward a grate-covered central drain/pit that all water drains into. Floor water should be ankle-deep with very strong inward-flowing currents that visibly pull toward the center. Jumps while in contact with this ankle deep water have 80% the jump strength; midair jumps are only affected by the rain forces. Occasional very large brown barrels float from the steel pipes which break open and despawn on contact with the spike ball. Player can stand on them or shoot them to destroy them. Player moves with the barrel while standing on it, and takes heavy knockback but no damage if they are standing on the barrel when it breaks
 - **hazard L2** `[ready]` Heavy rain cycling through one of 3 directions (top-to-bottom, diagonal down+left, diagonal down+right) applies a continuous directional force vector / velocity bias that pushes Mega Man in the direction of the rain. Lightning bolts in the background telegraph the rain direction is about to change.
@@ -152,7 +152,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
-- **silhouette** `[ready]` Add a small grey jetpack to the current placeholder with two downward nozzles that pivot appropriately in the direction opposite the boss
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Volt Man — Electric
 
@@ -181,7 +181,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Thorn Man — Grass
 
@@ -209,7 +209,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Frost Man — Ice
 
@@ -236,8 +236,8 @@ where each one stands.
 - **weapon Lv1** `[ready]` Very slow ice buildup. Full Shield blocks the equivalent of 3 minion projectile; breaks and freezes the opponent if contacting a minion instead.
 - **weapon Lv3** `[ready]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
 - **weapon Lv6** `[ready]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
-- **weapon Lv10** `[wip]` Standing still briefly while holding attack forms ice armor that reflects projectiles and removes all incoming damage and knockback. Player cannot otherwise attack until the button is released.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **weapon Lv10** `[wip]` Standing still briefly forms ice armour around the player: incoming damage and knockback are nulled and projectiles reflect back at whoever fired them. The armour FADES as it nulls damage, the same way the shield does at the lower rungs, rather than running on a timer. When it finally breaks it throws a 7-way spread of ice outward in all directions.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Strike Man — Fighting
 
@@ -265,7 +265,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Venom Man — Poison
 
@@ -294,7 +294,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits.
 - **weapon Lv6** `[wip]` Lv6+: clouds can be detonated for burst damage.
 - **weapon Lv10** `[wip]` Poisoned enemies drop health pickups when killed.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Quake Man — Ground
 
@@ -322,7 +322,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Airborne swings cause the player to swing downward and rapidly travel downward where a shockwave will be generated on contact with the ground.
 - **weapon Lv6** `[wip]` Lv5+: if slide mastery allows it, attacking while in slide extends the duration of the slide
 - **weapon Lv10** `[wip]` Max: super stomp that causes falling debris from the ceiling.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Gale Man — Flying
 
@@ -350,7 +350,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Psi Man — Psychic
 
@@ -372,13 +372,13 @@ where each one stands.
 - **attack L1** `[wip]` Levitates the player and drops them from height while firing homing psychic orbs.
 - **attack L2** `[wip]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
 - **attack L3** `[wip]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
-- **weapon class** `[wip]` Offensive
+- **weapon class** `[wip]` Defensive
 - **weapon** `[wip]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
 - **weapon Lv1** `[wip]` One slow homing orb at a time; steerable while the attack button is held.
 - **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
 - **weapon Lv6** `[wip]` Lv6+: can control multiple orbs.
 - **weapon Lv10** `[wip]` Ultimate: brief mind control on weak enemies.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Swarm Man — Bug
 
@@ -406,7 +406,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 2 allies with a longer duration; they now prioritise whatever the player last damaged.
 - **weapon Lv6** `[ready]` Lv6: 3 bugs; every other bug spawned will prioritize intercepting projectiles as a meat shield
 - **weapon Lv10** `[ready]` Lv10: 5 bugs continuously swarm all over the player forming a shield and slowly respawn after tanking enough damage. Additionally, 3 bugs simultaneously converge on an enemy and kamikaze with an explosive blast.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Granite Man — Rock
 
@@ -417,7 +417,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
-- **weapon name** `[ready]` Rock Buster
+- **weapon name** `[wip]` Granite Form
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
@@ -428,13 +428,13 @@ where each one stands.
 - **attack L1** `[wip]` Pushes massive rolling rocks that crush and block paths.
 - **attack L2** `[wip]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
 - **attack L3** `[wip]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
-- **weapon class** `[wip]` Offensive
-- **weapon** `[wip]` Throws heavy boulders that roll and crush enemies; can be charged for bigger rocks. Per-level scaling: larger boulders + more throw speed.
-- **weapon Lv1** `[wip]` Single thrown boulder; rolls on landing and stops at the first wall.
+- **weapon class** `[wip]` Defensive
+- **weapon** `[wip]` Defensive; the player turns to stone — Kirby's Rock form. It is driven by the ABSENCE OF PLAYER INPUT, not by movement or momentum: stop giving the weapon input and it hardens. Heavy damage reduction and total knockback immunity while hardened, and anything the stone lands on is crushed. Needs sprite art for 3 to 5 distinct rock statue forms.
+- **weapon Lv1** `[wip]` On the ground, hardening takes about a second of no input. In the air it takes HALF that time, and hardening mid-air slams the player downward with only limited horizontal navigation on the way down. Once the statue contacts any horizontal surface it cannot move, and the form wears off after 5 seconds.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
-- **weapon Lv10** `[wip]` Charged throw produces a boulder that spans the screen and shatters into rolling fragments at the far wall.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **weapon Lv10** `[wip]` The player can now walk while hardened. Pressing jump while hardened cancels the form early and throws stone shards out in all directions. This 360 finish is deliberately the same shape as Frost Guard Lv10's — overlap between two weapons is accepted, especially at the deep rungs; no more than two may share a function.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Wraith Man — Ghost
 
@@ -462,7 +462,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Drake Man — Dragon
 
@@ -490,7 +490,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` The beam can be angled with directional input and reaches noticeably further.
 - **weapon Lv6** `[wip]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
 - **weapon Lv10** `[wip]` Lv8+: charge for a massive dragon-head projectile.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Eclipse Man — Dark
 
@@ -518,7 +518,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Alloy Man — Steel
 
@@ -546,7 +546,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Two ricochets and increased pierce; blades survive contact with terrain corners.
 - **weapon Lv6** `[wip]` Lv5+: blades can be recalled early.
 - **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
-- **silhouette** `[todo]` Deferred — silhouette follows from attack + arena design, not before it.
+- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ---
 
@@ -655,7 +655,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 - **area** `[ready]` The endless procedural stream. Its background and its ground are themed to the boss whose door is coming, so the arena is foreshadowed before you reach it.
 - **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible.
-- **door and warp** `[ready]` The door does not open into the arena, it warps you there: contact freezes everything, fades to black, builds the room behind full black, then fades back in. Nothing is ever seen half-constructed.
+- **door and warp** `[wip]` The door does not open into the arena, it warps you there: contact freezes everything, slow fades to black, builds the room behind full black, then fades back in. Nothing is ever seen half-constructed.
 - **pacing targets** `[wip]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
 
 # BUGS
