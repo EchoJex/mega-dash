@@ -670,7 +670,22 @@ still describing it, and `[ready]` means already fixed.
 | build | status | bug |
 |---|---|---|
 | 1108 (main) | `[draft]` | Dev mode boss picker does not work when after returning to Dev mode options screen |
-| 1108 (main) | `[wip]` | In Dev mode only, Re-quip wheel should just always act like post boss wheel.  |
+| 1108 (main) | `[wip]` | In Dev mode only, Re-quip wheel should just always act like post boss wheel. If  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
