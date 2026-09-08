@@ -669,7 +669,14 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| 1108 (main) | `[wip]` |  |
+| 1108 (main) | `[wip]` | Dev mode boss picker does |
+
+
+
+
+
+
+
 
 
 
