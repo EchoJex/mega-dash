@@ -92,7 +92,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Blaze Man — Fire
 
@@ -647,7 +647,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Meta progression
 
 - **chips** `[ready]` Earned from score and boss kills at run end, spent on Upgrades. Score alone earns Chips, so a run that never reaches a boss still buys something.
-- **upgrades** `[draft]` Eighteen permanent stat boosts bought with Chips in the Hub, split into ordinary percentage upgrades and the MASTERY ladders that unlock abilities. Need more ideas here, like from vampire survivor meta upgrades or other rogue lite meta upgrades
+- **upgrades** `[wip]` Twenty-five permanent stat boosts bought with Chips in the Hub, split into 21 ordinary percentage upgrades and the 4 MASTERY ladders that unlock abilities. A ramp-difficulty-for-reward upgrade (Vampire Survivors' Curse) was considered and rejected — this game does not want one.
 - **boss layers** `[draft]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Game over once lifetime kill of all bosses at level 1-3 is >0
 - **run progression** `[ready]` Weapons are earned by killing the boss that carries them. EXP is COLLECTED from enemy drops and never granted; distance grants nothing. A level is a flat 100 EXP and pauses for a card screen.
 
