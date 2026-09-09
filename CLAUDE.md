@@ -424,7 +424,7 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 |---|---|---|---|
 | **EXP** / **Level** | run only | **collected** from enemy drops | levelling weapons |
 | **Chips** | persistent | score + boss kills at run end | **Upgrades** |
-| **Upgrades** | persistent | bought with Chips | permanent stat boosts (19: 15 ordinary + 4 MASTERY ladders) |
+| **Upgrades** | persistent | bought with Chips | permanent stat boosts (25: 21 ordinary + 4 MASTERY ladders) |
 | **Weapon Level** | run only, per weapon, 1→10 | level-up choices | that weapon's feature ladder |
 | **Layer** | persistent, per boss, 1→3 | lifetime clears of that boss | how hard that boss fights |
 | **Slot** | run only, up to 2 offensive + 2 defensive | equipping a weapon you have unlocked | which weapons are actually in play |
@@ -1532,6 +1532,17 @@ jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (curre
 - Boss/weapon ids are lowercase snake (`eclipse_blade`); display names UPPERCASE.
 - Colours are `#RRGGBB` strings in data, converted with `hexNum()` at draw time.
 - Run `npm test` before committing. The whole suite is ~0.1s.
+
+### Fixing a bug: check its history before you size the fix
+
+Lazy but not wrong. Before writing fix code, find out whether this bug has
+happened before and whether it can happen again — `git log -S` the symptom,
+read the comments around the code, check whether a sibling caller has the same
+hole. That answer sizes the fix. A one-off with no path back needs the smallest
+correct change and no scaffolding; a bug that has already bitten twice, or that
+a whole class of callers can hit, earns the guard AND the check that fails if it
+returns. Deciding that from the history is the difference between a proportionate
+fix and an elaborate one defending against nothing.
 
 ### What tests are for at this phase — and what they are NOT for
 
