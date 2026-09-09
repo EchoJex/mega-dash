@@ -1929,6 +1929,28 @@ export default class UIScene extends Phaser.Scene {
     this.buildCardPanel(cards, r.level);
   }
 
+  /**
+   * SALVAGE — throw this hand away and deal another.
+   *
+   * It re-enters `openCards`, which re-rolls the weapon picks from the same
+   * pool, so a reroll is a genuinely new hand rather than a reshuffle of the
+   * three cards already on screen.
+   *
+   * IT MUST NOT TOUCH `pendingLevelUps`. That counter is what `closeCards`
+   * decrements, and spending a reroll is not taking a level — going through
+   * closeCards here would silently consume the level-up the player has not
+   * chosen yet, and a big EXP orb would hand back fewer choices than it granted.
+   */
+  rerollCards() {
+    const r = this.game_.run;
+    if (r.rerollsLeft <= 0) return;
+    r.rerollsLeft--;
+    sfx('select');
+    this.cards?.destroy(true);
+    this.cards = null;
+    this.openCards();
+  }
+
   buildCardPanel(cards, level) {
     this.cards = this.add.container(0, 0).setDepth(50);
     this.cards.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.93).setOrigin(0)
@@ -1952,6 +1974,25 @@ export default class UIScene extends Phaser.Scene {
       this.cards.add(label(this, x + cw / 2, y + 26, c.title, { color: '#E0F0FF', origin: 0.5 }));
       this.cards.add(label(this, x + cw / 2, y + 52, c.sub, { color: '#88AABB', origin: 0.5 }));
     });
+
+    /**
+     * The reroll sits BELOW the hand and only when one is left, so a player
+     * who never bought SALVAGE sees exactly the screen they saw before — an
+     * always-present control reading `0 LEFT` would be a permanent advert for
+     * something they have not got.
+     *
+     * y = 44 + 74 + 8: the cards' own top, their height, then a gap, rather
+     * than a number picked to look right. It moves if the cards do.
+     */
+    const r = this.game_.run;
+    if (r.rerollsLeft > 0) {
+      const y = 44 + 74 + 8;
+      const t = label(this, this.w / 2, y,
+        `REROLL  (${r.rerollsLeft})`, { color: '#B8DC28', origin: 0.5 });
+      t.setInteractive({ useHandCursor: true });
+      t.on('pointerdown', () => this.rerollCards());
+      this.cards.add(t);
+    }
   }
 
   closeCards() {

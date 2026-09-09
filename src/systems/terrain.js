@@ -243,9 +243,15 @@ export function prune(world, camX) {
   world.doors = world.doors.filter((d) => d.alive && d.x > behind);
 }
 
-/** A boss door every doorIntervalSeconds, on solid ground we guarantee. */
-export function maybeSpawnDoor(world, camX, viewW, elapsedFrames) {
-  const every = FEEL.doorIntervalSeconds * 60;
+/**
+ * A boss door every doorIntervalSeconds, on solid ground we guarantee.
+ *
+ * `doorMult` is SATNAV, and it must land on a whole number of frames: the test
+ * below is an exact modulo, so a fractional interval would match on no frame at
+ * all and the run would never see another door.
+ */
+export function maybeSpawnDoor(world, camX, viewW, elapsedFrames, doorMult = 1) {
+  const every = Math.max(1, Math.round(FEEL.doorIntervalSeconds * 60 * doorMult));
   if (world.doors.length || elapsedFrames === 0 || elapsedFrames % every !== 0) return;
   const x = camX + viewW + 40;
   world.groundSpans.push({ x1: x - 30, x2: x + 46 });

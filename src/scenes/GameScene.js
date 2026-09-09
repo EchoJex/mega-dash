@@ -266,6 +266,8 @@ export default class GameScene extends Phaser.Scene {
       cdMult: 1, comboDecayMult: 1, magnetMult: 1, dmgMult: 1, projSpeedMult: 1,
       bulletSizeMult: 1, extraShots: 0, armorBonus: 0, scoreMult: 1,
       chipGainMult: 1, luckMult: 1, revives: 0, revivesLeft: 0,
+      expMult: 1, damageReduce: 0, hazardMult: 1, eliteExpMult: 1, doorMult: 1,
+      rerolls: 0, rerollsLeft: 0,
       starterArsenal: false, twinArsenal: false,
       // slide is meta-gated: rank 0 means the player cannot slide at all
       slideRank: 0, slideDurMult: 1, slideSpeedBonus: 1, slideIframes: 0,
@@ -333,6 +335,10 @@ export default class GameScene extends Phaser.Scene {
     });
     run.hp = FEEL.hpMax + run.hpBonus;
     run.revivesLeft = run.revives;
+    // Same shape as revives: `rerolls` is what was bought, `rerollsLeft` is
+    // what this run still has. Reset here so a Hub purchase mid-session
+    // cannot be spent twice.
+    run.rerollsLeft = run.rerolls;
 
     // Weapons are EARNED: you start with the sidearm and unlock a special by
     // beating the boss that carries it (killBoss below). The two arsenal
@@ -756,14 +762,14 @@ export default class GameScene extends Phaser.Scene {
     // spikes.
     const box = Phys.hitboxOf(p);
     if (p.y > VIEW_H + 24) {
-      this.hurt(p.x, FEEL.hazardDamage);
+      this.hurt(p.x, this.hazardDamage());
       this.beamOut();
     } else {
       for (const s of this.world.spikes) {
         if (Phys.overlaps(box, s)) {
           // Check BEFORE hurt(), which sets the i-frames itself.
           const landed = r.invuln === 0;
-          this.hurt(s.x + s.w / 2, FEEL.hazardDamage);
+          this.hurt(s.x + s.w / 2, this.hazardDamage());
           // Beam only if the hit actually registered, or if you are standing in
           // them. Clipping a spike mid-jump while already invulnerable should
           // not stop you dead — you are passing through, not stuck, and killing
@@ -825,7 +831,8 @@ export default class GameScene extends Phaser.Scene {
     } else {
       this.areaFrame++;
       Terrain.generate(this.world, this.cam.x, this.viewW);
-      Terrain.maybeSpawnDoor(this.world, this.cam.x, this.viewW, this.areaFrame);
+      Terrain.maybeSpawnDoor(this.world, this.cam.x, this.viewW, this.areaFrame,
+        this.run.doorMult);
       Terrain.prune(this.world, this.cam.x);
 
       // walking into the boss door warps you to its arena
@@ -1200,7 +1207,7 @@ export default class GameScene extends Phaser.Scene {
     const q = this.arena.liquid;
     if (q && q.kind === 'lava' && q.h > 0.5 && box.y + box.h > this.arena.floorY - q.h) {
       if (r.invuln === 0) {
-        this.hurt(box.x + box.w / 2, FEEL.hazardDamage);
+        this.hurt(box.x + box.w / 2, this.hazardDamage());
         Attr.applyStatus(this.status, 'burn', FEEL.burnFrames);
       }
     }
@@ -1872,6 +1879,9 @@ export default class GameScene extends Phaser.Scene {
     r.score += Math.round((base + r.combo * FEEL.scoreComboStep) * r.scoreMult);
     this.pickups.push(...Pickups.dropsFor(
       e.elite ? 'elite' : 'minion', e.x + e.w / 2 - 3, e.y + e.h / 2, r.luckMult,
+      // ELITE HUNTER applies to elites and to nothing else, which is what makes
+      // the gold outline worth walking towards rather than around.
+      e.elite ? r.eliteExpMult : 1,
     ));
     e.hp = 0; // pruned at the end of the step
   }
@@ -2212,6 +2222,17 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ── Damage / death ──────────────────────────────────────────────────
+  /**
+   * What a pit or a spike costs, after VIB. DAMPENERS.
+   *
+   * A method rather than a value read at run start, because `hazardDamage` is a
+   * FEEL constant the physics overlay is expected to tune live — caching it
+   * would silently pin the old number for the rest of the run.
+   */
+  hazardDamage() {
+    return Math.max(1, Math.ceil(FEEL.hazardDamage * this.run.hazardMult));
+  }
+
   hurt(sourceX, amount = 1) {
     const r = this.run, p = this.player;
     if (r.invuln > 0) return;
@@ -2219,6 +2240,10 @@ export default class GameScene extends Phaser.Scene {
     // so a reduction can never turn a real hit into a free one — armour should
     // make a trade survivable, not make you immune while mashing.
     if (r.meleeArmor > 0) amount = Math.max(1, Math.ceil(amount * (1 - r.meleeArmor)));
+    // HARDEN, and it obeys the same floor for the same reason: a reduction may
+    // make a trade survivable, never make a hit free. Applied after the melee
+    // window so the two stack multiplicatively rather than summing past 100%.
+    if (r.damageReduce > 0) amount = Math.max(1, Math.ceil(amount * (1 - r.damageReduce)));
     r.hp -= amount;
     // DEV: the hit lands in full — flinch, knockback and i-frames all apply —
     // it just cannot finish you.
@@ -2395,7 +2420,9 @@ export default class GameScene extends Phaser.Scene {
   // ── Progression ─────────────────────────────────────────────────────
   gainExp(amount) {
     const r = this.run;
-    r.exp += amount;
+    // CONT. INTEGRATION. Multiplied at the single point EXP enters the run
+    // rather than at each drop, so nothing that grants EXP later can forget it.
+    r.exp += Math.max(1, Math.round(amount * r.expMult));
     while (r.exp >= r.expToNext) {
       r.exp -= r.expToNext;
       r.level++;

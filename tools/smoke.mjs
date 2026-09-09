@@ -209,7 +209,24 @@ for (const id of BUILT_BOSSES) {
   await page.keyboard.down('ArrowRight');
   await page.waitForTimeout(2200);
   await page.keyboard.up('ArrowRight');
-  await page.waitForTimeout(900);
+
+  /**
+   * WAIT FOR THE WARP TO FINISH, NOT FOR A CLOCK.
+   *
+   * This was a flat 900ms, which was comfortable while the boss-door warp took
+   * about half a second. The tracker's `door and warp` field made it a ~6s
+   * ceremony — 3s out, then the room, the furniture and the boss beaming down a
+   * second each — and three of six bosses then failed here with "door missed?"
+   * when the door had in fact been reached and the fade was still running.
+   *
+   * Waiting on the condition cannot rot the same way the next time that
+   * sequence is retimed. The catch is deliberate: a genuine miss should fall
+   * through to the check below and be reported as one, not thrown from here.
+   */
+  await page.waitForFunction(() => {
+    const gs = globalThis.__game.scene.getScene('Game');
+    return !!gs.arena && !gs.warp;
+  }, null, { timeout: 15000 }).catch(() => {});
 
   const inArena = await page.evaluate(() => {
     const gs = globalThis.__game.scene.getScene('Game');

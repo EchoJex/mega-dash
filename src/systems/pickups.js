@@ -59,13 +59,16 @@ function rollExpAmount(tier) {
  *
  * Both rates are placeholders and both scale with the Luck Chip.
  */
-export function dropsFor(tier, x, y, luckMult = 1) {
+export function dropsFor(tier, x, y, luckMult = 1, expMult = 1) {
   const out = [];
   const isBoss = tier === 'boss';
 
   if (isBoss || Math.random() < FEEL.expDropChance * luckMult) {
     const orbs = isBoss ? FEEL.expOrbsBoss : 1;
-    const total = rollExpAmount(tier);
+    // ELITE HUNTER multiplies the AMOUNT, never the drop CHANCE — an upgrade
+    // that made elites drop more often would be a second Luck Chip wearing a
+    // different name, and would say nothing about elites being worth hunting.
+    const total = Math.round(rollExpAmount(tier) * expMult);
     const each = Math.max(1, Math.round(total / orbs));
     for (let i = 0; i < orbs; i++) out.push(orb('exp', x, y, { amount: each }));
   }

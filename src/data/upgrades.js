@@ -55,6 +55,38 @@ export const UPGRADES = [
   { id: 'luck',         name: 'LUCK CHIP',    color: '#5CADD5', maxLv: 4, cost: 140, mult: 1.5,
     desc: (l) => `Pickup drop rate +${l * 20}%`,
     apply: (r, l) => { r.luckMult = 1 + l * 0.20; } },
+  /**
+   * THE SECOND WAVE, chosen by the owner from a shortlist and named by them.
+   *
+   * Every one of these hangs off plumbing that already existed — a multiplier
+   * the run state was already carrying, or a single call site — which is why
+   * they are cheap. None of them is weapon-specific: "no weapon may be the
+   * meta" applies to upgrades that quietly favour one just as much as it
+   * applies to world content.
+   */
+  // VS's own *Growth*, which is EXP — not GROWTH MODULE below, which is Chips.
+  // The names collide and the mechanics do not; see the note on that row.
+  { id: 'cont_integration', name: 'CONT. INTEGRATION', color: '#7FD4C1', maxLv: 5, cost: 150, mult: 1.55,
+    desc: (l) => `EXP collected +${l * 15}%`,
+    apply: (r, l) => { r.expMult = 1 + l * 0.15; } },
+  // NOT armor_plate. That buys i-frames — time in which nothing can touch you.
+  // This reduces the size of a hit that does land. Two different currencies.
+  { id: 'harden',       name: 'HARDEN',       color: '#9FB4C7', maxLv: 4, cost: 190, mult: 1.6,
+    desc: (l) => `Incoming damage -${l * 8}%`,
+    apply: (r, l) => { r.damageReduce = l * 0.08; } },
+  { id: 'vib_dampeners', name: 'VIB. DAMPENERS', color: '#9AD8F0', maxLv: 3, cost: 170, mult: 1.6,
+    desc: (l) => `Pit and spike damage -${l * 20}%`,
+    apply: (r, l) => { r.hazardMult = 1 - l * 0.20; } },
+  // Gold, because the thing it is about is told by a gold outline.
+  { id: 'elite_hunter', name: 'ELITE HUNTER', color: '#F5D328', maxLv: 1, cost: 700, mult: 1,
+    desc: () => 'Elites drop double EXP',
+    apply: (r, l) => { r.eliteExpMult = l > 0 ? 2 : 1; } },
+  { id: 'satnav',       name: 'SATNAV',       color: '#5CADD5', maxLv: 3, cost: 210, mult: 1.7,
+    desc: (l) => `Boss doors arrive ${l * 10}% sooner`,
+    apply: (r, l) => { r.doorMult = 1 - l * 0.10; } },
+  { id: 'salvage',      name: 'SALVAGE',      color: '#B8DC28', maxLv: 3, cost: 240, mult: 1.8,
+    desc: (l) => `Reroll a level-up hand ${l} time${l === 1 ? '' : 's'} per run`,
+    apply: (r, l) => { r.rerolls = l; } },
   { id: 'twin_arsenal', name: 'TWIN ARSENAL', color: '#2AAB1C', maxLv: 1, cost: 1400, mult: 1,
     desc: () => 'Begin each run with TWO random boss weapons unlocked',
     apply: (r, l) => { r.twinArsenal = l > 0; } },

@@ -43,12 +43,18 @@ export default class HubScene extends Phaser.Scene {
       const t = label(this, LEFT, 0, '', { color: '#E0F0FF' });
       t.setInteractive({ useHandCursor: true });
       t.on('pointerdown', () => this.buy(u));
+      // PAD COMES FROM THE LONGEST NAME IN ITS OWN COLUMN, not a constant. It
+      // was 16, and CONT. INTEGRATION is 17 — so the row silently rendered as
+      // "CONT. INTEGRATIO". The shrink loop below still trims when the two
+      // columns cannot both fit, which is the case the constant was guarding.
       const row = { u, t, short, pad: short ? 10 : 16 };
       this.rows.push(row);
       return row;
     };
     const mainRows = main.map((u) => addRow(u, false));
     const mastRows = mastery.map((u) => addRow(u, true));
+    const widestName = Math.max(...main.map((u) => u.name.length));
+    for (const r of mainRows) r.pad = Math.max(r.pad, widestName);
     this.headTxt = label(this, LEFT, 0, 'MASTERY', { color: '#F5D328' });
 
     /**
@@ -78,7 +84,22 @@ export default class HubScene extends Phaser.Scene {
      * time until they clear each other. Truncated names beat overlapping ones,
      * and it only ever bites on the narrowest device.
      */
-    const roomForNames = () => w - LEFT - GUTTER - widest(mastRows) - LEFT;
+    /**
+     * THE SPLIT IS DECIDED BEFORE THE NAMES ARE TRIMMED, because it changes
+     * what the trim has to clear. While the right-hand column held only the
+     * four narrow mastery rows, "does the left column fit" was the whole
+     * question. Once main rows overflow into it, the right side needs a FULL
+     * row's width, and a loop still measuring against the mastery rows lets
+     * three upgrades run off the screen edge — which is exactly what happened
+     * at 320 and 398 virtual px before this was measured.
+     */
+    const step = lineH + 1;
+    const cap = Math.max(1, Math.floor((BOTTOM - TOP) / step) + 1);
+    const colA = mainRows.slice(0, cap);
+    const colB = mainRows.slice(cap);
+
+    const rightNeeds = () => Math.max(widest(mastRows), colB.length ? widest(colB) : 0);
+    const roomForNames = () => w - LEFT - GUTTER - rightNeeds() - LEFT;
     while (widest(mainRows) > roomForNames() && mainRows[0].pad > 8) {
       for (const r of mainRows) r.pad--;
       this.refresh();
@@ -88,11 +109,34 @@ export default class HubScene extends Phaser.Scene {
     const pitch = (n, top) => Math.max(lineH + 1,
       Math.min(11, Math.floor((BOTTOM - top) / Math.max(1, n - 1))));
 
-    const p = pitch(mainRows.length, TOP);
-    mainRows.forEach((r, i) => r.t.setPosition(LEFT, TOP + i * p));
+    /**
+     * THE LEFT COLUMN HAS A CAPACITY AND THE LIST OUTGREW IT.
+     *
+     * `pitch` cannot shrink past `lineH + 1` without rows overlapping, so once
+     * the main list needs more than that many rows it stops being a fit problem
+     * and starts being an overflow: the six upgrades added on 9 Sep pushed
+     * SALVAGE and TWIN ARSENAL under the BACK plate, where nothing can buy them.
+     *
+     * So the remainder wraps into the SECOND column, beneath the mastery block —
+     * which is four rows tall in a column that runs the full height, and was
+     * therefore mostly empty space the layout had already paid for. The split is
+     * still "mastery is its own group", it is just no longer the ONLY thing on
+     * that side. It stays derived, so the next upgrade does not need this note
+     * read again.
+     */
+    const p = pitch(colA.length, TOP);
+    colA.forEach((r, i) => r.t.setPosition(LEFT, TOP + i * p));
     this.headTxt.setPosition(col2, TOP);
     const q = pitch(mastRows.length, TOP + p);
     mastRows.forEach((r, i) => r.t.setPosition(col2, TOP + p + i * q));
+
+    // The overflow starts a clear line below the last mastery row rather than
+    // continuing its pitch, so the two groups still read as two groups.
+    if (colB.length) {
+      const after = TOP + p + Math.max(1, mastRows.length) * q + step;
+      const rr = pitch(colB.length, after);
+      colB.forEach((r, i) => r.t.setPosition(col2, after + i * rr));
+    }
 
     plate(this, w / 2, VIEW_H - 10, 'BACK', { color: '#5CADD5', padX: 8, padY: 3 })
       .rect.on('pointerdown', () => this.scene.start('Title'));
