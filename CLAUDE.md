@@ -47,26 +47,16 @@ npx playwright@latest install chromium    # once
 npm run build && npm run smoke
 ```
 
-### `npm run tracker-test` — the one bug the tracker app cannot afford
+### `npm run tracker-test` — the tracker app's whole-file PUT
 
-`tools/tracker-publish.mjs` serves `docs/index.html` in Chromium and drives a real
-PUBLISH against a faked api.github.com. Only the network is stubbed; the app under
-test is the one that ships.
+`tools/tracker-publish.mjs` drives a real PUBLISH in Chromium against a faked
+api.github.com. Opt-in, not in CI, same terms as `npm run smoke`.
 
-**It exists because this already happened.** On 3 Sep 2026 a drafting session held a
-document forked before Claude's 1 Sep commits. `tracker: publish` merged correctly,
-and the autosave 26 seconds later PUT the editor's whole in-memory copy back over the
-merge — seven transcribed tracker fields gone, with a valid sha and no error anywhere.
-
-**EVERY WRITE IN THAT APP IS A WHOLE-FILE PUT**, so "the tab's document is older than
-the branch" can never surface as a conflict; it is always a silent revert. That is why
-`publishDraft()` returns whether it fast-forwarded or merged, and why `save()` re-bases
-the tab onto the merge before it is allowed to write again. Do not remove either — the
-return value looks unused until you notice what reads it.
-
-Opt-in and not in CI, on the same terms as `npm run smoke`. Reverting `docs/index.html`
-to the pre-fix version makes it exit 1, which is how it was verified rather than
-assumed.
+EVERY WRITE IN THAT APP IS A WHOLE-FILE PUT, so "the tab's document is older than
+the branch" is never a conflict — always a silent revert. It ate seven tracker
+fields on 3 Sep 2026. `publishDraft()` returns ff-or-merge and `save()` re-bases
+on merge; **do not remove either** — the return value looks unused until you see
+what reads it.
 
 ### `npm run sim` — the boss difficulty harness
 
