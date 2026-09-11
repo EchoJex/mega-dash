@@ -169,3 +169,36 @@ export function proposedBox(frame, w, h, fudgeW, fudgeH) {
     y: b.y1 + 1 - bh,
   };
 }
+
+/**
+ * WRAP THE SILHOUETTE IN THE OUTLINE ROLE, growing OUTWARD by one pixel.
+ *
+ * Outward and not inward, because that is how the shipped art is actually
+ * drawn — `player.sprite` reads `....0000111111110`, outline sitting around
+ * the fill rather than eating its edge. Growing inward would keep the sprite
+ * the same size and make every drawing a pixel thinner than the artist drew it.
+ *
+ * Only primary and secondary count as solid, so outline never grows outline:
+ * running this twice does the same thing as running it once.
+ *
+ * `clipped` is true when the grid edge stopped the outline going where it
+ * should have. The caller says so out loud rather than silently shipping a
+ * sprite whose outline is open along one side.
+ */
+export function outlineFrame(rows, w, h) {
+  const out = rows.map((r) => [...r]);
+  const solid = (x, y) => rows[y][x] === '1' || rows[y][x] === '2';
+  let clipped = false;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!solid(x, y)) continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) { clipped = true; continue; }
+        if (rows[ny][nx] === EMPTY) out[ny][nx] = '0';
+      }
+    }
+  }
+  return { rows: out.map((r) => r.join('')), clipped };
+}

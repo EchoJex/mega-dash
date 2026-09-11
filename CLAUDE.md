@@ -365,8 +365,9 @@ reference frame — the player's own box matches `idle1` at 1.00 and `idle0` at 
 
 #### THE TOOL ROW IS ONE LINE THAT SCROLLS, and that is a constraint, not a style
 
-It carries the four colour pens, five drawing tools, undo/redo, the frame buttons and the
-view toggles; the NES chip, the role dropdowns and the fudge dials are behind PAL. Left to
+It carries the four colour pens, six drawing tools, the zoom ladder, undo/redo, the frame
+buttons and the view toggles; the NES chip, the role dropdowns and the fudge dials are
+behind PAL. Left to
 WRAP, that same row was one line on a desktop and four on a phone in landscape — which took
 a 380px screen down to a **thirty-pixel canvas**, the exact opposite of what the layout is
 for. `flex-wrap: nowrap` with `overflow-x: auto` makes the footer's height a constant, and
@@ -377,6 +378,15 @@ row's min-content and drags the stage off-centre with it, and `#drawer` needs an
 
 **The standing vertical-fudge warning lives OUTSIDE the drawer** so closing the drawer
 cannot close it. That is the whole point of it being standing.
+
+#### ONE FINGER IS ALWAYS THE TOOL. Do not reintroduce pinch.
+
+Zoom is a ladder of whole numbers reached by buttons, and pan is a tool. Pinch-to-zoom was
+removed for it, by the owner's call, so that a one-finger drag on the stage can never mean
+two things — which is what a selection tool needs before it can drag a region around. The
+rungs are integers because the grid overlay switches on at 4x and a fractional cell size
+shimmers against it; `fitCam` may still land between rungs, and the next press snaps back
+on. The wheel stays, on the same ladder, because a wheel carries no touch ambiguity.
 
 **The preview's rate is a control, and 60 is not what the game does.** `MANIFEST` plays the
 player at `fps: 12` with the idle slowed to 1.5, so a literal 60 on a two-frame idle is a

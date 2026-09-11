@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { parse, serialize, bounds, proposedBox, blankFrame, STATUSES } from '../docs/sprite-fmt.js';
+import { parse, serialize, bounds, proposedBox, blankFrame, outlineFrame, STATUSES } from '../docs/sprite-fmt.js';
 import { NES, USABLE, UNSAFE, nearestSlot } from '../docs/nes-palette.js';
 
 const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url)));
@@ -107,4 +107,18 @@ test('every drawable actor has a grid its collision box fits inside', () => {
       `${id}: box ${t.box.w}x${t.box.h} overflows grid ${t.grid.w}x${t.grid.h}`);
     assert.ok(t.frames.length >= 1, `${id} has no frames`);
   }
+});
+
+test('auto-outline wraps the silhouette outward and stops growing', () => {
+  const one = outlineFrame(['...', '.1.', '...'], 3, 3);
+  assert.deepEqual(one.rows, ['.0.', '010', '.0.']);
+  assert.equal(one.clipped, false);
+  // Outline is not solid, so a second pass has nothing left to wrap. An artist
+  // who taps it twice must not end up two pixels thicker than they drew.
+  assert.deepEqual(outlineFrame(one.rows, 3, 3).rows, one.rows);
+});
+
+test('auto-outline reports when the grid edge stopped it', () => {
+  assert.equal(outlineFrame(['1..', '...', '...'], 3, 3).clipped, true);
+  assert.equal(outlineFrame(['...', '.2.', '...'], 3, 3).clipped, false);
 });

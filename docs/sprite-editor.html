@@ -159,17 +159,25 @@
     <button data-tool="line" title="straight line (L)">LINE</button>
     <button data-tool="rect" title="rectangle outline (U)">RECT</button>
     <button data-tool="pick" title="eyedropper (I)">PICK</button>
+    <button data-tool="pan" title="move the view (H)">PAN</button>
+    <span class="sep"></span>
+    <button id="zoomOut" title="zoom out (−)">−</button>
+    <span id="zval" class="tag">12x</span>
+    <button id="zoomIn" title="zoom in (+)">+</button>
+    <button id="zoomFit" title="fit the sprite and both reference figures">FIT</button>
     <span class="sep"></span>
     <button id="undo" title="undo (Ctrl+Z)">↶</button>
     <button id="redo" title="redo (Ctrl+Shift+Z)">↷</button>
     <button id="flipH" title="mirror this frame left-right">⇄</button>
     <button id="flipV" title="mirror this frame top-bottom">⇅</button>
     <button id="clearF" title="empty this frame">CLR</button>
+    <button id="outline" title="wrap the silhouette in the outline colour">OUTLINE</button>
     <span class="grow"></span>
     <button id="addFrame" title="add a copy of this frame after it">+FRAME</button>
     <button id="delFrame" title="delete this frame">−FRAME</button>
     <button id="play" title="cycle the frames (P)">▶</button>
     <span class="sep"></span>
+    <button id="tOnion" title="ghost the previous frame under this one (O)">ONION</button>
     <button id="tView" title="art only — hide the grid, boxes and reference figures">VIEW</button>
     <button id="tBox" title="show the engine box and the box this drawing proposes">BOX</button>
     <button id="tDrawer" title="the NES palette, the role colours and the fudge dials">PAL ▾</button>
@@ -205,7 +213,7 @@
 
 <script type="module">
 import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js';
-import { parse, serialize, blankFrame, bounds, proposedBox, STATUSES } from './sprite-fmt.js';
+import { parse, serialize, blankFrame, bounds, proposedBox, outlineFrame, STATUSES } from './sprite-fmt.js';
 
 const OWNER = 'EchoJex', REPO = 'mega-dash';
 const TOKEN_KEY = 'megadash_gh_token';        // SHARED with the tracker app
@@ -220,7 +228,7 @@ let doc = null;          // the sprite being edited
 let key = null;          // its id
 let sha = null, dirty = false, saving = false, timer = null;
 let frameIx = 0, pen = '1', tool = 'pen';
-let view = { editor: true, boxes: true };
+let view = { editor: true, boxes: true, onion: false };
 let cam = { z: 12, x: 0, y: 0 };
 
 // ── GitHub, the same shape the tracker uses ───────────────────────────
@@ -509,6 +517,8 @@ function syncControls() {
 function syncButtons() {
   for (const b of document.querySelectorAll('.pen')) b.classList.toggle('on', b.dataset.pen === pen);
   for (const b of document.querySelectorAll('[data-tool]')) b.classList.toggle('on', b.dataset.tool === tool);
+  $('#tOnion').classList.toggle('on', view.onion);
+  $('#tOnion').disabled = !doc || doc.frames.length < 2;
   $('#tView').classList.toggle('on', !view.editor);
   $('#tBox').classList.toggle('on', view.boxes);
   $('#tDrawer').classList.toggle('on', !$('#drawer').hidden);
@@ -721,6 +731,44 @@ function fitCam() {
   cam.x = r.width / 2 - (BOSS_REF.w - PLAYER_REF.w) * cam.z / 2;
   // Baselines share a line, so centre on that line rather than on the canvas.
   cam.y = r.height / 2 + (tall - doc.h) * cam.z / 2 - 12;
+  syncZoom();
+}
+
+/**
+ * ZOOM IS A LADDER OF WHOLE NUMBERS, REACHED BY BUTTONS ONLY.
+ *
+ * Pinch is gone and pan is a tool, so one finger on the stage now always means
+ * the tool that is selected and nothing else. That is not tidiness: a drag has
+ * to be unambiguous before a selection tool can exist to drag things around
+ * with, and a pinch that starts a frame after a stroke was already painting is
+ * exactly the ambiguity that makes a phone editor feel unreliable.
+ *
+ * The rungs are integers because the grid overlay switches on at 4x and a
+ * fractional cell size shimmers against it. `fitCam` is still allowed to land
+ * between rungs — fitting means fitting — and the next press snaps back on.
+ */
+const ZOOMS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+const syncZoom = () => { $('#zval').textContent = `${Math.round(cam.z)}x`; };
+
+/** Zoom about the CENTRE of the stage, so the thing being looked at stays put. */
+function zoomTo(nz) {
+  const r = $('#stage').getBoundingClientRect();
+  const cx = r.width / 2, cy = r.height / 2;
+  const gx = (cx - cam.x) / cam.z, gy = (cy - cam.y) / cam.z;
+  cam.z = nz;
+  cam.x = cx - gx * nz;
+  cam.y = cy - gy * nz;
+  fitted = false;
+  syncZoom();
+  draw();
+}
+
+/** The next rung strictly above or below where the camera is now. */
+function zoomStep(d) {
+  const nz = d > 0
+    ? ZOOMS.find((z) => z > cam.z + 0.001)
+    : [...ZOOMS].reverse().find((z) => z < cam.z - 0.001);
+  if (nz) zoomTo(nz);
 }
 
 const REF_GAP = 6;
@@ -761,8 +809,8 @@ function draw() {
    * than in a general one: a 48x48 canvas tells you nothing about whether the
    * thing on it reads as bigger than the player. They stand on the same
    * baseline as the canvas and zoom with it, so the comparison holds at every
-   * magnification — which is what makes pinching to zoom in on an eye still
-   * honest about how big the eye is.
+   * magnification — which is what keeps zooming in on an eye honest about how
+   * big the eye is.
    */
   if (view.editor) {
     const label = (text, x) => {
@@ -813,15 +861,31 @@ function draw() {
     label(`MAX BOSS ${BOSS_REF.w}x${BOSS_REF.h}`, bx0);
   }
 
+  /**
+   * THE ONION SKIN SHOWS THROUGH THE HOLES AND NOWHERE ELSE.
+   *
+   * The previous frame is drawn only where this one is transparent, which is
+   * the whole question an in-between pose asks — what did I move away FROM —
+   * and it keeps the frame being worked on at full strength rather than
+   * muddying it under a wash. The frame before frame 0 is the LAST frame,
+   * because a walk cycle is a loop and its seam is the hardest part of it.
+   */
+  const onion = view.onion && doc.frames.length > 1
+    ? doc.frames[(frameIx - 1 + doc.frames.length) % doc.frames.length].rows
+    : null;
+
   // The canvas ground: a checker, so transparency reads as transparency.
   for (let y = 0; y < doc.h; y++) {
     for (let x = 0; x < doc.w; x++) {
       const px = doc.frames[frameIx].rows[y][x];
       if (px === EMPTY) {
         if (!view.editor) continue;                 // visible-pixels-only
-        ctx.fillStyle = ((x >> 1) + (y >> 1)) % 2 ? '#161a21' : '#1c212a';
+        const og = onion && onion[y][x] !== EMPTY ? onion[y][x] : null;
+        if (og) { ctx.globalAlpha = 0.3; ctx.fillStyle = colourOf(og, cols); }
+        else ctx.fillStyle = ((x >> 1) + (y >> 1)) % 2 ? '#161a21' : '#1c212a';
       } else ctx.fillStyle = colourOf(px, cols);
       ctx.fillRect(ox + x * z, oy + y * z, z, z);
+      ctx.globalAlpha = 1;
     }
   }
 
@@ -936,10 +1000,10 @@ function drawPreview() {
   }
 }
 
-// ── Input: draw, pan, pinch ───────────────────────────────────────────
+// ── Input: draw and pan ───────────────────────────────────────────────
 
 const pointers = new Map();
-let pinch = null, painting = false, lastCell = null, panning = false;
+let painting = false, lastCell = null, panning = false;
 let ghost = null;          // { a, b } while a line or rect is being dragged
 let strokeChanged = false;
 
@@ -983,22 +1047,14 @@ function beginStroke(c) {
 $('#stage').addEventListener('pointerdown', (e) => {
   $('#stage').setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pointers.size === 2) {
-    // PINCH BEATS PAINT, and anything already painted this gesture stays.
-    // Undoing it would be worse: a second finger landing a frame late is a
-    // zoom the artist meant, not a stroke they want reverted.
-    endStroke();
-    const [a, b] = [...pointers.values()];
-    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z,
-      mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, cx: cam.x, cy: cam.y };
-    return;
-  }
+  // A SECOND FINGER DOES NOTHING AT ALL. With pinch gone there is nothing for
+  // it to mean, and a stray one landing mid-stroke must not turn a line into
+  // a gesture.
   if (pointers.size !== 1) return;
   const c = cellAt(e.clientX, e.clientY);
-  // A ONE-FINGER DRAG THAT STARTS OFF THE GRID PANS. On a phone the second
-  // finger is the one holding the device, so pinch cannot be the only way to
-  // move the view.
-  if (!c) { panning = true; return; }
+  // A drag that starts off the grid pans whatever tool is held, so the view is
+  // always movable without going back to the tool row to say so.
+  if (tool === 'pan' || !c) { panning = true; return; }
   beginStroke(c);
 });
 
@@ -1006,21 +1062,6 @@ $('#stage').addEventListener('pointermove', (e) => {
   if (!pointers.has(e.pointerId)) return;
   const prev = pointers.get(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pinch && pointers.size === 2) {
-    const [a, b] = [...pointers.values()];
-    const d = Math.hypot(a.x - b.x, a.y - b.y);
-    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    // Zoom about the pinch centre, then carry the pan the fingers did.
-    const nz = Math.max(1, Math.min(64, pinch.z * (d / (pinch.d || 1))));
-    const r = $('#stage').getBoundingClientRect();
-    const gx = (pinch.mx - r.left - pinch.cx) / pinch.z, gy = (pinch.my - r.top - pinch.cy) / pinch.z;
-    cam.z = nz;
-    cam.x = (mx - r.left) - gx * nz;
-    cam.y = (my - r.top) - gy * nz;
-    fitted = false;
-    draw();
-    return;
-  }
   if (panning || (pointers.size === 1 && e.buttons === 4)) {   // middle-drag also pans
     cam.x += e.clientX - prev.x; cam.y += e.clientY - prev.y;
     fitted = false;
@@ -1050,21 +1091,17 @@ function endStroke() {
 
 const endPointer = (e) => {
   pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinch = null;
   if (pointers.size === 0) { endStroke(); panning = false; }
 };
 $('#stage').addEventListener('pointerup', endPointer);
 $('#stage').addEventListener('pointercancel', endPointer);
 
+// The wheel is a desktop convenience and carries no touch ambiguity, so it
+// stays — but on the same ladder as the buttons rather than as a second zoom
+// with a feel of its own.
 $('#stage').addEventListener('wheel', (e) => {
   e.preventDefault();
-  const r = $('#stage').getBoundingClientRect();
-  const gx = (e.clientX - r.left - cam.x) / cam.z, gy = (e.clientY - r.top - cam.y) / cam.z;
-  cam.z = Math.max(1, Math.min(64, cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
-  cam.x = (e.clientX - r.left) - gx * cam.z;
-  cam.y = (e.clientY - r.top) - gy * cam.z;
-  fitted = false;
-  draw();
+  zoomStep(e.deltaY < 0 ? 1 : -1);
 }, { passive: false });
 
 // ── Wiring ────────────────────────────────────────────────────────────
@@ -1080,6 +1117,23 @@ $('#redo').onclick = redo;
 $('#flipH').onclick = flipH;
 $('#flipV').onclick = flipV;
 $('#clearF').onclick = clearFrame;
+/**
+ * AUTO-OUTLINE IS ONE TAP AND IT IS ALLOWED TO SAY NO. Two of the three
+ * outcomes are worth a word: nothing to wrap, and a drawing already touching
+ * the grid edge, where part of the outline has nowhere to go and the sprite
+ * ships with an open side unless somebody is told.
+ */
+$('#outline').onclick = () => {
+  const f = cur();
+  const { rows, clipped } = outlineFrame(f.rows, doc.w, doc.h);
+  if (rows.every((r, i) => r === f.rows[i])) { flash('nothing to outline'); return; }
+  f.rows = rows;
+  commit();
+  if (clipped) flash('outlined — this drawing reaches the grid edge, so part of the outline had nowhere to go');
+};
+$('#zoomIn').onclick = () => zoomStep(1);
+$('#zoomOut').onclick = () => zoomStep(-1);
+$('#zoomFit').onclick = () => { fitCam(); draw(); };
 $('#addFrame').onclick = addFrame;
 $('#delFrame').onclick = delFrame;
 $('#play').onclick = togglePlay;
@@ -1097,6 +1151,7 @@ $('#prate').onclick = () => {
   rateIx = (rateIx + 1) % RATES.length;
   $('#prate').textContent = `${RATES[rateIx]} FPS`;
 };
+$('#tOnion').onclick = () => { view.onion = !view.onion; syncButtons(); draw(); };
 $('#tView').onclick = () => { view.editor = !view.editor; syncButtons(); draw(); };
 $('#tBox').onclick = () => { view.boxes = !view.boxes; syncButtons(); draw(); };
 /**
@@ -1152,9 +1207,9 @@ $('#tok').addEventListener('close', () => {
 
 /**
  * THE ASEPRITE LETTERS, because they are the ones a pixel artist's hand
- * already knows: B pencil, G fill, L line, U rectangle, I eyedropper.
+ * already knows: B pencil, G fill, L line, U rectangle, I eyedropper, H hand.
  */
-const TOOL_KEYS = { b: 'pen', g: 'fill', l: 'line', u: 'rect', i: 'pick' };
+const TOOL_KEYS = { b: 'pen', g: 'fill', l: 'line', u: 'rect', i: 'pick', h: 'pan' };
 addEventListener('keydown', (e) => {
   if (!doc || e.target.matches('input, select, textarea')) return;
   const k = e.key.toLowerCase();
@@ -1166,6 +1221,9 @@ addEventListener('keydown', (e) => {
   if (TOOL_KEYS[k]) { tool = TOOL_KEYS[k]; ghost = null; syncButtons(); draw(); return; }
   if ('1234'.includes(k)) { pen = ['0', '1', '2', EMPTY]['1234'.indexOf(k)]; syncButtons(); return; }
   if (k === 'p') { togglePlay(); return; }
+  if (k === 'o') { view.onion = !view.onion; syncButtons(); draw(); return; }
+  if (k === '+' || k === '=') { zoomStep(1); return; }
+  if (k === '-' || k === '_') { zoomStep(-1); return; }
   if (k === ',' || k === '.') {
     const d = k === ',' ? -1 : 1;
     frameIx = (frameIx + d + doc.frames.length) % doc.frames.length;
