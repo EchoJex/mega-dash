@@ -9,7 +9,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { parse, serialize, bounds, proposedBox, blankFrame, outlineFrame, STATUSES } from '../docs/sprite-fmt.js';
+import {
+  parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
+  readRegion, clearRegion, stampRegion, STATUSES,
+} from '../docs/sprite-fmt.js';
 import { NES, USABLE, UNSAFE, nearestSlot } from '../docs/nes-palette.js';
 
 const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url)));
@@ -121,4 +124,24 @@ test('auto-outline wraps the silhouette outward and stops growing', () => {
 test('auto-outline reports when the grid edge stopped it', () => {
   assert.equal(outlineFrame(['1..', '...', '...'], 3, 3).clipped, true);
   assert.equal(outlineFrame(['...', '.2.', '...'], 3, 3).clipped, false);
+});
+
+test('region ops move a shape without punching a hole around it', () => {
+  const rows = ['.1.', '.2.', '111'];
+  const sel = { x: 1, y: 0, w: 1, h: 2 };
+  const region = readRegion(rows, 3, 3, sel);
+  assert.deepEqual(region, ['1', '2']);
+  const cleared = clearRegion(rows, 3, 3, sel);
+  assert.deepEqual(cleared, ['...', '...', '111']);
+  // Stamped one left: the floor row survives, because a transparent cell in
+  // the lifted rectangle does not paint.
+  assert.deepEqual(stampRegion(cleared, 3, 3, region, 0, 0), ['1..', '2..', '111']);
+});
+
+test('a region hanging off the grid pads on read and clips on stamp', () => {
+  const rows = ['.1', '2.'];
+  assert.deepEqual(readRegion(rows, 2, 2, { x: 1, y: 1, w: 2, h: 2 }), ['..', '..']);
+  // Two columns stamped at x=1 on a 2-wide grid: the first lands, the second
+  // falls off the right edge and is gone.
+  assert.deepEqual(stampRegion(['..', '..'], 2, 2, ['12'], 1, 0), ['.1', '..']);
 });

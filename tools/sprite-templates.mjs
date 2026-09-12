@@ -133,6 +133,42 @@ const bossRows = [...bosses.matchAll(/id: '(\w+)', name: '([^']+)'[\s\S]*?scale:
   .map((m) => ({ id: m[1], name: m[2], scale: +m[3] }));
 if (bossRows.length !== 17) throw new Error(`read ${bossRows.length} bosses, expected 17`);
 
+const SHOT_GRID = num(display, /^\s*shot:\s*\{ w: (\d+)/m, 'shot grid');
+const PICKUP_GRID = num(display, /^\s*pickup:\s*\{ w: (\d+)/m, 'pickup grid');
+
+/**
+ * THE PROJECTILE ROSTER IS THE WEAPON ROSTER, derived the same way everything
+ * else here is. A weapon gains a drawable shot on the day it is added to
+ * `DEFS`, with no edit in this file — the same derive-don't-list rule the
+ * playtester content gate follows.
+ *
+ * `boss` is carried through because it is the shot's PALETTE: a Blaze Wheel
+ * bullet is drawn in Blaze Man's three colours and re-tunes with him. The
+ * sidearm's is null and falls back to the buster's own.
+ */
+const weaponRows = [...src('src/data/weapons.js')
+  .matchAll(/\{ id: '(\w+)', name: (['"])(.+?)\2[\s\S]{0,120}?boss: (?:'(\w+)'|null)/g)]
+  .map((m) => ({ id: m[1], name: m[3], boss: m[4] || null }));
+if (weaponRows.length !== 18) throw new Error(`read ${weaponRows.length} weapons, expected 18`);
+
+// The two pickups, from PICKUP_STYLE — the one place their identity is stated.
+const pickupRows = [...src('src/systems/pickups.js')
+  .matchAll(/^\s*(etank|exp):\s*\{ primary: '(#[0-9A-Fa-f]{6})', secondary: '(#[0-9A-Fa-f]{6})'/gm)]
+  .map((m) => ({ id: m[1], palette: { primary: m[2], secondary: m[3], outline: '#0A0A12' } }));
+if (pickupRows.length !== 2) throw new Error(`read ${pickupRows.length} pickups, expected 2`);
+
+/**
+ * The buster's and the pickups' three colours DO travel in here, and that is
+ * not a contradiction of the note above. That note is about BOSS palettes,
+ * which live in `boss-data.json` because the tracker owns them; these two have
+ * no other machine-readable home at all, so this is the only copy rather than
+ * a second one.
+ */
+const bustP = /BUSTER_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/
+  .exec(src('src/data/weapons.js'));
+if (!bustP) throw new Error('could not read BUSTER_PALETTE');
+const BUSTER_PAL = { primary: bustP[1], secondary: bustP[2], outline: '#0A0A12' };
+
 /**
  * THE EXACT ARITHMETIC `spawnBoss` USES, and it has to stay exact.
  *
@@ -443,6 +479,32 @@ const targets = {
     frames: ['idle0', 'idle1'],
   }])),
   /**
+   * SHOTS AND PICKUPS CARRY NO BOX, and that is the honest answer rather than
+   * a gap. A projectile's collision is a RADIUS the engine computes per weapon
+   * and per level, and a pickup's is a flat 7x7 pickup test — neither is the
+   * per-actor hurtbox the fudge dials exist to propose. Drawing a box here
+   * would invite an artist to tune a number nothing reads.
+   *
+   * THE ID IS FILENAME-SAFE AND `key` IS WHAT MANIFEST WANTS. `shot:buster` is
+   * a fine manifest key and a bad path, so the file is `shot-buster.sprite`
+   * and the colon lives in one generated field instead of in a two-way
+   * conversion somebody has to keep straight.
+   */
+  shots: Object.fromEntries(weaponRows.map((w) => [`shot-${w.id}`, {
+    label: w.name, cls: 'shot', key: `shot:${w.id}`, boss: w.boss,
+    palette: w.boss ? null : BUSTER_PAL,
+    grid: { w: SHOT_GRID, h: SHOT_GRID },
+    box: null,
+    frames: ['fly0', 'fly1', 'fly2', 'fly3'],
+  }])),
+  pickups: Object.fromEntries(pickupRows.map((p) => [`pickup-${p.id}`, {
+    label: p.id === 'etank' ? 'E-TANK' : 'EXP ORB', cls: 'pickup', key: `pickup:${p.id}`,
+    palette: p.palette,
+    grid: { w: PICKUP_GRID, h: PICKUP_GRID },
+    box: null,
+    frames: ['idle0', 'idle1'],
+  }])),
+  /**
    * THE FUDGE DEFAULT, MEASURED RATHER THAN CHOSEN.
    *
    * The shipped player art is the only sprite in the game with a collision box
@@ -456,6 +518,17 @@ const targets = {
    * visibly misses, while a landing is exactly where the feet are, because
    * platforming cannot afford a vertical lie.
    */
+  /**
+   * THE AVERAGE BOSS, for the walk-across preview's finish line. The largest
+   * boss answers "will this fit"; the average one answers "is this the size a
+   * fight actually feels like", and that is the question a walk cycle asks.
+   * Same `bossBox` arithmetic as every other footprint here.
+   */
+  avgBoss: { scale: Math.round(avgScale * 100) / 100, box: bossBox(avgScale) },
+  // The classic NES walk, converted out of that game's 8.8 fixed point. The
+  // editor's walk preview travels at exactly this, so a cycle that looks right
+  // there is a cycle that looks right in the game.
+  moveSpeed: num(feel, /moveSpeed: ([0-9.]+)/, 'moveSpeed'),
   fudge: { w: 0.7, h: 1, step: 0.05, measured: { standing: [0.71, 0.96], sliding: [0.76, 1] } },
 };
 writeFileSync(join(REPO, 'design/sprite-targets.json'), `${JSON.stringify(targets, null, 2)}\n`);

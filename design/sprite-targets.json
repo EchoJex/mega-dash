@@ -358,6 +358,384 @@
       ]
     }
   },
+  "shots": {
+    "shot-buster": {
+      "label": "SIDE ARM",
+      "cls": "shot",
+      "key": "shot:buster",
+      "boss": null,
+      "palette": {
+        "primary": "#1565C0",
+        "secondary": "#5CC8F0",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-core_blaster": {
+      "label": "NULLFIRE DRONE",
+      "cls": "shot",
+      "key": "shot:core_blaster",
+      "boss": "core",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-blaze_wheel": {
+      "label": "BLAZE WHEEL",
+      "cls": "shot",
+      "key": "shot:blaze_wheel",
+      "boss": "blaze",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-torrent_cannon": {
+      "label": "TORRENT CANNON",
+      "cls": "shot",
+      "key": "shot:torrent_cannon",
+      "boss": "torrent",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-volt_spark": {
+      "label": "VOLT SPARK",
+      "cls": "shot",
+      "key": "shot:volt_spark",
+      "boss": "volt",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-thorn_lash": {
+      "label": "SIMON'S WHIP",
+      "cls": "shot",
+      "key": "shot:thorn_lash",
+      "boss": "thorn",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-frost_guard": {
+      "label": "FROST GUARD",
+      "cls": "shot",
+      "key": "shot:frost_guard",
+      "boss": "frost",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-strike_gauntlet": {
+      "label": "STRIKE GAUNTLET",
+      "cls": "shot",
+      "key": "shot:strike_gauntlet",
+      "boss": "strike",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-venom_spray": {
+      "label": "VENOM SPRAY",
+      "cls": "shot",
+      "key": "shot:venom_spray",
+      "boss": "venom",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-quake_hammer": {
+      "label": "QUAKE HAMMER",
+      "cls": "shot",
+      "key": "shot:quake_hammer",
+      "boss": "quake",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-gale_vortex": {
+      "label": "GALE VORTEX",
+      "cls": "shot",
+      "key": "shot:gale_vortex",
+      "boss": "gale",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-psi_orb": {
+      "label": "PSI ORB",
+      "cls": "shot",
+      "key": "shot:psi_orb",
+      "boss": "psi",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-swarm_caller": {
+      "label": "SWARM CALLER",
+      "cls": "shot",
+      "key": "shot:swarm_caller",
+      "boss": "swarm",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-rock_buster": {
+      "label": "GRANITE FORM",
+      "cls": "shot",
+      "key": "shot:rock_buster",
+      "boss": "granite",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-wraith_cloak": {
+      "label": "WRAITH CLOAK",
+      "cls": "shot",
+      "key": "shot:wraith_cloak",
+      "boss": "wraith",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-drake_breath": {
+      "label": "DRAKE BREATH",
+      "cls": "shot",
+      "key": "shot:drake_breath",
+      "boss": "drake",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-eclipse_blade": {
+      "label": "ASTRAL CLOAK",
+      "cls": "shot",
+      "key": "shot:eclipse_blade",
+      "boss": "eclipse",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    "shot-alloy_blade": {
+      "label": "ALLOY BLADE",
+      "cls": "shot",
+      "key": "shot:alloy_blade",
+      "boss": "alloy",
+      "palette": null,
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    }
+  },
+  "pickups": {
+    "pickup-etank": {
+      "label": "E-TANK",
+      "cls": "pickup",
+      "key": "pickup:etank",
+      "palette": {
+        "primary": "#E11416",
+        "secondary": "#F8FAFC",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "idle0",
+        "idle1"
+      ]
+    },
+    "pickup-exp": {
+      "label": "EXP ORB",
+      "cls": "pickup",
+      "key": "pickup:exp",
+      "palette": {
+        "primary": "#F5D328",
+        "secondary": "#5C4A0A",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "frames": [
+        "idle0",
+        "idle1"
+      ]
+    }
+  },
+  "avgBoss": {
+    "scale": 1.69,
+    "box": {
+      "w": 31,
+      "h": 41
+    }
+  },
+  "moveSpeed": 1.375,
   "fudge": {
     "w": 0.7,
     "h": 1,

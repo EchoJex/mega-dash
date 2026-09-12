@@ -144,6 +144,7 @@
   <div id="prev" hidden>
     <canvas id="pcv"></canvas>
     <button id="prate" title="the game plays this sheet at 12fps — 60 is a strobe on a 2-frame idle">60 FPS</button>
+    <button id="pmode" title="cycle in place, or walk the ground between the player and a boss">LOOP</button>
   </div>
 </div>
 
@@ -159,7 +160,18 @@
     <button data-tool="line" title="straight line (L)">LINE</button>
     <button data-tool="rect" title="rectangle outline (U)">RECT</button>
     <button data-tool="pick" title="eyedropper (I)">PICK</button>
+    <button data-tool="sel" title="select a rectangle (M)">SEL</button>
     <button data-tool="pan" title="move the view (H)">PAN</button>
+    <span class="sep" id="selSep" hidden></span>
+    <span id="selTools" hidden>
+      <button id="selCut" title="cut the selection (Ctrl+X)">CUT</button>
+      <button id="selCopy" title="copy the selection (Ctrl+C)">COPY</button>
+      <button id="selPaste" title="paste where it was copied from (Ctrl+V)">PASTE</button>
+      <button id="nL" title="nudge left">←</button>
+      <button id="nU" title="nudge up">↑</button>
+      <button id="nD" title="nudge down">↓</button>
+      <button id="nR" title="nudge right">→</button>
+    </span>
     <span class="sep"></span>
     <button id="zoomOut" title="zoom out (−)">−</button>
     <span id="zval" class="tag">12x</span>
@@ -213,7 +225,10 @@
 
 <script type="module">
 import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js';
-import { parse, serialize, blankFrame, bounds, proposedBox, outlineFrame, STATUSES } from './sprite-fmt.js';
+import {
+  parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
+  readRegion, clearRegion, stampRegion, STATUSES,
+} from './sprite-fmt.js';
 
 const OWNER = 'EchoJex', REPO = 'mega-dash';
 const TOKEN_KEY = 'megadash_gh_token';        // SHARED with the tracker app
@@ -324,18 +339,36 @@ async function boot() {
   await open($('#target').value);
 }
 
+/**
+ * FORTY ENTRIES NOW, SO THEY ARE GROUPED. Actors, then the eighteen shots,
+ * then the two pickups — a flat list where a boss and a bullet sat side by
+ * side made the one you wanted a scroll rather than a glance.
+ */
 function buildTargetList() {
   const sel = $('#target');
-  const add = (v, label) => sel.add(new Option(label, v));
-  add('player', 'PLAYER');
-  for (const m of targets.minions) add(m.id, m.label);
-  for (const [id, b] of Object.entries(targets.bosses)) add(id, `${b.label}  ${b.scale}x`);
+  sel.innerHTML = '';
+  const group = (label) => {
+    const g = document.createElement('optgroup');
+    g.label = label; sel.append(g);
+    return (v, text) => g.append(new Option(text, v));
+  };
+  const actors = group('ACTORS');
+  actors('player', 'PLAYER');
+  for (const m of targets.minions) actors(m.id, m.label);
+  for (const [id, b] of Object.entries(targets.bosses)) actors(id, `${b.label}  ${b.scale}x`);
+  const shots = group('SHOTS');
+  for (const [id, w] of Object.entries(targets.shots)) shots(id, w.label);
+  const pickups = group('PICKUPS');
+  for (const [id, k] of Object.entries(targets.pickups)) pickups(id, k.label);
 }
+
+/** Neither carries a collision box, so neither gets the box or the fudge dials. */
+const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup');
 
 function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
-  return m || targets.bosses[id];
+  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id];
 }
 
 /**
@@ -344,6 +377,12 @@ function targetOf(id) {
  * artist sees here is the palette the design says, not a copy of it.
  */
 function paletteOf(id) {
+  const t = targetOf(id);
+  // The sidearm's shot and both pickups carry their own three, because they
+  // have no boss to borrow from. Everything else a shot wears is its SOURCE
+  // boss's, so re-tuning a primary in the tracker recolours his bullet too.
+  if (t && t.palette) return t.palette;
+  if (t && t.boss) return paletteOf(t.boss);
   const b = palettes.bosses[id];
   if (b) return { outline: b.outline, primary: b.primary, secondary: b.secondary };
   if (id === 'player') return { outline: '#0A0A12', primary: '#FFFFFF', secondary: '#BFC6D2' };
@@ -352,6 +391,7 @@ function paletteOf(id) {
 
 async function open(id) {
   key = id; sha = null; dirty = false; frameIx = 0;
+  clearSel();
   stopPlay();
   const t = targetOf(id);
   let text = null;
@@ -517,6 +557,14 @@ function syncControls() {
 function syncButtons() {
   for (const b of document.querySelectorAll('.pen')) b.classList.toggle('on', b.dataset.pen === pen);
   for (const b of document.querySelectorAll('[data-tool]')) b.classList.toggle('on', b.dataset.tool === tool);
+  const selecting = tool === 'sel';
+  $('#selTools').hidden = !selecting;
+  $('#selSep').hidden = !selecting;
+  for (const id of ['selCut', 'selCopy', 'nL', 'nR', 'nU', 'nD']) $(`#${id}`).disabled = !sel;
+  $('#selPaste').disabled = !clip;
+  const prop = doc && isProp(targetOf(key));
+  $('#tBox').disabled = prop;
+  for (const id of ['fwm', 'fwp', 'fhm', 'fhp', 'fudgeDef']) $(`#${id}`).disabled = prop;
   $('#tOnion').classList.toggle('on', view.onion);
   $('#tOnion').disabled = !doc || doc.frames.length < 2;
   $('#tView').classList.toggle('on', !view.editor);
@@ -576,7 +624,7 @@ function hintText() {
   const f = doc.frames[frameIx];
   const b = bounds(f, doc.w, doc.h);
   const box = proposedBox(f, doc.w, doc.h, doc.fudgeW, doc.fudgeH);
-  const engine = `engine box ${t.box.w}x${t.box.h}`;
+  const engine = t.box ? `engine box ${t.box.w}x${t.box.h}` : t.key;
   /**
    * A FRAME COUNT THAT NO LONGER MATCHES THE MANIFEST IS WORTH SAYING OUT
    * LOUD. The sheet is one strip and the game addresses it by INDEX, so
@@ -587,6 +635,7 @@ function hintText() {
   const drift = doc.frames.length !== t.frames.length
     ? ` · ${doc.frames.length} frames, MANIFEST expects ${t.frames.length}` : '';
   if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}${drift}`;
+  if (!t.box) return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · ${engine}${drift}`;
   return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · `
     + `fudged box ${box.w}x${box.h} · ${engine}${drift}`;
 }
@@ -650,6 +699,73 @@ const paintCells = (cells) => {
   for (const c of cells) changed = setCell(cur(), c.x, c.y, pen) || changed;
   return changed;
 };
+
+/**
+ * THE SELECTION IS A RECTANGLE AND IT NEVER FLOATS.
+ *
+ * A drag PREVIEWS the move by rebuilding the frame off to one side and drawing
+ * that; nothing is written until the finger lifts, and a nudge writes straight
+ * away. So there is no floating layer to remember to put down before an undo,
+ * a frame change or a target change — which is the bug every floating-paste
+ * implementation ships with once, and the reason this one does not have one.
+ *
+ * COARSE AND FINE, per the owner's call: drag it roughly where it goes, then
+ * land it exactly with the arrows. One pixel is a real distance on a 16-cell
+ * canvas and a fingertip is not a one-pixel instrument.
+ */
+let sel = null;        // { x, y, w, h } in cells
+let marquee = null;    // { a, b } while the rectangle is being dragged out
+let selDrag = null;    // { ox, oy, dx, dy } while the contents are being dragged
+let clip = null;       // { rows, w, h, x, y } — x/y is where it was taken from
+
+const inSel = (c) => sel && c.x >= sel.x && c.y >= sel.y
+  && c.x < sel.x + sel.w && c.y < sel.y + sel.h;
+
+const rectOf = (a, b) => ({
+  x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
+  w: Math.abs(a.x - b.x) + 1, h: Math.abs(a.y - b.y) + 1,
+});
+
+/** The frame as it WOULD be with the selection shifted — preview and apply share it. */
+const movedRows = (rows, dx, dy) => stampRegion(
+  clearRegion(rows, doc.w, doc.h, sel), doc.w, doc.h,
+  readRegion(rows, doc.w, doc.h, sel), sel.x + dx, sel.y + dy,
+);
+
+function moveSel(dx, dy) {
+  if (!sel || (!dx && !dy)) return;
+  const f = cur();
+  f.rows = movedRows(f.rows, dx, dy);
+  sel = { ...sel, x: sel.x + dx, y: sel.y + dy };
+  commit();
+}
+
+function copySel(cut) {
+  if (!sel) return;
+  const f = cur();
+  clip = { rows: readRegion(f.rows, doc.w, doc.h, sel), w: sel.w, h: sel.h, x: sel.x, y: sel.y };
+  // PASTE only becomes live once something has been taken, so the copy has to
+  // say so — without this the button stays dead with a full clipboard behind it.
+  syncButtons();
+  if (!cut) { flash(`copied ${sel.w}x${sel.h}`); return; }
+  f.rows = clearRegion(f.rows, doc.w, doc.h, sel);
+  commit();
+}
+
+/**
+ * PASTE LANDS WHERE IT WAS TAKEN FROM, which is what makes "copy, next frame,
+ * paste" a sentence worth saying — the pose arrives registered with the one it
+ * came from instead of somewhere the artist then has to align it.
+ */
+function pasteSel() {
+  if (!clip) { flash('nothing copied'); return; }
+  cur().rows = stampRegion(cur().rows, doc.w, doc.h, clip.rows, clip.x, clip.y);
+  sel = { x: clip.x, y: clip.y, w: clip.w, h: clip.h };
+  commit();
+  syncButtons();
+}
+
+function clearSel() { sel = marquee = selDrag = null; }
 
 function flipH() { const f = cur(); f.rows = f.rows.map((r) => [...r].reverse().join('')); commit(); }
 function flipV() { const f = cur(); f.rows = f.rows.slice().reverse(); commit(); }
@@ -719,8 +835,10 @@ let fitted = false;
 function fitCam() {
   fitted = true;
   const r = $('#stage').getBoundingClientRect();
-  const wide = doc.w + REF_GAP * 2 + PLAYER_REF.w + BOSS_REF.w;
-  const tall = Math.max(doc.h, PLAYER_REF.h, BOSS_REF.h) + 2;
+  const solo = isProp(targetOf(key));            // player reference only
+  const bw = solo ? 0 : BOSS_REF.w, bh = solo ? 0 : BOSS_REF.h;
+  const wide = doc.w + REF_GAP * (solo ? 1 : 2) + PLAYER_REF.w + bw;
+  const tall = Math.max(doc.h, PLAYER_REF.h, bh) + 2;
   cam.z = Math.max(2, Math.floor(Math.min(r.width / wide, (r.height - 30) / tall)));
   /**
    * CENTRE THE COMPOSITION, NOT THE CANVAS. The two references are different
@@ -728,7 +846,7 @@ function fitCam() {
    * the thing being drawn pushes the wider reference off the right edge. The
    * offset is half the difference between them.
    */
-  cam.x = r.width / 2 - (BOSS_REF.w - PLAYER_REF.w) * cam.z / 2;
+  cam.x = r.width / 2 - (bw - PLAYER_REF.w) * cam.z / 2;
   // Baselines share a line, so centre on that line rather than on the canvas.
   cam.y = r.height / 2 + (tall - doc.h) * cam.z / 2 - 12;
   syncZoom();
@@ -850,15 +968,17 @@ function draw() {
     ctx.strokeRect(px0 + 0.5, baseY - PLAYER_REF.h * z + 0.5, PLAYER_REF.w * z - 1, PLAYER_REF.h * z - 1);
     label(`PLAYER ${PLAYER_REF.w}x${PLAYER_REF.h}`, px0);
 
-    // The largest boss has no art yet, so his reference stays an honest
-    // rectangle at true collision footprint — the same thing the game itself
-    // draws for a boss whose silhouette is not designed.
+    // THE BOSS REFERENCE IS FOR ACTORS ONLY. Next to a 16-cell bullet a 36x48
+    // rectangle answers no question anybody is asking and costs the zoom that
+    // drawing an 8px ball needs.
+    if (!isProp(targetOf(key))) {
     const bx0 = ox + gw + REF_GAP * z;
     ctx.fillStyle = '#241a1a';
     ctx.fillRect(bx0, baseY - BOSS_REF.h * z, BOSS_REF.w * z, BOSS_REF.h * z);
     ctx.strokeStyle = '#5a3a3a';
     ctx.strokeRect(bx0 + 0.5, baseY - BOSS_REF.h * z + 0.5, BOSS_REF.w * z - 1, BOSS_REF.h * z - 1);
     label(`MAX BOSS ${BOSS_REF.w}x${BOSS_REF.h}`, bx0);
+    }
   }
 
   /**
@@ -870,6 +990,12 @@ function draw() {
    * muddying it under a wash. The frame before frame 0 is the LAST frame,
    * because a walk cycle is a loop and its seam is the hardest part of it.
    */
+  // A drag shows the move rather than doing it; the frame is untouched until
+  // the finger lifts.
+  const live = selDrag && (selDrag.dx || selDrag.dy)
+    ? movedRows(doc.frames[frameIx].rows, selDrag.dx, selDrag.dy)
+    : doc.frames[frameIx].rows;
+
   const onion = view.onion && doc.frames.length > 1
     ? doc.frames[(frameIx - 1 + doc.frames.length) % doc.frames.length].rows
     : null;
@@ -877,7 +1003,7 @@ function draw() {
   // The canvas ground: a checker, so transparency reads as transparency.
   for (let y = 0; y < doc.h; y++) {
     for (let x = 0; x < doc.w; x++) {
-      const px = doc.frames[frameIx].rows[y][x];
+      const px = live[y][x];
       if (px === EMPTY) {
         if (!view.editor) continue;                 // visible-pixels-only
         const og = onion && onion[y][x] !== EMPTY ? onion[y][x] : null;
@@ -918,7 +1044,23 @@ function draw() {
     ctx.stroke();
   }
 
-  if (view.boxes) {
+  /**
+   * THE MARQUEE IS DASHED WHITE AND SITS ABOVE EVERYTHING. Dashed so it cannot
+   * be mistaken for a drawn outline pixel, white because the three roles are
+   * whatever the boss's palette says and a fixed hue is the only one that
+   * cannot collide with one of them.
+   */
+  const marq = marquee ? rectOf(marquee.a, marquee.b)
+    : sel ? { ...sel, x: sel.x + (selDrag ? selDrag.dx : 0), y: sel.y + (selDrag ? selDrag.dy : 0) }
+      : null;
+  if (marq) {
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
+    ctx.strokeRect(ox + marq.x * z + 0.5, oy + marq.y * z + 0.5, marq.w * z - 1, marq.h * z - 1);
+    ctx.setLineDash([]);
+  }
+
+  if (view.boxes && targetOf(key).box) {
     const t = targetOf(key);
     // THE ENGINE'S box, in cyan: what the game uses TODAY.
     const ex = ox + Math.round((doc.w - t.box.w) / 2) * z;
@@ -951,6 +1093,29 @@ function draw() {
  * reading a fast cycle; 12 is one tap away and is the truth.
  */
 const RATES = [60, 24, 12, 6, 1.5];
+
+/**
+ * WALK MODE: THE SPRITE CROSSES GROUND BETWEEN TWO THINGS IT WILL MEET.
+ *
+ * A cycle looping in place answers whether the frames are smooth. It cannot
+ * answer whether the weight lands, because that is a relationship between how
+ * fast the feet move and how fast the body travels — and the travel speed is
+ * `FEEL.moveSpeed`, a number the loop does not have.
+ *
+ * THE PLAYER STANDS AT THE START LINE AND A BOSS AT THE FINISH, both still.
+ * The moving thing is the only thing moving, so the eye reads its speed
+ * against two fixed sizes rather than against the edge of a box. The boss is
+ * the AVERAGE of the seventeen, not the largest — the question here is what a
+ * fight feels like, not what will fit on the grid.
+ *
+ * 1.375 px per frame is the NES walk converted out of 8.8 fixed point, and it
+ * is read from the live source rather than typed here.
+ */
+const WALK_TRAVEL = 48, WALK_GAP = 6;
+let walk = false;
+const MOVE_SPEED = () => targets.moveSpeed;
+const walkStart = () => PLAYER_REF.w + WALK_GAP;
+const walkEnd = () => walkStart() + WALK_TRAVEL;
 const pcv = $('#pcv'), pctx = pcv.getContext('2d');
 let player = null;   // { raf, last, rate }
 let rateIx = 0;
@@ -965,25 +1130,87 @@ function stopPlay() {
 function togglePlay() {
   if (player) { stopPlay(); return; }
   if (doc.frames.length < 2) { flash('one frame — nothing to cycle'); return; }
-  player = { raf: 0, last: performance.now(), i: frameIx };
+  player = { raf: 0, last: performance.now(), i: frameIx, x: walkStart(), t: performance.now() };
   $('#prev').hidden = false;
   drawPreview();
   const tick = (now) => {
     if (!player) return;
     const step = 1000 / RATES[rateIx];
+    let dirty = false;
     if (now - player.last >= step) {
       player.last = now;
       player.i = (player.i + 1) % doc.frames.length;
-      drawPreview();
+      dirty = true;
     }
+    /**
+     * TRAVEL RUNS ON REAL TIME, NOT ON THE RATE DIAL. The frame rate is a
+     * viewing control — 12 is the truth and 60 reads a fast cycle — but the
+     * walk speed is the game's, so slowing the cycle to look at it must not
+     * also slow the body down and make the feet stop matching.
+     */
+    if (walk) {
+      player.x += MOVE_SPEED() * ((now - player.t) / (1000 / 60));
+      if (player.x > walkEnd()) player.x = walkStart();
+      dirty = true;
+    }
+    player.t = now;
+    if (dirty) drawPreview();
     player.raf = requestAnimationFrame(tick);
   };
   player.raf = requestAnimationFrame(tick);
   syncButtons();
 }
 
+/** One sprite's rows, blitted with its bottom edge on `baseY`. */
+function pblit(rows, gw, gh, x, baseY, z, colour, alpha = 1) {
+  pctx.globalAlpha = alpha;
+  for (let y = 0; y < gh; y++) {
+    for (let xx = 0; xx < gw; xx++) {
+      const ch = rows[y][xx];
+      if (ch === EMPTY) continue;
+      pctx.fillStyle = colour(ch);
+      pctx.fillRect((x + xx) * z, baseY - (gh - y) * z, z, z);
+    }
+  }
+  pctx.globalAlpha = 1;
+}
+
+function drawWalkPreview(cols) {
+  const bb = targets.avgBoss.box;
+  const sw = PLAYER_REF.w + WALK_GAP + WALK_TRAVEL + WALK_GAP + bb.w;
+  const sh = Math.max(doc.h, PLAYER_REF.h, bb.h) + 2;
+  const z = Math.max(1, Math.floor(240 / sw));
+  const W = sw * z, H = sh * z;
+  if (pcv.width !== W || pcv.height !== H) { pcv.width = W; pcv.height = H; }
+  pctx.clearRect(0, 0, W, H);
+
+  const base = (sh - 1) * z;              // every figure stands on this line
+  pctx.fillStyle = '#2b3341';
+  pctx.fillRect(0, base, W, z);
+
+  // THE START LINE: the real player when his art loads, a box when it does not.
+  if (refPlayer) {
+    pblit(refPlayer.rows, refPlayer.w, refPlayer.h, 0, base, z,
+      (ch) => refPlayer.cols[ch], 0.75);
+  } else {
+    pctx.fillStyle = '#1a2029';
+    pctx.fillRect(0, base - PLAYER_REF.h * z, PLAYER_REF.w * z, PLAYER_REF.h * z);
+  }
+
+  // THE FINISH LINE: an honest rectangle at the average boss's true footprint,
+  // which is exactly what the game draws for a boss whose art has not landed.
+  pctx.fillStyle = '#241a1a';
+  pctx.fillRect((sw - bb.w) * z, base - bb.h * z, bb.w * z, bb.h * z);
+  pctx.strokeStyle = '#5a3a3a'; pctx.lineWidth = 1;
+  pctx.strokeRect((sw - bb.w) * z + 0.5, base - bb.h * z + 0.5, bb.w * z - 1, bb.h * z - 1);
+
+  const rows = doc.frames[Math.min(player.i, doc.frames.length - 1)].rows;
+  pblit(rows, doc.w, doc.h, Math.round(player.x), base, z, (ch) => colourOf(ch, cols));
+}
+
 function drawPreview() {
   if (!player || !doc) return;
+  if (walk) { drawWalkPreview(roleColours()); return; }
   const z = Math.max(1, Math.floor(96 / Math.max(doc.w, doc.h)));
   const w = doc.w * z, h = doc.h * z;
   if (pcv.width !== w || pcv.height !== h) { pcv.width = w; pcv.height = h; }
@@ -1038,6 +1265,13 @@ function beginStroke(c) {
     if (fillFrom(cur(), c, pen)) commit(); else draw();
     return;
   }
+  if (tool === 'sel') {
+    // Inside the selection moves it; anywhere else starts a new one.
+    if (inSel(c)) selDrag = { ox: c.x, oy: c.y, dx: 0, dy: 0 };
+    else { marquee = { a: c, b: c }; sel = null; }
+    draw();
+    return;
+  }
   if (tool === 'line' || tool === 'rect') { ghost = { a: c, b: c }; draw(); return; }
   painting = true; lastCell = c;
   strokeChanged = paintCells([c]);
@@ -1068,6 +1302,13 @@ $('#stage').addEventListener('pointermove', (e) => {
     draw();
     return;
   }
+  if (marquee) { marquee = { a: marquee.a, b: cellAt(e.clientX, e.clientY, true) }; draw(); return; }
+  if (selDrag) {
+    const c = cellAt(e.clientX, e.clientY, true);
+    selDrag.dx = c.x - selDrag.ox; selDrag.dy = c.y - selDrag.oy;
+    draw();
+    return;
+  }
   if (ghost) { ghost = { a: ghost.a, b: cellAt(e.clientX, e.clientY, true) }; draw(); return; }
   if (painting) {
     // Interpolate: a fast drag reports a handful of points, and a pen that
@@ -1081,6 +1322,13 @@ $('#stage').addEventListener('pointermove', (e) => {
 
 /** Bank whatever the gesture was building. The only place a stroke commits. */
 function endStroke() {
+  if (marquee) { sel = rectOf(marquee.a, marquee.b); marquee = null; syncButtons(); draw(); return; }
+  if (selDrag) {
+    const { dx, dy } = selDrag;
+    selDrag = null;
+    if (dx || dy) moveSel(dx, dy); else draw();
+    return;
+  }
   if (ghost) {
     const changed = paintCells(ghostCells());
     ghost = null;
@@ -1110,7 +1358,15 @@ for (const b of document.querySelectorAll('.pen')) {
   b.onclick = () => { pen = b.dataset.pen; syncButtons(); };
 }
 for (const b of document.querySelectorAll('[data-tool]')) {
-  b.onclick = () => { tool = b.dataset.tool; ghost = null; syncButtons(); draw(); };
+  b.onclick = () => {
+    tool = b.dataset.tool;
+    ghost = null;
+    // Leaving SEL puts the selection down — a marquee that outlived its tool
+    // would sit on the canvas with no way to act on it.
+    if (tool !== 'sel') clearSel();
+    syncButtons();
+    draw();
+  };
 }
 $('#undo').onclick = undo;
 $('#redo').onclick = redo;
@@ -1131,6 +1387,13 @@ $('#outline').onclick = () => {
   commit();
   if (clipped) flash('outlined — this drawing reaches the grid edge, so part of the outline had nowhere to go');
 };
+$('#selCut').onclick = () => copySel(true);
+$('#selCopy').onclick = () => copySel(false);
+$('#selPaste').onclick = pasteSel;
+$('#nL').onclick = () => moveSel(-1, 0);
+$('#nR').onclick = () => moveSel(1, 0);
+$('#nU').onclick = () => moveSel(0, -1);
+$('#nD').onclick = () => moveSel(0, 1);
 $('#zoomIn').onclick = () => zoomStep(1);
 $('#zoomOut').onclick = () => zoomStep(-1);
 $('#zoomFit').onclick = () => { fitCam(); draw(); };
@@ -1147,6 +1410,11 @@ $('#play').onclick = togglePlay;
 for (const ev of ['pointerdown', 'pointerup', 'pointermove', 'wheel']) {
   $('#prev').addEventListener(ev, (e) => e.stopPropagation());
 }
+$('#pmode').onclick = () => {
+  walk = !walk;
+  $('#pmode').textContent = walk ? 'WALK' : 'LOOP';
+  if (player) { player.x = walkStart(); drawPreview(); }
+};
 $('#prate').onclick = () => {
   rateIx = (rateIx + 1) % RATES.length;
   $('#prate').textContent = `${RATES[rateIx]} FPS`;
@@ -1195,7 +1463,10 @@ $('#fudgeDef').onclick = () => {
 };
 
 $('#target').onchange = async (e) => { if (dirty) await save(false); await open(e.target.value); };
-$('#frame').onchange = (e) => { frameIx = +e.target.value; draw(); };
+// The selection is a rectangle over THIS frame; carrying it to the next one
+// would leave it pointing at pixels nobody selected. The clipboard survives,
+// which is the whole point of copying between frames.
+$('#frame').onchange = (e) => { frameIx = +e.target.value; clearSel(); syncButtons(); draw(); };
 $('#saveBtn').onclick = () => save(true);
 $('#tokenBtn').onclick = () => { $('#tokIn').value = token(); $('#tok').showModal(); };
 $('#tok').addEventListener('close', () => {
@@ -1209,7 +1480,7 @@ $('#tok').addEventListener('close', () => {
  * THE ASEPRITE LETTERS, because they are the ones a pixel artist's hand
  * already knows: B pencil, G fill, L line, U rectangle, I eyedropper, H hand.
  */
-const TOOL_KEYS = { b: 'pen', g: 'fill', l: 'line', u: 'rect', i: 'pick', h: 'pan' };
+const TOOL_KEYS = { b: 'pen', g: 'fill', l: 'line', u: 'rect', i: 'pick', h: 'pan', m: 'sel' };
 addEventListener('keydown', (e) => {
   if (!doc || e.target.matches('input, select, textarea')) return;
   const k = e.key.toLowerCase();
@@ -1217,8 +1488,25 @@ addEventListener('keydown', (e) => {
     e.preventDefault(); e.shiftKey ? redo() : undo(); return;
   }
   if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
+  if ((e.ctrlKey || e.metaKey) && 'xcv'.includes(k)) {
+    e.preventDefault();
+    if (k === 'v') pasteSel(); else copySel(k === 'x');
+    syncButtons();
+    return;
+  }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (TOOL_KEYS[k]) { tool = TOOL_KEYS[k]; ghost = null; syncButtons(); draw(); return; }
+  if (TOOL_KEYS[k]) {
+    tool = TOOL_KEYS[k]; ghost = null;
+    if (tool !== 'sel') clearSel();
+    syncButtons(); draw(); return;
+  }
+  if (e.key === 'Escape' && sel) { clearSel(); syncButtons(); draw(); return; }
+  if (sel && e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    moveSel(e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0,
+      e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0);
+    return;
+  }
   if ('1234'.includes(k)) { pen = ['0', '1', '2', EMPTY]['1234'.indexOf(k)]; syncButtons(); return; }
   if (k === 'p') { togglePlay(); return; }
   if (k === 'o') { view.onion = !view.onion; syncButtons(); draw(); return; }

@@ -275,8 +275,12 @@ it. That is the sprite-box/collision-box split from rule 4, enforced.
 **Sprite grid per class** — `SPRITE_CLASS` in `config/display.js`. Art is authored at
 exactly its class's grid and uses transparency to carve the real silhouette:
 `minion 16×16` · `player 24×24` (the NES reference) · `miniboss 32×32` (reserved) ·
-`boss 48×48`. Elites share the minion grid. These are ceilings, not collision boxes;
-collision gets tuned against the final art.
+`boss 48×48` · `shot 16×16` · `pickup 16×16`. Elites share the minion grid. These are
+ceilings, not collision boxes; collision gets tuned against the final art.
+
+**The last two have deliberate slack in them.** The largest projectile the engine draws is
+an 8px ball (`radius: 4`) and a pickup's collision is a flat 7×7 — the rest of the 16 is
+room for a glow, a spin or a trail, none of which collision ever sees.
 
 **Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
 construction order. **The player is always above every world actor** — hazards, pickups,
@@ -365,8 +369,8 @@ reference frame — the player's own box matches `idle1` at 1.00 and `idle0` at 
 
 #### THE TOOL ROW IS ONE LINE THAT SCROLLS, and that is a constraint, not a style
 
-It carries the four colour pens, six drawing tools, the zoom ladder, undo/redo, the frame
-buttons and the view toggles; the NES chip, the role dropdowns and the fudge dials are
+It carries the four colour pens, seven drawing tools, the zoom ladder, undo/redo, the
+frame buttons and the view toggles; the NES chip, the role dropdowns and the fudge dials are
 behind PAL. Left to
 WRAP, that same row was one line on a desktop and four on a phone in landscape — which took
 a 380px screen down to a **thirty-pixel canvas**, the exact opposite of what the layout is
@@ -379,6 +383,24 @@ row's min-content and drags the stage off-centre with it, and `#drawer` needs an
 **The standing vertical-fudge warning lives OUTSIDE the drawer** so closing the drawer
 cannot close it. That is the whole point of it being standing.
 
+#### SHOTS AND PICKUPS ARE DRAWABLE AND CARRY NO COLLISION BOX
+
+All 18 projectiles and both pickups are editor targets, derived from `DEFS` in
+`data/weapons.js` and `PICKUP_STYLE` in `systems/pickups.js` — a weapon gains a drawable
+shot on the day it joins the roster, with no edit in the generator.
+
+**Their `box` is `null` on purpose and must stay that way.** A projectile's collision is a
+RADIUS the engine computes per weapon and per level; a pickup's is a flat 7×7 pickup test.
+Neither is the per-actor hurtbox the fudge dials exist to propose, so the editor hides the
+box overlay and the dials for them rather than inviting anyone to tune a number nothing
+reads. The MAX BOSS reference figure goes too — beside a 16-cell bullet it answers no
+question and costs the zoom that drawing an 8px ball needs.
+
+**The id is filename-safe and `key` is what MANIFEST wants.** `shot:buster` is a fine
+manifest key and a bad path, so the file is `shot-buster.sprite` and the colon lives in one
+generated field rather than in a two-way conversion somebody has to keep straight.
+`npm run sprites:build` prints the manifest key beside the PNG for exactly that reason.
+
 #### ONE FINGER IS ALWAYS THE TOOL. Do not reintroduce pinch.
 
 Zoom is a ladder of whole numbers reached by buttons, and pan is a tool. Pinch-to-zoom was
@@ -387,6 +409,15 @@ two things — which is what a selection tool needs before it can drag a region 
 rungs are integers because the grid overlay switches on at 4x and a fractional cell size
 shimmers against it; `fitCam` may still land between rungs, and the next press snaps back
 on. The wheel stays, on the same ladder, because a wheel carries no touch ambiguity.
+
+**The preview has two modes and WALK is the one that answers the hard question.** A cycle
+looping in place says whether the frames are smooth; it cannot say whether the weight
+lands, because that is a relationship between how fast the feet move and how fast the body
+travels. WALK crosses ground at `FEEL.moveSpeed`, read from the live source, with the
+player still at the start line and an AVERAGE-sized boss still at the finish — the average
+of the seventeen, not the largest, because the question is what a fight feels like rather
+than what fits on the grid. **Travel runs on real time, not on the rate dial**: slowing the
+cycle to look at it must not also slow the body and make the feet stop matching.
 
 **The preview's rate is a control, and 60 is not what the game does.** `MANIFEST` plays the
 player at `fps: 12` with the idle slowed to 1.5, so a literal 60 on a two-frame idle is a

@@ -202,3 +202,54 @@ export function outlineFrame(rows, w, h) {
   }
   return { rows: out.map((r) => r.join('')), clipped };
 }
+
+/**
+ * REGION OPS — the three moves a rectangular selection is made of.
+ *
+ * They are pure and they live here rather than inside the editor's script for
+ * the same reason `outlineFrame` does: a frame is an array of short strings,
+ * so the whole of "move that arm two pixels left" is string arithmetic that a
+ * test can reach without a browser.
+ *
+ * A region may hang off the grid. `readRegion` pads with transparent and
+ * `stampRegion` clips, because a selection dragged half off the canvas is a
+ * thing an artist does on purpose and losing what went over the edge is the
+ * honest result — not an exception.
+ */
+const inGrid = (x, y, w, h) => x >= 0 && y >= 0 && x < w && y < h;
+
+export function readRegion(rows, gw, gh, sel) {
+  return Array.from({ length: sel.h }, (_, j) => Array.from({ length: sel.w }, (_, i) => {
+    const x = sel.x + i, y = sel.y + j;
+    return inGrid(x, y, gw, gh) ? rows[y][x] : EMPTY;
+  }).join(''));
+}
+
+export function clearRegion(rows, gw, gh, sel) {
+  return rows.map((row, y) => {
+    if (y < sel.y || y >= sel.y + sel.h) return row;
+    const a = [...row];
+    for (let i = 0; i < sel.w; i++) {
+      const x = sel.x + i;
+      if (inGrid(x, y, gw, gh)) a[x] = EMPTY;
+    }
+    return a.join('');
+  });
+}
+
+/**
+ * TRANSPARENT CELLS DO NOT PAINT. Moving an arm over the torso must not punch
+ * a rectangular hole around it — the selection is a rectangle but the thing
+ * inside it is not, and the gaps are where the rest of the drawing shows
+ * through. The origin is already blank by the time this runs on a move.
+ */
+export function stampRegion(rows, gw, gh, cells, x0, y0) {
+  const out = rows.map((r) => [...r]);
+  cells.forEach((row, j) => {
+    [...row].forEach((ch, i) => {
+      const x = x0 + i, y = y0 + j;
+      if (ch !== EMPTY && inGrid(x, y, gw, gh)) out[y][x] = ch;
+    });
+  });
+  return out.map((r) => r.join(''));
+}

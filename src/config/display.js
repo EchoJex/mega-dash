@@ -171,6 +171,14 @@ export const SPRITE_CLASS = {
   player:   { w: PLAYER_SPRITE_W, h: PLAYER_SPRITE_H },
   miniboss: { w: 32, h: 32 },
   boss:     { w: 48, h: 48 },
+  /**
+   * NOT ACTORS, and their grids are ceilings with deliberate slack in them.
+   * The largest projectile the engine draws is an 8px ball (`radius: 4`) and a
+   * pickup's collision box is 7x7 — the rest of the 16 is room for a glow, a
+   * spin or a trail, none of which the collision ever sees.
+   */
+  shot:     { w: 16, h: 16 },
+  pickup:   { w: 16, h: 16 },
 };
 
 /**

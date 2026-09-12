@@ -65,6 +65,31 @@ function paletteOf(id) {
     }
     return p;
   }
+  /**
+   * A SHOT IS DRAWN IN ITS SOURCE BOSS'S COLOURS, so re-tuning a primary in
+   * the tracker recolours his bullet too. The sidearm has no boss and falls
+   * back to the buster's own palette, read from the same source that defines
+   * it rather than copied here.
+   */
+  const shot = targets.shots[id];
+  if (shot) {
+    if (shot.boss) return paletteOf(shot.boss);
+    const w = readFileSync(join(REPO, 'src/data/weapons.js'), 'utf8');
+    const bp = /BUSTER_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/.exec(w);
+    if (!bp) throw new Error('could not read BUSTER_PALETTE out of src/data/weapons.js');
+    return { primary: bp[1], secondary: bp[2], outline: '#0A0A12' };
+  }
+
+  const pick = targets.pickups[id];
+  if (pick) {
+    const src = readFileSync(join(REPO, 'src/systems/pickups.js'), 'utf8');
+    const key = id.replace('pickup-', '');
+    const m = new RegExp(`${key}:\\s*\\{ primary: '(#[0-9A-Fa-f]{6})', `
+      + `secondary: '(#[0-9A-Fa-f]{6})'`).exec(src);
+    if (!m) throw new Error(`no PICKUP_STYLE entry for '${key}'`);
+    return { primary: m[1], secondary: m[2], outline: '#0A0A12' };
+  }
+
   // Minions carry their own three and are not part of the boss spacing set.
   const minions = readFileSync(join(REPO, 'src/data/minions.js'), 'utf8');
   const re = new RegExp(`id: '${id}'[\\s\\S]*?primary: '(#[0-9A-Fa-f]{6})'[\\s\\S]*?`
@@ -80,7 +105,7 @@ const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
-  return m || targets.bosses[id] || null;
+  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id] || null;
 }
 
 // ── Build ─────────────────────────────────────────────────────────────
@@ -144,7 +169,8 @@ for (const file of files) {
 
   writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
   built++;
-  console.log(`  ${id.padEnd(10)} ${w}x${h}  ${doc.frames.length} frame(s)  [${doc.status}]`);
+  console.log(`  ${(t.key || id).padEnd(20)} ${id}.png  ${w}x${h}  `
+    + `${doc.frames.length} frame(s)  [${doc.status}]`);
 }
 
 if (problems.length) {
