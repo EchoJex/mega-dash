@@ -344,6 +344,39 @@ adding art is still a PNG in `public/sprites/` plus one `MANIFEST` line, the PNG
 source file now. Proven by round-tripping the shipped `player.png` through the format and
 back: **pixel-identical.**
 
+#### A FRAME IS `ACTOR > ACTION > INDEX`, and the index is 1-BASED PER ACTION
+
+`[run 1]` through `[run 6]` are one animation; `[idle 1]`, `[idle 2]` are another.
+**The sheet's absolute frame position is DERIVED from block order and written down
+nowhere.** `MANIFEST.anims` used to hold those absolute indices by hand, so inserting a
+frame anywhere but the end of the sheet silently repointed every animation after it —
+`npm run sprites:build` now regenerates them into `src/data/sprite-anims.json`, which
+`createAnims` reads. **Do not hand-edit that file and do not put frame indices back in
+`MANIFEST`**; the hand-written `anims` there is now only a fallback for a sprite with no
+`.sprite` source. The build **says so out loud when an animation's shape changes**, because
+adding a frame to an action is a gameplay change that arrives as a side effect of drawing.
+
+**`status` IS PER FRAME.** A sheet is rarely finished all at once and the old
+one-status-per-sheet gate meant a single unfinished pose held back every finished one. A
+`wip` frame **still gets its cell in the PNG, drawn blank** — dropping the cell would
+renumber the sheet, which is the breakage the derived list exists to prevent — and is
+**left out of the regenerated animation**, so a cycle never plays a hole.
+
+#### `hold` IS IN SIM STEPS, and the game always had this number
+
+One 1/60s step of the fixed simulation. On a 60Hz screen that is one refresh; on a 120Hz
+phone the frame lasts the same *time* across ten. Steps are the unit that means something.
+
+It was previously spelled as one `fps` for a whole sheet: the player is `fps: 12`, and
+60/12 is **5 steps** — which is why `DEFAULT_HOLD` is 5 and not a rounder-looking 10, a
+number that would quietly play a new frame at half its own animation's speed.
+`animFps: { idle: 1.5 }` was the single escape hatch, and 60/1.5 is the idle's **40
+steps**. `tests/sprites.test.js` pins the default against `MANIFEST.player.fps` so the two
+cannot drift.
+
+The editor's (i) beside the field carries this terminology, because "step" is the word
+that stops meaning anything a month later.
+
 **A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
 seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
 change in the tracker recolours every sprite drawn against it with no art reopened. It also
@@ -406,6 +439,19 @@ manifest key and a bad path, so the file is `shot-buster.sprite` and the colon l
 generated field rather than in a two-way conversion somebody has to keep straight.
 `npm run sprites:build` prints the manifest key beside the PNG for exactly that reason.
 
+#### THE STAGE CAPTURES THE POINTER, so anything drawn ON it needs `stopPropagation`
+
+`setPointerCapture` retargets the rest of a gesture at the stage, so a tap on a control
+sitting over the canvas never becomes a click on that control — it paints a pixel behind
+it. This has now bitten twice: the preview's rate button, and the (i) note. Both are fixed
+by the same loop that stops `pointerdown`/`pointerup`/`pointermove`/`wheel` from
+propagating. **Any new overlay on `#stage` joins that list.**
+
+Also twice now: an element whose own CSS sets `display` **outranks the UA sheet's
+`[hidden] { display: none }`**. `#drawer` (grid) and `#onionRow` (`.row` is flex) each
+needed an explicit `[hidden]` rule, and without it the thing is permanently visible while
+the code believes it is closed.
+
 #### ONE FINGER IS ALWAYS THE TOOL. Do not reintroduce pinch.
 
 Zoom is a ladder of whole numbers reached by buttons, and pan is a tool. Pinch-to-zoom was
@@ -414,6 +460,18 @@ two things — which is what a selection tool needs before it can drag a region 
 rungs are integers because the grid overlay switches on at 4x and a fractional cell size
 shimmers against it; `fitCam` may still land between rungs, and the next press snaps back
 on. The wheel stays, on the same ladder, because a wheel carries no touch ambiguity.
+
+**THE PREVIEW PLAYS ONE ANIMATION AT THE GAME'S OWN RATE.** It used to cycle the whole
+sheet, running the idle into the run into the jump poses into the slide — which is not
+something the game ever does. It plays the selected action, each frame for its own `hold`,
+at 60 steps a second. **There is no fps dial any more** because there is nothing left for
+it to choose; what replaced it is a slow-motion ladder (1x, 1/2, 1/4, 1/8) for looking at
+a fast cycle without pretending the game plays it that way.
+
+**SCRAPPER AND DRIFTER STAND IN THE WALK LANE**, one on the floor and one in the air,
+because bosses are events and minions are weather — a run is mostly spent beside those
+two, so they are the honest timing reference in a way a boss met once every few minutes is
+not.
 
 **The preview has two modes and WALK is the one that answers the hard question.** A cycle
 looping in place says whether the frames are smooth; it cannot say whether the weight
@@ -424,10 +482,10 @@ of the seventeen, not the largest, because the question is what a fight feels li
 than what fits on the grid. **Travel runs on real time, not on the rate dial**: slowing the
 cycle to look at it must not also slow the body and make the feet stop matching.
 
-**The preview's rate is a control, and 60 is not what the game does.** `MANIFEST` plays the
-player at `fps: 12` with the idle slowed to 1.5, so a literal 60 on a two-frame idle is a
-30Hz strobe of an animation nobody will ever see. 60 is the default because it is what was
-asked for and it does read a fast cycle honestly; 12 is one tap away and is the truth.
+**The rate dial is gone and the holds replaced it.** It offered 60/24/12/6/1.5 fps for a
+whole sheet, which is the same information a per-frame `hold` carries exactly — and the
+dial could not express the one thing real animation does, which is frames of different
+lengths in the same cycle.
 
 **Undo is one snapshot per STROKE.** A drag across twelve pixels is one thing the artist
 did, and twelve taps to take it back is how an undo stack becomes useless. Snapshotting the

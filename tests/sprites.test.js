@@ -12,7 +12,9 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import {
   parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
+  DEFAULT_HOLD, splitLegacyName, renumber, framesOf,
 } from '../docs/sprite-fmt.js';
+import { MANIFEST } from '../src/systems/assets.js';
 import { NES, USABLE, UNSAFE, nearestSlot } from '../docs/nes-palette.js';
 
 const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url)));
@@ -42,9 +44,68 @@ test('an empty file still yields one blank frame at the right size', () => {
   assert.deepEqual(doc.frames[0].rows, blankFrame(8, 8));
 });
 
-test('a new sprite defaults to deferred', () => {
-  assert.equal(parse('# x\ngrid 4x4\n').status, 'deferred');
+test('a new sprite defaults to one wip frame', () => {
+  const doc = parse('# x\ngrid 4x4\n');
+  assert.equal(doc.frames.length, 1);
+  assert.equal(doc.frames[0].status, 'wip',
+    'a frame nobody has drawn yet has not been approved for a playtest');
+  assert.equal(doc.frames[0].hold, DEFAULT_HOLD);
   assert.equal(STATUSES[0], 'deferred');
+});
+
+/**
+ * THE HOLD DEFAULT IS MEASURED, NOT CHOSEN — the same standard as the fudge
+ * factors below. The shipped player sheet is `fps: 12`, and 60/12 is 5, so a
+ * new frame lasts exactly as long as the frames either side of it.
+ */
+test('the default hold matches what the shipped sheet already plays at', () => {
+  assert.equal(DEFAULT_HOLD, Math.round(60 / MANIFEST.player.fps));
+});
+
+/**
+ * MIGRATION OFF THE OLD NAMES. Every shape below is this editor's own doing:
+ * `idle0` from the first hand-written sheet, `slide_b` and `fly0_b_b` from a
+ * +FRAME button that appended `_b` to the name it copied.
+ */
+test('legacy frame names become an action and a 1-based index', () => {
+  assert.deepEqual(splitLegacyName('idle0'), { action: 'idle', index: 1 });
+  assert.deepEqual(splitLegacyName('run5'), { action: 'run', index: 6 });
+  assert.deepEqual(splitLegacyName('jumpRise'), { action: 'jumpRise', index: 1 });
+  assert.deepEqual(splitLegacyName('slide_b'), { action: 'slide', index: 2 });
+  assert.deepEqual(splitLegacyName('fly0_b_b_b_b_b'), { action: 'fly', index: 6 });
+});
+
+test('a legacy sheet keeps its status on every frame', () => {
+  const doc = parse('# x\nstatus ready\ngrid 2x2\n\n[idle0]\n..\n..\n\n[idle1]\n..\n..\n');
+  assert.deepEqual(doc.frames.map((f) => f.status), ['ready', 'ready'],
+    'dropping a finished sheet to wip would un-ship it for having touched the parser');
+  assert.deepEqual(doc.frames.map((f) => f.action), ['idle', 'idle']);
+  assert.deepEqual(doc.frames.map((f) => f.index), [1, 2]);
+});
+
+test('status and hold survive a round trip, per frame', () => {
+  const src = '# x\ngrid      2x2\nfudge     0.70 x 1.00\n\n'
+    + '[run 1] status=ready hold=40\n..\n..\n\n[run 2] status=wip hold=3\n..\n..\n';
+  assert.equal(serialize(parse(src)), src);
+});
+
+/**
+ * THE WHOLE REASON THE INDEX IS PER-ACTION. Inserting a frame into `run` used
+ * to shift every absolute index after it, and `MANIFEST.anims` held those
+ * indices by hand — so a new run frame silently repointed `slide` at the wrong
+ * cell. Nothing stores an absolute position now; it is re-derived from order.
+ */
+test('inserting a frame renumbers its own action and no other', () => {
+  const doc = parse('# x\ngrid 2x2\n\n[run 1]\n..\n..\n\n[run 2]\n..\n..\n'
+    + '\n[slide 1]\n..\n..\n');
+  doc.frames.splice(1, 0, {
+    action: 'run', index: 0, status: 'wip', hold: DEFAULT_HOLD, rows: blankFrame(2, 2),
+  });
+  renumber(doc);
+  assert.deepEqual(doc.frames.map((f) => `${f.action} ${f.index}`),
+    ['run 1', 'run 2', 'run 3', 'slide 1']);
+  assert.deepEqual(framesOf(doc, 'slide').map((f) => f.at), [3],
+    'slide moved along the sheet, and that is exactly why nothing may store its index');
 });
 
 /**
@@ -59,7 +120,7 @@ test('the default horizontal fudge reproduces the shipped player box', () => {
   const src = new URL('../design/sprites/player.sprite', import.meta.url);
   if (!existsSync(src)) return;
   const doc = parse(readFileSync(src, 'utf8'));
-  const idle = doc.frames.find((f) => f.name === 'idle0');
+  const idle = framesOf(doc, 'idle')[0];
   const b = bounds(idle, doc.w, doc.h);
   assert.deepEqual({ w: b.w, h: b.h }, { w: 17, h: 23 }, 'the player silhouette changed');
 

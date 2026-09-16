@@ -58,6 +58,7 @@
  */
 
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
+import SPRITE_ANIMS from '../data/sprite-anims.json' with { type: 'json' };
 
 /**
  * Real art. Anything not listed here falls through to a placeholder, which is
@@ -148,21 +149,56 @@ export function preloadArt(scene) {
  */
 export function createAnims(scene) {
   for (const [id, def] of Object.entries(MANIFEST)) {
-    if (!def.anims) continue;
-    for (const [name, frames] of Object.entries(def.anims)) {
+    const gen = SPRITE_ANIMS[id];
+    const anims = gen?.anims ?? def.anims;
+    if (!anims) continue;
+    for (const [name, frames] of Object.entries(anims)) {
       const key = `${id}:${name}`;
       if (scene.anims.exists(key)) continue;
+      /**
+       * PER-FRAME HOLD WHEN THE SPRITE HAS A SOURCE, one rate when it does not.
+       *
+       * `holds` is in SIM STEPS — 1/60s each — which is the unit the artist
+       * sets in the editor and the unit the rest of the game thinks in. Phaser
+       * wants milliseconds per frame, so the conversion happens here and
+       * nowhere else.
+       *
+       * A frameRate is still required alongside per-frame durations: Phaser
+       * uses it for any frame that does not carry its own.
+       */
+      const holds = gen?.holds?.[name];
       scene.anims.create({
         key,
-        frames: frames.map((f) => ({ key: id, frame: f })),
+        frames: frames.map((f, i) => ({
+          key: id,
+          frame: f,
+          ...(holds ? { duration: (holds[i] / 60) * 1000 } : {}),
+        })),
         // PER-CLIP RATE, falling back to the sheet's. One rate for a whole
         // sheet cannot serve both a six-frame run and a two-frame breath: at
-        // the run's 12fps the idle blinks six times a second.
+        // the run's 12fps the idle blinks six times a second. Sprites with a
+        // `.sprite` source say it per frame instead and never reach this.
         frameRate: def.animFps?.[name] ?? def.fps ?? 8,
         repeat: def.repeat ?? -1,
       });
     }
   }
+}
+
+/**
+ * How many 1/60s sim steps each frame of an animation is held for.
+ *
+ * Exported for the sprite editor's preview and for anything that needs to
+ * reason about timing without a Phaser scene. Falls back to the sheet rate for
+ * a sprite with no `.sprite` source.
+ */
+export function holdsOf(id, name) {
+  const gen = SPRITE_ANIMS[id];
+  if (gen?.holds?.[name]) return gen.holds[name];
+  const def = MANIFEST[id];
+  const fps = def?.animFps?.[name] ?? def?.fps ?? 8;
+  const n = (gen?.anims ?? def?.anims)?.[name]?.length ?? 1;
+  return Array.from({ length: n }, () => Math.round(60 / fps));
 }
 
 // ── The draw layer ────────────────────────────────────────────────────

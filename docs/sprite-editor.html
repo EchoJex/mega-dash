@@ -52,7 +52,28 @@
   }
   header, footer, #stage { min-width: 0; }
   header, footer { background: var(--panel); border-color: var(--grid); border-style: solid; }
-  header { border-width: 0 0 1px; padding: 6px 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  /* NOWRAP AND SCROLL, exactly as #tools does, and for the same reason. The
+     header carries the frame's whole identity now — sprite, action, index,
+     status, hold — and left to wrap it became two and then three rows on a
+     phone in landscape, each one taken off the canvas. */
+  header { border-width: 0 0 1px; padding: 6px 8px; display: flex; gap: 6px;
+           align-items: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  header::-webkit-scrollbar { display: none; }
+  header > * { flex: 0 0 auto; }
+  #hold { width: 3.6em; text-align: right; }
+  /* An (i) that is a real control, not decoration: the terminology behind
+     "steps" is the thing nobody remembers a month later. */
+  .info {
+    width: 20px; height: 20px; padding: 0; border-radius: 50%;
+    font-size: 11px; line-height: 1; opacity: .75;
+  }
+  .info:hover, .info.on { opacity: 1; }
+  #stepsNote {
+    position: absolute; left: 8px; bottom: 8px; right: 8px; max-width: 460px;
+    background: #0d1015f2; border: 1px solid var(--grid); border-radius: 4px;
+    padding: 8px 10px; font-size: 11px; line-height: 1.5; z-index: 5;
+  }
+  #stepsNote b { color: #ffd166; }
   footer { border-width: 1px 0 0; padding: 6px 8px; }
   select, button, input {
     font: inherit; background: #0d1015; color: var(--ink);
@@ -118,6 +139,11 @@
      so without this the drawer never actually closed — it just stopped being
      called open, while still eating the canvas it was meant to give back. */
   #drawer[hidden] { display: none; }
+  /* Same trap one row down: `.row` sets `display: flex`, which outranks the UA
+     sheet's `[hidden] { display: none }` exactly as `#drawer`'s grid did. The
+     onion row was permanently visible without this. */
+  #onionRow[hidden] { display: none; }
+  #onionRow { margin-top: 6px; gap: 6px; align-items: center; }
   /* The preview sits ON the canvas, top-right: it is a second view of the
      thing being drawn, so it belongs beside it rather than under the tools. */
   #prev {
@@ -130,8 +156,12 @@
 
 <header>
   <select id="target" title="which sprite"></select>
-  <select id="frame" title="which frame"></select>
-  <select id="status" title="status"></select>
+  <select id="action" title="which animation — the game plays one of these at a time"></select>
+  <select id="frame" title="which frame of this animation; picking a position inserts here"></select>
+  <select id="status" title="this FRAME's status — wip frames build blank and stay out of the animation"></select>
+  <input id="hold" type="number" min="1" max="600" step="1"
+         title="how many 1/60s sim steps this frame stays on screen">
+  <button id="holdI" class="info" title="what a STEP is">i</button>
   <span class="grow"></span>
   <span id="state" class="tag">…</span>
   <a class="applink" href="./index.html" title="the design tracker">📋 Tracker</a>
@@ -141,9 +171,27 @@
 
 <div id="stage">
   <canvas id="cv"></canvas>
+  <div id="stepsNote" hidden>
+    <b>A STEP is one 1/60s slice of the game's fixed simulation.</b>
+    On a 60Hz screen one step is one refresh, so "5 steps" and "5 screen frames"
+    are the same thing there. On a 120Hz phone the drawn frame lasts the same
+    <i>time</i>, it just spans 10 refreshes — so steps are the number that means
+    something and refreshes are not.<br><br>
+    <b>HOLD is a number the game always had; it was just spelled <i>fps</i>.</b>
+    The player sheet is <code>fps: 12</code>, so every frame is held 1/12 s =
+    <b>5 steps</b> — which is why 5 is the default. <code>idle</code> overrode
+    it with <code>animFps: 1.5</code>, so its frames hold for <b>40 steps</b>.
+    One number for a whole sheet; now one per frame.<br><br>
+    <b>IDLE</b> — 2 frames, 40 steps each (0.67s), full cycle 1.33s. A breath,
+    not a cycle: at the run's 12fps a two-frame idle blinks six times a second
+    and reads as a strobe.<br>
+    <b>RUN</b> — 6 frames, 5 steps each (0.083s), full stride 30 steps (0.5s),
+    carrying him 41px. <b>JUMP</b> — three one-frame poses picked from velocity,
+    never cycled. <b>SLIDE</b> — held for all 26 steps (0.43s).
+  </div>
   <div id="prev" hidden>
     <canvas id="pcv"></canvas>
-    <button id="prate" title="the game plays this sheet at 12fps — 60 is a strobe on a 2-frame idle">60 FPS</button>
+    <button id="prate" title="play speed, off the rate the game really plays this sheet at">1x</button>
     <button id="pmode" title="cycle in place, or walk the ground between the player and a boss">LOOP</button>
   </div>
 </div>
@@ -211,6 +259,12 @@
     <div id="pal"></div>
   </div>
 
+  <div class="row" id="onionRow" hidden>
+    <span class="tag">ONION</span>
+    <select id="onSprite" title="which sprite to ghost under this one"></select>
+    <select id="onFrame" title="which of its frames"></select>
+  </div>
+
   <div id="vwarn" hidden></div>
   <div class="hint" id="hint"></div>
 </footer>
@@ -228,6 +282,7 @@ import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js
 import {
   parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
+  DEFAULT_HOLD, renumber, actionsOf, framesOf,
 } from './sprite-fmt.js';
 import {
   OWNER, REPO, token, setToken, gh,
@@ -425,10 +480,14 @@ async function open(id) {
 const HIST_MAX = 80;
 let hist = [], histIx = -1;
 
-const snapshot = () => ({
-  frameIx,
-  frames: doc.frames.map((f) => ({ name: f.name, rows: f.rows.slice() })),
-});
+/**
+ * SNAPSHOT THE WHOLE FRAME, not just its pixels. Action, status and hold are
+ * things the artist changed and therefore things undo owes them — and copying
+ * only `rows` is how a status flip or an inserted frame becomes un-undoable
+ * while looking like it worked.
+ */
+const copyFrames = () => doc.frames.map((f) => ({ ...f, rows: f.rows.slice() }));
+const snapshot = () => ({ frameIx, frames: copyFrames() });
 
 function resetHistory() { hist = [snapshot()]; histIx = 0; }
 
@@ -444,7 +503,7 @@ function commit() {
 }
 
 function restore(s) {
-  doc.frames = s.frames.map((f) => ({ name: f.name, rows: f.rows.slice() }));
+  doc.frames = s.frames.map((f) => ({ ...f, rows: f.rows.slice() }));
   frameIx = Math.min(s.frameIx, doc.frames.length - 1);
   buildFrameList();
   touch();
@@ -459,10 +518,64 @@ function redo() { if (histIx < hist.length - 1) restore(hist[++histIx]); }
 
 const cur = () => doc.frames[frameIx];
 
+/**
+ * ACTOR > ACTION > INDEX, and the two dropdowns are that hierarchy.
+ *
+ * The ACTION list is every animation on the sheet plus `New…`; the FRAME list
+ * is the indices within the selected action plus one `+ insert at N` entry per
+ * position. Picking an existing index SELECTS it; picking an insert entry puts
+ * a copy of the current frame THERE and renumbers the rest of that action —
+ * which is safe now only because nothing stores an absolute sheet index any
+ * more. `MANIFEST.anims` did, and that is what made this dangerous before.
+ */
 function buildFrameList() {
+  const asel = $('#action'); asel.innerHTML = '';
+  const actions = actionsOf(doc);
+  for (const a of actions) asel.add(new Option(a.toUpperCase(), a));
+  asel.add(new Option('NEW…', NEW_ACTION));
+  const action = cur().action;
+  asel.value = action;
+
   const sel = $('#frame'); sel.innerHTML = '';
-  doc.frames.forEach((f, i) => sel.add(new Option(f.name, String(i))));
+  const mine = framesOf(doc, action);
+  for (const f of mine) sel.add(new Option(`${f.index} of ${mine.length}`, String(f.at)));
+  for (let i = 1; i <= mine.length + 1; i++) {
+    sel.add(new Option(`+ insert at ${i}`, `${INSERT}${i}`));
+  }
   sel.value = String(frameIx);
+
+  $('#status').value = cur().status;
+  $('#hold').value = String(cur().hold);
+}
+
+const NEW_ACTION = '.new';
+const INSERT = '.at';
+
+/** The first frame of `action`, as an absolute sheet index. */
+const firstOf = (action) => doc.frames.findIndex((f) => f.action === action);
+
+/**
+ * Put a copy of the current frame at 1-based position `n` of its action.
+ *
+ * A COPY, NOT A BLANK, because that is what animating is — the next pose is
+ * the last pose with something moved, and a blank frame makes every addition
+ * start by redrawing the parts that were not supposed to change. It arrives
+ * `wip`: a frame nobody has drawn yet has not been approved for a playtest.
+ */
+function insertAt(action, n) {
+  const mine = framesOf(doc, action);
+  const at = n > mine.length
+    ? (mine.length ? mine[mine.length - 1].at + 1 : doc.frames.length)
+    : mine[n - 1].at;
+  doc.frames.splice(at, 0, {
+    action, index: n, status: 'wip', hold: cur()?.hold ?? DEFAULT_HOLD,
+    rows: (cur()?.rows ?? blankFrame(doc.w, doc.h)).slice(),
+  });
+  renumber(doc);
+  frameIx = at;
+  buildFrameList();
+  commit();
+  flash(`inserted ${action} ${n} — later frames of ${action} renumbered, nothing else moved`);
 }
 
 function buildPalette() {
@@ -495,7 +608,9 @@ function buildRoleSelects() {
   });
   const st = $('#status'); st.innerHTML = '';
   for (const s of STATUSES) st.add(new Option(s.toUpperCase(), s));
-  st.onchange = () => { doc.status = st.value; touch(); };
+  // PER FRAME, not per sheet. A sheet is rarely finished all at once, and one
+  // unfinished pose used to hold back every finished one on the same sheet.
+  st.onchange = () => { cur().status = st.value; commit(); };
 }
 
 /**
@@ -525,7 +640,6 @@ function syncControls() {
     }
   };
   set(0, p.outline); set(1, p.primary); set(2, p.secondary);
-  $('#status').value = doc.status;
   $('#fw').textContent = doc.fudgeW.toFixed(2);
   $('#fh').textContent = doc.fudgeH.toFixed(2);
   applyRoles();
@@ -545,7 +659,11 @@ function syncButtons() {
   $('#tBox').disabled = prop;
   for (const id of ['fwm', 'fwp', 'fhm', 'fhp', 'fudgeDef']) $(`#${id}`).disabled = prop;
   $('#tOnion').classList.toggle('on', view.onion);
-  $('#tOnion').disabled = !doc || doc.frames.length < 2;
+  // Never disabled any more: with a target sprite there is always something to
+  // ghost, even on a one-frame sheet.
+  $('#tOnion').disabled = !doc;
+  $('#onionRow').hidden = !view.onion;
+  if (view.onion) { buildOnionSprites(); $('#onSprite').value = onSprite; }
   $('#tView').classList.toggle('on', !view.editor);
   $('#tBox').classList.toggle('on', view.boxes);
   $('#tDrawer').classList.toggle('on', !$('#drawer').hidden);
@@ -605,14 +723,18 @@ function hintText() {
   const box = proposedBox(f, doc.w, doc.h, doc.fudgeW, doc.fudgeH);
   const engine = t.box ? `engine box ${t.box.w}x${t.box.h}` : t.key;
   /**
-   * A FRAME COUNT THAT NO LONGER MATCHES THE MANIFEST IS WORTH SAYING OUT
-   * LOUD. The sheet is one strip and the game addresses it by INDEX, so
-   * inserting a frame in the middle silently renumbers every animation after
-   * it. Adding frames is legitimate — the manifest is the owner's to update —
-   * but it is not free, and this is the only place it would ever show up.
+   * WHAT THIS ANIMATION COSTS IN TIME, which is the number the hold dials are
+   * actually for and the one a cycle cannot be judged without.
+   *
+   * It replaces a "MANIFEST expects N frames" warning that is no longer true:
+   * the manifest's frame indices are DERIVED from this file now, so adding a
+   * frame updates them rather than drifting from them. The warning outlived
+   * the hazard it described by exactly one commit.
    */
-  const drift = doc.frames.length !== t.frames.length
-    ? ` · ${doc.frames.length} frames, MANIFEST expects ${t.frames.length}` : '';
+  const mine = framesOf(doc, f.action);
+  const steps = mine.reduce((n, x) => n + x.hold, 0);
+  const drift = ` · ${f.action}: ${mine.length} frame(s), `
+    + `${steps} steps (${(steps / 60).toFixed(2)}s per cycle)`;
   if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}${drift}`;
   if (!t.box) return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · ${engine}${drift}`;
   return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · `
@@ -750,30 +872,19 @@ function flipH() { const f = cur(); f.rows = f.rows.map((r) => [...r].reverse().
 function flipV() { const f = cur(); f.rows = f.rows.slice().reverse(); commit(); }
 function clearFrame() { cur().rows = blankFrame(doc.w, doc.h); commit(); }
 
-/** A name nothing else in this sprite is using. */
-function uniqueName(base) {
-  const taken = new Set(doc.frames.map((f) => f.name));
-  if (!taken.has(base)) return base;
-  for (let i = 2; ; i++) if (!taken.has(`${base}${i}`)) return `${base}${i}`;
-}
-
 /**
- * ADD FRAME COPIES THE CURRENT ONE, which is what animating actually is: the
- * next pose is the last pose with something moved. A blank frame would make
- * every addition start by redrawing the parts that were not supposed to change.
+ * +FRAME is "insert directly after this one", the common case of insertAt.
+ *
+ * It used to append `_b` to the frame's NAME — which is how the Volt Spark
+ * ended up with a frame called `fly0_b_b_b_b_b`. A frame has an action and a
+ * position now, so there is no name left to mangle.
  */
-function addFrame() {
-  const f = cur();
-  doc.frames.splice(frameIx + 1, 0, { name: uniqueName(`${f.name}_b`), rows: f.rows.slice() });
-  frameIx++;
-  buildFrameList();
-  commit();
-  flash(`copied to ${cur().name} — remember MANIFEST addresses frames by index`);
-}
+function addFrame() { insertAt(cur().action, cur().index + 1); }
 
 function delFrame() {
   if (doc.frames.length < 2) { flash('a sprite needs at least one frame'); return; }
   doc.frames.splice(frameIx, 1);
+  renumber(doc);
   frameIx = Math.min(frameIx, doc.frames.length - 1);
   buildFrameList();
   commit();
@@ -885,6 +996,84 @@ async function loadPlayerRef() {
   } catch { refPlayer = null; }   // a box is a fine fallback
 }
 
+/**
+ * THE ONION SKIN CAN GHOST ANY FRAME OF ANY SPRITE, not just the one before.
+ *
+ * `PREV` is still the default and still the common case — what did I move away
+ * FROM — and the frame before frame 1 is the LAST frame of the same action,
+ * because a cycle is a loop and its seam is the hardest part of it.
+ *
+ * The rest is what the default cannot do: lining a shot up against the arm
+ * that fires it, matching a boss's stance to the player's, or checking a new
+ * action against a finished one. Those all need a frame this sheet does not
+ * contain.
+ *
+ * A DIFFERENT GRID IS ALIGNED BY ITS BOTTOM-CENTRE, which is how the engine
+ * stands actors on the ground (`anchor: 'bottom'`) — ghosting a 16x16 shot
+ * into the top-left corner of a 24x24 player would answer nothing.
+ */
+const ONION_PREV = '.prev';
+let onSprite = ONION_PREV;
+const onionCache = new Map();   // id -> parsed doc, or null once a load failed
+
+function onionRows() {
+  if (onSprite === ONION_PREV) {
+    const fr = framesOf(doc, cur().action);
+    if (fr.length < 2) return null;
+    const i = fr.findIndex((f) => f.at === frameIx);
+    return fr[(i - 1 + fr.length) % fr.length].rows;
+  }
+  const d = onionCache.get(onSprite);
+  if (!d || !d.frames.length) return null;
+  const src = d.frames[Math.min(+$('#onFrame').value || 0, d.frames.length - 1)];
+  if (d.w === doc.w && d.h === doc.h) return src.rows;
+
+  // Re-seat a foreign grid onto this one, bottom-centre.
+  const dx = Math.round((doc.w - d.w) / 2), dy = doc.h - d.h;
+  return Array.from({ length: doc.h }, (_, y) => Array.from({ length: doc.w }, (_, x) => {
+    const sy = y - dy, sx = x - dx;
+    return (sy >= 0 && sy < d.h && sx >= 0 && sx < d.w) ? src.rows[sy][sx] : EMPTY;
+  }).join(''));
+}
+
+function buildOnionSprites() {
+  const sel = $('#onSprite');
+  if (sel.options.length) return;                     // the roster never changes
+  sel.add(new Option('PREV FRAME', ONION_PREV));
+  const t = $('#target');
+  for (const g of t.querySelectorAll('optgroup')) {
+    const og = document.createElement('optgroup');
+    og.label = g.label; sel.append(og);
+    for (const o of g.querySelectorAll('option')) og.append(new Option(o.textContent, o.value));
+  }
+}
+
+function buildOnionFrames() {
+  const sel = $('#onFrame');
+  sel.innerHTML = '';
+  const d = onionCache.get(onSprite);
+  sel.disabled = onSprite === ONION_PREV || !d;
+  if (sel.disabled) { sel.add(new Option(onSprite === ONION_PREV ? '—' : '…', '0')); return; }
+  d.frames.forEach((f, i) => sel.add(new Option(`${f.action} ${f.index}`, String(i))));
+}
+
+async function pickOnion(id) {
+  onSprite = id;
+  $('#onFrame').disabled = true;
+  if (id !== ONION_PREV && !onionCache.has(id)) {
+    onionCache.set(id, null);                         // a failed load must not retry forever
+    try {
+      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}`
+        + `?ref=${draftRef()}&t=${Date.now()}`).catch(() => gh(
+        `/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${BRANCH}&t=${Date.now()}`));
+      onionCache.set(id, parse(unb64(r.content.replace(/\n/g, ''))));
+    } catch { flash(`${id} has no .sprite yet — nothing to ghost`); }
+  }
+  buildOnionFrames();
+  syncButtons();
+  draw();
+}
+
 const roleColours = () => ROLES.map((_, i) => $(`#role${i}`).value);
 const colourOf = (ch, cols) => cols[ROLES.findIndex((r) => r.key === ch)] || '#f0f';
 
@@ -975,9 +1164,7 @@ function draw() {
     ? movedRows(doc.frames[frameIx].rows, selDrag.dx, selDrag.dy)
     : doc.frames[frameIx].rows;
 
-  const onion = view.onion && doc.frames.length > 1
-    ? doc.frames[(frameIx - 1 + doc.frames.length) % doc.frames.length].rows
-    : null;
+  const onion = view.onion ? onionRows() : null;
 
   // The canvas ground: a checker, so transparency reads as transparency.
   for (let y = 0; y < doc.h; y++) {
@@ -1061,17 +1248,29 @@ function draw() {
 // ── The preview ───────────────────────────────────────────────────────
 
 /**
- * FRAMES, PLAYED. A sprite sheet is a strip of stills until something runs it,
- * and the only question that matters about a walk cycle — does the weight land
- * — cannot be answered one frame at a time.
+ * FRAMES, PLAYED — AT THE RATE THE GAME ACTUALLY PLAYS THEM.
  *
- * THE RATE IS A CONTROL, and 60 is not what the game does. `MANIFEST` plays the
- * player's sheet at 12fps with the idle slowed to 1.5, so a literal 60 on a
- * two-frame idle is a 30Hz strobe of an animation nobody will ever see. 60 is
- * the default because it is what was asked for and it is genuinely useful for
- * reading a fast cycle; 12 is one tap away and is the truth.
+ * A sprite sheet is a strip of stills until something runs it, and the only
+ * question that matters about a walk cycle — does the weight land — cannot be
+ * answered one frame at a time.
+ *
+ * THERE IS NO FPS DIAL ANY MORE, because there is nothing left for it to
+ * choose. Every frame now carries its own HOLD in sim steps and the game runs
+ * a fixed 60 steps a second, so "play each frame for its hold, at 60 steps a
+ * second" IS the game's real speed — the old dial's 12 and 1.5 were the same
+ * two numbers arrived at from the other end.
+ *
+ * What is left is a SLOW MOTION control, which is the thing a dial was being
+ * used for anyway: 1x is the truth, and the rungs below it are for looking at
+ * a fast cycle without pretending the game plays it that way.
  */
-const RATES = [60, 24, 12, 6, 1.5];
+const SPEEDS = [
+  { label: '1x', mult: 1 },
+  { label: '1/2', mult: 2 },
+  { label: '1/4', mult: 4 },
+  { label: '1/8', mult: 8 },
+];
+const STEP_MS = 1000 / 60;
 
 /**
  * WALK MODE: THE SPRITE CROSSES GROUND BETWEEN TWO THINGS IT WILL MEET.
@@ -1093,11 +1292,22 @@ const RATES = [60, 24, 12, 6, 1.5];
 const WALK_TRAVEL = 48, WALK_GAP = 6;
 let walk = false;
 const MOVE_SPEED = () => targets.moveSpeed;
+const MINION = (id) => targets.minions.find((m) => m.id === id);
 const walkStart = () => PLAYER_REF.w + WALK_GAP;
 const walkEnd = () => walkStart() + WALK_TRAVEL;
 const pcv = $('#pcv'), pctx = pcv.getContext('2d');
-let player = null;   // { raf, last, rate }
+let player = null;   // { raf, last, i, x, t }
 let rateIx = 0;
+
+/**
+ * THE PREVIEW PLAYS ONE ANIMATION, NOT THE SHEET.
+ *
+ * Cycling every frame of the sheet ran the idle into the run into the jump
+ * poses into the slide, which is not a thing the game ever does and tells you
+ * nothing about any of them. The action dropdown already says which animation
+ * is being worked on; this plays that one.
+ */
+const playFrames = () => framesOf(doc, cur().action);
 
 function stopPlay() {
   if (player) cancelAnimationFrame(player.raf);
@@ -1108,17 +1318,29 @@ function stopPlay() {
 
 function togglePlay() {
   if (player) { stopPlay(); return; }
-  if (doc.frames.length < 2) { flash('one frame — nothing to cycle'); return; }
-  player = { raf: 0, last: performance.now(), i: frameIx, x: walkStart(), t: performance.now() };
+  const fr = playFrames();
+  if (fr.length < 2 && !walk) {
+    flash(`${cur().action} has one frame — nothing to cycle. WALK still shows its travel.`);
+    return;
+  }
+  player = { raf: 0, last: performance.now(), i: 0, x: walkStart(), t: performance.now() };
   $('#prev').hidden = false;
   drawPreview();
   const tick = (now) => {
     if (!player) return;
-    const step = 1000 / RATES[rateIx];
+    /**
+     * EACH FRAME LASTS ITS OWN HOLD. A cycle whose frames all last the same
+     * time is the one thing a single fps dial could express, and it is the
+     * thing almost no good animation does — the idle's 40-step breath and the
+     * run's 5-step stride are the same sheet.
+     */
+    const fr = playFrames();
+    const hold = (fr[player.i % fr.length]?.hold ?? DEFAULT_HOLD) * STEP_MS
+      * SPEEDS[rateIx].mult;
     let dirty = false;
-    if (now - player.last >= step) {
+    if (now - player.last >= hold) {
       player.last = now;
-      player.i = (player.i + 1) % doc.frames.length;
+      player.i = (player.i + 1) % fr.length;
       dirty = true;
     }
     /**
@@ -1128,7 +1350,7 @@ function togglePlay() {
      * also slow the body down and make the feet stop matching.
      */
     if (walk) {
-      player.x += MOVE_SPEED() * ((now - player.t) / (1000 / 60));
+      player.x += MOVE_SPEED() * ((now - player.t) / STEP_MS);
       if (player.x > walkEnd()) player.x = walkStart();
       dirty = true;
     }
@@ -1183,7 +1405,30 @@ function drawWalkPreview(cols) {
   pctx.strokeStyle = '#5a3a3a'; pctx.lineWidth = 1;
   pctx.strokeRect((sw - bb.w) * z + 0.5, base - bb.h * z + 0.5, bb.w * z - 1, bb.h * z - 1);
 
-  const rows = doc.frames[Math.min(player.i, doc.frames.length - 1)].rows;
+  /**
+   * THE TWO MINIONS, ONE PER PLANE, STANDING IN THE TRAVEL LANE.
+   *
+   * Bosses are events; minions are weather — a run is mostly spent beside
+   * these two, so they are the honest scale and timing reference for how fast
+   * a cycle reads, in a way a boss met once every few minutes is not.
+   *
+   * SCRAPPER IS ON THE FLOOR AND DRIFTER IS IN THE AIR, because that is the
+   * whole distinction between them: one walks its span, the other tracks your
+   * altitude. Drawn as footprints rather than art for the same reason the boss
+   * is — that is what the game draws until the art lands.
+   */
+  const airY = Math.round(bb.h * 0.62);
+  for (const [m, lift, tint] of [[MINION('scrapper'), 0, '#1d2418'], [MINION('drifter'), airY, '#181f2b']]) {
+    if (!m) continue;
+    const mx = Math.round(walkStart() + WALK_TRAVEL * (lift ? 0.62 : 0.28));
+    pctx.fillStyle = tint;
+    pctx.fillRect(mx * z, base - (m.box.h + lift) * z, m.box.w * z, m.box.h * z);
+    pctx.strokeStyle = '#4a5a3a';
+    pctx.strokeRect(mx * z + 0.5, base - (m.box.h + lift) * z + 0.5, m.box.w * z - 1, m.box.h * z - 1);
+  }
+
+  const fr = playFrames();
+  const rows = fr[player.i % fr.length].rows;
   pblit(rows, doc.w, doc.h, Math.round(player.x), base, z, (ch) => colourOf(ch, cols));
 }
 
@@ -1195,7 +1440,8 @@ function drawPreview() {
   if (pcv.width !== w || pcv.height !== h) { pcv.width = w; pcv.height = h; }
   pctx.clearRect(0, 0, w, h);
   const cols = roleColours();
-  const rows = doc.frames[Math.min(player.i, doc.frames.length - 1)].rows;
+  const fr = playFrames();
+  const rows = fr[player.i % fr.length].rows;
   for (let y = 0; y < doc.h; y++) {
     for (let x = 0; x < doc.w; x++) {
       const ch = rows[y][x];
@@ -1387,7 +1633,10 @@ $('#play').onclick = togglePlay;
  * behind the preview instead.
  */
 for (const ev of ['pointerdown', 'pointerup', 'pointermove', 'wheel']) {
-  $('#prev').addEventListener(ev, (e) => e.stopPropagation());
+  // THE STEPS NOTE IS ON THE STAGE TOO and needs the same guard for the same
+  // reason: the stage captures the pointer, so a tap on the note was reaching
+  // the canvas and painting a pixel behind it instead of dismissing it.
+  for (const id of ['#prev', '#stepsNote']) $(id).addEventListener(ev, (e) => e.stopPropagation());
 }
 $('#pmode').onclick = () => {
   walk = !walk;
@@ -1395,10 +1644,12 @@ $('#pmode').onclick = () => {
   if (player) { player.x = walkStart(); drawPreview(); }
 };
 $('#prate').onclick = () => {
-  rateIx = (rateIx + 1) % RATES.length;
-  $('#prate').textContent = `${RATES[rateIx]} FPS`;
+  rateIx = (rateIx + 1) % SPEEDS.length;
+  $('#prate').textContent = SPEEDS[rateIx].label;
 };
 $('#tOnion').onclick = () => { view.onion = !view.onion; syncButtons(); draw(); };
+$('#onSprite').onchange = (e) => pickOnion(e.target.value);
+$('#onFrame').onchange = () => draw();
 $('#tView').onclick = () => { view.editor = !view.editor; syncButtons(); draw(); };
 $('#tBox').onclick = () => { view.boxes = !view.boxes; syncButtons(); draw(); };
 /**
@@ -1445,7 +1696,52 @@ $('#target').onchange = async (e) => { if (dirty) await save(false); await open(
 // The selection is a rectangle over THIS frame; carrying it to the next one
 // would leave it pointing at pixels nobody selected. The clipboard survives,
 // which is the whole point of copying between frames.
-$('#frame').onchange = (e) => { frameIx = +e.target.value; clearSel(); syncButtons(); draw(); };
+$('#frame').onchange = (e) => {
+  const v = e.target.value;
+  if (v.startsWith(INSERT)) { insertAt(cur().action, +v.slice(INSERT.length)); clearSel(); draw(); return; }
+  frameIx = +v; clearSel(); buildFrameList(); syncButtons(); draw();
+};
+
+$('#action').onchange = (e) => {
+  const v = e.target.value;
+  if (v === NEW_ACTION) {
+    const name = (prompt('New animation name (e.g. climb, hurt, shoot)') || '').trim();
+    // Filename-safe and MANIFEST-key-safe: an action becomes an animation name
+    // the game looks up by string, so a space in it is a bug with a delay on it.
+    const clean = name.replace(/[^A-Za-z0-9_]/g, '');
+    if (!clean) { buildFrameList(); return; }
+    if (actionsOf(doc).includes(clean)) { frameIx = firstOf(clean); buildFrameList(); draw(); return; }
+    doc.frames.push({
+      action: clean, index: 1, status: 'wip', hold: DEFAULT_HOLD, rows: blankFrame(doc.w, doc.h),
+    });
+    renumber(doc);
+    frameIx = doc.frames.length - 1;
+    buildFrameList();
+    commit();
+    flash(`new animation '${clean}' — it reaches the game as MANIFEST.anims.${clean}`);
+    draw();
+    return;
+  }
+  frameIx = firstOf(v);
+  clearSel(); buildFrameList(); syncButtons(); draw();
+};
+
+/**
+ * HOLD IS IN SIM STEPS, and the (i) beside it is not decoration — "step" is
+ * the piece of vocabulary that stops meaning anything a month after you read it.
+ */
+$('#hold').onchange = (e) => {
+  const v = Math.max(1, Math.min(600, Math.round(+e.target.value) || DEFAULT_HOLD));
+  e.target.value = String(v);
+  cur().hold = v;
+  commit();
+};
+$('#holdI').onclick = () => {
+  const n = $('#stepsNote');
+  n.hidden = !n.hidden;
+  $('#holdI').classList.toggle('on', !n.hidden);
+};
+$('#stepsNote').onclick = () => { $('#stepsNote').hidden = true; $('#holdI').classList.remove('on'); };
 $('#saveBtn').onclick = () => save(true);
 $('#tokenBtn').onclick = () => { $('#tokIn').value = token(); $('#tok').showModal(); };
 $('#tok').addEventListener('close', () => {

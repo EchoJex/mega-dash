@@ -1,0 +1,58 @@
+{
+  "player": {
+    "anims": {
+      "idle": [
+        0,
+        1
+      ],
+      "run": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "jumpRise": [
+        8
+      ],
+      "jumpApex": [
+        9
+      ],
+      "jumpFall": [
+        10
+      ],
+      "slide": [
+        11,
+        12
+      ]
+    },
+    "holds": {
+      "idle": [
+        40,
+        40
+      ],
+      "run": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "jumpRise": [
+        5
+      ],
+      "jumpApex": [
+        5
+      ],
+      "jumpFall": [
+        5
+      ],
+      "slide": [
+        5,
+        5
+      ]
+    }
+  }
+}

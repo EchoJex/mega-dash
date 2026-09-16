@@ -25,7 +25,7 @@
 import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { parse } from '../docs/sprite-fmt.js';
+import { parse, actionsOf, framesOf } from '../docs/sprite-fmt.js';
 import { encodePng } from './png.mjs';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
@@ -121,6 +121,20 @@ if (!files.length) { console.log('no .sprite files yet'); process.exit(0); }
 
 let built = 0, skipped = 0;
 const problems = [];
+const warnings = [];
+
+/**
+ * The regenerated `MANIFEST.anims`, written to src/data/sprite-anims.json.
+ *
+ * DERIVED, NEVER HAND-MAINTAINED. Absolute sheet indices used to be typed into
+ * assets.js, so inserting a frame anywhere but the end of the sheet silently
+ * shifted every animation after it. They now fall out of the block order in
+ * the `.sprite` file, which is the thing the artist actually edits.
+ */
+const anims = {};
+
+/** A frame the owner has finished enough to ship. */
+const shippable = (f) => f.status === 'ready' || f.status === 'draft';
 
 for (const file of files) {
   const id = file.replace(/\.sprite$/, '');
@@ -135,12 +149,21 @@ for (const file of files) {
   }
 
   /**
-   * ONLY `ready` AND `draft` SHIP. A sprite the owner has marked `wip` or
-   * `deferred` is one they are still deciding about, and dropping it into the
-   * game would put half-finished art in a playtest — the same rule the fight
-   * content follows, applied to the thing that is actually visible.
+   * ONLY `ready` AND `draft` SHIP, AND THAT IS NOW PER FRAME. A sheet is rarely
+   * finished all at once; the old sheet-wide gate meant one unfinished pose
+   * held back every finished one.
+   *
+   * A `wip` frame STILL GETS ITS CELL, drawn blank. Dropping the cell would
+   * renumber every frame after it in the PNG, which is the exact breakage the
+   * derived anim list exists to prevent — and it would do it silently, because
+   * a sheet one frame short still loads.
+   *
+   * IT IS LEFT OUT OF THE ANIMATION, THOUGH. The two rules together are what
+   * the owner asked for: a blank cell keeps the sheet's shape, and an animation
+   * that skips it never plays a hole. Half-finished art cannot reach a
+   * playtest either way.
    */
-  if (doc.status !== 'ready' && doc.status !== 'draft') {
+  if (!doc.frames.some(shippable)) {
     skipped++;
     continue;
   }
@@ -151,6 +174,7 @@ for (const file of files) {
   const w = doc.w * doc.frames.length, h = doc.h;
   const px = new Uint8Array(w * h * 4);
   doc.frames.forEach((f, fi) => {
+    if (!shippable(f)) return;                 // cell stays, drawn transparent
     for (let y = 0; y < doc.h; y++) {
       for (let x = 0; x < doc.w; x++) {
         const ch = f.rows[y][x];
@@ -167,10 +191,28 @@ for (const file of files) {
     }
   });
 
+  /**
+   * The anim list, and the per-frame HOLD in sim steps beside it.
+   *
+   * `hold` is what the sheet-wide `fps: 12` always meant — 60/12 is 5 steps —
+   * except it is now per frame, so the idle's breath (40 steps) is a property
+   * of the idle rather than a special case in assets.js.
+   */
+  const a = { anims: {}, holds: {} };
+  for (const action of actionsOf(doc)) {
+    const live = framesOf(doc, action).filter(shippable);
+    if (!live.length) continue;
+    a.anims[action] = live.map((f) => f.at);
+    a.holds[action] = live.map((f) => f.hold);
+  }
+  anims[t.key || id] = a;
+
+  const wip = doc.frames.length - doc.frames.filter(shippable).length;
   writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
   built++;
   console.log(`  ${(t.key || id).padEnd(20)} ${id}.png  ${w}x${h}  `
-    + `${doc.frames.length} frame(s)  [${doc.status}]`);
+    + `${doc.frames.length} frame(s)${wip ? `, ${wip} blank (wip)` : ''}  `
+    + Object.entries(a.anims).map(([k, v]) => `${k}:${v.length}`).join(' '));
 }
 
 if (problems.length) {
@@ -178,5 +220,34 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
+
+/**
+ * SAY SO WHEN AN ANIMATION'S SHAPE CHANGES. Adding a frame to an action is a
+ * gameplay change — the pose the player reads mid-slide is not a detail — and
+ * it arrives here as a side effect of drawing, with nothing else to announce
+ * it. Compared against the hand-written `MANIFEST.anims` still in assets.js,
+ * which is now a fallback for sprites that have no `.sprite` source.
+ */
+const { MANIFEST } = await import('../src/systems/assets.js');
+for (const [key, a] of Object.entries(anims)) {
+  const was = MANIFEST[key]?.anims;
+  if (!was) continue;
+  for (const [name, frames] of Object.entries(a.anims)) {
+    const old = was[name];
+    if (!old) continue;
+    if (old.length !== frames.length || old.some((v, i) => v !== frames[i])) {
+      warnings.push(`${key}.${name}: was [${old}] in MANIFEST, now [${frames}] `
+        + `— the game will play ${frames.length} frame(s) here, not ${old.length}`);
+    }
+  }
+}
+
+writeFileSync(join(REPO, 'src/data/sprite-anims.json'), `${JSON.stringify(anims, null, 2)}\n`);
+
+if (warnings.length) {
+  console.log('\nANIMATION SHAPE CHANGED:');
+  for (const w of warnings) console.log(`  ${w}`);
+}
 console.log(`\nbuilt ${built} sprite sheet(s)`
-  + (skipped ? `, skipped ${skipped} still wip/deferred` : ''));
+  + (skipped ? `, skipped ${skipped} with nothing shippable` : '')
+  + '\n  src/data/sprite-anims.json rewritten');

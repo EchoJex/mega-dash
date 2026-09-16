@@ -32,18 +32,71 @@
  *     fudge     0.70 x 1.00
  *     note      anything after this is ignored, so notes are free
  *
- *     [idle0]
+ *     [idle 1] status=ready hold=40
  *     ........................
  *     ....00000000............
  *     ...
  *
- * One `[frame]` block per frame, each exactly `grid` rows of `grid` characters.
+ * One block per frame, each exactly `grid` rows of `grid` characters.
  * `.` transparent, `0` outline, `1` primary, `2` secondary — see ROLES.
+ *
+ * A FRAME IS `ACTOR > ACTION > INDEX`, AND THE INDEX IS 1-BASED PER ACTION.
+ * `[run 1]` through `[run 6]` are one animation; `[idle 1]`, `[idle 2]` are
+ * another. The sheet's absolute frame position is DERIVED from the order the
+ * blocks appear in, never written down — which is what makes inserting a frame
+ * safe. `MANIFEST.anims` used to hold those absolute indices by hand, so
+ * inserting a frame anywhere but the end silently shifted every animation
+ * after it; `npm run sprites:build` now regenerates them from this file.
+ *
+ * `status` is PER FRAME. A sheet is rarely finished all at once, and the old
+ * one-status-per-sheet gate meant a single unfinished pose held back every
+ * finished one.
+ *
+ * `hold` IS IN SIM STEPS — how many 1/60s game steps this frame stays on
+ * screen. The game has always had this number; it was just spelled as one
+ * `fps` for the whole sheet (12fps = 5 steps), with `animFps` as the single
+ * escape hatch (the idle's 1.5fps = 40 steps). Per frame, it can be drawn
+ * against instead of worked around. 5 is the default because that is what the
+ * shipped sheet does everywhere except the idle.
  */
 
 import { EMPTY } from './nes-palette.js';
 
 export const STATUSES = ['deferred', 'wip', 'draft', 'ready'];
+
+/**
+ * One drawn frame lasts this many 1/60s sim steps unless it says otherwise.
+ *
+ * FIVE, because that is what the game already does: the player sheet is
+ * `fps: 12`, and 60/12 is 5. A new frame therefore matches the frames beside
+ * it, which a rounder-looking 10 would not — it would quietly play at half the
+ * speed of its own animation.
+ */
+export const DEFAULT_HOLD = 5;
+
+/**
+ * Split a legacy frame name into an action and a 1-based index.
+ *
+ * Three shapes exist in the wild and all three are this editor's own doing:
+ *
+ *   `idle0` / `run3`   a trailing 0-based number — becomes index n+1
+ *   `slide` / `jumpRise`   no number at all — one frame, index 1
+ *   `slide_b` / `fly0_b_b` the old +FRAME button appended `_b` to the name it
+ *                          copied, so the sixth frame of the Volt Spark was
+ *                          called `fly0_b_b_b_b_b`. Each `_b` is one step
+ *                          further along the same action.
+ *
+ * Order is preserved and indices are renumbered from the block order anyway,
+ * so this only has to get the ACTION right; the number is a sanity check.
+ */
+export function splitLegacyName(name) {
+  let n = String(name).trim();
+  let bumps = 0;
+  while (n.endsWith('_b')) { n = n.slice(0, -2); bumps++; }
+  const m = /^(.*?)(\d+)$/.exec(n);
+  if (m && m[1]) return { action: m[1], index: +m[2] + 1 + bumps };
+  return { action: n || 'frame', index: 1 + bumps };
+}
 
 /** A blank frame: `h` rows of `w` transparent pixels. */
 export const blankFrame = (w, h) => Array.from({ length: h }, () => EMPTY.repeat(w));
@@ -51,10 +104,12 @@ export const blankFrame = (w, h) => Array.from({ length: h }, () => EMPTY.repeat
 export function parse(text) {
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   const doc = {
-    id: null, status: 'deferred', w: 0, h: 0,
+    id: null, w: 0, h: 0,
     fudgeW: 0.7, fudgeH: 1, note: '', frames: [],
   };
   let frame = null;
+  // The pre-per-frame sheet-wide `status` line, if this file still has one.
+  let legacyStatus = null;
 
   for (const raw of lines) {
     const line = raw.replace(/\s+$/, '');
@@ -62,9 +117,31 @@ export function parse(text) {
 
     if (line.startsWith('# ')) { doc.id = line.slice(2).trim(); continue; }
 
-    const head = /^\[(.+)\]$/.exec(line);
+    /**
+     * `[action index] status=ready hold=40`, or a legacy `[idle0]`.
+     *
+     * The attributes ride on the header line rather than on key lines inside
+     * the block, so flipping one frame's status is a ONE-LINE diff and a pixel
+     * row can never be mistaken for a key — a row is only ever `.012`.
+     */
+    const head = /^\[([^\]]+)\]\s*(.*)$/.exec(line);
     if (head) {
-      frame = { name: head[1].trim(), rows: [] };
+      const inside = head[1].trim();
+      const attrs = head[2];
+      const m = /^(\S+)\s+(\d+)$/.exec(inside);
+      const { action, index } = m
+        ? { action: m[1], index: +m[2] }
+        : splitLegacyName(inside);
+      const at = (k) => new RegExp(`\\b${k}=(\\S+)`).exec(attrs)?.[1];
+      const st = at('status');
+      const hold = Number(at('hold'));
+      frame = {
+        action,
+        index,
+        status: STATUSES.includes(st) ? st : 'wip',
+        hold: Number.isFinite(hold) && hold > 0 ? Math.round(hold) : DEFAULT_HOLD,
+        rows: [],
+      };
       doc.frames.push(frame);
       continue;
     }
@@ -76,7 +153,7 @@ export function parse(text) {
       const kv = /^(\w+)\s+(.*)$/.exec(line);
       if (kv) {
         const [, k, v] = kv;
-        if (k === 'status' && STATUSES.includes(v.trim())) doc.status = v.trim();
+        if (k === 'status' && STATUSES.includes(v.trim())) legacyStatus = v.trim();
         else if (k === 'grid') {
           const g = /^(\d+)\s*x\s*(\d+)$/.exec(v.trim());
           if (g) { doc.w = +g[1]; doc.h = +g[2]; }
@@ -108,19 +185,56 @@ export function parse(text) {
     }
   }
   if (!doc.frames.length && doc.w && doc.h) {
-    doc.frames.push({ name: 'frame0', rows: blankFrame(doc.w, doc.h) });
+    doc.frames.push({
+      action: 'idle', index: 1, status: 'wip', hold: DEFAULT_HOLD,
+      rows: blankFrame(doc.w, doc.h),
+    });
+  }
+
+  /**
+   * A LEGACY SHEET INHERITS ITS OLD SHEET-WIDE STATUS on every frame. Dropping
+   * a `ready` sheet to a wall of `wip` on first open would un-ship finished art
+   * for having touched the parser.
+   */
+  if (legacyStatus) for (const f of doc.frames) f.status = legacyStatus;
+
+  return renumber(doc);
+}
+
+/**
+ * Renumber every frame's index from its position within its own action.
+ *
+ * THIS IS WHAT MAKES INSERTING A FRAME SAFE. Nothing anywhere stores an
+ * absolute sheet position, so a frame dropped into the middle of `run` cannot
+ * shift `slide`; the indices are re-derived from block order every time the
+ * file is read or written. Mutates and returns `doc`.
+ */
+export function renumber(doc) {
+  const seen = new Map();
+  for (const f of doc.frames) {
+    const n = (seen.get(f.action) || 0) + 1;
+    seen.set(f.action, n);
+    f.index = n;
   }
   return doc;
 }
 
+/** Every action on this sheet, in the order they first appear. */
+export const actionsOf = (doc) => [...new Set(doc.frames.map((f) => f.action))];
+
+/** The frames of one action, in order, each with its absolute sheet position. */
+export const framesOf = (doc, action) => doc.frames
+  .map((f, at) => ({ ...f, at }))
+  .filter((f) => f.action === action);
+
 export function serialize(doc) {
+  renumber(doc);
   const out = [`# ${doc.id}`];
-  out.push(`status    ${doc.status}`);
   out.push(`grid      ${doc.w}x${doc.h}`);
   out.push(`fudge     ${doc.fudgeW.toFixed(2)} x ${doc.fudgeH.toFixed(2)}`);
   if (doc.note) out.push(`note      ${doc.note}`);
   for (const f of doc.frames) {
-    out.push('', `[${f.name}]`, ...f.rows);
+    out.push('', `[${f.action} ${f.index}] status=${f.status} hold=${f.hold}`, ...f.rows);
   }
   out.push('');
   return out.join('\n');
