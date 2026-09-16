@@ -34,50 +34,25 @@
  * title screen with nothing to report and a cheerful pass. Play input still
  * goes through the real keyboard, so the input path is exercised for real.
  */
-import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-
-let chromium;
-try {
-  ({ chromium } = await import('playwright'));
-} catch {
-  console.log('playwright is not installed — this tool is deliberately opt-in.\n');
-  console.log('  npx playwright@latest install chromium');
-  console.log('  npm i --no-save playwright');
-  console.log('  npm run build && npm run smoke\n');
-  process.exit(1);
-}
+import { serve, launchChromium } from './harness.mjs';
 
 const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
 if (!existsSync(join(ROOT, 'index.html'))) {
   console.log('no dist/ — run `npm run build` first.');
   process.exit(1);
 }
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
-
-const server = createServer((req, res) => {
-  const url = req.url.split('?')[0];
-  const file = join(ROOT, url === '/' ? 'index.html' : url);
-  if (!existsSync(file)) { res.writeHead(404); res.end('nope'); return; }
-  res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream' });
-  res.end(readFileSync(file));
-});
-await new Promise((r) => server.listen(4173, r));
+const { server, url: SITE } = await serve(ROOT);
 
 // Screenshots go to a scratch directory, never into the repo.
 const OUT = mkdtempSync(join(tmpdir(), 'megadash-smoke-'));
 const shot = (name) => join(OUT, name);
 
-// Prefer a pre-installed browser when the environment has one (CI images and
-// container sandboxes usually do), otherwise let Playwright find its own.
-const PINNED = process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium';
-const browser = await chromium.launch(
-  existsSync(PINNED) ? { executablePath: PINNED } : {},
-);
+const browser = await launchChromium('npm run build && npm run smoke');
 const page = await browser.newPage({ viewport: { width: 900, height: 420 } });
 
 const problems = [];
@@ -112,7 +87,7 @@ page.on('pageerror', (e) => fail(`pageerror: ${e.message}\n${e.stack}`));
 // `?dev=1` answers the launch dialog for us. The game now opens on a DEV MODE
 // vs PLAYTESTER choice, and every perk this script relies on — the whole
 // arsenal unlocked, the boss jump, the HP floor — lives down the dev branch.
-await page.goto('http://localhost:4173/?seed=4821&dev=1', { waitUntil: 'networkidle' });
+await page.goto(`${SITE}/?seed=4821&dev=1`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1200);
 
 const has = await page.evaluate(() => !!globalThis.__game);

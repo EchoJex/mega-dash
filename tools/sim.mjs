@@ -25,16 +25,15 @@
  *   npm run sim -- --list
  */
 
-import { createServer } from 'node:http';
-import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { WEIGHTS } from '../src/sim/metrics.js';
+import { serve, launchChromium } from './harness.mjs';
 
 const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
 const REPO = fileURLToPath(new URL('..', import.meta.url));
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 
 // ── Arguments ─────────────────────────────────────────────────────────
 
@@ -142,17 +141,6 @@ if (args.list) {
  * of `ERR_MODULE_NOT_FOUND` Node internals. `tools/smoke.mjs` already says the
  * useful thing instead; this is the same message.
  */
-let chromium;
-try {
-  ({ chromium } = await import('playwright'));
-} catch {
-  console.log('playwright is not installed — this tool is deliberately opt-in.\n');
-  console.log('  npx playwright@latest install chromium');
-  console.log('  npm i --no-save playwright');
-  console.log('  npm run sim -- --list      (this one needs neither)\n');
-  process.exit(1);
-}
-
 // ── The bundle ────────────────────────────────────────────────────────
 
 /**
@@ -183,19 +171,8 @@ if (!args['no-build']) {
   process.exit(1);
 }
 
-const server = createServer((req, res) => {
-  const url = req.url.split('?')[0];
-  const file = join(ROOT, url === '/' ? 'sim.html' : url);
-  if (!existsSync(file)) { res.writeHead(404); res.end('nope'); return; }
-  res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream' });
-  res.end(readFileSync(file));
-});
-await new Promise((r) => server.listen(4174, r));
-
-// A pre-installed browser when the environment has one (CI images and container
-// sandboxes usually do), otherwise let Playwright find its own.
-const PINNED = process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium';
-const browser = await chromium.launch(existsSync(PINNED) ? { executablePath: PINNED } : {});
+const { server, url: SITE } = await serve(ROOT, 'sim.html');
+const browser = await launchChromium('npm run sim -- --list      (this one needs neither)');
 const page = await browser.newPage({ viewport: { width: 900, height: 420 } });
 
 const fatal = [];
@@ -208,7 +185,7 @@ page.on('console', (m) => {
 
 // `?dev=0` takes the clean branch past the launch dialog. The harness forces
 // the one dev hook it needs (the layer override) itself, with every perk off.
-await page.goto('http://localhost:4174/sim.html?dev=0', { waitUntil: 'networkidle' });
+await page.goto(`${SITE}/sim.html?dev=0`, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => globalThis.__sim?.ready === true, null, { timeout: 15000 })
   .catch(() => { throw new Error(`harness never booted:\n${fatal.join('\n') || '(no error)'}`); });
 

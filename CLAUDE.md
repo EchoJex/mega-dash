@@ -38,6 +38,11 @@ Chromium, starts a run, fights every boss whose fight is built, then equips ever
 that has a ladder at every rung and fires them — failing on any page exception,
 console error, crash overlay, non-finite position or runaway projectile count.
 
+`tools/harness.mjs` is the shared half of all three opt-in browser tools — the
+playwright guard, the static server and the Chromium launch. Same reason as
+`docs/gh.js`: three copies had drifted, and `tracker-publish.mjs`'s hardcoded
+browser path meant it only ran inside a container.
+
 It is **deliberately not in CI and not a devDependency**: Playwright's postinstall would
 pull ~150MB of browsers onto every APK build for a job CI does not run. Run it locally
 after any change to a fight, a weapon runtime or the render loop:
@@ -869,6 +874,14 @@ with the old HTML tracker, along with a JSON export built on the false premise t
 needed structured data to read a design doc. Both are gone.
 
 `docs/tracker-md.js` is the ONE parser, imported by both the web app and the repo tooling.
+
+**`docs/gh.js` is the ONE GitHub client, on the same terms.** Both apps talk to the
+same repo with the same token against the same draft branch, and both used to carry
+their own copy of `gh()`, the base64 pair and `ensureDraft`. The copies drifted and
+each ended up holding half a lesson the other needed: the tracker knew a rejected
+token must not stop a READ, the editor knew a 204 has no body, and neither knew the
+other's. **Do not inline a second copy** — `tests/gh.test.js` pins the read-only
+degradation, which is the one that takes a whole app down when it regresses.
 `tests/tracker.test.js` asserts `serialize(parse(x)) === x` byte for byte, so the app
 cannot silently rewrite or drop prose it did not understand.
 

@@ -28,24 +28,10 @@
  * Verified against the bug: reverting docs/index.html to the pre-fix version
  * makes this exit 1, with "keeps the other side: false".
  */
-import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-// Same opt-in guard as tools/smoke.mjs, and for the same reason: playwright is
-// deliberately not a devDependency, so a missing one is a message rather than a
-// stack trace.
-let chromium;
-try {
-  ({ chromium } = await import('playwright'));
-} catch {
-  console.log('playwright is not installed — this tool is deliberately opt-in.\n');
-  console.log('  npx playwright@latest install chromium');
-  console.log('  npm i --no-save playwright');
-  console.log('  npm run tracker-test\n');
-  process.exit(1);
-}
+import { serve, launchChromium } from './harness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = path.join(ROOT, 'docs');
@@ -60,21 +46,14 @@ const OURS = fs.readFileSync(path.join(ROOT, 'design/TRACKER.md'), 'utf8')
 const THEIRS = 'CLAUDE-SIDE-MARKER';
 const MERGED = OURS.replace('OWNER-SIDE-MARKER', `OWNER-SIDE-MARKER\n\n${THEIRS}`);
 
-const server = http.createServer((req, res) => {
-  const rel = req.url.split('?')[0];
-  const file = path.join(DOCS, rel === '/' ? 'index.html' : rel);
-  if (!file.startsWith(DOCS) || !fs.existsSync(file)) { res.writeHead(404); return res.end(); }
-  res.writeHead(200, { 'content-type': file.endsWith('.js') ? 'text/javascript' : 'text/html' });
-  res.end(fs.readFileSync(file));
-}).listen(0);
-const port = server.address().port;
+const { server, url: SITE } = await serve(DOCS);
 
 let mainContent = OURS;     // becomes MERGED once the merge is taken
 let merged = false;
 const puts = [];
 const pageErrors = [];
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const browser = await launchChromium('npm run tracker-test');
 const page = await browser.newPage();
 page.on('pageerror', (e) => pageErrors.push(String(e)));
 
@@ -112,7 +91,7 @@ await page.route('**://api.github.com/**', async (route) => {
   return json({});
 });
 
-await page.goto(`http://localhost:${port}/index.html`);
+await page.goto(`${SITE}/index.html`);
 await page.waitForFunction(
   () => /loaded/.test(document.querySelector('#state')?.textContent || ''),
   null, { timeout: 20000 },

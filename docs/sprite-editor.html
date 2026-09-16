@@ -229,13 +229,15 @@ import {
   parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
 } from './sprite-fmt.js';
+import {
+  OWNER, REPO, token, setToken, gh,
+  draftRef as draftBranch, ensureDraft as ensureDraftOn,
+  b64encode as b64, b64decode as unb64,
+} from './gh.js';
 
-const OWNER = 'EchoJex', REPO = 'mega-dash';
-const TOKEN_KEY = 'megadash_gh_token';        // SHARED with the tracker app
 const BRANCH = 'main';
-const draftRef = () => `tracker-draft/${BRANCH}`;
+const draftRef = () => draftBranch(BRANCH);
 const $ = (s) => document.querySelector(s);
-const token = () => localStorage.getItem(TOKEN_KEY) || '';
 
 let targets = null;      // design/sprite-targets.json
 let palettes = null;     // design/boss-data.json
@@ -246,21 +248,6 @@ let frameIx = 0, pen = '1', tool = 'pen';
 let view = { editor: true, boxes: true, onion: false };
 let cam = { z: 12, x: 0, y: 0 };
 
-// ── GitHub, the same shape the tracker uses ───────────────────────────
-
-async function gh(path, opts = {}) {
-  const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
-  if (token()) headers.Authorization = 'Bearer ' + token();
-  const res = await fetch('https://api.github.com' + path, { ...opts, headers });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  // A 204 has no body. The tracker learned this the hard way on /merges.
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
-
-const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
-const unb64 = (s) => new TextDecoder().decode(Uint8Array.from(atob(s), (c) => c.charCodeAt(0)));
-
 function setState(msg, cls = '') { $('#state').textContent = msg; $('#state').className = cls || 'tag'; }
 
 const pathFor = (id) => `design/sprites/${id}.sprite`;
@@ -270,15 +257,7 @@ const pathFor = (id) => `design/sprites/${id}.sprite`;
  * there and only PUBLISH moves the working branch. Drawing produces a lot of
  * small edits and none of them should be a commit on `main`.
  */
-async function ensureDraft() {
-  try { await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${draftRef()}`); return draftRef(); } catch {}
-  const base = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
-  await gh(`/repos/${OWNER}/${REPO}/git/refs`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ref: `refs/heads/${draftRef()}`, sha: base.object.sha }),
-  });
-  return draftRef();
-}
+const ensureDraft = () => ensureDraftOn(BRANCH);
 
 function touch() { dirty = true; clearTimeout(timer); timer = setTimeout(() => save(false), 2500); }
 
@@ -1471,8 +1450,8 @@ $('#saveBtn').onclick = () => save(true);
 $('#tokenBtn').onclick = () => { $('#tokIn').value = token(); $('#tok').showModal(); };
 $('#tok').addEventListener('close', () => {
   const v = $('#tok').returnValue;
-  if (v === 'save') localStorage.setItem(TOKEN_KEY, $('#tokIn').value.trim());
-  if (v === 'clear') localStorage.removeItem(TOKEN_KEY);
+  if (v === 'save') setToken($('#tokIn').value.trim());
+  if (v === 'clear') setToken('');
   if (v !== 'x') setState(token() ? 'token set' : 'no token — read only', token() ? 'ok' : 'err');
 });
 

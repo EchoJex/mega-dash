@@ -142,9 +142,13 @@
 
 <script type="module">
 import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
+import {
+  OWNER, REPO, token, setToken, tokenRejected, gh, headOf, ensureDraft,
+  draftRef as draftBranch, b64encode, b64decode,
+} from './gh.js';
 
 // ── Config ────────────────────────────────────────────────────────────
-const OWNER = 'EchoJex', REPO = 'mega-dash', PATH = 'design/TRACKER.md';
+const PATH = 'design/TRACKER.md';
 /**
  * Branches are LISTED FROM GITHUB, not hardcoded.
  *
@@ -226,7 +230,6 @@ const readChecks = (text, names) => {
 const writeChecks = (names, on) =>
   names.map((n, i) => `[${on[i] ? 'x' : ' '}] ${n}`).join(' · ');
 
-const TOKEN_KEY = 'megadash_gh_token';
 const BRANCH_KEY = 'megadash_branch';
 
 let doc = null;          // parsed model
@@ -254,68 +257,17 @@ let dirty = false, saving = false, saveTimer = null;
  * published is a slice Claude cannot see. That is why the pending count is
  * shown on the button itself rather than tucked into a status line.
  */
-const draftRef = () => `tracker-draft/${branch()}`;
+const draftRef = () => draftBranch(branch());
 let writeRef = null;     // the branch `sha` belongs to
 let pending = 0;         // autosaves not yet published to the working branch
 
 const $ = (s) => document.querySelector(s);
-const token = () => localStorage.getItem(TOKEN_KEY) || '';
 const branch = () => localStorage.getItem(BRANCH_KEY) || 'main';
 
 function setState(msg, cls = '') {
   const el = $('#state');
   el.textContent = msg;
   el.className = cls;
-}
-
-// ── GitHub REST ───────────────────────────────────────────────────────
-// Base64 has to go through UTF-8 explicitly or every em dash and arrow in the
-// tracker corrupts on save.
-const b64encode = (str) => {
-  const bytes = new TextEncoder().encode(str);
-  let bin = '';
-  bytes.forEach((b) => { bin += String.fromCharCode(b); });
-  return btoa(bin);
-};
-const b64decode = (b64) => {
-  const bin = atob(b64.replace(/\n/g, ''));
-  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-};
-
-/** True once the current token has been rejected, so we stop re-sending it. */
-let tokenBad = false;
-
-/**
- * The repo is PUBLIC, so reading needs no credentials at all.
- *
- * A bad or expired token therefore must never stop you reading the tracker — it
- * should only stop you saving. Attaching the token unconditionally meant one
- * mistyped character produced "401 Bad credentials" on a plain read and the
- * whole app went blank, which is a far worse failure than "saving is off".
- * Reads now retry anonymously and the app carries on read-only.
- */
-async function gh(path, opts = {}) {
-  const method = (opts.method || 'GET').toUpperCase();
-  const send = async (withToken) => {
-    const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
-    if (withToken) headers.Authorization = 'Bearer ' + token();
-    return fetch('https://api.github.com' + path, { ...opts, headers });
-  };
-
-  const useToken = !!token() && !tokenBad;
-  let res = await send(useToken);
-
-  if (res.status === 401 && useToken) {
-    tokenBad = true;
-    if (method === 'GET') {
-      res = await send(false);            // public read still works without it
-      if (res.ok) return res.json();   // caller reports the read-only state
-    }
-    throw new Error('TOKEN_REJECTED');
-  }
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${(await res.text()).slice(0, 200)}`);
-  return res.json();
 }
 
 async function load() {
@@ -392,11 +344,11 @@ async function load() {
       // The read succeeded, but say so honestly: if the token was rejected on
       // the way through, saving is off and you need to know that NOW, not when
       // an hour of edits fails to persist.
-      setState(tokenBad
+      setState(tokenRejected()
         ? 'loaded · ' + br + ' — TOKEN REJECTED, read-only. Tap 🔑.'
         : pending
           ? `loaded · ${br} + ${pending} unpublished draft edit(s)`
-          : 'loaded · ' + br, tokenBad ? 'err' : 'ok');
+          : 'loaded · ' + br, tokenRejected() ? 'err' : 'ok');
       loadBuilds();
       return;
     } catch (e) {
@@ -429,33 +381,6 @@ async function loadBuilds() {
       if (doc) render();
     }
   } catch { /* offline or no token — the static fallback list stands */ }
-}
-
-/** The commit a branch currently points at, or null if it does not exist. */
-async function headOf(ref) {
-  try {
-    const r = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${ref}?t=${Date.now()}`);
-    return r.object.sha;
-  } catch { return null; }
-}
-
-/**
- * Make sure the draft branch exists, forking it from the working branch.
- *
- * Created lazily rather than up front: someone who only ever reads the tracker
- * should not leave a branch behind on the repo for having opened a web page.
- */
-async function ensureDraft() {
-  const ref = draftRef();
-  if (await headOf(ref)) return ref;
-  const base = await headOf(branch());
-  if (!base) throw new Error(`cannot find branch ${branch()}`);
-  await gh(`/repos/${OWNER}/${REPO}/git/refs`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ref: `refs/heads/${ref}`, sha: base }),
-  });
-  return ref;
 }
 
 /**
@@ -1070,8 +995,7 @@ $('#tokenSave').onclick = async () => {
   // Trim hard: a token pasted on a phone very often carries a trailing space or
   // newline, and that alone is enough to make GitHub reject it.
   const t = $('#tokenIn').value.replace(/\s+/g, '');
-  localStorage.setItem(TOKEN_KEY, t);
-  tokenBad = false;
+  setToken(t);
   $('#tokenDlg').close();
   if (!t) { setState('token cleared — read only'); return; }
   // Prove it works NOW rather than letting the first real save fail.
@@ -1093,7 +1017,7 @@ $('#tokenSave').onclick = async () => {
      */
     const repo = await gh(`/repos/${OWNER}/${REPO}`);
     const canPush = !!(repo.permissions && (repo.permissions.push || repo.permissions.admin));
-    if (tokenBad) {
+    if (tokenRejected()) {
       setState('token rejected — check it and try again', 'err');
     } else if (!canPush) {
       setState('token has no WRITE access to this repo — read only. '
@@ -1106,8 +1030,7 @@ $('#tokenSave').onclick = async () => {
   }
 };
 $('#tokenClear').onclick = () => {
-  localStorage.removeItem(TOKEN_KEY); $('#tokenIn').value = '';
-  tokenBad = false;
+  setToken(''); $('#tokenIn').value = '';
   $('#tokenDlg').close(); setState('token cleared — read only');
 };
 $('#tokenClose').onclick = () => $('#tokenDlg').close();
