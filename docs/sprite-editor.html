@@ -282,8 +282,9 @@ import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js
 import {
   parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, renumber, actionsOf, framesOf,
+  DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName,
 } from './sprite-fmt.js';
+import { markAfterEdit, changedPixels } from './marks.js';
 import {
   OWNER, REPO, token, setToken, gh,
   draftRef as draftBranch, ensureDraft as ensureDraftOn,
@@ -445,15 +446,21 @@ async function open(id) {
     // roster is not being drawn today and a status that claimed otherwise
     // would make the list useless as a to-do.
     doc = {
-      id, status: 'deferred', w: t.grid.w, h: t.grid.h,
+      id, w: t.grid.w, h: t.grid.h,
       fudgeW: targets.fudge.w, fudgeH: targets.fudge.h, note: '',
-      frames: t.frames.map((n) => ({ name: n, rows: blankFrame(t.grid.w, t.grid.h) })),
+      frames: t.frames.map((n) => ({
+        ...splitLegacyName(n), status: 'deferred', hold: DEFAULT_HOLD,
+        rows: blankFrame(t.grid.w, t.grid.h),
+      })),
     };
+    renumber(doc);
   }
   // The grid always comes from the live target, never from the file: a class
   // whose grid changed must not be edited at the old size.
   doc.w = t.grid.w; doc.h = t.grid.h;
 
+  // The assertion rule measures every later edit against THIS state.
+  rebaseAll();
   resetHistory();
   buildFrameList();
   syncControls();
@@ -492,7 +499,38 @@ const snapshot = () => ({ frameIx, frames: copyFrames() });
 function resetHistory() { hist = [snapshot()]; histIx = 0; }
 
 /** Called once a change is FINISHED: banks it, marks dirty, redraws. */
+/**
+ * THE ASSERTION RULE, in pixels — the same rule marks.js applies to the
+ * tracker's prose, measured in the only unit a drawing has.
+ *
+ * A SMALL TOUCH-UP ON A FINISHED FRAME LANDS ON `draft`, NOT `wip`. That
+ * matters more here than in the tracker: a `wip` frame builds BLANK, so
+ * dropping a finished frame to `wip` for a two-pixel fix would delete it from
+ * the game until somebody noticed. Under fifty pixels it goes back in the queue
+ * instead, and the next `npm run sprites:ship` re-checks and re-promotes it.
+ *
+ * `base` is the frame as it stood when the sprite was LOADED, not since the
+ * last autosave — autosave fires every couple of seconds and re-baselining on
+ * it would make a long redraw read as a hundred tiny edits.
+ */
+/**
+ * Re-baseline a frame: "this is the state I mean". Called when the sprite is
+ * opened and whenever the owner sets a status by hand — a deliberate status
+ * choice is an assertion about the CURRENT pixels, so measuring the next edit
+ * against anything older would immediately undo it.
+ */
+const rebase = (f) => { f.base = f.rows.slice(); };
+const rebaseAll = () => doc.frames.forEach(rebase);
+
+function assertEdit() {
+  const f = cur();
+  if (!f || !f.base) return;
+  const next = markAfterEdit(f.status, changedPixels(f.base, f.rows));
+  if (next !== f.status) { f.status = next; $('#status').value = next; }
+}
+
 function commit() {
+  assertEdit();
   hist = hist.slice(0, histIx + 1);
   hist.push(snapshot());
   if (hist.length > HIST_MAX) hist.shift();
@@ -572,6 +610,7 @@ function insertAt(action, n) {
     rows: (cur()?.rows ?? blankFrame(doc.w, doc.h)).slice(),
   });
   renumber(doc);
+  rebase(doc.frames[at]);
   frameIx = at;
   buildFrameList();
   commit();
@@ -610,7 +649,7 @@ function buildRoleSelects() {
   for (const s of STATUSES) st.add(new Option(s.toUpperCase(), s));
   // PER FRAME, not per sheet. A sheet is rarely finished all at once, and one
   // unfinished pose used to hold back every finished one on the same sheet.
-  st.onchange = () => { cur().status = st.value; commit(); };
+  st.onchange = () => { cur().status = st.value; rebase(cur()); commit(); };
 }
 
 /**
@@ -1715,6 +1754,7 @@ $('#action').onchange = (e) => {
       action: clean, index: 1, status: 'wip', hold: DEFAULT_HOLD, rows: blankFrame(doc.w, doc.h),
     });
     renumber(doc);
+    rebase(doc.frames[doc.frames.length - 1]);
     frameIx = doc.frames.length - 1;
     buildFrameList();
     commit();

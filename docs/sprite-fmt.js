@@ -61,8 +61,14 @@
  */
 
 import { EMPTY } from './nes-palette.js';
+import { MARKS } from './marks.js';
 
-export const STATUSES = ['deferred', 'wip', 'draft', 'ready'];
+/**
+ * A frame's status is a rung on the SAME ladder the tracker's fields use —
+ * deferred, wip, draft, ready — so a rule written about one applies to the
+ * other without translation. `marks.js` is the one copy.
+ */
+export const STATUSES = MARKS;
 
 /**
  * One drawn frame lasts this many 1/60s sim steps unless it says otherwise.

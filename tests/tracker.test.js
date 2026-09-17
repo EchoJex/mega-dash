@@ -14,6 +14,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse, serialize, fieldsOf, rawOf } from '../docs/tracker-md.js';
+import { MARKS } from '../docs/marks.js';
 
 const SRC = new URL('../design/TRACKER.md', import.meta.url);
 const raw = readFileSync(SRC, 'utf8');
@@ -73,7 +74,7 @@ test('every slice carries an id stamp linking it to the code', () => {
 });
 
 test('every field uses a known status marker', () => {
-  const OK = new Set(['ready', 'wip', 'draft', 'todo', 'na']);
+  const OK = new Set(MARKS);
   const doc = parse(raw);
   let checked = 0;
   for (const sec of doc.sections) {

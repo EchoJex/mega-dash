@@ -1045,19 +1045,49 @@ in `tools/status.js` is that list, and it stays the thirteen fight fields.
 
 ### Status markers — the implementation gate
 
-Every field carries one marker, and **Claude implements `[draft]` fields only**:
+**ONE LADDER, FOUR RUNGS, SHARED BY THE TRACKER AND THE SPRITE EDITOR.** `docs/marks.js`
+is the one copy — the two apps had drifted into dialects (`todo`/`na` on one side,
+`deferred` on the other) so a rule written about one did not obviously apply to the other.
 
 | marker | meaning |
 |---|---|
-| `[draft]` | The owner has finished this field and it is ready to build. **The only green light.** |
-| `[wip]` | Still being written. Not ready — skip it. Editing any field sets this automatically. |
-| `[ready]` | Already built and untouched since. Nothing to do — skip it. |
-| `[todo]` | Nothing written yet. |
-| `[na]` | Deliberately not applicable. |
+| `[deferred]` | The thing exists but nothing has been written or drawn for it. |
+| `[wip]` | Being written or drawn. Not ready, and not to be built from. |
+| `[draft]` | The owner is satisfied. **Find it and build it.** The only green light. |
+| `[ready]` | Built, deploys clean, untouched since. |
 
-Editing a field drops it to `[wip]`. Moving it to `[draft]` is a deliberate act, and that
-act is the go-ahead. **Do not build from `[wip]`, and do not ask to.** A field settles at
-`[ready]` once it has been built and the owner has not revised it since.
+**THE ASSERTION RULE: an edit moves the marker, and how far depends on how much changed.**
+`markAfterEdit` in `docs/marks.js`, applied by both apps:
+
+| you edit | it becomes |
+|---|---|
+| `ready`, under 50 changed | `draft` |
+| `ready`, 50 or more | `wip` |
+| `draft` or `deferred` | `wip` |
+
+**The small-edit case is the whole point.** Fixing one word in a finished field used to
+drop it to `wip`, where nothing looks at it — so a one-character correction could sit
+unbuilt indefinitely. Under the threshold it goes back in the queue instead.
+
+**50 is a THRESHOLD, not a measurement**, and the unit differs by medium: characters for
+prose (`changedChars`, the length of the span that actually differs), pixels for a sprite
+frame (`changedPixels`, cells whose ROLE changed — a palette re-tune changes every colour
+and no meaning). The two are each comparable to themselves and never to each other.
+
+**The baseline is the state when the thing was OPENED, never since the last autosave.**
+Autosave fires every couple of seconds; re-baselining on it would make a long redraw read
+as a hundred tiny edits. Setting a marker by hand re-baselines, because a deliberate choice
+is an assertion about the current content.
+
+**`[na]` is retired.** "Deliberately not applicable" was a fifth state off the side of the
+ladder that three fields used, and each was a settled answer — which is what `[ready]`
+means. **Where a field genuinely has no answer, the prose says so and the test checks it**:
+Proto Mk0's weakness reads "Typeless — no elemental weakness", and
+`tests/typechart.test.js` now validates that claim against the chart rather than skipping
+the field. Meaning in the text beats meaning in a status, which is invisible in the app.
+
+**Do not build from `[wip]`, and do not ask to.** Claude writes `[ready]` and never
+`[draft]`.
 
 **This is the reverse of the original scheme**, where `[ready]` was the go-ahead and
 `[draft]` meant Claude-generated prose awaiting review. The owner rewrote the design in

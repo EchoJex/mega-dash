@@ -7,18 +7,31 @@ directly here — they are the same file.
 
 Every field carries one marker. **Claude implements `[draft]` fields only.**
 
+It is a LADDER, not a set — each rung means strictly more done than the last.
+
 | marker | meaning |
 |---|---|
-| `[draft]` | **The green light.** Owner has finished this field and it is ready to build. |
-| `[wip]` | Still being written. Not ready — skip it entirely. Editing any field sets this automatically. |
-| `[ready]` | Already built and unchanged since. Nothing to do — skip it entirely. |
-| `[todo]` | Empty, nothing written yet. |
-| `[na]` | Deliberately not applicable to this boss. |
+| `[deferred]` | The field exists but nothing has been written for it yet. |
+| `[wip]` | Being written. Not ready — skip it entirely. |
+| `[draft]` | **The green light.** Owner is satisfied; find it and build it. |
+| `[ready]` | Built, deploys clean, and untouched since. Nothing to do. |
 
-Editing a field in the web app flips it to `[wip]`. Moving it to `[draft]` is a
-deliberate act — that is the assertion that it may be built. Once Claude has
-built it and the owner has not touched it since, it settles at `[ready]`, which
-means "done, leave it alone" rather than "start work".
+**Editing a field moves it, and how far depends on how much changed.** A small
+edit to a `[ready]` field — under fifty characters — drops it to `[draft]`, so a
+typo fix goes back in the queue to be re-checked instead of disappearing into
+`[wip]` where nothing looks at it. A larger edit is a rewrite and drops to
+`[wip]`. Editing a `[draft]` withdraws the go-ahead and drops to `[wip]`.
+
+Moving a field to `[draft]` yourself is the assertion that it may be built.
+Claude never writes `[draft]` — only `[ready]`, and only once the thing
+verifiably works.
+
+`[na]` is gone. "Deliberately not applicable" was a fifth state off the side of
+the ladder that three fields used, and each was a settled answer — which is what
+`[ready]` means. Where a field genuinely has no answer, **the prose says so**:
+Proto Mk0's weakness reads "Typeless — no elemental weakness", and
+`tests/typechart.test.js` now checks that claim against the chart rather than
+skipping it.
 
 This is a deliberate reversal of the earlier scheme, where `[ready]` was the
 build signal and `[draft]` meant Claude-generated prose awaiting review. Old
@@ -76,8 +89,8 @@ where each one stands.
 - **attack name** `[ready]` Ballistic barrage
 - **weapon name** `[ready]` Nullfire Drone
 - **palette notes** `[ready]` Light grey / dark grey
-- **boss weakness A** `[na]` Typeless — no elemental weakness.
-- **boss weakness B** `[na]` None — this boss has no second weakness on the chart.
+- **boss weakness A** `[ready]` Typeless — no elemental weakness.
+- **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
 - **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
 - **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
@@ -104,7 +117,7 @@ where each one stands.
 - **scale** `[wip]` 1.75x player height (average build)
 - **attack name** `[ready]` Inferno Wheel
 - **weapon name** `[ready]` Blaze Wheel
-- **palette notes** `[todo]`
+- **palette notes** `[deferred]`
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[wip]` Ground
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
@@ -121,7 +134,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Tempest Man — Water
 
@@ -152,7 +165,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Volt Man — Electric
 
@@ -166,7 +179,7 @@ where each one stands.
 - **weapon name** `[ready]` Volt Spark
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **boss weakness A** `[wip]` Ground
-- **boss weakness B** `[na]` None — this boss has no second weakness on the chart.
+- **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
 - **arena** `[ready]` All furniture, hazards, and boss layer attacks shall be synched to a common 1s beat. Two industrial speakers with pulsing membrane pulse every 1s indicating this arena wide beat; several platforms phase in and out slowly in genuinely random locations, 2 at a time, 3 seconds apart, each set lasting 5 seconds.
 - **arena furniture** `[ready]` Four phasing platforms that phase in at a new location each time they phase IN, 2 at a time, 3 seconds apart, each set lasting 5 seconds. eight floor panels. Two large industrial speakers that are visual only. two long industrial power lines at 30% and 70% arena width. The cables are drawn at every layer and but the conductors and the electrified tip are only drawn at layer 2 and layer 3.
 - **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, visually discharging and leaving that panel electrified. The start of each panels hurt box will be telegraphed by a blinking red and yellow light on the panel 1s before it electrically discharges. Discharge animation lasts 1s and causes flinch and moderate damage and but not stun. Lingering electrification of the panel lasts 3s. Lingering electrified panel deals mild damage and a short Stun. Next panel telegraph starts immediately after discharge duration.
@@ -181,7 +194,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Thorn Man — Grass
 
@@ -209,7 +222,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Frost Man — Ice
 
@@ -224,7 +237,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Fire
 - **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
 - **hazard L2** `[wip]` More icicles, forming faster, and the floor slick left behind lasts noticeably longer so patches begin to join up.
 - **hazard L3** `[wip]` A section of floor freezes over entirely and stays slick until the layer cycle ends, while icicles continue to fall onto it.
@@ -237,7 +250,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Full Shield blocks the equivalent of 4 minion attacks; breaks from damage or from contact cause shield to break into 3 small ice shards that shot out from the top edge of the shield with the middle one at a 45 deg angle and side ones at 67.5 degrees and 22.5 def from the horizon; freezes the opponent if contacting a minion or the water boss.
 - **weapon Lv6** `[ready]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
 - **weapon Lv10** `[wip]` Standing still briefly forms ice armour around the player: incoming damage and knockback are nulled and projectiles reflect back at whoever fired them. The armour FADES as it nulls damage, the same way the shield does at the lower rungs, rather than running on a timer. When it finally breaks it throws a 7-way spread of ice outward in all directions.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Strike Man — Fighting
 
@@ -265,7 +278,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Venom Man — Poison
 
@@ -281,7 +294,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Ground
 - **boss weakness B** `[wip]` Psychic
 - **arena** `[wip]` Chemical processing floor: corroded vats, drip lines and grated walkways over a sump. Background is a bank of pressure tanks weeping green.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Overhead drip lines leak at fixed points onto the floor, building small corrosive pools that apply Poisoned on contact and evaporate after several seconds.
 - **hazard L2** `[wip]` More leak points, building pools faster, plus a low toxic haze that sits in the bottom few pixels of the room and applies Poisoned while stood in it.
 - **hazard L3** `[wip]` The haze rises to about knee height and drifts slowly across the room, so the safe ground moves rather than the player simply avoiding fixed spots.
@@ -294,7 +307,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Wider cone and longer Poisoned duration; the cone now passes through the first enemy it hits.
 - **weapon Lv6** `[wip]` Lv6+: clouds can be detonated for burst damage.
 - **weapon Lv10** `[wip]` Poisoned enemies drop health pickups when killed.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Quake Man — Ground
 
@@ -309,7 +322,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[wip]` Grass
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
 - **hazard L3** `[wip]` A rolling wave of pillars crosses the room end to end, forcing continuous movement rather than choosing a spot to stand.
@@ -322,7 +335,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Airborne swings cause the player to swing downward and rapidly travel downward where a shockwave will be generated on contact with the ground.
 - **weapon Lv6** `[wip]` Lv5+: if slide mastery allows it, attacking while in slide extends the duration of the slide
 - **weapon Lv10** `[wip]` Max: super stomp that causes falling debris from the ceiling.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Gale Man — Flying
 
@@ -337,7 +350,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Electric
 - **boss weakness B** `[wip]` Rock
 - **arena** `[wip]` Open turbine deck at altitude: no side walls, only railings, with slow cloud layers passing behind and a vast rotor turning in the background.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` A steady crosswind pushes the player toward one railing, reversing direction on a slow, clearly telegraphed cycle.
 - **hazard L2** `[wip]` The wind gusts rather than holding steady — short, strong bursts strong enough to break a jump arc, separated by calm.
 - **hazard L3** `[wip]` Gusts alternate with vacuum pockets that pull toward the rotor, so the player is fighting force in both directions within one cycle.
@@ -350,7 +363,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Psi Man — Psychic
 
@@ -365,7 +378,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
 - **hazard L2** `[wip]` More panels, cycling faster, and some invert to heavy gravity instead — jumps out of them are much shorter.
 - **hazard L3** `[wip]` The whole room alternates between low and heavy gravity, with the panels only marking where the effect is strongest.
@@ -378,7 +391,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
 - **weapon Lv6** `[wip]` Lv6+: can control multiple orbs.
 - **weapon Lv10** `[wip]` Ultimate: brief mind control on weak enemies.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Swarm Man — Bug
 
@@ -393,7 +406,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Fire
 - **boss weakness B** `[wip]` Rock
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
 - **hazard L2** `[wip]` Cells hatch in clusters, and the resin floor now slows movement in patches where a sac has burst.
 - **hazard L3** `[wip]` Hatching is continuous from both walls, and the ceiling drops sacs that burst into slowing resin where they land.
@@ -406,7 +419,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 2 allies with a longer duration; they now prioritise whatever the player last damaged.
 - **weapon Lv6** `[ready]` Lv6: 3 bugs; every other bug spawned will prioritize intercepting projectiles as a meat shield
 - **weapon Lv10** `[ready]` Lv10: 5 bugs continuously swarm all over the player forming a shield and slowly respawn after tanking enough damage. Additionally, 3 bugs simultaneously converge on an enemy and kamikaze with an explosive blast.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Granite Man — Rock
 
@@ -421,7 +434,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[wip]` Fighting
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
 - **hazard L2** `[wip]` Larger rock, more of it, and settled pieces now stack into a low barrier that has to be jumped or destroyed.
 - **hazard L3** `[wip]` A sustained rockslide down one side of the room, changing sides between cycles.
@@ -434,7 +447,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
 - **weapon Lv10** `[wip]` The player can now walk while hardened. Pressing jump while hardened cancels the form early and throws stone shards out in all directions. This 360 finish is deliberately the same shape as Frost Guard Lv10's — overlap between two weapons is accepted, especially at the deep rungs; no more than two may share a function.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Wraith Man — Ghost
 
@@ -449,7 +462,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
 - **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
 - **hazard L3** `[wip]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
@@ -462,7 +475,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Drake Man — Dragon
 
@@ -477,7 +490,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Ice
 - **boss weakness B** `[wip]` Dragon
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The floor fissure vents in bursts at telegraphed points, each vent a brief vertical jet dealing moderate damage.
 - **hazard L2** `[wip]` More vents in quicker succession, and the fissure widens so the safe standing area either side narrows.
 - **hazard L3** `[wip]` Vents fire in a travelling sequence along the fissure, sweeping the room end to end.
@@ -490,7 +503,7 @@ where each one stands.
 - **weapon Lv3** `[wip]` The beam can be angled with directional input and reaches noticeably further.
 - **weapon Lv6** `[wip]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
 - **weapon Lv10** `[wip]` Lv8+: charge for a massive dragon-head projectile.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Eclipse Man — Dark
 
@@ -505,7 +518,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Fighting
 - **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Patches of darkness drift across the room, reducing visibility to a short radius while the player is inside one.
 - **hazard L2** `[wip]` Larger and more numerous patches, and a shadow clone of an ordinary minion spawns inside each one.
 - **hazard L3** `[wip]` The room blacks out entirely on a slow cycle, leaving only silhouettes and the boss's own outline visible.
@@ -518,7 +531,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ## Alloy Man — Steel
 
@@ -533,7 +546,7 @@ where each one stands.
 - **boss weakness A** `[wip]` Fire
 - **boss weakness B** `[wip]` Ground
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
-- **arena furniture** `[todo]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
+- **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The overhead crane traverses the room and drops a steel plate at a telegraphed position, which stands as a solid obstacle before being lifted away.
 - **hazard L2** `[wip]` Two plates per pass, and a dropped plate now stays long enough for two to be present at once, splitting the room.
 - **hazard L3** `[wip]` The crane also drags a plate along the floor between drops, sweeping the ground the length of the room.
@@ -546,7 +559,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Two ricochets and increased pierce; blades survive contact with terrain corners.
 - **weapon Lv6** `[wip]` Lv5+: blades can be recalled early.
 - **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
-- **sprite sheet** `[todo]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 
 ---
 

@@ -168,12 +168,23 @@ test('every boss weakness in the tracker is a real Gen 3 weakness of that boss',
     for (const slot of ['A', 'B']) {
       const f = new RegExp(`^- \\*\\*boss weakness ${slot}\\*\\* \`\\[(\\w+)\\]\` (.*)$`, 'm').exec(sl);
       assert.ok(f, `${id} is missing its boss weakness ${slot} field`);
-      const [, mark, text] = f;
-      // `[na]` is the honest answer for Proto Mk0, who has no element, and for
-      // Volt Man's second slot — Electric has exactly one weakness on the whole
-      // chart. Neither is a type name and neither is checked as one.
-      if (mark === 'na') continue;
+      const [, , text] = f;
+      /**
+       * "NO WEAKNESS" IS SAID IN THE TEXT, NOT IN THE MARKER.
+       *
+       * It used to be `[na]`, which carried the meaning in a status rather than
+       * in the field — so the answer was invisible in the app and vanished the
+       * moment `na` was retired from the ladder. A field whose prose says there
+       * is no weakness is now checked AGAINST THE CHART rather than skipped,
+       * which is strictly stronger: claiming "none" for a boss that has one is
+       * now a failure instead of a shrug.
+       */
       const type = text.trim();
+      if (/^(None|Typeless)\b/.test(type)) {
+        assert.equal(slot === 'A' ? legal.length : legal.length < 2, slot === 'A' ? 0 : true,
+          `${id} says it has no weakness ${slot}, but ${boss.element} is weak to ${legal.join(', ')}`);
+        continue;
+      }
       assert.ok(legal.includes(type),
         `${id} is ${boss.element}, which is not weak to ${type} in Gen 3`
         + ` — its weaknesses are ${legal.join(', ')}`);

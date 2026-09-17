@@ -10,7 +10,7 @@
        they once were: [draft] is now the build signal (green = go) and [ready]
        means already built and settled (blue = at rest). --ui is the app's own
        accent, kept separate so recolouring a marker never restyles the chrome. */
-    --draft:#49d97e; --wip:#f2b53d; --ready:#4a8fd8; --todo:#ff5c5c; --na:#6b7686;
+    --draft:#49d97e; --wip:#f2b53d; --ready:#4a8fd8; --deferred:#6b7686;
     --ui:#49d97e;
     --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
   }
@@ -73,10 +73,9 @@
   .f-ready .txt{background:rgba(74,143,216,.09);box-shadow:inset 3px 0 0 var(--ready)}
   .f-wip   .txt{background:rgba(242,181,61,.09);box-shadow:inset 3px 0 0 var(--wip)}
   .f-draft .txt{box-shadow:inset 3px 0 0 var(--draft)}
-  .f-todo  .txt{background:rgba(255,92,92,.08);box-shadow:inset 3px 0 0 var(--todo);color:var(--dim)}
-  .f-na    .txt{color:var(--na);box-shadow:inset 3px 0 0 var(--na)}
+  .f-deferred .txt{color:var(--deferred);box-shadow:inset 3px 0 0 var(--deferred)}
   i.f-ready{background:var(--ready)} i.f-wip{background:var(--wip)}
-  i.f-draft{background:var(--draft)} i.f-todo{background:var(--todo)} i.f-na{background:var(--na)}
+  i.f-draft{background:var(--draft)} i.f-deferred{background:var(--deferred)}
 
   .bug{display:grid;grid-template-columns:150px 92px 1fr 34px;border-top:1px solid var(--grid)}
   .bug input,.bug select{width:100%;background:#0d1015;color:var(--ink);border:none;border-right:1px solid var(--grid);padding:8px}
@@ -146,6 +145,7 @@ import {
   OWNER, REPO, token, setToken, tokenRejected, gh, headOf, ensureDraft,
   draftRef as draftBranch, b64encode, b64decode,
 } from './gh.js';
+import { MARKS, markAfterEdit, changedChars } from './marks.js';
 
 // ── Config ────────────────────────────────────────────────────────────
 const PATH = 'design/TRACKER.md';
@@ -165,7 +165,7 @@ const FALLBACK_BRANCHES = ['main'];
 let BRANCHES = [...FALLBACK_BRANCHES];
 // Ordered by how often they are chosen: [draft] is the build signal and the
 // most common deliberate act, so it leads.
-const MARKS = ['draft', 'wip', 'ready', 'todo', 'na'];
+
 
 /**
  * THE SIXTEEN TYPES THAT CAN BE A WEAKNESS, in the chart's own order.
@@ -727,6 +727,9 @@ function card(sec, it) {
 }
 
 function fieldRow(f, head) {
+  // The baseline the assertion rule measures against — see dirty() below.
+  f.was = f.text;
+
   const row = document.createElement('div');
   row.className = 'field f-' + f.mark;
 
@@ -752,11 +755,22 @@ function fieldRow(f, head) {
   const boxes = CHECK_FIELDS[f.label];
   const txt = document.createElement(choices ? 'select' : 'div');
   txt.className = boxes ? 'txt checks' : 'txt';
+  /**
+   * THE ASSERTION RULE lives in marks.js, shared with the sprite editor.
+   *
+   * A SMALL EDIT TO A FINISHED FIELD LANDS ON `draft`, NOT `wip`. Fixing one
+   * word used to drop the whole field to `wip`, where nothing looks at it — so
+   * a one-character correction could sit unbuilt indefinitely. Anything larger
+   * is a rewrite and still drops to `wip`.
+   *
+   * `was` is the text as it stood when this card was opened, NOT since the last
+   * autosave: autosave fires every couple of seconds, and re-baselining on it
+   * would make every edit look small no matter how long you typed.
+   */
   const dirty = () => {
-    // THE ASSERTION RULE: editing a field drops it back to wip. Moving it to
-    // draft again is a deliberate act, and that act is the go-ahead to build it.
-    if (f.mark !== 'wip') {
-      f.mark = 'wip'; sel.value = 'wip'; row.className = 'field f-wip'; bump(head);
+    const next = markAfterEdit(f.mark, changedChars(f.was ?? f.text, f.text));
+    if (f.mark !== next) {
+      f.mark = next; sel.value = next; row.className = `field f-${next}`; bump(head);
     }
     touch();
   };
@@ -889,7 +903,7 @@ function writeBugs(sec, rows) {
   const table = ['', '| build | status | bug |', '|---|---|---|'].concat(
     rows.length
       ? rows.map((b) => `| ${b.build} | \`[${b.mark}]\` | ${b.note} |`)
-      : ['| — | `[todo]` | _no open bugs_ |'],
+      : ['| — | `[deferred]` | _no open bugs_ |'],
     [''],
   );
   it.content = [
@@ -917,7 +931,7 @@ function bugRow(b, onDel, onChange) {
   free.oninput = () => { b.build = free.value || 'other'; onChange(); touch(); };
 
   const mark = document.createElement('select');
-  for (const m of ['wip', 'draft', 'ready', 'todo', 'na']) {
+  for (const m of MARKS) {
     const o = document.createElement('option'); o.value = m; o.textContent = m;
     o.selected = m === b.mark; mark.appendChild(o);
   }
