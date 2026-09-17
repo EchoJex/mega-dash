@@ -150,7 +150,7 @@ export const FEEL = {
   // is LEFT, and any fresh application resets the whole 5 seconds. Asymmetric
   // on purpose: the tracker gives the player 15% and enemies 30%, so the same
   // attribute is twice as punishing coming off your weapon as going onto you.
-  stunFrames: 300,          // 5s, reset by every re-application
+  stunFrames: 300,          // 5s, per stack — each stack expires on its own clock
   stunPlayerStep: 0.85,     // 15% off the remaining speed, per stack
   stunEnemyStep: 0.70,      // 30% off the remaining speed, per stack
 
