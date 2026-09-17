@@ -16,6 +16,7 @@
     "sync": "node tools/sync-tracker.js",
     "sprites": "node tools/sprite-templates.mjs",
     "sprites:build": "node tools/sprites-build.mjs",
+    "sprites:geo": "node tools/geo-sprites.mjs",
     "sprites:ship": "node tools/sprites-ship.mjs",
     "glossary": "node tools/glossary-shots.mjs"
   },
