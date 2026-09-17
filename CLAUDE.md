@@ -850,6 +850,27 @@ and the wheel stays up to be tapped. **Lifting is not a cancel.**
 module. Both axes must be real, so a flat flick can never fire a slot nobody aimed at. The
 keyboard mirrors the same shape: `Q` above `Z` on the left, `E` above `C` on the right.
 
+**PER-VISIT SCENE STATE MUST BE RESET IN `create()`.** Phaser reuses the scene INSTANCE
+across `scene.start()`, so a field still holding a destroyed object looks alive to every
+guard that tests it. The dev menu's boss picker died exactly this way — picking a boss
+started the game without nulling `this.picker`, and `openBossPicker` bails on a truthy
+picker, so the row silently did nothing for the rest of the session. `tests/scenes.test.js`
+now asserts the whole class (a field nulled anywhere must be set by something `create()`
+runs) and **found five more the moment it was written**: the pause panel, the wheel's
+cursor and selection, the re-quip wait, the acquire banner and the exit confirmation.
+
+**LEAVING THE POST-BOSS WHEEL TAKES A TAP IN THE CONTROLS**, not a tap anywhere. Any
+scrim tap used to close it, which made the whole screen an exit button sitting a few
+pixels outside every disc — a missed grab shut the wheel. The movement strip (`z3`) and
+the action pair (`z4`) are where a thumb goes when it is done with a menu, so those are
+the exit; Esc, jump and the RE-QUIP button still work and nothing else does anything.
+
+**THE DISCS' TOUCH TARGET IS BIGGER THAN THE DISCS, and the number is measured.** A 6px
+disc is a 12px target on a 224px playfield. At full spread the tightest adjacent pair on
+the arc is 19.78px apart, so 9.89 is where neighbours would touch; `ARC_TOUCH_R` is 9.
+**The drawn disc stays at 6** — growing the art would crowd the ring to solve a problem
+about fingers.
+
 **The 7-second timeout is a dead man's handle.** Slow motion with no way out is a soft
 lock for anyone who opened it by accident, and the player's hands are already full.
 `closeWheel` restores time down every branch.

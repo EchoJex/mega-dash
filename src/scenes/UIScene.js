@@ -209,6 +209,20 @@ const MOD = 26, MOD_GAP = 6;       // module size and the gap between columns
 const LABEL_OFF_Y = 76, LABEL_DEF_Y = 148;
 const ARC_SLOT_R = 6;
 /**
+ * THE TOUCH TARGET IS BIGGER THAN THE DISC, and 9 is measured rather than
+ * chosen.
+ *
+ * A 6px disc is a 12px target on a 224px-tall playfield — small enough that
+ * picking the weapon you meant was a coin flip on a phone. At full spread the
+ * tightest adjacent pair on the arc sits 19.78px apart, so 9.89 is the radius
+ * at which neighbours would just touch; 9 takes almost all of it and keeps
+ * ~1.8px of clearance, so a fat press can never be ambiguous between two discs.
+ *
+ * The DRAWN disc stays at ARC_SLOT_R. Growing the art instead would crowd the
+ * ring and change what the wheel looks like to solve a problem about fingers.
+ */
+const ARC_TOUCH_R = 9;
+/**
  * How far the arcs stop short of horizontal, in radians.
  *
  * "MAINTAIN A DISTINCT GAP between the top half and the bottom half separating
@@ -230,6 +244,9 @@ const ARC_END = 0.34;
  */
 const READ_Y = 172;
 const SWIPE_CY = 74;               // between the sidearm and the offensive row
+
+/** Is a virtual point inside one of the control zones? */
+const inZone = (v, z) => !!z && v.x >= z.x && v.x < z.x + z.w && v.y >= z.y && v.y < z.y + z.h;
 const CYAN = 0x5cadd5;
 const GOLD = 0xf5d328;
 const FRAME_DARK = 0x2a323c;       // the grid frame when a module is not running
@@ -305,6 +322,39 @@ export default class UIScene extends Phaser.Scene {
     fitCamera(this, w);
     this.w = w;
     this.g = this.add.graphics();
+
+    /**
+     * PER-VISIT STATE, RESET BECAUSE PHASER REUSES THE SCENE INSTANCE.
+     *
+     * The pause panel is torn down by `closePause` and by `abortRun`, but a run
+     * aborted FROM the pause menu goes straight to the title and the next run
+     * re-enters `create()` on this same object. `togglePause` opens on a falsy
+     * panel and CLOSES on a truthy one, so a stale reference meant the first
+     * pause press of the next run closed a destroyed container instead of
+     * opening a live one — the menu simply did not appear.
+     *
+     * Found by the same test that caught the dev menu's boss picker, which is
+     * the point of that test: this is a class of bug, not an incident.
+     */
+    this.pausePanel = null;
+    this.pauseRows = null;
+    this.pauseCaret = null;
+    // The wheel's per-session state, for the same reason. A stale `cursorAt`
+    // or `pick` points at a slot object from a run that has already ended.
+    this.mode = null;
+    this.cursorAt = null;
+    this.target = null;
+    this.pick = null;
+    this.aimSlot = null;
+    this.press = null;
+    this.slotPress = null;
+    this.situTimer = null;
+    this.requipWait = null;
+    this.unlockMsg = null;
+    // The two other overlays that own their own teardown: the ABORT RUN
+    // confirmation and the level-up card screen.
+    this.exitPanel = null;
+    this.cards = null;
 
     /**
      * CONTROL LAYOUT — bigger pads, and each one is a real button.
@@ -831,8 +881,12 @@ export default class UIScene extends Phaser.Scene {
   /** One tappable disc: body, abbreviation, level. Contents are set on refresh. */
   mkSlot(s, chars) {
     const disc = this.add.circle(s.x, s.y, s.r, LOCKED_FILL)
-      .setStrokeStyle(1, 0x0a0a12)
-      .setInteractive({ useHandCursor: true });
+      .setStrokeStyle(1, 0x0a0a12);
+    // An explicit hit area, larger than the drawing. An Arc's default hit circle
+    // is centred at (r, r) in local space, so only the radius grows.
+    const touch = Math.max(s.r, ARC_TOUCH_R);
+    disc.setInteractive(new Phaser.Geom.Circle(s.r, s.r, touch),
+      Phaser.Geom.Circle.Contains, { useHandCursor: true });
     const abbr = label(this, s.x, s.y - 5, '', { color: '#E0F0FF', origin: 0.5 });
     const lvl = label(this, s.x, s.y + 3, '', { color: '#E0F0FF', origin: 0.5 });
     const slot = { ...s, chars, disc, abbr, lvl, id: null };
@@ -955,6 +1009,14 @@ export default class UIScene extends Phaser.Scene {
        * the wheel used to close itself (see the pointerup handler below).
        */
       if (this.mode === 'open') { this.closeWheel(); return; }
+      /**
+       * DEV — `WHEEL: POST BOSS` makes the button always open the post-boss
+       * wheel, which is the one you want while building it. It is the only
+       * branch that reaches past `inRequipRoom`, and it changes nothing else:
+       * `canRequip` still gates equipping, so outside the real window the wheel
+       * opens, reads and toggles exactly as it always did.
+       */
+      if (DEV.enabled && DEV.wheelMode === 'postboss') { this.openWheel(); return; }
       if (this.mode !== 'situ' && this.inRequipRoom()) { this.openWheel(); return; }
       const v = vpt(this, p);
       this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
@@ -1008,12 +1070,12 @@ export default class UIScene extends Phaser.Scene {
      * global handler so it can never swallow a press meant for a pad — the
      * scrim only exists while a wheel is up.
      */
-    this.scrim.on('pointerdown', () => {
+    this.scrim.on('pointerdown', (p) => {
       if (this.mode === 'situ') { this.closeWheel(); return; }
       if (this.mode !== 'open') return;
       // POST-BOSS, A TAP ON NOTHING IS A BACK BUTTON BEFORE IT IS AN EXIT.
       // With half a swap on screen it puts that half down; only a tap with
-      // nothing in hand closes the wheel. Otherwise one fat-fingered miss
+      // nothing in hand can close the wheel. Otherwise one fat-fingered miss
       // between the two taps would shut the wheel and bench the weapon the
       // player was in the middle of equipping.
       if (this.pick || this.target) {
@@ -1023,7 +1085,18 @@ export default class UIScene extends Phaser.Scene {
         this.setReadout(this.game_.run.activeWeapon);
         return;
       }
-      this.closeWheel();
+      /**
+       * LEAVING TAKES A DELIBERATE TAP, IN THE CONTROLS.
+       *
+       * Any tap on the scrim used to close it, which made the whole screen an
+       * exit button sitting a few pixels outside every disc — a missed grab
+       * shut the wheel. The movement strip and the action pair are the two
+       * places a thumb goes when it has finished with a menu and wants to play,
+       * so those are the exit. Esc, the jump key and the RE-QUIP button still
+       * work, and nothing else does anything.
+       */
+      const v = vpt(this, p);
+      if (inZone(v, this.z3) || inZone(v, this.z4)) this.closeWheel();
     });
   }
 

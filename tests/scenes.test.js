@@ -71,3 +71,64 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith('.js'))) {
       `${file} calls this.${missing.join('(), this.')}() which is never defined`);
   });
 }
+
+
+/**
+ * PER-VISIT STATE MUST BE RESET IN `create()`, and this catches the whole class.
+ *
+ * PHASER REUSES THE SCENE INSTANCE across `scene.start()`, so a field still
+ * holding a destroyed object looks alive to every guard that tests it. The dev
+ * menu's boss picker died exactly this way: picking a boss started the game
+ * without nulling `this.picker`, `openBossPicker` bails on a truthy picker, and
+ * the row silently did nothing for the rest of the session — it highlighted,
+ * it played its sound, and no picker opened.
+ *
+ * The rule that catches it: a field the scene sets to `null` ANYWHERE is a
+ * field with a teardown path, so `create()` has to establish it. Source-read
+ * like the rest of this file, because scenes import Phaser and cannot be loaded
+ * under `node --test`.
+ */
+test('every scene field with a teardown path is reset in create()', () => {
+  const dir = new URL('../src/scenes/', import.meta.url);
+
+  /** A method's body, by brace matching from its declaration. */
+  const bodyOf = (src, decl) => {
+    const at = src.indexOf(decl);
+    if (at < 0) return '';
+    let i = src.indexOf('{', at), depth = 0;
+    for (; i < src.length; i++) {
+      if (src[i] === '{') depth++;
+      else if (src[i] === '}' && --depth === 0) return src.slice(at, i);
+    }
+    return src.slice(at);
+  };
+
+  let checked = 0;
+  for (const file of readdirSync(dir)) {
+    if (!file.endsWith('.js')) continue;
+    const src = readFileSync(new URL(file, dir), 'utf8');
+    const create = bodyOf(src, '\n  create(');
+    if (!create) continue;
+
+    /**
+     * FOLLOW ONE LEVEL IN. GameScene initialises almost everything in
+     * `startRun()` rather than in `create()` itself, and counting that as
+     * uninitialised is a false alarm that gets the test deleted rather than
+     * the bug fixed. One level is enough for every scene here.
+     */
+    let reach = create;
+    for (const m of new Set([...create.matchAll(/this\.([a-zA-Z_]\w*)\(/g)].map((x) => x[1]))) {
+      reach += bodyOf(src, `\n  ${m}(`);
+    }
+
+    const nulled = new Set([...src.matchAll(/this\.([a-zA-Z_]\w*)\s*=\s*null/g)].map((m) => m[1]));
+    const set = new Set([...reach.matchAll(/this\.([a-zA-Z_]\w*)\s*=/g)].map((m) => m[1]));
+    for (const k of nulled) {
+      checked++;
+      assert.ok(set.has(k),
+        `${file}: this.${k} is nulled somewhere but nothing create() runs sets it — `
+        + 'a reused scene instance carries the stale value into the next visit');
+    }
+  }
+  assert.ok(checked >= 3, `only ${checked} fields checked; the scan may be broken`);
+});

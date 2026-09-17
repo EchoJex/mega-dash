@@ -54,6 +54,19 @@ export default class DevMenuScene extends Phaser.Scene {
     label(this, w / 2, 11, 'DEV MENU', { scale: 2, color: '#F5D328', origin: 0.5 });
 
     this.rows = [];
+    /**
+     * THE PICKER IS PER-VISIT STATE AND PHASER REUSES THE SCENE INSTANCE.
+     *
+     * Picking a boss calls `scene.start('Game')`, which tears down the display
+     * list but leaves this field pointing at the destroyed container — only the
+     * BACK button ever nulled it. `openBossPicker` bails on a truthy `picker`,
+     * so after one pick the BOSS PICKER row silently did nothing for the rest
+     * of the session: the row highlighted, the sound played, no picker opened.
+     *
+     * Reset here rather than on the pick, because `create()` is where every
+     * other per-visit field is initialised and it covers every route back in.
+     */
+    this.picker = null;
     const left = this.runRows();
     const right = this.metaRows();
 
@@ -264,6 +277,16 @@ export default class DevMenuScene extends Phaser.Scene {
       this.flag('LOADOUT NOW', 'requipAtStart',
         ['ON: RUN OPENS ON THE RE-QUIP WHEEL',
           'OFF: WAIT FOR A BOSS, LIKE THE REAL GAME']),
+      /**
+       * WHICH WHEEL THE RE-QUIP BUTTON OPENS. `POST BOSS` is for working ON
+       * that wheel: reaching it otherwise costs a whole fight, and slow motion
+       * is not the state you want to inspect a layout in. It changes the
+       * CONTROL, never the rules — `canRequip` still decides what may change.
+       */
+      this.wheel('WHEEL', 'wheelMode',
+        [['playtest', 'PLAYTEST'], ['postboss', 'POST BOSS']],
+        ['WHICH WHEEL THE RE-QUIP BUTTON OPENS',
+          'PLAYTEST: IN-SITU IN A FIGHT. POST BOSS: ALWAYS']),
       this.flag('HP FLOOR', 'hpFloor',
         ['ON: HITS LAND BUT ENERGY STOPS AT 1',
           'YOU FEEL EVERY HIT. THE RUN DOES NOT END']),

@@ -158,6 +158,21 @@ export const DEV = {
   offRank: null,
   defRank: null,
 
+  /**
+   * WHICH RE-QUIP WHEEL THE BUTTON OPENS, in dev mode only.
+   *
+   * `playtest` is the shipped pair: the in-situ wheel under fire, the hard-
+   * paused post-boss wheel between fights. `postboss` makes the button always
+   * open the post-boss one, which is what you want while you are BUILDING that
+   * wheel — reaching it otherwise costs a whole fight, and slow motion is not
+   * the state you want to inspect a layout in.
+   *
+   * It does NOT widen what you may change: `canRequip` still gates equipping,
+   * so outside the window the wheel opens, reads and toggles and nothing else.
+   * The dev perk buys access to the CONTROL, never to the decision.
+   */
+  wheelMode: 'playtest',
+
   /** Boss id the next run's first door leads to, or null for the shuffle bag. */
   startBoss: null,
 };
@@ -170,7 +185,7 @@ export const DEV = {
 const PERSISTED = [
   'hpFloor', 'unlockAnyWeapon', 'cardsFromAllWeapons', 'startUnlocked',
   'maxMastery', 'bossSelect', 'cycleLayers', 'requipAtStart', 'debugHud',
-  'nextLayer', 'startLevel', 'offRank', 'defRank',
+  'nextLayer', 'startLevel', 'offRank', 'defRank', 'wheelMode',
 ];
 
 /**
