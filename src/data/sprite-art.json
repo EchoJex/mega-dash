@@ -1,5 +1,10 @@
 {
   "player": {
+    "file": "player.png",
+    "frameW": 24,
+    "frameH": 24,
+    "anchor": "bottom",
+    "tintable": false,
     "anims": {
       "idle": [
         0,
@@ -50,12 +55,17 @@
         5
       ],
       "slide": [
-        5,
-        5
+        3,
+        23
       ]
     }
   },
   "shot:volt_spark": {
+    "file": "shot-volt_spark.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "center",
+    "tintable": false,
     "anims": {
       "fly": [
         0,

@@ -58,7 +58,7 @@
  */
 
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
-import SPRITE_ANIMS from '../data/sprite-anims.json' with { type: 'json' };
+import SPRITE_ART from '../data/sprite-art.json' with { type: 'json' };
 
 /**
  * Real art. Anything not listed here falls through to a placeholder, which is
@@ -92,7 +92,41 @@ export const MANIFEST = {
   },
 };
 
+/**
+ * EVERY BUILT SHEET IS IN THE MANIFEST, WITHOUT ANYONE TYPING A LINE.
+ *
+ * `npm run sprites:build` derives the whole entry — file, grid, anchor, anims,
+ * holds — from the `.sprite` source and the class it belongs to, because the
+ * hand-written line was the last thing standing between a drawn frame and the
+ * game. The Volt Spark was published, built to a PNG, and still invisible,
+ * waiting on one line nobody had typed.
+ *
+ * PRECEDENCE, LOWEST TO HIGHEST: the derived look fields, then anything
+ * hand-written above (which is how `offX`, `parallax` or a deliberate anchor
+ * override survive), then the derived `anims` and `holds`, which always win —
+ * they are the frame indices, and the whole point is that nobody maintains
+ * those by hand.
+ */
+for (const [key, gen] of Object.entries(SPRITE_ART)) {
+  const { anims, holds, ...look } = gen;
+  MANIFEST[key] = { ...look, ...MANIFEST[key], anims, holds };
+}
+
 export const hasArt = (id) => Object.prototype.hasOwnProperty.call(MANIFEST, id);
+
+/**
+ * A SPRITE WITH ONE ANIMATION NEEDS NOBODY TO NAME IT.
+ *
+ * `actor.clip` exists because the player has six and only `GameScene` knows
+ * which one his velocity means. A projectile has one — `fly` — and nothing was
+ * ever going to set it, so a six-frame spark would have loaded, drawn, and held
+ * frame 1 forever. Any actor that grows a second animation goes back to naming
+ * its own clip, which is the honest point to start deciding.
+ */
+const soleClip = (id) => {
+  const names = Object.keys(MANIFEST[id]?.anims ?? {});
+  return names.length === 1 ? names[0] : null;
+};
 
 /**
  * Which frame of the player sheet matches what he is actually doing.
@@ -149,10 +183,8 @@ export function preloadArt(scene) {
  */
 export function createAnims(scene) {
   for (const [id, def] of Object.entries(MANIFEST)) {
-    const gen = SPRITE_ANIMS[id];
-    const anims = gen?.anims ?? def.anims;
-    if (!anims) continue;
-    for (const [name, frames] of Object.entries(anims)) {
+    if (!def.anims) continue;
+    for (const [name, frames] of Object.entries(def.anims)) {
       const key = `${id}:${name}`;
       if (scene.anims.exists(key)) continue;
       /**
@@ -166,7 +198,7 @@ export function createAnims(scene) {
        * A frameRate is still required alongside per-frame durations: Phaser
        * uses it for any frame that does not carry its own.
        */
-      const holds = gen?.holds?.[name];
+      const holds = def.holds?.[name];
       scene.anims.create({
         key,
         frames: frames.map((f, i) => ({
@@ -193,11 +225,10 @@ export function createAnims(scene) {
  * a sprite with no `.sprite` source.
  */
 export function holdsOf(id, name) {
-  const gen = SPRITE_ANIMS[id];
-  if (gen?.holds?.[name]) return gen.holds[name];
   const def = MANIFEST[id];
+  if (def?.holds?.[name]) return def.holds[name];
   const fps = def?.animFps?.[name] ?? def?.fps ?? 8;
-  const n = (gen?.anims ?? def?.anims)?.[name]?.length ?? 1;
+  const n = def?.anims?.[name]?.length ?? 1;
   return Array.from({ length: n }, () => Math.round(60 / fps));
 }
 
@@ -268,8 +299,9 @@ export class ActorLayer {
     if (actor.facing) s.setFlipX(actor.facing < 0);
     if (def.tintable && actor.palette?.primary) s.setTint(hexNum(actor.palette.primary));
 
-    if (def.anims && actor.clip) {
-      const key = `${actor.id}:${actor.clip}`;
+    const clip = actor.clip ?? soleClip(actor.id);
+    if (def.anims && clip) {
+      const key = `${actor.id}:${clip}`;
       if (this.scene.anims.exists(key) && s.anims?.getName() !== key) s.play(key, true);
     }
     return s;

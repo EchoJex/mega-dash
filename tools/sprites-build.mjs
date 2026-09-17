@@ -124,14 +124,29 @@ const problems = [];
 const warnings = [];
 
 /**
- * The regenerated `MANIFEST.anims`, written to src/data/sprite-anims.json.
+ * THE WHOLE MANIFEST ENTRY, written to src/data/sprite-art.json.
  *
- * DERIVED, NEVER HAND-MAINTAINED. Absolute sheet indices used to be typed into
- * assets.js, so inserting a frame anywhere but the end of the sheet silently
- * shifted every animation after it. They now fall out of the block order in
- * the `.sprite` file, which is the thing the artist actually edits.
+ * DERIVED, NEVER HAND-MAINTAINED. This started as just the anim map, because
+ * absolute sheet indices typed into assets.js meant inserting a frame silently
+ * shifted every animation after it. It now carries the entry itself, because
+ * the hand-written MANIFEST line was the LAST thing standing between a drawn
+ * frame and the game: the Volt Spark was published, built to a PNG, and still
+ * invisible, waiting on one line nobody had typed.
+ *
+ * Everything here is a FACT about the sheet — its file, its grid, where it
+ * anchors — so nothing is decided here that the `.sprite` file and the class it
+ * belongs to do not already decide. `assets.js` still lets a hand-written entry
+ * override the look fields; the derived anims always win.
  */
-const anims = {};
+const art = {};
+
+/**
+ * A SHOT AND A PICKUP ARE CENTRED; EVERYTHING ELSE STANDS ON THE GROUND.
+ *
+ * The same split the editor draws with (`isProp`): a projectile's position IS
+ * its middle, while an actor's is the bottom of its collision box.
+ */
+const anchorFor = (cls) => (cls === 'shot' || cls === 'pickup' ? 'center' : 'bottom');
 
 /** A frame the owner has finished enough to ship. */
 const shippable = (f) => f.status === 'ready' || f.status === 'draft';
@@ -198,14 +213,24 @@ for (const file of files) {
    * except it is now per frame, so the idle's breath (40 steps) is a property
    * of the idle rather than a special case in assets.js.
    */
-  const a = { anims: {}, holds: {} };
+  const a = {
+    file: `${id}.png`,
+    frameW: doc.w,
+    frameH: doc.h,
+    anchor: anchorFor(t.cls),
+    // The three colours are baked into the PNG; a Phaser tint multiplies the
+    // whole texture and would wreck a 3-colour sheet.
+    tintable: false,
+    anims: {},
+    holds: {},
+  };
   for (const action of actionsOf(doc)) {
     const live = framesOf(doc, action).filter(shippable);
     if (!live.length) continue;
     a.anims[action] = live.map((f) => f.at);
     a.holds[action] = live.map((f) => f.hold);
   }
-  anims[t.key || id] = a;
+  art[t.key || id] = a;
 
   const wip = doc.frames.length - doc.frames.filter(shippable).length;
   writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
@@ -228,21 +253,22 @@ if (problems.length) {
  * it. Compared against the hand-written `MANIFEST.anims` still in assets.js,
  * which is now a fallback for sprites that have no `.sprite` source.
  */
-const { MANIFEST } = await import('../src/systems/assets.js');
-for (const [key, a] of Object.entries(anims)) {
-  const was = MANIFEST[key]?.anims;
-  if (!was) continue;
+const ART = join(REPO, 'src/data/sprite-art.json');
+const prev = existsSync(ART) ? JSON.parse(readFileSync(ART, 'utf8')) : {};
+for (const [key, a] of Object.entries(art)) {
+  const was = prev[key]?.anims;
+  if (!was) { warnings.push(`${key}: NEW to the game — it had no sheet before this build`); continue; }
   for (const [name, frames] of Object.entries(a.anims)) {
     const old = was[name];
-    if (!old) continue;
+    if (!old) { warnings.push(`${key}.${name}: a NEW animation`); continue; }
     if (old.length !== frames.length || old.some((v, i) => v !== frames[i])) {
-      warnings.push(`${key}.${name}: was [${old}] in MANIFEST, now [${frames}] `
+      warnings.push(`${key}.${name}: was [${old}], now [${frames}] `
         + `— the game will play ${frames.length} frame(s) here, not ${old.length}`);
     }
   }
 }
 
-writeFileSync(join(REPO, 'src/data/sprite-anims.json'), `${JSON.stringify(anims, null, 2)}\n`);
+writeFileSync(ART, `${JSON.stringify(art, null, 2)}\n`);
 
 if (warnings.length) {
   console.log('\nANIMATION SHAPE CHANGED:');
@@ -250,4 +276,4 @@ if (warnings.length) {
 }
 console.log(`\nbuilt ${built} sprite sheet(s)`
   + (skipped ? `, skipped ${skipped} with nothing shippable` : '')
-  + '\n  src/data/sprite-anims.json rewritten');
+  + '\n  src/data/sprite-art.json rewritten');

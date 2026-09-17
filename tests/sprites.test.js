@@ -12,9 +12,81 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import {
   parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, splitLegacyName, renumber, framesOf,
+  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf,
 } from '../docs/sprite-fmt.js';
-import { MANIFEST } from '../src/systems/assets.js';
+import { MANIFEST, holdsOf } from '../src/systems/assets.js';
+import { FEEL } from '../src/config/feel.js';
+
+const SPRITES = new URL('../design/sprites/', import.meta.url);
+const sheets = () => readdirSync(SPRITES).filter((f) => f.endsWith('.sprite'))
+  .map((f) => ({ id: f.replace(/\.sprite$/, ''), doc: parse(readFileSync(new URL(f, SPRITES), 'utf8')) }));
+const keyOf = (id) => (id === 'player' ? 'player'
+  : targets.minions.find((x) => x.id === id)?.id
+  || (targets.bosses[id] || targets.shots[id] || targets.pickups[id])?.key || id);
+const shippable = (f) => f.status === 'ready' || f.status === 'draft';
+
+/**
+ * THE SLIDE IS ONE PASS OF ITS OWN ANIMATION, and that is a relationship rather
+ * than a number: the asserted pose reads briefly, the original carries the rest,
+ * and together they last exactly as long as a slide does. If they summed to
+ * less, the cycle would come round and reset the pose mid-slide; if more, the
+ * second frame would be cut off before it ever finished.
+ *
+ * The split between them is the owner's to tune. The SUM is not.
+ */
+test('the slide animation lasts exactly one slide', () => {
+  const holds = holdsOf('player', 'slide');
+  assert.equal(holds.reduce((a, b) => a + b, 0), FEEL.slideDurationFrames,
+    'the slide cycle and FEEL.slideDurationFrames have to agree');
+});
+
+/**
+ * A DRAWN FRAME REACHES THE GAME WITH NOBODY TYPING A LINE. The hand-written
+ * MANIFEST entry was the last gap in the pipeline — the Volt Spark was drawn,
+ * published and built to a PNG while staying completely invisible.
+ */
+test('every sheet with a shippable frame is in the MANIFEST', () => {
+  for (const { id, doc } of sheets()) {
+    if (!doc.frames.some(shippable)) continue;
+    const def = MANIFEST[keyOf(id)];
+    assert.ok(def, `${id} has shippable frames but no manifest entry`);
+    assert.equal(def.frameW, doc.w);
+    assert.equal(def.frameH, doc.h);
+  }
+});
+
+/**
+ * THE GENERATED FILE IS NOT ALLOWED TO GO STALE. It is a build output committed
+ * to the repo, so a `.sprite` edited without re-running the build would ship a
+ * sheet whose animations describe the previous version of itself.
+ */
+test('sprite-art.json still matches the .sprite sources', () => {
+  for (const { id, doc } of sheets()) {
+    if (!doc.frames.some(shippable)) continue;
+    const def = MANIFEST[keyOf(id)];
+    for (const action of actionsOf(doc)) {
+      const live = framesOf(doc, action).filter(shippable);
+      if (!live.length) continue;
+      assert.deepEqual(def.anims[action], live.map((f) => f.at),
+        `${id}.${action} drifted — run npm run sprites:build`);
+      assert.deepEqual(def.holds[action], live.map((f) => f.hold),
+        `${id}.${action} holds drifted — run npm run sprites:build`);
+    }
+  }
+});
+
+/**
+ * A `wip` FRAME KEEPS ITS CELL AND LOSES ITS PLACE IN THE ANIMATION. Both
+ * halves matter: the cell keeps every later frame's index stable, the omission
+ * keeps a blank hole out of a cycle that is otherwise finished.
+ */
+test('a wip frame holds its cell but leaves the animation', () => {
+  const doc = parse('# x\ngrid 2x2\n\n[run 1] status=ready hold=5\n..\n..\n'
+    + '\n[run 2] status=wip hold=5\n..\n..\n\n[run 3] status=ready hold=5\n..\n..\n');
+  const live = framesOf(doc, 'run').filter(shippable);
+  assert.deepEqual(live.map((f) => f.at), [0, 2],
+    'the wip frame is skipped, and frame 3 keeps sheet index 2 rather than sliding to 1');
+});
 import { NES, USABLE, UNSAFE, nearestSlot } from '../docs/nes-palette.js';
 
 const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url)));

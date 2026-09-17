@@ -21,7 +21,8 @@ npm run status   # the ELEMENT SLICE BOARD — what is built, read from live cod
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
 npm run tracker-test    # OPT-IN: drive the tracker app against a fake GitHub (~15s)
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
-npm run sprites:build   # design/sprites/*.sprite -> the PNGs MANIFEST loads
+npm run sprites:build   # design/sprites/*.sprite -> the PNGs + the derived MANIFEST entries
+npm run sprites:ship    # GIVE THE WORD: verify every [draft] frame reaches the game, mark it [ready]
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -261,8 +262,20 @@ probing is inset so you can stand with boots overhanging a ledge.
 
 ### 5. Asset abstraction — placeholders swap to art with no code changes
 `src/systems/assets.js`. Every drawable resolves to a placeholder shape **or** real art
-depending on `MANIFEST`. Adding art is: drop a PNG in `public/sprites/`, add one line to
-`MANIFEST`. Per actor, in any order, over months, game playable throughout.
+depending on `MANIFEST`. **Adding art is: draw it and run `npm run sprites:build`.** Per
+actor, in any order, over months, game playable throughout.
+
+**The hand-written `MANIFEST` line is gone, and it had to go.** It used to be the second
+half of "drop a PNG in `public/sprites/`, add one line to `MANIFEST`", and that one line
+was the last thing standing between a drawn frame and the game — the Volt Spark was drawn,
+published, built to a PNG and still completely invisible, waiting on it. The build now
+derives the whole entry from the `.sprite` source and the class it belongs to, into
+`src/data/sprite-art.json`, and `assets.js` folds it in.
+
+**A hand-written entry still wins for the LOOK fields** (`offX`, `parallax`, a deliberate
+`anchor` override) and **never for `anims`/`holds`**, which are frame indices nobody
+maintains by hand. A sprite with no `.sprite` source keeps its hand-written entry entirely,
+which is what `MANIFEST` is still there for.
 
 **Manifest keys** — `player` · `<bossId>` · `<minionId>` · `shot:<weaponId>` ·
 `pickup:etank` · `pickup:exp` · `background`. An entry is either a static image
@@ -350,7 +363,7 @@ back: **pixel-identical.**
 **The sheet's absolute frame position is DERIVED from block order and written down
 nowhere.** `MANIFEST.anims` used to hold those absolute indices by hand, so inserting a
 frame anywhere but the end of the sheet silently repointed every animation after it —
-`npm run sprites:build` now regenerates them into `src/data/sprite-anims.json`, which
+`npm run sprites:build` now regenerates them into `src/data/sprite-art.json`, which
 `createAnims` reads. **Do not hand-edit that file and do not put frame indices back in
 `MANIFEST`**; the hand-written `anims` there is now only a fallback for a sprite with no
 `.sprite` source. The build **says so out loud when an animation's shape changes**, because
@@ -361,6 +374,12 @@ one-status-per-sheet gate meant a single unfinished pose held back every finishe
 `wip` frame **still gets its cell in the PNG, drawn blank** — dropping the cell would
 renumber the sheet, which is the breakage the derived list exists to prevent — and is
 **left out of the regenerated animation**, so a cycle never plays a hole.
+
+**THE SLIDE IS AN ASSERTION THEN A HOLD, and the two sum to `FEEL.slideDurationFrames`.**
+The custom pose reads for 3 steps and the original carries the remaining 23, so one pass of
+the cycle is exactly one slide — shorter and the loop comes round and resets the pose
+mid-slide, longer and the second frame is cut off before it finishes. **The split is the
+owner's to tune; the SUM is an invariant** and `tests/sprites.test.js` holds it.
 
 #### `hold` IS IN SIM STEPS, and the game always had this number
 
@@ -382,9 +401,38 @@ seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a 
 change in the tracker recolours every sprite drawn against it with no art reopened. It also
 means the 3-colours-plus-transparency rule is the only thing the format can express.
 
-**Only `ready` and `draft` sprites build.** `wip` and `deferred` are skipped, so
+**Only `ready` and `draft` frames build.** `wip` and `deferred` are skipped, so
 half-finished art cannot reach a playtest — the same gate the fight content has, applied to
 the thing that is actually visible.
+
+#### `npm run sprites:ship` — the sprite half of the marker gate
+
+The tracker has one word for "this is finished, build it": a field moves to `[draft]`,
+Claude builds it, and it settles at `[ready]`. **Sprite frames now run the same handshake**
+— give the word, and every `draft` frame that genuinely reaches the game is promoted to
+`ready`.
+
+**IT VERIFIES BEFORE IT PROMOTES.** `ready` means "built and in the game", so promoting a
+frame that never made it would put a lie in the one file that answers that question. Four
+things must hold, and each has been the thing that was wrong at least once: the sheet is in
+the manifest, the PNG is on disk at the right size, the frame is in its animation (a `wip`
+frame keeps its cell but leaves the anim), and **something can actually play that clip**.
+
+A frame failing any of them is **left at `draft` with the reason printed**, which is not a
+failure — it is drawn and it builds, it just is not reachable yet.
+
+**The reachability check must stay EXACT, not a grep.** The first version searched `src/`
+for the action name in quotes and was wrong in both directions on its first real test: it
+passed a `charge` animation because `sfx('charge')` exists, and it passed `fly` on a
+PROJECTILE because a MINION's clip happens to be called `fly`. The player's clip set is now
+derived by running `playerClip` over the states that produce each branch; the minions' is
+written down because the scene picks theirs inline.
+
+**A SPRITE WITH ONE ANIMATION PLAYS ITSELF** (`soleClip`). `actor.clip` exists because the
+player has six and only `GameScene` knows which one his velocity means; a projectile has
+one and nothing was ever going to set it, so a six-frame spark loaded, drew, and held frame
+1 forever. An actor that grows a SECOND animation goes back to naming its own clip — and
+`sprites:ship` holds its frames until something does, which is the right direction to fail.
 
 #### The fudge factors are TWO numbers and the vertical one is dangerous
 
