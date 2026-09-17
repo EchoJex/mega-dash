@@ -395,15 +395,35 @@ function buildTargetList() {
   for (const [id, w] of Object.entries(targets.shots)) shots(id, w.label);
   const pickups = group('PICKUPS');
   for (const [id, k] of Object.entries(targets.pickups)) pickups(id, k.label);
+  /**
+   * ARENA FURNITURE — three slots per arena, per the owner's ask.
+   *
+   * A slot backed by a real piece carries that piece's MEASURED grid: Blaze
+   * Man's platform is 44x5 because `makeArena` builds it that way, and Volt
+   * Man's speaker is 22x54 for the same reason. A SPARE is an empty canvas at
+   * the shot grid — somewhere to draw a piece before the code that places it
+   * exists — and is listed last within its arena so the real ones read first.
+   */
+  const arena = group('ARENA');
+  for (const [id, f] of Object.entries(targets.furniture || {})) {
+    arena(id, f.spare ? `${f.label} ·` : `${f.label}  ${f.grid.w}x${f.grid.h}`);
+  }
 }
 
 /** Neither carries a collision box, so neither gets the box or the fudge dials. */
-const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup');
+/**
+ * Neither a shot, a pickup nor a piece of FURNITURE carries the per-actor
+ * hurtbox the fudge dials exist to propose — furniture collision is whatever
+ * its own hazard loop tests. So none of the three gets the box overlay, the
+ * dials, or the MAX BOSS reference figure.
+ */
+const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup' || t.cls === 'furniture');
 
 function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
-  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id];
+  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id]
+    || targets.furniture?.[id];
 }
 
 /**

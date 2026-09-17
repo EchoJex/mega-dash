@@ -178,6 +178,66 @@ for (const wpn of WEAPONS) {
     + `${n} frame(s), ${ink} px drawn`);
 }
 
+// ── Arena furniture ───────────────────────────────────────────────────
+//
+// Each piece is one static frame: furniture animates off room STATE — a tile's
+// growth, a speaker's beat, a turret's muzzle flash — never off a frame
+// counter, so there is no cycle to sample. One canvas, the piece at rest.
+
+const FURN = {
+  // A flat slab. Blaze and Volt platforms, the lift, and Volt's panels.
+  platforms: (px, w, h) => rect(px, 0, 0, w, h, '1'),
+  lift: (px, w, h) => rect(px, 0, 0, w, h, '1'),
+  panels: (px, w, h) => rect(px, 0, 0, w, h, '1'),
+  // Body, then the 3px muzzle hanging below centre — the reason the canvas is
+  // taller than the turret.
+  turrets: (px, w, h) => {
+    rect(px, 0, 0, w, h - 3, '1');
+    rect(px, w / 2 - 1, h - 3, 2, 3, '2');
+  },
+  // Pipe with its darker seam two pixels down.
+  pipes: (px, w, h) => {
+    rect(px, 0, 0, w, h, '1');
+    rect(px, 0, 2, w, 2, '2');
+  },
+  // Cabinet, cone and port. The cone sits at 62% of the height, radius 34% of
+  // the width, exactly as drawArena places it.
+  speakers: (px, w, h) => {
+    rect(px, 0, 0, w, h, '1');
+    const cx = w / 2, cy = h * 0.62, r = w * 0.34;
+    circle(px, cx, cy, r + 2, '2');
+    circle(px, cx, cy, r * 0.62, '1');
+  },
+  // Ground cover at FULL growth — 12px out of a 6px strip, standing on the
+  // canvas floor because that is where the tile's base is.
+  cover: (px, w, h) => rect(px, 0, 0, w, h, '1'),
+};
+
+for (const [id, t] of Object.entries(targets.furniture || {})) {
+  if (t.spare) continue;                       // an empty canvas needs no transcription
+  const kind = t.label.split(' ').pop().toLowerCase();
+  const paint = FURN[kind];
+  if (!paint) { console.log(`  skip ${id} — no geometry for '${kind}'`); continue; }
+  const path = join(SRC, `${id}.sprite`);
+  if (existsSync(path) && parse(readFileSync(path, 'utf8')).frames.some(shippable)) {
+    kept++;
+    console.log(`  keep ${id.padEnd(22)} already has hand-drawn frames`);
+    continue;
+  }
+  const px = blank(t.grid.w, t.grid.h);
+  paint(px, t.grid.w, t.grid.h);
+  const rows = px.map((r) => r.join(''));
+  writeFileSync(path, serialize({
+    id, w: t.grid.w, h: t.grid.h, fudgeW: targets.fudge.w, fudgeH: targets.fudge.h,
+    note: `transcribed from drawArena '${kind}'`,
+    frames: [{ action: 'idle', index: 1, status: 'wip', hold: DEFAULT_HOLD, rows }],
+  }));
+  wrote++;
+  const ink = rows.join('').replace(/\./g, '').length;
+  console.log(`  ${id.padEnd(22)} ${kind.padEnd(10)} `
+    + `${t.grid.w}x${t.grid.h}  1 frame, ${ink} px drawn`);
+}
+
 console.log(`\n${wrote} transcribed at [wip], ${kept} left alone.`);
 console.log('Nothing changes in the game until you promote a frame — a wip sheet');
 console.log('does not build, so the geometry keeps drawing exactly as it does now.');

@@ -80,6 +80,15 @@ function paletteOf(id) {
     return { primary: bp[1], secondary: bp[2], outline: '#0A0A12' };
   }
 
+  /**
+   * A PIECE OF FURNITURE WEARS ITS ROOM'S COLOURS — the boss's own three, the
+   * same deal a shot gets from the weapon's source boss. The arena draws it in
+   * greys today, but grey is a colour and the format stores ROLES; re-tune the
+   * boss's primary and his furniture follows, which is the whole point.
+   */
+  const furn = targets.furniture?.[id];
+  if (furn?.boss) return paletteOf(furn.boss);
+
   const pick = targets.pickups[id];
   if (pick) {
     const src = readFileSync(join(REPO, 'src/systems/pickups.js'), 'utf8');
@@ -105,7 +114,8 @@ const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
-  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id] || null;
+  return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id]
+    || targets.furniture?.[id] || null;
 }
 
 // ── Build ─────────────────────────────────────────────────────────────
