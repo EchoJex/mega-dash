@@ -383,6 +383,13 @@ owner's to tune; the SUM is an invariant** and `tests/sprites.test.js` holds it.
 
 #### `hold` IS IN SIM STEPS, and the game always had this number
 
+**FRAMES ARE STEPS — they are aliases, and `design/GLOSSARY.md` says so first.** When the
+owner writes "hold for 10 frames" in a tracker field they mean 10 steps, and it must be
+read that way. The two words point at one unit because the game has ONE clock: a 120Hz
+phone paints twice as often as a 60Hz one, and the moment "frame" came to mean "one
+repaint" the same animation would run at half speed on half the devices. Never introduce a
+duration measured in refreshes, and never ask the owner which sense they meant.
+
 One 1/60s step of the fixed simulation. On a 60Hz screen that is one refresh; on a 120Hz
 phone the frame lasts the same *time* across ten. Steps are the unit that means something.
 

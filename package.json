@@ -16,7 +16,8 @@
     "sync": "node tools/sync-tracker.js",
     "sprites": "node tools/sprite-templates.mjs",
     "sprites:build": "node tools/sprites-build.mjs",
-    "sprites:ship": "node tools/sprites-ship.mjs"
+    "sprites:ship": "node tools/sprites-ship.mjs",
+    "glossary": "node tools/glossary-shots.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.1"
