@@ -435,6 +435,20 @@ PROJECTILE because a MINION's clip happens to be called `fly`. The player's clip
 derived by running `playerClip` over the states that produce each branch; the minions' is
 written down because the scene picks theirs inline.
 
+**THE SPRITE OVERRIDES THE GEOMETRY, AND NOTHING IS CONDITIONAL ON THAT.**
+`ActorLayer.draw(actor, fallback)` uses the sheet when `MANIFEST` has the id and calls the
+fallback when it does not, so the whole placeholder-to-art path is one rule with no branch
+anywhere: **all frames `wip` or `deferred` → no sheet is built → no manifest entry → the
+code geometry draws. One frame at `draft` or `ready` → the drawing takes over**, same
+place, same duration. Verified in the real build both ways.
+
+**A HITSCAN WEAPON HAS NO BULLET, so it needs somewhere to hang that.** A thrown projectile
+is already an actor and gets the swap for free; the Volt Spark is an instant hitbox and a
+fading rectangle, so its six drawn frames built, loaded and had nothing to attach to.
+A puff may now **name a weapon** (`ctx.puff({ ..., weapon: 'volt_spark' })`), and
+`GameScene` routes a named puff through the bullets layer with `drawPuff` as the fallback.
+Any other hitscan weapon gets the same by naming itself.
+
 **A SPRITE WITH ONE ANIMATION PLAYS ITSELF** (`soleClip`). `actor.clip` exists because the
 player has six and only `GameScene` knows which one his velocity means; a projectile has
 one and nothing was ever going to set it, so a six-frame spark loaded, drew, and held frame

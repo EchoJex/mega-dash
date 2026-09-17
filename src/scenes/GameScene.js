@@ -2784,6 +2784,30 @@ export default class GameScene extends Phaser.Scene {
       );
     }
 
+    /**
+     * HITSCAN EFFECTS THAT NAME A WEAPON, through the same layer as a bullet.
+     *
+     * This is the whole "placeholder becomes art" path for a weapon that throws
+     * nothing. `ActorLayer.draw` uses the sprite when one exists and calls the
+     * fallback when it does not, so a Volt Spark whose frames are all `wip`
+     * builds no sheet, has no manifest entry, and draws the rectangle it always
+     * did — and the moment one frame reaches `draft` the drawing takes over.
+     * Nothing here is conditional on that; the layer already decides.
+     */
+    for (const q of this.fx.puffs) {
+      if (!q.weapon) continue;
+      const cx = sx(q.x);
+      const half = q.w / 2;
+      L.bullets.draw(
+        {
+          ...q, id: `shot:${q.weapon}`,
+          x: cx - half, y: q.y - half, w: q.w, h: q.w,
+          facing: q.facing || 1,
+        },
+        (gg, a) => Wpn.drawPuff(gg, q, a.x + a.w / 2),
+      );
+    }
+
     if (this.boss) {
       const b = this.boss;
       /**

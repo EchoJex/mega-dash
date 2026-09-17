@@ -489,7 +489,15 @@ const volt = {
       x: p.facing > 0 ? p.x + 14 : p.x + 10 - L.range,
       y: p.y + 4, w: L.range, h: 18,
     };
-    ctx.puff({ x: box.x + box.w / 2, y: box.y + 9, w: box.w, life: 8, color: 0xF5D328 });
+    /**
+     * The zap's visual. `weapon` is what lets the Volt Spark's own sprite take
+     * this over: with no art it is the rectangle it has always been, and with
+     * a shippable frame it is the drawing, at the same place for the same time.
+     */
+    ctx.puff({
+      x: box.x + box.w / 2, y: box.y + 9, w: box.w, life: 8,
+      color: 0xF5D328, weapon: 'volt_spark', facing: p.facing,
+    });
 
     const first = enemiesIn(ctx, box)[0];
     if (!first) return true;
@@ -1636,6 +1644,19 @@ export function coolWeapons(store) {
 export const makeFx = () => ({ puffs: [], arcs: [] });
 
 /** A fading rectangle of light where a hitbox was. `life` doubles as its fade. */
+/**
+ * A PUFF MAY NAME A WEAPON, and that is how a hitscan weapon gets a sprite.
+ *
+ * Most weapons throw a bullet, and a bullet already goes through `ActorLayer`
+ * — so the moment its `.sprite` has a shippable frame the art replaces the
+ * geometry with no edit anywhere. A HITSCAN weapon has no bullet to draw: the
+ * Volt Spark is an instant hitbox and a fading rectangle, so its six drawn
+ * frames built, loaded, and had nothing to attach to.
+ *
+ * Naming the weapon on the puff gives it that attachment. `GameScene.draw`
+ * routes a named puff through the same layer a bullet uses, with the rectangle
+ * below as the fallback — geometry until the art exists, art from then on.
+ */
 export const puff = (fx, spec) => fx.puffs.push({ ...spec, max: spec.life });
 
 /** The visible link between two enemies a chain jumped across. */
@@ -1656,6 +1677,18 @@ export function stepFx(fx) {
  * `sx` maps world x to shaken screen x, exactly as GameScene.draw uses it, so
  * every one of these tracks the screen shake with the world it belongs to.
  */
+/**
+ * One puff's geometry — the placeholder a hitscan weapon draws until its sprite
+ * lands. Exported so `GameScene` can hand it to `ActorLayer.draw` as the
+ * fallback, which is what makes the swap automatic rather than conditional.
+ */
+export function drawPuff(g, q, cx) {
+  const t = q.life / q.max;
+  g.fillStyle(q.color, 0.55 * t);
+  const h = 4 + 10 * (1 - t);
+  g.fillRect(cx - q.w / 2, q.y - h / 2, q.w, h);
+}
+
 export function drawWeaponry(g, sx, ctx) {
   const { run, player: p, fx } = ctx;
 
@@ -1804,10 +1837,10 @@ export function drawWeaponry(g, sx, ctx) {
   }
 
   for (const q of fx.puffs) {
-    const t = q.life / q.max;
-    g.fillStyle(q.color, 0.55 * t);
-    const h = 4 + 10 * (1 - t);
-    g.fillRect(sx(q.x) - q.w / 2, q.y - h / 2, q.w, h);
+    // A puff that names a weapon is drawn by GameScene through the art layer,
+    // which falls back to `drawPuff` below when that weapon has no sprite yet.
+    if (q.weapon) continue;
+    drawPuff(g, q, sx(q.x));
   }
   for (const arc of fx.arcs) {
     g.lineStyle(1, 0xF5D328, arc.life / arc.max);
