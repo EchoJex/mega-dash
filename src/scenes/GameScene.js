@@ -47,6 +47,43 @@ import {
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
 
+/**
+ * THE AREA TERRAIN PALETTE. A PIT IS THE ABSENCE OF GROUND, so the only thing
+ * that makes one visible is GROUND-AGAINST-BACKGROUND — and that read was being
+ * carried entirely by HUE, which is the channel that dies first on a phone in
+ * daylight.
+ *
+ * The area backdrop is the coming boss's primary at 16% (`Arena.themeFor`), so
+ * it moves with the bag while the ground did not. Measured across all 17
+ * themes, the old ground (#0a1628) sat at a luminance contrast ratio of
+ * 1.01-1.26 against every one of them — 1.0 being *identical brightness*. Five
+ * collapsed in hue as well, and Tempest Man was the degenerate case: his
+ * backdrop resolves to #091524 against a #0a1628 ground, a dE of 2.4. That is
+ * not a low-contrast pit, it is an invisible one, which is what the playtest
+ * was reporting.
+ *
+ * So the ground is lifted until LUMINANCE alone carries the edge. These values
+ * clear every theme at CR 2.20 (frost, the brightest backdrop) to 2.97
+ * (eclipse, the darkest), and `tests/contrast.test.js` asserts that floor
+ * against the live palette rather than against these hexes — nudging a boss
+ * primary into the ground is the regression worth catching, not editing these.
+ *
+ * CAP IS THE HERO AND ITS ROW IS WHY. The controls cover VIEW_H-30 down, so of
+ * the 40px ground band only the top 10 rows are ever unobstructed — and the cap
+ * is drawn in the first two of them. It reads at CR 6.85-9.26 against every
+ * backdrop, in the one strip a thumb can never sit on, which is what makes the
+ * pit edge legible even where the pad band crushes the body contrast back to
+ * 1.39. Do not move the cap below row GROUND_Y+10.
+ *
+ * The arena floor in `systems/arena.js` still carries the old literals. It has
+ * the same measured problem and none of the consequence — a sealed room has no
+ * pits — so it is deliberately left for the owner's call rather than changed
+ * under a brief that said non-arena.
+ */
+const AREA_GROUND = 0x3a6180;   // body: the solid you stand on
+const AREA_CAP    = 0x8fb8d4;   // 2px lit top surface — this is the pit edge
+const AREA_PLAT   = 0x4d7da0;   // floating platforms, read against the backdrop
+
 
 /** Copy of an array in random order. Used for the arsenal head start. */
 const shuffled = (arr) => [...arr].sort(() => Math.random() - 0.5);
@@ -2698,9 +2735,9 @@ export default class GameScene extends Phaser.Scene {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
       if (s.x2 < cam - 8 || s.x1 > cam + this.viewW + 8) continue;
-      g.fillStyle(0x0a1628, 1);
+      g.fillStyle(AREA_GROUND, 1);
       g.fillRect(sx(s.x1), sy(GROUND_Y), s.x2 - s.x1, VIEW_H - GROUND_Y);
-      g.fillStyle(0x1a3050, 1);
+      g.fillStyle(AREA_CAP, 1);
       g.fillRect(sx(s.x1), sy(GROUND_Y), s.x2 - s.x1, 2);
     }
     for (const s of this.world.spikes) {
@@ -2712,7 +2749,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     for (const p of this.world.platforms) {
-      g.fillStyle(0x1a3a60, 1);
+      g.fillStyle(AREA_PLAT, 1);
       g.fillRect(sx(p.x), sy(p.y), p.w, p.h);
     }
     }
