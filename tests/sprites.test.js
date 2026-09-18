@@ -12,7 +12,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import {
   parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf, rolesFromPixels,
+  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf, rolesFromPixels, resizeDoc,
 } from '../docs/sprite-fmt.js';
 import { MANIFEST, holdsOf } from '../src/systems/assets.js';
 import { FEEL } from '../src/config/feel.js';
@@ -309,4 +309,54 @@ test('rolesFromPixels snaps to the three roles and counts what was off palette',
   // soft edge has to become a hard one on the way in rather than at build time.
   const soft = rolesFromPixels(px([[0x2A, 0xAB, 0x1C, 128], [0x2A, 0xAB, 0x1C, 129]]), 2, 1, pal);
   assert.deepEqual(soft.rows, ['.1'], 'alphaMin is the boundary, inclusive on the hole side');
+});
+
+/**
+ * A MENU ELEMENT'S GRID IS ADJUSTABLE — the one class where it is.
+ *
+ * Every other sprite's grid is its CLASS's grid and not negotiable. A UI
+ * element's size is whatever UIScene lays out and those differ per element, so
+ * the editor can move it. What must never happen is a resize that moves art.
+ */
+test('resizeDoc anchors top-left and reports what a shrink drops', () => {
+  const doc = { w: 2, h: 2, frames: [{ action: 'idle', index: 1, rows: ['11', '1.'] }] };
+
+  const grown = resizeDoc(doc, 3, 3);
+  assert.deepEqual(grown.frames[0].rows, ['11.', '1..', '...']);
+  assert.equal(grown.lost, 0, 'growing can never drop a pixel');
+  // TOP-LEFT IS THE CORRECTNESS QUESTION. Centring would re-index every drawn
+  // pixel on an odd delta, shifting finished art half a cell.
+  assert.equal(grown.frames[0].rows[0][0], doc.frames[0].rows[0][0]);
+  assert.equal(grown.w, 3);
+
+  const shrunk = resizeDoc(doc, 1, 1);
+  assert.deepEqual(shrunk.frames[0].rows, ['1']);
+  assert.equal(shrunk.lost, 2, 'a shrink says exactly how many drawn pixels it ate');
+
+  // Trimming blank space is free and must not be reported as loss.
+  const padded = { w: 3, h: 3, frames: [{ action: 'idle', index: 1, rows: ['1..', '...', '...'] }] };
+  assert.equal(resizeDoc(padded, 1, 1).lost, 0);
+
+  assert.equal(resizeDoc(doc, 0, 0).w, 1, 'a grid never goes below 1');
+});
+
+/**
+ * THE MENU ARENA'S TARGETS ARE MEASURED, NOT WRITTEN DOWN — the same rule the
+ * arena furniture grids follow, applied to the UI.
+ */
+test('every MENU target carries a contact zone at least as big as its drawing', () => {
+  const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url), 'utf8'));
+  const menu = Object.entries(targets.menu || {});
+  assert.ok(menu.length > 0, 'the MENU arena has no targets');
+  for (const [id, m] of menu) {
+    assert.equal(m.box, null, `${id}: a UI element must not claim a collision box`);
+    assert.ok(m.zone, `${id}: a UI element needs a contact zone`);
+    // THE FUDGE RUNS THE OTHER WAY HERE. A touch target is never SMALLER than
+    // what it is a target for — that is the one direction that is a bug.
+    assert.ok(m.zone.w >= m.grid.w && m.zone.h >= m.grid.h,
+      `${id}: contact zone ${m.zone.w}x${m.zone.h} is smaller than its ${m.grid.w}x${m.grid.h} drawing`);
+  }
+  // The dot is the case the whole idea came from: 6px of disc, 9px of target.
+  const dot = targets.menu['menu-weapon-dot'];
+  assert.ok(dot.zone.w > dot.grid.w, 'the weapon dot should still be bigger than it looks');
 });

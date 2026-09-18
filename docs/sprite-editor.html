@@ -244,6 +244,12 @@
     <button id="addFrame" title="add a copy of this frame after it">+FRAME</button>
     <button id="delFrame" title="delete this frame">−FRAME</button>
     <button id="impFrame" title="import a PNG as a new frame">IMPORT</button>
+    <span id="gridGrp" hidden>
+      <button id="colP" title="widen this UI element's grid by one column">+COL</button>
+      <button id="colM" title="narrow it by one column">−COL</button>
+      <button id="rowP" title="add a row to this UI element's grid">+ROW</button>
+      <button id="rowM" title="remove a row">−ROW</button>
+    </span>
     <button id="play" title="cycle the frames (P)">▶</button>
     <span class="sep"></span>
     <button id="tOnion" title="ghost the previous frame under this one (O)">ONION</button>
@@ -307,7 +313,7 @@ import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js
 import {
   parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName, rolesFromPixels,
+  DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName, rolesFromPixels, resizeDoc,
 } from './sprite-fmt.js';
 import { markAfterEdit, changedPixels } from './marks.js';
 import {
@@ -433,6 +439,18 @@ function buildTargetList() {
   for (const [id, f] of Object.entries(targets.furniture || {})) {
     arena(id, f.spare ? `${f.label} ·` : `${f.label}  ${f.grid.w}x${f.grid.h}`);
   }
+  /**
+   * THE MENU ARENA — the UI as one more room with furniture in it.
+   *
+   * There is no MENU arena in the game and there does not need to be. This
+   * editor's vocabulary is already ACTOR > ACTION > FRAME against a grid, and a
+   * button is a thing drawn at a fixed grid that wants art, so calling the UI
+   * an arena buys the grouping without inventing a fifth class.
+   */
+  const menu = group('MENU');
+  for (const [id, m] of Object.entries(targets.menu || {})) {
+    menu(id, `${m.label}  ${m.grid.w}x${m.grid.h}`);
+  }
 }
 
 /** Neither carries a collision box, so neither gets the box or the fudge dials. */
@@ -442,13 +460,29 @@ function buildTargetList() {
  * its own hazard loop tests. So none of the three gets the box overlay, the
  * dials, or the MAX BOSS reference figure.
  */
-const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup' || t.cls === 'furniture');
+const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup'
+  || t.cls === 'furniture' || t.cls === 'menu');
+
+/**
+ * A CONTACT ZONE IS NOT A HITBOX, AND THE FUDGE RUNS THE OTHER WAY.
+ *
+ * Everywhere else here the box is SMALLER than the drawing, because a narrow
+ * hurtbox is free fairness — a near miss then visibly misses. A UI element is
+ * the exact opposite: the touch target is deliberately BIGGER than what is
+ * drawn, because a finger is not a cursor. The weapon select dot is the
+ * clearest case in the game, 12 pixels of disc inside an 18-pixel target.
+ *
+ * So a menu target carries a `zone` where an actor carries a `box`, the overlay
+ * is labelled CONTACT ZONE, and a fudge ABOVE 1 is normal rather than the
+ * standing warning vertical fudge earns on an actor.
+ */
+const isMenu = (t) => t?.cls === 'menu';
 
 function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
   return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id]
-    || targets.furniture?.[id];
+    || targets.furniture?.[id] || targets.menu?.[id];
 }
 
 /**
@@ -539,7 +573,10 @@ let hist = [], histIx = -1;
  * while looking like it worked.
  */
 const copyFrames = () => doc.frames.map((f) => ({ ...f, rows: f.rows.slice() }));
-const snapshot = () => ({ frameIx, frames: copyFrames() });
+// The GRID is in here because a MENU element's is adjustable: without w/h a
+// +ROW could be drawn but never taken back, and undo would silently leave the
+// frames one size and the document another.
+const snapshot = () => ({ frameIx, frames: copyFrames(), w: doc.w, h: doc.h });
 
 function resetHistory() { hist = [snapshot()]; histIx = 0; }
 
@@ -586,6 +623,7 @@ function commit() {
 }
 
 function restore(s) {
+  if (s.w) { doc.w = s.w; doc.h = s.h; }
   doc.frames = s.frames.map((f) => ({ ...f, rows: f.rows.slice() }));
   frameIx = Math.min(s.frameIx, doc.frames.length - 1);
   buildFrameList();
@@ -800,6 +838,32 @@ $('#impForm').onsubmit = (ev) => {
   flash(`imported ${action} ${n}${off}`);
 };
 
+/**
+ * RESIZE THE GRID — MENU elements only.
+ *
+ * Every other sprite's grid is its CLASS's grid and not negotiable: a minion is
+ * 16x16 because that is what the engine draws, and letting anyone nudge it
+ * would put art on a canvas the game will never read. A UI element's size is
+ * whatever UIScene lays out, those differ per element, and the owner asked to
+ * be able to try a taller pad without a round trip through the generator.
+ *
+ * The generated target keeps its measured grid as the STARTING point; this only
+ * moves the document. `npm run sprites` still reports what UIScene actually
+ * lays out, so the two disagreeing is visible rather than silent.
+ */
+function resizeBy(dw, dh) {
+  if (!doc || !isMenu(targetOf(key))) return;
+  const next = resizeDoc(doc, doc.w + dw, doc.h + dh);
+  if (next.w === doc.w && next.h === doc.h) return;
+  doc.w = next.w; doc.h = next.h; doc.frames = next.frames;
+  clearSel();
+  fitCam();
+  commit();
+  flash(next.lost
+    ? `grid now ${doc.w}x${doc.h} — ${next.lost} drawn pixel(s) fell outside and were dropped`
+    : `grid now ${doc.w}x${doc.h}`);
+}
+
 function buildPalette() {
   const el = $('#pal'); el.innerHTML = '';
   NES.forEach((hex, i) => {
@@ -877,9 +941,28 @@ function syncButtons() {
   $('#selSep').hidden = !selecting;
   for (const id of ['selCut', 'selCopy', 'nL', 'nR', 'nU', 'nD']) $(`#${id}`).disabled = !sel;
   $('#selPaste').disabled = !clip;
-  const prop = doc && isProp(targetOf(key));
+  /**
+   * A MENU TARGET IS A PROP FOR EVERY OTHER PURPOSE BUT KEEPS THE OVERLAY.
+   *
+   * It has no collision box and gets no MAX BOSS figure, like a shot or a
+   * pickup. What it does have is a CONTACT ZONE, and that is exactly the thing
+   * the box overlay and the fudge dials are shaped to show — a rectangle
+   * proposed against the drawing. So the dials stay live here and mean the
+   * touch target instead of the hurtbox.
+   */
+  const t = doc && targetOf(key);
+  const menuT = isMenu(t);
+  const prop = doc && isProp(t) && !menuT;
   $('#tBox').disabled = prop;
   for (const id of ['fwm', 'fwp', 'fhm', 'fhp', 'fudgeDef']) $(`#${id}`).disabled = prop;
+  $('#gridGrp').hidden = !menuT;
+  if (menuT) {
+    $('#colM').disabled = doc.w <= 1;
+    $('#rowM').disabled = doc.h <= 1;
+  }
+  $('#tBox').title = menuT
+    ? 'show the contact zone this drawing proposes'
+    : 'show the engine box and the box this drawing proposes';
   $('#tOnion').classList.toggle('on', view.onion);
   // Never disabled any more: with a target sprite there is always something to
   // ghost, even on a one-frame sheet.
@@ -917,6 +1000,18 @@ function syncButtons() {
  * this sprite in a month is the one who needs telling.
  */
 function warnVertical() {
+  /**
+   * NOT ON A UI ELEMENT. The warning exists because a vertical lie in a HURTBOX
+   * reads as the game being wrong — feet landing somewhere other than they
+   * look. A contact zone has no feet and no ceiling; a taller touch target is
+   * the correct answer for a thumb, and flagging it gold would train the owner
+   * to ignore a warning that is right everywhere else.
+   */
+  if (isMenu(targetOf(key))) {
+    $('#vgrp').classList.remove('warn');
+    $('#vwarn').hidden = true;
+    return;
+  }
   const off = Math.abs(doc.fudgeH - 1) > 0.001;
   $('#vgrp').classList.toggle('warn', off);
   const w = $('#vwarn');
@@ -943,7 +1038,11 @@ function hintText() {
   const f = doc.frames[frameIx];
   const b = bounds(f, doc.w, doc.h);
   const box = proposedBox(f, doc.w, doc.h, doc.fudgeW, doc.fudgeH);
-  const engine = t.box ? `engine box ${t.box.w}x${t.box.h}` : t.key;
+  // A UI element has no hurtbox; what it has is the region a thumb may land in,
+  // and the note beside it is why that element exists at all.
+  const engine = t.box ? `engine box ${t.box.w}x${t.box.h}`
+    : isMenu(t) ? `contact zone ${t.zone.w}x${t.zone.h}${t.note ? ` — ${t.note}` : ''}`
+    : t.key;
   /**
    * WHAT THIS ANIMATION COSTS IN TIME, which is the number the hold dials are
    * actually for and the one a cycle cannot be judged without.
@@ -1448,12 +1547,29 @@ function draw() {
     ctx.setLineDash([]);
   }
 
-  if (view.boxes && targetOf(key).box) {
-    const t = targetOf(key);
-    // THE ENGINE'S box, in cyan: what the game uses TODAY.
-    const ex = ox + Math.round((doc.w - t.box.w) / 2) * z;
+  /**
+   * TWO RECTANGLES, ONE OVERLAY. On an actor the cyan one is the HURTBOX the
+   * engine uses today; on a UI element it is the CONTACT ZONE UIScene lays out.
+   * Both are "the rectangle the code believes in", drawn against the art, so
+   * the gold proposal means the same thing in both cases.
+   *
+   * A UI zone is CENTRED on the drawing rather than stood on the baseline: a
+   * touch target grows outward around what it is a target FOR, while a hurtbox
+   * sits on the ground the actor stands on.
+   */
+  const tk = targetOf(key);
+  // `rect` rather than `live` — the onion block above already owns that name in
+  // this scope, and shadowing it took the whole editor down with a SyntaxError.
+  const rect = tk?.box || (isMenu(tk) ? tk.zone : null);
+  if (view.boxes && rect) {
+    const t = tk;
+    const ex = ox + Math.round((doc.w - rect.w) / 2) * z;
     ctx.strokeStyle = '#5ccdd5'; ctx.lineWidth = 2;
-    ctx.strokeRect(ex, baseY - t.box.h * z, t.box.w * z, t.box.h * z);
+    if (isMenu(t)) {
+      ctx.strokeRect(ex, oy + Math.round((doc.h - rect.h) / 2) * z, rect.w * z, rect.h * z);
+    } else {
+      ctx.strokeRect(ex, baseY - rect.h * z, rect.w * z, rect.h * z);
+    }
     // THE FUDGED box, in gold: what the drawing plus the current factors
     // PROPOSE. Two boxes rather than one because the artist is deciding
     // whether the second should become the first.
@@ -1847,6 +1963,10 @@ $('#zoomFit').onclick = () => { fitCam(); draw(); };
 $('#addFrame').onclick = addFrame;
 $('#delFrame').onclick = delFrame;
 $('#impFrame').onclick = openImport;
+$('#colP').onclick = () => resizeBy(1, 0);
+$('#colM').onclick = () => resizeBy(-1, 0);
+$('#rowP').onclick = () => resizeBy(0, 1);
+$('#rowM').onclick = () => resizeBy(0, -1);
 $('#play').onclick = togglePlay;
 /**
  * THE PREVIEW SITS ON THE CANVAS, so its own pointer events have to be stopped

@@ -422,3 +422,45 @@ export function rolesFromPixels(rgba, w, h, palette, alphaMin = 128) {
   }
   return { rows, offPalette, solid };
 }
+
+/**
+ * GROW OR SHRINK EVERY FRAME'S GRID, anchored top-left.
+ *
+ * A sprite's grid is normally its CLASS's grid and not negotiable — a minion is
+ * 16x16 because that is what the engine draws. The MENU arena is the exception
+ * the editor needs: a UI element's size is whatever UIScene lays out, those
+ * differ per element, and the owner has to be able to try a taller pad without
+ * a round trip through the generator.
+ *
+ * TOP-LEFT, NOT CENTRED, and that is the whole correctness question here.
+ * Centring would re-index every drawn pixel on an odd delta, so a row added to
+ * a finished drawing would shift the art half a pixel and land it between
+ * cells. Anchoring means added space is always new blank space and existing
+ * pixels keep their coordinates, which is the only behaviour that is safe to
+ * repeat.
+ *
+ * Shrinking DROPS whatever falls outside, and says how much, because silently
+ * eating a drawn pixel is the one thing a resize must never do quietly.
+ */
+export function resizeDoc(doc, w, h) {
+  const nw = Math.max(1, Math.round(w));
+  const nh = Math.max(1, Math.round(h));
+  let lost = 0;
+  const frames = doc.frames.map((f) => {
+    const rows = [];
+    for (let y = 0; y < nh; y++) {
+      const src = f.rows[y] || '';
+      let row = '';
+      for (let x = 0; x < nw; x++) row += src[x] ?? EMPTY;
+      rows.push(row);
+    }
+    // Count only what was DRAWN and is now gone; trimming blank space is free.
+    for (let y = 0; y < f.rows.length; y++) {
+      for (let x = 0; x < f.rows[y].length; x++) {
+        if ((y >= nh || x >= nw) && f.rows[y][x] !== EMPTY) lost++;
+      }
+    }
+    return { ...f, rows };
+  });
+  return { ...doc, w: nw, h: nh, frames, lost };
+}

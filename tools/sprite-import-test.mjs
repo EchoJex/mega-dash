@@ -60,7 +60,7 @@ await ctx.route('**://api.github.com/**', async (route) => {
     route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   if (p.endsWith('/contents/design/sprites/player.sprite')) return json({ sha: 'blob0', content: b64(SPRITE) });
   if (p.endsWith('/contents/design/sprite-targets.json')) return json({ sha: 'blob1', content: b64(TARGETS) });
-  if (p.includes('/contents/design/sprites/')) return json({ message: 'Not Found' }, 404);
+  if (p.includes('/contents/design/sprites/')) return json({ message: 'Not Found' }, 404);   // a sprite nobody has drawn yet
   if (p.includes('/git/ref/heads/')) return json({ object: { sha: `sha-${p.split('heads/')[1]}` } });
   if (p.endsWith('/git/refs')) return json({}, 201);
   if (p.includes('/branches')) return json([{ name: 'main' }]);
@@ -142,6 +142,45 @@ ok(!!landed, 'the imported frame is at idle 2');
 ok(landed && landed.status === 'wip', 'it arrives wip — an import is not an approval');
 ok(landed && landed.w === 24 && landed.h === 24, 'it is stored at the sprite grid');
 ok(landed && !landed.blank, 'its pixels came through as roles, not as a hole');
+
+/**
+ * THE MENU ARENA — the UI as furniture, with an adjustable grid and a CONTACT
+ * ZONE where an actor has a hurtbox.
+ */
+await page.selectOption('#target', 'menu-weapon-dot');
+await page.waitForFunction(() => globalThis.__doc?.w === 12, null, { timeout: 10000 })
+  .catch(() => {});
+const dot = await page.evaluate(() => ({
+  w: globalThis.__doc.w, h: globalThis.__doc.h,
+  grid: !document.querySelector('#gridGrp').hidden,
+  boxOn: !document.querySelector('#tBox').disabled,
+  hint: document.querySelector('#hint').textContent,
+  warn: !document.querySelector('#vwarn').hidden,
+}));
+ok(dot.w === 12 && dot.h === 12, `the weapon dot opens at its drawn 12x12 (got ${dot.w}x${dot.h})`);
+ok(dot.grid, '+ROW/+COL appear for a MENU element');
+ok(dot.boxOn, 'the overlay stays available — a UI element has a zone to show');
+ok(/contact zone 18x18/.test(dot.hint), `the hint names the contact zone (${dot.hint.slice(0, 60)})`);
+
+await page.click('#rowP'); await page.click('#colP');
+const grown = await page.evaluate(() => ({
+  w: globalThis.__doc.w, h: globalThis.__doc.h,
+  rows: globalThis.__doc.frames[0].rows.length,
+  cols: globalThis.__doc.frames[0].rows[0].length,
+}));
+ok(grown.w === 13 && grown.h === 13, `+COL and +ROW grew the grid (${grown.w}x${grown.h})`);
+ok(grown.rows === 13 && grown.cols === 13, 'every frame grew with it, not just the header');
+
+await page.click('#undo'); await page.click('#undo');
+const undone = await page.evaluate(() => ({ w: globalThis.__doc.w, h: globalThis.__doc.h }));
+ok(undone.w === 12 && undone.h === 12, `a resize is undoable (back to ${undone.w}x${undone.h})`);
+
+// The standing gold warning is for a HURTBOX lie. A taller touch target is the
+// right answer for a thumb, so it must not fire here.
+await page.evaluate(() => { globalThis.__doc.fudgeH = 1.5; });
+await page.click('#tBox'); await page.click('#tBox');
+ok(!(await page.evaluate(() => !document.querySelector('#vwarn').hidden)),
+  'the vertical-fudge warning does not fire on a contact zone');
 
 ok(pageErrors.length === 0, `no page errors (${pageErrors.length})`);
 if (pageErrors.length) console.log(pageErrors.join('\n'));

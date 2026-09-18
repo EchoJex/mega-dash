@@ -728,6 +728,284 @@
       ]
     }
   },
+  "menu": {
+    "menu-move-left": {
+      "label": "PAD LEFT",
+      "cls": "menu",
+      "key": "menu:move_left",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 36,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 36,
+        "h": 30
+      },
+      "note": "the outer left pad",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-move-upleft": {
+      "label": "PAD UP-LEFT",
+      "cls": "menu",
+      "key": "menu:move_upleft",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 36,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 36,
+        "h": 30
+      },
+      "note": "walks left, records the ul diagonal",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-move-upright": {
+      "label": "PAD UP-RIGHT",
+      "cls": "menu",
+      "key": "menu:move_upright",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 36,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 36,
+        "h": 30
+      },
+      "note": "walks right, records the ur diagonal",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-move-right": {
+      "label": "PAD RIGHT",
+      "cls": "menu",
+      "key": "menu:move_right",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 36,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 36,
+        "h": 30
+      },
+      "note": "the outer right pad",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-jump": {
+      "label": "JUMP PAD",
+      "cls": "menu",
+      "key": "menu:jump",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 54,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 54,
+        "h": 30
+      },
+      "note": "double-tap is the slide",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-fire": {
+      "label": "FIRE PAD",
+      "cls": "menu",
+      "key": "menu:fire",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 54,
+        "h": 30
+      },
+      "box": null,
+      "zone": {
+        "w": 54,
+        "h": 30
+      },
+      "note": "aims whichever offensive weapon holds the trigger",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-requip": {
+      "label": "RE-QUIP BUTTON",
+      "cls": "menu",
+      "key": "menu:requip",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 44,
+        "h": 24
+      },
+      "box": null,
+      "zone": {
+        "w": 44,
+        "h": 24
+      },
+      "note": "opens the in-situ wheel on contact",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-pause": {
+      "label": "PAUSE PLATE",
+      "cls": "menu",
+      "key": "menu:pause",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 18,
+        "h": 12
+      },
+      "box": null,
+      "zone": {
+        "w": 18,
+        "h": 12
+      },
+      "note": "the || plate, top right",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-slot-offensive": {
+      "label": "OFFENSIVE SLOT",
+      "cls": "menu",
+      "key": "menu:slot_offensive",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 26,
+        "h": 26
+      },
+      "box": null,
+      "zone": {
+        "w": 26,
+        "h": 26
+      },
+      "note": "a wheel module. A cyan bar along its bottom says the fire button is pointed here",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-slot-defensive": {
+      "label": "DEFENSIVE SLOT",
+      "cls": "menu",
+      "key": "menu:slot_defensive",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 26,
+        "h": 26
+      },
+      "box": null,
+      "zone": {
+        "w": 26,
+        "h": 26
+      },
+      "note": "a wheel module. Never draws the aimed bar - every live defensive slot acts at once",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-weapon-dot": {
+      "label": "WEAPON SELECT DOT",
+      "cls": "menu",
+      "key": "menu:weapon_dot",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 12,
+        "h": 12
+      },
+      "box": null,
+      "zone": {
+        "w": 18,
+        "h": 18
+      },
+      "note": "drawn at 6px radius inside a 9px target - the clearest contact-zone case in the game",
+      "frames": [
+        "idle0"
+      ]
+    },
+    "menu-wheel-ring": {
+      "label": "RE-QUIP WHEEL",
+      "cls": "menu",
+      "key": "menu:wheel_ring",
+      "palette": {
+        "primary": "#5CADD5",
+        "secondary": "#0D1420",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 192,
+        "h": 104
+      },
+      "box": null,
+      "zone": {
+        "w": 192,
+        "h": 104
+      },
+      "note": "the oval the discs fan out along",
+      "frames": [
+        "idle0"
+      ]
+    }
+  },
   "furniture": {
     "furniture-core-1": {
       "label": "PROTO MK0 TURRETS",

@@ -481,6 +481,55 @@ where the odd column goes. Any row flagged above has it.
  * exists, which is the direction this pipeline is supposed to run. Where a room
  * ever builds more, the extras are still named rather than dropped silently.
  */
+/**
+ * THE MENU ARENA'S FURNITURE, read out of UIScene rather than written here.
+ *
+ * Every number below is lifted from the live scene, so a pad that changes size
+ * in UIScene changes the canvas it is drawn on with no edit here. The two
+ * proportional ones are evaluated at MENU_REF_W because 320 is the NARROWEST
+ * supported virtual width and therefore where `colW` and `actW` are smallest:
+ * art drawn for the small case stretches to the wide one, and art drawn for the
+ * wide case does not fit the small one.
+ */
+const MENU_REF_W = 320;
+const ui = src('src/scenes/UIScene.js');
+const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.floor(v)));
+
+const PAD_H = num(ui, /this\.padH = (\d+);/, 'padH');
+const colParts = /const colW = clamp\(w \* ([0-9.]+), (\d+), (\d+)\)/.exec(ui);
+const actParts = /const actW = clamp\(w \* ([0-9.]+), (\d+), (\d+)\)/.exec(ui);
+if (!colParts || !actParts) throw new Error('could not read the pad widths from UIScene');
+const COL_W = clampN(MENU_REF_W * +colParts[1], +colParts[2], +colParts[3]);
+const ACT_W = clampN(MENU_REF_W * +actParts[1], +actParts[2], +actParts[3]);
+
+const MOD_SZ = num(ui, /const MOD = (\d+)/, 'MOD');
+const RING_RX = num(ui, /RING_RX = (\d+)/, 'RING_RX');
+const RING_RY = num(ui, /RING_RY = (\d+)/, 'RING_RY');
+const ARC_SLOT_R = num(ui, /const ARC_SLOT_R = (\d+)/, 'ARC_SLOT_R');
+const ARC_TOUCH_R = num(ui, /const ARC_TOUCH_R = (\d+)/, 'ARC_TOUCH_R');
+const pausePlate = /mkTap\(w - \d+, \d+, (\d+), (\d+), '\|\|'/.exec(ui);
+if (!pausePlate) throw new Error('could not read the pause plate from UIScene');
+const REQ_W = num(ui, /const bw = Math\.max\((\d+),/, 'RE-QUIP width floor');
+const REQ_H = PAD_H - 6;
+
+/** The UI is not a boss and borrows nobody's palette. */
+const MENU_PAL = { primary: '#5CADD5', secondary: '#0D1420', outline: '#0A0A12' };
+
+const menuRows = [
+  { slug: 'move_left', label: 'PAD LEFT', w: COL_W, h: PAD_H, note: 'the outer left pad' },
+  { slug: 'move_upleft', label: 'PAD UP-LEFT', w: COL_W, h: PAD_H, note: 'walks left, records the ul diagonal' },
+  { slug: 'move_upright', label: 'PAD UP-RIGHT', w: COL_W, h: PAD_H, note: 'walks right, records the ur diagonal' },
+  { slug: 'move_right', label: 'PAD RIGHT', w: COL_W, h: PAD_H, note: 'the outer right pad' },
+  { slug: 'jump', label: 'JUMP PAD', w: ACT_W, h: PAD_H, note: 'double-tap is the slide' },
+  { slug: 'fire', label: 'FIRE PAD', w: ACT_W, h: PAD_H, note: 'aims whichever offensive weapon holds the trigger' },
+  { slug: 'requip', label: 'RE-QUIP BUTTON', w: REQ_W, h: REQ_H, note: 'opens the in-situ wheel on contact' },
+  { slug: 'pause', label: 'PAUSE PLATE', w: +pausePlate[1], h: +pausePlate[2], note: 'the || plate, top right' },
+  { slug: 'slot_offensive', label: 'OFFENSIVE SLOT', w: MOD_SZ, h: MOD_SZ, note: 'a wheel module. A cyan bar along its bottom says the fire button is pointed here' },
+  { slug: 'slot_defensive', label: 'DEFENSIVE SLOT', w: MOD_SZ, h: MOD_SZ, note: 'a wheel module. Never draws the aimed bar - every live defensive slot acts at once' },
+  { slug: 'weapon_dot', label: 'WEAPON SELECT DOT', w: ARC_SLOT_R * 2, h: ARC_SLOT_R * 2, zw: ARC_TOUCH_R * 2, zh: ARC_TOUCH_R * 2, note: 'drawn at 6px radius inside a 9px target - the clearest contact-zone case in the game' },
+  { slug: 'wheel_ring', label: 'RE-QUIP WHEEL', w: RING_RX * 2, h: RING_RY * 2, note: 'the oval the discs fan out along' },
+].map((m) => ({ ...m, id: `menu-${m.slug.replace(/_/g, '-')}` }));
+
 const FURNITURE_KINDS = ['turrets', 'platforms', 'lift', 'pipes', 'drain',
   'panels', 'speakers', 'conductors', 'rails', 'cover'];
 const SLOTS_PER_ARENA = 5;
@@ -569,6 +618,44 @@ const targets = {
     grid: { w: PICKUP_GRID, h: PICKUP_GRID },
     box: null,
     frames: ['idle0', 'idle1'],
+  }])),
+  /**
+   * THE MENU ARENA — the UI, treated as one more room with furniture in it.
+   *
+   * There is no MENU arena in the game and there does not need to be: the
+   * editor's whole vocabulary is already ACTOR > ACTION > FRAME against a grid,
+   * and a button is a thing drawn at a fixed grid that wants art. Calling it an
+   * arena buys the grouping for free rather than inventing a fifth class.
+   *
+   * MEASURED FROM UIScene, NOT DESCRIBED HERE, for the same reason every arena
+   * grid is measured from `makeArena`: a number copied by hand is a number that
+   * drifts. `MENU_REF_W` is the NARROW virtual width, because `colW` and `actW`
+   * are proportional-then-clamped and 320 is where they are smallest — art
+   * drawn for the small case stretches to the wide one, and art drawn for the
+   * wide case does not fit the small one.
+   *
+   * A CONTACT ZONE IS NOT A HITBOX, AND THE FUDGE RUNS THE OTHER WAY.
+   *
+   * Everywhere else in this editor the box is SMALLER than the drawing: a
+   * narrow hurtbox is free fairness, because a near miss then visibly misses.
+   * A UI element is the exact opposite — the touch target is deliberately
+   * BIGGER than what is drawn, because a finger is not a cursor. The weapon
+   * select dot is the clearest case in the game: 12 pixels of disc inside an
+   * 18-pixel target, a fudge of 1.5, and the 9 in ARC_TOUCH_R is measured from
+   * the tightest adjacent pair on the arc rather than chosen.
+   *
+   * So these carry a `zone` where an actor carries a `box`, the editor labels
+   * it CONTACT ZONE, and a fudge above 1 is normal here instead of a warning.
+   */
+  menu: Object.fromEntries(menuRows.map((m) => [m.id, {
+    label: m.label, cls: 'menu', key: `menu:${m.slug}`, palette: MENU_PAL,
+    grid: { w: m.w, h: m.h },
+    // No collision box anywhere in the UI — nothing here is ever hit by a
+    // bullet. What it has instead is the region a thumb may land in.
+    box: null,
+    zone: { w: m.zw ?? m.w, h: m.zh ?? m.h },
+    note: m.note,
+    frames: ['idle0'],
   }])),
   /**
    * ARENA FURNITURE — FIVE SLOTS PER ARENA, and the ones that exist are
