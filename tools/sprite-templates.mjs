@@ -468,14 +468,22 @@ where the odd column goes. Any row flagged above has it.
  * and whatever it produced is read back. So these sizes cannot drift from the
  * rooms: they ARE the rooms.
  *
- * THREE SLOTS PER ARENA, per the owner's ask. Where a room builds fewer than
- * three drawable pieces the rest are spares at the shot grid. Where it builds
- * MORE, the extras are named in the build output rather than dropped silently —
- * Volt Man's room has four.
+ * FIVE SLOTS PER ARENA, per the owner's ask, and the number is deliberately
+ * ahead of demand. It was three, which Volt Man's room quietly outgrew the day
+ * his conductors landed — four drawable pieces against three canvases, so the
+ * piece with nowhere to go was reported in the build output every run and
+ * nobody was going to act on it. Five leaves headroom for the prose still being
+ * written, so the next room that grows a piece finds a canvas already waiting
+ * instead of discovering the ceiling.
+ *
+ * Where a room builds fewer than five drawable pieces the rest are SPARES at
+ * the shot grid — somewhere to draw a piece before the code that places it
+ * exists, which is the direction this pipeline is supposed to run. Where a room
+ * ever builds more, the extras are still named rather than dropped silently.
  */
 const FURNITURE_KINDS = ['turrets', 'platforms', 'lift', 'pipes', 'drain',
   'panels', 'speakers', 'conductors', 'rails', 'cover'];
-const SLOTS_PER_ARENA = 3;
+const SLOTS_PER_ARENA = 5;
 const overflow = [];
 const furnitureRows = [];
 for (const b of bossRows) {
@@ -563,7 +571,7 @@ const targets = {
     frames: ['idle0', 'idle1'],
   }])),
   /**
-   * ARENA FURNITURE — THREE SLOTS PER ARENA, and the ones that exist are
+   * ARENA FURNITURE — FIVE SLOTS PER ARENA, and the ones that exist are
    * measured off the live room rather than described here.
    *
    * `makeArena` is called for real and its furniture read back, so a platform
@@ -610,7 +618,7 @@ const targets = {
 writeFileSync(join(REPO, 'design/sprite-targets.json'), `${JSON.stringify(targets, null, 2)}\n`);
 if (overflow.length) {
   console.log(`\nMORE FURNITURE THAN SLOTS: ${overflow.join(', ')}`);
-  console.log('Three slots per arena is the owner\'s number; these pieces have no canvas.');
+  console.log(`${SLOTS_PER_ARENA} slots per arena is the owner's number; these pieces have no canvas.`);
 }
 
 console.log(`wrote ${SUBJECTS.length + 2} files to design/sprite-templates/`);
