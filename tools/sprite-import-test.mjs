@@ -29,6 +29,23 @@ const SPRITE = fs.readFileSync(path.join(ROOT, 'design/sprites/player.sprite'), 
 const TARGETS = fs.readFileSync(path.join(ROOT, 'design/sprite-targets.json'), 'utf8');
 const BOSSDATA = fs.readFileSync(path.join(ROOT, 'design/boss-data.json'), 'utf8');
 
+/**
+ * A REAL, DECODABLE WAV. The editor decodes what it is handed rather than
+ * trusting the extension, so a fake header would be refused for the right
+ * reason and prove nothing about the accept path.
+ */
+function wav(seconds, rate = 8000) {
+  const n = Math.round(seconds * rate);
+  const b = Buffer.alloc(44 + n * 2);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVE', 8);
+  b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20);
+  b.writeUInt16LE(1, 22); b.writeUInt32LE(rate, 24); b.writeUInt32LE(rate * 2, 28);
+  b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
+  b.write('data', 36); b.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(Math.sin(i / 8) * 8000), 44 + i * 2);
+  return b;
+}
+
 /** A solid block in one colour, RGBA, fully opaque. */
 function solid(w, h, [r, g, b]) {
   const px = new Uint8Array(w * h * 4);
@@ -37,6 +54,7 @@ function solid(w, h, [r, g, b]) {
 }
 
 const fails = [];
+const sfxPuts = [];
 const ok = (cond, msg) => { if (!cond) fails.push(msg); else console.log(`  ok — ${msg}`); };
 
 const { url: SITE, server } = await serve(DOCS, 'sprite-editor.html');
@@ -61,6 +79,13 @@ await ctx.route('**://api.github.com/**', async (route) => {
   if (p.endsWith('/contents/design/sprites/player.sprite')) return json({ sha: 'blob0', content: b64(SPRITE) });
   if (p.endsWith('/contents/design/sprite-targets.json')) return json({ sha: 'blob1', content: b64(TARGETS) });
   if (p.includes('/contents/design/sprites/')) return json({ message: 'Not Found' }, 404);   // a sprite nobody has drawn yet
+  if (p.includes('/contents/public/sfx/')) {
+    if (route.request().method() === 'PUT') {
+      sfxPuts.push(p.split('/contents/')[1]);
+      return json({ content: { sha: 'audio1' } });
+    }
+    return json({ message: 'Not Found' }, 404);
+  }
   if (p.includes('/git/ref/heads/')) return json({ object: { sha: `sha-${p.split('heads/')[1]}` } });
   if (p.endsWith('/git/refs')) return json({}, 201);
   if (p.includes('/branches')) return json([{ name: 'main' }]);
@@ -181,6 +206,45 @@ await page.evaluate(() => { globalThis.__doc.fudgeH = 1.5; });
 await page.click('#tBox'); await page.click('#tBox');
 ok(!(await page.evaluate(() => !document.querySelector('#vwarn').hidden)),
   'the vertical-fudge warning does not fire on a contact zone');
+
+/**
+ * SOUND ON A FRAME — anchored to the frame being edited, capped, and checked by
+ * DECODING rather than by trusting the extension.
+ */
+await page.selectOption('#target', 'player');
+await page.waitForFunction(() => globalThis.__doc?.id === 'player', null, { timeout: 10000 }).catch(() => {});
+await page.click('#sfxFrame');
+const where = await page.textContent('#sfxWhere');
+ok(/currently silent/.test(where), 'the dialog says which frame it is attaching to and that it is silent');
+ok(/128KB and 2s/.test(where), 'both caps are stated before a file is chosen');
+
+// Too long: a track, not a one-shot.
+await page.setInputFiles('#sfxFile', { name: 'long.wav', mimeType: 'audio/wav', buffer: wav(3) });
+await page.waitForFunction(() => /capped at/.test(document.querySelector('#sfxWhy').textContent), null, { timeout: 8000 });
+ok(await page.isDisabled('#sfxGo'), 'a 3s clip is refused as a track rather than a one-shot');
+
+// Not audio at all, despite the extension.
+await page.setInputFiles('#sfxFile', { name: 'fake.wav', mimeType: 'audio/wav', buffer: Buffer.from('definitely not audio') });
+await page.waitForFunction(() => /not an ogg/.test(document.querySelector('#sfxWhy').textContent), null, { timeout: 8000 });
+ok(await page.isDisabled('#sfxGo'), 'a file lying about being audio is refused on its bytes');
+
+// A real short one-shot.
+await page.setInputFiles('#sfxFile', { name: 'step.wav', mimeType: 'audio/wav', buffer: wav(0.25) });
+await page.waitForFunction(() => !document.querySelector('#sfxGo').disabled, null, { timeout: 8000 });
+await page.fill('#sfxName', 'step');
+await page.click('#sfxGo');
+await page.waitForFunction(() => globalThis.__doc.frames.some((f) => f.sfx === 'step.wav'), null, { timeout: 8000 });
+const cue = await page.evaluate(() => {
+  const f = globalThis.__doc.frames.find((x) => x.sfx);
+  return { action: f.action, index: f.index, sfx: f.sfx };
+});
+ok(cue.sfx === 'step.wav', `the cue lands on the edited frame (${cue.action} ${cue.index} -> ${cue.sfx})`);
+// The bytes go up OUTSIDE the .sprite autosave, deliberately — they are a
+// different file and a failed upload must not lose the frame edit. So the PUT
+// lands after the cue, and waiting for it is the point rather than a nicety.
+for (let i = 0; i < 50 && !sfxPuts.length; i++) await page.waitForTimeout(100);
+ok(sfxPuts.length === 1 && sfxPuts[0] === 'public/sfx/step.wav',
+  `the audio is PUT beside the sprite sheets (${sfxPuts.join(', ') || 'nothing uploaded'})`);
 
 ok(pageErrors.length === 0, `no page errors (${pageErrors.length})`);
 if (pageErrors.length) console.log(pageErrors.join('\n'));

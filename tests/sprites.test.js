@@ -360,3 +360,51 @@ test('every MENU target carries a contact zone at least as big as its drawing', 
   const dot = targets.menu['menu-weapon-dot'];
   assert.ok(dot.zone.w > dot.grid.w, 'the weapon dot should still be bigger than it looks');
 });
+
+/**
+ * A FRAME MAY NAME A SOUND, and the reference survives the round trip.
+ *
+ * `.sprite` is a text format and audio is binary, so the frame stores a NAME
+ * and the bytes live in `public/sfx/` — the same split sprite sheets already
+ * have. The header was already an attribute bag, so this needed no new syntax.
+ */
+test('sfx= round-trips, and a silent frame writes nothing', () => {
+  const src = [
+    '# player',
+    'grid      2x1',
+    'fudge     0.70 x 1.00',
+    '',
+    '[idle 1] status=ready hold=5 sfx=step.wav',
+    '1.',
+    '',
+    '[idle 2] status=ready hold=5',
+    '.1',
+    '',
+  ].join('\n');
+  const doc = parse(src);
+  assert.equal(doc.frames[0].sfx, 'step.wav');
+  assert.equal(doc.frames[1].sfx, undefined, 'a frame with no sound has no key at all');
+  // ADDING THE FEATURE MUST NOT REWRITE EVERY EXISTING FILE. An empty `sfx=`
+  // on the 27 silent sheets would be a diff on all of them for no content.
+  assert.equal(serialize(doc), src, 'byte for byte, including the silent frame');
+  assert.ok(!serialize(parse(src.replace(' sfx=step.wav', ''))).includes('sfx='));
+});
+
+/**
+ * THE CUE LIST IS DERIVED, never hand-written — the same rule the frame indices
+ * follow, and for the same reason: a sound hung on "frame 3" by hand repoints
+ * the moment somebody inserts a frame before it.
+ */
+test('the build derives per-frame cues parallel to holds', () => {
+  const art = JSON.parse(readFileSync(new URL('../src/data/sprite-art.json', import.meta.url), 'utf8'));
+  for (const [key, def] of Object.entries(art)) {
+    if (!def.sfx) continue;   // sparse on purpose: almost every sheet is silent
+    for (const [action, cues] of Object.entries(def.sfx)) {
+      assert.ok(Array.isArray(cues), `${key}.${action}: cues must be a list`);
+      assert.equal(cues.length, def.holds[action].length,
+        `${key}.${action}: ${cues.length} cues against ${def.holds[action].length} frames — `
+        + 'the lists are read by index, so a mismatch plays the wrong frame’s sound');
+      assert.ok(cues.some(Boolean), `${key}.${action}: an all-silent list should not be emitted`);
+    }
+  }
+});

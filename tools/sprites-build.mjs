@@ -233,13 +233,22 @@ for (const file of files) {
     tintable: false,
     anims: {},
     holds: {},
+    // Per-frame one-shots, parallel to `holds` and sparse: only actions that
+    // actually name a sound get an entry, and a silent frame is null. Derived
+    // from the `.sprite` source for the same reason the frame indices are —
+    // a sound hung on frame 3 by hand would repoint the moment a frame was
+    // inserted before it.
+    sfx: {},
   };
   for (const action of actionsOf(doc)) {
     const live = framesOf(doc, action).filter(shippable);
     if (!live.length) continue;
     a.anims[action] = live.map((f) => f.at);
     a.holds[action] = live.map((f) => f.hold);
+    const cues = live.map((f) => f.sfx || null);
+    if (cues.some(Boolean)) a.sfx[action] = cues;
   }
+  if (!Object.keys(a.sfx).length) delete a.sfx;
   art[t.key || id] = a;
 
   const wip = doc.frames.length - doc.frames.filter(shippable).length;

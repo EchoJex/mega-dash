@@ -244,6 +244,7 @@
     <button id="addFrame" title="add a copy of this frame after it">+FRAME</button>
     <button id="delFrame" title="delete this frame">−FRAME</button>
     <button id="impFrame" title="import a PNG as a new frame">IMPORT</button>
+    <button id="sfxFrame" title="attach a sound to THIS frame">SFX</button>
     <span id="gridGrp" hidden>
       <button id="colP" title="widen this UI element's grid by one column">+COL</button>
       <button id="colM" title="narrow it by one column">−COL</button>
@@ -283,6 +284,21 @@
   <div id="vwarn" hidden></div>
   <div class="hint" id="hint"></div>
 </footer>
+
+<dialog id="sfxDlg">
+  <form method="dialog" id="sfxForm">
+    <p><b>SOUND ON THIS FRAME</b></p>
+    <p class="note" id="sfxWhere">&nbsp;</p>
+    <label>Name <input id="sfxName" placeholder="step" autocomplete="off"></label>
+    <input id="sfxFile" type="file" accept=".ogg,.mp3,.wav,audio/ogg,audio/mpeg,audio/wav">
+    <p class="note" id="sfxWhy">&nbsp;</p>
+    <div class="row">
+      <button value="go" id="sfxGo" disabled>Attach</button>
+      <button value="off" id="sfxOff">Silence this frame</button>
+      <button value="x">Cancel</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="imp">
   <form method="dialog" id="impForm">
@@ -862,6 +878,138 @@ function resizeBy(dw, dh) {
   flash(next.lost
     ? `grid now ${doc.w}x${doc.h} — ${next.lost} drawn pixel(s) fell outside and were dropped`
     : `grid now ${doc.w}x${doc.h}`);
+}
+
+/**
+ * ATTACHING A SOUND TO A FRAME.
+ *
+ * ANCHORED TO THE FRAME, BECAUSE THAT IS WHERE A SOUND HAPPENS. A footstep
+ * lands on the frame the foot lands on. Hanging it off the ANIMATION would
+ * either fire once at the start of a six-frame walk or need a second number
+ * saying which frame it really meant, and the second number is the frame.
+ *
+ * THE FILE IS NOT STORED IN THE SPRITE. `.sprite` is a text format holding
+ * roles, and base64 audio in it would bloat every diff of a drawing. The frame
+ * stores a NAME; the bytes go to `public/sfx/<name>.<ext>` beside the sprite
+ * sheets, which is the same split sprites already have.
+ *
+ * THREE FORMATS, AND THE BYTES ARE CHECKED. Ogg, MP3 and WAV are the three an
+ * Android WebView decodes without fuss, and `accept` is a hint to the file
+ * browser rather than a promise about what arrives — the same reason the PNG
+ * import reads its magic bytes.
+ *
+ * TWO CAPS, BOTH STATED UP FRONT. This is a ONE-SHOT, not music: every byte
+ * ships inside a 3.2MB APK that the in-app updater re-downloads on every build,
+ * so a 5MB "effect" would cost more than the whole game. 2 seconds is the other
+ * half of the same rule — anything longer is a track, and a track belongs to an
+ * arena rather than to a frame.
+ */
+const SFX_MAX_BYTES = 128 * 1024;
+const SFX_MAX_SECONDS = 2;
+const SFX_KINDS = [
+  { ext: 'ogg', magic: [0x4F, 0x67, 0x67, 0x53] },                 // OggS
+  { ext: 'wav', magic: [0x52, 0x49, 0x46, 0x46] },                 // RIFF
+  { ext: 'mp3', magic: [0x49, 0x44, 0x33] },                       // ID3 tag
+  { ext: 'mp3', magic: [0xFF, 0xFB] },                             // bare frame sync
+  { ext: 'mp3', magic: [0xFF, 0xF3] },
+  { ext: 'mp3', magic: [0xFF, 0xF2] },
+];
+let sfxPick = null;      // { name, ext, bytes } once something valid is chosen
+
+function sfxSay(msg, cls = '') {
+  const el = $('#sfxWhy');
+  el.textContent = msg || ' ';
+  el.className = `note ${cls}`;
+}
+
+function openSfx() {
+  if (!doc) return;
+  sfxPick = null;
+  $('#sfxFile').value = '';
+  $('#sfxGo').disabled = true;
+  sfxSay('');
+  const f = cur();
+  $('#sfxWhere').textContent =
+    `${doc.id || key} > ${f.action} ${f.index}`
+    + (f.sfx ? ` — currently plays "${f.sfx}"` : ' — currently silent')
+    + `\nogg, mp3 or wav · at most ${SFX_MAX_BYTES / 1024}KB and ${SFX_MAX_SECONDS}s`;
+  // A sound is usually shared across frames, so default to the one already
+  // here and otherwise to the action's name — a "step" on the run cycle.
+  $('#sfxName').value = f.sfx ? String(f.sfx).replace(/\.[a-z0-9]+$/i, '') : f.action;
+  $('#sfxOff').disabled = !f.sfx;
+  $('#sfxDlg').showModal();
+}
+
+$('#sfxFile').onchange = async () => {
+  const file = $('#sfxFile').files[0];
+  sfxPick = null;
+  $('#sfxGo').disabled = true;
+  if (!file) { sfxSay(''); return; }
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.length > SFX_MAX_BYTES) {
+      sfxSay(`${file.name} is ${(bytes.length / 1024).toFixed(0)}KB; the cap is ${SFX_MAX_BYTES / 1024}KB.\n`
+        + 'Every byte ships inside the APK the updater re-downloads on every build.', 'bad');
+      return;
+    }
+    const kind = SFX_KINDS.find((k) => k.magic.every((b, i) => bytes[i] === b));
+    if (!kind) {
+      sfxSay(`${file.name} is not an ogg, mp3 or wav.\nThose are the three an Android WebView decodes without fuss.`, 'bad');
+      return;
+    }
+    // DECODE IT HERE rather than trusting the extension. A file the device
+    // cannot decode is silent in the game and gives no error anywhere, which is
+    // the worst possible way to find out — and decoding is also the only honest
+    // way to know its duration.
+    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+    const buf = await new AC().decodeAudioData(bytes.slice().buffer);
+    if (buf.duration > SFX_MAX_SECONDS) {
+      sfxSay(`${file.name} is ${buf.duration.toFixed(2)}s; a one-shot is capped at ${SFX_MAX_SECONDS}s.\n`
+        + 'Anything longer is a track, and a track belongs to an arena rather than to a frame.', 'bad');
+      return;
+    }
+    sfxPick = { ext: kind.ext, bytes };
+    sfxSay(`${file.name} — ${buf.duration.toFixed(2)}s, ${(bytes.length / 1024).toFixed(0)}KB, decodes fine.`, 'good');
+    $('#sfxGo').disabled = false;
+  } catch (e) {
+    sfxSay(`could not decode ${file.name}: ${e.message || 'unsupported codec'}`, 'bad');
+  }
+};
+
+$('#sfxForm').onsubmit = (ev) => {
+  const how = ev.submitter?.value;
+  if (how === 'off') { delete cur().sfx; commit(); flash('frame silenced'); return; }
+  if (how !== 'go' || !sfxPick) return;
+  const name = String($('#sfxName').value || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!name) { ev.preventDefault(); sfxSay('a sound needs a name', 'bad'); return; }
+  const file = `${name}.${sfxPick.ext}`;
+  cur().sfx = file;
+  commit();
+  // The bytes go up on their own, outside the .sprite autosave, because they
+  // are a different file. A failure here must not lose the frame edit above.
+  putSfx(file, sfxPick.bytes);
+  sfxPick = null;
+};
+
+/** PUT the audio beside the sprite sheets, on the same draft branch. */
+async function putSfx(file, bytes) {
+  if (!token()) { flash(`no token — "${file}" is named but the audio was not uploaded`); return; }
+  try {
+    const ref = await ensureDraft();
+    const path = `public/sfx/${file}`;
+    let sha = null;
+    try { sha = (await gh(`/repos/${OWNER}/${REPO}/contents/${path}?ref=${ref}`)).sha; } catch { /* new file */ }
+    let bin = '';
+    for (const b of bytes) bin += String.fromCharCode(b);
+    const body = { message: `sfx: ${file}`, content: btoa(bin), branch: ref };
+    if (sha) body.sha = sha;
+    await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    flash(`${file} uploaded — ${cur().action} ${cur().index} plays it`);
+  } catch (e) {
+    flash(`frame names "${file}" but the upload failed: ${e.message}`);
+  }
 }
 
 function buildPalette() {
@@ -1963,6 +2111,7 @@ $('#zoomFit').onclick = () => { fitCam(); draw(); };
 $('#addFrame').onclick = addFrame;
 $('#delFrame').onclick = delFrame;
 $('#impFrame').onclick = openImport;
+$('#sfxFrame').onclick = openSfx;
 $('#colP').onclick = () => resizeBy(1, 0);
 $('#colM').onclick = () => resizeBy(-1, 0);
 $('#rowP').onclick = () => resizeBy(0, 1);

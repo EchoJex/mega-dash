@@ -59,6 +59,7 @@
 
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
 import SPRITE_ART from '../data/sprite-art.json' with { type: 'json' };
+import { sfxFile } from './sfx.js';
 
 /**
  * Real art. Anything not listed here falls through to a placeholder, which is
@@ -336,6 +337,27 @@ export class ActorLayer {
       ? this.scene.add.sprite(0, 0, id)
       : this.scene.add.image(0, 0, id);
     s.setOrigin(0.5, def.anchor === 'center' ? 0.5 : 1);
+    /**
+     * PER-FRAME SOUND, FIRED WHERE THE FRAME ACTUALLY CHANGES.
+     *
+     * A footstep lands on the frame the foot lands on, so the cue has to come
+     * from the thing that knows a frame just turned over — which is Phaser's
+     * own animation, not the fixed-step loop. `draw()` runs every step and
+     * would re-fire the same cue for all five steps of a hold.
+     *
+     * Bound ONCE per pooled sprite rather than per draw: the pool only grows,
+     * so this is a handful of listeners per layer per run, and re-binding every
+     * frame would stack them until one footstep played sixty times.
+     *
+     * Silent unless the sheet names a sound, which is almost every sheet.
+     */
+    if (s.on) {
+      s.on('animationupdate', (anim, frame) => {
+        const cues = MANIFEST[id]?.sfx?.[anim.key.split(':')[1]];
+        const cue = cues?.[frame.index - 1];
+        if (cue) sfxFile(cue);
+      });
+    }
     this.root.add(s);
     // The pool only grows, so this runs a handful of times per layer per run —
     // and it is the one place a new sprite could get above the overlay.

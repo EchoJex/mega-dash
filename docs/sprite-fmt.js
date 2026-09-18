@@ -141,11 +141,24 @@ export function parse(text) {
       const at = (k) => new RegExp(`\\b${k}=(\\S+)`).exec(attrs)?.[1];
       const st = at('status');
       const hold = Number(at('hold'));
+      /**
+       * `sfx=` IS A NAME, NOT A FILE. The sound lives in `public/sfx/<name>.<ext>`
+       * exactly as a sprite sheet lives in `public/sprites/`, and this text
+       * format stores the reference the way it stores a role rather than a
+       * colour. A frame with no `sfx=` is silent, which is almost all of them.
+       *
+       * IT IS PER FRAME BECAUSE THAT IS WHERE A SOUND HAPPENS. A footstep lands
+       * on the frame the foot lands on; hanging it off the ANIMATION would
+       * either fire it once at the start of a six-frame walk or need a second
+       * number saying which frame it really meant.
+       */
+      const sfx = at('sfx');
       frame = {
         action,
         index,
         status: STATUSES.includes(st) ? st : 'wip',
         hold: Number.isFinite(hold) && hold > 0 ? Math.round(hold) : DEFAULT_HOLD,
+        ...(sfx ? { sfx } : {}),
         rows: [],
       };
       doc.frames.push(frame);
@@ -240,7 +253,11 @@ export function serialize(doc) {
   out.push(`fudge     ${doc.fudgeW.toFixed(2)} x ${doc.fudgeH.toFixed(2)}`);
   if (doc.note) out.push(`note      ${doc.note}`);
   for (const f of doc.frames) {
-    out.push('', `[${f.action} ${f.index}] status=${f.status} hold=${f.hold}`, ...f.rows);
+    // `sfx` is omitted when absent rather than written empty, so adding the
+    // feature does not rewrite every existing file — `serialize(parse(x)) === x`
+    // is the guarantee tests/sprites.test.js holds this format to.
+    const sfx = f.sfx ? ` sfx=${f.sfx}` : '';
+    out.push('', `[${f.action} ${f.index}] status=${f.status} hold=${f.hold}${sfx}`, ...f.rows);
   }
   out.push('');
   return out.join('\n');

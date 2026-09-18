@@ -1,5 +1,9 @@
 /**
- * SOUND — chiptune effects synthesised at runtime. No audio files, ever.
+ * SOUND — chiptune effects synthesised at runtime, plus a narrow sampled path.
+ *
+ * "No audio files, ever" was the rule here for the whole project's life and it
+ * is still the default for everything below `sfxFile`. See that function for
+ * what changed and why it is additive rather than a reversal.
  *
  * WHY SYNTHESISED
  * ---------------
@@ -222,3 +226,69 @@ export function sfx(name, opts = {}) {
 }
 
 export const SFX_NAMES = Object.keys(SOUNDS);
+
+/**
+ * SAMPLED ONE-SHOTS — the narrow exception to "no audio files, ever".
+ *
+ * That rule at the top of this file is still the default and still right for
+ * everything it covers: a synthesised effect is a handful of numbers, costs no
+ * asset bytes, and is tunable the way FEEL is. What it cannot do is let someone
+ * who is not a sound engineer DROP IN a sound they already like, and the owner
+ * asked for exactly that.
+ *
+ * So this is additive and deliberately small. Nothing synthesised changes,
+ * `sfx()` is untouched, and a game with no files in `public/sfx/` behaves
+ * exactly as it did. A sprite FRAME may name one (`sfx=` in the `.sprite`
+ * header) and `assets.js` fires it when that frame comes up.
+ *
+ * DECODED ONCE, CACHED FOREVER. `decodeAudioData` is not cheap and a footstep
+ * fires several times a second; the cache is keyed on the name so a sound
+ * shared by ten frames is one buffer. An in-flight decode is cached as its own
+ * promise, or the first six frames of a run would each start a separate fetch
+ * of the same file.
+ *
+ * IT IS NEVER ALLOWED TO BREAK A RUN. Every failure path here — no context yet,
+ * a missing file, a codec the device will not decode — resolves to silence. The
+ * game must never wait on or throw because of audio, which is the same contract
+ * the synthesised path has had from the start.
+ */
+const samples = new Map();
+
+/** Where a named one-shot lives, mirroring `public/sprites/` for sheets. */
+export const sampleUrl = (name) => `sfx/${name}`;
+
+function loadSample(name) {
+  if (samples.has(name)) return samples.get(name);
+  const c = audio();
+  if (!c) return null;                 // before the first touch; try again later
+  const p = fetch(sampleUrl(name))
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${r.status}`))))
+    .then((buf) => c.decodeAudioData(buf))
+    .catch(() => null);                // a bad file is silence, never a crash
+  samples.set(name, p);
+  return p;
+}
+
+/**
+ * Play a sampled one-shot by name. Safe to call every frame: it is a no-op
+ * until the browser has allowed audio and until the buffer has decoded.
+ */
+export function sfxFile(name, opts = {}) {
+  if (!name || !enabled) return;
+  const pending = loadSample(name);
+  if (!pending) return;
+  pending.then((buf) => {
+    const c = audio();
+    if (!buf || !c || !enabled) return;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = opts.pitch || 1;
+    const g = c.createGain();
+    g.gain.value = opts.vol ?? 1;
+    src.connect(g).connect(master);
+    src.start();
+  });
+}
+
+/** Drop every decoded buffer. The editor calls this after replacing a file. */
+export function clearSamples() { samples.clear(); }
