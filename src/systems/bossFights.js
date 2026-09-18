@@ -2044,6 +2044,10 @@ const THORN_HAZ = {
   combo: BEAT,             // "2nd damage source within 1s"
   slow: 0.72,              // "a slightly noticeable movement speed drop"
   constrict: 90,           // layer 2 only
+  // "Ground cover receded by bugs has a regrowth rate of 0.5x normal." Applied
+  // per tile rather than to COVER.regrowRate, because the same room regrows
+  // player-receded cover at the normal rate in the same frame.
+  bugRegrow: 0.5,
 };
 
 
@@ -2053,9 +2057,21 @@ function thornHazard(layer) {
     if (!a?.cover?.length) return;
 
     /**
-     * THE BUGS KEEP THE FLOOR DOWN — "bug swarm prioritizes keeping all
-     * overgrowth recessed. For this arena the bug has unlimited duration, but
-     * new ones will continue to spawn at their normal rate."
+     * THE BUGS KEEP THE FLOOR DOWN, AND THE FLOOR PAYS THEM FOR IT.
+     *
+     * "The Initial Bug from bug swarm prioritizes keeping all overgrowth
+     * receded, has unlimited duration, and every 10-2(bug swarm weapon level)th
+     * ground cover fully receded by this bug causes an additional unlimited
+     * duration bug to spawn (up to a max of 1 bug per 3 receded ground covers)."
+     *
+     * THIS REPLACED A TIMER, and the difference is the whole design. The
+     * previous wording was "new ones will continue to spawn at their normal
+     * rate", so the room spawned a group every `recallFrames` up to a flat cap
+     * and the swarm grew while the player did nothing — which is what a
+     * playtest reported as bugs appearing endlessly. Population is now DERIVED
+     * from tiles actually put down, so a swarm that is working grows and one
+     * that is idle does not. `a.bugRecedes` is the counter; `weaponry.js` reads
+     * it and decides how many bugs that buys.
      *
      * A GRASS ROOM ANSWERING TO A BUG WEAPON is the type chart showing up as a
      * mechanic rather than as a damage multiplier, and it is the reason this
@@ -2070,6 +2086,14 @@ function thornHazard(layer) {
       const under = coverUnder(a, ally.x);
       if (under && under.grow > 0.05 && ally.y > under.y - 14) {
         scare(under, layer, ctx, true);
+        /**
+         * WHOSE RECEDE IT WAS. Both the count and the 0.5x regrowth below are
+         * about cover "receded by bugs", so the tile has to remember what put
+         * it down. Set on the scare and cleared once it has grown back far
+         * enough to be worth taking down again.
+         */
+        under.byBug = true;
+        under.regrowMult = THORN_HAZ.bugRegrow;
       }
       /**
        * Steered at the tallest tile still standing, not the nearest. Nearest
@@ -2088,6 +2112,21 @@ function thornHazard(layer) {
     }
 
     for (const c of a.cover) {
+      /**
+       * "FULLY RECEDED" IS AN EVENT, AND IT IS COUNTED WHERE IT HAPPENS.
+       *
+       * A bug parked over a tile calls `scare` on every one of the ~7 frames
+       * the recede takes, so counting the scare would pay it seven times for
+       * one tile. The tile is counted when `grow` actually reaches the floor,
+       * once, and re-arms only after it has grown back past halfway — which is
+       * also the point the recede stops being the same one.
+       */
+      if (c.byBug && c.grow <= 0.01 && !c.counted) {
+        c.counted = true;
+        a.bugRecedes = (a.bugRecedes || 0) + 1;
+      }
+      if (c.grow > 0.5) { c.byBug = false; c.counted = false; c.regrowMult = 1; }
+
       /**
        * HOT BURNS IT BACK. "Applying Hot attribute to an overgrown tile causes
        * the tile to stay receded for 3 times the normal duration."

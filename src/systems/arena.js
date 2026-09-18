@@ -125,6 +125,10 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     // A room that asks summoned allies to stay — Thorn Man's greenhouse. False
     // everywhere else, and the Swarm Caller is the only weapon that reads it.
     bugsPersist: false,
+    // Tiles the swarm has put down in THIS room. Thorn Man's fight pays an
+    // extra bug per N of them; every other room leaves it at zero. Per-room,
+    // so walking into the next arena does not arrive pre-paid.
+    bugRecedes: 0,
     // A whole-room light flash, in frames. Tempest Man's lightning telegraphs
     // a rain direction change with one; Volt Man's arcs use it too. Drawn over
     // the room but under the HUD, and it never moves with the shake — a flash
@@ -577,7 +581,10 @@ export function stepArena(arena) {
       if (c.grow > c.floor) c.grow = Math.max(c.floor, c.grow - COVER.recedeRate);
       continue;
     }
-    if (c.grow < 1) c.grow = Math.min(1, c.grow + COVER.regrowRate);
+    // `regrowMult` is the hazard's, not the room's: cover a BUG put down comes
+    // back at half rate, cover the player shot comes back at full, and both
+    // happen in the same frame on neighbouring tiles.
+    if (c.grow < 1) c.grow = Math.min(1, c.grow + COVER.regrowRate * (c.regrowMult || 1));
   }
   for (const c of arena.conductors) {
     if (c.tell > 0) c.tell--;

@@ -909,6 +909,19 @@ const quake = {
 /** How many bugs one room may accumulate. See the `bugsPersist` note below. */
 const SWARM_PERSIST_CAP = 12;
 
+/**
+ * HOW MANY TILES ONE EXTRA BUG COSTS — "every 10-2(bug swarm weapon level)th
+ * ground cover fully receded by this bug causes an additional unlimited
+ * duration bug to spawn (up to a max of 1 bug per 3 receded ground covers)".
+ *
+ * THE PARENTHETICAL IS WHAT STOPS THE FORMULA EATING ITSELF. 10-2L is 8 at
+ * Lv1 and reaches 0 at Lv5, which would be a divide by zero and then a
+ * negative price; the floor of 3 is the stated maximum rate and it binds from
+ * Lv4 up. So the ladder is 8, 6, 4, then 3 forever — levelling the weapon buys
+ * a faster-growing swarm and then stops, rather than an unbounded one.
+ */
+const bugPrice = (lv) => Math.max(3, 10 - 2 * lv);
+
 const swarm = {
   init(st) { st.cool = 0; st.kami = 0; },
 
@@ -941,22 +954,39 @@ const swarm = {
     }
 
     /**
-     * A ROOM CAN ASK THE SWARM TO STAY. Thorn Man's greenhouse sets
-     * `arena.bugsPersist`: "for this arena the bug has unlimited duration, but
-     * NEW ONES WILL CONTINUE TO SPAWN at their normal rate."
+     * A ROOM CAN ASK THE SWARM TO STAY, AND THORN MAN'S PAYS IT BY THE TILE.
      *
-     * Both halves need a change here, and the second is the one that does the
-     * work. Below Lv10 a group is summoned only when the last one is gone, so
-     * unlimited duration on its own would have frozen the swarm at its opening
-     * three forever — the population has to be allowed to grow, because growing
-     * it IS the reward for bringing a Bug weapon into a Grass room.
+     * "The INITIAL bug ... has unlimited duration, and every 10-2(level)th
+     * ground cover fully receded by this bug causes an additional unlimited
+     * duration bug to spawn."
      *
-     * Capped anyway. A five-minute fight at the Lv6 recall rate is a hundred
-     * bugs, and "the room fills up" stops being a reward some way before that.
+     * THE POPULATION IS DERIVED, NOT TIMED. An earlier wording had new bugs
+     * arriving "at their normal rate", so this spawned a group every
+     * `recallFrames` while the player did nothing and a playtest read it as
+     * bugs appearing without limit. What the room owes is now a pure function
+     * of `arena.bugRecedes`, the count of tiles the swarm has actually put
+     * down (`bossFights.js` keeps it) — so a swarm that is working grows, one
+     * that is idle stays put, and there is no clock to drift.
+     *
+     * ONE AT A TIME, so a burst of recedes reads as the swarm building rather
+     * than as a group teleporting in, and so the arrival keeps its sound.
+     *
+     * Capped anyway. Eight tiles cycling for five minutes is a few hundred
+     * recedes, and "the room fills up" stops being a reward well before that.
      */
     const persist = !!ctx.arena?.bugsPersist;
-    const room = persist ? mine.length < SWARM_PERSIST_CAP : mine.length === 0;
-    if (room && --st.cool <= 0) {
+    if (persist) {
+      const earned = 1 + Math.floor((ctx.arena.bugRecedes || 0) / bugPrice(lv));
+      const want = Math.min(earned, SWARM_PERSIST_CAP);
+      if (mine.length < want && --st.cool <= 0) {
+        st.cool = L.respawnFrames || 30;
+        ctx.sfx('pickupExp', { pitch: 0.8 });
+        ctx.allies.push(makeBug(lv, ctx, L, 'attack'));
+      }
+      return;
+    }
+
+    if (mine.length === 0 && --st.cool <= 0) {
       st.cool = L.recallFrames;
       ctx.sfx('pickupExp', { pitch: 0.8 });
       for (let i = 0; i < L.count; i++) {
@@ -1075,6 +1105,27 @@ export function stepAllies(ctx) {
     if (tx === undefined && a.regroup > 0) {
       tx = ctx.player.x + 12; ty = ctx.player.y - 8;
     }
+    /**
+     * THE ROOM'S JOB OUTRANKS THE BUG'S OWN IDEA OF WHERE TO GO — but not a
+     * kamikaze already committed, not an interceptor with a shot in front of
+     * it, and not the regroup beat, because the first two are one-way trips
+     * already under way and the third is a ladder rung of the weapon itself.
+     *
+     * IT USED TO BE A LAST RESORT AND THEREFORE NEVER RAN. The test was
+     * `tx === undefined`, so the job was taken only when the bug had nothing
+     * else to fly at — and inside a sealed boss room there is always a boss, so
+     * `nearestEnemy` filled `tx` on every frame and the errand was dropped on
+     * every frame. Thorn Man's whole "bug swarm prioritizes keeping all
+     * overgrowth receded" clause had never once fired; the comment here already
+     * claimed the behaviour the code did not have.
+     *
+     * Applied HERE rather than as an early return, so a bug on an errand still
+     * moves with the same acceleration and still hurts whatever it flies into.
+     * A second movement path would have been a second thing to tune.
+     */
+    const committed = a.role === 'kamikaze' || (a.role === 'block' && tx !== undefined);
+    if (job && !committed && a.regroup <= 0) { tx = job.x; ty = job.y; }
+
     if (tx === undefined) {
       // Lv3 prioritises whatever the player last damaged; otherwise nearest.
       const focus = ctx.run.lastDamaged;
@@ -1082,16 +1133,6 @@ export function stepAllies(ctx) {
         ? focus : nearestEnemy(ctx, a.x, a.y);
       if (t) { const c = centreOf(t); tx = c.x; ty = c.y; }
     }
-    /**
-     * THE ROOM'S JOB OUTRANKS THE BUG'S OWN IDEA OF WHERE TO GO — but not a
-     * kamikaze already committed, and not an interceptor with a shot in front
-     * of it, because both of those are one-way trips already under way.
-     *
-     * Applied HERE rather than as an early return, so a bug on an errand still
-     * moves with the same acceleration and still hurts whatever it flies into.
-     * A second movement path would have been a second thing to tune.
-     */
-    if (job && a.role !== 'kamikaze' && tx === undefined) { tx = job.x; ty = job.y; }
     if (tx === undefined) { tx = ctx.player.x + 12; ty = ctx.player.y - 8; }
 
     const dx = tx - a.x, dy = ty - a.y;
