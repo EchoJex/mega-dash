@@ -100,6 +100,14 @@
   .roleRow { display: flex; gap: 5px; align-items: center; }
   dialog { background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 6px; max-width: 92vw; }
   dialog input { width: 100%; margin: 8px 0; }
+  dialog label { display: block; margin: 8px 0; color: var(--dim); }
+  dialog label select, dialog label input { width: 100%; margin: 3px 0 0; }
+  /* The reason an import was refused, and the grid it had to match. Dim by
+     default; .bad turns it red, because "why did nothing happen" is the whole
+     job of this line. */
+  .note { color: var(--dim); margin: 6px 0; white-space: pre-wrap; }
+  .note.bad { color: var(--err); }
+  .note.good { color: var(--ok); }
   .hint { color: var(--dim); font-size: 11px; margin-top: 4px; }
   .applink {
     color: var(--sel); text-decoration: none; border: 1px solid var(--grid);
@@ -235,6 +243,7 @@
     <span class="grow"></span>
     <button id="addFrame" title="add a copy of this frame after it">+FRAME</button>
     <button id="delFrame" title="delete this frame">−FRAME</button>
+    <button id="impFrame" title="import a PNG as a new frame">IMPORT</button>
     <button id="play" title="cycle the frames (P)">▶</button>
     <span class="sep"></span>
     <button id="tOnion" title="ghost the previous frame under this one (O)">ONION</button>
@@ -269,6 +278,22 @@
   <div class="hint" id="hint"></div>
 </footer>
 
+<dialog id="imp">
+  <form method="dialog" id="impForm">
+    <p><b>IMPORT A PNG AS A FRAME</b></p>
+    <p class="note" id="impGrid">&nbsp;</p>
+    <label>Action <select id="impAct"></select></label>
+    <input id="impNew" placeholder="new action name" hidden>
+    <label>Index <input id="impIdx" type="number" min="1" step="1"></label>
+    <input id="impFile" type="file" accept="image/png,.png">
+    <p class="note" id="impWhy">&nbsp;</p>
+    <div class="row">
+      <button value="go" id="impGo" disabled>Import</button>
+      <button value="x">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="tok">
   <form method="dialog">
     <p>GitHub token with <b>repo</b> scope. Stored in this browser only.</p>
@@ -282,7 +307,7 @@ import { NES, USABLE, UNSAFE, nearestSlot, ROLES, EMPTY } from './nes-palette.js
 import {
   parse, serialize, blankFrame, bounds, proposedBox, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName,
+  DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName, rolesFromPixels,
 } from './sprite-fmt.js';
 import { markAfterEdit, changedPixels } from './marks.js';
 import {
@@ -586,7 +611,17 @@ const cur = () => doc.frames[frameIx];
  * which is safe now only because nothing stores an absolute sheet index any
  * more. `MANIFEST.anims` did, and that is what made this dangerous before.
  */
+/**
+ * A READ-ONLY HANDLE ON THE OPEN DOCUMENT, for `npm run sprite-import-test`.
+ *
+ * The test asserts what LANDED — the action, the index, the status and whether
+ * the pixels became roles — and none of that is in the DOM. Reading it back out
+ * of the select captions would be testing the captions.
+ */
+function publishDoc() { globalThis.__doc = doc; }
+
 function buildFrameList() {
+  publishDoc();
   const asel = $('#action'); asel.innerHTML = '';
   const actions = actionsOf(doc);
   for (const a of actions) asel.add(new Option(a.toUpperCase(), a));
@@ -636,6 +671,134 @@ function insertAt(action, n) {
   commit();
   flash(`inserted ${action} ${n} — later frames of ${action} renumbered, nothing else moved`);
 }
+
+/**
+ * IMPORTING A PNG AS A FRAME.
+ *
+ * WHY PNG AND NOTHING ELSE. The format needs per-pixel alpha to know which
+ * cells are holes, and PNG is the only lossless one every drawing tool exports.
+ * A JPEG has no alpha at all and would arrive with its flat colours smeared
+ * into hundreds of near-misses, every one of which this would then snap to a
+ * role — a silhouette would come back as noise. So the picker is filtered to
+ * PNG and the bytes are checked as well, because a filter on `accept` is a hint
+ * to the file browser and not a guarantee about what arrives.
+ *
+ * WHY THE GRID MUST MATCH EXACTLY. Scaling is the one thing that cannot be
+ * done quietly here. A sprite grid is a count of pixels the game will draw, not
+ * a size on a screen, so resampling a 32x32 drawing into a 24x24 frame does not
+ * shrink it, it invents pixels that were never authored and destroys the
+ * silhouette the artist spent the time on. Refusing is the kind answer, and the
+ * refusal has to say the two numbers.
+ *
+ * WHY IT IS NAMED ON THE WAY IN. A frame is ACTOR > ACTION > INDEX and the
+ * index is what orders an animation, so an import with no name would have to
+ * land somewhere arbitrary and be moved. The default is the next index of the
+ * action being edited, which is what "I drew the following pose" means.
+ */
+const PNG_MAGIC = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+let impBits = null;      // the decoded bitmap, or null while nothing is valid
+
+function impSay(msg, cls = '') {
+  const el = $('#impWhy');
+  el.textContent = msg || '\u00a0';
+  el.className = `note ${cls}`;
+}
+
+function openImport() {
+  if (!doc) return;
+  impBits = null;
+  $('#impFile').value = '';
+  $('#impGo').disabled = true;
+  impSay('');
+  $('#impGrid').textContent = `this sprite's grid is ${doc.w}x${doc.h} — a PNG must match it exactly`;
+  $('#impGrid').className = 'note';
+
+  const sel = $('#impAct');
+  sel.innerHTML = '';
+  for (const a of actionsOf(doc)) {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a; sel.appendChild(o);
+  }
+  const nu = document.createElement('option');
+  nu.value = '.new'; nu.textContent = 'NEW\u2026'; sel.appendChild(nu);
+  sel.value = cur().action;
+
+  // "the editable default being the current frame being edited +1"
+  $('#impIdx').value = cur().index + 1;
+  $('#impNew').hidden = true;
+  $('#imp').showModal();
+}
+
+$('#impAct').onchange = () => {
+  const isNew = $('#impAct').value === '.new';
+  $('#impNew').hidden = !isNew;
+  // A brand new action starts at 1 by definition; it has no frames to follow.
+  if (isNew) { $('#impIdx').value = 1; $('#impNew').focus(); }
+};
+
+$('#impFile').onchange = async () => {
+  const f = $('#impFile').files[0];
+  impBits = null;
+  $('#impGo').disabled = true;
+  if (!f) { impSay(''); return; }
+  try {
+    const buf = new Uint8Array(await f.arrayBuffer());
+    if (!PNG_MAGIC.every((b, i) => buf[i] === b)) {
+      impSay(`${f.name} is not a PNG.\nThe format needs per-pixel alpha to know which cells are holes.`, 'bad');
+      return;
+    }
+    const bmp = await createImageBitmap(new Blob([buf], { type: 'image/png' }));
+    if (bmp.width !== doc.w || bmp.height !== doc.h) {
+      impSay(`${f.name} is ${bmp.width}x${bmp.height}; this frame's grid is ${doc.w}x${doc.h}.\n`
+        + 'Nothing is scaled on the way in — resampling would invent pixels nobody drew.', 'bad');
+      bmp.close?.();
+      return;
+    }
+    impBits = bmp;
+    impSay(`${f.name} — ${bmp.width}x${bmp.height}, fits.`, 'good');
+    $('#impGo').disabled = false;
+  } catch (e) {
+    impSay(`could not read ${f.name}: ${e.message}`, 'bad');
+  }
+};
+
+$('#impForm').onsubmit = (ev) => {
+  // A native dialog form closes on ANY button, so cancel needs no handler and
+  // the import must be the only branch that touches the document.
+  if (ev.submitter?.value !== 'go' || !impBits) return;
+  const raw = $('#impAct').value === '.new' ? $('#impNew').value : $('#impAct').value;
+  const action = String(raw || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!action) { ev.preventDefault(); impSay('an action needs a name', 'bad'); return; }
+
+  const cv = document.createElement('canvas');
+  cv.width = doc.w; cv.height = doc.h;
+  const cc = cv.getContext('2d', { willReadFrequently: true });
+  cc.drawImage(impBits, 0, 0);
+  const { data } = cc.getImageData(0, 0, doc.w, doc.h);
+  const { rows, offPalette, solid } = rolesFromPixels(data, doc.w, doc.h, paletteOf(target.id));
+
+  const mine = framesOf(doc, action);
+  const n = Math.max(1, Math.min(mine.length + 1, +$('#impIdx').value || 1));
+  const at = n > mine.length
+    ? (mine.length ? mine[mine.length - 1].at + 1 : doc.frames.length)
+    : mine[n - 1].at;
+  // `wip` for the same reason every new frame is: an import has not been
+  // approved for a playtest just because it arrived.
+  doc.frames.splice(at, 0, {
+    action, index: n, status: 'wip', hold: cur()?.hold ?? DEFAULT_HOLD, rows,
+  });
+  renumber(doc);
+  rebase(doc.frames[at]);
+  frameIx = at;
+  buildFrameList();
+  commit();
+  impBits.close?.();
+  impBits = null;
+  const off = offPalette
+    ? ` — ${offPalette} of ${solid} drawn pixels were off palette and snapped to the nearest role`
+    : '';
+  flash(`imported ${action} ${n}${off}`);
+};
 
 function buildPalette() {
   const el = $('#pal'); el.innerHTML = '';
@@ -1683,6 +1846,7 @@ $('#zoomOut').onclick = () => zoomStep(-1);
 $('#zoomFit').onclick = () => { fitCam(); draw(); };
 $('#addFrame').onclick = addFrame;
 $('#delFrame').onclick = delFrame;
+$('#impFrame').onclick = openImport;
 $('#play').onclick = togglePlay;
 /**
  * THE PREVIEW SITS ON THE CANVAS, so its own pointer events have to be stopped

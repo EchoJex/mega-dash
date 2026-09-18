@@ -18,7 +18,8 @@
     "sprites:build": "node tools/sprites-build.mjs",
     "sprites:geo": "node tools/geo-sprites.mjs",
     "sprites:ship": "node tools/sprites-ship.mjs",
-    "glossary": "node tools/glossary-shots.mjs"
+    "glossary": "node tools/glossary-shots.mjs",
+    "sprite-import-test": "node tools/sprite-import-test.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.1"

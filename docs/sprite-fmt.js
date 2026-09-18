@@ -60,7 +60,7 @@
  * shipped sheet does everywhere except the idle.
  */
 
-import { EMPTY } from './nes-palette.js';
+import { EMPTY, ROLES } from './nes-palette.js';
 import { MARKS } from './marks.js';
 
 /**
@@ -372,4 +372,53 @@ export function stampRegion(rows, gw, gh, cells, x0, y0) {
     });
   });
   return out.map((r) => r.join(''));
+}
+
+/**
+ * AN IMPORTED PNG IS COLOURS; THIS FILE STORES ROLES. Bridging the two is the
+ * whole import.
+ *
+ * A pixel is snapped to whichever of the sprite's three roles it is nearest,
+ * which is not a lossy convenience — it is the 3-colours-plus-transparency rule
+ * being ENFORCED at the door. A PNG carrying a fourth colour cannot be
+ * represented, so the only question is whether it is rejected or rounded, and
+ * rounding plus an honest count is the more useful answer: the artist sees the
+ * frame land and is told how much of it was not on palette.
+ *
+ * DISTANCE IS WEIGHTED FOR THE EYE, not plain RGB. Green carries most of
+ * perceived brightness and blue almost none, so a flat sum of squares snaps a
+ * dark blue-grey to the wrong role about as often as to the right one. These
+ * are the same coefficients the luminance work uses elsewhere in the project.
+ *
+ * ALPHA IS A CLIFF, NOT A RAMP. There is no partial transparency in the format
+ * and none on the NES; anything at or under `alphaMin` is a hole and everything
+ * above it is solid. A soft-edged PNG therefore imports with a hard edge, which
+ * is what it would have had to become anyway.
+ */
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(String(h).slice(i, i + 2), 16));
+
+export function rolesFromPixels(rgba, w, h, palette, alphaMin = 128) {
+  const refs = ROLES.map((r) => ({ key: r.key, rgb: hexRgb(palette[r.name] || '#000000') }));
+  let offPalette = 0, solid = 0;
+  const rows = [];
+  for (let y = 0; y < h; y++) {
+    let row = '';
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (rgba[i + 3] <= alphaMin) { row += EMPTY; continue; }
+      solid++;
+      const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2];
+      let best = refs[0], bestD = Infinity;
+      for (const ref of refs) {
+        const d = 0.2126 * (r - ref.rgb[0]) ** 2
+                + 0.7152 * (g - ref.rgb[1]) ** 2
+                + 0.0722 * (b - ref.rgb[2]) ** 2;
+        if (d < bestD) { bestD = d; best = ref; }
+      }
+      if (bestD > 1) offPalette++;   // not an exact hit on any of the three
+      row += best.key;
+    }
+    rows.push(row);
+  }
+  return { rows, offPalette, solid };
 }

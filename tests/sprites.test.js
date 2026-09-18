@@ -12,7 +12,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import {
   parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
   readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf,
+  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf, rolesFromPixels,
 } from '../docs/sprite-fmt.js';
 import { MANIFEST, holdsOf } from '../src/systems/assets.js';
 import { FEEL } from '../src/config/feel.js';
@@ -277,4 +277,36 @@ test('a region hanging off the grid pads on read and clips on stamp', () => {
   // Two columns stamped at x=1 on a 2-wide grid: the first lands, the second
   // falls off the right edge and is gone.
   assert.deepEqual(stampRegion(['..', '..'], 2, 2, ['12'], 1, 0), ['.1', '..']);
+});
+
+/**
+ * PNG IMPORT — the colour-to-role snap.
+ *
+ * The browser half (decode, size refusal, the dialog) is driven for real by
+ * `npm run sprite-import-test`. What is asserted here is the one piece that is
+ * pure: a PNG carries colours and this format stores roles, and that mapping is
+ * where a silhouette gets quietly destroyed if it is wrong.
+ */
+test('rolesFromPixels snaps to the three roles and counts what was off palette', () => {
+  const pal = { outline: '#0A0A12', primary: '#2AAB1C', secondary: '#8FD97F' };
+  const px = (list) => new Uint8ClampedArray(list.flat());
+  const T = [0, 0, 0, 0];
+
+  const exact = rolesFromPixels(px([T, [0x2A, 0xAB, 0x1C, 255], [0x0A, 0x0A, 0x12, 255],
+    [0x8F, 0xD9, 0x7F, 255]]), 2, 2, pal);
+  assert.deepEqual(exact.rows, ['.1', '02'], 'each palette colour maps to its own role');
+  assert.equal(exact.offPalette, 0, 'exact palette hits are not reported as off palette');
+  assert.equal(exact.solid, 3, 'a transparent cell is not a drawn pixel');
+
+  // A colour that belongs to none of the three still has to land somewhere —
+  // the format cannot hold a fourth — so it snaps and is COUNTED, which is the
+  // only way the artist finds out their PNG was not on palette.
+  const off = rolesFromPixels(px([[0xFF, 0, 0, 255], [0x2A, 0xAB, 0x1C, 255]]), 2, 1, pal);
+  assert.equal(off.offPalette, 1);
+  assert.equal(off.rows[0].length, 2, 'every cell still resolves to a role or a hole');
+
+  // ALPHA IS A CLIFF. There is no partial transparency in the format, so a
+  // soft edge has to become a hard one on the way in rather than at build time.
+  const soft = rolesFromPixels(px([[0x2A, 0xAB, 0x1C, 128], [0x2A, 0xAB, 0x1C, 129]]), 2, 1, pal);
+  assert.deepEqual(soft.rows, ['.1'], 'alphaMin is the boundary, inclusive on the hole side');
 });
