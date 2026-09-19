@@ -50,8 +50,23 @@ export const SMALL_EDIT = 50;
  * The small-edit case is the whole point. Before it, fixing one word in a
  * finished field dropped it all the way to `wip`, where nothing looks at it —
  * so a one-character correction could sit unbuilt indefinitely.
+ *
+ * AN EDIT OF ZERO IS NOT AN EDIT, and leaving that out broke the one control
+ * the ladder exists for. Both apps call this from a general "something changed"
+ * path that covers more than the content it measures — a hold, a sound, a
+ * deleted neighbour, a keystroke typed and taken back — and every one of those
+ * arrived here with `changed` at 0 and got a marker moved anyway, because only
+ * the `ready` branch ever looked at the number.
+ *
+ * The sprite editor's status dropdown is where it hurt: picking DRAFT set the
+ * status, re-baselined so the diff was 0, and then fell through to `return
+ * 'wip'` on the very next commit. DRAFT and DEFERRED snapped back to WIP and
+ * READY landed on DRAFT, so of the four rungs the only one that could be set by
+ * hand was the one already selected. The owner could not give the green light
+ * to a finished frame at all — and `[draft]` is the whole gate.
  */
 export function markAfterEdit(mark, changed) {
+  if (!changed) return mark;
   if (mark === 'ready') return changed < SMALL_EDIT ? 'draft' : 'wip';
   return 'wip';
 }
