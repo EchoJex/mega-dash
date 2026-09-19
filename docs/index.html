@@ -142,8 +142,8 @@
 <script type="module">
 import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
 import {
-  OWNER, REPO, token, setToken, tokenRejected, gh, headOf, ensureDraft,
-  draftRef as draftBranch, b64encode, b64decode,
+  OWNER, REPO, token, setToken, tokenRejected, gh, ensureDraft,
+  draftRef as draftBranch, b64encode, b64decode, publishDraft as publishOnto,
 } from './gh.js';
 import { MARKS, markAfterEdit, changedChars } from './marks.js';
 
@@ -386,69 +386,16 @@ async function loadBuilds() {
 /**
  * Put the draft's work on the working branch, then start the draft over.
  *
- * FAST-FORWARD FIRST, MERGE IF THAT FAILS. A fast-forward keeps the history
- * clean — one commit per publish, no merge bubble. But the working branch moves
- * under you whenever Claude commits, and GitHub refuses a non-fast-forward ref
- * update, which is exactly the right answer: forcing it would silently rewind
- * somebody else's commits. So the refusal is caught and a real three-way merge
- * is used instead, which keeps both sides.
- *
- * THE DRAFT IS RESET AFTERWARDS, always. Left alone it would drift further from
- * the working branch with every publish, and the merges would get progressively
- * more likely to conflict over a file both sides touch. Starting each drafting
- * session from the published state means a conflict can only ever involve edits
- * made since the last publish.
- *
- * IT RETURNS WHICH PATH IT TOOK, AND THE CALLER MUST ACT ON IT. A fast-forward
- * leaves the working branch holding exactly what this tab is holding. A MERGE
- * does not: the result contains the other side's changes too, and this tab has
- * never seen them. Every write here is a whole-file PUT, so the next autosave
- * would serialise this tab's `doc` straight over the merge and revert the other
- * side — which is exactly how seven transcribed tracker fields were lost between
- * 1 and 3 Sep 2026. `save()` re-bases onto the merge; see adoptPublished().
+ * THE DANCE ITSELF LIVES IN gh.js, because the sprite editor needs exactly the
+ * same one and its own copy had drifted into a version missing the draft reset
+ * and the 409 tag — which is the failure `docs/gh.js` exists to stop happening
+ * a second time. What stays here is the part that is this app's: the blob sha
+ * belongs to a commit that is no longer the draft's head, so the next write has
+ * to look it up again.
  */
 async function publishDraft() {
-  const head = await headOf(draftRef());
-  if (!head) return false;
-  let how = 'ff';
-  try {
-    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${branch()}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sha: head }),
-    });
-  } catch (e) {
-    if (!/422/.test(e.message)) throw e;
-    // The working branch moved on. Merge rather than clobber.
-    try {
-      await gh(`/repos/${OWNER}/${REPO}/merges`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          base: branch(), head: draftRef(), commit_message: 'tracker: publish',
-        }),
-      });
-    } catch (m) {
-      // A 409 HERE IS A REAL MERGE CONFLICT, not the stale-blob 409 that
-      // save()'s handler is written for. Tagged so it cannot be mistaken for
-      // one and "re-synced" into a write that would clobber the other side.
-      if (/409/.test(m.message)) throw new Error('MERGE_CONFLICT');
-      throw m;
-    }
-    how = 'merge';
-  }
-  // Re-point the draft at the published state so the next session forks clean.
-  const now = await headOf(branch());
-  if (now) {
-    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${draftRef()}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sha: now, force: true }),
-    });
-    // The blob sha we were holding belongs to a commit that is no longer the
-    // draft's head, so the next write has to look it up again.
-    writeRef = null;
-  }
+  const how = await publishOnto(branch(), 'tracker: publish');
+  if (how) writeRef = null;
   return how;
 }
 

@@ -124,3 +124,81 @@ export async function ensureDraft(branch) {
   });
   return ref;
 }
+
+/**
+ * PUBLISH: move the working branch onto the draft, then start the draft over.
+ *
+ * FAST-FORWARD FIRST, MERGE IF THAT FAILS. A fast-forward keeps the history
+ * clean — one commit per publish, no merge bubble. But the working branch moves
+ * under you whenever Claude commits, and GitHub refuses a non-fast-forward ref
+ * update, which is exactly the right answer: forcing it would silently rewind
+ * somebody else's commits. So the refusal is caught and a real three-way merge
+ * is used instead, which keeps both sides.
+ *
+ * THE DRAFT IS RESET AFTERWARDS, ALWAYS — and that step is the half of the
+ * lesson the sprite editor's own copy of this dance was missing. Left alone the
+ * draft drifts further from the working branch with every publish and the
+ * merges get progressively more likely to conflict over a file both sides
+ * touch. It did: `design/sprites/player.sprite` reached a state where each
+ * branch held a whole parallel migration of the same file and no publish could
+ * ever succeed again. Worse, the editor OPENS from the draft in preference to
+ * the working branch, so a draft that never resets quietly pins every later
+ * session to a stale fork — the owner was drawing against a copy of the file
+ * that predated its own format migration and nothing said so.
+ *
+ * IT RETURNS WHICH PATH IT TOOK, AND THE CALLER MUST ACT ON IT. A fast-forward
+ * leaves the working branch holding exactly what the calling tab is holding. A
+ * MERGE does not: the result contains the other side's changes too, and the tab
+ * has never seen them. EVERY WRITE IN BOTH APPS IS A WHOLE-FILE PUT, so the
+ * next autosave would serialise the tab's document straight over the merge and
+ * revert the other side — which is exactly how seven transcribed tracker fields
+ * were lost between 1 and 3 Sep 2026. On 'merge', re-read the file.
+ */
+export async function publishDraft(branch, message) {
+  const ref = draftRef(branch);
+  const head = await headOf(ref);
+  if (!head) return false;
+  let how = 'ff';
+  try {
+    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${branch}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: head }),
+    });
+  } catch (e) {
+    /**
+     * ONLY A 422 MEANS "THE BRANCH MOVED". Catching everything here sent a
+     * rejected token, a rate limit and an offline moment down the merge path
+     * too, where they came back as a second, less honest error about merging.
+     */
+    if (!/422/.test(e.message)) throw e;
+    try {
+      await gh(`/repos/${OWNER}/${REPO}/merges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base: branch, head: ref, commit_message: message }),
+      });
+    } catch (m) {
+      /**
+       * A 409 HERE IS A REAL MERGE CONFLICT, not the stale-blob 409 a caller's
+       * save handler is written for. Tagged so it cannot be mistaken for one
+       * and "re-synced" into a write that would clobber the other side — and so
+       * that no caller has to show GitHub's own body, which is a JSON blob that
+       * reads as a crash rather than as a thing the owner can act on.
+       */
+      if (/409/.test(m.message)) throw new Error('MERGE_CONFLICT');
+      throw m;
+    }
+    how = 'merge';
+  }
+  // Re-point the draft at the published state so the next session forks clean.
+  const now = await headOf(branch);
+  if (now) {
+    await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${ref}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: now, force: true }),
+    });
+  }
+  return how;
+}

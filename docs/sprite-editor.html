@@ -122,6 +122,16 @@
     margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
     background: #3a2f0c; border: 1px solid #f5d328; color: #ffe9a3; font-size: 11px;
   }
+  /* A FAILED PUBLISH IS A CONDITION, NOT A MOMENT, so it gets a standing panel
+     rather than a toast — the art stays unpublishable until somebody resolves
+     the file in the repo, and a message that has faded cannot say so. Red
+     rather than the fudge warning's gold: gold is "be careful what you chose",
+     this is "the thing you pressed did not happen". */
+  #cwarn {
+    margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
+    background: #3a1214; border: 1px solid #ff6b6b; color: #ffd5d5; font-size: 11px;
+  }
+  #cwarn code { background: #00000055; padding: 0 3px; border-radius: 2px; }
 
   /* ── the one tool row ──
      IT SCROLLS RATHER THAN WRAPS, and that is the whole trick. Left to wrap,
@@ -281,6 +291,7 @@
     <select id="onFrame" title="which of its frames"></select>
   </div>
 
+  <div id="cwarn" hidden></div>
   <div id="vwarn" hidden></div>
   <div class="hint" id="hint"></div>
 </footer>
@@ -335,6 +346,7 @@ import { markAfterEdit, changedPixels } from './marks.js';
 import {
   OWNER, REPO, token, setToken, gh,
   draftRef as draftBranch, ensureDraft as ensureDraftOn,
+  publishDraft as publishOnto,
   b64encode as b64, b64decode as unb64,
 } from './gh.js';
 
@@ -364,8 +376,51 @@ const ensureDraft = () => ensureDraftOn(BRANCH);
 
 function touch() { dirty = true; clearTimeout(timer); timer = setTimeout(() => save(false), 2500); }
 
+/**
+ * Re-open this sprite from what was actually PUBLISHED.
+ *
+ * Only needed after a MERGE. The merged file holds both sides; `doc` holds one,
+ * and every write here is a whole-file PUT — so without this the next autosave
+ * serialises this tab's frames straight over the merge and reverts whatever it
+ * brought in, silently, with a sha GitHub is perfectly happy to accept. That is
+ * the bug that ate seven tracker fields in September; the editor is the same
+ * shape and had none of the defence.
+ *
+ * It reads the WORKING branch rather than the draft even though publishOnto has
+ * just reset one onto the other: the draft ref was moved with a force PATCH and
+ * the working branch is the thing whose content we actually care about.
+ */
+async function adoptPublished() {
+  const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}?ref=${BRANCH}&t=${Date.now()}`);
+  doc = parse(unb64(r.content.replace(/\n/g, '')));
+  doc.w = targetOf(key).grid.w; doc.h = targetOf(key).grid.h;
+  sha = null;               // belongs to the pre-merge write, on the old draft head
+  dirty = false;
+  clearSel();
+  stopPlay();
+  frameIx = Math.min(frameIx, doc.frames.length - 1);
+  // The same refresh open() does, for the same reason: the frame list this tab
+  // is holding has just been replaced wholesale, so the assertion rule has to
+  // re-baseline and undo must not reach back past the merge.
+  rebaseAll();
+  resetHistory();
+  buildFrameList();
+  syncControls();
+  fitCam();
+  draw();
+}
+
 async function save(manual) {
-  if (!doc || saving) return;
+  if (!doc) return;
+  /**
+   * A SAVE THAT ARRIVES MID-SAVE MUST BE RESCHEDULED, NOT DROPPED — the same
+   * hole the tracker had. The autosave timer is single-shot and cleared on
+   * every stroke, so if it fired while a save was in flight this returned with
+   * `dirty` still true and NO new timer armed. The artist drew a last pose,
+   * stopped, and the status pill went on showing the previous save's time; that
+   * pose lived only in the tab until the next stroke, and closing it lost it.
+   */
+  if (saving) { if (!manual) touch(); return; }
   if (!token()) { setState('no token — read only', 'err'); return; }
   saving = true;
   setState(manual ? 'publishing…' : 'saving…');
@@ -384,26 +439,72 @@ async function save(manual) {
       dirty = false;
     }
     if (manual) {
-      // Fast-forward the working branch onto the draft, and fall back to a
-      // merge when it has moved underneath us. Straight out of the tracker.
-      const head = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${draftRef()}`);
-      try {
-        await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sha: head.object.sha }),
-        });
-      } catch {
-        await gh(`/repos/${OWNER}/${REPO}/merges`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base: BRANCH, head: draftRef(), commit_message: `sprite: publish ${key}` }),
-        });
-      }
-      setState(`published ${new Date().toLocaleTimeString()}`, 'ok');
+      // Fast-forward the working branch onto the draft, fall back to a merge,
+      // and RESET THE DRAFT — all three in gh.js, shared with the tracker.
+      const how = await publishOnto(BRANCH, `sprite: publish ${key}`);
+      clearConflict();
+      if (how === 'merge') {
+        const typedDuringPublish = dirty;
+        await adoptPublished();
+        setState(typedDuringPublish
+          ? `published — ${BRANCH} had moved, so it was merged and re-read; the last few strokes are gone`
+          : `published (merged with ${BRANCH}) ${new Date().toLocaleTimeString()}`,
+        typedDuringPublish ? 'err' : 'ok');
+      } else setState(`published ${new Date().toLocaleTimeString()}`, 'ok');
     } else setState(`saved ${new Date().toLocaleTimeString()}`, 'ok');
   } catch (e) {
-    setState(String(e.message || e).slice(0, 60), 'err');
+    const msg = String(e.message || e);
+    if (msg === 'MERGE_CONFLICT') {
+      /**
+       * NOTHING WAS PUBLISHED AND NOTHING WAS LOST. Both sides changed the same
+       * lines of the same sprite and a browser is the wrong place to resolve
+       * that. This used to fall through to the generic handler, which put the
+       * first sixty characters of GitHub's own JSON body in the status pill —
+       * `{ "message": "Merge conflict", "documentation_url` — which reads as a
+       * crash rather than as a thing anybody can act on.
+       */
+      setState('merge conflict — not published', 'err');
+      showConflict();
+    } else if (msg === 'TOKEN_REJECTED') {
+      setState('token rejected — NOT saved. Tap the key and paste a new one.', 'err');
+    } else if (/409/.test(msg)) {
+      /**
+       * A 409 ON THE WRITE IS A STALE BLOB SHA, not a merge conflict, and it
+       * used to wedge autosave forever: `dirty = false` sits inside the try and
+       * is never reached on a throw, so every later autosave retried with the
+       * same stale sha and 409'd again. Re-reading the sha is the whole fix and
+       * it is safe — `doc` in this tab is still the newest art, and the other
+       * side of a draft-branch conflict is this artist's own earlier autosave.
+       */
+      try {
+        const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}?ref=${draftRef()}&t=${Date.now()}`);
+        sha = cur.sha;
+        setState('the draft moved — re-syncing; your art saves next', 'err');
+        if (!manual) { clearTimeout(timer); timer = setTimeout(() => save(false), 1200); }
+      } catch {
+        setState('conflict — reload, then re-apply this frame', 'err');
+      }
+    } else setState(msg.slice(0, 60), 'err');
   } finally { saving = false; }
 }
+
+/**
+ * THE CONFLICT PANEL IS STANDING, like the vertical-fudge warning and for the
+ * same reason: it is a condition, not a moment. A toast would be gone before
+ * the artist had finished reading it, and the art stays unpublishable until
+ * somebody resolves the file in the repo — so the panel stays up until a
+ * publish actually succeeds.
+ */
+function showConflict() {
+  const w = $('#cwarn');
+  w.hidden = false;
+  w.innerHTML = `<b>MERGE CONFLICT — NOTHING WAS PUBLISHED AND NOTHING WAS LOST.</b> `
+    + `Your work is safe on <code>${draftRef()}</code>. `
+    + `<code>${BRANCH}</code> and your draft both changed the same lines of a sprite, `
+    + `which a browser cannot resolve. Ask Claude to resolve it in the repo, then publish again. `
+    + `Keep drawing meanwhile — autosave still works.`;
+}
+function clearConflict() { $('#cwarn').hidden = true; }
 
 // ── Loading ───────────────────────────────────────────────────────────
 
