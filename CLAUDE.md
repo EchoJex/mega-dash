@@ -220,81 +220,82 @@ needs it.
 
 ### The size budget — what a byte costs, and where the room is
 
-**THE BENCHMARK IS VAMPIRE SURVIVORS AT v1.5, THE LAST PHASER BUILD**, by the owner's
-call. It is the right yardstick for an unusual reason: VS was written in Phaser too, by one
-person, and only moved to Unity at v1.6 for the console and mobile push. So it is the same
-engine doing the same genre at a scale worth reaching, rather than an arbitrary number.
+**THE TARGET IS A 500MB INSTALLED APK, by the owner's call.** That is deliberately
+generous and it replaces an earlier 20MB target benchmarked on Vampire Survivors at v1.5,
+the last Phaser build. **Do not put that benchmark back.** It was picked because VS is the
+same engine doing the same genre, which made it a fair yardstick and a bad budget: the
+owner's judgement was that the web build is simply too lean to plan a phone game around.
 
-**THAT BUILD HAD NO ANDROID RELEASE, and the comparison has to be translated.** v1.5 shipped
-on desktop through Steam and in the browser on itch.io; the Android build everyone can
-download is the Unity one. Its Steam wrapper was Chromium, well over 100MB, against our
-~2.8MB of Capacitor — so TOTAL DOWNLOAD is not the thing to match. What transfers is the
-CONTENT weight: the Phaser game and its assets.
+Three measurements decide where the room actually is, and only one of them is a surprise.
 
-**The exact v1.5 figure is UNVERIFIED and is the one number here to go and check.** Every
-authoritative source was unreachable when this was written (`steamdb.info`, `play.google.com`,
-`apkpure.com`, `appbrain.com`, `poncle.itch.io` all blocked). The only VS number actually
-confirmed is its **Unity Android build at ~36MB**. The 20MB target below is set at
-comfortably under that and is A DIAL: find the real v1.5 content size and move it, and every
-row scales with it.
+#### The wrapper is 88% of today's download and is FIXED
 
-#### The wrapper is 88% of today's download, and almost none of it is the game
-
-Measured from the shipped `MegaDash-1136.apk`, by COMPRESSED bytes, which is what actually
-travels on an update:
+Measured from a shipped APK, by COMPRESSED bytes, which is what travels on an update:
 
 | | download | share |
 |---|---|---|
 | **WRAPPER** — Java/Kotlin dex, Android resources, signing | **2,858 KB** | **88%** |
 | the whole game — JS bundle, sprites, shell | 395 KB | 12% |
-| total | 3,253 KB | |
 
-**That 2.8MB is FIXED and is not worth attacking.** It is Capacitor plus AndroidX plus the
-Kotlin runtime, it does not grow as the game does, and the only ways to shrink it — R8
-shrinking, dropping AndroidX — trade real risk for a saving that content will dwarf within
-one boss slice. Treat it as the floor and budget the rest.
+Capacitor plus AndroidX plus the Kotlin runtime. It does not grow as the game does, and
+shrinking it (R8, dropping AndroidX) trades real risk for a saving one boss slice would
+dwarf. Treat it as the floor.
 
-The 12% is the surprising half: **the entire game is 395KB compressed.** The bundle is 1.6MB
-on disk and Phaser is most of it, but it is text and text deflates. Every sprite in the game
-is currently 1KB, because a 3-colour PNG at a 24px grid is almost nothing.
+#### ART IS FREE. Stop optimising it.
+
+`public/sprites/player.png` measures **0.1018 bytes per pixel** — 14 frames of 24x24 in 821
+bytes — and the Volt Spark agrees at 0.1172. Three colours plus transparency is the most
+compressible thing a PNG can hold, and that number is why.
+
+Take the player's own fluidity as the template for everything (6-frame locomotion cycle,
+2-frame idle, single poses for the jump states) and **every animated thing in the finished
+game is ~105KB**: 17 bosses at 22 frames each is 85KB of that, and everything else together
+is 20KB. Triple the frame counts AND treble the entropy for busier art and it reaches 1MB.
+Seventeen arena backdrops at 480x224 add 0.18MB on the 3-colour rule, ~1MB drawn richly.
+
+**So no amount of sprite-squeezing buys anything, and no fluidity target is too expensive.**
+Never ask the owner to cut frames, share a sheet, or drop a pose for size. If art ever
+appears in a size conversation, the conversation has gone wrong.
 
 #### The allocation
 
-Against a **20MB APK** target, which leaves ~17MB of content over the fixed wrapper:
+| line | budget | what fills it |
+|---|---|---|
+| wrapper | 2.9 MB | **fixed.** Not content, not negotiable |
+| game code | 1 MB | 17 fights, 18 ladders, arenas. Roughly doubles from today's 0.4MB |
+| every sprite | 1 MB | pessimistic: 2x the frames at 2x the entropy |
+| arena backdrops | 1 MB | 17, drawn richly |
+| SFX | 1 MB | ~40 one-shots, in the APK — see below |
+| **total inside the APK** | **~7 MB** | |
+| headroom to 500MB | ~493 MB | **not the APK's to spend** — see below |
 
-| line | budget | today | what fills it |
-|---|---|---|---|
-| wrapper | 2.8 MB | 2.8 MB | **fixed.** Not content, not negotiable |
-| game code | 0.8 MB | 0.4 MB | 17 fights, 18 ladders, arenas. Roughly doubles from here |
-| sprites | 1.5 MB | ~0 | ~20 actors plus 17 arena backdrops. 3-colour PNGs are tiny; backdrops are the only part that is not |
-| SFX | 0.8 MB | ~0 | ~40 one-shots. The editor's 128KB cap is what keeps this honest |
-| **BGM** | **13 MB** | 0 | **~20 tracks. The only line that can blow the budget** |
-| headroom | 1.1 MB | — | do not spend this early |
+#### MUSIC SHIPS OUTSIDE THE APK. SFX SHIPS INSIDE.
 
-**EVERYTHING EXCEPT MUSIC ADDS UP TO UNDER 3MB.** That is the whole point of this table.
-Code, art and effects together are a rounding error next to one album, so a size problem in
-this project is always a music problem, and no amount of sprite-squeezing buys anything.
+The owner's decision, and the reason is CI rather than storage. **Every push builds an APK
+and the in-app updater downloads the whole thing**, so anything inside it is re-downloaded
+for every one-line fix. 500MB installed is unremarkable; 500MB to see a typo corrected is
+the thing that would actually change how this project feels to work on.
 
-**13MB across 20 two-minute tracks is ~43kbps**, which is Opus mono at 48k — the option
-already costed against this benchmark. MP3 at 128k stereo needs 38MB for the same album and
-does not fit at any total under 40MB.
+Music is the only asset class big enough for that to bite — the table above is 7MB and every
+row of it is bounded. So BGM becomes a pack fetched once, and the 493MB of headroom belongs
+to that pack rather than to the APK.
 
-#### The cost is PER UPDATE, not per install
+**SFX stays in**, and the split is not arbitrary: a one-shot is a few KB, it is anchored to
+a sprite FRAME (`sfx=` in the `.sprite` header), and a footstep that has to wait on a
+download is a footstep that does not play. The editor caps an upload at 128KB and 2 seconds,
+which is what keeps this row at 1MB rather than making it the new problem.
 
-CI builds an APK on every push to every branch and the in-app updater downloads the whole
-thing. So music that never changes re-downloads on every one-line fix. 20MB installed is
-unremarkable; 20MB to see a typo fix is the part that bites, and it is the reason the BGM row
-is a ceiling rather than a target to fill.
-
-**If that ceiling ever binds, the answer is DELIVERY, not compression** — ship the APK lean
-and have the updater pull a music pack once. It is a new network path in a game that
-currently fetches nothing but updates, so it is a real decision and not a free one; it is
-also the only move that decouples music size from iteration cost entirely. Do not take it
-without the owner asking.
+**NOTHING FETCHES A MUSIC PACK YET, and that is on purpose.** There is no music, so the
+format, the hosting and the versioning would all be invented against zero files — and this
+game currently fetches nothing but its own updates, so adding a network path is a real cost
+to a closed surface. Build it on the day there is a track to deliver, not before. What it
+will need when that day comes: a pack URL, a version check the updater already knows how to
+do, somewhere writable to cache it, and a game that plays silently when it is absent.
 
 **These numbers are a BUDGET, not a measurement.** Nothing derives them and nothing checks
 them, so they will drift the way every hand-written inventory in this file has. Re-measure
 from a real APK before trusting a row.
+
 
 ---
 
