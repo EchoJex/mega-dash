@@ -218,6 +218,84 @@ services and no manifest-declared receivers. Adding a permission to a sideloaded
 store reputation costs real trust — treat that list as closed unless a feature genuinely
 needs it.
 
+### The size budget — what a byte costs, and where the room is
+
+**THE BENCHMARK IS VAMPIRE SURVIVORS AT v1.5, THE LAST PHASER BUILD**, by the owner's
+call. It is the right yardstick for an unusual reason: VS was written in Phaser too, by one
+person, and only moved to Unity at v1.6 for the console and mobile push. So it is the same
+engine doing the same genre at a scale worth reaching, rather than an arbitrary number.
+
+**THAT BUILD HAD NO ANDROID RELEASE, and the comparison has to be translated.** v1.5 shipped
+on desktop through Steam and in the browser on itch.io; the Android build everyone can
+download is the Unity one. Its Steam wrapper was Chromium, well over 100MB, against our
+~2.8MB of Capacitor — so TOTAL DOWNLOAD is not the thing to match. What transfers is the
+CONTENT weight: the Phaser game and its assets.
+
+**The exact v1.5 figure is UNVERIFIED and is the one number here to go and check.** Every
+authoritative source was unreachable when this was written (`steamdb.info`, `play.google.com`,
+`apkpure.com`, `appbrain.com`, `poncle.itch.io` all blocked). The only VS number actually
+confirmed is its **Unity Android build at ~36MB**. The 20MB target below is set at
+comfortably under that and is A DIAL: find the real v1.5 content size and move it, and every
+row scales with it.
+
+#### The wrapper is 88% of today's download, and almost none of it is the game
+
+Measured from the shipped `MegaDash-1136.apk`, by COMPRESSED bytes, which is what actually
+travels on an update:
+
+| | download | share |
+|---|---|---|
+| **WRAPPER** — Java/Kotlin dex, Android resources, signing | **2,858 KB** | **88%** |
+| the whole game — JS bundle, sprites, shell | 395 KB | 12% |
+| total | 3,253 KB | |
+
+**That 2.8MB is FIXED and is not worth attacking.** It is Capacitor plus AndroidX plus the
+Kotlin runtime, it does not grow as the game does, and the only ways to shrink it — R8
+shrinking, dropping AndroidX — trade real risk for a saving that content will dwarf within
+one boss slice. Treat it as the floor and budget the rest.
+
+The 12% is the surprising half: **the entire game is 395KB compressed.** The bundle is 1.6MB
+on disk and Phaser is most of it, but it is text and text deflates. Every sprite in the game
+is currently 1KB, because a 3-colour PNG at a 24px grid is almost nothing.
+
+#### The allocation
+
+Against a **20MB APK** target, which leaves ~17MB of content over the fixed wrapper:
+
+| line | budget | today | what fills it |
+|---|---|---|---|
+| wrapper | 2.8 MB | 2.8 MB | **fixed.** Not content, not negotiable |
+| game code | 0.8 MB | 0.4 MB | 17 fights, 18 ladders, arenas. Roughly doubles from here |
+| sprites | 1.5 MB | ~0 | ~20 actors plus 17 arena backdrops. 3-colour PNGs are tiny; backdrops are the only part that is not |
+| SFX | 0.8 MB | ~0 | ~40 one-shots. The editor's 128KB cap is what keeps this honest |
+| **BGM** | **13 MB** | 0 | **~20 tracks. The only line that can blow the budget** |
+| headroom | 1.1 MB | — | do not spend this early |
+
+**EVERYTHING EXCEPT MUSIC ADDS UP TO UNDER 3MB.** That is the whole point of this table.
+Code, art and effects together are a rounding error next to one album, so a size problem in
+this project is always a music problem, and no amount of sprite-squeezing buys anything.
+
+**13MB across 20 two-minute tracks is ~43kbps**, which is Opus mono at 48k — the option
+already costed against this benchmark. MP3 at 128k stereo needs 38MB for the same album and
+does not fit at any total under 40MB.
+
+#### The cost is PER UPDATE, not per install
+
+CI builds an APK on every push to every branch and the in-app updater downloads the whole
+thing. So music that never changes re-downloads on every one-line fix. 20MB installed is
+unremarkable; 20MB to see a typo fix is the part that bites, and it is the reason the BGM row
+is a ceiling rather than a target to fill.
+
+**If that ceiling ever binds, the answer is DELIVERY, not compression** — ship the APK lean
+and have the updater pull a music pack once. It is a new network path in a game that
+currently fetches nothing but updates, so it is a real decision and not a free one; it is
+also the only move that decouples music size from iteration cost entirely. Do not take it
+without the owner asking.
+
+**These numbers are a BUDGET, not a measurement.** Nothing derives them and nothing checks
+them, so they will drift the way every hand-written inventory in this file has. Re-measure
+from a real APK before trusting a row.
+
 ---
 
 ## Non-negotiable architecture
