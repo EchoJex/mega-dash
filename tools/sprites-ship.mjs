@@ -24,7 +24,7 @@
  *
  *   SOMETHING CAN ACTUALLY PLAY IT. An animation nobody names is an animation
  *   that holds frame 1 forever — which is exactly what a projectile did until
- *   `soleClip` landed.
+ *   `onlyClipOf` landed.
  *
  * A frame that fails any of them is LEFT AT `draft` and the reason is printed.
  * Nothing here draws, deletes or renumbers: the only edit it makes is a status.
@@ -65,7 +65,7 @@ const targetOf = (id) => (id === 'player' ? targets.player
  * The minions' is written down, because the scene picks theirs inline and
  * there is nothing importable to ask.
  *
- * ANYTHING NOT LISTED FALLS BACK TO `soleClip` — one animation plays itself.
+ * ANYTHING NOT LISTED FALLS BACK TO `onlyClipOf` — one animation plays itself.
  * An actor that grows a SECOND animation is held here until whoever taught the
  * game to pick between them says so, which is the right direction to fail: the
  * alternative is marking a frame `ready` that holds pose 1 forever.

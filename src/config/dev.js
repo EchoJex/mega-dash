@@ -117,7 +117,7 @@ export const DEV = {
    * falls, which is exactly the wrong order for a session that wants to test a
    * weapon against a fight.
    *
-   * So the run OPENS on the real post-boss wheel: the same control, the same
+   * So the run OPENS on the real between-fights wheel: the same control, the same
    * window, the same rules, just granted rather than earned. Set the loadout,
    * tap away, walk. It shuts on the first arena warp like any other window.
    *
@@ -161,9 +161,9 @@ export const DEV = {
   /**
    * WHICH RE-QUIP WHEEL THE BUTTON OPENS, in dev mode only.
    *
-   * `playtest` is the shipped pair: the in-situ wheel under fire, the hard-
-   * paused post-boss wheel between fights. `postboss` makes the button always
-   * open the post-boss one, which is what you want while you are BUILDING that
+   * `playtest` is the shipped pair: the mid-fight wheel under fire, the hard-
+   * paused between-fights wheel between fights. `postboss` makes the button always
+   * open the between-fights one, which is what you want while you are BUILDING that
    * wheel — reaching it otherwise costs a whole fight, and slow motion is not
    * the state you want to inspect a layout in.
    *

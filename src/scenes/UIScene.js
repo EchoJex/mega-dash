@@ -82,14 +82,14 @@
  *                                   defensive: switch it on or off
  *
  * THE HALO MEANS NEW. It rings the weapon the boss just dropped and nothing
- * else. Everything you own is drawn at full strength in the post-boss wheel,
+ * else. Everything you own is drawn at full strength in the between-fights wheel,
  * which is what says "owned"; a halo on all of them said it twice and left the
  * one weapon you had never seen looking like the rest.
  *
  * LOADOUT MASTERY IS DRAWN, NOT EXPLAINED. A module past your rank keeps its
  * shape and its watermark under a padlock, so the row's full size is always
  * visible as something to work toward. Where the rank caps how many may run at
- * once, the in-situ tap becomes a radio switch between them — the gesture does
+ * once, the mid-fight tap becomes a radio switch between them — the gesture does
  * not change and the cyan border always says which one won.
  *
  * SLOTS ONLY CHANGE BETWEEN FIGHTS. Equipping is live from a boss going down
@@ -134,13 +134,13 @@ import { sfx, unlockAudio } from '../systems/sfx.js';
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
 const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
 /**
- * How long the in-situ wheel holds slow motion with nothing decided.
+ * How long the mid-fight wheel holds slow motion with nothing decided.
  *
  * A dead man's handle. Opening it stops time from moving at a useful rate, so
  * an accidental touch with no way out would be a soft lock — and the player's
  * hands are already occupied. Long enough to read four modules and choose.
  */
-const SITU_TIMEOUT_MS = 7000;
+const MID_FIGHT_TIMEOUT_MS = 7000;
 
 /** The beat between the boss finishing coming apart and the wheel arriving. */
 const POST_BOSS_DELAY_MS = 550;
@@ -240,7 +240,7 @@ const ARC_END = 0.34;
  * (170), and the button's top edge is VIEW_H - padH - 4 (190). Two 7px lines
  * with the font's 2px leading is 16px, so this is the only place they fit —
  * at 180 the second line was drawing across the top of the button, which is
- * exactly where a thumb rests through the whole in-situ gesture.
+ * exactly where a thumb rests through the whole mid-fight gesture.
  */
 const READ_Y = 172;
 const SWIPE_CY = 74;               // between the sidearm and the offensive row
@@ -261,9 +261,9 @@ const LOCKED_ALPHA = 0.45;
  * only NEW, so the disc has to say owned by itself.
  */
 const BENCH_ALPHA = 0.95;
-// In the in-situ wheel the ring is context, not a menu. Low enough that the
+// In the mid-fight wheel the ring is context, not a menu. Low enough that the
 // eye goes to the four modules and stays there.
-const SITU_BENCH_ALPHA = 0.16;
+const MID_FIGHT_BENCH_ALPHA = 0.16;
 const IDLE_ALPHA = PAD_ALPHA; // RE-QUIP rests at the same opacity as the pads
 
 /**
@@ -348,7 +348,7 @@ export default class UIScene extends Phaser.Scene {
     this.aimSlot = null;
     this.press = null;
     this.slotPress = null;
-    this.situTimer = null;
+    this.midFightTimer = null;
     this.requipWait = null;
     this.unlockMsg = null;
     // The two other overlays that own their own teardown: the ABORT RUN
@@ -413,7 +413,9 @@ export default class UIScene extends Phaser.Scene {
     this.scrim = this.add.rectangle(0, 0, w, VIEW_H, 0x2a2e3a, 0.55)
       .setOrigin(0).setVisible(false).setInteractive();
 
-    // null | 'open' (post-boss, paused) | 'situ' (in-fight, slow motion)
+    // Which wheel is up, or null for neither. The two are different controls:
+    //   'betweenFights'  hard pause, HUD hidden, weapons can actually be swapped
+    //   'midFight'       slow motion, HUD stays, you may only aim or switch off
     this.mode = null;
     this.aimSlot = null;
     this.press = null;
@@ -476,7 +478,7 @@ export default class UIScene extends Phaser.Scene {
    * `setMove(dir)` stayed latched, the player walked forever, and no movement
    * button responded again for the rest of the run. The fire pad latched into
    * endless auto-fire the same way, and the RE-QUIP button's stale `press`
-   * made the in-situ wheel permanently unreachable.
+   * made the mid-fight wheel permanently unreachable.
    *
    * One helper rather than three paired `.on` calls, so a handler added later
    * cannot reintroduce this by forgetting the second line.
@@ -609,7 +611,7 @@ export default class UIScene extends Phaser.Scene {
     if (this.pausePanel) return this.closePause();
     // The exit confirmation joins the list for the same reason the others are
     // on it: it already owns `paused`, and this panel would open beneath it.
-    if (this.cards || this.mode === 'open' || this.exitPanel) return;
+    if (this.cards || this.mode === 'betweenFights' || this.exitPanel) return;
     this.openPause();
   }
 
@@ -751,7 +753,7 @@ export default class UIScene extends Phaser.Scene {
     this.frameG = this.add.graphics();
     this.wheel.add(this.frameG);
     this.drawRing(cx);
-    // Kept as refs so the in-situ wheel can push the whole frame back — see
+    // Kept as refs so the mid-fight wheel can push the whole frame back — see
     // the scenery note in refreshWheel.
     this.clsLabels = [
       label(this, cx, LABEL_OFF_Y, 'OFFENSIVE', { color: '#5CADD5', origin: 0.5 }),
@@ -813,9 +815,9 @@ export default class UIScene extends Phaser.Scene {
      * A hold that meant one thing and a tap that meant another, on the same
      * disc, in a control that also had a swipe route into it, was three
      * gestures the player had to tell apart by feel with no feedback until
-     * after they had committed. Toggling what is RUNNING is the in-situ
+     * after they had committed. Toggling what is RUNNING is the mid-fight
      * wheel's whole job and it is one tap there; rearranging what you CARRY is
-     * the post-boss wheel's whole job and it is two taps there, in either
+     * the between-fights wheel's whole job and it is two taps there, in either
      * order. Nothing is timed.
      *
      * Still resolved at SCENE level rather than on the disc: a thumb drifts a
@@ -873,7 +875,7 @@ export default class UIScene extends Phaser.Scene {
     const lvl = label(this, cx, s.y + 15, '', { color: '#88AABB', origin: 0.5 });
     const slot = { ...s, chars: 3, disc: rect, abbr, lvl, id: null, cxm: cx };
     rect.on('pointerdown', () => { this.slotPress = { slot }; });
-    rect.on('pointerover', () => { if (this.mode === 'open') this.setReadout(slot.id); });
+    rect.on('pointerover', () => { if (this.mode === 'betweenFights') this.setReadout(slot.id); });
     this.wheel.add([rect, abbr, lvl]);
     return slot;
   }
@@ -891,7 +893,7 @@ export default class UIScene extends Phaser.Scene {
     const lvl = label(this, s.x, s.y + 3, '', { color: '#E0F0FF', origin: 0.5 });
     const slot = { ...s, chars, disc, abbr, lvl, id: null };
     disc.on('pointerdown', () => { this.slotPress = { slot }; });
-    disc.on('pointerover', () => { if (this.mode === 'open') this.setReadout(slot.id); });
+    disc.on('pointerover', () => { if (this.mode === 'betweenFights') this.setReadout(slot.id); });
     this.wheel.add([disc, abbr, lvl]);
     return slot;
   }
@@ -1008,20 +1010,20 @@ export default class UIScene extends Phaser.Scene {
        * of a swipe gesture, and leaving a stale press behind is precisely how
        * the wheel used to close itself (see the pointerup handler below).
        */
-      if (this.mode === 'open') { this.closeWheel(); return; }
+      if (this.mode === 'betweenFights') { this.closeWheel(); return; }
       /**
-       * DEV — `WHEEL: POST BOSS` makes the button always open the post-boss
+       * DEV — `WHEEL: POST BOSS` makes the button always open the between-fights
        * wheel, which is the one you want while building it. It is the only
        * branch that reaches past `inRequipRoom`, and it changes nothing else:
        * `canRequip` still gates equipping, so outside the real window the wheel
        * opens, reads and toggles exactly as it always did.
        */
       if (DEV.enabled && DEV.wheelMode === 'postboss') { this.openWheel(); return; }
-      if (this.mode !== 'situ' && this.inRequipRoom()) { this.openWheel(); return; }
+      if (this.mode !== 'midFight' && this.inRequipRoom()) { this.openWheel(); return; }
       const v = vpt(this, p);
       this.press = { id: p.id, x: v.x, y: v.y, swiping: false };
-      if (this.mode === 'situ') { this.closeWheel(); return; }
-      this.beginSitu();
+      if (this.mode === 'midFight') { this.closeWheel(); return; }
+      this.beginMidFight();
     });
 
     // Move and release are tracked at SCENE level, not on the button: a swipe
@@ -1029,7 +1031,7 @@ export default class UIScene extends Phaser.Scene {
     // its own pointer the moment it does.
     this.input.on('pointermove', (p) => {
       const pr = this.press;
-      if (!pr || p.id !== pr.id || !p.isDown || this.mode !== 'situ') return;
+      if (!pr || p.id !== pr.id || !p.isDown || this.mode !== 'midFight') return;
       const v = vpt(this, p);
       const dx = v.x - pr.x, dy = v.y - pr.y;
       if (Math.hypot(dx, dy) < SWIPE_DEADZONE) return;
@@ -1050,19 +1052,19 @@ export default class UIScene extends Phaser.Scene {
        *
        * It is a SCENE-LEVEL pointerup, needed because a swipe leaves the 60x20
        * RE-QUIP button within a few pixels. It used to end with
-       * `else if (this.mode === 'open') this.closeWheel()`. `this.press` is set
+       * `else if (this.mode === 'betweenFights') this.closeWheel()`. `this.press` is set
        * on the button's pointerdown and cleared only by a pointerup whose id
        * matches — so any press whose release went missing (a finger leaving the
        * canvas, a touch id reused, the boss dying between down and up) left a
        * stale press that the NEXT release anywhere on screen matched. If the
-       * post-boss wheel was up by then, that release shut it: the player let go
+       * between-fights wheel was up by then, that release shut it: the player let go
        * of a movement pad and the menu vanished.
        *
-       * The post-boss wheel already has four honest ways out — a tap on the
+       * The between-fights wheel already has four honest ways out — a tap on the
        * scrim with nothing in hand, Esc, the jump key, and the RE-QUIP button.
        * It does not need a fifth that fires on a release nobody aimed.
        */
-      if (pr.swiping && this.aimSlot) this.commitSitu();
+      if (pr.swiping && this.aimSlot) this.commitMidFight();
     });
 
     /**
@@ -1071,8 +1073,8 @@ export default class UIScene extends Phaser.Scene {
      * scrim only exists while a wheel is up.
      */
     this.scrim.on('pointerdown', (p) => {
-      if (this.mode === 'situ') { this.closeWheel(); return; }
-      if (this.mode !== 'open') return;
+      if (this.mode === 'midFight') { this.closeWheel(); return; }
+      if (this.mode !== 'betweenFights') return;
       // POST-BOSS, A TAP ON NOTHING IS A BACK BUTTON BEFORE IT IS AN EXIT.
       // With half a swap on screen it puts that half down; only a tap with
       // nothing in hand can close the wheel. Otherwise one fat-fingered miss
@@ -1103,7 +1105,7 @@ export default class UIScene extends Phaser.Scene {
   /**
    * THE POST-BOSS WHEEL ON A KEYBOARD — a cursor, per the field.
    *
-   * "The post-boss wheel shall have a simple cursor to cycle through the weapon
+   * "The between-fights wheel shall have a simple cursor to cycle through the weapon
    * you want attached and the slot you want it attached to. Repeat until escape
    * key or jump key."
    *
@@ -1152,18 +1154,18 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
-   * A slot chosen by key while the in-situ wheel is up: toggle it, then close.
+   * A slot chosen by key while the mid-fight wheel is up: toggle it, then close.
    * Same contract as tapping a module or swiping its diagonal.
    */
   /**
-   * Q or E: the post-boss wheel inside the re-quip window, the in-situ one
+   * Q or E: the between-fights wheel inside the re-quip window, the mid-fight one
    * outside it. The same decision the RE-QUIP button makes, so the keyboard and
    * the thumb reach the same control at the same moments.
    */
   beginRequipKey() {
     if (this.cards || this.pausePanel || this.exitPanel || this.game_.warp) return;
     if (this.inRequipRoom()) this.openWheel();
-    else this.beginSitu();
+    else this.beginMidFight();
   }
 
   /**
@@ -1180,7 +1182,7 @@ export default class UIScene extends Phaser.Scene {
    * able to stop it.
    *
    * `arena` is the room. Inside it, with the boss dead, there is nothing to
-   * stop; outside it, the button is the in-situ wheel exactly as before.
+   * stop; outside it, the button is the mid-fight wheel exactly as before.
    */
   inRequipRoom() {
     const gm = this.game_;
@@ -1188,7 +1190,7 @@ export default class UIScene extends Phaser.Scene {
       && !this.cards && !this.pausePanel && !this.exitPanel && !gm.warp;
   }
 
-  situKey(cls, index) {
+  midFightKey(cls, index) {
     const s = this.active.find(
       (a) => a.kind === 'slot' && a.cls === cls && a.index === index,
     );
@@ -1198,7 +1200,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
-   * The post-boss wheel, opened for you once the death animation has resolved.
+   * The between-fights wheel, opened for you once the death animation has resolved.
    *
    * ALWAYS opens, even when nothing can change — at mastery 0 with no benched
    * weapon there is still a free weapon level to show, and a reward the player
@@ -1244,7 +1246,7 @@ export default class UIScene extends Phaser.Scene {
     return false;
   }
 
-  /** Called every frame while a post-boss wheel is owed. */
+  /** Called every frame while a between-fights wheel is owed. */
   stepRequipWait() {
     if (this.requipWait === null || this.requipWait === undefined) return;
     // THE WINDOW CLOSING CANCELS THE REQUEST. Warping into the next arena, or
@@ -1261,16 +1263,16 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
-   * The in-situ wheel: time crawls, the ring ghosts in, nothing is committed.
+   * The mid-fight wheel: time crawls, the ring ghosts in, nothing is committed.
    *
-   * It is NOT the same control as the post-boss wheel and must not feel like
+   * It is NOT the same control as the between-fights wheel and must not feel like
    * it. Here the only thing you can touch is the four modules you are already
    * carrying — the sidelined weapons are drawn right down, because changing
    * what you CARRY is a between-fights decision and offering it here would be
    * offering something the game is about to refuse.
    */
-  beginSitu() {
-    this.mode = 'situ';
+  beginMidFight() {
+    this.mode = 'midFight';
     this.aimSlot = null;
     this.refreshWheel();
     this.wheel.setVisible(true).setAlpha(IDLE_ALPHA);
@@ -1280,9 +1282,9 @@ export default class UIScene extends Phaser.Scene {
     // A DEAD MAN'S HANDLE. Slow motion with no way out would be a soft lock for
     // anyone who opened this by accident, and the player's hands are already
     // full. Seven seconds is long enough to read four modules and decide.
-    this.situTimer?.remove();
-    this.situTimer = this.time.delayedCall(SITU_TIMEOUT_MS, () => {
-      if (this.mode === 'situ') this.closeWheel();
+    this.midFightTimer?.remove();
+    this.midFightTimer = this.time.delayedCall(MID_FIGHT_TIMEOUT_MS, () => {
+      if (this.mode === 'midFight') this.closeWheel();
     });
   }
 
@@ -1308,7 +1310,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /** Resolve the aimed diagonal: toggle that slot, then get out of the way. */
-  commitSitu() {
+  commitMidFight() {
     const s = this.aimSlot;
     this.aimSlot = null;
     if (s) this.toggleSlot(s);
@@ -1338,7 +1340,7 @@ export default class UIScene extends Phaser.Scene {
      * gesture felt good underneath all of it. They go to the same band as the
      * benched discs: present enough to place the grid, quiet enough to ignore.
      */
-    const scenery = this.mode === 'situ';
+    const scenery = this.mode === 'midFight';
     this.lockG.setAlpha(scenery ? 0.2 : 1);
     this.frameG.setAlpha(scenery ? 0.25 : 1);
     for (const t of this.clsLabels) t.setAlpha(scenery ? 0.3 : 1);
@@ -1370,7 +1372,7 @@ export default class UIScene extends Phaser.Scene {
      * still looking for a home selects itself when the wheel opens (see
      * openWheel), so the acquire case needs no separate highlight of its own.
      */
-    const held = this.mode === 'open' ? this.pick?.id || r.pendingLoadout : null;
+    const held = this.mode === 'betweenFights' ? this.pick?.id || r.pendingLoadout : null;
     const wanted = held ? classOf(held) : null;
 
     for (const s of [...this.active, ...this.arc]) {
@@ -1430,8 +1432,8 @@ export default class UIScene extends Phaser.Scene {
           // A module that could take the weapon currently selected on the ring.
           open: !!wanted && s.cls === wanted && !s.rankLocked
             && Loadout.canEquip(lo, held, s.index),
-          // Only in the post-boss wheel: mid-fight the drop has not happened.
-          fresh: this.mode === 'open' && !!s.id && s.id === r.freshWeapon,
+          // Only in the between-fights wheel: mid-fight the drop has not happened.
+          fresh: this.mode === 'betweenFights' && !!s.id && s.id === r.freshWeapon,
         });
       } else {
         this.paintDisc(s, {
@@ -1562,16 +1564,16 @@ export default class UIScene extends Phaser.Scene {
    *
    * TWO WHEELS, INVERSE EMPHASIS. After a boss falls the sidelined weapons are
    * the point, so every one you own burns at FULL strength — they are what the
-   * wheel opened to offer. In the in-situ wheel they are not available at all —
+   * wheel opened to offer. In the mid-fight wheel they are not available at all —
    * you cannot change what you CARRY mid-fight — so they drop right back and
    * stop reading as things to touch. The player never has to be told which
    * wheel they are in; the brightness says it.
    */
   paintDisc(s, { wd, unlocked, picked, fresh }) {
     const fill = unlocked ? hexNum(wd.palette.primary || '#5CADD5') : LOCKED_FILL;
-    const situ = this.mode === 'situ';
+    const midFight = this.mode === 'midFight';
     s.disc.setFillStyle(fill)
-      .setAlpha(situ ? SITU_BENCH_ALPHA : unlocked ? BENCH_ALPHA : LOCKED_ALPHA)
+      .setAlpha(midFight ? MID_FIGHT_BENCH_ALPHA : unlocked ? BENCH_ALPHA : LOCKED_ALPHA)
       // A picked weapon is held slightly off the ring — a size change survives
       // being small, dark and next to seventeen other coloured dots in a way a
       // colour change does not.
@@ -1579,7 +1581,7 @@ export default class UIScene extends Phaser.Scene {
       .setStrokeStyle(picked ? 2 : 1,
         picked ? 0xFFFFFF : hexNum(wd.palette.outline || '#0A0A12'));
 
-    if (situ) return;
+    if (midFight) return;
 
     /**
      * THE HALO — reserved for the weapon this boss just dropped.
@@ -1613,7 +1615,7 @@ export default class UIScene extends Phaser.Scene {
    * never be able to do that.
    */
   openWheel() {
-    this.mode = 'open';
+    this.mode = 'betweenFights';
     this.target = null;
     // Opened by hand, so there is nothing left owed.
     this.requipWait = null;
@@ -1629,7 +1631,7 @@ export default class UIScene extends Phaser.Scene {
     // The HUD goes away for the POST-BOSS route only. The game is stopped, so
     // score and energy are not telling you anything you need right now, and the
     // dev diagnostic line runs straight through where the sidearm sits. The
-    // in-situ route keeps it, because there the fight is still happening.
+    // mid-fight route keeps it, because there the fight is still happening.
     this.hud.setVisible(false);
     this.refreshWheel();
     this.aimSlot = null;
@@ -1692,7 +1694,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   closeWheel() {
-    const wasSitu = this.mode === 'situ';
+    const wasMidFight = this.mode === 'midFight';
     this.mode = null;
     this.cursorAt = null;
     this.target = null;
@@ -1704,13 +1706,13 @@ export default class UIScene extends Phaser.Scene {
     // fire a slot tap into the next wheel that opens.
     this.press = null;
     this.slotPress = null;
-    this.situTimer?.remove();
-    this.situTimer = null;
+    this.midFightTimer?.remove();
+    this.midFightTimer = null;
     this.aimG.clear();
-    // Time comes back whichever way the in-situ wheel was left — swiped,
+    // Time comes back whichever way the mid-fight wheel was left — swiped,
     // tapped, timed out or cancelled. Leaving slow motion running because a
     // gesture ended down an unexpected branch would be unrecoverable.
-    if (wasSitu) this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
+    if (wasMidFight) this.game_.setTimeScale(1, FEEL.requipSlowOutFrames);
     this.hud.setVisible(true);
     // Closing on an unresolved acquire IS the answer: the new weapon goes to
     // the bench. It keeps its level and stays one tap away in the arc, so this
@@ -1770,7 +1772,7 @@ export default class UIScene extends Phaser.Scene {
      * discoverable without a tutorial. The picked weapon wins over the selected
      * module because it is the half that moves.
      */
-    if (this.mode === 'open' && (this.pick || this.target)) {
+    if (this.mode === 'betweenFights' && (this.pick || this.target)) {
       const held = this.pick?.id;
       if (held) {
         this.readName.setText(weaponOf(held).name);
@@ -1791,7 +1793,7 @@ export default class UIScene extends Phaser.Scene {
     // The consolation level from a boss you had already beaten. Announced here
     // because this wheel opens for it — without a line saying so, a silent +1
     // buried in a weapon's level is a reward nobody notices.
-    if (r.bonusLevel && this.mode === 'open') {
+    if (r.bonusLevel && this.mode === 'betweenFights') {
       this.readName.setText(weaponOf(r.bonusLevel).name);
       this.readLv.setText(`+1 LEVEL  NOW LV ${r.wpLevels[r.bonusLevel] || 1}`);
       return;
@@ -1840,7 +1842,7 @@ export default class UIScene extends Phaser.Scene {
 
     // IN SITU THE RING IS SCENERY. Nothing on it can be taken mid-fight, so
     // nothing on it answers a touch.
-    if (this.mode === 'situ') {
+    if (this.mode === 'midFight') {
       if (s.kind !== 'slot' || s.rankLocked || !s.id) return;
       this.toggleSlot(s);
       this.closeWheel();
@@ -1900,7 +1902,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   /**
-   * The in-situ tap: what a module does when you touch it mid-fight.
+   * The mid-fight tap: what a module does when you touch it mid-fight.
    *
    * OFFENSIVE modules AIM — see GameScene.aimWeapon. Offensive weapons share
    * one fire button, so with two of them live the useful question is which one
@@ -1916,7 +1918,7 @@ export default class UIScene extends Phaser.Scene {
    * standing refuses so the fire button is never dead. The gesture does not
    * change and the cyan border always says which one won.
    *
-   * Unlike equipping, none of this is gated to the post-boss window. It cannot
+   * Unlike equipping, none of this is gated to the between-fights window. It cannot
    * change what you are carrying, only which of it is awake and which of it you
    * are holding, and that is a moment-to-moment call.
    */
@@ -2075,7 +2077,7 @@ export default class UIScene extends Phaser.Scene {
     r.pendingLevelUps = Math.max(0, r.pendingLevelUps - 1);
     // More levels banked (one big orb can grant several) — straight into the next.
     if (r.pendingLevelUps > 0) this.openCards();
-    // Only the overlay that paused the game may unpause it. The post-boss wheel
+    // Only the overlay that paused the game may unpause it. The between-fights wheel
     // is also a hard pause, so resuming here while one is open would run the
     // game under a scrim that eats every input.
     else if (!this.mode) this.game_.paused = false;
@@ -2087,7 +2089,7 @@ export default class UIScene extends Phaser.Scene {
 
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);
-    // A post-boss wheel that has been asked for but is waiting on the room to
+    // A between-fights wheel that has been asked for but is waiting on the room to
     // settle. Checked every frame rather than fired off a timer — see
     // promptRequip.
     this.stepRequipWait();
@@ -2095,7 +2097,7 @@ export default class UIScene extends Phaser.Scene {
     /**
      * `!this.mode` IS PART OF THE GATE. `stepRequipWait` runs a few lines above
      * this in the same update(), so without it a level-up card screen could be
-     * raised on top of an already-open post-boss wheel — and that wheel is a
+     * raised on top of an already-open between-fights wheel — and that wheel is a
      * HARD pause. Taking the card then ran closeCards, which unconditionally
      * sets `paused = false`, so the run resumed underneath a wheel whose scrim
      * swallows every touch control: damage, hazards and death carried on and
@@ -2125,7 +2127,7 @@ export default class UIScene extends Phaser.Scene {
     //
     // IT IS DROPPED WHILE A WHEEL IS UP. Three stacked lines reach y=40, which
     // is exactly where the wheel's sidearm dot and its caption sit, and the
-    // in-situ wheel deliberately keeps the HUD — so the one overlay in the game
+    // mid-fight wheel deliberately keeps the HUD — so the one overlay in the game
     // that is pure diagnostics was drawing straight through the control the
     // owner was trying to judge. Energy and the live weapon stay; the build,
     // seed and density are not things you read mid-gesture.
@@ -2149,7 +2151,7 @@ export default class UIScene extends Phaser.Scene {
     /**
      * DEV — THE LOADOUT WHEEL, HANDED OVER ON THE FIRST FRAME OF THE RUN.
      *
-     * The real post-boss wheel, opened by the same call a boss death makes.
+     * The real between-fights wheel, opened by the same call a boss death makes.
      * Dev mode does not bypass `canRequip`, so without this the arsenal is
      * unreachable until the first boss falls — which is the wrong order for a
      * session that wants to test a weapon AGAINST a fight. Granted, not
@@ -2193,7 +2195,7 @@ export default class UIScene extends Phaser.Scene {
         this.unlockMsg = null;
         r.justUnlocked = null;
       }
-    } else if (r.pendingLoadout && this.mode !== 'open'
+    } else if (r.pendingLoadout && this.mode !== 'betweenFights'
       && !this.cards && !this.pausePanel && !gm.warp) {
       // Deliberately after the banner has run its course, so the player has
       // read WHAT they got before being asked where to put it.

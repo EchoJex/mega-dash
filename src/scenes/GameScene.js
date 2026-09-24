@@ -131,7 +131,7 @@ export default class GameScene extends Phaser.Scene {
      *
      *   A / D          walk            SPACE    jump (double-tap to slide)
      *   W              aim up          RSHIFT   fire
-     *   arrows         walk (kept)     Q / E    open the in-situ wheel
+     *   arrows         walk (kept)     Q / E    open the mid-fight wheel
      *   ESC / ENTER    pause           ESC      close a wheel
      *
      * JUMP AND FIRE SWAPPED SIDES, and the swap is the point. Space is the
@@ -164,22 +164,22 @@ export default class GameScene extends Phaser.Scene {
      * and a held fire would re-stamp `fireStart` so no charge could ever build.
      */
     this.input.keyboard.on('keydown-SPACE', () => {
-      // The jump key is the post-boss wheel's other exit while it is up —
+      // The jump key is the between-fights wheel's other exit while it is up —
       // checked before the jump so leaving the menu never also launches the
       // player.
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'open') { ui.closeWheel(); return; }
+      if (ui?.mode === 'betweenFights') { ui.closeWheel(); return; }
       if (ui?.pausePanel || ui?.cards) return;
       if (!this.intent.jumpHeld) this.doJump();
     });
     this.input.keyboard.on('keyup-SPACE', () => this.endJump());
     this.input.keyboard.on('keydown-SHIFT', () => {
-      // The post-boss wheel borrows the fire key as its confirm, so firing
+      // The between-fights wheel borrows the fire key as its confirm, so firing
       // stands down while it is up. Both handlers are bound to the same key and
       // both run; without this, confirming a swap also queued a shot for the
       // frame the game resumed on.
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'open' || ui?.pausePanel || ui?.cards) return;
+      if (ui?.mode === 'betweenFights' || ui?.pausePanel || ui?.cards) return;
       if (!this.intent.fireHeld) this.beginFire();
     });
     /**
@@ -190,7 +190,7 @@ export default class GameScene extends Phaser.Scene {
      * release with no matching press still set `fireReleased` — and only step()
      * clears that, which a paused game does not run.
      *
-     * SHIFT is the post-boss wheel's confirm and sits next to the pause key, so
+     * SHIFT is the between-fights wheel's confirm and sits next to the pause key, so
      * this fired constantly: `releaseFire()` measured `now - fireStart` against
      * a `fireStart` from seconds earlier (or 0), decided the shot was fully
      * charged, and spat one out on the frame the game resumed. Exactly the bug
@@ -209,13 +209,13 @@ export default class GameScene extends Phaser.Scene {
      * the right — so the mapping is spatial rather than memorised, exactly like
      * the four diagonals on a touchscreen.
      */
-    const SITU_KEYS = { Q: ['offensive', 0], E: ['offensive', 1],
+    const MID_FIGHT_KEYS = { Q: ['offensive', 0], E: ['offensive', 1],
       Z: ['defensive', 0], C: ['defensive', 1] };
-    for (const [key, [cls, index]] of Object.entries(SITU_KEYS)) {
+    for (const [key, [cls, index]] of Object.entries(MID_FIGHT_KEYS)) {
       this.input.keyboard.on(`keydown-${key}`, () => {
         const ui = this.scene.get('UI');
         if (!ui) return;
-        if (ui.mode === 'situ') ui.situKey(cls, index);
+        if (ui.mode === 'midFight') ui.midFightKey(cls, index);
         // Only Q and E open it. Z and C would be a surprise to anyone who
         // pressed them with the wheel down and no way to know what they meant.
         else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginRequipKey();
@@ -232,7 +232,7 @@ export default class GameScene extends Phaser.Scene {
     for (const [key, d] of [['LEFT', -1], ['RIGHT', 1], ['A', -1], ['D', 1]]) {
       this.input.keyboard.on(`keydown-${key}`, () => {
         const ui = this.scene.get('UI');
-        if (ui?.mode === 'open') ui.cursorStep(d);
+        if (ui?.mode === 'betweenFights') ui.cursorStep(d);
         else if (ui?.pausePanel) ui.pauseStep(d);
       });
     }
@@ -246,7 +246,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.input.keyboard.on('keydown-SHIFT', () => {
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'open') ui.cursorPick();
+      if (ui?.mode === 'betweenFights') ui.cursorPick();
     });
 
     /**
@@ -348,12 +348,12 @@ export default class GameScene extends Phaser.Scene {
       // it after 2.5s, and the halo has to survive as long as the window does.
       freshWeapon: null,
       // A free level from re-beating a boss whose weapon you already own; the
-      // post-boss wheel announces it and then clears it.
+      // between-fights wheel announces it and then clears it.
       bonusLevel: null,
       // Set when the player touches the exit door with the re-quip window still
       // open; UIScene turns it into the confirmation pop-up.
       confirmExit: null,
-      // DEV — ask UIScene to open the post-boss wheel once the first frame has
+      // DEV — ask UIScene to open the between-fights wheel once the first frame has
       // drawn. See DEV.requipAtStart; it is cleared the moment it is honoured.
       devRequipPending: false,
     };
@@ -2885,8 +2885,8 @@ export default class GameScene extends Phaser.Scene {
       }
       const bf = Attr.statusFlash(b.status);
       if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.boss.gOver.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
-        L.boss.gOver.fillRect(sx(b.x), sy(b.y), b.w, b.h);
+        L.boss.gAboveSprites.fillStyle(bf.tint, 0.45 * bf.alpha * Attr.statusIntensity(b.status));
+        L.boss.gAboveSprites.fillRect(sx(b.x), sy(b.y), b.w, b.h);
       }
     }
 
@@ -2894,7 +2894,7 @@ export default class GameScene extends Phaser.Scene {
     // and scrolls with everything else and sits exactly where the body was.
     // Over the sprites for the same reason the player's flash is: a death that
     // drew behind the body would be invisible the day bosses have art.
-    for (const d of this.deaths) Death.drawDeath(L.boss.gOver, sx, d, sy);
+    for (const d of this.deaths) Death.drawDeath(L.boss.gAboveSprites, sx, d, sy);
 
     // player — flashes while invulnerable
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {
@@ -2915,13 +2915,13 @@ export default class GameScene extends Phaser.Scene {
       // than tinting leaves the suit readable underneath, so a status never
       // makes the player harder to find on a busy screen.
       //
-      // ON `gOver`, NOT `g`. The player has real art now, and within a layer
+      // ON `gAboveSprites`, NOT `g`. The player has real art now, and within a layer
       // sprites draw above shapes — so every one of these would have gone
       // behind him and silently stopped existing.
       const pf = Attr.statusFlash(this.status);
       if (pf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
-        L.player.gOver.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
-        L.player.gOver.fillRect(sx(p.x), sy(p.y + (p.sliding ? 12 : 0)), 24, p.sliding ? 12 : 24);
+        L.player.gAboveSprites.fillStyle(pf.tint, 0.45 * pf.alpha * Attr.statusIntensity(this.status));
+        L.player.gAboveSprites.fillRect(sx(p.x), sy(p.y + (p.sliding ? 12 : 0)), 24, p.sliding ? 12 : 24);
       }
     }
 
@@ -2938,7 +2938,7 @@ export default class GameScene extends Phaser.Scene {
      * Still on the player's layer, so the drone and the shield sit above every
      * world actor with him.
      */
-    Wpn.drawWeaponry(L.player.gOver, sx, this.weaponCtx());
+    Wpn.drawWeaponry(L.player.gAboveSprites, sx, this.weaponCtx());
 
     /**
      * THE ROOM LOSING POWER. Volt Man's layer-2 sweep ends by flickering the

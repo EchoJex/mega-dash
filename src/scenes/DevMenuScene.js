@@ -272,7 +272,7 @@ export default class DevMenuScene extends Phaser.Scene {
       this.flag('LAYER WRAP', 'cycleLayers',
         ['AFTER THREE CLEARS OF ONE BOSS',
           'ON: LAYERS LOOP 1-2-3. OFF: STICK AT 3']),
-      // The post-boss wheel, granted at run start. See DEV.requipAtStart — this
+      // The between-fights wheel, granted at run start. See DEV.requipAtStart — this
       // is the only way to reach the loadout without beating a boss first.
       this.flag('LOADOUT NOW', 'requipAtStart',
         ['ON: RUN OPENS ON THE RE-QUIP WHEEL',

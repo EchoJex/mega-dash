@@ -536,7 +536,7 @@ A puff may now **name a weapon** (`ctx.puff({ ..., weapon: 'volt_spark' })`), an
 `GameScene` routes a named puff through the bullets layer with `drawPuff` as the fallback.
 Any other hitscan weapon gets the same by naming itself.
 
-**A SPRITE WITH ONE ANIMATION PLAYS ITSELF** (`soleClip`). `actor.clip` exists because the
+**A SPRITE WITH ONE ANIMATION PLAYS ITSELF** (`onlyClipOf`). `actor.clip` exists because the
 player has six and only `GameScene` knows which one his velocity means; a projectile has
 one and nothing was ever going to set it, so a six-frame spark loaded, drew, and held frame
 1 forever. An actor that grows a SECOND animation goes back to naming its own clip — and
@@ -870,14 +870,14 @@ Read them as the same ladder offset by the sidearm: a slot, then simultaneity, t
 last restriction lifted. Rank 2 offensive looks smallest and is not — your thumb aims one
 weapon either way, but at rank 1 switching to the special *silences* the sidearm.
 
-**Where a rank caps how many may run, the in-situ tap becomes a radio switch** rather than
+**Where a rank caps how many may run, the mid-fight tap becomes a radio switch** rather than
 an on/off. The gesture never changes and the cyan border always says which one won, so the
 player never has to know it changed meaning. The offensive row is never allowed to reach
 zero live weapons; defensive is "up to N", so zero is legal there.
 
 **LIVE AND AIMED ARE DIFFERENT STATES, and the offensive row needs both.** Offensive
 weapons share one fire button, so from rank 2 two of them run at once and exactly one is on
-the trigger. Touching an offensive module in-situ **aims** it; touching the one already
+the trigger. Touching an offensive module mid-fight **aims** it; touching the one already
 aimed switches it off and hands the trigger to the other. `GameScene.aimWeapon` is the only
 thing that moves the trigger — `normaliseActive` cannot, because it only reacts when the
 current weapon has stopped being firable. Without it a full offensive row still only ever
@@ -912,10 +912,10 @@ to be told which one they are in — the brightness says it.
 | the gesture | one tap, or one diagonal swipe | **two taps, in either order** |
 | exits | RE-QUIP again · diagonal swipe · slot tap · tap off the wheel · 7s timeout | Esc / tap away |
 
-**The RE-QUIP button can never open the post-boss wheel DURING A FIGHT.** In a fight it
-opens the in-situ wheel on contact and a second press puts it away. It used to do both — a
+**The RE-QUIP button can never open the between-fights wheel DURING A FIGHT.** In a fight it
+opens the mid-fight wheel on contact and a second press puts it away. It used to do both — a
 leftover from the era when tap and swipe were two ways into one control — so the second tap
-closed the in-situ wheel on the way down and then opened the *hard-paused* between-fights
+closed the mid-fight wheel on the way down and then opened the *hard-paused* between-fights
 wheel on the way up, in the middle of a live fight. A control resting under the player's
 thumb during a fight must not be able to stop the game.
 
@@ -923,7 +923,7 @@ thumb during a fight must not be able to stop the game.
 exception to the rule above, it is the rule's own boundary.** In a sealed room whose boss
 is dead there is no live fight to stop. The game opens this same wheel by itself at the
 start of that window, so refusing to reopen it only meant that dismissing it once cost the
-player the whole window. Anywhere else the post-boss wheel is still opened by
+player the whole window. Anywhere else the between-fights wheel is still opened by
 `promptRequip`, by an unresolved drop, and by nothing else.
 
 **BOTH HALVES OF "IN THE BOSS ROOM" ARE LOAD-BEARING — `inRequipRoom`, not `canRequip`.**
@@ -987,7 +987,7 @@ Volt Spark — and it only works because re-quipping is no longer done under fir
 weapons, no modules past your mastery rank. At 0/0 the wheel is one module holding the
 sidearm.
 
-### The post-boss wheel — two taps, in either order
+### The between-fights wheel — two taps, in either order
 
 **Tap a weapon then a module, or a module then a weapon.** The first tap of the pair only
 ever *selects* — a white ring on a weapon, white corners on a module, and the modules that
@@ -1335,7 +1335,7 @@ whenever they land, per actor, via `MANIFEST` — the game stays playable withou
 **The player's sheet has landed** (`public/sprites/player.png`, 336×24, fourteen 24×24
 frames — twelve at the handoff, and a slide that has since grown from two poses to three). It is the first real art in the game and the proof the abstraction works: landing
 it changed no gameplay code. Two things it did need, and both are general rather than
-player-specific — an `ActorLayer.gOver` graphics that stays above the layer's sprites (a
+player-specific — an `ActorLayer.gAboveSprites` graphics that stays above the layer's sprites (a
 status flash drawn on `g` goes *behind* the art), and the jump registered as three
 one-frame clips so `playerClip()` can pick the pose from `vy` instead of looping.
 
@@ -1503,7 +1503,7 @@ choice.
 | slide | **double-tap jump** | **double-tap jump** |
 | fire | `RSHIFT` (either shift) | fire pad |
 | pause | `ESC` / `ENTER` | the `||` plate |
-| in-situ wheel | `Q` / `E`, then `Q`/`E`/`Z`/`C` | RE-QUIP, then swipe a diagonal or tap a slot |
+| mid-fight wheel | `Q` / `E`, then `Q`/`E`/`Z`/`C` | RE-QUIP, then swipe a diagonal or tap a slot |
 | close a wheel | `ESC`, or jump | tap off the wheel |
 
 **The slide has no key of its own on either surface.** Both get it from the double-tap,
@@ -1679,7 +1679,7 @@ save can never be shaped by a setting they cannot see. `fullReset` clears both.
 **THE LOADOUT WHEEL IS GRANTED AT RUN START** (`requipAtStart`, the LOADOUT NOW row). Dev
 mode still does **not** bypass `canRequip` — a loadout change is an event you earn, and a
 playtest that could re-quip at will was never testing the thing being designed. So instead
-the run *opens* on the real post-boss wheel: same control, same window, same rules, granted
+the run *opens* on the real between-fights wheel: same control, same window, same rules, granted
 rather than skipped, and it shuts on the first arena warp like any other. **That is also
 the answer to re-quipping mid-run — abort the run**, which is the trade the owner asked
 for. Esc or a tap off the wheel dismisses it.
@@ -1858,7 +1858,7 @@ script that opens a panel and screenshots it at both 320 and 480 virtual width c
 minute and settles it.
 
 **Two knobs the owner expects to tune after playing:** `FEEL.slideTapFrames` (the
-jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (currently 7000).
+jump→slide cancel window, currently 8) and `MID_FIGHT_TIMEOUT_MS` in UIScene (currently 7000).
 
 
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A

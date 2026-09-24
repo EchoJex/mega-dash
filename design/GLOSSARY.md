@@ -115,7 +115,8 @@ it reads better. Nobody has to translate.
 | **mastery** | The meta upgrade that decides how many slots you own at all, and how many run at once. Rank 0 to 3, bought separately for each class. |
 | **re-quip** | Changing which weapons are in your slots. Coined here; it just means re-equip. |
 | **the wheel** | The screen where you do it. Two modes: the **mid-fight wheel** (slow motion, aim or switch off a slot, nothing else) and the **between-fights wheel** (hard pause, actually swap weapons). |
-| **in-situ** | The code's name for the mid-fight wheel. It is Latin for "in place" and it is jargon — `SITU_TIMEOUT_MS` is that mode's seven-second cut-off. |
+| **in-situ** | RETIRED. It was the code's name for the mid-fight wheel — Latin for "in place" — and you will still meet it in commits before the rename. It means `midFight`, and its timeout is now `MID_FIGHT_TIMEOUT_MS`. |
+| **post-boss** | RETIRED, same way. The between-fights wheel, `betweenFights` in the code. |
 
 ## What you earn
 

@@ -206,8 +206,8 @@ test('the overlay graphics stays above sprites added after it', () => {
   layer.draw({ ...box, id: 'late' });
   layer.end();
   const order = layer.root.order;
-  assert.ok(order.indexOf(layer.gOver) > order.indexOf(layer.g),
+  assert.ok(order.indexOf(layer.gAboveSprites) > order.indexOf(layer.g),
     'the overlay must sit above the base graphics');
-  assert.equal(order[order.length - 1], layer.gOver,
+  assert.equal(order[order.length - 1], layer.gAboveSprites,
     'a sprite acquired after construction must not get above the overlay');
 });

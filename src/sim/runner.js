@@ -29,7 +29,7 @@ function stub(game) {
 
   // `die()` writes runs and Chips into the save and starts the Title scene.
   gs.die = function simDie() { this.simDied = true; };
-  // The post-boss wheel hard-pauses the game. There is nobody to dismiss it.
+  // The between-fights wheel hard-pauses the game. There is nobody to dismiss it.
   if (ui) {
     ui.promptRequip = () => {};
     ui.openWheel = () => {};

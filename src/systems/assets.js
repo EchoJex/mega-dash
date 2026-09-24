@@ -119,7 +119,7 @@ export const hasArt = (id) => Object.prototype.hasOwnProperty.call(MANIFEST, id)
  * frame 1 forever. Any actor that grows a second animation goes back to naming
  * its own clip, which is the honest point to start deciding.
  */
-const soleClip = (id) => {
+const onlyClipOf = (id) => {
   const names = Object.keys(MANIFEST[id]?.anims ?? {});
   return names.length === 1 ? names[0] : null;
 };
@@ -267,15 +267,15 @@ export class ActorLayer {
      *
      * Anything that must sit ON an actor rather than behind it goes here.
      */
-    this.gOver = scene.add.graphics();
-    this.root.add(this.gOver);
+    this.gAboveSprites = scene.add.graphics();
+    this.root.add(this.gAboveSprites);
     this.pools = new Map();   // manifest id -> Sprite[]
     this.cursor = new Map();  // manifest id -> how many used this frame
   }
 
   begin() {
     this.g.clear();
-    this.gOver.clear();
+    this.gAboveSprites.clear();
     this.cursor.clear();
   }
 
@@ -299,7 +299,7 @@ export class ActorLayer {
     if (actor.facing) s.setFlipX(actor.facing < 0);
     if (def.tintable && actor.palette?.primary) s.setTint(hexNum(actor.palette.primary));
 
-    const clip = actor.clip ?? soleClip(actor.id);
+    const clip = actor.clip ?? onlyClipOf(actor.id);
     if (def.anims && clip) {
       const key = `${actor.id}:${clip}`;
       if (this.scene.anims.exists(key) && s.anims?.getName() !== key) s.play(key, true);
@@ -360,7 +360,7 @@ export class ActorLayer {
     this.root.add(s);
     // The pool only grows, so this runs a handful of times per layer per run —
     // and it is the one place a new sprite could get above the overlay.
-    this.root.bringToTop?.(this.gOver);
+    this.root.bringToTop?.(this.gAboveSprites);
     arr.push(s);
     return s;
   }

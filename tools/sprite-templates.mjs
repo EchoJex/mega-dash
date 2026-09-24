@@ -522,7 +522,7 @@ const menuRows = [
   { slug: 'move_right', label: 'PAD RIGHT', w: COL_W, h: PAD_H, note: 'the outer right pad' },
   { slug: 'jump', label: 'JUMP PAD', w: ACT_W, h: PAD_H, note: 'double-tap is the slide' },
   { slug: 'fire', label: 'FIRE PAD', w: ACT_W, h: PAD_H, note: 'aims whichever offensive weapon holds the trigger' },
-  { slug: 'requip', label: 'RE-QUIP BUTTON', w: REQ_W, h: REQ_H, note: 'opens the in-situ wheel on contact' },
+  { slug: 'requip', label: 'RE-QUIP BUTTON', w: REQ_W, h: REQ_H, note: 'opens the mid-fight wheel on contact' },
   { slug: 'pause', label: 'PAUSE PLATE', w: +pausePlate[1], h: +pausePlate[2], note: 'the || plate, top right' },
   { slug: 'slot_offensive', label: 'OFFENSIVE SLOT', w: MOD_SZ, h: MOD_SZ, note: 'a wheel module. A cyan bar along its bottom says the fire button is pointed here' },
   { slug: 'slot_defensive', label: 'DEFENSIVE SLOT', w: MOD_SZ, h: MOD_SZ, note: 'a wheel module. Never draws the aimed bar - every live defensive slot acts at once' },

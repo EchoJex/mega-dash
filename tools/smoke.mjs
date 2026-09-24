@@ -128,7 +128,7 @@ const started = await page.evaluate(() => !!globalThis.__game.scene.getScene('Ga
 if (!started) fail('the run never started');
 
 /**
- * Dismiss the loadout wheel. A dev-mode run opens on the post-boss re-quip
+ * Dismiss the loadout wheel. A dev-mode run opens on the between-fights re-quip
  * window (DEV.requipAtStart), which is a hard pause — so without this every
  * key press below lands on a stopped simulation and the whole script proves
  * nothing. Esc is the shipping way out of it, so this exercises that too.
@@ -137,6 +137,31 @@ await page.keyboard.press('Escape');
 await page.waitForTimeout(400);
 const running = await page.evaluate(() => !globalThis.__game.scene.getScene('Game').paused);
 if (!running) fail('still paused after Esc — did the start-of-run wheel close?');
+
+/**
+ * THE MID-FIGHT WHEEL, WHICH NOTHING ELSE HERE TOUCHES.
+ *
+ * The two wheels are told apart by a string on `UIScene.mode`, and a string
+ * comparison is the one thing that fails SILENTLY when it is wrong: a stale
+ * value on either side just means a branch never runs, no error, no crash.
+ * That very nearly shipped during the `in-situ` -> `midFight` rename, and the
+ * 0.1s suite cannot see it because it has no scenes.
+ *
+ * Q opens it, Q again puts it away. Slow motion rather than a hard pause is
+ * the whole difference from the wheel dismissed just above.
+ */
+await page.keyboard.press('KeyQ');
+await page.waitForTimeout(350);
+const mid = await page.evaluate(() => ({
+  mode: globalThis.__game.scene.getScene('UI')?.mode ?? null,
+  paused: !!globalThis.__game.scene.getScene('Game').paused,
+}));
+if (mid.mode !== 'midFight') fail(`Q did not open the mid-fight wheel (mode: ${mid.mode})`);
+if (mid.paused) fail('the mid-fight wheel hard-paused the game; it should only slow it');
+await page.keyboard.press('KeyQ');
+await page.waitForTimeout(350);
+const shut = await page.evaluate(() => globalThis.__game.scene.getScene('UI')?.mode ?? null);
+if (shut !== null) fail(`Q did not put the mid-fight wheel away (mode: ${shut})`);
 
 await play(6, ['ArrowRight', 'Space', 'ShiftRight', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyW']);
 await page.screenshot({ path: shot('area.png') });

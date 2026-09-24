@@ -646,7 +646,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## The re-quip wheel
 
-- **mid-fight wheel** `[ready]` Opened by the RE-QUIP button during a fight. Slow motion, HUD stays up, the ring of weapons is dimmed to scenery and cannot be touched — you may aim a slot or switch one off, and nothing else. One tap, or one diagonal swipe. It closes itself after seven seconds, because slow motion with no way out is a soft lock for anyone who opened it by accident. The code calls this mode `in-situ`, which is Latin for "in place"; `SITU_TIMEOUT_MS` is that seven seconds.
+- **mid-fight wheel** `[ready]` Opened by the RE-QUIP button during a fight. Slow motion, HUD stays up, the ring of weapons is dimmed to scenery and cannot be touched — you may aim a slot or switch one off, and nothing else. One tap, or one diagonal swipe. It closes itself after seven seconds, because slow motion with no way out is a soft lock for anyone who opened it by accident. The code calls this mode `midFight` and the seven seconds `MID_FIGHT_TIMEOUT_MS`. It used to be called `in-situ`, which is Latin for "in place" and told you nothing.
 - **between-fights wheel** `[ready]` Opens by itself after the boss death animation has fully resolved plus a small delay. Hard pause, while staying in the boss room after their defeat, continue to use this Post Boss mode. This mode is the only way the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon. Continue allowing adjustments until the player taps outside the wheel
 - **ring layout** `[ready]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately. Maintain a distinct gap between the top half and the bottom half separating offensive slots and offensive weapons vs defensive slots and defensive weapons
 - **keyboard and gamepad** `[ready]` There is no way to re-quip without a mouse or a touchscreen. The mid-fight wheel has Q/E/Z/C; the between-fights wheel shall have a simple cursor to cycle through the weapon you want attached and the slot you want it attached to. Repeat until escape key or jump key
@@ -691,7 +691,7 @@ still describing it, and `[ready]` means already fixed.
 | build | status | bug |
 |---|---|---|
 | other | `[ready]` | Dev mode boss picker does not work when after returning to Dev mode options screen |
-| other | `[ready]` | In Dev mode only, Re-quip wheel should just always act like post boss wheel. Dev mode toggle for how the wheel should behave (playtester version with both in situ and post boss vs post boss wheel at all times) |
+| other | `[ready]` | In Dev mode only, Re-quip wheel should just always act like between fights wheel. Dev mode toggle for how the wheel should behave (playtester version with both mid-fight and between fights vs between fights wheel at all times) |
 | 1111 (main) | `[ready]` | Post Boss Re-quip wheel: increase the touch tolerance when selecting a weapon; exciting out of this wheel should require tapping in the movement or action button zones |
 
 
