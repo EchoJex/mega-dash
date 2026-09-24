@@ -364,6 +364,12 @@ console.log(`\n${ran.length} simulated, ${skipped.length} skipped, ${secs}s\n`);
  * saved run is a FILE and therefore a commit: `git log design/sim/` is the
  * history of how hard this game has been, and any two runs are a `git diff`.
  *
+ * THE DIRECTORY STARTS EMPTY and is not committed until something saves into
+ * it. The four runs it held were purged in the terminology pass rather than
+ * rewritten: every id in them named a boss or a weapon the game no longer has,
+ * and a measurement record edited to say it measured something it did not is
+ * worse than no record. The first `--save` after that simply has no delta.
+ *
  * The JSON is the record; `latest.md` is the thing to actually read, and it
  * carries the delta against the previous save so a tweak's effect is the first
  * thing on screen rather than something to work out by eye.

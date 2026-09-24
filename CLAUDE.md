@@ -72,7 +72,8 @@ and reports what it cost. It builds a second Vite entry (`sim.html`, only when
 calls `GameScene.step()` directly — no `requestAnimationFrame`, no renderer in
 the loop, ~340,000 steps/sec, about 5,600x real time. **Nothing is mocked**: the
 physics, the boss state machines, the hazard loops and the weapon runtimes are
-the ones that ship. A 195-pairing sweep takes 38 seconds.
+the ones that ship. A full sweep of every complete pairing takes well under a minute;
+`--list` says how many there are today rather than this file guessing.
 
 ```bash
 npm run sim -- --list                                   # what is built enough to test
@@ -436,8 +437,8 @@ nearer the thing it draws for.
 
 **`design/sprites/*.sprite` is the source; `public/sprites/*.png` is the build output.**
 `npm run sprites:build` is the only step between them, and nothing downstream changes —
-adding art is still a PNG in `public/sprites/` plus one `MANIFEST` line, the PNG just has a
-source file now. Proven by round-tripping the shipped `player.png` through the format and
+adding art is drawing it and running that build. The `MANIFEST` line it used to also need
+is gone — the entry is derived — so the PNG has a source file and nothing else has a step. Proven by round-tripping the shipped `player.png` through the format and
 back: **pixel-identical.**
 
 #### A FRAME IS `ACTOR > ACTION > INDEX`, and the index is 1-BASED PER ACTION
@@ -448,8 +449,9 @@ nowhere.** `MANIFEST.anims` used to hold those absolute indices by hand, so inse
 frame anywhere but the end of the sheet silently repointed every animation after it —
 `npm run sprites:build` now regenerates them into `src/data/sprite-art.json`, which
 `createAnims` reads. **Do not hand-edit that file and do not put frame indices back in
-`MANIFEST`**; the hand-written `anims` there is now only a fallback for a sprite with no
-`.sprite` source. The build **says so out loud when an animation's shape changes**, because
+`MANIFEST`**. The hand-written `anims` there was deleted once every sheet had a source:
+it had rotted to `slide: [11]` against a sheet whose slide was 11, 12 and 13, and the
+merge had been overwriting it on every load for long enough that nobody noticed. The build **says so out loud when an animation's shape changes**, because
 adding a frame to an action is a gameplay change that arrives as a side effect of drawing.
 
 **`status` IS PER FRAME.** A sheet is rarely finished all at once and the old
@@ -459,10 +461,11 @@ renumber the sheet, which is the breakage the derived list exists to prevent —
 **left out of the regenerated animation**, so a cycle never plays a hole.
 
 **THE SLIDE IS AN ASSERTION THEN A HOLD, and the two sum to `FEEL.slideDurationFrames`.**
-The custom pose reads for 3 steps and the original carries the remaining 23, so one pass of
-the cycle is exactly one slide — shorter and the loop comes round and resets the pose
-mid-slide, longer and the second frame is cut off before it finishes. **The split is the
-owner's to tune; the SUM is an invariant** and `tests/sprites.test.js` holds it.
+One pass of the cycle is exactly one slide — shorter and the loop comes round and resets
+the pose mid-slide, longer and the last frame is cut off before it finishes. **The split is
+the owner's to tune; the SUM is an invariant** and `tests/sprites.test.js` holds it. It
+started as two frames at 3 and 23 and is three at 8, 5 and 13, which is the point: the
+COUNT is the owner's too, and only the total is fixed.
 
 #### `hold` IS IN SIM STEPS, and the game always had this number
 
@@ -480,8 +483,9 @@ It was previously spelled as one `fps` for a whole sheet: the player is `fps: 12
 60/12 is **5 steps** — which is why `DEFAULT_HOLD` is 5 and not a rounder-looking 10, a
 number that would quietly play a new frame at half its own animation's speed.
 `animFps: { idle: 1.5 }` was the single escape hatch, and 60/1.5 is the idle's **40
-steps**. `tests/sprites.test.js` pins the default against `MANIFEST.player.fps` so the two
-cannot drift.
+steps** — the number the idle still holds, now as a per-frame `hold` rather than a sheet
+rate. That escape hatch is deleted; `fps: 12` survives in `MANIFEST` as nothing but the
+anchor, and `tests/sprites.test.js` pins `DEFAULT_HOLD` against it so the two cannot drift.
 
 The editor's (i) beside the field carries this terminology, because "step" is the word
 that stops meaning anything a month later.
@@ -1093,7 +1097,8 @@ working branch moved while they were typing — and then resets the draft.
 
 **IT DOES NOT SQUASH, AND THE HISTORY SHOWS IT.** A fast-forward brings every commit the
 draft has accumulated, so publishing 100 autosaves puts 100 autosave commits on the working
-branch at once — `main` currently carries 192 of them against 4 publishes. The draft branch
+branch at once, and `main` carries hundreds of them against a handful of publishes — count
+them with `git log --oneline --grep=autosave` rather than trusting a number here. The draft branch
 therefore DELAYS the noise rather than removing it, which is not what this paragraph used
 to claim. Getting one commit per publish would mean writing the file to the working branch
 directly instead of moving the ref, and nobody has done that work.
@@ -1327,8 +1332,8 @@ An element is DONE when all of this is true for its boss:
 Art is NOT in the slice. Sprites and arena backdrops are the owner's to draw and land
 whenever they land, per actor, via `MANIFEST` — the game stays playable without them.
 
-**The player's sheet has landed** (`public/sprites/player.png`, 288×24, twelve 24×24
-frames). It is the first real art in the game and the proof the abstraction works: landing
+**The player's sheet has landed** (`public/sprites/player.png`, 336×24, fourteen 24×24
+frames — twelve at the handoff, and a slide that has since grown from two poses to three). It is the first real art in the game and the proof the abstraction works: landing
 it changed no gameplay code. Two things it did need, and both are general rather than
 player-specific — an `ActorLayer.gOver` graphics that stays above the layer's sprites (a
 status flash drawn on `g` goes *behind* the art), and the jump registered as three
@@ -1336,9 +1341,9 @@ one-frame clips so `playerClip()` can pick the pose from `vy` instead of looping
 
 ### Order
 
-Core → Blaze → Tempest first: they were the first fields the owner wrote in their own
-words, and the first three establish the template. Proto Mk0 (id `proto`, renamed from Proto
-Mk0) is deliberately first as the simplest — he is Typeless, so he carries no attribute.
+Proto → Blaze → Tempest first: they were the first fields the owner wrote in their own
+words, and the first three establish the template. Proto Mk0 is deliberately first as the
+simplest — he is Typeless, so he carries no attribute.
 He is also the only boss SMALLER than the player, at 0.8x rather than the 1.75x average.
 
 After those three the order is the owner's call. Nothing technical forces it.
@@ -1395,7 +1400,7 @@ Only after enough slices exist to have something to tune:
 
 | | why it waits |
 |---|---|
-| **Balance** | weapon damage, boss and minion HP, the ramp. `npm run sim` is the instrument and `design/sim/` is its history, so this is now a measure-change-measure loop rather than a feel. Meaningless before there are fights to compare |
+| **Balance** | weapon damage, boss and minion HP, the ramp. `npm run sim` is the instrument and `--save` starts a history whenever the loop is worth keeping, so this is a measure-change-measure loop rather than a feel. Meaningless before there are fights to compare |
 | **Physics overlay** | `FEEL_GROUPS` exists to drive it; deliberately not built early, because the motion constants are a known-good NES reference to tune AWAY from and there is nothing yet to tune them against |
 | **Palette spacing** | re-run the optimisation LATE, with sprites to judge it against — see the palette rule |
 | **Handing someone a build** | one switch, whenever it is wanted. `DEV.available = false` takes the launch dialog, the dev menu and every perk out together. Not a milestone — see below |
@@ -1439,7 +1444,7 @@ the three tracks above independently runnable:
 |---|---|
 | `design/TRACKER.md` + the tracker app | the design, editable from a phone, autosaving to a draft branch |
 | `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
-| `npm run sim` + `design/sim/` | headless difficulty measurement with a saved history and a delta against the last run |
+| `npm run sim` | headless difficulty measurement; `--save` keeps a run and diffs it against the one before |
 | `npm run smoke` | the real bundle, played in a browser, against every built fight |
 | the sprite editor + `npm run sprites*` | pixel-exact templates and a role-based sprite format that survives a palette change |
 | the in-app updater + per-branch CI | every push becomes an installable build; iterating costs one tap |
