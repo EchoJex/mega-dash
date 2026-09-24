@@ -1159,9 +1159,12 @@ for "built and untouched since" rather than a claim they are settled forever.
 committing. A weapon RENAME is now the `weapon name` field, not a meta-line edit.
 
 **The `id` stamp stays raw on purpose.** It is the join key that boss-data.json,
-the status board and every save depend on, and Tempest Man ships as `torrent`
-after a rename — so it stays readable and not editable rather than becoming a
-footgun with a textbox around it. `tools/sync-tracker.js` reads the fields and
+the status board and every save depend on — so it stays readable and not
+editable rather than becoming a footgun with a textbox around it. **Every id
+now matches its display name, and that is exactly why it must not be DERIVED
+from one**: a derivation would pass on all seventeen today and break silently
+the day a name moves again. It is already wrong for Proto Mk0, whose name
+slugs to `proto_mk0` and whose id is `proto`. `tools/sync-tracker.js` reads the fields and
 no longer falls back to the old meta line: all seventeen slices have been in the
 field shape for a while, and the fallback's only remaining effect was to make a
 total parser failure look like a successful run.
@@ -1273,9 +1276,10 @@ of it.** The owner moves ideas into a slice themselves when they are ready to be
 `design/boss-data.json` holds only the mechanical values (palette hexes, sprite scale,
 names) extracted from the tracker's meta lines by `npm run sync`. The owner never edits or
 sees it. `tests/data.test.js` uses it to assert `bosses.js` has not drifted from the
-design. Each slice's meta line carries an `` `id` `` stamp — that is the join key, because
-Tempest Man ships in code as `torrent` and deriving the id from the display name would be
-wrong, silently.
+design. Each slice's meta line carries an `` `id` `` stamp — that is the join key, and it is
+stamped rather than derived because a derivation is wrong for Proto Mk0 today (`proto_mk0`
+against a real id of `proto`) and would go wrong silently for anyone else the day a
+display name changes.
 
 **Read the tracker before implementing any boss or weapon.** It is more current than any
 code comment.
@@ -1333,8 +1337,8 @@ one-frame clips so `playerClip()` can pick the pose from `vy` instead of looping
 ### Order
 
 Core → Blaze → Tempest first: they were the first fields the owner wrote in their own
-words, and the first three establish the template. Proto Mk0 (id `core`, renamed from Core
-Man) is deliberately first as the simplest — he is Typeless, so he carries no attribute.
+words, and the first three establish the template. Proto Mk0 (id `proto`, renamed from Proto
+Mk0) is deliberately first as the simplest — he is Typeless, so he carries no attribute.
 He is also the only boss SMALLER than the player, at 0.8x rather than the 1.75x average.
 
 After those three the order is the owner's call. Nothing technical forces it.
@@ -1776,8 +1780,8 @@ Man's attack had been a patrolling water cannon; the tracker's attack layers des
 Queen B flight pattern with no projectile at all, so the cannon went. Blaze Man's layer-3
 flood ran for 30 seconds and cancelled the rockfall; the tracker says 20 seconds and
 "rocks shall fall, but not from right above the platforms". Volt Man's sweep had been
-speeding up at L2; the field says "same sweep", so it no longer does. The **Eclipse
-Blade** went further and changed class outright — a provisionally-offensive boomerang
+speeding up at L2; the field says "same sweep", so it no longer does. The **Astral
+Cloak** went further and changed class outright — a provisionally-offensive boomerang
 became a defensive cloak, because that is what its field now describes.
 
 **A revision can force a change in a neighbouring `[ready]` field.** Blaze Man's L1 went
@@ -1787,12 +1791,12 @@ drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at th
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
 panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
-Frost Guard; **Constrict** is live on Simon's Whip (id `thorn_lash`) from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
+Frost Guard; **Constrict** is live on Simon's Whip (id `simons_whip`) from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
 and tested but nothing applies them yet, because their sources are weapons whose slices
 have not happened.
 
 `cloakHold` is in the ATTR table but is **not** an elemental attribute and is deliberately
-not in the tracker's list — it is the Eclipse Blade's aggro pause, which is mechanically a
+not in the tracker's list — it is the Astral Cloak's aggro pause, which is mechanically a
 hold and nothing else. It reuses the hold machinery so every consumer already honours it
 and carries no tint, because there is nothing elemental to show.
 
@@ -1865,7 +1869,7 @@ jump→slide cancel window, currently 8) and `SITU_TIMEOUT_MS` in UIScene (curre
   art list. The density fix holds until it lands.
 - Comments explain **why**, not what. Phase-boundary and deliberate-stub comments exist
   so future sessions don't "fix" intentional placeholders — keep that habit.
-- Boss/weapon ids are lowercase snake (`eclipse_blade`); display names UPPERCASE.
+- Boss/weapon ids are lowercase snake (`astral_cloak`); display names UPPERCASE.
 - Colours are `#RRGGBB` strings in data, converted with `hexNum()` at draw time.
 - Run `npm test` before committing. The whole suite is ~0.1s.
 

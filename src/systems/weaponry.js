@@ -113,7 +113,7 @@ function mountPoint(p, aheadX = 9, aboveY = -3) {
  */
 const drone = {
   init(st, lv) {
-    const L = ladderAt('core_blaster', lv);
+    const L = ladderAt('nullfire_drone', lv);
     st.clip = L.clip;
     st.cool = 0;
     st.reload = 0;
@@ -129,7 +129,7 @@ const drone = {
   },
 
   step(st, lv, ctx) {
-    const L = ladderAt('core_blaster', lv);
+    const L = ladderAt('nullfire_drone', lv);
     // Clip size can change under us when the weapon levels mid-run.
     if (st.clip > L.clip) st.clip = L.clip;
 
@@ -188,7 +188,7 @@ const drone = {
 function droneShot(st, L, lv, ctx, target) {
   st.clip--;
   const m = mountPoint(ctx.player);
-  const dmg = dmgOf('core_blaster', lv, ctx) * (L.dmgMult ?? 1);
+  const dmg = dmgOf('nullfire_drone', lv, ctx) * (L.dmgMult ?? 1);
   ctx.sfx('shoot', { pitch: 1.4 });
 
   if (L.skyward) {
@@ -202,7 +202,7 @@ function droneShot(st, L, lv, ctx, target) {
     ctx.spawn({
       x: m.x, y: m.y, vx: (Math.random() - 0.5) * 0.6, vy: -L.speed,
       radius: 2.5, damage: dmg, color: '#B8C0CC', shape: 'bolt',
-      weapon: 'core_blaster', life: 260,
+      weapon: 'nullfire_drone', life: 260,
       seek: pick, seekTurn: L.seekTurn, accel: L.accel, maxSpeed: L.maxSpeed,
     });
     return;
@@ -216,7 +216,7 @@ function droneShot(st, L, lv, ctx, target) {
     x: m.x, y: m.y,
     vx: (dx / d) * L.speed, vy: (dy / d) * L.speed,
     radius: 2.5, damage: dmg, color: '#B8C0CC', shape: 'bolt',
-    weapon: 'core_blaster', life: 220,
+    weapon: 'nullfire_drone', life: 220,
     // Lv6: "bullet splits into 3 fragments after a brief time; fragments have
     // moderate auto-aim". The two bursts chase different enemies, so the first
     // set locks the nearest and the second the next-nearest.
@@ -1166,7 +1166,7 @@ function nearestEnemyShot(ctx, x, y, maxDist = 90) {
   return best;
 }
 
-// ── THORN LASH — Grass, offensive ────────────────────────────────────
+// ── SIMON'S WHIP — Grass, offensive ────────────────────────────────────
 /**
  * "Stand still while shooting a directional-input whip-like vine that reels in
  *  enemies then immediately throws them back as projectiles. Moderately slow
@@ -1197,7 +1197,7 @@ const thorn = {
   init(st) { st.lash = null; st.root = 0; st.tossed = []; },
 
   step(st, lv, ctx) {
-    const L = ladderAt('thorn_lash', lv);
+    const L = ladderAt('simons_whip', lv);
     if (st.root > 0) { st.root--; ctx.run.rootFrames = Math.max(ctx.run.rootFrames, 1); }
     stepTossed(st, ctx);
     const la = st.lash;
@@ -1243,7 +1243,7 @@ const thorn = {
 
   fire(st, lv, ctx) {
     if (st.lash || st.cool > 0) return false;
-    const L = ladderAt('thorn_lash', lv);
+    const L = ladderAt('simons_whip', lv);
     st.cool = L.cooldown;
     st.root = L.rootFrames;
     const p = ctx.player;
@@ -1305,7 +1305,7 @@ function tossMinion(st, lv, ctx, L, e) {
     x: e.x + e.w / 2, y: e.y + e.h / 2,
     vx: L.tossSpeed * p.facing, vy: -0.6,
     radius: 4, damage: 0,
-    color: '#2AAB1C', shape: 'rock', weapon: 'thorn_lash',
+    color: '#2AAB1C', shape: 'rock', weapon: 'simons_whip',
     life: 120, pierce: 99, knockback: L.tossKnock,
     gravity: 0.22,
   };
@@ -1313,7 +1313,7 @@ function tossMinion(st, lv, ctx, L, e) {
   // The live bullet is the last one in the list — the ram to follow.
   const live = ctx.bullets[ctx.bullets.length - 1];
   (st.tossed || (st.tossed = [])).push({
-    e, ram: live, dmg: dmgOf('thorn_lash', lv, ctx) * L.tossDmgMult,
+    e, ram: live, dmg: dmgOf('simons_whip', lv, ctx) * L.tossDmgMult,
   });
   ctx.sfx('shootBig', { pitch: 0.95 });
 }
@@ -1371,7 +1371,7 @@ function thornProbe(st, lv, ctx, L) {
   const e = enemiesIn(ctx, box).find((o) => !la.hit.has(o));
   if (e) {
     la.hit.add(e);
-    ctx.hitEnemy(e, dmgOf('thorn_lash', lv, ctx) * L.dmgMult, { from: la.ox });
+    ctx.hitEnemy(e, dmgOf('simons_whip', lv, ctx) * L.dmgMult, { from: la.ox });
     if (e.isBoss) {
       // `step` is what makes constrict DO anything. applyStatus defaults it to
       // 1, and speedMult computes `1 ** stacks === 1` — so this one call site,
@@ -1404,7 +1404,7 @@ function thornProbe(st, lv, ctx, L) {
       for (const o of enemiesIn(ctx, { x: bx - 4, y: by - 4, w: 8, h: 8 })) {
         if (la.hit.has(o)) continue;
         la.hit.add(o);
-        ctx.hitEnemy(o, dmgOf('thorn_lash', lv, ctx) * L.bodyDmgMult, { from: la.ox });
+        ctx.hitEnemy(o, dmgOf('simons_whip', lv, ctx) * L.bodyDmgMult, { from: la.ox });
       }
     }
   }
@@ -1497,9 +1497,9 @@ const gale = {
  *
  * Lv10's "Dark Mode" is still `[wip]`, so the ladder stops at Lv6.
  *
- * THE WEAPON WAS AN OFFENSIVE BOOMERANG CALLED THE ECLIPSE BLADE. The tracker
+ * THE WEAPON WAS AN OFFENSIVE BOOMERANG CALLED THE ASTRAL CLOAK. The tracker
  * field now describes a defensive cloak, and the field wins, so it is a cloak
- * and it is named like one. Only the ID is unchanged — `eclipse_blade` is the
+ * and it is named like one. Only the ID is unchanged — `astral_cloak` is the
  * join key for the boss drop and for every save's unlock set, and a rename must
  * never cost anyone their save.
  *
@@ -1513,7 +1513,7 @@ const eclipse = {
   init(st) { st.trail = 0; },
 
   step(st, lv, ctx) {
-    const L = ladderAt('eclipse_blade', lv);
+    const L = ladderAt('astral_cloak', lv);
     const p = ctx.player;
 
     // Read by systems/minions.js and by the boss fire path. Re-asserted every
@@ -1531,10 +1531,10 @@ const eclipse = {
     if (Math.abs(p.vx) < 0.4 || --st.trail > 0) return;
     st.trail = L.trailGap;
     ctx.allies.push({
-      owner: 'eclipse_blade', role: 'trail',
+      owner: 'astral_cloak', role: 'trail',
       x: p.x + 12, y: p.y + 12, w: 6, h: 6, vx: 0, vy: 0,
       life: L.trailLife, maxLife: L.trailLife,
-      damage: dmgOf('eclipse_blade', lv, ctx) * L.trailDmgMult,
+      damage: dmgOf('astral_cloak', lv, ctx) * L.trailDmgMult,
       lifesteal: L.lifesteal,
       hitGap: 0, hitEvery: L.trailHitGap,
       regroup: 0, regroupFor: 0, orbit: 0,
@@ -1591,7 +1591,7 @@ const alloy = {
  * for a weapon whose element slice has not happened yet.
  */
 export const RUNTIME = {
-  core_blaster: drone,
+  nullfire_drone: drone,
   blaze_wheel: blaze,
   torrent_cannon: torrent,
   volt_spark: volt,
@@ -1599,9 +1599,9 @@ export const RUNTIME = {
   strike_gauntlet: strike,
   quake_hammer: quake,
   swarm_caller: swarm,
-  thorn_lash: thorn,
+  simons_whip: thorn,
   gale_vortex: gale,
-  eclipse_blade: eclipse,
+  astral_cloak: eclipse,
   alloy_blade: alloy,
 };
 
@@ -1736,14 +1736,14 @@ export function drawWeaponry(g, sx, ctx) {
   // NULLFIRE DRONE — grey while live, DARK grey during the emergency reload,
   // which is the tracker's own readout for "the clip is gone". The clip bar
   // beside it is the other half of that readout.
-  const dr = run.wstate.core_blaster;
-  if (dr && ctx.equipped.includes('core_blaster')) {
+  const dr = run.wstate.nullfire_drone;
+  if (dr && ctx.equipped.includes('nullfire_drone')) {
     const m = mountPoint(p);
     g.fillStyle(dr.reloading ? 0x3A3F4A : 0x9AA4B4, 1);
     g.fillRect(sx(m.x) - 4, m.y - 3, 8, 6);
     g.fillStyle(dr.reloading ? 0x22262E : 0xD8DEE8, 1);
     g.fillRect(sx(m.x) - 2, m.y - 1, 4, 2);
-    const L = ladderAt('core_blaster', ctx.levelOf('core_blaster'));
+    const L = ladderAt('nullfire_drone', ctx.levelOf('nullfire_drone'));
     const frac = Math.max(0, Math.min(1, (dr.clip || 0) / L.clip));
     g.fillStyle(0x14243A, 1);
     g.fillRect(sx(m.x) - 5, m.y - 6, 10, 2);
@@ -1768,7 +1768,7 @@ export function drawWeaponry(g, sx, ctx) {
   }
 
   /**
-   * THORN LASH — the vine itself, drawn every frame it exists.
+   * SIMON'S WHIP — the vine itself, drawn every frame it exists.
    *
    * It had no animation of its own at all. The only thing on screen was the
    * generic chain-arc fx it borrowed from the Volt Spark: one YELLOW hairline
@@ -1781,8 +1781,8 @@ export function drawWeaponry(g, sx, ctx) {
    * weapon's own green. The barbs are the segment ticks — enough to read as a
    * vine rather than a laser at 224px tall, and cheap enough to draw per frame.
    */
-  const tl = run.wstate.thorn_lash;
-  if (tl?.lash && ctx.equipped.includes('thorn_lash')) {
+  const tl = run.wstate.simons_whip;
+  if (tl?.lash && ctx.equipped.includes('simons_whip')) {
     const la = tl.lash;
     // While reeling, the tip is the thing on the end of it — the vine has to
     // follow its catch home or the grab reads as the enemy moving by itself.
@@ -1848,7 +1848,7 @@ export function drawWeaponry(g, sx, ctx) {
   // the ENEMIES do, which is unreadable as feedback: fewer shots and the odd
   // pause look exactly like a quiet moment. Drawn OVER the suit rather than
   // instead of it, because the player is a fixed blue and must stay findable.
-  if (ctx.equipped.includes('eclipse_blade')) {
+  if (ctx.equipped.includes('astral_cloak')) {
     const bob = Math.sin(run.frame * 0.06) * 1.5;
     g.fillStyle(0x2A273F, 0.5);
     g.fillRect(sx(p.x) + 1, p.y + 2 + bob, 22, 22);

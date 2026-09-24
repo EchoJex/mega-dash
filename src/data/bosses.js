@@ -39,18 +39,19 @@ import { hasFight } from '../systems/bossFights.js';
 
 export const BOSSES = [
   {
-    // Renamed in the tracker from CORE MAN; the id stays 'core' so
-    // save.bossKills and every layer already earned survive the rename.
+    // CORE MAN in an earlier draft, and the id was `core` long after the name
+    // was not. It is `proto` now; the rename cost every layer earned against
+    // him, which is what SAVE_BREAK exists to announce.
     //
     // He is the only boss SMALLER than the player, at 0.8x rather than the
     // 1.75x average — a prototype chassis, and the tracker's own word for it.
     // Nothing in the code assumes a boss is large, but be aware when tuning:
     // his collision footprint is 19x14, so a spread that reads as generous
     // against Blaze Man can miss him entirely.
-    id: 'core', name: 'PROTO MK0', element: 'Typeless',
+    id: 'proto', name: 'PROTO MK0', element: 'Typeless',
     primary: '#687380', secondary: '#2E3338', outline: '#0A0A12',
     scale: 0.8, baseHp: 60,
-    attackName: 'Ballistic barrage', dropWeapon: 'core_blaster',
+    attackName: 'Ballistic barrage', dropWeapon: 'nullfire_drone',
     silhouette: null,
   },
   {
@@ -61,8 +62,7 @@ export const BOSSES = [
     silhouette: null,
   },
   {
-    // renamed in the tracker; the id stays 'torrent' so save.bossKills survives
-    id: 'torrent', name: 'TEMPEST MAN', element: 'Water',
+    id: 'tempest', name: 'TEMPEST MAN', element: 'Water',
     /**
      * "Blue yellow guy with a large grey hydro jet pack."
      *
@@ -96,7 +96,7 @@ export const BOSSES = [
     id: 'thorn', name: 'THORN MAN', element: 'Grass',
     primary: '#2AAB1C', secondary: '#5C4033', outline: '#0A0A12',
     scale: 1.8, baseHp: 68,
-    attackName: 'Vine Lash', dropWeapon: 'thorn_lash',
+    attackName: 'Vine Lash', dropWeapon: 'simons_whip',
     silhouette: null,
   },
   {
@@ -156,7 +156,7 @@ export const BOSSES = [
     id: 'granite', name: 'GRANITE MAN', element: 'Rock',
     primary: '#5F443A', secondary: '#A8A296', outline: '#0A0A12',
     scale: 2.0, baseHp: 80,
-    attackName: 'Boulder Roll', dropWeapon: 'rock_buster',
+    attackName: 'Boulder Roll', dropWeapon: 'granite_form',
     silhouette: null,
   },
   {
@@ -177,7 +177,7 @@ export const BOSSES = [
     id: 'eclipse', name: 'ECLIPSE MAN', element: 'Dark',
     primary: '#2A273F', secondary: '#DC2626', outline: '#0A0A12',
     scale: 1.75, baseHp: 68,
-    attackName: 'Shadow Bind', dropWeapon: 'eclipse_blade',
+    attackName: 'Shadow Bind', dropWeapon: 'astral_cloak',
     silhouette: null,
   },
   {

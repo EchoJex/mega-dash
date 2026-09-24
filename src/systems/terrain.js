@@ -136,17 +136,17 @@ export const THEMES = {
   strike:   { pit: 0.80, span: 1.20, spike: 1.2, plat: 0.8, high: 0.8 },  // arena floors
   blaze:    { pit: 1.20, span: 0.90, spike: 1.3, plat: 1.0, high: 1.0 },  // broken, hostile
   drake:    { pit: 1.10, span: 0.95, spike: 1.3, plat: 1.1, high: 1.2 },
-  torrent:  { pit: 1.25, span: 0.90, spike: 0.7, plat: 1.2, high: 0.9 },  // channels
+  tempest:  { pit: 1.25, span: 0.90, spike: 0.7, plat: 1.2, high: 0.9 },  // channels
   frost:    { pit: 1.10, span: 1.00, spike: 0.8, plat: 1.2, high: 1.1 },
   thorn:    { pit: 0.95, span: 0.95, spike: 1.2, plat: 1.4, high: 1.3 },  // overgrown
   swarm:    { pit: 1.00, span: 0.90, spike: 1.1, plat: 1.5, high: 1.3 },
   venom:    { pit: 1.05, span: 0.95, spike: 1.4, plat: 1.1, high: 1.0 },
   volt:     { pit: 1.05, span: 1.00, spike: 1.2, plat: 1.3, high: 1.2 },
   eclipse:  { pit: 1.15, span: 0.90, spike: 1.2, plat: 1.2, high: 1.1 },
-  core:     { pit: 1.00, span: 1.00, spike: 1.0, plat: 1.0, high: 1.0 },  // the neutral baseline
+  proto:     { pit: 1.00, span: 1.00, spike: 1.0, plat: 1.0, high: 1.0 },  // the neutral baseline
 };
 
-const NEUTRAL = THEMES.core;
+const NEUTRAL = THEMES.proto;
 
 /**
  * The TERRAIN shape multipliers for a boss's approach — how wide his pits are,

@@ -52,7 +52,7 @@ function aimAt(sx, sy, px, py) {
   return { x: dx / d, y: dy / d };
 }
 
-// ── PROTO MK0 (id `core`) — Typeless ────────────────────────────────
+// ── PROTO MK0 (id `proto`) — Typeless ────────────────────────────────
 // "Moves back and forth on the stage, occasionally stopping to fire..."
 // L1  a 3-bullet spread with mild auto-aim
 // L2  either that spread, OR a 5-bullet string with aim LOCKED to where the
@@ -148,7 +148,7 @@ function coreAttack(layer) {
   };
 }
 
-// ── CORE MAN hazard — ceiling turrets ───────────────────────────────
+// ── PROTO MK0 hazard — ceiling turrets ───────────────────────────────
 // "Turrets aim at player to nearest 45 deg, all firing simultaneous short
 //  3-bullet bursts of slightly slow bullets; 15s cooldown."
 // L2 aims to 22.5 deg with a slightly reduced cooldown, L3 to 11.25 deg with a
@@ -541,7 +541,7 @@ function blazeHazard(layer) {
   };
 }
 
-// ── TEMPEST MAN (id `torrent`) — Water ──────────────────────────────
+// ── TEMPEST MAN (id `tempest`) — Water ──────────────────────────────
 /**
  * "Boss flies around the stage just like the attack pattern of Queen B from
  *  DKC at full health / damaged / critical health. Player takes moderate damage
@@ -1953,7 +1953,7 @@ function strikeAttack(layer) {
 }
 
 export const FIGHTS = {
-  core: {
+  proto: {
     attack: { 1: { step: coreAttack(1) }, 2: { step: coreAttack(2) }, 3: { step: coreAttack(3) } },
     hazard: { 1: { step: coreHazard(1) }, 2: { step: coreHazard(2) }, 3: { step: coreHazard(3) } },
   },
@@ -1963,7 +1963,7 @@ export const FIGHTS = {
     hazard: { 1: { step: blazeHazard(1) }, 2: { step: blazeHazard(2) }, 3: { step: blazeHazard(3) } },
   },
 
-  torrent: {
+  tempest: {
     attack: {
       1: { step: tempestAttack(1) }, 2: { step: tempestAttack(2) }, 3: { step: tempestAttack(3) },
     },
@@ -2161,7 +2161,7 @@ function thornHazard(layer) {
          * frame of the SAME shot arrived with `since` at 1, satisfied the
          * inside-a-second test, and finished the combo by itself: layer 2 bared
          * a tile in one shot exactly like layer 1, and the whole rung did
-         * nothing. Same shape as the Thorn Lash's per-crack hit set, and the
+         * nothing. Same shape as Simon's Whip's per-crack hit set, and the
          * same reason.
          */
         (b.scaredCover || (b.scaredCover = new Set()));

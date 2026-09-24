@@ -212,9 +212,9 @@ test('layer falls BACK to the hardest layer written, never forward', () => {
  */
 test('no boss has more built layers than the tracker defines', () => {
   const written = {
-    core: { attack: 3, hazard: 3 },
+    proto: { attack: 3, hazard: 3 },
     blaze: { attack: 3, hazard: 3 },
-    torrent: { attack: 3, hazard: 3 },
+    tempest: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
     strike: { attack: 3, hazard: 3 },
     // A ROOM WITH NO FIGHT IN IT IS A LEGAL STATE, and Thorn Man is the first.
@@ -234,14 +234,14 @@ test('no boss has more built layers than the tracker defines', () => {
 });
 
 test('every furnished boss gets the geometry its hazards need', () => {
-  const core = Arena.makeArena(BOSS_BY_ID.core, 1, VIEW_W, FLOOR);
+  const core = Arena.makeArena(BOSS_BY_ID.proto, 1, VIEW_W, FLOOR);
   assert.ok(core.turrets.length > 0, 'Proto Mk0 needs ceiling turrets');
 
   const blaze = Arena.makeArena(BOSS_BY_ID.blaze, 1, VIEW_W, FLOOR);
   assert.ok(blaze.platforms.length > 0, 'Blaze Man needs phasing platforms');
   assert.equal(blaze.liquid.kind, 'lava');
 
-  const torrent = Arena.makeArena(BOSS_BY_ID.torrent, 2, VIEW_W, FLOOR);
+  const torrent = Arena.makeArena(BOSS_BY_ID.tempest, 2, VIEW_W, FLOOR);
   assert.ok(torrent.drain, 'Tempest Man needs a drain');
   assert.equal(torrent.liquid.kind, 'water');
   assert.equal(torrent.drain.grateHurts, true, 'the grate hurts from layer 2');
@@ -299,8 +299,8 @@ test('a Volt Man floor panel is never live without having been telegraphed', () 
  */
 test('Tempest Man stops sending barrels by layer 3', () => {
   const kindsAt = (layer) => {
-    const h = harness('torrent', layer);
-    const hz = FIGHTS.torrent.hazard[layer];
+    const h = harness('tempest', layer);
+    const hz = FIGHTS.tempest.hazard[layer];
     const kinds = new Set();
     for (let i = 0; i < 6000; i++) {
       hz.step(h.ctx);
@@ -316,8 +316,8 @@ test('Tempest Man stops sending barrels by layer 3', () => {
 });
 
 test('a Tempest Man barrel is standable and shootable; a spike ball is neither', () => {
-  const h = harness('torrent', 2);
-  const hz = FIGHTS.torrent.hazard[2];
+  const h = harness('tempest', 2);
+  const hz = FIGHTS.tempest.hazard[2];
   const seen = {};
   for (let i = 0; i < 6000 && Object.keys(seen).length < 2; i++) {
     hz.step(h.ctx);
@@ -343,8 +343,8 @@ test('a Tempest Man barrel is standable and shootable; a spike ball is neither',
  */
 test('Tempest Man attacks with his jetpack, never with a projectile', () => {
   for (const layer of [1, 2, 3]) {
-    const h = harness('torrent', layer);
-    const atk = FIGHTS.torrent.attack[layer];
+    const h = harness('tempest', layer);
+    const atk = FIGHTS.tempest.attack[layer];
     for (let i = 0; i < 2000; i++) atk.step(h.ctx);
     assert.equal(h.shots.length, 0, `L${layer} should fire nothing`);
     assert.ok(h.blocks.length > 0, `L${layer} plume should eat player fire`);

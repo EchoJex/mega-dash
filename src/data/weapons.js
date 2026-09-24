@@ -177,7 +177,7 @@ export const WEAPON_LADDERS = {
    * Lv10 straight up at 5/s from a 30-round clip, every bullet on a different
    *      target, arcing in under strong homing. No split.
    */
-  core_blaster: {
+  nullfire_drone: {
     1: {
       // "1 shot per 3 seconds, 10 ammo clip."
       clip: 10, burst: 1, burstGap: 1, pullFrames: 180,
@@ -365,7 +365,7 @@ export const WEAPON_LADDERS = {
       hits: 4, w: 10, h: 26,
       shards: [22.5, 45, 67.5],
       // "Freezes the opponent if contacting a minion OR THE WATER BOSS."
-      freezeBosses: ['torrent'],
+      freezeBosses: ['tempest'],
     },
     6: { shards: [-22.5, 0, 22.5, 45], shardPierce: 99 },
   },
@@ -434,7 +434,7 @@ export const WEAPON_LADDERS = {
     },
   },
 
-  // ── THORN LASH — offensive, Grass ─────────────────────────────────
+  // ── SIMON'S WHIP — offensive, Grass ─────────────────────────────────
   // "Stand still while shooting a directional-input whip-like vine that reels
   //  in enemies then immediately throws them back as projectiles. Moderately
   //  slow attack speed."
@@ -449,7 +449,7 @@ export const WEAPON_LADDERS = {
   // A whip that has to be aimed while standing still is priced in exposure, and
   // reach is what buys the exposure back.
   /**
-   * THORN LASH — offensive, Grass.
+   * SIMON'S WHIP — offensive, Grass.
    * Lv1 "Short reach; can only reel in and damage minions; mild knockback but
    *      does not toss or constrict them."
    * Lv3 "Increased reach. Each hit applies a stack of constrict and if a minion
@@ -464,7 +464,7 @@ export const WEAPON_LADDERS = {
    * the weapon IS — a crowd tool from its second rung rather than a reel that
    * eventually learns a trick.
    */
-  thorn_lash: {
+  simons_whip: {
     1: {
       /**
        * A WHIP CRACK, NOT A REACH. "Needs to be much quicker, like a whip;
@@ -543,7 +543,7 @@ export const WEAPON_LADDERS = {
   // only version of "stealth" that stays legible in a game where every threat is
   // already telegraphed. The status immunity is flat from Lv1 because a partial
   // immunity would be indistinguishable from luck.
-  eclipse_blade: {
+  astral_cloak: {
     1: {
       fireChance: 0.85, pauseChance: 0.012, pauseFrames: 18,
       immune: true, trail: false,
@@ -669,13 +669,13 @@ const DEFS = [
     cooldown: 8, projectiles: 1, shape: 'bolt', speed: 3.2,
     desc: 'Standard arm cannon. Starts in your first offensive slot.' },
 
-  { id: 'core_blaster', name: 'NULLFIRE DRONE', short: 'N-DRONE', cls: DEFENSIVE, boss: 'core',
+  { id: 'nullfire_drone', name: 'NULLFIRE DRONE', short: 'N-DRONE', cls: DEFENSIVE, boss: 'proto',
     cooldown: 15, projectiles: 1, shape: 'bolt', speed: 3.4,
     desc: 'Shoulder drone that auto-fires a neutral bullet from a clip.' },
   { id: 'blaze_wheel', name: 'BLAZE WHEEL', short: 'BLAZE', cls: OFFENSIVE, boss: 'blaze',
     cooldown: 30, projectiles: 1, shape: 'wheel', speed: 2.4,
     desc: 'Lobbed fireball that rolls and leaves Hot ground.' },
-  { id: 'torrent_cannon', name: 'TORRENT CANNON', short: 'TORRENT', cls: DEFENSIVE, boss: 'torrent',
+  { id: 'torrent_cannon', name: 'TORRENT CANNON', short: 'TORRENT', cls: DEFENSIVE, boss: 'tempest',
     cooldown: 4, projectiles: 1, shape: 'stream', speed: 3.0,
     desc: 'Jetpack that vents knockback water on landing.' },
   { id: 'volt_spark', name: 'VOLT SPARK', short: 'VOLT', cls: OFFENSIVE, boss: 'volt',
@@ -685,15 +685,15 @@ const DEFS = [
   // does not name one, and a whip you aim while standing still is not a thing
   // that runs itself. Confirmed if the owner ever writes the word.
   /**
-   * RENAMED from THORN LASH by the tracker's `weapon name` field. The id stays
-   * `thorn_lash` — it is the join key every save, ladder and wheel position
+   * RENAMED from SIMON'S WHIP by the tracker's `weapon name` field. The id stays
+   * `simons_whip` — it is the join key every save, ladder and wheel position
    * depends on, and renaming it would cost every player their unlock.
    *
    * The apostrophe is safe: `font.js` carries a `'` glyph, and `fold()` drops
    * any character it lacks SILENTLY, so a display name is the one place in the
    * game where punctuation has to be checked rather than assumed.
    */
-  { id: 'thorn_lash', name: "SIMON'S WHIP", short: 'WHIP', cls: OFFENSIVE, boss: 'thorn',
+  { id: 'simons_whip', name: "SIMON'S WHIP", short: 'WHIP', cls: OFFENSIVE, boss: 'thorn',
     cooldown: 54, projectiles: 1, shape: 'lash', speed: 2.8,
     desc: 'Whip-vine that reels enemies in and throws them.' },
   { id: 'frost_guard', name: 'FROST GUARD', short: 'FROST', cls: DEFENSIVE, boss: 'frost',
@@ -725,14 +725,14 @@ const DEFS = [
   { id: 'swarm_caller', name: 'SWARM CALLER', short: 'SWARM', cls: DEFENSIVE, boss: 'swarm',
     cooldown: 24, projectiles: 3, shape: 'swarm', speed: 2.6,
     desc: 'Summons temporary bug allies that fight for you.' },
-  // RENAMED AND RECLASSIFIED, confirmed by the owner, exactly as the Eclipse
-  // Blade was. Thrown boulders overlapped the Quake Hammer's swing and the Alloy
+  // RENAMED AND RECLASSIFIED, confirmed by the owner, exactly as the Astral
+  // Cloak was. Thrown boulders overlapped the Quake Hammer's swing and the Alloy
   // Blade's throw; stone ARMOUR is the thing neither of them does. "Buster" also
   // sat one row from SIDE ARM in the wheel and read as a variant of it.
   //
-  // THE ID STAYS `rock_buster` — the join key for `BOSSES[].dropWeapon` and for
+  // THE ID STAYS `granite_form` — the join key for `BOSSES[].dropWeapon` and for
   // every save's unlock set. A rename must never cost anyone their save.
-  { id: 'rock_buster', name: 'GRANITE FORM', short: 'GRANITE', cls: DEFENSIVE, boss: 'granite',
+  { id: 'granite_form', name: 'GRANITE FORM', short: 'GRANITE', cls: DEFENSIVE, boss: 'granite',
     cooldown: 20, projectiles: 1, shape: 'rock', speed: 2.8,
     desc: 'Hardens the player into stone while no input is given.' },
   // Provisional class — its tracker field is still `[wip]`.
@@ -743,16 +743,16 @@ const DEFS = [
   { id: 'drake_breath', name: 'DRAKE BREATH', short: 'DRAKE', cls: OFFENSIVE, boss: 'drake',
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },
-  // RENAMED AND RECLASSIFIED. This was an offensive boomerang called the Eclipse
-  // Blade while its tracker field was `[wip]`; the field now reads "Defensive;
+  // RENAMED AND RECLASSIFIED. This was an offensive boomerang called the Astral
+  // Cloak while its tracker field was `[wip]`; the field now reads "Defensive;
   // reduces aggro and become immune to status effects", so it is a cloak and it
   // is named like one.
   //
-  // THE ID STAYS `eclipse_blade` because it is the join key for
+  // THE ID STAYS `astral_cloak` because it is the join key for
   // `BOSSES[].dropWeapon` — a code-to-code join, which is the only kind that
   // makes an id load-bearing. It is NOT a save key: unlocks and weapon levels
   // are run-scoped and never persisted.
-  { id: 'eclipse_blade', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
+  { id: 'astral_cloak', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
   { id: 'alloy_blade', name: 'ALLOY BLADE', short: 'ALLOY', cls: OFFENSIVE, boss: 'alloy',

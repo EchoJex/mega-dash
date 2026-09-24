@@ -68,7 +68,7 @@
     }
   ],
   "bosses": {
-    "core": {
+    "proto": {
       "label": "PROTO MK0",
       "cls": "boss",
       "scale": 0.8,
@@ -102,7 +102,7 @@
         "idle1"
       ]
     },
-    "torrent": {
+    "tempest": {
       "label": "TEMPEST MAN",
       "cls": "boss",
       "scale": 1.5,
@@ -381,11 +381,11 @@
         "fly3"
       ]
     },
-    "shot-core_blaster": {
+    "shot-nullfire_drone": {
       "label": "NULLFIRE DRONE",
       "cls": "shot",
-      "key": "shot:core_blaster",
-      "boss": "core",
+      "key": "shot:nullfire_drone",
+      "boss": "proto",
       "palette": null,
       "grid": {
         "w": 16,
@@ -421,7 +421,7 @@
       "label": "TORRENT CANNON",
       "cls": "shot",
       "key": "shot:torrent_cannon",
-      "boss": "torrent",
+      "boss": "tempest",
       "palette": null,
       "grid": {
         "w": 16,
@@ -453,10 +453,10 @@
         "fly3"
       ]
     },
-    "shot-thorn_lash": {
+    "shot-simons_whip": {
       "label": "SIMON'S WHIP",
       "cls": "shot",
-      "key": "shot:thorn_lash",
+      "key": "shot:simons_whip",
       "boss": "thorn",
       "palette": null,
       "grid": {
@@ -597,10 +597,10 @@
         "fly3"
       ]
     },
-    "shot-rock_buster": {
+    "shot-granite_form": {
       "label": "GRANITE FORM",
       "cls": "shot",
-      "key": "shot:rock_buster",
+      "key": "shot:granite_form",
       "boss": "granite",
       "palette": null,
       "grid": {
@@ -651,10 +651,10 @@
         "fly3"
       ]
     },
-    "shot-eclipse_blade": {
+    "shot-astral_cloak": {
       "label": "ASTRAL CLOAK",
       "cls": "shot",
-      "key": "shot:eclipse_blade",
+      "key": "shot:astral_cloak",
       "boss": "eclipse",
       "palette": null,
       "grid": {
@@ -1007,11 +1007,11 @@
     }
   },
   "furniture": {
-    "furniture-core-1": {
+    "furniture-proto-1": {
       "label": "PROTO MK0 TURRETS",
       "cls": "furniture",
-      "key": "furniture:core:1",
-      "boss": "core",
+      "key": "furniture:proto:1",
+      "boss": "proto",
       "grid": {
         "w": 10,
         "h": 10
@@ -1022,11 +1022,11 @@
         "idle0"
       ]
     },
-    "furniture-core-2": {
+    "furniture-proto-2": {
       "label": "PROTO MK0 SPARE 2",
       "cls": "furniture",
-      "key": "furniture:core:2",
-      "boss": "core",
+      "key": "furniture:proto:2",
+      "boss": "proto",
       "grid": {
         "w": 16,
         "h": 16
@@ -1037,11 +1037,11 @@
         "idle0"
       ]
     },
-    "furniture-core-3": {
+    "furniture-proto-3": {
       "label": "PROTO MK0 SPARE 3",
       "cls": "furniture",
-      "key": "furniture:core:3",
-      "boss": "core",
+      "key": "furniture:proto:3",
+      "boss": "proto",
       "grid": {
         "w": 16,
         "h": 16
@@ -1052,11 +1052,11 @@
         "idle0"
       ]
     },
-    "furniture-core-4": {
+    "furniture-proto-4": {
       "label": "PROTO MK0 SPARE 4",
       "cls": "furniture",
-      "key": "furniture:core:4",
-      "boss": "core",
+      "key": "furniture:proto:4",
+      "boss": "proto",
       "grid": {
         "w": 16,
         "h": 16
@@ -1067,11 +1067,11 @@
         "idle0"
       ]
     },
-    "furniture-core-5": {
+    "furniture-proto-5": {
       "label": "PROTO MK0 SPARE 5",
       "cls": "furniture",
-      "key": "furniture:core:5",
-      "boss": "core",
+      "key": "furniture:proto:5",
+      "boss": "proto",
       "grid": {
         "w": 16,
         "h": 16
@@ -1157,11 +1157,11 @@
         "idle0"
       ]
     },
-    "furniture-torrent-1": {
+    "furniture-tempest-1": {
       "label": "TEMPEST MAN PIPES",
       "cls": "furniture",
-      "key": "furniture:torrent:1",
-      "boss": "torrent",
+      "key": "furniture:tempest:1",
+      "boss": "tempest",
       "grid": {
         "w": 16,
         "h": 10
@@ -1172,11 +1172,11 @@
         "idle0"
       ]
     },
-    "furniture-torrent-2": {
+    "furniture-tempest-2": {
       "label": "TEMPEST MAN SPARE 2",
       "cls": "furniture",
-      "key": "furniture:torrent:2",
-      "boss": "torrent",
+      "key": "furniture:tempest:2",
+      "boss": "tempest",
       "grid": {
         "w": 16,
         "h": 16
@@ -1187,11 +1187,11 @@
         "idle0"
       ]
     },
-    "furniture-torrent-3": {
+    "furniture-tempest-3": {
       "label": "TEMPEST MAN SPARE 3",
       "cls": "furniture",
-      "key": "furniture:torrent:3",
-      "boss": "torrent",
+      "key": "furniture:tempest:3",
+      "boss": "tempest",
       "grid": {
         "w": 16,
         "h": 16
@@ -1202,11 +1202,11 @@
         "idle0"
       ]
     },
-    "furniture-torrent-4": {
+    "furniture-tempest-4": {
       "label": "TEMPEST MAN SPARE 4",
       "cls": "furniture",
-      "key": "furniture:torrent:4",
-      "boss": "torrent",
+      "key": "furniture:tempest:4",
+      "boss": "tempest",
       "grid": {
         "w": 16,
         "h": 16
@@ -1217,11 +1217,11 @@
         "idle0"
       ]
     },
-    "furniture-torrent-5": {
+    "furniture-tempest-5": {
       "label": "TEMPEST MAN SPARE 5",
       "cls": "furniture",
-      "key": "furniture:torrent:5",
-      "boss": "torrent",
+      "key": "furniture:tempest:5",
+      "boss": "tempest",
       "grid": {
         "w": 16,
         "h": 16

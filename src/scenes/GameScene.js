@@ -731,7 +731,7 @@ export default class GameScene extends Phaser.Scene {
 
     // DIAGONAL AIM ON A KEYBOARD. The touch pads have had up-left and up-right
     // buttons all along, so `player.diagInput` was reachable on a phone and
-    // nowhere else — which meant the Thorn Lash's Lv3 diagonal could not be
+    // nowhere else — which meant Simon's Whip's Lv3 diagonal could not be
     // played in a browser or reached by the smoke test at all.
     //
     // W rather than UP, because UP is jump. Only set from the keyboard when a
@@ -769,7 +769,7 @@ export default class GameScene extends Phaser.Scene {
         // and how long it hangs there first. Rank 0 is near enough to zero.
         cliffGrab: r.cliffGrab,
         cliffStick: r.cliffRank > 0 ? FEEL.cliffStickFrames : 0,
-        // The Thorn Lash plants you for the length of a lash, and the Gale
+        // Simon's Whip plants you for the length of a lash, and the Gale
         // Vortex trades fall speed for air control. Both are asserted by the
         // weapon each frame and cleared in stepEquipped, so an unequipped
         // weapon cannot leave either of them switched on.
@@ -927,8 +927,8 @@ export default class GameScene extends Phaser.Scene {
     // EVERY PER-FRAME GRANT IS CLEARED HERE AND RE-ASSERTED BY WHOEVER GRANTS
     // IT. Otherwise benching the Strike Gauntlet mid-swing would leave its
     // damage reduction switched on for the rest of the run, and the same is
-    // true of the Gale Vortex's glide, the Thorn Lash's root and the Eclipse
-    // Blade's aggro tax. A weapon that is not running grants nothing, and this
+    // true of the Gale Vortex's glide, Simon's Whip's root and the Astral
+    // Cloak's aggro tax. A weapon that is not running grants nothing, and this
     // is the one line that guarantees it.
     r.meleeArmor = 0;
     r.rootFrames = 0;
@@ -987,7 +987,7 @@ export default class GameScene extends Phaser.Scene {
       // distinguishes them except Frost Guard, which checks `isBoss` itself.
       enemies: this.boss ? [...this.minions, this.boss] : this.minions,
       arena: this.arena,
-      // Live solid platforms — what the Thorn Lash's grapple can catch. The
+      // Live solid platforms — what Simon's Whip's grapple can catch. The
       // same list physics stands the player on, so a vine can never grab a
       // platform that has phased out from under him.
       platforms: this.world.platforms,
@@ -1866,7 +1866,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Attribute damage (Burn, Poison) routes through the same kill path as a
-    // THE ECLIPSE BLADE'S PURSUIT PAUSES. "When pursuing the player they will
+    // THE ASTRAL CLOAK'S PURSUIT PAUSES. "When pursuing the player they will
     // pause very briefly at random times" — rolled per minion per frame, so a
     // crowd stutters raggedly rather than all freezing on the same beat, which
     // is what makes it read as losing track of you rather than as lag.
@@ -2127,7 +2127,7 @@ export default class GameScene extends Phaser.Scene {
 
   /** A projectile owned by a boss or hazard. Enemy shots use the stingy pad. */
   spawnEnemyShot(spec) {
-    // THE ECLIPSE BLADE'S AGGRO TAX, applied at the one choke point every enemy
+    // THE ASTRAL CLOAK'S AGGRO TAX, applied at the one choke point every enemy
     // projectile in the game passes through. "Enemies will fire projectiles
     // slightly less frequently" is a dropped shot rather than a longer
     // cooldown: a cooldown change would desync a boss's telegraph from what

@@ -1,7 +1,7 @@
 {
   "_note": "GENERATED from design/TRACKER.md by tools/sync-tracker.js. Do not edit.",
   "bosses": {
-    "core": {
+    "proto": {
       "name": "Proto Mk0",
       "primary": "#687380",
       "secondary": "#2E3338",
@@ -21,7 +21,7 @@
       "weaponName": "Blaze Wheel",
       "weaponClass": "offensive"
     },
-    "torrent": {
+    "tempest": {
       "name": "Tempest Man",
       "primary": "#145DBD",
       "secondary": "#F5C518",

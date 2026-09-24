@@ -29,7 +29,7 @@ const boot = async (stored) => {
 
 test('a save from an older break is wiped, and says so', async () => {
   const { save, saveWiped, SAVE_BREAK } = await boot({
-    n: -1, hi: 9999, chips: 500, bossKills: { core: 3 }, upgrades: { magnet: 2 },
+    n: -1, hi: 9999, chips: 500, bossKills: { proto: 3 }, upgrades: { magnet: 2 },
   });
   assert.equal(saveWiped, true, 'the title screen has nothing to announce without this');
   assert.equal(save.chips, 0);

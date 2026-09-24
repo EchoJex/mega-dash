@@ -56,7 +56,7 @@ export function stepPlayer(p, world, input, groundY) {
     // every other caller — and every test — is unaffected by its existence.
     const slideMult = FEEL.slideSpeedMult * (p.slideSpeedBonus || 1);
     // `rooted` is a weapon planting the player for the duration of a move — the
-    // Thorn Lash's "stand still while shooting". It zeroes the INPUT rather than
+    // Simon's Whip's "stand still while shooting". It zeroes the INPUT rather than
     // the velocity, so friction still brings you to a stop over a frame or two
     // and being rooted reads as bracing rather than as hitting a wall.
     // `airControl` is the Gale Vortex's glide: horizontal authority while

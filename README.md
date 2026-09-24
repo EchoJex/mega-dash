@@ -34,6 +34,16 @@ branch is: push it, open the game, long-press UPDATE, pick the branch. Pushes th
 touch `design/`, `docs/` or Markdown are skipped, because the tracker web app autosaves
 on every pause in typing and each of those would otherwise burn a full Android build.
 
+### A build may wipe your save, and it will say so
+
+This is in development and expects to be for a long time, so wiping save data is an
+ordinary cost of a change rather than a disaster to engineer around — there are no
+migrations and there deliberately never will be any. When a build's save format moves,
+the old save is cleared on the first launch and the title screen says so in gold. Chips,
+upgrades and boss layers go; nothing else is stored. `SAVE_BREAK` in
+`src/systems/save.js` is the whole mechanism, and its note is the one line anybody
+reads about it — including, if it ever comes to that, "uninstall and reinstall".
+
 **Going back to `main` from a branch build needs an uninstall.** Build numbers come from
 one counter shared across every branch, so a branch build is numbered *above* the last
 `main` build and Android will not install the lower number over it. The game says so
@@ -61,9 +71,11 @@ npm run dev
 | `npm run smoke` | OPT-IN: boots the real bundle in Chromium and plays it (~3 min) |
 | `npm run sprites` | regenerate the pixel-exact drawing templates |
 | `npm run sprites:build` | `design/sprites/*.sprite` → the PNGs MANIFEST loads |
+| `npm run sprites:ship` | verify every `[draft]` frame reaches the game, mark it `[ready]` |
+| `npm run tracker-test` | OPT-IN: drives the tracker app against a faked GitHub (~15s) |
 | `npm run apk` | local APK build (CI does this automatically) |
 
-`sim` and `smoke` need Chromium and are deliberately not dependencies — Playwright's
+`sim`, `smoke` and `tracker-test` need Chromium and are deliberately not dependencies — Playwright's
 postinstall would pull ~150MB onto every APK build for jobs CI does not run:
 
 ```bash
@@ -88,7 +100,20 @@ buying rank 1 in the Hub.
 - **[CLAUDE.md](CLAUDE.md)** — architecture, terminology, the element-slice plan. Read first.
 - **[design/TRACKER.md](design/TRACKER.md)** — the design source of truth: slices, bugs
   and brainstorming, in plain readable Markdown.
-- **[Tracker web app](https://echojex.github.io/mega-dash/)** — a friendlier lens over that
-  same file. Autosaves straight into the repo; no export, no download. Needs a fine-grained
-  GitHub token (Contents: read/write on this repo only), stored in your browser and never
-  committed. Read-only without one.
+- **[design/GLOSSARY.md](design/GLOSSARY.md)** — the shared vocabulary. A step is 1/60s and
+  a frame is the same thing; if a word here means something else in a field you are
+  writing, the word is wrong.
+
+**Two apps, one Pages site, one bookmark.** Both are served from `docs/` on `main`, share
+one GitHub token and one `tracker-draft/<branch>` autosave branch, and link to each other
+in their headers:
+
+- **[Tracker web app](https://echojex.github.io/mega-dash/)** — a friendlier lens over
+  TRACKER.md. Autosaves straight into the repo; no export, no download.
+- **[Sprite editor](https://echojex.github.io/mega-dash/sprite-editor.html)** — draws
+  `design/sprites/*.sprite`, the source `npm run sprites:build` turns into the PNGs the
+  game loads. Deliberately not in the game's own dev menu: the APK is entirely offline
+  and an in-game editor would put a GitHub token inside a sideloaded app.
+
+Both need a fine-grained GitHub token (Contents: read/write on this repo only), stored in
+your browser and never committed. Both stay READ-ONLY without one rather than going blank.

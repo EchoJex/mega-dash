@@ -80,7 +80,7 @@ where each one stands.
 
 ## Proto Mk0 — Typeless
 
-`id` core
+`id` proto
 
 - **palette primary** `[ready]` #687380
 - **palette secondary** `[ready]` #2E3338
@@ -138,7 +138,7 @@ where each one stands.
 
 ## Tempest Man — Water
 
-`id` torrent
+`id` tempest
 
 - **palette primary** `[ready]` #145DBD
 - **palette secondary** `[ready]` #F5C518

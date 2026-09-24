@@ -246,9 +246,9 @@ const wheel = await page.evaluate(() => {
   const gs = g.scene.getScene('Game');
   const ui = g.scene.getScene('UI');
   const out = {};
-  for (const id of ['blaze_wheel', 'volt_spark', 'core_blaster', 'torrent_cannon',
+  for (const id of ['blaze_wheel', 'volt_spark', 'nullfire_drone', 'torrent_cannon',
     'frost_guard', 'strike_gauntlet', 'quake_hammer', 'swarm_caller',
-    'thorn_lash', 'gale_vortex', 'eclipse_blade', 'alloy_blade']) {
+    'simons_whip', 'gale_vortex', 'astral_cloak', 'alloy_blade']) {
     gs.run.unlocked.add(id);
     gs.run.wpLevels[id] = 10;              // the top rung of every ladder
   }
@@ -313,12 +313,12 @@ if (!wheel.offensive.includes(wheel.afterDisable)) {
  * twelve by the time anyone checked.
  */
 const PAIRS = [
-  ['blaze_wheel', 'core_blaster'],
+  ['blaze_wheel', 'nullfire_drone'],
   ['volt_spark', 'torrent_cannon'],
   ['strike_gauntlet', 'frost_guard'],
   ['quake_hammer', 'swarm_caller'],
-  ['thorn_lash', 'gale_vortex'],
-  ['alloy_blade', 'eclipse_blade'],
+  ['simons_whip', 'gale_vortex'],
+  ['alloy_blade', 'astral_cloak'],
 ];
 
 for (const level of [1, 3, 6, 10]) {

@@ -77,9 +77,12 @@ for (const item of slices.items) {
    * readable and not editable rather than becoming a textbox nobody can undo.
    *
    * What IS gone is deriving it from the display name when the stamp is
-   * missing. Tempest Man ships as `torrent`, so that path produced a wrong id
-   * rather than an error — and a wrong join key is the one failure here that
-   * nothing downstream can notice.
+   * missing. That path produced a wrong id rather than an error, and a wrong
+   * join key is the one failure here nothing downstream can notice. Every id
+   * matches its name since the terminology pass, which makes derivation look
+   * safe and is precisely why it is not: it is already wrong for PROTO MK0
+   * (`proto_mk0` against a real id of `proto`), and it would go wrong for the
+   * next boss whose name moves, on the quiet.
    */
   const stamped = /`id`\s*([a-z_]+)/.exec(meta);
   if (!stamped) throw new Error(`${name}: no \`id\` stamp — cannot join this slice to the code`);

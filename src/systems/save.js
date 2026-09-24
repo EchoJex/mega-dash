@@ -35,7 +35,14 @@ const KEY = 'megadash_save_v1';
  * a wipe, SAY THAT HERE — it is the one line anybody reads about it.
  */
 export const SAVE_BREAK = {
-  n: 1,
+  /**
+   * 2 — the terminology realignment. `save.bossKills` is keyed by BOSS ID and
+   * two of those changed (`core` -> `proto`, `torrent` -> `tempest`), so an
+   * older save holds two keys that now name nothing and reads layer 1 for two
+   * bosses it had already beaten. Nothing could migrate that honestly: the
+   * layer is the point of the key.
+   */
+  n: 2,
   /**
    * ONE LINE, 44 CHARACTERS AT THE ABSOLUTE MOST, AND `-` RATHER THAN `—`.
    *
@@ -51,7 +58,7 @@ export const SAVE_BREAK = {
    * full reset link is 20 pixels tall and a second line lands on one of them.
    * Any character the font lacks is drawn as `?`; the em dash is one of them.
    */
-  note: 'SAVE RESET - CHIPS AND LAYERS ARE FRESH',
+  note: 'BOSS IDS RENAMED - LAYERS AND CHIPS RESET',
 };
 
 const BLANK = {

@@ -152,7 +152,7 @@ export function makeArena(bossDef, layer, viewW, floorY) {
  * ARENA FURNITURE — the geometry each boss's designed hazards need to exist.
  *
  * Built here rather than in the hazard loop because it is the ROOM, not the
- * event: Core Man's turrets are bolted to the ceiling whether or not they are
+ * event: Proto Mk0's turrets are bolted to the ceiling whether or not they are
  * currently firing, and Tempest Man's drain is in the floor before the water
  * arrives. Only the three bosses whose tracker entries are written have entries;
  * everything else gets a bare room, which is correct rather than missing.
@@ -196,11 +196,11 @@ const COVER = { recedeRate: 0.14, regrowRate: 0.006 };
 
 const FURNITURE = {
   /**
-   * CORE MAN — "plain light grey room with a couple of small ceiling turrets".
+   * PROTO MK0 — "plain light grey room with a couple of small ceiling turrets".
    * Two turrets, mounted on the ceiling, inset from the walls so their spread
    * covers the room rather than firing into a corner.
    */
-  core(a, layer, viewW) {
+  proto(a, layer, viewW) {
     a.turrets = [0.28, 0.72].map((f) => ({
       x: Math.round(viewW * f) - 5, y: a.ceilY, w: 10, h: 7, flash: 0,
     }));
@@ -246,7 +246,7 @@ const FURNITURE = {
    * water with an inward current, and a grate-covered central drain with a
    * damaging spike ball sitting on it.
    */
-  torrent(a, layer, viewW, floorY) {
+  tempest(a, layer, viewW, floorY) {
     // "Large steel pipes protruding from the walls in the upper corners." They
     // are the spout for the cascade AND the mouth barrels and spike balls
     // arrive from, so the hazard loop reads their positions rather than
@@ -1042,7 +1042,7 @@ export function drawHazards(g, arena, shake) {
  */
 function drawBackdrop(g, arena, viewW, sx, sy) {
   const id = arena.theme.id;
-  if (id === 'core') {
+  if (id === 'proto') {
     // "Background shall be of various size metal gears"
     g.fillStyle(0x2a2f38, 1);
     const gears = [[60, 60, 22], [150, 38, 14], [250, 66, 28], [340, 44, 18], [430, 72, 12]];
@@ -1066,7 +1066,7 @@ function drawBackdrop(g, arena, viewW, sx, sy) {
       g.fillStyle(0xE8541A, 0.28 * arena.ebb);
       g.fillRect(0, 0, viewW, arena.floorY);
     }
-  } else if (id === 'torrent') {
+  } else if (id === 'tempest') {
     // "Dark cloudy skies. Bolts of lightning and screen flashes telegraph the
     // heavy rain direction changes." The clouds are static banks; the bolt is
     // drawn only while a flash is running, so the two always agree.

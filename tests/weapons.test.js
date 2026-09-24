@@ -132,7 +132,7 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
       // is a freeze and a blocked shot — neither spawns anything, and scoring
       // it as idle would be measuring the wrong thing.
       const statused = h.enemies.filter((e) => Object.keys(e.status).length > 0).length;
-      // So does asserting a per-frame grant. The Eclipse Blade at Lv1 spawns
+      // So does asserting a per-frame grant. The Astral Cloak at Lv1 spawns
       // nothing at all: its whole effect is the aggro tax it publishes onto the
       // run for GameScene to apply, which is exactly what "reduces aggro" means.
       const granted = (h.run.aggroFire < 1 ? 1 : 0) + (h.run.aggroPause ? 1 : 0)
@@ -176,7 +176,7 @@ test('a weapon with no enemies on screen still runs without throwing', () => {
  * EMERGENCY_PER_ROUND stays free to tune.
  */
 test('the Nullfire Drone reload is proportional to clip size, not fire rate', () => {
-  const rungs = [1, 3, 6, 10].map((level) => ladderAt('core_blaster', level));
+  const rungs = [1, 3, 6, 10].map((level) => ladderAt('nullfire_drone', level));
   const perRound = rungs.map((L) => L.reloadFrames / L.clip);
 
   for (const [i, r] of perRound.entries()) {
@@ -200,8 +200,8 @@ test('the Nullfire Drone reload is proportional to clip size, not fire rate', ()
 });
 
 test('the drone reloads when the clip runs dry and refills to full', () => {
-  const h = harness('core_blaster', 1);
-  const L = ladderAt('core_blaster', 1);
+  const h = harness('nullfire_drone', 1);
+  const L = ladderAt('nullfire_drone', 1);
   let sawEmpty = false;
   /**
    * The budget is DERIVED, not guessed at. It used to assume roughly a shot a
@@ -216,8 +216,8 @@ test('the drone reloads when the clip runs dry and refills to full', () => {
     // Leaving the first one out means `st.cool` never falls and the drone never
     // fires a shot, which is a fake context quietly testing nothing.
     Wpn.coolWeapons(h.run.wstate);
-    Wpn.stepWeapons(h.ctx, ['core_blaster']);
-    const st = h.run.wstate.core_blaster;
+    Wpn.stepWeapons(h.ctx, ['nullfire_drone']);
+    const st = h.run.wstate.nullfire_drone;
     if (st.reloading) sawEmpty = true;
     if (sawEmpty && !st.reloading) { assert.equal(st.clip, L.clip); return; }
   }
@@ -263,7 +263,7 @@ test('every ladder moves in the direction its tracker field describes', () => {
     }
   };
   // "Increased reach" at Lv3, "significantly increased reach" at Lv6.
-  grows('thorn_lash', 'reach', [1, 3, 6]);
+  grows('simons_whip', 'reach', [1, 3, 6]);
   // "More ricochets + higher damage."
   grows('alloy_blade', 'bounces', [1, 3]);
   grows('alloy_blade', 'pierce', [1, 3]);
@@ -274,20 +274,20 @@ test('every ladder moves in the direction its tracker field describes', () => {
   grows('swarm_caller', 'count', [1, 3, 6, 10]);
   grows('swarm_caller', 'lifeFrames', [1, 3, 10]);
   // "Slight increase in pause duration and frequency."
-  grows('eclipse_blade', 'pauseFrames', [1, 3]);
-  grows('eclipse_blade', 'pauseChance', [1, 3]);
+  grows('astral_cloak', 'pauseFrames', [1, 3]);
+  grows('astral_cloak', 'pauseChance', [1, 3]);
   // Hot lingers longer as the Blaze Wheel levels: 3s then 5s.
   grows('blaze_wheel', 'hotFrames', [1, 3]);
 });
 
-test('the Thorn Lash only tosses and constricts at its top rung', () => {
+test("Simon's Whip only tosses and constricts at its top rung", () => {
   // "Lv1: can only reel in and damage minions; does not toss or constrict them."
-  assert.equal(ladderAt('thorn_lash', 1).toss, false);
-  assert.equal(ladderAt('thorn_lash', 1).constrictFrames, 0);
-  assert.equal(ladderAt('thorn_lash', 1).grapple, false, 'the grapple arrives at Lv3');
-  assert.equal(ladderAt('thorn_lash', 3).grapple, true);
-  assert.equal(ladderAt('thorn_lash', 10).toss, true);
-  assert.ok(ladderAt('thorn_lash', 10).constrictFrames > 0);
+  assert.equal(ladderAt('simons_whip', 1).toss, false);
+  assert.equal(ladderAt('simons_whip', 1).constrictFrames, 0);
+  assert.equal(ladderAt('simons_whip', 1).grapple, false, 'the grapple arrives at Lv3');
+  assert.equal(ladderAt('simons_whip', 3).grapple, true);
+  assert.equal(ladderAt('simons_whip', 10).toss, true);
+  assert.ok(ladderAt('simons_whip', 10).constrictFrames > 0);
 });
 
 test('the Swarm Caller inverts from a timed group to a standing swarm at Lv10', () => {
@@ -308,10 +308,10 @@ test('the Quake Hammer declares its own 1.5 second hold', () => {
 });
 
 test('a status-immune weapon clears whatever has been applied', () => {
-  const h = harness('eclipse_blade', 1);
+  const h = harness('astral_cloak', 1);
   Attr.applyStatus(h.statusBag, 'burn', 120);
   assert.ok(Attr.hasStatus(h.statusBag, 'burn'));
-  Wpn.stepWeapons(h.ctx, ['eclipse_blade']);
+  Wpn.stepWeapons(h.ctx, ['astral_cloak']);
   assert.ok(!Attr.hasStatus(h.statusBag, 'burn'), 'the cloak must clear it the same frame');
   assert.ok(h.run.aggroFire < 1, 'and publish the aggro tax');
 });
@@ -533,11 +533,11 @@ test('the bench is everything unlocked in a class that is not slotted', () => {
 
 test('weapon state is dropped when a weapon leaves the loadout', () => {
   const store = {};
-  const h = harness('core_blaster', 1);
-  Wpn.stateFor(store, 'core_blaster', 1, h.ctx);
-  assert.ok(store.core_blaster);
+  const h = harness('nullfire_drone', 1);
+  Wpn.stateFor(store, 'nullfire_drone', 1, h.ctx);
+  assert.ok(store.nullfire_drone);
   Wpn.pruneStates(store, ['blaze_wheel']);
-  assert.equal(store.core_blaster, undefined,
+  assert.equal(store.nullfire_drone, undefined,
     're-slotting a weapon should start it fresh, not resume a stale clip');
 });
 

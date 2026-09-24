@@ -43,8 +43,9 @@ test('no word of the tracker is lost in a round-trip', () => {
 
 test('every slice carries an id stamp linking it to the code', () => {
   // The id is how tools/sync-tracker.js and the status board join the doc to
-  // bosses.js. Tempest Man ships as `torrent`, so deriving the id from the
-  // display name would be wrong for at least one boss and wrong silently.
+  // bosses.js. Deriving it from the display name is wrong for PROTO MK0 right
+  // now — that slugs to `proto_mk0` against a real id of `proto` — and would go
+  // wrong silently for any boss renamed later.
   const doc = parse(raw);
   const slices = doc.sections.find((s) => s.title === 'SLICES');
   assert.ok(slices, 'TRACKER.md must have a "# SLICES" section');
