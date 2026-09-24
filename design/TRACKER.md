@@ -22,9 +22,14 @@ typo fix goes back in the queue to be re-checked instead of disappearing into
 `[wip]` where nothing looks at it. A larger edit is a rewrite and drops to
 `[wip]`. Editing a `[draft]` withdraws the go-ahead and drops to `[wip]`.
 
-Moving a field to `[draft]` yourself is the assertion that it may be built.
-Claude never writes `[draft]` — only `[ready]`, and only once the thing
-verifiably works.
+Moving a field to `[draft]` yourself is what says it may be built. Claude never
+writes `[draft]` — only `[ready]`, and only once the thing verifiably works.
+
+**Renaming something does not move a marker.** If a word changes across the
+whole repo — a boss id, a weapon name, jargon swapped for plain English — the
+field still describes the same built thing, so it keeps the marker it had.
+Moving markers on a rename would either un-build correct fields or have Claude
+handing out green lights, and neither is what a rename means.
 
 `[na]` is gone. "Deliberately not applicable" was a fifth state off the side of
 the ladder that three fields used, and each was a settled answer — which is what
@@ -40,11 +45,12 @@ comments in code may still describe it the other way round; this table wins.
 ## Weapon loadout
 
 A run carries up to **two offensive** and **two defensive** weapons. Every weapon
-field below says which class its weapon belongs to; that word is load-bearing,
-not flavour.
+field below says which class its weapon belongs to. The code READS that word to
+decide how the weapon plays, so it is not flavour — change it and the weapon
+changes.
 
 - **Offensive** weapons share the fire button. The re-quip wheel picks which one
-  is aimed. **The sidearm** (the old Mega Buster) is one of these — it occupies
+  is aimed. **The sidearm** is one of these — it occupies
   an offensive slot rather than riding above them for free.
 - **Defensive** weapons run on their own — a drone that auto-fires, a shield
   that maintains itself, a jetpack that vents on landing. They are not aimed.
@@ -61,8 +67,10 @@ the Hub. The two classes are separate upgrades, each rank 0 to 3.
 | 2 | both live at once; the second position is still the sidearm | two slots, one live |
 | 3 | second position freed — two specials, sidearm tradeable | two slots, both live |
 
-Where a rank caps how many may run, the press-and-hold on a slot becomes a
-switch *between* them rather than an on/off.
+Where a rank caps how many may run, tapping a slot switches *between* them
+rather than turning one on and off. There is no press-and-hold anywhere on
+either wheel — a hold and a tap meaning different things on the same disc is
+two gestures told apart by feel, with no feedback until after you committed.
 
 Inactive but unlocked weapons keep their levels for the rest of the run and
 still turn up on level-up cards. **Slots only change between fights** — from a
@@ -622,7 +630,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Player
 
 - **palette** `[ready]` Fixed white — the three colours baked into `public/sprites/player.png`, held in `PLAYER_PALETTE` so the constant and the sheet cannot disagree. He was blue (#1565C0) for the whole placeholder era and the owner's sheet arrived white; the art wins. White is also the strongest answer to "never lose sight of the player" against arenas running from Blaze Man's dark red to Eclipse Man's near-black.
-- **sprite grid** `[ready]` 24x24, the NES reference size. Twelve frames in one 288x24 sheet. The jump is registered as three one-frame clips rather than a loop, so the pose is picked from `vy` and the arc reads.
+- **sprite grid** `[ready]` 24x24, the NES reference size. Fourteen frames in one 336x24 sheet — twelve at the handoff, plus the third slide pose. The jump is registered as three one-frame clips rather than a loop, so the pose is picked from `vy` and the arc reads.
 - **equipment visuals** `[ready]` What the player is carrying is told by weapon hardware DRAWN ON him, never by his colour. Live recolouring of the suit from the source boss's palette is scrubbed and must not return: a tint multiplies the whole texture, so it was quietly blocking the real three-colour art, and a protagonist whose colour changes is one you have to re-find after every re-quip.
 - **collision box** `[ready]` The sprite box and the collision box are deliberately different. The silhouette changes constantly — arm cannon extends, legs tuck, slide flattens — and a hitbox that followed the art would make vulnerability change frame to frame. A stable narrower box is both precise and fair.
 - **movement** `[ready]` Walk, jump, gravity, terminal velocity, slide speed and duration are the classic NES Mega Man values converted from that game's 8.8 fixed point. A known-good reference feel to tune away from, not a finished tune.
@@ -638,10 +646,10 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## The re-quip wheel
 
-- **in-situ mode** `[ready]` Opened by the RE-QUIP button mid-fight. Slow motion, HUD stays up, the ring is scenery at 0.16 alpha and not touchable. One tap or one diagonal swipe aims a slot or toggles it. Seven-second timeout as a dead man's handle.
-- **post-boss mode** `[ready]` Opens by itself after the boss detect animation has fully resolved plus a small delay. Hard pause, while staying in the boss room after their defeat, continue to use this Post Boss mode. This mode is the only way the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon. Continue allowing adjustments until the player taps outside the wheel
+- **mid-fight wheel** `[ready]` Opened by the RE-QUIP button during a fight. Slow motion, HUD stays up, the ring of weapons is dimmed to scenery and cannot be touched — you may aim a slot or switch one off, and nothing else. One tap, or one diagonal swipe. It closes itself after seven seconds, because slow motion with no way out is a soft lock for anyone who opened it by accident. The code calls this mode `in-situ`, which is Latin for "in place"; `SITU_TIMEOUT_MS` is that seven seconds.
+- **between-fights wheel** `[ready]` Opens by itself after the boss death animation has fully resolved plus a small delay. Hard pause, while staying in the boss room after their defeat, continue to use this Post Boss mode. This mode is the only way the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon. Continue allowing adjustments until the player taps outside the wheel
 - **ring layout** `[ready]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately. Maintain a distinct gap between the top half and the bottom half separating offensive slots and offensive weapons vs defensive slots and defensive weapons
-- **keyboard and gamepad** `[ready]` There is no way to re-quip without a mouse or a touchscreen. The in-situ wheel has Q/E/Z/C; the post-boss wheel shall have a simple cursor to cycle through the weapon you want attached and the slot you want it attached to. Repeat until escape key or jump key
+- **keyboard and gamepad** `[ready]` There is no way to re-quip without a mouse or a touchscreen. The mid-fight wheel has Q/E/Z/C; the between-fights wheel shall have a simple cursor to cycle through the weapon you want attached and the slot you want it attached to. Repeat until escape key or jump key
 
 ## Minions
 
@@ -652,7 +660,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## HUD and controls
 
 - **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad.
-- **keyboard** `[ready]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the in-situ wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc closes post boss requip wheel
+- **keyboard** `[ready]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the mid-fight wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc closes the between-fights wheel
 - **slide** `[ready]` Double-tap jump. The jump always wins the first tap — detecting a double-tap first would put latency on every jump in the game — and the second tap inside the window puts the player back where he launched and slides instead.
 - **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` silently drops any glyph it lacks, so HUD strings stay inside plain uppercase, digits and spaces.
 - **dev HUD** `[ready]` A `[DEV]` marker whenever dev mode is on, plus a diagnostic line carrying the build, the run's world seed, and render density with the viewport it was picked from. The marker is not switchable; the diagnostic line is.
