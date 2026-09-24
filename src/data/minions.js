@@ -18,7 +18,7 @@
 
 export const MINIONS = [
   {
-    id: 'scrapper', name: 'SCRAPPER', kind: 'ground',
+    id: 'spiglet', name: 'SPIGLET', kind: 'ground',
     primary: '#788850', secondary: '#2E3520', outline: '#0A0A12',
     w: 14, h: 14,
     hp: 3,

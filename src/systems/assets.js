@@ -18,7 +18,7 @@
  * -------------------------------------
  *   player            the player
  *   <bossId>          a boss, e.g. 'blaze'      (see data/bosses.js)
- *   <minionId>        a minion, e.g. 'scrapper' (see data/minions.js)
+ *   <minionId>        a minion, e.g. 'spiglet' (see data/minions.js)
  *   shot:<weaponId>   a projectile, e.g. 'shot:buster', 'shot:blaze_wheel'
  *   pickup:etank      the E-Tank drop
  *   pickup:exp        the EXP drop

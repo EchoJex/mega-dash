@@ -616,7 +616,7 @@ at 60 steps a second. **There is no fps dial any more** because there is nothing
 it to choose; what replaced it is a slow-motion ladder (1x, 1/2, 1/4, 1/8) for looking at
 a fast cycle without pretending the game plays it that way.
 
-**SCRAPPER AND DRIFTER STAND IN THE WALK LANE**, one on the floor and one in the air,
+**SPIGLET AND DRIFTER STAND IN THE WALK LANE**, one on the floor and one in the air,
 because bosses are events and minions are weather — a run is mostly spent beside those
 two, so they are the honest timing reference in a way a boss met once every few minutes is
 not.
@@ -785,7 +785,7 @@ definitions.
 
 ## Minions
 
-`src/data/minions.js` — exactly two, one per plane of movement: **SCRAPPER** (ground,
+`src/data/minions.js` — exactly two, one per plane of movement: **SPIGLET** (ground,
 walks its span and turns at pit edges) and **DRIFTER** (air, drifts left while tracking
 your altitude). Bosses are events; minions are weather.
 

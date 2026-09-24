@@ -1999,13 +1999,13 @@ function drawWalkPreview(cols) {
    * these two, so they are the honest scale and timing reference for how fast
    * a cycle reads, in a way a boss met once every few minutes is not.
    *
-   * SCRAPPER IS ON THE FLOOR AND DRIFTER IS IN THE AIR, because that is the
+   * SPIGLET IS ON THE FLOOR AND DRIFTER IS IN THE AIR, because that is the
    * whole distinction between them: one walks its span, the other tracks your
    * altitude. Drawn as footprints rather than art for the same reason the boss
    * is — that is what the game draws until the art lands.
    */
   const airY = Math.round(bb.h * 0.62);
-  for (const [m, lift, tint] of [[MINION('scrapper'), 0, '#1d2418'], [MINION('drifter'), airY, '#181f2b']]) {
+  for (const [m, lift, tint] of [[MINION('spiglet'), 0, '#1d2418'], [MINION('drifter'), airY, '#181f2b']]) {
     if (!m) continue;
     const mx = Math.round(walkStart() + WALK_TRAVEL * (lift ? 0.62 : 0.28));
     pctx.fillStyle = tint;

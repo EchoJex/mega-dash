@@ -127,7 +127,7 @@ const PLAYER_BOX = { w: +hb[1], h: +hb[2], offX: +hb[3], offY: +hb[4] };
 const sl = /playerHitboxSlide:\s*\{ w: (\d+), h: (\d+), offX: (\d+), offY: (\d+) \}/.exec(feel);
 const SLIDE_BOX = sl ? { w: +sl[1], h: +sl[2], offX: +sl[3], offY: +sl[4] } : null;
 
-// The two minions, in file order: SCRAPPER then DRIFTER.
+// The two minions, in file order: SPIGLET then DRIFTER.
 const minionBoxes = [...minions.matchAll(/w: (\d+), h: (\d+),/g)].map((m) => ({
   w: +m[1], h: +m[2],
 }));
@@ -582,7 +582,7 @@ const targets = {
       'jumpRise', 'jumpApex', 'jumpFall', 'slide'],
   },
   minions: [
-    { id: 'scrapper', label: 'SCRAPPER', cls: 'minion',
+    { id: 'spiglet', label: 'SPIGLET', cls: 'minion',
       grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[0], frames: ['walk0', 'walk1'] },
     { id: 'drifter', label: 'DRIFTER', cls: 'minion',
       grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[1], frames: ['drift0', 'drift1'] },

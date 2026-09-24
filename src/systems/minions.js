@@ -122,7 +122,7 @@ export function stepMinions(list, world, player, groundY) {
     if (dot > 0) burned.push({ e, dot });
 
     // Knockback overrides walking for as long as it lasts, then decays away.
-    // Applied to position rather than folded into vx, because a Scrapper's vx
+    // Applied to position rather than folded into vx, because a Spiglet's vx
     // is its patrol direction and blending the two would flip it permanently.
     if (Math.abs(e.kbVx) > 0.05) {
       e.x += e.kbVx;

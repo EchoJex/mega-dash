@@ -82,7 +82,7 @@ const { playerClip } = await import('../src/systems/assets.js');
 const CLIPS = {
   player: new Set(PLAYER_STATES.map(playerClip)),
   // GameScene picks these inline from the minion's plane of movement.
-  scrapper: new Set(['walk']),
+  spiglet: new Set(['walk']),
   drifter: new Set(['fly']),
 };
 const named = (key, action) => CLIPS[key]?.has(action) ?? false;

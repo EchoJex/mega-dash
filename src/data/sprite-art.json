@@ -62,6 +62,23 @@
       ]
     }
   },
+  "shot:buster": {
+    "file": "shot-buster.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "center",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0
+      ]
+    },
+    "holds": {
+      "fly": [
+        5
+      ]
+    }
+  },
   "shot:volt_spark": {
     "file": "shot-volt_spark.png",
     "frameW": 16,
@@ -80,8 +97,31 @@
     },
     "holds": {
       "fly": [
+        10,
+        10,
+        10,
+        10,
         5,
-        5,
+        5
+      ]
+    }
+  },
+  "spiglet": {
+    "file": "spiglet.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
         5,
         5,
         5,
