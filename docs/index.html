@@ -142,7 +142,7 @@
 <script type="module">
 import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
 import {
-  OWNER, REPO, token, setToken, tokenRejected, gh, ensureDraft,
+  OWNER, REPO, token, setToken, tokenRejected, gh, ensureDraft as ensureDraftOn,
   draftRef as draftBranch, b64encode, b64decode, publishDraft as publishOnto,
 } from './gh.js';
 import { MARKS, markAfterEdit, changedChars } from './marks.js';
@@ -258,6 +258,12 @@ let dirty = false, saving = false, saveTimer = null;
  * shown on the button itself rather than tucked into a status line.
  */
 const draftRef = () => draftBranch(branch());
+// BOTH WRAPPERS OR NEITHER. gh.js takes the branch as an argument; this file
+// knows it from `branch()`. `draftRef` got wrapped when the shared client was
+// split out and `ensureDraft` did not, so the call site in save() went on
+// calling it with no argument and every autosave died on "cannot find branch
+// undefined". The sprite editor has had both since the split.
+const ensureDraft = () => ensureDraftOn(branch());
 let writeRef = null;     // the branch `sha` belongs to
 let pending = 0;         // autosaves not yet published to the working branch
 

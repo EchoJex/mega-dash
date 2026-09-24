@@ -48,6 +48,7 @@ const MERGED = OURS.replace('OWNER-SIDE-MARKER', `OWNER-SIDE-MARKER\n\n${THEIRS}
 
 const { server, url: SITE } = await serve(DOCS);
 
+const REFS = ['main', 'tracker-draft/main'];   // every other ref 404s, as on a real repo
 let mainContent = OURS;     // becomes MERGED once the merge is taken
 let merged = false;
 const puts = [];
@@ -79,7 +80,17 @@ await page.route('**://api.github.com/**', async (route) => {
     return json({ sha: 'blob0', content: b64(ref === 'main' ? mainContent : OURS) });
   }
   if (p.includes('/compare/')) return json({ ahead_by: 1 });
-  if (p.includes('/git/ref/heads/')) return json({ object: { sha: `sha-${p.split('heads/')[1]}` } });
+  // A REF THAT DOES NOT EXIST HAS TO 404. Answering every ref with a sha made
+  // this fake wrong in the one way that mattered: the tracker was calling the
+  // shared `ensureDraft(branch)` with no argument, so it asked for
+  // `tracker-draft/undefined`, got a sha back, and returned happily — and this
+  // test went on passing while the real app could not save at all.
+  if (p.includes('/git/ref/heads/')) {
+    const ref = p.split('heads/')[1];
+    return REFS.includes(ref)
+      ? json({ object: { sha: `sha-${ref}` } })
+      : json({ message: 'Not Found' }, 404);
+  }
   if (p.endsWith('/git/refs') && method === 'POST') return json({}, 201);
   // The fast-forward is REFUSED. This is what forces the merge path, and it is
   // what really happens whenever Claude has committed since the draft forked.
