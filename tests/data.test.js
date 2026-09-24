@@ -13,7 +13,7 @@ import {
 import { UPGRADES } from '../src/data/upgrades.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER,
-  WEAPON_LADDERS, hasLadder, damageAtLevel,
+  WEAPON_LADDERS, hasLadder, damageAtLevel, SIDEARM_ID,
 } from '../src/data/weapons.js';
 import { SPRITE_CLASS, DEPTH, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
 import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
@@ -129,14 +129,18 @@ test('the null weapon is an outline-only silhouette that fires nothing', () => {
   // an unknown id must degrade to it rather than throw
   assert.equal(weaponOf('does_not_exist'), NULL_WEAPON);
   assert.equal(weaponOf(undefined), NULL_WEAPON);
-  assert.equal(weaponOf('buster').id, 'buster');
+  assert.equal(weaponOf(SIDEARM_ID).id, SIDEARM_ID, 'a known id must still resolve');
 });
 
-test('the buster occupies a wheel slot like any other weapon', () => {
-  // Structural only. The buster's COLOURS are a placeholder and are
+test('the sidearm occupies a wheel slot like any other weapon', () => {
+  // Structural only. The sidearm's COLOURS are a placeholder and are
   // deliberately not asserted — see the testing note in CLAUDE.md.
-  assert.ok(WHEEL_ORDER.includes('buster'));
-  assert.equal(weaponOf('buster').id, 'buster');
+  //
+  // THROUGH THE CONSTANT, NOT THE LITERAL. These asserted `'buster'` by hand,
+  // which is what made renaming the id look like it would break things: the
+  // coupling was in the test, not in the game.
+  assert.ok(WHEEL_ORDER.includes(SIDEARM_ID));
+  assert.equal(weaponOf(SIDEARM_ID).id, SIDEARM_ID);
 });
 
 test('every weapon shape has an explicit drawn half-height', () => {

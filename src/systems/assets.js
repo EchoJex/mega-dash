@@ -19,7 +19,7 @@
  *   player            the player
  *   <bossId>          a boss, e.g. 'blaze'      (see data/bosses.js)
  *   <minionId>        a minion, e.g. 'spiglet' (see data/minions.js)
- *   shot:<weaponId>   a projectile, e.g. 'shot:buster', 'shot:blaze_wheel'
+ *   shot:<weaponId>   a projectile, e.g. 'shot:sidearm', 'shot:blaze_wheel'
  *   pickup:etank      the E-Tank drop
  *   pickup:exp        the EXP drop
  *   background        the scrolling backdrop
@@ -73,24 +73,19 @@ import { sfxFile } from './sfx.js';
  * art actually reads. The frame indices are unchanged from the handoff sheet.
  */
 export const MANIFEST = {
-  player: {
-    file: 'player.png', frameW: 24, frameH: 24, anchor: 'bottom',
-    anims: {
-      idle: [0, 1],
-      run: [2, 3, 4, 5, 6, 7],
-      jumpRise: [8],
-      jumpApex: [9],
-      jumpFall: [10],
-      slide: [11],
-    },
-    fps: 12,
-    // The idle is a BREATH, not a cycle — two frames a second apart, not six a
-    // second. See the per-clip rate note in createAnims.
-    animFps: { idle: 1.5 },
-    // NOT tintable. The three colours are baked into the sheet; a Phaser tint
-    // multiplies the whole texture and would wreck it. See the palette note at
-    // the bottom of this file.
-  },
+  /**
+   * ONE FIELD, AND IT IS NOT ART — it is the anchor `DEFAULT_HOLD` is derived
+   * from. 60/12 is 5 steps, which is why the default is 5 and not a rounder
+   * 10; `tests/sprites.test.js` pins the two together so neither can drift.
+   *
+   * Everything else the player entry used to carry is gone, because the build
+   * derives it and the merge below overwrites it anyway. It had rotted exactly
+   * as you would expect of a list nobody reads: `slide: [11]` while the sheet
+   * had grown a three-frame slide at 11, 12 and 13. A dead list that disagrees
+   * with the truth is worse than no list, because somebody eventually believes
+   * it.
+   */
+  player: { fps: 12 },
 };
 
 /**
@@ -166,6 +161,10 @@ export const hexNum = (s) => parseInt(String(s).replace('#', ''), 16);
  */
 export function preloadArt(scene) {
   for (const [id, def] of Object.entries(MANIFEST)) {
+    // AN ENTRY WITH NO FILE IS NOT ART. Every sheet's `file` comes from the
+    // build now, so an entry left holding only a tuning constant must not send
+    // the loader after `sprites/undefined`.
+    if (!def.file) continue;
     if (def.frameW && def.frameH) {
       scene.load.spritesheet(id, `sprites/${def.file}`, {
         frameWidth: def.frameW,

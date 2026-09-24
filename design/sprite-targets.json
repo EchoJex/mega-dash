@@ -359,10 +359,10 @@
     }
   },
   "shots": {
-    "shot-buster": {
+    "shot-sidearm": {
       "label": "SIDE ARM",
       "cls": "shot",
-      "key": "shot:buster",
+      "key": "shot:sidearm",
       "boss": null,
       "palette": {
         "primary": "#1565C0",

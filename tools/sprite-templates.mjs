@@ -147,7 +147,7 @@ const PICKUP_GRID = num(display, /^\s*pickup:\s*\{ w: (\d+)/m, 'pickup grid');
  *
  * `boss` is carried through because it is the shot's PALETTE: a Blaze Wheel
  * bullet is drawn in Blaze Man's three colours and re-tunes with him. The
- * sidearm's is null and falls back to the buster's own.
+ * sidearm's is null and falls back to the sidearm palette below.
  */
 const weaponRows = [...src('src/data/weapons.js')
   .matchAll(/\{ id: '(\w+)', name: (['"])(.+?)\2[\s\S]{0,120}?boss: (?:'(\w+)'|null)/g)]
@@ -161,16 +161,16 @@ const pickupRows = [...src('src/systems/pickups.js')
 if (pickupRows.length !== 2) throw new Error(`read ${pickupRows.length} pickups, expected 2`);
 
 /**
- * The buster's and the pickups' three colours DO travel in here, and that is
+ * The sidearm's and the pickups' three colours DO travel in here, and that is
  * not a contradiction of the note above. That note is about BOSS palettes,
  * which live in `boss-data.json` because the tracker owns them; these two have
  * no other machine-readable home at all, so this is the only copy rather than
  * a second one.
  */
-const bustP = /BUSTER_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/
+const sideP = /SIDEARM_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/
   .exec(src('src/data/weapons.js'));
-if (!bustP) throw new Error('could not read BUSTER_PALETTE');
-const BUSTER_PAL = { primary: bustP[1], secondary: bustP[2], outline: '#0A0A12' };
+if (!sideP) throw new Error('could not read SIDEARM_PALETTE');
+const SIDEARM_PAL = { primary: sideP[1], secondary: sideP[2], outline: '#0A0A12' };
 
 /**
  * THE EXACT ARITHMETIC `spawnBoss` USES, and it has to stay exact.
@@ -600,14 +600,14 @@ const targets = {
    * per-actor hurtbox the fudge dials exist to propose. Drawing a box here
    * would invite an artist to tune a number nothing reads.
    *
-   * THE ID IS FILENAME-SAFE AND `key` IS WHAT MANIFEST WANTS. `shot:buster` is
-   * a fine manifest key and a bad path, so the file is `shot-buster.sprite`
+   * THE ID IS FILENAME-SAFE AND `key` IS WHAT MANIFEST WANTS. `shot:sidearm` is
+   * a fine manifest key and a bad path, so the file is `shot-sidearm.sprite`
    * and the colon lives in one generated field instead of in a two-way
    * conversion somebody has to keep straight.
    */
   shots: Object.fromEntries(weaponRows.map((w) => [`shot-${w.id}`, {
     label: w.name, cls: 'shot', key: `shot:${w.id}`, boss: w.boss,
-    palette: w.boss ? null : BUSTER_PAL,
+    palette: w.boss ? null : SIDEARM_PAL,
     grid: { w: SHOT_GRID, h: SHOT_GRID },
     box: null,
     frames: ['fly0', 'fly1', 'fly2', 'fly3'],

@@ -62,8 +62,8 @@
       ]
     }
   },
-  "shot:buster": {
-    "file": "shot-buster.png",
+  "shot:sidearm": {
+    "file": "shot-sidearm.png",
     "frameW": 16,
     "frameH": 16,
     "anchor": "center",

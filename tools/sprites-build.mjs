@@ -75,8 +75,8 @@ function paletteOf(id) {
   if (shot) {
     if (shot.boss) return paletteOf(shot.boss);
     const w = readFileSync(join(REPO, 'src/data/weapons.js'), 'utf8');
-    const bp = /BUSTER_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/.exec(w);
-    if (!bp) throw new Error('could not read BUSTER_PALETTE out of src/data/weapons.js');
+    const bp = /SIDEARM_PALETTE[\s\S]*?primary: '(#[0-9A-Fa-f]{6})'[\s\S]*?secondary: '(#[0-9A-Fa-f]{6})'/.exec(w);
+    if (!bp) throw new Error('could not read SIDEARM_PALETTE out of src/data/weapons.js');
     return { primary: bp[1], secondary: bp[2], outline: '#0A0A12' };
   }
 

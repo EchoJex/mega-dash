@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
-import { save, fullReset } from '../systems/save.js';
+import { save, fullReset, saveWiped, SAVE_BREAK } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
 import { DEV } from '../config/dev.js';
 
@@ -81,7 +81,18 @@ export default class TitleScene extends Phaser.Scene {
     this.btn(cx, 158, `HUB   (${save.chips} chips)`, () => this.scene.start('Hub'));
     this.updateBtn(cx, 176);
 
-    this.note = label(this, cx, VIEW_H - 24, '', { color: '#3A6A8A', origin: 0.5 });
+    /**
+     * THE WIPE IS ANNOUNCED, ALWAYS. Losing a save to a development build is
+     * fine; finding out by noticing your chips are gone is not. `saveWiped` is
+     * set during the boot that threw the old save away, so this is the first
+     * screen after the update that did it — which is exactly when to say so.
+     *
+     * Gold rather than the note line's usual blue, and it takes the note line
+     * over instead of sitting beside it, because nothing else on this screen is
+     * worth reading first.
+     */
+    this.note = label(this, cx, VIEW_H - 24, saveWiped ? SAVE_BREAK.note : '',
+      { color: saveWiped ? '#F5D328' : '#3A6A8A', origin: 0.5 });
 
     label(this, cx, VIEW_H - 12, 'full reset', { color: '#804040', origin: 0.5 })
       .setInteractive({ useHandCursor: true })

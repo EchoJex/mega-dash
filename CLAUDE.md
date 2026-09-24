@@ -353,8 +353,12 @@ derives the whole entry from the `.sprite` source and the class it belongs to, i
 
 **A hand-written entry still wins for the LOOK fields** (`offX`, `parallax`, a deliberate
 `anchor` override) and **never for `anims`/`holds`**, which are frame indices nobody
-maintains by hand. A sprite with no `.sprite` source keeps its hand-written entry entirely,
-which is what `MANIFEST` is still there for.
+maintains by hand. A sprite with no `.sprite` source would keep a hand-written entry
+entirely, which is what `MANIFEST` is still nominally for — but every sheet in the game
+has a source now, so the table is down to a single tuning constant (`player.fps`, the
+anchor `DEFAULT_HOLD` is derived from) and `preloadArt` skips any entry with no `file`.
+The player's hand-written `anims` block was deleted when it was found still claiming a
+one-frame slide against a sheet that had grown three.
 
 **Manifest keys** — `player` · `<bossId>` · `<minionId>` · `shot:<weaponId>` ·
 `pickup:etank` · `pickup:exp` · `background`. An entry is either a static image
@@ -582,8 +586,8 @@ box overlay and the dials for them rather than inviting anyone to tune a number 
 reads. The MAX BOSS reference figure goes too — beside a 16-cell bullet it answers no
 question and costs the zoom that drawing an 8px ball needs.
 
-**The id is filename-safe and `key` is what MANIFEST wants.** `shot:buster` is a fine
-manifest key and a bad path, so the file is `shot-buster.sprite` and the colon lives in one
+**The id is filename-safe and `key` is what MANIFEST wants.** `shot:sidearm` is a fine
+manifest key and a bad path, so the file is `shot-sidearm.sprite` and the colon lives in one
 generated field rather than in a two-way conversion somebody has to keep straight.
 `npm run sprites:build` prints the manifest key beside the PNG for exactly that reason.
 
@@ -673,7 +677,8 @@ follows from attack and arena design, which is not done. Do not invent silhouett
 | **Loadout Mastery** | persistent, per class, 0→3 | bought with Chips | how many slots exist and how many run at once |
 
 Never say "Bolts" (renamed to Chips) or "Mega Buster" (renamed to **Side Arm** — its id is
-still `buster` so saves survive, but nothing user-facing says buster). EXP never buys
+`sidearm`, renamed with the weapon once it was clear no save had ever held a
+weapon id). EXP never buys
 Upgrades; Chips never grant Levels. A weapon is *unlocked* for the run and *equipped* into
 a slot; those are different states and an unlocked weapon on the bench still levels up.
 
@@ -1157,7 +1162,9 @@ committing. A weapon RENAME is now the `weapon name` field, not a meta-line edit
 the status board and every save depend on, and Tempest Man ships as `torrent`
 after a rename — so it stays readable and not editable rather than becoming a
 footgun with a textbox around it. `tools/sync-tracker.js` reads the fields and
-still falls back to the old meta line, so a slice in the old shape keeps working.
+no longer falls back to the old meta line: all seventeen slices have been in the
+field shape for a while, and the fallback's only remaining effect was to make a
+total parser failure look like a successful run.
 
 **`npm run status` deliberately does NOT count the identity fields.** Its board
 measures whether a boss's FIGHT is designed; folding palette and names into the
@@ -1545,6 +1552,34 @@ and the fixed timestep already makes it reachable.
 
 Text in the HUD goes through a 5×7 bitmap font whose `fold()` **substitutes `?` for any glyph
 it lacks** — `@` is not in it. Check `FONT_CHARS` before adding punctuation to a HUD string.
+
+### Losing a save is NORMAL. Announce it; never carry a shim to avoid it.
+
+**By the owner's call: this game will be in development for a long time, so wiping
+save data is an ordinary cost of a change, not a disaster to engineer around.** What
+is NOT acceptable is losing it silently, or paying for it forever in compatibility
+code that makes every later change more expensive than the save ever was.
+
+`SAVE_BREAK` in `systems/save.js` is the whole mechanism. **Bump `n` whenever a change
+makes existing saves wrong**; a save carries the number it was written under, a
+mismatch is wiped on the spot, and the title screen shows `SAVE_BREAK.note` in gold on
+the first launch afterwards — which is the launch right after the update that did it.
+
+**There is no migration path and there is deliberately not going to be one.** Do not
+write one, do not add a shim that reads an older shape, and do not keep a name or an id
+"so saves survive" — check first, because that claim has already been wrong once. The
+save holds scores, lifetime totals, boss kills, chips and upgrades. It has never held a
+weapon id, and unlocks and weapon levels are run-scoped by design.
+
+**The note is one line of at most 44 characters** and the reasons are in the constant's
+own comment — read it before writing one. **If a build needs a full uninstall and
+reinstall rather than a wipe, say so THERE**: it is the one line anybody reads about it.
+
+**What this does NOT license.** The keystore and its `keyAlias` still never change — a
+forced reinstall being announceable does not make one worth causing, and that rename buys
+nothing. An id that is a live code-to-code join key (`BOSSES[].dropWeapon`, a slice's
+`` `id` `` stamp) still stays put, because that is a real dependency rather than a save
+one. The rule retires compatibility with OLD DATA, not the joins inside the current code.
 
 ### Dev mode — `src/config/dev.js`
 

@@ -619,7 +619,7 @@ export function weaponDamage(cooldownFrames, projectiles = 1) {
  * invariant. Its only privilege is not competing for a slot. Dark blue body,
  * light blue accent.
  */
-const BUSTER_PALETTE = {
+const SIDEARM_PALETTE = {
   primary: '#1565C0',
   secondary: '#5CC8F0',
   outline: '#0A0A12',
@@ -665,7 +665,7 @@ const DEFS = [
   // slot, and swapping it out for a special is a real trade you are allowed to
   // make. `sidearm: true` only keeps it off the ring arc: it has its own fixed
   // bench position above the wheel, so it never moves and is always findable.
-  { id: 'buster', name: 'SIDE ARM', short: 'SIDEARM', cls: OFFENSIVE, sidearm: true, boss: null,
+  { id: 'sidearm', name: 'SIDE ARM', short: 'SIDEARM', cls: OFFENSIVE, sidearm: true, boss: null,
     cooldown: 8, projectiles: 1, shape: 'bolt', speed: 3.2,
     desc: 'Standard arm cannon. Starts in your first offensive slot.' },
 
@@ -748,10 +748,10 @@ const DEFS = [
   // reduces aggro and become immune to status effects", so it is a cloak and it
   // is named like one.
   //
-  // THE ID STAYS `eclipse_blade`. It is the join key for `BOSSES[].dropWeapon`
-  // and for every save's unlock set and weapon levels — the same reason the
-  // sidearm is still literally 'buster'. A rename is a display change and must
-  // never cost anyone their save.
+  // THE ID STAYS `eclipse_blade` because it is the join key for
+  // `BOSSES[].dropWeapon` — a code-to-code join, which is the only kind that
+  // makes an id load-bearing. It is NOT a save key: unlocks and weapon levels
+  // are run-scoped and never persisted.
   { id: 'eclipse_blade', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
@@ -772,18 +772,24 @@ export const WEAPONS = DEFS.map((d) => {
     radius: d.shape === 'stream' || d.shape === 'spray' ? 2 : 3,
     palette: src
       ? { primary: src.primary, secondary: src.secondary, outline: src.outline }
-      : BUSTER_PALETTE,
-    color: src ? src.primary : BUSTER_PALETTE.primary,
+      : SIDEARM_PALETTE,
+    color: src ? src.primary : SIDEARM_PALETTE.primary,
   };
 });
 
 export const WEAPON_BY_ID = Object.fromEntries(WEAPONS.map((w) => [w.id, w]));
 /**
- * The sidearm's id. Still literally 'buster' so every existing save keeps its
- * unlock set and weapon levels — the rename is a display change, not a data
- * migration, and paying for it with a wiped save would be absurd.
+ * The sidearm's id, which now matches its name.
+ *
+ * It was `buster` long after the weapon stopped being called one, kept on the
+ * stated grounds that renaming it would cost every player their unlock set and
+ * weapon levels. THAT WAS NEVER TRUE: unlocks and weapon levels are run-scoped
+ * and `systems/save.js` persists neither — the save holds scores, chips,
+ * upgrades and boss kills, and no weapon id has ever appeared in it. The
+ * comment outlived anyone checking it, which is how a rule nobody can act on
+ * gets written down.
  */
-export const SIDEARM_ID = 'buster';
+export const SIDEARM_ID = 'sidearm';
 
 /**
  * Resolve a weapon id, falling back to the outline-only NULL_WEAPON. Always use
