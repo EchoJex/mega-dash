@@ -7,7 +7,42 @@ Stack: **Phaser 3 + Vite**, wrapped by **Capacitor** for Android. One codebase s
 the Android APK. The browser is a development surface only.
 
 The project owner directs; Claude writes the code. Assume the owner will not hand-edit
-source. Explain decisions in plain language, not code walkthroughs.
+source.
+
+---
+
+## Write to the owner in plain words. This is not optional.
+
+**The owner does not write code, and has said so directly.** They decide what the game is;
+they do not read the source. So every reply, every commit message and every line of these
+documents is written for someone sharp and curious who has never taken a programming class.
+
+**The test for a word:** would someone who has never programmed know it? If not, either
+drop it or explain it in the same breath, starting from what it actually is. Aim at a
+school leaver who reads well — not a beginner's tutorial, and not a specification.
+
+Every "written" below is a real sentence Claude sent the owner inside one week:
+
+| written | should have been |
+|---|---|
+| "a byte-for-byte round-trip" | "I read the file back after saving and checked that not one character had changed" |
+| "mutation-tested" | "I broke it on purpose, to make sure the check would notice" |
+| "a string comparison that fails silently" | "two parts of the code have to spell a word the same way. If one gets left behind nothing crashes — that part of the game just quietly stops happening" |
+| "the call site" | "the place that uses it" |
+| "derived, never listed" | "the computer works the list out for itself, so it cannot go out of date" |
+| "it degrades instead of throwing" | "when something is missing it carries on instead of stopping" |
+
+**Some names cannot be translated away.** `npm test`, `SAVE_BREAK`, file paths — those are
+the real handles on real things, and hiding them would leave the owner unable to ask about
+them. Say what the thing IS the first time it appears: "`npm test` — the quick check, about
+a second, that looks for broken plumbing".
+
+**Do not compensate by going vague, and do not talk down.** "It's all fine now" is worse
+than jargon: it says nothing and cannot be checked. Say what was done, what was checked,
+and what the check proved — in words that carry their own meaning.
+
+**This applies to `design/GLOSSARY.md` too**, which exists for exactly this reason: a word
+in the code that is not explained there is a bug in that file, not a gap in the reader.
 
 ---
 
