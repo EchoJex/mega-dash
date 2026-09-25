@@ -1138,6 +1138,28 @@ therefore DELAYS the noise rather than removing it, which is not what this parag
 to claim. Getting one commit per publish would mean writing the file to the working branch
 directly instead of moving the ref, and nobody has done that work.
 
+**NEVER FORCE THE DRAFT BRANCH WITHOUT CHECKING IT FIRST.** After committing to the
+working branch, a session is tempted to shove `tracker-draft/<branch>` up to match, so the
+editor does not serve a stale copy. That is the right goal and a dangerous move: the owner
+may be drawing RIGHT NOW, and their autosaves land on that branch every few seconds. Force
+it while they are mid-sprite and their work is off the branch — recoverable from the
+commits, but their next autosave writes over it and the editor is already showing them the
+old picture.
+
+So check before moving it, every time:
+
+```bash
+git fetch origin 'refs/heads/tracker-draft/<branch>:refs/remotes/origin/tracker-draft/<branch>' --force
+git merge-base --is-ancestor origin/tracker-draft/<branch> HEAD   # 0 = safe to move
+```
+
+If that exits non-zero there is work on the draft that the working branch has not got.
+**Leave it alone and say so** — it is the owner's unpublished drawing, and the whole point
+of the draft branch is that it is theirs. `--force-with-lease` does NOT protect against
+this: it only asks whether the branch moved since the last fetch, never whether the commits
+on it still matter. This nearly went wrong once already, and was saved only by a pull
+happening to bring the autosaves in a minute earlier.
+
 **This means unpublished edits are invisible to you.** A field marked `[draft]` that was
 never published is on `tracker-draft/main` and not in your checkout. If the owner says
 they wrote something and `npm run status` disagrees, that is the first thing to check —
