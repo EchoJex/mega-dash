@@ -8,10 +8,10 @@
   WHY IT LIVES HERE AND NOT IN THE DEV MENU. Two reasons, and the second is the
   one that settles it.
 
-  The autosave already exists here. This page reuses the tracker's whole
-  GitHub path — the same token, the same `tracker-draft/<branch>` target, the
-  same 2.5s debounce — so "save like the tracker does" is a shared function
-  rather than a second implementation to keep in step.
+  The saving already exists here. This page reuses the tracker's whole GitHub
+  path — the same token, the same branch, the same save engine in
+  `autosave.js` — so "save like the tracker does" is a shared function rather
+  than a second implementation to keep in step.
 
   And THE GAME IS OFFLINE. CLAUDE.md: it bundles every asset and fetches
   nothing; there is no remote content and the manifest requests exactly two
@@ -122,16 +122,6 @@
     margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
     background: #3a2f0c; border: 1px solid #f5d328; color: #ffe9a3; font-size: 11px;
   }
-  /* A FAILED PUBLISH IS A CONDITION, NOT A MOMENT, so it gets a standing panel
-     rather than a toast — the art stays unpublishable until somebody resolves
-     the file in the repo, and a message that has faded cannot say so. Red
-     rather than the fudge warning's gold: gold is "be careful what you chose",
-     this is "the thing you pressed did not happen". */
-  #cwarn {
-    margin: 6px 0 0; padding: 6px 8px; border-radius: 3px;
-    background: #3a1214; border: 1px solid #ff6b6b; color: #ffd5d5; font-size: 11px;
-  }
-  #cwarn code { background: #00000055; padding: 0 3px; border-radius: 2px; }
 
   /* ── the one tool row ──
      IT SCROLLS RATHER THAN WRAPS, and that is the whole trick. Left to wrap,
@@ -181,9 +171,12 @@
          title="how many 1/60s sim steps this frame stays on screen">
   <button id="holdI" class="info" title="what a STEP is">i</button>
   <span class="grow"></span>
-  <span id="state" class="tag">…</span>
+  <!-- The status pill is the only save control, and tapping it is never
+       required — it saves by itself, to `main`, the one branch everything
+       else reads. The PUBLISH button is gone because there is no longer a
+       second place for the art to sit waiting to be moved. -->
+  <button id="state" class="tag" title="tap to save right now">…</button>
   <a class="applink" href="./index.html" title="the design tracker">📋 Tracker</a>
-  <button id="saveBtn" title="commit now and fast-forward the working branch">PUBLISH</button>
   <button id="tokenBtn" title="GitHub token">🔑</button>
 </header>
 
@@ -291,7 +284,6 @@
     <select id="onFrame" title="which of its frames"></select>
   </div>
 
-  <div id="cwarn" hidden></div>
   <div id="vwarn" hidden></div>
   <div class="hint" id="hint"></div>
 </footer>
@@ -342,23 +334,19 @@ import {
   readRegion, clearRegion, stampRegion, STATUSES,
   DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName, rolesFromPixels, resizeDoc,
 } from './sprite-fmt.js';
+import { mergeSprite } from './sprite-fmt.js';
 import { markAfterEdit, changedPixels } from './marks.js';
 import {
-  OWNER, REPO, token, setToken, gh,
-  draftRef as draftBranch, ensureDraft as ensureDraftOn,
-  publishDraft as publishOnto,
-  b64encode as b64, b64decode as unb64,
+  OWNER, REPO, token, setToken, gh, b64encode as b64, b64decode as unb64,
 } from './gh.js';
+import { createSaver, BRANCH } from './autosave.js';
 
-const BRANCH = 'main';
-const draftRef = () => draftBranch(BRANCH);
 const $ = (s) => document.querySelector(s);
 
 let targets = null;      // design/sprite-targets.json
 let palettes = null;     // design/boss-data.json
 let doc = null;          // the sprite being edited
 let key = null;          // its id
-let sha = null, dirty = false, saving = false, timer = null;
 let frameIx = 0, pen = '1', tool = 'pen';
 let view = { editor: true, boxes: true, onion: false };
 let cam = { z: 12, x: 0, y: 0 };
@@ -368,143 +356,51 @@ function setState(msg, cls = '') { $('#state').textContent = msg; $('#state').cl
 const pathFor = (id) => `design/sprites/${id}.sprite`;
 
 /**
- * THE DRAFT BRANCH IS THE TARGET, exactly as in the tracker: autosaves land
- * there and only PUBLISH moves the working branch. Drawing produces a lot of
- * small edits and none of them should be a commit on `main`.
+ * SAVING — see docs/autosave.js for the whole story.
+ *
+ * A stroke goes into this browser straight away and to `main` on GitHub a few
+ * seconds later. There is no draft branch and no PUBLISH button: both were
+ * ways for finished art to sit somewhere the game could not see it, which is
+ * exactly what kept happening.
+ *
+ * `mergeSprite` matters here more than it looks. `npm run sprites:ship` moves
+ * finished frames from `draft` to `ready` and Claude commits that; without a
+ * merge, a sprite open in this tab would write `draft` back over it.
  */
-const ensureDraft = () => ensureDraftOn(BRANCH);
+const saver = createSaver({
+  textNow: () => serialize(doc),
+  apply: (text) => {
+    doc = parse(text);
+    doc.w = targetOf(key).grid.w; doc.h = targetOf(key).grid.h;
+    frameIx = Math.min(frameIx, doc.frames.length - 1);
+    clearSel(); stopPlay(); rebaseAll(); resetHistory();
+    buildFrameList(); syncControls(); draw();
+    flash('GitHub had newer changes to this sprite; both have been kept');
+  },
+  merge: mergeSprite,
+  message: (path) => `sprite: ${path.split('/').pop().replace('.sprite', '')}`,
+  onState: showState,
+});
+saver.watch();
 
-function touch() { dirty = true; clearTimeout(timer); timer = setTimeout(() => save(false), 2500); }
+const touch = () => saver.touch();
 
 /**
- * Re-open this sprite from what was actually PUBLISHED.
- *
- * Only needed after a MERGE. The merged file holds both sides; `doc` holds one,
- * and every write here is a whole-file PUT — so without this the next autosave
- * serialises this tab's frames straight over the merge and reverts whatever it
- * brought in, silently, with a sha GitHub is perfectly happy to accept. That is
- * the bug that ate seven tracker fields in September; the editor is the same
- * shape and had none of the defence.
- *
- * It reads the WORKING branch rather than the draft even though publishOnto has
- * just reset one onto the other: the draft ref was moved with a force PATCH and
- * the working branch is the thing whose content we actually care about.
+ * The pill says where the art actually is. `kept on this device` is not a
+ * warning — the stroke is saved and survives the tab closing; it just has not
+ * reached GitHub yet, which is a different and much smaller thing than lost.
  */
-async function adoptPublished() {
-  const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}?ref=${BRANCH}&t=${Date.now()}`);
-  doc = parse(unb64(r.content.replace(/\n/g, '')));
-  doc.w = targetOf(key).grid.w; doc.h = targetOf(key).grid.h;
-  sha = null;               // belongs to the pre-merge write, on the old draft head
-  dirty = false;
-  clearSel();
-  stopPlay();
-  frameIx = Math.min(frameIx, doc.frames.length - 1);
-  // The same refresh open() does, for the same reason: the frame list this tab
-  // is holding has just been replaced wholesale, so the assertion rule has to
-  // re-baseline and undo must not reach back past the merge.
-  rebaseAll();
-  resetHistory();
-  buildFrameList();
-  syncControls();
-  fitCam();
-  draw();
+function showState(state, note) {
+  const at = () => new Date().toLocaleTimeString();
+  if (state === 'holding') return setState('kept here — saving to GitHub shortly', 'warn');
+  if (state === 'sending') return setState('saving…');
+  if (state === 'saved') return setState(`saved ${at()}`, 'ok');
+  if (state === 'offline') return setState('kept here — GitHub not answering, still trying', 'err');
+  if (state === 'blocked') return setState(`kept here — ${note}. Tap the key.`, 'err');
+  return setState('ready');
 }
 
-async function save(manual) {
-  if (!doc) return;
-  /**
-   * A SAVE THAT ARRIVES MID-SAVE MUST BE RESCHEDULED, NOT DROPPED — the same
-   * hole the tracker had. The autosave timer is single-shot and cleared on
-   * every stroke, so if it fired while a save was in flight this returned with
-   * `dirty` still true and NO new timer armed. The artist drew a last pose,
-   * stopped, and the status pill went on showing the previous save's time; that
-   * pose lived only in the tab until the next stroke, and closing it lost it.
-   */
-  if (saving) { if (!manual) touch(); return; }
-  if (!token()) { setState('no token — read only', 'err'); return; }
-  saving = true;
-  setState(manual ? 'publishing…' : 'saving…');
-  try {
-    const ref = await ensureDraft();
-    if (dirty) {
-      const body = {
-        message: `sprite: ${manual ? 'publish' : 'autosave'} ${key}`,
-        content: b64(serialize(doc)), branch: ref,
-      };
-      if (sha) body.sha = sha;
-      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      });
-      sha = r.content.sha;
-      dirty = false;
-    }
-    if (manual) {
-      // Fast-forward the working branch onto the draft, fall back to a merge,
-      // and RESET THE DRAFT — all three in gh.js, shared with the tracker.
-      const how = await publishOnto(BRANCH, `sprite: publish ${key}`);
-      clearConflict();
-      if (how === 'merge') {
-        const typedDuringPublish = dirty;
-        await adoptPublished();
-        setState(typedDuringPublish
-          ? `published — ${BRANCH} had moved, so it was merged and re-read; the last few strokes are gone`
-          : `published (merged with ${BRANCH}) ${new Date().toLocaleTimeString()}`,
-        typedDuringPublish ? 'err' : 'ok');
-      } else setState(`published ${new Date().toLocaleTimeString()}`, 'ok');
-    } else setState(`saved ${new Date().toLocaleTimeString()}`, 'ok');
-  } catch (e) {
-    const msg = String(e.message || e);
-    if (msg === 'MERGE_CONFLICT') {
-      /**
-       * NOTHING WAS PUBLISHED AND NOTHING WAS LOST. Both sides changed the same
-       * lines of the same sprite and a browser is the wrong place to resolve
-       * that. This used to fall through to the generic handler, which put the
-       * first sixty characters of GitHub's own JSON body in the status pill —
-       * `{ "message": "Merge conflict", "documentation_url` — which reads as a
-       * crash rather than as a thing anybody can act on.
-       */
-      setState('merge conflict — not published', 'err');
-      showConflict();
-    } else if (msg === 'TOKEN_REJECTED') {
-      setState('token rejected — NOT saved. Tap the key and paste a new one.', 'err');
-    } else if (/409/.test(msg)) {
-      /**
-       * A 409 ON THE WRITE IS A STALE BLOB SHA, not a merge conflict, and it
-       * used to wedge autosave forever: `dirty = false` sits inside the try and
-       * is never reached on a throw, so every later autosave retried with the
-       * same stale sha and 409'd again. Re-reading the sha is the whole fix and
-       * it is safe — `doc` in this tab is still the newest art, and the other
-       * side of a draft-branch conflict is this artist's own earlier autosave.
-       */
-      try {
-        const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(key)}?ref=${draftRef()}&t=${Date.now()}`);
-        sha = cur.sha;
-        setState('the draft moved — re-syncing; your art saves next', 'err');
-        if (!manual) { clearTimeout(timer); timer = setTimeout(() => save(false), 1200); }
-      } catch {
-        setState('conflict — reload, then re-apply this frame', 'err');
-      }
-    } else setState(msg.slice(0, 60), 'err');
-  } finally { saving = false; }
-}
 
-/**
- * THE CONFLICT PANEL IS STANDING, like the vertical-fudge warning and for the
- * same reason: it is a condition, not a moment. A toast would be gone before
- * the artist had finished reading it, and the art stays unpublishable until
- * somebody resolves the file in the repo — so the panel stays up until a
- * publish actually succeeds.
- */
-function showConflict() {
-  const w = $('#cwarn');
-  w.hidden = false;
-  w.innerHTML = `<b>MERGE CONFLICT — NOTHING WAS PUBLISHED AND NOTHING WAS LOST.</b> `
-    + `Your work is safe on <code>${draftRef()}</code>. `
-    + `<code>${BRANCH}</code> and your draft both changed the same lines of a sprite, `
-    + `which a browser cannot resolve. Ask Claude to resolve it in the repo, then publish again. `
-    + `Keep drawing meanwhile — autosave still works.`;
-}
-function clearConflict() { $('#cwarn').hidden = true; }
 
 // ── Loading ───────────────────────────────────────────────────────────
 
@@ -620,21 +516,27 @@ function paletteOf(id) {
   return { outline: '#0A0A12', primary: '#8899AA', secondary: '#556677' };
 }
 
+/**
+ * Open a sprite.
+ *
+ * `saver.open` writes out anything the previous sprite was still holding
+ * before it switches — "I picked another sprite and lost my last stroke" is
+ * exactly the kind of quiet loss this is all for — and if the last visit ended
+ * with unsent work on THIS sprite, it hands that back rather than the older
+ * copy sitting on GitHub.
+ */
+let restored = false;
 async function open(id) {
-  key = id; sha = null; dirty = false; frameIx = 0;
+  key = id; frameIx = 0;
   clearSel();
   stopPlay();
   const t = targetOf(id);
   let text = null;
   try {
-    const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${draftRef()}&t=${Date.now()}`);
-    text = unb64(r.content.replace(/\n/g, '')); sha = r.sha;
-  } catch {
-    try {
-      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${BRANCH}&t=${Date.now()}`);
-      text = unb64(r.content.replace(/\n/g, '')); sha = null;
-    } catch { text = null; }
-  }
+    const got = await saver.open(pathFor(id));
+    text = got.missing ? null : got.text;
+    restored = !!got.restored;
+  } catch { text = null; restored = false; }
 
   if (text) doc = parse(text);
   else {
@@ -662,7 +564,8 @@ async function open(id) {
   syncControls();
   fitCam();
   draw();
-  setState(text ? 'loaded' : 'new sprite', 'ok');
+  if (restored) setState('unsent work from last time restored — saving it now', 'warn');
+  else setState(text ? 'loaded' : 'new sprite', 'ok');
 }
 
 // ── Undo history ──────────────────────────────────────────────────────
@@ -697,7 +600,7 @@ const snapshot = () => ({ frameIx, frames: copyFrames(), w: doc.w, h: doc.h });
 
 function resetHistory() { hist = [snapshot()]; histIx = 0; }
 
-/** Called once a change is FINISHED: banks it, marks dirty, redraws. */
+/** Called once a change is FINISHED: banks it for undo, saves it, redraws. */
 /**
  * THE ASSERTION RULE, in pixels — the same rule marks.js applies to the
  * tracker's prose, measured in the only unit a drawing has.
@@ -1092,11 +995,11 @@ $('#sfxForm').onsubmit = (ev) => {
   sfxPick = null;
 };
 
-/** PUT the audio beside the sprite sheets, on the same draft branch. */
+/** PUT the audio beside the sprite sheets, on the same branch as everything else. */
 async function putSfx(file, bytes) {
   if (!token()) { flash(`no token — "${file}" is named but the audio was not uploaded`); return; }
   try {
-    const ref = await ensureDraft();
+    const ref = BRANCH;
     const path = `public/sfx/${file}`;
     let sha = null;
     try { sha = (await gh(`/repos/${OWNER}/${REPO}/contents/${path}?ref=${ref}`)).sha; } catch { /* new file */ }
@@ -1634,8 +1537,7 @@ async function pickOnion(id) {
     onionCache.set(id, null);                         // a failed load must not retry forever
     try {
       const r = await gh(`/repos/${OWNER}/${REPO}/contents/${pathFor(id)}`
-        + `?ref=${draftRef()}&t=${Date.now()}`).catch(() => gh(
-        `/repos/${OWNER}/${REPO}/contents/${pathFor(id)}?ref=${BRANCH}&t=${Date.now()}`));
+        + `?ref=${BRANCH}&t=${Date.now()}`);
       onionCache.set(id, parse(unb64(r.content.replace(/\n/g, ''))));
     } catch { flash(`${id} has no .sprite yet — nothing to ghost`); }
   }
@@ -2285,7 +2187,7 @@ $('#fudgeDef').onclick = () => {
   touch(); draw();
 };
 
-$('#target').onchange = async (e) => { if (dirty) await save(false); await open(e.target.value); };
+$('#target').onchange = async (e) => { await open(e.target.value); };
 // The selection is a rectangle over THIS frame; carrying it to the next one
 // would leave it pointing at pixels nobody selected. The clipboard survives,
 // which is the whole point of copying between frames.
@@ -2336,7 +2238,10 @@ $('#holdI').onclick = () => {
   $('#holdI').classList.toggle('on', !n.hidden);
 };
 $('#stepsNote').onclick = () => { $('#stepsNote').hidden = true; $('#holdI').classList.remove('on'); };
-$('#saveBtn').onclick = () => save(true);
+// Tapping the pill saves now. Never necessary, but watching it go is
+// reassuring before putting the phone down, and that is most of what the old
+// PUBLISH button was actually providing.
+$('#state').onclick = () => saver.push();
 $('#tokenBtn').onclick = () => { $('#tokIn').value = token(); $('#tok').showModal(); };
 $('#tok').addEventListener('close', () => {
   const v = $('#tok').returnValue;
@@ -2389,7 +2294,12 @@ addEventListener('keydown', (e) => {
   }
 });
 
-addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+// Leaving with work GitHub has not seen no longer risks losing it — it is in
+// this browser and comes back next visit — but it does mean the game and
+// Claude cannot see it yet, which is still worth a prompt.
+addEventListener('beforeunload', (e) => {
+  if (saver.unsent()) { saver.stash(); e.preventDefault(); e.returnValue = ''; }
+});
 
 // The reference figures are the real numbers, once the targets are in.
 boot().then(async () => {

@@ -1,9 +1,9 @@
 /**
- * The browser harness shared by smoke.mjs, sim.mjs and tracker-publish.mjs.
+ * The browser harness shared by smoke.mjs, sim.mjs and pages-save.mjs.
  *
  * All three do the same three things before they start doing their own: check
  * that playwright is there, serve a directory over http, and launch Chromium.
- * They had three copies of it, and the copies had drifted — tracker-publish
+ * They had three copies of it, and the copies had drifted — pages-save
  * hardcoded the container's browser path with no fallback, so it only ran
  * inside CI and not on the machine the game is developed on.
  *

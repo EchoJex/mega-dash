@@ -33,7 +33,10 @@
   .applink{background:#243044;color:var(--ink);border:1px solid var(--grid);padding:7px 12px;
            border-radius:3px;text-decoration:none;font-size:13px;white-space:nowrap}
   .applink:hover{filter:brightness(1.25)}
-  #state{font-size:12px;color:var(--dim)}
+  /* The status line is a <button> so it can be tapped to save now; it should
+     still read as text rather than as a control competing with Reload. */
+  #state{font-size:12px;color:var(--dim);background:none;border:0;padding:0;
+         font:inherit;font-size:12px;text-align:left;cursor:pointer}
   #state.err{color:#ff8080}
   #state.ok{color:var(--ui)}
 
@@ -102,11 +105,15 @@
 <header>
   <h1>Mega Dash — Dev Tracker</h1>
   <div class="row">
-    <button id="saveBtn" class="primary" title="commit the draft branch onto the working branch">Publish</button>
-    <button id="reloadBtn">Reload</button>
-    <select id="branch" title="branch"></select>
+    <button id="reloadBtn" title="re-read the tracker from GitHub">Reload</button>
     <span class="sp"></span>
-    <span id="state">…</span>
+    <!-- THE STATUS LINE IS THE ONLY SAVE CONTROL, and tapping it is never
+         required — it saves by itself. There is no Publish button because
+         there is nothing left to publish: what you type goes to `main`, the
+         one branch everything else reads. Forgetting to press something was
+         the single biggest cause of lost work in the old design, so the fix
+         was to delete the something. -->
+    <button id="state" title="tap to save right now">…</button>
     <!-- The two apps are siblings on one Pages site and share a token, so each
          links to the other: one bookmark reaches both, and neither has to be
          remembered as a URL. -->
@@ -140,29 +147,13 @@
 </dialog>
 
 <script type="module">
-import { parse, serialize, fieldsOf, rawOf } from './tracker-md.js';
-import {
-  OWNER, REPO, token, setToken, tokenRejected, gh, ensureDraft as ensureDraftOn,
-  draftRef as draftBranch, b64encode, b64decode, publishDraft as publishOnto,
-} from './gh.js';
+import { parse, serialize, fieldsOf, rawOf, mergeTracker } from './tracker-md.js';
+import { OWNER, REPO, token, setToken, tokenRejected, gh } from './gh.js';
+import { createSaver, BRANCH } from './autosave.js';
 import { MARKS, markAfterEdit, changedChars } from './marks.js';
 
 // ── Config ────────────────────────────────────────────────────────────
 const PATH = 'design/TRACKER.md';
-/**
- * Branches are LISTED FROM GITHUB, not hardcoded.
- *
- * This used to be a literal ['main', 'boss-dev'], which meant every new working
- * branch was invisible here: the tracker on that branch could not be opened, and
- * Reload just re-fetched whichever old branch was still selected — looking for
- * all the world like the app was broken. A hardcoded list of a thing that
- * changes weekly is a list that is wrong.
- *
- * The fallback below is only for a failed or rate-limited API call, so the app
- * still opens read-only rather than showing an empty picker.
- */
-const FALLBACK_BRANCHES = ['main'];
-let BRANCHES = [...FALLBACK_BRANCHES];
 // Ordered by how often they are chosen: [draft] is the build signal and the
 // most common deliberate act, so it leads.
 
@@ -230,45 +221,30 @@ const readChecks = (text, names) => {
 const writeChecks = (names, on) =>
   names.map((n, i) => `[${on[i] ? 'x' : ' '}] ${n}`).join(' · ');
 
-const BRANCH_KEY = 'megadash_branch';
+let doc = null;          // the tracker, parsed
 
-let doc = null;          // parsed model
-let sha = null;          // blob sha ON `writeRef`, for conflict-free writes
-let dirty = false, saving = false, saveTimer = null;
 /**
- * AUTOSAVE GOES TO A DRAFT BRANCH; PUBLISH PUTS IT ON THE REAL ONE.
+ * WHAT SAVING LOOKS LIKE NOW — see docs/autosave.js for the full story.
  *
- * Typing produced a commit every couple of seconds, and a working branch's
- * history was hundreds of "tracker: autosave" lines deep between two real
- * commits. Keystroke saves now land on `tracker-draft/<branch>` and the SAVE
- * button fast-forwards the working branch to whatever the draft has reached.
+ * You type, it goes into this browser straight away, and a few seconds later
+ * it goes to `main` on GitHub. That is the whole thing. The branch dropdown
+ * and the Publish button are gone: both were ways to send work somewhere
+ * nothing reads, which is what kept happening.
  *
- * THAT DELAYS THE NOISE, IT DOES NOT REMOVE IT. A fast-forward carries every
- * commit the draft accumulated, so a publish moves all of them onto the working
- * branch in one go — the history is batched, not squashed. Squashing would mean
- * PUTting the file to the working branch directly rather than moving its ref.
- *
- * The safety property is unchanged — nothing you type is ever only in a browser
- * tab — but the cost moves to a branch nobody reads. CI already ignores
- * `design/**`, so neither path was ever burning an APK build.
- *
- * THE COST IS THAT UNPUBLISHED EDITS ARE INVISIBLE TO THE BUILD. Claude reads
- * the tracker off the working branch, so a slice marked `[draft]` and never
- * published is a slice Claude cannot see. That is why the pending count is
- * shown on the button itself rather than tucked into a status line.
+ * `merge` is what saves the day when Claude commits while you are typing.
+ * Every save here replaces the whole file, so without it one of you would be
+ * written straight over the other. It combines the two field by field.
  */
-const draftRef = () => draftBranch(branch());
-// BOTH WRAPPERS OR NEITHER. gh.js takes the branch as an argument; this file
-// knows it from `branch()`. `draftRef` got wrapped when the shared client was
-// split out and `ensureDraft` did not, so the call site in save() went on
-// calling it with no argument and every autosave died on "cannot find branch
-// undefined". The sprite editor has had both since the split.
-const ensureDraft = () => ensureDraftOn(branch());
-let writeRef = null;     // the branch `sha` belongs to
-let pending = 0;         // autosaves not yet published to the working branch
+const saver = createSaver({
+  textNow: () => serialize(doc),
+  apply: (text) => { doc = parse(text); render(); },
+  merge: mergeTracker,
+  message: () => 'tracker: edit',
+  onState: showState,
+});
+saver.watch();
 
 const $ = (s) => document.querySelector(s);
-const branch = () => localStorage.getItem(BRANCH_KEY) || 'main';
 
 function setState(msg, cls = '') {
   const el = $('#state');
@@ -276,95 +252,64 @@ function setState(msg, cls = '') {
   el.className = cls;
 }
 
+/**
+ * Put the tracker on screen.
+ *
+ * ONE BRANCH, so there is no list to try and no chance of quietly loading a
+ * different branch's tracker than the one saving will write to — which is a
+ * thing the old loader could do, and did.
+ *
+ * `saver.open` does the part that is easy to get wrong: if the last visit
+ * ended with work that never reached GitHub, it hands that work back instead
+ * of the older copy GitHub is holding, and starts saving it immediately.
+ */
 async function load() {
   setState('loading…');
-  // Try the selected branch first, then the others. The tracker file does not
-  // exist on every branch, and a bare 404 with no explanation is a dead end for
-  // someone who just wants to write down a bug.
-  const order = [branch(), ...BRANCHES.filter((b) => b !== branch())];
-  let lastErr = null;
-  for (const br of order) {
-    try {
-      let r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${br}&t=${Date.now()}`);
-      writeRef = br;
-      pending = 0;
-
-      // THE DRAFT BRANCH WINS WHEN IT IS AHEAD. Autosaves land there, so the
-      // newest version of what you typed is on the draft and loading the
-      // working branch would silently hand you back an older tracker — which
-      // is the one way this scheme could lose work.
-      if (br === branch()) {
-        try {
-          const cmp = await gh(
-            `/repos/${OWNER}/${REPO}/compare/${br}...${draftRef()}?t=${Date.now()}`,
-          );
-          if (cmp.ahead_by > 0) {
-            r = await gh(
-              `/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${draftRef()}&t=${Date.now()}`,
-            );
-            writeRef = draftRef();
-            pending = cmp.ahead_by;
-          }
-        } catch (e) {
-          /**
-           * A 404 MEANS NO DRAFT BRANCH. ANYTHING ELSE MEANS WE DO NOT KNOW,
-           * AND NOT KNOWING MUST NOT LOOK LIKE "NOTHING THERE".
-           *
-           * A bare catch here swallowed a 403 rate limit and a 5xx as readily
-           * as the 404 it was written for. When that happened while the draft
-           * WAS ahead, `writeRef` stayed on the working branch and the app
-           * loaded the older file — and the first autosave then re-read the
-           * draft's sha and PUT the stale content over it with a matching sha,
-           * which GitHub accepts. Every unpublished edit since the last publish
-           * was gone, and the comment above calls that "the one way this scheme
-           * could lose work".
-           *
-           * So: only a 404 is "no draft yet". Any other failure refuses to load
-           * rather than guessing, because a refusal costs a reload and a wrong
-           * guess costs the writing.
-           */
-          if (!/^404\b/.test(e.message || '')) {
-            const fatal = new Error(
-              `Could not check the draft branch (${e.message}). Not loading, because `
-              + 'the draft may hold newer work than this branch and saving over it '
-              + 'would lose it. Reload to try again.',
-            );
-            // Marked fatal so the branch loop below does not treat this as
-            // "that branch did not work, try the next one" and quietly load a
-            // different branch's tracker instead.
-            fatal.fatal = true;
-            throw fatal;
-          }
-        }
-      }
-
-      sha = r.sha;
-      doc = parse(b64decode(r.content));
-      render();
-      dirty = false;
-      refreshSaveBtn();
-      if (br !== branch()) {
-        localStorage.setItem(BRANCH_KEY, br);
-        $('#branch').value = br;
-      }
-      // The read succeeded, but say so honestly: if the token was rejected on
-      // the way through, saving is off and you need to know that NOW, not when
-      // an hour of edits fails to persist.
-      setState(tokenRejected()
-        ? 'loaded · ' + br + ' — TOKEN REJECTED, read-only. Tap 🔑.'
-        : pending
-          ? `loaded · ${br} + ${pending} unpublished draft edit(s)`
-          : 'loaded · ' + br, tokenRejected() ? 'err' : 'ok');
-      loadBuilds();
-      return;
-    } catch (e) {
-      lastErr = e;
-      // A fatal error is a refusal, not a miss. Trying the next branch after
-      // one would load somebody else's tracker and point saving at it.
-      if (e.fatal) break;
+  try {
+    const got = await saver.open(PATH);
+    if (got.missing) { setState(`${PATH} is not on ${BRANCH}`, 'err'); return; }
+    doc = parse(got.text);
+    render();
+    if (tokenRejected()) {
+      setState('read-only — the access token was rejected. Tap the key.', 'err');
+    } else if (got.restored) {
+      setState(got.merged
+        ? 'unsent work from your last visit restored and combined with newer '
+          + 'changes from GitHub — saving it now'
+        : 'unsent work from your last visit restored — saving it now', 'warn');
     }
+    loadBuilds();
+  } catch (e) {
+    setState('could not load: ' + e.message, 'err');
   }
-  setState('load failed: ' + (lastErr ? lastErr.message : 'unknown'), 'err');
+}
+
+/**
+ * Turn the saver's state into a sentence, because the status line is the only
+ * place the owner can see where their work actually is — and "saved" meaning
+ * "saved somewhere nothing reads" is how the old design went wrong.
+ *
+ * `holding` is deliberately not called "unsaved". The work IS saved, in this
+ * browser, and it survives the tab closing; it just has not reached GitHub
+ * yet. Those are different facts and only one of them is worth worrying about.
+ */
+function showState(state, note) {
+  const at = () => new Date().toLocaleTimeString();
+  if (state === 'holding') return setState('kept on this device — saving to GitHub shortly', 'warn');
+  if (state === 'sending') return setState('saving to GitHub…');
+  if (state === 'saved') {
+    return setState(note === 'up to date'
+      ? `up to date with ${BRANCH}`
+      : `saved to ${BRANCH} ${at()}`, 'ok');
+  }
+  if (state === 'offline') {
+    return setState('kept on this device — GitHub is not answering, still trying. '
+      + `Your work is safe. (${note || ''})`, 'err');
+  }
+  if (state === 'blocked') {
+    return setState(`kept on this device — ${note}. Tap the key; nothing is lost.`, 'err');
+  }
+  return setState('ready');
 }
 
 /**
@@ -389,202 +334,7 @@ async function loadBuilds() {
   } catch { /* offline or no token — the static fallback list stands */ }
 }
 
-/**
- * Put the draft's work on the working branch, then start the draft over.
- *
- * THE DANCE ITSELF LIVES IN gh.js, because the sprite editor needs exactly the
- * same one and its own copy had drifted into a version missing the draft reset
- * and the 409 tag — which is the failure `docs/gh.js` exists to stop happening
- * a second time. What stays here is the part that is this app's: the blob sha
- * belongs to a commit that is no longer the draft's head, so the next write has
- * to look it up again.
- */
-async function publishDraft() {
-  const how = await publishOnto(branch(), 'tracker: publish');
-  if (how) writeRef = null;
-  return how;
-}
-
-/**
- * Re-base this tab onto what was actually published.
- *
- * Only needed after a MERGE. The merged file holds both sides; `doc` holds one.
- * Re-reading it is the whole fix — without it the next whole-file PUT reverts
- * whatever the merge brought in, silently, with a valid sha that GitHub accepts.
- *
- * It reads the WORKING branch rather than the draft even though publishDraft
- * has just reset one onto the other: the draft ref was moved with a force PATCH
- * and the working branch is the thing whose content we actually care about, so
- * reading the source rather than the copy removes a race that would be
- * invisible if it ever happened.
- */
-async function adoptPublished() {
-  const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${branch()}&t=${Date.now()}`);
-  doc = parse(b64decode(r.content));
-  render();
-  dirty = false;
-  // Both belong to the pre-merge write; save() re-reads them against the draft.
-  sha = null;
-  writeRef = null;
-}
-
-/**
- * `manual` is PUBLISH, not "save harder".
- *
- * An autosave commits to the draft branch and nothing else. A manual save
- * commits any outstanding edit there too, then fast-forwards the working branch
- * onto it — so the working branch gains ONE commit per publish however many
- * times you paused while typing.
- */
-async function save(manual) {
-  if (!doc) return;
-  /**
-   * A SAVE THAT ARRIVES MID-SAVE MUST BE RESCHEDULED, NOT DROPPED.
-   *
-   * The autosave timer is single-shot and cleared on every keystroke. If it
-   * fired while a save was already in flight, this returned silently with
-   * `dirty` still true and NO new timer armed — so the owner typed a last
-   * sentence, stopped, and the status line went on showing the previous save's
-   * timestamp. That sentence lived only in the tab until the next keystroke,
-   * and closing the tab lost it.
-   */
-  if (saving) {
-    if (!manual) queueSave();
-    return;
-  }
-  if (!token()) { setState('no token — read only', 'err'); return; }
-  saving = true;
-  setState(manual ? 'publishing…' : 'saving…');
-  try {
-    const ref = await ensureDraft();
-    // The blob sha we hold belongs to whichever branch we last wrote; on the
-    // first write of a session that is the branch we LOADED from, which may not
-    // be the draft. Re-read it rather than sending a sha from another branch,
-    // which GitHub rejects as a conflict.
-    if (writeRef !== ref) {
-      const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${ref}&t=${Date.now()}`);
-      sha = cur.sha;
-      writeRef = ref;
-    }
-    if (dirty) {
-      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: manual ? 'tracker: publish' : 'tracker: autosave',
-          content: b64encode(serialize(doc)),
-          sha, branch: ref,
-        }),
-      });
-      sha = r.content.sha;
-      pending++;
-    }
-    dirty = false;
-
-    if (manual) {
-      const how = await publishDraft();
-      pending = 0;
-      if (how === 'merge') {
-        /**
-         * THE MERGE BROUGHT IN WORK THIS TAB HAS NEVER SEEN, so this tab must
-         * stop being the newest thing in the room before it writes again.
-         * Adopting re-renders, which loses which cards were open — a cheap
-         * price for not reverting somebody's commits.
-         *
-         * `dirty` here means keystrokes landed during the publish round-trip,
-         * AFTER the flush above put everything on the draft. Those few seconds
-         * are the only thing adopting can cost, and they are named out loud
-         * rather than swallowed: the alternative is keeping them and silently
-         * reverting the whole other side of the merge, which is the bug.
-         */
-        const typedDuringPublish = dirty;
-        await adoptPublished();
-        setState(mergePublishMessage(typedDuringPublish, branch()),
-          typedDuringPublish ? 'warn' : 'ok');
-      } else {
-        setState(`published to ${branch()} ${new Date().toLocaleTimeString()}`, 'ok');
-      }
-    } else {
-      setState(`draft saved ${new Date().toLocaleTimeString()}`, 'ok');
-    }
-    refreshSaveBtn();
-  } catch (e) {
-    // A 409 means the file moved under us — almost always because Claude
-    // committed. Say so plainly rather than silently clobbering either side.
-    if (e.message === 'MERGE_CONFLICT') {
-      // Nothing was published and nothing was clobbered. Both sides changed the
-      // same lines, and a browser is the wrong place to resolve that.
-      setState(`${branch()} and your draft both changed the same lines. Nothing `
-        + 'was published and nothing was lost — your text is safe on the draft '
-        + 'branch. Resolve it in the repo, then publish again.', 'err');
-    } else if (e.message === 'TOKEN_REJECTED') {
-      setState('token rejected — your edits are NOT saved. Tap 🔑 and paste a new one.', 'err');
-    } else if (/409/.test(e.message)) {
-      /**
-       * A 409 IS A STALE SHA, AND IT USED TO WEDGE AUTOSAVE FOREVER.
-       *
-       * `dirty = false` sits inside the try and is never reached on a throw, so
-       * every later autosave retried with the SAME stale sha and 409'd again —
-       * the status line flashed "saving…" then this message on every pause in
-       * typing, and nothing ever recovered on its own.
-       *
-       * Re-reading the sha is the whole fix and it is safe: `doc` in this tab
-       * is still the newest text, the conflict is only about which blob the
-       * write claims to replace. What is NOT safe is doing it silently, so the
-       * message says the remote moved and the next save will take this tab's
-       * version — which is the choice the owner would make anyway, because the
-       * other side of a draft-branch conflict is their own earlier autosave.
-       */
-      try {
-        const cur = await gh(`/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${writeRef}&t=${Date.now()}`);
-        sha = cur.sha;
-        setState('conflict — the draft moved. Re-syncing; your text will save next.', 'warn');
-        if (!manual) queueSave();
-      } catch {
-        setState('conflict — someone else changed it. Reload, then re-apply your edit.', 'err');
-      }
-    } else {
-      setState('save failed: ' + e.message, 'err');
-    }
-  } finally {
-    saving = false;
-  }
-}
-
-/**
- * The button carries the pending count, because unpublished edits are the one
- * failure mode this design introduces: a slice marked `[draft]` that never left
- * the draft branch is a slice the build cannot see. It has to be visible on the
- * control that fixes it, not in a status line that scrolls away.
- */
-function refreshSaveBtn() {
-  const b = $('#saveBtn');
-  if (!b) return;
-  b.textContent = pending ? `Publish (${pending})` : 'Publish';
-  b.classList.toggle('warn', pending > 0);
-}
-
-/** The two things a merge publish can have to say, kept out of the call site. */
-function mergePublishMessage(typed, br) {
-  const t = new Date().toLocaleTimeString();
-  return typed
-    ? `published to ${br} ${t} — ${br} had moved, so this tab reloaded onto the `
-      + 'merge. Anything you typed in the last second or two is not in it; '
-      + 're-check the field you were on.'
-    : `published to ${br} ${t} — merged with newer work and reloaded.`;
-}
-
-/** Arm the autosave. One place, so a save can re-arm it after a collision. */
-function queueSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => save(false), 2500);
-}
-
-function touch() {
-  dirty = true;
-  setState('unsaved…');
-  queueSave();
-}
+const touch = () => saver.touch();
 
 // ── Parse / serialize ─────────────────────────────────────────────────
 // Conservative on purpose: anything the model does not recognise is kept as a
@@ -906,55 +656,30 @@ function bugRow(b, onDel, onChange) {
 
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-// ── Wiring ────────────────────────────────────────────────────────────
-const bsel = $('#branch');
-
-function fillBranchPicker() {
-  bsel.innerHTML = '';
-  // The current selection always appears, even if the listing failed or the
-  // branch has since been deleted — otherwise the picker would silently show
-  // something other than what is loaded.
-  const all = BRANCHES.includes(branch()) ? BRANCHES : [branch(), ...BRANCHES];
-  for (const b of all) {
-    const o = document.createElement('option');
-    o.value = b; o.textContent = b; o.selected = b === branch();
-    bsel.appendChild(o);
-  }
-}
+// ── Wiring ─────────────────────────────────────────────────
 
 /**
- * Pull the real branch list. Newest-pushed first, so the branch you are working
- * on is near the top of the picker instead of buried alphabetically.
+ * THERE IS NO BRANCH PICKER, and that is the fix rather than a simplification.
+ *
+ * It listed every branch in the repo and remembered what you last chose, so
+ * one mis-tap sent weeks of edits to a branch nothing reads — silently, since
+ * writing to the wrong branch still succeeds. It also could not agree with the
+ * sprite editor, which never had a picker at all.
+ *
+ * The dropdown was left over from an era of a branch per slice, which
+ * CLAUDE.md reversed: work lands on `main`. Wanting otherwise is something to
+ * say to Claude, not something to steer a web app into.
  */
-async function loadBranches() {
-  try {
-    const rows = await gh(`/repos/${OWNER}/${REPO}/branches?per_page=100&t=${Date.now()}`);
-    const names = rows.map((b) => b.name);
-    if (names.length) {
-      BRANCHES = [
-        ...names.filter((n) => n === 'main'),
-        ...names.filter((n) => n !== 'main').sort(),
-      ];
-    }
-  } catch {
-    // Unauthenticated listing can be rate-limited. The fallback still opens.
-  }
-  fillBranchPicker();
-}
 
-bsel.onchange = () => { localStorage.setItem(BRANCH_KEY, bsel.value); load(); };
-
-// ?branch=<name> selects a branch on load, so a link can point straight at one.
-// Typing a branch into a phone's address bar beats hunting through a dropdown,
-// and it is the way in when the listing is rate-limited. Applied BEFORE the
-// picker is first filled, so the URL and the selection never disagree.
-const urlBranch = new URLSearchParams(location.search).get('branch');
-if (urlBranch) localStorage.setItem(BRANCH_KEY, urlBranch);
-fillBranchPicker();
-
-$('#saveBtn').onclick = () => save(true);
-$('#reloadBtn').onclick = () => {
-  if (dirty && !confirm('You have unsaved edits. Reload and lose them?')) return;
+// Tapping the status line saves immediately. Never necessary — it saves on
+// its own — but when you are about to put the phone down it is reassuring to
+// watch it go, and reassurance is most of what the old Publish button was for.
+$('#state').onclick = () => saver.push();
+$('#reloadBtn').onclick = async () => {
+  if (saver.unsent() && !confirm('You have changes that are not on GitHub yet. Save them first?')) {
+    // Answering no means reload anyway; the work stays in this browser and
+    // comes back next time the page opens, so nothing is thrown away here.
+  } else if (saver.unsent()) await saver.push();
   load();
 };
 $('#tokenBtn').onclick = () => { $('#tokenIn').value = token(); $('#tokenDlg').showModal(); };
@@ -1002,10 +727,15 @@ $('#tokenClear').onclick = () => {
 };
 $('#tokenClose').onclick = () => $('#tokenDlg').close();
 
-addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
-// Branches first, so the picker is populated before the load reports which one
-// it settled on. Both are fire-and-forget; neither blocks the other.
-loadBranches();
+/**
+ * The warning on the way out is now only about the ROUND TRIP, not about
+ * losing anything: unsent work is already in this browser and comes back on
+ * the next visit. It stays because leaving with work that GitHub has not seen
+ * still means Claude and the build cannot see it either.
+ */
+addEventListener('beforeunload', (e) => {
+  if (saver.unsent()) { saver.stash(); e.preventDefault(); e.returnValue = ''; }
+});
 load();
 </script>
 </body></html>

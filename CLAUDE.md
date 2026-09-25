@@ -54,7 +54,7 @@ npm run build    # production bundle into dist/
 npm test         # code-integrity + data-shape tests (~0.1s) — run before committing
 npm run status   # the ELEMENT SLICE BOARD — what is built, read from live code
 npm run smoke    # OPT-IN: boot the real bundle in a browser and play it (~3 min)
-npm run tracker-test    # OPT-IN: drive the tracker app against a fake GitHub (~15s)
+npm run pages-test      # OPT-IN: drive both web apps against a fake GitHub (~40s)
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
 npm run sprites:build   # design/sprites/*.sprite -> the PNGs + the derived MANIFEST entries
 npm run sprites:ship    # GIVE THE WORD: verify every [draft] frame reaches the game, mark it [ready]
@@ -76,7 +76,7 @@ console error, crash overlay, non-finite position or runaway projectile count.
 
 `tools/harness.mjs` is the shared half of all three opt-in browser tools — the
 playwright guard, the static server and the Chromium launch. Same reason as
-`docs/gh.js`: three copies had drifted, and `tracker-publish.mjs`'s hardcoded
+`docs/gh.js`: three copies had drifted, and `pages-save.mjs`'s hardcoded
 browser path meant it only ran inside a container.
 
 It is **deliberately not in CI and not a devDependency**: Playwright's postinstall would
@@ -88,16 +88,21 @@ npx playwright@latest install chromium    # once
 npm run build && npm run smoke
 ```
 
-### `npm run tracker-test` — the tracker app's whole-file PUT
+### `npm run pages-test` — do the two web apps keep what you put in them
 
-`tools/tracker-publish.mjs` drives a real PUBLISH in Chromium against a faked
-api.github.com. Opt-in, not in CI, same terms as `npm run smoke`.
+`tools/pages-save.mjs` drives the real tracker and the real sprite editor in Chromium
+against a faked api.github.com. Opt-in, not in CI, same terms as `npm run smoke`.
 
-EVERY WRITE IN THAT APP IS A WHOLE-FILE PUT, so "the tab's document is older than
-the branch" is never a conflict — always a silent revert. It ate seven tracker
-fields on 3 Sep 2026. `publishDraft()` returns ff-or-merge and `save()` re-bases
-on merge; **do not remove either** — the return value looks unused until you see
-what reads it.
+It asks each app the same three questions, and each one is a way work has actually been
+lost: does typing reach `main` **with no button pressed**; does a save that collides with
+a Claude commit **keep both sides**; and does work that never reached GitHub **come back
+after a reload**. A unit test cannot catch these — they live in the ordering of network
+calls and in what survives closing the page.
+
+EVERY WRITE IN BOTH APPS IS A WHOLE-FILE PUT, so "the tab's copy is older than the
+branch" is never a conflict — always a silent revert. It ate seven tracker fields on
+3 Sep 2026. The guard is that every write names the version it is replacing and the apps
+merge on a refusal; **do not remove either.**
 
 ### `npm run sim` — the boss difficulty harness
 
@@ -464,7 +469,7 @@ the one part of the job that is arithmetic.
 ### The sprite editor — `docs/sprite-editor.html`
 
 A sibling of the tracker app, served from the same GitHub Pages site, sharing its token,
-its `tracker-draft/<branch>` autosave and its marker vocabulary. **It is deliberately not
+its save engine (`docs/autosave.js`) and its marker vocabulary. **It is deliberately not
 in the dev menu.** The game is entirely offline and its permission list is closed; an
 in-game editor that autosaved would put a GitHub token and a write path inside a sideloaded
 APK, which is a real cost to a trust surface paid so a drawing tool could sit one menu
@@ -1121,63 +1126,74 @@ the repo.
 
 **TWO APPS, ONE PAGES SITE, ONE BOOKMARK.** Pages serves `docs/` from `main`, so the
 tracker is the site root and the sprite editor is `sprite-editor.html` beside it. They
-share the token, the draft branch and the marker vocabulary, and each links to the other in
+share the token, the save engine and the marker vocabulary, and each links to the other in
 its header — so neither has to be remembered as a URL, and adding a third tool means adding
 one file plus one link.
 
-**Autosaves go to `tracker-draft/<branch>`, not to the working branch.** Typing produced a
-commit every couple of seconds and buried real history hundreds of lines deep. The
-**Publish** button fast-forwards the working branch onto the draft — or merges, if the
-working branch moved while they were typing — and then resets the draft.
+**WHAT YOU TYPE GOES STRAIGHT TO `main`, BY ITSELF.** There is no Publish button, no
+branch dropdown and no draft branch. A change is copied into the browser's own storage
+the instant it is made, and written to `main` a few seconds after you stop. The status
+line always says which of those two has it.
 
-**IT DOES NOT SQUASH, AND THE HISTORY SHOWS IT.** A fast-forward brings every commit the
-draft has accumulated, so publishing 100 autosaves puts 100 autosave commits on the working
-branch at once, and `main` carries hundreds of them against a handful of publishes — count
-them with `git log --oneline --grep=autosave` rather than trusting a number here. The draft branch
-therefore DELAYS the noise rather than removing it, which is not what this paragraph used
-to claim. Getting one commit per publish would mean writing the file to the working branch
-directly instead of moving the ref, and nobody has done that work.
+**THE BROWSER COPY IS DELETED THE MOMENT GITHUB CONFIRMS THE WRITE**, which makes one
+sentence true and load-bearing: IF A BROWSER COPY EXISTS, THERE IS WORK GITHUB HAS NOT
+GOT. So a page that opens and finds one knows the last session ended with something
+unsent, and puts it back rather than loading the older copy over the top of it. That is
+the recovery the old design had no answer for — a closed tab, a lift with no signal, a
+flat battery.
 
-**NEVER FORCE THE DRAFT BRANCH WITHOUT CHECKING IT FIRST.** After committing to the
-working branch, a session is tempted to shove `tracker-draft/<branch>` up to match, so the
-editor does not serve a stale copy. That is the right goal and a dangerous move: the owner
-may be drawing RIGHT NOW, and their autosaves land on that branch every few seconds. Force
-it while they are mid-sprite and their work is off the branch — recoverable from the
-commits, but their next autosave writes over it and the editor is already showing them the
-old picture.
+**This replaced an autosave-to-a-draft-branch scheme plus a manual Publish**, which the
+owner asked to be redone after losing work to it repeatedly. All three of its failures
+were one root cause — A SECOND PLACE THE WORK COULD BE — so the second place is gone:
 
-So check before moving it, every time:
+| went wrong | why |
+|---|---|
+| forgetting **Publish** | the work sat on `tracker-draft/<branch>`, which nothing reads. The app said "saved", and it was, just not anywhere useful |
+| the **branch dropdown** | it remembered what you last picked, and the sprite editor had no picker at all — so the two apps could write to different branches with nothing on screen saying so |
+| unexplained **409s** | moving work between two branches is a merge, and a merge can fail |
 
-```bash
-git fetch origin 'refs/heads/tracker-draft/<branch>:refs/remotes/origin/tracker-draft/<branch>' --force
-git merge-base --is-ancestor origin/tracker-draft/<branch> HEAD   # 0 = safe to move
-```
+**Do not reintroduce a second branch, a Publish button or a branch picker** without the
+owner asking for one by name. Cutting autosave noise out of `main`'s history was the
+draft branch's only real argument, and it never actually did that — a fast-forward
+carried every commit across, so publishing 100 autosaves put 100 commits on `main` at
+once. The noise is now cut at the source instead: a save waits several seconds after
+typing stops, so a writing session is a handful of commits rather than hundreds. Count
+them with `git log --oneline --grep=autosave` rather than trusting a number here.
 
-If that exits non-zero there is work on the draft that the working branch has not got.
-**Leave it alone and say so** — it is the owner's unpublished drawing, and the whole point
-of the draft branch is that it is theirs. `--force-with-lease` does NOT protect against
-this: it only asks whether the branch moved since the last fetch, never whether the commits
-on it still matter. This nearly went wrong once already, and was saved only by a pull
-happening to bring the autosaves in a minute earlier.
+**WHEN THE OWNER IS TYPING AND YOU COMMIT, BOTH SIDES SURVIVE.** Every write from these
+apps replaces the whole file, so a tab holding an older copy does not conflict — it
+silently reverts. That ate seven tracker fields on 3 Sep 2026. Each write now names the
+exact version it believes it is replacing, GitHub refuses it if the file has moved, and
+the app combines the two: `mergeTracker` field by field, `mergeSprite` frame by frame.
+**Do not remove either, and do not "simplify" a write into one that sends no version.**
+`mergeSprite` earns its place for a specific reason — `npm run sprites:ship` moves
+finished frames from `draft` to `ready`, and without it a sprite open in the editor
+would write `draft` straight back over that.
 
-**This means unpublished edits are invisible to you.** A field marked `[draft]` that was
-never published is on `tracker-draft/main` and not in your checkout. If the owner says
-they wrote something and `npm run status` disagrees, that is the first thing to check —
-`git fetch origin tracker-draft/main` and look. There is no export step and no download — that friction was the whole problem
-with the old HTML tracker, along with a JSON export built on the false premise that Claude
+**There is no export step and no download** — that friction was the whole problem with
+the old HTML tracker, along with a JSON export built on the false premise that Claude
 needed structured data to read a design doc. Both are gone.
 
 `docs/tracker-md.js` is the ONE parser, imported by both the web app and the repo tooling.
 
-**`docs/gh.js` is the ONE GitHub client, on the same terms.** Both apps talk to the
-same repo with the same token against the same draft branch, and both used to carry
-their own copy of `gh()`, the base64 pair and `ensureDraft`. The copies drifted and
-each ended up holding half a lesson the other needed: the tracker knew a rejected
+**`docs/gh.js` is the ONE GitHub client, and `docs/autosave.js` the ONE save engine,
+on the same terms.** Both apps talk to the same repo with the same token, and both used
+to carry their own copy of the plumbing AND their own saving code. The copies drifted
+and each ended up holding half a lesson the other needed: the tracker knew a rejected
 token must not stop a READ, the editor knew a 204 has no body, and neither knew the
-other's. **Do not inline a second copy** — `tests/gh.test.js` pins the read-only
-degradation, which is the one that takes a whole app down when it regresses.
-`tests/tracker.test.js` asserts `serialize(parse(x)) === x` byte for byte, so the app
-cannot silently rewrite or drop prose it did not understand.
+other's. The editor's copy of the publish dance was missing two of its four steps,
+which is what produced the 409s the owner kept hitting. **Do not inline a second copy of
+either** — `tests/gh.test.js` pins the read-only degradation, which is the one that
+takes a whole app down when it regresses, and `tests/autosave.test.js` pins the promise
+the save engine makes: work that has not reached GitHub is still there when you come
+back. `tests/tracker.test.js` asserts `serialize(parse(x)) === x` byte for byte, so the
+app cannot silently rewrite or drop prose it did not understand.
+
+**The split is WHEN versus HOW.** `gh.js` is the talking-to-GitHub part and knows
+nothing about timing. `autosave.js` decides when to write, keeps the browser copy until
+the write lands, and combines two versions that both moved on. A change about
+authentication or a status code belongs in the first; a change about losing work belongs
+in the second.
 
 **LINE ENDINGS ARE LOAD-BEARING, AND `.gitattributes` IS WHY.** Git for Windows sets
 `core.autocrlf=true` in its SYSTEM gitconfig, so before that file existed every Windows
@@ -1499,7 +1515,7 @@ the three tracks above independently runnable:
 
 | | |
 |---|---|
-| `design/TRACKER.md` + the tracker app | the design, editable from a phone, autosaving to a draft branch |
+| `design/TRACKER.md` + the tracker app | the design, editable from a phone, saving itself to `main` |
 | `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
 | `npm run sim` | headless difficulty measurement; `--save` keeps a run and diffs it against the one before |
 | `npm run smoke` | the real bundle, played in a browser, against every built fight |

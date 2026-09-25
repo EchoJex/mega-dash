@@ -89,3 +89,74 @@ export function serialize(d) {
 export const fieldsOf = (it) => it.content.filter((c) => c.type === 'field');
 /** Raw prose lines of an item, for the meta strip. */
 export const rawOf = (it) => it.content.filter((c) => c.type === 'raw').map((c) => c.line);
+
+/**
+ * COMBINE TWO VERSIONS OF THE TRACKER THAT BOTH MOVED ON FROM THE SAME START.
+ *
+ * Needed because every save replaces the whole file. If the owner is typing in
+ * a browser while Claude commits from a session, one of the two is about to be
+ * written straight over the other with no warning — that is what ate seven
+ * fields once. GitHub refuses the second write, and this is what makes the
+ * refusal recoverable instead of just an error message.
+ *
+ * `theirs` is what is on GitHub now, `mine` is this tab's version, and `base`
+ * is the version they both started from. Comparing each side against `base` is
+ * what tells a real edit apart from a line that simply has not changed — with
+ * only two versions there is no way to know which one moved.
+ *
+ * STRUCTURE COMES FROM `theirs`, FIELD VALUES FROM WHOEVER CHANGED THEM. New
+ * sections and new prose arrive from Claude's side, so that copy is the one
+ * worth starting from; then any field this tab actually edited is laid over
+ * the top. A field neither side touched keeps the one value it always had, and
+ * a field both sides changed keeps this tab's — the owner is sitting in front
+ * of it, and their version is the one they can see.
+ */
+export function mergeTracker(theirs, mine, base) {
+  const T = parse(theirs), M = parse(mine), B = parse(base);
+  const at = (sec, item, label) => `${sec}\u0000${item}\u0000${label}`;
+
+  const index = (d) => {
+    const map = new Map();
+    for (const sec of d.sections) {
+      for (const it of sec.items) {
+        for (const f of it.content) {
+          if (f.type === 'field') map.set(at(sec.title, it.title, f.label), f);
+        }
+      }
+    }
+    return map;
+  };
+  const items = (d) => {
+    const map = new Map();
+    for (const sec of d.sections) {
+      for (const it of sec.items) map.set(`${sec.title}\u0000${it.title}`, it);
+    }
+    return map;
+  };
+
+  const tIx = index(T), bIx = index(B), tItems = items(T);
+
+  for (const sec of M.sections) {
+    for (const it of sec.items) {
+      for (const f of it.content) {
+        if (f.type !== 'field') continue;
+        const key = at(sec.title, it.title, f.label);
+        const was = bIx.get(key);
+        // Unchanged here means this side has nothing to contribute to it.
+        if (was && was.text === f.text && was.mark === f.mark) continue;
+        const there = tIx.get(key);
+        if (there) { there.text = f.text; there.mark = f.mark; continue; }
+        /**
+         * A field this tab has and GitHub does not. The app only edits fields
+         * it was given, so in practice this is a field Claude DELETED while it
+         * was being edited here. Putting it back is the safe direction: an
+         * unwanted line is visible and one keystroke to remove, whereas
+         * writing over somebody's sentence is invisible and gone for good.
+         */
+        const host = tItems.get(`${sec.title}\u0000${it.title}`);
+        if (host) host.content.push({ type: 'field', label: f.label, mark: f.mark, text: f.text });
+      }
+    }
+  }
+  return serialize(T);
+}

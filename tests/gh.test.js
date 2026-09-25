@@ -59,96 +59,11 @@ test('a 204 has no body and must not throw', async () => {
     '/merges returns 204 when there is nothing to merge; res.json() on that throws');
 });
 
-/**
- * PUBLISH IS THE OTHER REASON THIS MODULE EXISTS, and it earned a test the
- * expensive way. The sprite editor carried its own fast-forward-then-merge and
- * had drifted into a copy missing two of the four things the tracker's knew:
- * it caught EVERY error on the fast-forward rather than only the 422, and it
- * never reset the draft branch afterwards. The second one is the quiet killer —
- * the draft then diverges from the working branch forever, and since the editor
- * opens from the draft in preference to the working branch, the artist is
- * silently pinned to a stale fork of every file they draw. It took
- * `design/sprites/player.sprite` all the way to unpublishable.
+/*
+ * The publish tests that used to live here are gone with the thing they
+ * tested. Moving work from a draft branch onto the working branch was the
+ * whole reason `publishDraft` existed, and both apps now write straight to
+ * `main` — see the top of docs/autosave.js. What replaced these is
+ * tests/autosave.test.js, which tests the failure that actually kept
+ * happening: work that never reached GitHub at all.
  */
-const ref = (b) => `/repos/EchoJex/mega-dash/git/refs/heads/${b}`;
-const DRAFT = 'tracker-draft/main';
-
-/**
- * A GitHub stand-in that records every write. `ff` / `merge` / `conflict` pick
- * what the working branch does when we try to move it.
- */
-function stubGitHub(mode) {
-  const seen = [];
-  globalThis.fetch = async (url, opts = {}) => {
-    const path = url.replace('https://api.github.com', '').replace(/[?&]t=\d+/, '');
-    const method = (opts.method || 'GET').toUpperCase();
-    const body = opts.body ? JSON.parse(opts.body) : null;
-    seen.push({ method, path, body });
-    const ok = (o) => ({ ok: true, status: 200, text: async () => JSON.stringify(o) });
-    const err = (s, t) => ({ ok: false, status: s, statusText: t, text: async () => `{"message":"${t}"}` });
-
-    if (method === 'GET' && path.startsWith('/repos/EchoJex/mega-dash/git/ref/heads/')) {
-      return ok({ object: { sha: path.endsWith('/main') ? 'MAINSHA' : 'DRAFTSHA' } });
-    }
-    if (method === 'PATCH' && path === ref('main')) {
-      return mode === 'ff' ? ok({}) : err(422, 'Unprocessable Entity');
-    }
-    if (method === 'POST' && path === '/repos/EchoJex/mega-dash/merges') {
-      return mode === 'conflict' ? err(409, 'Conflict') : ok({});
-    }
-    if (method === 'PATCH' && path === ref(DRAFT)) return ok({});
-    return err(404, 'Not Found');
-  };
-  return seen;
-}
-
-const { publishDraft } = await import('../docs/gh.js');
-
-test('a fast-forward publish resets the draft onto what it published', async () => {
-  setToken('good-token');
-  const seen = stubGitHub('ff');
-  assert.equal(await publishDraft('main', 'tracker: publish'), 'ff');
-
-  const reset = seen.find((c) => c.method === 'PATCH' && c.path === ref(DRAFT));
-  assert.ok(reset, 'without this the draft diverges further on every publish, forever');
-  assert.deepEqual(reset.body, { sha: 'MAINSHA', force: true },
-    'the draft has to land on the WORKING branch head, and only a force gets it there');
-});
-
-test('a working branch that moved is merged, not clobbered — and still resets', async () => {
-  setToken('good-token');
-  const seen = stubGitHub('merge');
-  assert.equal(await publishDraft('main', 'tracker: publish'), 'merge',
-    "the caller re-reads the file on 'merge'; every write in both apps is a whole-file PUT");
-
-  assert.ok(seen.some((c) => c.path === '/repos/EchoJex/mega-dash/merges'));
-  assert.ok(seen.some((c) => c.method === 'PATCH' && c.path === ref(DRAFT)));
-});
-
-test('a real conflict is tagged, and publishes nothing', async () => {
-  setToken('good-token');
-  const seen = stubGitHub('conflict');
-  await assert.rejects(() => publishDraft('main', 'tracker: publish'), /^Error: MERGE_CONFLICT$/,
-    'untagged, this reached the status pill as the first 60 characters of GitHub\'s own JSON body');
-
-  assert.ok(!seen.some((c) => c.method === 'PATCH' && c.path === ref(DRAFT)),
-    'nothing was published, so resetting the draft would throw the work away');
-});
-
-test('only a 422 means the branch moved', async () => {
-  setToken('good-token');
-  const seen = stubGitHub('ff');
-  const base = globalThis.fetch;
-  globalThis.fetch = async (url, opts = {}) => {
-    const path = url.replace('https://api.github.com', '').replace(/[?&]t=\d+/, '');
-    if ((opts.method || 'GET').toUpperCase() === 'PATCH' && path === ref('main')) {
-      seen.push({ method: 'PATCH', path, body: null });
-      return { ok: false, status: 403, statusText: 'Forbidden', text: async () => '{"message":"rate limited"}' };
-    }
-    return base(url, opts);
-  };
-  await assert.rejects(() => publishDraft('main', 'tracker: publish'), /403/,
-    'a rate limit sent down the merge path comes back as a second, less honest error');
-  assert.ok(!seen.some((c) => c.path === '/repos/EchoJex/mega-dash/merges'),
-    'a 403 is not "the branch moved" and must never attempt a merge');
-});

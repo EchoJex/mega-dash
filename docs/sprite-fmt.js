@@ -481,3 +481,43 @@ export function resizeDoc(doc, w, h) {
   });
   return { ...doc, w: nw, h: nh, frames, lost };
 }
+
+/**
+ * COMBINE TWO VERSIONS OF ONE SPRITE THAT BOTH MOVED ON FROM THE SAME START.
+ *
+ * The same job `mergeTracker` does, one frame at a time instead of one field
+ * at a time, and it is needed for a real reason rather than a theoretical one:
+ * `npm run sprites:ship` rewrites these files to move finished frames from
+ * `draft` to `ready`, and Claude commits that. If a frame were open in the
+ * editor at the time, saving would put `draft` straight back — undoing the
+ * promotion with nothing on screen to say it had happened.
+ *
+ * A frame is matched by its action and number. Whichever side changed it wins;
+ * if both did, the one being drawn right now wins, because the artist can see
+ * it. Frames only one side has are kept either way — deleting somebody's work
+ * to resolve a disagreement is never the safer choice.
+ */
+export function mergeSprite(theirs, mine, base) {
+  const T = parse(theirs), M = parse(mine), B = parse(base);
+  const at = (f) => `${f.action}\u0000${f.index}`;
+  const same = (a, b) => a && b
+    && a.status === b.status && a.hold === b.hold && (a.sfx || '') === (b.sfx || '')
+    && a.rows.join('\n') === b.rows.join('\n');
+
+  const bIx = new Map(B.frames.map((f) => [at(f), f]));
+  const tIx = new Map(T.frames.map((f) => [at(f), f]));
+
+  for (const f of M.frames) {
+    const key = at(f);
+    if (same(bIx.get(key), f)) continue;      // untouched here — nothing to contribute
+    const there = tIx.get(key);
+    if (there) Object.assign(there, { status: f.status, hold: f.hold, sfx: f.sfx, rows: f.rows });
+    else T.frames.push(f);                    // a frame added here since the last save
+  }
+  // The dials and the note belong to whoever moved them, same rule.
+  for (const k of ['fudgeW', 'fudgeH', 'note']) {
+    if (M[k] !== B[k]) T[k] = M[k];
+  }
+  renumber(T);
+  return serialize(T);
+}

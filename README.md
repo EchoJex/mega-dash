@@ -105,11 +105,13 @@ buying rank 1 in the Hub.
   writing, the word is wrong.
 
 **Two apps, one Pages site, one bookmark.** Both are served from `docs/` on `main`, share
-one GitHub token and one `tracker-draft/<branch>` autosave branch, and link to each other
-in their headers:
+one GitHub token and one save engine, and link to each other in their headers. What you
+type is copied into the browser straight away and written to `main` a few seconds later —
+there is no Publish button and no branch to pick, because forgetting the one and mis-tapping
+the other were how work kept going missing:
 
 - **[Tracker web app](https://echojex.github.io/mega-dash/)** — a friendlier lens over
-  TRACKER.md. Autosaves straight into the repo; no export, no download.
+  TRACKER.md. Saves itself into the repo; no export, no download.
 - **[Sprite editor](https://echojex.github.io/mega-dash/sprite-editor.html)** — draws
   `design/sprites/*.sprite`, the source `npm run sprites:build` turns into the PNGs the
   game loads. Deliberately not in the game's own dev menu: the APK is entirely offline
