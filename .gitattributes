@@ -32,3 +32,6 @@
 *.keystore binary
 *.jar binary
 *.apk binary
+*.ogg binary
+*.mp3 binary
+*.wav binary

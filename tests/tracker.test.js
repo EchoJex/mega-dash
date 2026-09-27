@@ -185,3 +185,27 @@ test('a field line always parses as a field, never as raw prose', () => {
   }
   assert.deepEqual(stragglers, [], 'these look like fields but parsed as raw lines');
 });
+
+/**
+ * MUSIC: `[ready]` on a `bgm ...` field is a claim that the file it names is in
+ * `design/music/`. Checked both ways, so a track marked ready with no file, or
+ * a file handed off with no line pointing at it, fails here instead of quietly
+ * going missing when the music pack is built.
+ */
+test('every [ready] bgm field names a file in design/music, and every file is claimed', async () => {
+  const { readdirSync, existsSync } = await import('node:fs');
+  const dir = new URL('../design/music/', import.meta.url);
+  const claimed = new Set();
+  for (const sec of parse(raw).sections) for (const it of sec.items) {
+    for (const f of fieldsOf(it)) {
+      if (!/^bgm /.test(f.label) || f.mark !== 'ready') continue;
+      const name = /`([^`]+\.(?:ogg|mp3|wav))`/.exec(f.text)?.[1];
+      assert.ok(name, `${it.title} / ${f.label} is [ready] but names no audio file`);
+      assert.ok(existsSync(new URL(name, dir)), `${it.title} / ${f.label}: design/music/${name} is missing`);
+      claimed.add(name);
+    }
+  }
+  const files = existsSync(dir) ? readdirSync(dir) : [];
+  const orphans = files.filter((n) => !claimed.has(n));
+  assert.deepEqual(orphans, [], 'files in design/music/ that no [ready] bgm field names');
+});
