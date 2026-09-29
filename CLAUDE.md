@@ -386,8 +386,11 @@ slow and speed the track in step with the room. **The pause menu plays the main 
 and PARKS the fight's track where it stopped (`parkMusic`/`unparkMusic`); leaving the menu
 drops the game to `requipSlowScale` and ramps it back over `requipSlowOutFrames`, exactly as
 leaving the mid-fight wheel does, and the unparked track rides the same ramp. Measured
-through wheel, ramp and pause: drift stayed within 50ms. A hard pause the music does NOT
-stop for (the level-up cards) lets the track run ahead, and the next resync jumps it back.
+through wheel, ramp and pause: drift stayed within 50ms. **The level-up cards park it
+too**, by the owner's call — with silence rather than the menu track — and resolving the
+last card runs the same ramp (`UIScene.resumeFromSlow`, shared by both screens). A chain
+of cards keeps it parked until the last one. Any OTHER hard pause the music does not stop
+for lets the track run ahead, and the next resync jumps it back.
 
 **The mixer is per device** (`megadash_audio_v1`, beside the dev settings, never in the
 save): MASTER, MUSIC and SFX sliders, and ON/OFF switches for the last two that leave the

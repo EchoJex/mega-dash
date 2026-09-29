@@ -729,12 +729,17 @@ export default class UIScene extends Phaser.Scene {
     this.pauseRows = null;
     this.pauseCaret = null;
     this.game_.paused = false;
-    /**
-     * LEAVING PAUSE IS LEAVING THE MID-FIGHT WHEEL: the game comes back from
-     * slow motion over the same ramp, and the fight's music — back from
-     * behind the menu track — rides that ramp with it (GameScene hands the
-     * speed to the music every frame). One gesture, one feel, both screens.
-     */
+    this.resumeFromSlow();
+  }
+
+  /**
+   * LEAVING PAUSE OR THE CARDS IS LEAVING THE MID-FIGHT WHEEL: the game comes
+   * back from slow motion over the same ramp, and the fight's music — which
+   * waited, stopped, while the screen was up — rides that ramp with it
+   * (GameScene hands the speed to the music every frame). One gesture, one
+   * feel, on all three screens.
+   */
+  resumeFromSlow() {
     const gm = this.game_;
     gm.timeScale = FEEL.requipSlowScale;
     gm.setTimeScale(1, FEEL.requipSlowOutFrames);
@@ -1993,6 +1998,10 @@ export default class UIScene extends Phaser.Scene {
   openCards() {
     const r = this.game_.run;
     this.game_.paused = true;
+    // The fight's music stops and waits, like the pause menu's — but the
+    // cards get silence rather than the menu track. A second card screen
+    // in a row finds it already waiting and leaves it be.
+    parkMusic();
 
     const pool = WHEEL_ORDER.filter((id) => {
       const unlocked = r.unlocked.has(id) || dev('cardsFromAllWeapons');
@@ -2105,7 +2114,8 @@ export default class UIScene extends Phaser.Scene {
     // Only the overlay that paused the game may unpause it. The between-fights wheel
     // is also a hard pause, so resuming here while one is open would run the
     // game under a scrim that eats every input.
-    else if (!this.mode) this.game_.paused = false;
+    else if (!this.mode) { this.game_.paused = false; this.resumeFromSlow(); }
+    else unparkMusic();
   }
 
   update() {

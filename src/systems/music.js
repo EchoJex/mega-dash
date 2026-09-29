@@ -279,14 +279,16 @@ export function syncMusicTo(name, seconds) {
  * the menu resumes it at the same point, and the room's clock (stopped
  * with it) still agrees.
  */
-export function parkMusic(menuName) {
+export function parkMusic(menuName = null) {
   if (parked) return;
   parked = now && !now.leaving ? now : null;
   if (parked) { parked.el.pause(); now = null; }
-  playMusic(menuName, { fadeIn: 300, fadeOut: 0 });
+  // No menu track (the level-up cards): silence while the fight's track waits.
+  if (menuName) playMusic(menuName, { fadeIn: 300, fadeOut: 0 });
+  else wanted = null;
 }
 
-/** Leave the pause menu: the fight's track comes back, fading in over `ms`. */
+/** Leave the pause menu or the cards: the fight's track comes back, fading in over `ms`. */
 export function unparkMusic(ms = 300) {
   const back = parked;
   parked = null;
