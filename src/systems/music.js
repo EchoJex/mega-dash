@@ -64,6 +64,8 @@ let syncing = null;
 
 let wanted = null;          // { name, fadeIn } — what the game is asking for
 let now = null;             // { name, el, gain } — what is actually playing
+let parked = null;          // the fight's track, waiting out the pause menu
+let rate = 1;               // follows the game's own speed (slow motion)
 let hidden = false;
 
 const keyFor = (t) => `${BASE}${t.file}?v=${t.sha}`;
@@ -198,6 +200,8 @@ function startIfWanted() {
   el.crossOrigin = 'anonymous';
   el.src = url;
   el.loop = true;
+  el.preservesPitch = false;         // slow motion drops the pitch, like tape
+  el.playbackRate = rate;
   const gain = g.ctx.createGain();
   try { g.ctx.createMediaElementSource(el).connect(gain); } catch { return; }
   gain.connect(g.bus);
@@ -232,6 +236,84 @@ function startIfWanted() {
 }
 
 /**
+ * MUSIC RUNS AT THE GAME'S SPEED. The re-quip wheel's slow motion slows the
+ * track by the same factor, and its ramp back to full speed ramps the track
+ * with it — so a beat-locked room and its music slow down and speed up
+ * together instead of sliding apart. Pitch falls with the speed, the way a
+ * slowed tape does. The browser will not play slower than 1/16th.
+ */
+export function setMusicRate(r) {
+  const next = Math.max(0.0625, Math.min(4, r));
+  if (Math.abs(next - rate) < 0.005) return;
+  rate = next;
+  if (now) now.el.playbackRate = rate;
+}
+
+/**
+ * RESYNC: hold a track to where the game says it should be.
+ *
+ * The scene calls this every half second with the position its own clock
+ * implies (for a boss room: 3.0s plus the room clock). Slow motion, a
+ * struggling phone and a paused screen all move the game's clock and the
+ * track's clock differently; this pulls the track back into line. Only the
+ * named track is touched, so a stray call can never yank a different one.
+ *
+ * Small drift is left alone — a jump is itself audible, and 60ms is well
+ * inside what the ear forgives on a beat.
+ */
+const RESYNC_S = 0.06;
+export function syncMusicTo(name, seconds) {
+  const el = now?.name === name && !now.leaving ? now.el : null;
+  if (!el || el.paused || el.readyState < 2 || !el.duration) return;
+  const target = seconds % el.duration;
+  let drift = el.currentTime - target;
+  // A loop wraps: 0.1s past the start is only 0.2s from 0.1s before the end.
+  if (drift > el.duration / 2) drift -= el.duration;
+  if (drift < -el.duration / 2) drift += el.duration;
+  if (Math.abs(drift) > RESYNC_S) el.currentTime = target;
+}
+
+/**
+ * THE PAUSE MENU PLAYS THE MAIN MENU TRACK, and the fight's track waits.
+ * It is stopped where it was — not faded out and thrown away — so leaving
+ * the menu resumes it at the same point, and the room's clock (stopped
+ * with it) still agrees.
+ */
+export function parkMusic(menuName) {
+  if (parked) return;
+  parked = now && !now.leaving ? now : null;
+  if (parked) { parked.el.pause(); now = null; }
+  playMusic(menuName, { fadeIn: 300, fadeOut: 0 });
+}
+
+/** Leave the pause menu: the fight's track comes back, fading in over `ms`. */
+export function unparkMusic(ms = 300) {
+  const back = parked;
+  parked = null;
+  if (!back) { fadeOutMusic(200); return; }
+  stopMusic(150);
+  now = back;
+  wanted = { name: back.name, fadeIn: ms, at: performance.now(), sync: false };
+  const g = audioGraph();
+  if (g) {
+    const t = g.ctx.currentTime;
+    back.gain.gain.cancelScheduledValues(t);
+    back.gain.gain.setValueAtTime(0, t);
+    back.gain.gain.linearRampToValueAtTime(1, t + ms / 1000);
+  }
+  back.el.playbackRate = rate;
+  if (!hidden) back.el.play().catch(() => {});
+}
+
+/** The run ended from the pause menu: the waiting track will never be wanted. */
+export function dropParkedMusic() {
+  if (!parked) return;
+  const el = parked.el;
+  parked = null;
+  el.pause(); el.removeAttribute('src'); el.load();
+}
+
+/**
  * The first touch unlocks audio on a phone. A track asked for before it — the
  * title screen's — was refused by the browser, so try it again now.
  */
@@ -260,5 +342,7 @@ export const musicState = () => ({
   // Seconds into the track — moving means the file is really being played.
   at: now ? now.el.currentTime : 0,
   gain: now ? now.gain.gain.value : 0,
+  rate: now ? now.el.playbackRate : rate,
+  parked: parked?.name ?? null,
   held: [...ready.keys()],
 });

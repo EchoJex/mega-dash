@@ -122,6 +122,7 @@ import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf, DISPLAY_DIAG, BUILD } from '../config/display.js';
 import { fitCamera, label, plate, inkFor } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
+import { parkMusic, unparkMusic, dropParkedMusic, TRACK } from '../systems/music.js';
 import {
   weaponOf, WHEEL_ORDER, SIDEARM_ID, OFFENSIVE, DEFENSIVE, specialsOfClass, classOf,
 } from '../data/weapons.js';
@@ -640,6 +641,7 @@ export default class UIScene extends Phaser.Scene {
    */
   openPause() {
     this.game_.paused = true;
+    parkMusic(TRACK.menu);   // the menu's track; the fight's waits where it stopped
     const cx = this.w / 2;
     this.pausePanel = this.add.container(0, 0).setDepth(60);
     this.pausePanel.add(this.add.rectangle(0, 0, this.w, VIEW_H, 0x060614, 0.9)
@@ -727,10 +729,21 @@ export default class UIScene extends Phaser.Scene {
     this.pauseRows = null;
     this.pauseCaret = null;
     this.game_.paused = false;
+    /**
+     * LEAVING PAUSE IS LEAVING THE MID-FIGHT WHEEL: the game comes back from
+     * slow motion over the same ramp, and the fight's music — back from
+     * behind the menu track — rides that ramp with it (GameScene hands the
+     * speed to the music every frame). One gesture, one feel, both screens.
+     */
+    const gm = this.game_;
+    gm.timeScale = FEEL.requipSlowScale;
+    gm.setTimeScale(1, FEEL.requipSlowOutFrames);
+    unparkMusic(FEEL.requipSlowOutFrames * 1000 / 60);
   }
 
   /** End the run deliberately — straight to the normal results screen. */
   abortRun() {
+    dropParkedMusic();
     this.pausePanel?.destroy(true);
     this.pausePanel = null;
     this.pauseRows = null;

@@ -38,13 +38,20 @@ import * as Attr from '../systems/attributes.js';
 import * as Loadout from '../systems/loadout.js';
 import * as Wpn from '../systems/weaponry.js';
 import { sfx } from '../systems/sfx.js';
-import { playMusic, fadeOutMusic, TRACK } from '../systems/music.js';
+import { playMusic, fadeOutMusic, setMusicRate, syncMusicTo, TRACK } from '../systems/music.js';
 import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
   playerClip, hexNum,
 } from '../systems/assets.js';
+
+/**
+ * How far into the arena track the room's clock starts: the boss door's whole
+ * arrival (room, furniture, boss), which the track fades in across. The owner
+ * lines up beat-locked tracks by hand against this — see CLAUDE.md.
+ */
+const ARRIVAL_S = (Arena.ARENA_WARP.bg + Arena.ARENA_WARP.furn + Arena.ARENA_WARP.beam) / 60;
 
 const GROUND_Y = VIEW_H - 40; // leaves room for the on-screen controls
 
@@ -445,6 +452,7 @@ export default class GameScene extends Phaser.Scene {
     this.boss = null;
     this.arena = null;
     this.warp = null;
+    this.beatTrack = null;   // the arena track the room resyncs, while its boss is up
     this.shake = null;
     // Character attributes on the player (Burn, Wet, ...). Run-scoped: nothing
     // about a status survives death, so it lives here and not in save.
@@ -640,6 +648,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.vx = 0; this.player.vy = 0;
       this.spawnBoss(def, layer);
       this.music(TRACK.arena(def.id));
+      this.beatTrack = TRACK.arena(def.id);
     }, true);   // staged: room, then furniture, then the boss beams down
   }
 
@@ -695,6 +704,8 @@ export default class GameScene extends Phaser.Scene {
         ? Math.min(this.tsTarget, this.timeScale + d)
         : Math.max(this.tsTarget, this.timeScale - d);
     }
+    // The music runs at the game's speed, ramps included — see setMusicRate.
+    setMusicRate(this.timeScale);
     if (this.paused) return;
     // A warp freezes the simulation entirely and advances on real time.
     if (this.warp) { this.stepWarp(delta); this.draw(); return; }
@@ -851,6 +862,16 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.arena) {
       Arena.stepArena(this.arena);
+      /**
+       * RESYNC THE FIGHT'S TRACK TO THE ROOM, every half second. The track was
+       * 3.0s in when this clock started, so that plus the clock is where it
+       * should be; slow motion, a hard pause or a struggling phone can pull
+       * the two apart, and this pulls them back. Only while the boss is up —
+       * `beatTrack` is cleared the moment he dies.
+       */
+      if (this.beatTrack && this.arena.t % 30 === 0) {
+        syncMusicTo(this.beatTrack, ARRIVAL_S + this.arena.t / 60);
+      }
       // Phasing platforms are real collision only while they are ON. Republishing
       // the list each frame is what makes a platform vanish from under you the
       // instant it phases out, which is the whole point of the mechanic.
@@ -2176,6 +2197,7 @@ export default class GameScene extends Phaser.Scene {
     // The fight's music goes with him; the post-fight track arrives when his
     // death animation has finished (stepDeaths), with the door and the wheel.
     fadeOutMusic(1000);
+    this.beatTrack = null;
     // The body comes apart in its own element. Purely cosmetic and deliberately
     // NOT gated on anything below: the unlock, the drops and the wrap door all
     // land on this frame, so a death sequence can never strand a run. The

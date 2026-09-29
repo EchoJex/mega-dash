@@ -373,6 +373,20 @@ Audacity against that 3.0s, so **do not move the start or change the arrival's l
 without saying so** — it silently shifts every hand-aligned track. Measured in Chromium:
 3.06–3.09s, with the file stored and with it arriving mid-warp.
 
+**THE FIGHT'S TRACK IS HELD TO THE ROOM CLOCK, not merely started on it.** Every 30 room
+steps `GameScene` calls `syncMusicTo(beatTrack, ARRIVAL_S + arena.t / 60)`, and the track
+jumps back into line if it has drifted more than 60ms. `beatTrack` is set on arrival and
+cleared the moment the boss dies — the post-fight track has no beat to hold to.
+
+**MUSIC RUNS AT THE GAME'S SPEED** — `setMusicRate(timeScale)` every frame, pitch falling
+with it (`preservesPitch = false`), so the re-quip wheel's slow motion and its ramp back
+slow and speed the track in step with the room. **The pause menu plays the main menu track**
+and PARKS the fight's track where it stopped (`parkMusic`/`unparkMusic`); leaving the menu
+drops the game to `requipSlowScale` and ramps it back over `requipSlowOutFrames`, exactly as
+leaving the mid-fight wheel does, and the unparked track rides the same ramp. Measured
+through wheel, ramp and pause: drift stayed within 50ms. A hard pause the music does NOT
+stop for (the level-up cards) lets the track run ahead, and the next resync jumps it back.
+
 **The mixer is per device** (`megadash_audio_v1`, beside the dev settings, never in the
 save): MASTER, MUSIC and SFX sliders, and ON/OFF switches for the last two that leave the
 slider where it was. `AudioScene` is the one screen for it, launched over the title screen
