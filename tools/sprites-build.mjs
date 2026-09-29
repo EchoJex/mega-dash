@@ -25,7 +25,8 @@
 import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { parse, actionsOf, framesOf } from '../docs/sprite-fmt.js';
+import { parse, actionsOf, framesOf, declaredPalette } from '../docs/sprite-fmt.js';
+import { MAX_COLOURS } from '../docs/nes-palette.js';
 import { encodePng } from './png.mjs';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
@@ -193,8 +194,32 @@ for (const file of files) {
     continue;
   }
 
-  const pal = paletteOf(id);
-  const colour = { 0: rgb(pal.outline), 1: rgb(pal.primary), 2: rgb(pal.secondary) };
+  /**
+   * A 16-BIT SPRITE CARRIES ITS OWN COLOURS; everything else resolves roles.
+   *
+   * A declared palette is baked exactly as written — it does not follow the
+   * live palette, which is the trade the art direction accepts for ramps. The
+   * SNES limit binds: more than MAX_COLOURS, or a key declared twice, stops the
+   * build rather than shipping a sheet nobody drew.
+   */
+  const declared = declaredPalette(doc);
+  let colour;
+  if (declared) {
+    const keys = declared.map((p) => p.key);
+    if (declared.length > MAX_COLOURS) {
+      problems.push(`${file}: declares ${declared.length} colours; the limit is ${MAX_COLOURS} plus transparency`);
+      continue;
+    }
+    if (new Set(keys).size !== keys.length) {
+      problems.push(`${file}: a palette key is declared twice (${keys.join(' ')})`);
+      continue;
+    }
+    colour = Object.fromEntries(declared.map((p) => [p.key, rgb(p.hex)]));
+  } else {
+    const pal = paletteOf(id);
+    colour = { 0: rgb(pal.outline), 1: rgb(pal.primary), 2: rgb(pal.secondary) };
+  }
+  const allowed = declared ? declared.map((p) => p.key).join(' ') : '0 1 or 2';
 
   const w = doc.w * doc.frames.length, h = doc.h;
   const px = new Uint8Array(w * h * 4);
@@ -206,8 +231,8 @@ for (const file of files) {
         if (ch === '.') continue;                    // transparent, already zero
         const c = colour[ch];
         if (!c) {
-          problems.push(`${file}: frame '${f.name}' row ${y} has '${ch}', `
-            + `which is not a role — expected . 0 1 or 2`);
+          problems.push(`${file}: frame '${f.action} ${f.index}' row ${y} has '${ch}', `
+            + `which is not in its palette — expected . or ${allowed}`);
           return;
         }
         const o = (y * w + fi * doc.w + x) * 4;
@@ -228,8 +253,8 @@ for (const file of files) {
     frameW: doc.w,
     frameH: doc.h,
     anchor: anchorFor(t.cls),
-    // The three colours are baked into the PNG; a Phaser tint multiplies the
-    // whole texture and would wreck a 3-colour sheet.
+    // The colours are baked into the PNG; a Phaser tint multiplies the whole
+    // texture and would wreck any baked sheet, 3-colour or 16-bit.
     tintable: false,
     anims: {},
     holds: {},

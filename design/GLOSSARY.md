@@ -59,6 +59,7 @@ it reads better. Nobody has to translate.
 | **grid / cell** | The fixed box each picture is drawn in. Player 24×24, bullet 16×16. |
 | **anchor** | Which part of the picture sits at the character's position. Feet on the ground for actors, middle for bullets. |
 | **role** | A pixel is stored as *primary / secondary / outline*, never as a colour. Re-tune the palette and every sprite recolours. |
+| **declared palette** | The 16-bit alternative to roles: `palette` lines at the top of a `.sprite` file list up to 15 fixed colours, and each pixel names one of them. The player is drawn this way. Those colours do not follow a palette re-tune; they are changed by hand. |
 | **silhouette** | The drawn shape, ignoring transparency. |
 | **collision box** | The invisible rectangle the game uses for hits. Deliberately not the same as the drawing. |
 | **fudge factor** | The ratio between the two. 0.70 wide, 1.00 tall. |

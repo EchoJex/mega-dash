@@ -146,7 +146,7 @@ export function installFont(scene) {
   tex.refresh();
 
   // White ink so setTint can colour it freely — a single-colour glyph tints
-  // cleanly, unlike a 3-colour sprite.
+  // cleanly, unlike a sprite with its colours baked in.
   scene.cache.bitmapFont.add(FONT_KEY, Phaser.GameObjects.RetroFont.Parse(scene, {
     image: FONT_KEY,
     width: cellW,

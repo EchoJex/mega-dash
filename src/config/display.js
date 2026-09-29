@@ -116,14 +116,17 @@ export const PLAYER_SPRITE_W = 24;
 export const PLAYER_SPRITE_H = 24;
 
 /**
- * THE PLAYER'S COLOURS, FIXED FOREVER — and now taken FROM the art.
+ * THE PLAYER'S COLOURS, FIXED FOREVER — the placeholder's three.
  *
- * These three are the exact colours baked into `public/sprites/player.png`, so
- * this constant and the sheet can never disagree about what the player looks
- * like. The suit used to be recoloured live from whichever weapon was equipped;
- * that is scrubbed, and a live recolour must never come back — a Phaser tint
- * multiplies a 3-colour sprite and wrecks it, and a protagonist whose colour
- * changes is one you have to re-find after every re-quip.
+ * The real sheet is 16-bit now: twelve colours declared in the palette lines of
+ * `design/sprites/player.sprite` and baked into `public/sprites/player.png` —
+ * a white suit, cool grey shading and a #3CBCFC accent on the visor, muzzle and
+ * fin. These three are the suit's white, its mid-grey and the shared outline, so
+ * the fallback still looks like him. The suit used to be recoloured live from
+ * whichever weapon was equipped; that is scrubbed, and a live recolour must
+ * never come back — a Phaser tint multiplies a baked sprite and wrecks it, and
+ * a protagonist whose colour changes is one you have to re-find after every
+ * re-quip.
  *
  * IT WAS BLUE. The player was #1565C0 through the whole placeholder era and
  * CLAUDE.md called that fixed forever; the owner's sheet arrived white and the
@@ -133,15 +136,16 @@ export const PLAYER_SPRITE_H = 24;
  * near-black.
  *
  * NOTHING READS THIS FOR THE PLAYER ANY MORE — `drawPlaceholder` is no longer
- * reached for him now that `MANIFEST.player` exists. It is kept as the single
- * place the decision lives, and as what the player would fall back to if the
- * sheet ever failed to load.
+ * reached for him now that `MANIFEST.player` exists, and `npm run sprites:build`
+ * uses the sprite's own palette. It is kept as the single place the decision
+ * lives, and as what the player would fall back to if the sheet ever failed to
+ * load.
  *
- * Same 3-colour NES rule as everything else: primary, secondary, shared outline.
+ * Placeholders keep the three-colour look: primary, secondary, shared outline.
  */
 export const PLAYER_PALETTE = {
   primary: '#FFFFFF',
-  secondary: '#BFC6D2',
+  secondary: '#C3CAD7',
   outline: '#0A0A12',
 };
 

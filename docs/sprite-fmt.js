@@ -12,14 +12,17 @@
  *   IT DIFFS. A binary autosave every few seconds is a wall of opaque blobs;
  *   this shows you which pixels moved, in a pull request, months later.
  *
- *   IT STORES ROLES, NOT COLOURS. A pixel is `1` for primary, not `#EA6A34`.
- *   The seventeen boss primaries are perceptually optimised as a SET, so they
- *   get re-tuned as a set — and when one changes, every sprite drawn against it
- *   recolours with no art reopened. A PNG would have to be repainted.
+ *   IT STORES ROLES, NOT COLOURS — BY DEFAULT. A pixel is `1` for primary,
+ *   not `#EA6A34`. The seventeen boss primaries are perceptually optimised as a
+ *   SET, so they get re-tuned as a set — and when one changes, every sprite
+ *   drawn against it recolours with no art reopened. A PNG would have to be
+ *   repainted.
  *
- *   IT CANNOT BREAK THE PALETTE RULE. Three colours plus transparency is not a
- *   convention the artist has to remember here; it is the only thing the file
- *   can express.
+ *   A 16-BIT SPRITE DECLARES ITS OWN PALETTE. `palette` lines in the header give
+ *   it up to MAX_COLOURS fixed colours, one key character each, and its pixels
+ *   store those keys. A file with no `palette` line is exactly the 3-role file
+ *   it always was and round-trips byte for byte. The trade: a declared palette
+ *   does not follow a primary re-tuned in the tracker.
  *
  * The cost is `npm run sprites:build`, which turns these into the PNGs
  * `MANIFEST` already knows how to load. Nothing downstream of that changes.
@@ -31,6 +34,7 @@
  *     grid      24x24
  *     fudge     0.70 x 1.00
  *     note      anything after this is ignored, so notes are free
+ *     palette   0 #0A0A12 outline   <- optional, one line per colour (16-bit)
  *
  *     [idle 1] status=ready hold=40
  *     ........................
@@ -38,7 +42,8 @@
  *     ...
  *
  * One block per frame, each exactly `grid` rows of `grid` characters.
- * `.` transparent, `0` outline, `1` primary, `2` secondary — see ROLES.
+ * `.` transparent, `0` outline, `1` primary, `2` secondary — see ROLES. A sprite
+ * with a `palette` header uses its declared keys instead.
  *
  * A FRAME IS `ACTOR > ACTION > INDEX`, AND THE INDEX IS 1-BASED PER ACTION.
  * `[run 1]` through `[run 6]` are one animation; `[idle 1]`, `[idle 2]` are
@@ -60,7 +65,7 @@
  * shipped sheet does everywhere except the idle.
  */
 
-import { EMPTY, ROLES } from './nes-palette.js';
+import { EMPTY, ROLES, OUTLINE_KEY } from './nes-palette.js';
 import { MARKS } from './marks.js';
 
 /**
@@ -111,7 +116,7 @@ export function parse(text) {
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   const doc = {
     id: null, w: 0, h: 0,
-    fudgeW: 0.7, fudgeH: 1, note: '', frames: [],
+    fudgeW: 0.7, fudgeH: 1, note: '', palette: [], frames: [],
   };
   let frame = null;
   // The pre-per-frame sheet-wide `status` line, if this file still has one.
@@ -128,7 +133,7 @@ export function parse(text) {
      *
      * The attributes ride on the header line rather than on key lines inside
      * the block, so flipping one frame's status is a ONE-LINE diff and a pixel
-     * row can never be mistaken for a key — a row is only ever `.012`.
+     * row can never be mistaken for a key — a row is only ever `.` and keys.
      */
     const head = /^\[([^\]]+)\]\s*(.*)$/.exec(line);
     if (head) {
@@ -180,6 +185,12 @@ export function parse(text) {
           const f = /^([0-9.]+)\s*x\s*([0-9.]+)$/.exec(v.trim());
           if (f) { doc.fudgeW = +f[1]; doc.fudgeH = +f[2]; }
         } else if (k === 'note') doc.note = v.trim();
+        else if (k === 'palette') {
+          // `palette   <key> <#RRGGBB> <name>` — kept exactly as written, hex
+          // case included, so the file round-trips byte for byte.
+          const p = /^(\S)\s+(#[0-9A-Fa-f]{6})(?:\s+(.*))?$/.exec(v.trim());
+          if (p && p[1] !== EMPTY) doc.palette.push({ key: p[1], hex: p[2], name: (p[3] || '').trim() });
+        }
         continue;
       }
     }
@@ -241,6 +252,9 @@ export function renumber(doc) {
 /** Every action on this sheet, in the order they first appear. */
 export const actionsOf = (doc) => [...new Set(doc.frames.map((f) => f.action))];
 
+/** A sprite's declared palette ([{ key, hex, name }]), or null for a 3-role file. */
+export const declaredPalette = (doc) => (doc.palette && doc.palette.length ? doc.palette : null);
+
 /** The frames of one action, in order, each with its absolute sheet position. */
 export const framesOf = (doc, action) => doc.frames
   .map((f, at) => ({ ...f, at }))
@@ -251,6 +265,7 @@ export function serialize(doc) {
   const out = [`# ${doc.id}`];
   out.push(`grid      ${doc.w}x${doc.h}`);
   out.push(`fudge     ${doc.fudgeW.toFixed(2)} x ${doc.fudgeH.toFixed(2)}`);
+  for (const p of doc.palette || []) out.push(`palette   ${p.key} ${p.hex}${p.name ? ` ${p.name}` : ''}`);
   if (doc.note) out.push(`note      ${doc.note}`);
   for (const f of doc.frames) {
     // `sfx` is omitted when absent rather than written empty, so adding the
@@ -315,8 +330,9 @@ export function proposedBox(frame, w, h, fudgeW, fudgeH) {
  * the fill rather than eating its edge. Growing inward would keep the sprite
  * the same size and make every drawing a pixel thinner than the artist drew it.
  *
- * Only primary and secondary count as solid, so outline never grows outline:
- * running this twice does the same thing as running it once.
+ * Anything drawn that is not the outline counts as solid, so outline never
+ * grows outline: running this twice does the same thing as running it once.
+ * For a role-based sprite that is primary and secondary, exactly as before.
  *
  * `clipped` is true when the grid edge stopped the outline going where it
  * should have. The caller says so out loud rather than silently shipping a
@@ -324,7 +340,7 @@ export function proposedBox(frame, w, h, fudgeW, fudgeH) {
  */
 export function outlineFrame(rows, w, h) {
   const out = rows.map((r) => [...r]);
-  const solid = (x, y) => rows[y][x] === '1' || rows[y][x] === '2';
+  const solid = (x, y) => rows[y][x] !== EMPTY && rows[y][x] !== OUTLINE_KEY;
   let clipped = false;
 
   for (let y = 0; y < h; y++) {
@@ -395,9 +411,10 @@ export function stampRegion(rows, gw, gh, cells, x0, y0) {
  * AN IMPORTED PNG IS COLOURS; THIS FILE STORES ROLES. Bridging the two is the
  * whole import.
  *
- * A pixel is snapped to whichever of the sprite's three roles it is nearest,
- * which is not a lossy convenience — it is the 3-colours-plus-transparency rule
- * being ENFORCED at the door. A PNG carrying a fourth colour cannot be
+ * A pixel is snapped to whichever of the sprite's colours it is nearest — its
+ * three roles, or its declared palette when it has one — which is not a lossy
+ * convenience: it is the palette being ENFORCED at the door. A PNG carrying a
+ * colour the sprite does not have cannot be
  * represented, so the only question is whether it is rejected or rounded, and
  * rounding plus an honest count is the more useful answer: the artist sees the
  * frame land and is told how much of it was not on palette.
@@ -415,7 +432,10 @@ export function stampRegion(rows, gw, gh, cells, x0, y0) {
 const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(String(h).slice(i, i + 2), 16));
 
 export function rolesFromPixels(rgba, w, h, palette, alphaMin = 128) {
-  const refs = ROLES.map((r) => ({ key: r.key, rgb: hexRgb(palette[r.name] || '#000000') }));
+  // An array is a declared palette ([{ key, hex }]); an object is the 3 roles.
+  const refs = Array.isArray(palette)
+    ? palette.map((p) => ({ key: p.key, rgb: hexRgb(p.hex) }))
+    : ROLES.map((r) => ({ key: r.key, rgb: hexRgb(palette[r.name] || '#000000') }));
   let offPalette = 0, solid = 0;
   const rows = [];
   for (let y = 0; y < h; y++) {
@@ -514,10 +534,11 @@ export function mergeSprite(theirs, mine, base) {
     if (there) Object.assign(there, { status: f.status, hold: f.hold, sfx: f.sfx, rows: f.rows });
     else T.frames.push(f);                    // a frame added here since the last save
   }
-  // The dials and the note belong to whoever moved them, same rule.
+  // The dials, the note and the palette belong to whoever moved them, same rule.
   for (const k of ['fudgeW', 'fudgeH', 'note']) {
     if (M[k] !== B[k]) T[k] = M[k];
   }
+  if (JSON.stringify(M.palette) !== JSON.stringify(B.palette)) T.palette = M.palette;
   renumber(T);
   return serialize(T);
 }

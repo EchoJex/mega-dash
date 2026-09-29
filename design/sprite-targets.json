@@ -885,7 +885,7 @@
         "w": 44,
         "h": 24
       },
-      "note": "opens the in-situ wheel on contact",
+      "note": "opens the mid-fight wheel on contact",
       "frames": [
         "idle0"
       ]

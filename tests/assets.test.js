@@ -178,7 +178,7 @@ test('every shipped manifest entry is well formed', () => {
         }
       }
     }
-    // Baked 3-colour art must never be tinted — a Phaser tint multiplies the
+    // Baked art must never be tinted — a Phaser tint multiplies the
     // whole texture. Only a greyscale mask may set this.
     assert.notEqual(def.tintable, true, `${id} is tintable; is it really a mask?`);
   }

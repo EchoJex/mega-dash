@@ -1,8 +1,10 @@
 /**
  * BOSSES - 17 robot masters, one per element.
  *
- * PALETTE RULE (NES constraint): every sprite gets exactly 3 colours plus
- * transparency - primary, secondary, and a shared near-black outline. The
+ * PALETTE RULE: primary, secondary, and a shared near-black outline are every
+ * boss's identity. Placeholders and role-based sprites are drawn in exactly
+ * those three plus transparency; 16-bit art may use up to 15 colours, built as
+ * ramps from the primary and secondary, and keeps the shared outline. The
  * outline is what stops dark bosses (Eclipse) dissolving into the dark
  * background, and it is why sprites read as objects in front of a scene.
  *
@@ -66,9 +68,9 @@ export const BOSSES = [
     /**
      * "Blue yellow guy with a large grey hydro jet pack."
      *
-     * The grey is NOT in the palette, and cannot be: the NES rule is exactly
-     * three colours plus transparency, and blue, yellow and the shared outline
-     * spend all three. The jetpack is a SEPARATE OBJECT attached to his back —
+     * The grey is NOT in the palette, and cannot be: a boss's identity palette
+     * is exactly three colours, and blue, yellow and the shared outline spend
+     * all three. The jetpack is a SEPARATE OBJECT attached to his back —
      * the same pattern as the weapon hardware drawn on the player — so it
      * carries its own greys without costing him a palette slot. See
      * `rig: 'jetpack'` below and drawBossRig in systems/assets.js.

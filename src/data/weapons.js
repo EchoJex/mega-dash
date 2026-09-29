@@ -44,10 +44,10 @@
  * its projectiles, its effects and its place on the re-quip wheel.
  *
  * THE PLAYER IS NOT ONE OF THOSE PLACES. Equipping a weapon used to recolour
- * the suit live; that is scrubbed and the player is a fixed blue forever (see
+ * the suit live; that is scrubbed and the player is a fixed white forever (see
  * PLAYER_PALETTE in config/display.js). Do not reintroduce it — a protagonist
  * whose colour changes is one you have to re-find after every re-quip, and a
- * live tint is something placeholders do for free that real 3-colour art
+ * live tint is something placeholders do for free that real baked-colour art
  * cannot.
  *
  * LEVELS

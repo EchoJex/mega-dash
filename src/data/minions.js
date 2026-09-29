@@ -6,8 +6,10 @@
  * difficulty RAMP and the boss fight — not enemy variety. More archetypes can
  * land later without changing anything here.
  *
- * PALETTE: the same 3-colour NES rule as bosses (primary, secondary, shared
- * near-black outline), but otherwise UNRELATED to the boss palette. The 17 boss
+ * PALETTE: the same rule as bosses — primary, secondary and the shared
+ * near-black outline are the minion's identity, drawn as exactly those three
+ * by the placeholder, and the base of any 16-bit ramps real art builds (up to
+ * 15 colours, see CLAUDE.md) — but otherwise UNRELATED to the boss palette. The 17 boss
  * primaries are perceptually spaced against each other; minions are not part of
  * that set and carry no constraint against it. Pick whatever colour suits the
  * minion as it develops.

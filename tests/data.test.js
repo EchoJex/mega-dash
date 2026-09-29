@@ -53,7 +53,7 @@ test('bosses.js matches design/TRACKER.md', () => {
 // palette. The 17 boss primaries are perceptually spaced against each other;
 // minions are not part of that set, so there is no separation test here.
 
-test('minions honour the 3-colour NES palette rule', () => {
+test('minions carry the three identity colours: primary, secondary, shared outline', () => {
   for (const m of MINIONS) {
     assert.equal(m.outline, '#0A0A12', `${m.id} must use the shared outline`);
     assert.equal(new Set([m.primary, m.secondary, m.outline]).size, 3,

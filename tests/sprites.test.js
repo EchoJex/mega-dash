@@ -87,7 +87,7 @@ test('a wip frame holds its cell but leaves the animation', () => {
   assert.deepEqual(live.map((f) => f.at), [0, 2],
     'the wip frame is skipped, and frame 3 keeps sheet index 2 rather than sliding to 1');
 });
-import { NES, USABLE, UNSAFE, nearestSlot } from '../docs/nes-palette.js';
+import { NES, USABLE, UNSAFE, nearestSlot, MAX_COLOURS } from '../docs/nes-palette.js';
 
 const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url)));
 
@@ -407,4 +407,52 @@ test('the build derives per-frame cues parallel to holds', () => {
       assert.ok(cues.some(Boolean), `${key}.${action}: an all-silent list should not be emitted`);
     }
   }
+});
+
+/**
+ * THE 16-BIT PALETTE HEADER — opt-in per sprite, and invisible to every file
+ * that does not use it. The 3-role sprites must not gain a single byte.
+ */
+test('a declared palette round-trips and a 3-role file is untouched', () => {
+  const src = ['# x', 'grid      2x1', 'fudge     0.70 x 1.00',
+    'palette   0 #0A0A12 outline', 'palette   1 #FFFFFF highlight', 'palette   9 #3CBCFC',
+    'note      n', '', '[idle 1] status=ready hold=5', '19', ''].join('\n');
+  const doc = parse(src);
+  assert.deepEqual(doc.palette.map((p) => p.key), ['0', '1', '9']);
+  assert.equal(doc.palette[2].name, '', 'a colour may go unnamed');
+  assert.equal(serialize(doc), src, 'byte for byte, palette lines and all');
+  const plain = parse('# x\ngrid 2x1\n\n[idle 1] status=ready hold=5\n12\n');
+  assert.deepEqual(plain.palette, []);
+  assert.ok(!serialize(plain).includes('palette'), 'a 3-role file never grows a palette line');
+});
+
+test('auto-outline treats every declared colour but the outline as solid', () => {
+  assert.deepEqual(outlineFrame(['...', '.9.', '...'], 3, 3).rows, ['.0.', '090', '.0.']);
+});
+
+test('PNG import snaps to a declared palette when the sprite has one', () => {
+  const pal = [{ key: '0', hex: '#0A0A12' }, { key: '9', hex: '#3CBCFC' }];
+  const px = new Uint8ClampedArray([0x3C, 0xBC, 0xFC, 255, 0x0A, 0x0A, 0x12, 255]);
+  const r = rolesFromPixels(px, 2, 1, pal);
+  assert.deepEqual(r.rows, ['90']);
+  assert.equal(r.offPalette, 0);
+});
+
+test('no sprite exceeds the SNES colour limit, and every pixel is declared', () => {
+  for (const { id, doc } of sheets()) {
+    if (!doc.palette.length) continue;
+    assert.ok(doc.palette.length <= MAX_COLOURS, `${id}: ${doc.palette.length} colours, limit ${MAX_COLOURS}`);
+    const keys = new Set(doc.palette.map((p) => p.key));
+    for (const f of doc.frames) for (const row of f.rows) for (const ch of row) {
+      assert.ok(ch === '.' || keys.has(ch), `${id} ${f.action} ${f.index}: '${ch}' is not in its palette`);
+    }
+  }
+});
+
+test('the 16-bit player keeps the shared outline, his white and his accent', () => {
+  const doc = parse(readFileSync(new URL('../design/sprites/player.sprite', import.meta.url), 'utf8'));
+  const hex = Object.fromEntries(doc.palette.map((p) => [p.key, p.hex.toUpperCase()]));
+  assert.equal(hex['0'], '#0A0A12', 'the outline is shared by the whole roster');
+  assert.equal(hex['1'], '#FFFFFF', 'the suit is white');
+  assert.ok(Object.values(hex).includes('#3CBCFC'), 'the visor, muzzle and fin accent');
 });

@@ -379,8 +379,9 @@ export class ActorLayer {
  * Placeholder: a filled rect in the actor's primary colour, a secondary band
  * to hint at an accent, and the shared near-black outline.
  *
- * The outline is not decoration — it is the third colour of the 3-colour NES
- * palette and it is what stops a dark actor dissolving into the dark background.
+ * The outline is not decoration — it is the third of the placeholder's three
+ * colours, it stays the outer edge of real 16-bit art too, and it is what stops a
+ * dark actor dissolving into the dark background.
  */
 export function drawPlaceholder(g, actor) {
   const { x, y, w, h, palette } = actor;
@@ -603,8 +604,8 @@ export function drawPickup(g, p, style, frame) {
  *
  * Equipping a weapon recolours the player live, which the placeholder does for
  * free by drawing with a different palette. Real art cannot: a Phaser tint
- * multiplies the whole texture, which would wreck a 3-colour sprite that already
- * has its own primary, secondary and outline baked in.
+ * multiplies the whole texture, which would wreck a sprite that already has its
+ * own colours baked in — three roles or a 16-bit palette alike.
  *
  * The two honest options are per-weapon frames, or a palette-swap shader keyed
  * on index colours. Both need the art to exist before they can be designed

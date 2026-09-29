@@ -69,19 +69,36 @@ export function nearestSlot(hex) {
 }
 
 /**
- * THE THREE ROLES EVERY SPRITE HAS, and the order is the drawing order.
+ * THE THREE ROLES A ROLE-BASED SPRITE HAS, and the order is the drawing order.
  *
- * The game's palette rule is exactly three colours plus transparency, and the
- * outline is shared across the whole roster (`OUTLINE` in bosses.js) so that a
- * dark boss never dissolves into a dark room. Storing a pixel as its ROLE
- * rather than as a colour is what lets a boss's palette change in the tracker
- * and recolour his sprite without anybody reopening the art.
+ * A sprite with no `palette` header is drawn in exactly these three plus
+ * transparency, and the outline is shared across the whole roster (`OUTLINE` in
+ * bosses.js) so that a dark boss never dissolves into a dark room. Storing a
+ * pixel as its ROLE rather than as a colour is what lets a boss's palette change
+ * in the tracker and recolour his sprite without anybody reopening the art.
+ *
+ * 16-BIT SPRITES DECLARE THEIR OWN PALETTE instead (see `palette` in
+ * sprite-fmt.js): up to MAX_COLOURS fixed colours, one key character each. Keys
+ * `0`, `1` and `2` keep their role meaning there too — outline, primary,
+ * secondary — so anything that reads roles still gets the right idea.
  */
 export const ROLES = [
   { key: '0', name: 'outline', label: 'OUTLINE' },
   { key: '1', name: 'primary', label: 'PRIMARY' },
   { key: '2', name: 'secondary', label: 'SECONDARY' },
 ];
+
+/** The outline's key in every sprite, role-based or not. */
+export const OUTLINE_KEY = '0';
+
+/**
+ * THE SNES LIMIT: one 16-entry sub-palette per sprite, entry 0 transparent, so
+ * 15 colours. The build refuses a sprite that declares more.
+ */
+export const MAX_COLOURS = 15;
+
+/** The key characters a declared palette uses, in order. `.` is never one. */
+export const PALETTE_KEYS = '0123456789abcde';
 
 /** The character used for a transparent pixel, in the file and in the editor. */
 export const EMPTY = '.';

@@ -1,7 +1,7 @@
 # MEGA DASH — Project Context
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
+**16-bit (SNES-era) visuals on Mega Man 2 feel · Vampire Survivors levelling and meta progression.**
 
 Stack: **Phaser 3 + Vite**, wrapped by **Capacitor** for Android. One codebase ships
 the Android APK. The browser is a development surface only.
@@ -289,13 +289,15 @@ dwarf. Treat it as the floor.
 
 `public/sprites/player.png` measures **0.1018 bytes per pixel** — 14 frames of 24x24 in 821
 bytes — and the Volt Spark agrees at 0.1172. Three colours plus transparency is the most
-compressible thing a PNG can hold, and that number is why.
+compressible thing a PNG can hold, and that number is why. The 16-bit player sheet that
+replaced it (22 frames, 12 colours) is still under 10KB, so the art direction moving to
+16-bit changes nothing below.
 
 Take the player's own fluidity as the template for everything (6-frame locomotion cycle,
 2-frame idle, single poses for the jump states) and **every animated thing in the finished
 game is ~105KB**: 17 bosses at 22 frames each is 85KB of that, and everything else together
 is 20KB. Triple the frame counts AND treble the entropy for busier art and it reaches 1MB.
-Seventeen arena backdrops at 480x224 add 0.18MB on the 3-colour rule, ~1MB drawn richly.
+Seventeen arena backdrops at 480x224 add 0.18MB at three colours, ~1MB drawn at 16-bit richness.
 
 **So no amount of sprite-squeezing buys anything, and no fluidity target is too expensive.**
 Never ask the owner to cut frames, share a sheet, or drop a pose for size. If art ever
@@ -489,17 +491,20 @@ construction order. **The player is always above every world actor** — hazards
 minions, projectiles, bosses — because losing sight of the player is losing the run. Only
 UI overlays go above, and those live in UIScene, a whole scene above this one.
 
-**Palette:** the player is a **fixed white**, taken from the art — `PLAYER_PALETTE` in
-`config/display.js` holds the three colours baked into `public/sprites/player.png`, so the
-constant and the sheet cannot disagree. He was blue (#1565C0) for the whole placeholder
-era and this file called that fixed forever; the owner's sheet arrived white and **the art
-wins.** White is also the strongest answer to "never lose sight of the player" against
-arenas running from Blaze Man's dark red to Eclipse Man's near-black.
+**Palette:** the player is a **fixed white suit with a #3CBCFC accent** on the visor, the
+arm-cannon muzzle and the helmet fin. His 12 colours are declared in
+`design/sprites/player.sprite` itself (see *16-bit art direction* below) and baked into
+`public/sprites/player.png`; `PLAYER_PALETTE` in `config/display.js` is only the
+placeholder fallback now and the build no longer reads it for him. He was blue (#1565C0)
+for the whole placeholder era and this file called that fixed forever; the owner's sheet
+arrived white and **the art wins.** White is also the strongest answer to "never lose sight
+of the player" against arenas running from Blaze Man's dark red to Eclipse Man's
+near-black.
 
 Equipping a weapon used to recolour the suit live from its source boss's palette; **that
 is scrubbed, do not reintroduce it.** What you are carrying is told by weapon hardware
 drawn on the player, not by his colour. A live recolour is something placeholders do for
-free and real 3-colour art cannot (a Phaser tint multiplies the whole texture), so the
+free and real baked-colour art cannot (a Phaser tint multiplies the whole texture), so the
 feature was quietly blocking the art it stood in for — and a protagonist whose colour
 changes is one you have to re-find after every re-quip.
 
@@ -592,8 +597,23 @@ that stops meaning anything a month later.
 
 **A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
 seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
-change in the tracker recolours every sprite drawn against it with no art reopened. It also
-means the 3-colours-plus-transparency rule is the only thing the format can express.
+change in the tracker recolours every sprite drawn against it with no art reopened.
+
+**A SPRITE MAY DECLARE ITS OWN PALETTE instead** — the 16-bit path. `palette` lines in the
+header give it up to 15 colours, one key character each:
+
+    palette   0 #0A0A12 outline
+    palette   1 #FFFFFF highlight
+    palette   2 #C3CAD7 mid
+    palette   9 #3CBCFC accent
+
+A sprite with a palette stores those keys and the build bakes the hex values as written; a
+sprite without one is exactly the 3-role file it always was, and round-trips byte for byte.
+Keep `0` as the shared outline, `1` as the primary and `2` as the secondary so anything
+that reads roles still gets the right idea. **The trade-off is deliberate:** a fixed
+palette does not follow a primary re-tuned in the tracker, so a boss drawn this way has to
+be recoloured by hand if his primary moves. `MAX_COLOURS` in `docs/nes-palette.js` is 15
+and the build refuses more.
 
 **Only `ready` and `draft` frames build.** `wip` and `deferred` are skipped, so
 half-finished art cannot reach a playtest — the same gate the fight content has, applied to
@@ -747,16 +767,42 @@ lengths in the same cycle.
 did, and twelve taps to take it back is how an undo stack becomes useless. Snapshotting the
 frame LIST rather than the current frame is what makes +FRAME and −FRAME undoable at all.
 
-### Sprite art is HUMAN-AUTHORED. Do not generate it.
+### 16-bit art direction (SNES era)
 
-Character art, silhouettes and boss arena backgrounds are the owner's to draw. Generated
-pixel art falls below the line the owner has drawn between *AI-supported* and *AI-created*
-game development, and that line is a deliberate authorship decision, not a quality
-judgement about any particular generator.
+**The game's look is 16-bit, SNES-era pixel art.** The NES 3-colour rule this file used to
+state is retired for drawn sprites. What did NOT change: the 224px playfield and its
+integer scaling, every sprite grid in `SPRITE_CLASS` (the player is still 24x24), bottom
+anchoring, collision boxes, and the motion constants — this is a visual upgrade, not a
+resolution or feel change.
 
-So do not offer to generate, and never quietly add, sprites or silhouettes for the player,
-minions, bosses, or arena backdrops. Bosses stay honest rectangles at true collision
-footprint until real art lands. `silhouette: null` in `bosses.js` is not a gap to fill.
+- **Up to 15 colours plus transparency per sprite** — one SNES 16-entry sub-palette with
+  entry 0 as the hole. Declared in the `.sprite` header (see the sprite editor section).
+- **Shade in ramps**: 3–5 tones per material, shadows shifted slightly cool, highlights
+  sparing. Far limbs sit one step darker than near limbs, so the sprite still reads
+  flipped.
+- **The outer outline stays the shared near-black `#0A0A12`.** Interior edges may use a
+  dark tone of the fill instead of black (selective outlining). The outline is still what
+  keeps an actor readable against a dark room.
+- **Identity colours still rule.** The player is a fixed white suit with a `#3CBCFC`
+  accent and is never tinted. A boss's primary and secondary stay his identity; his
+  16-bit ramps are built from them.
+- **Colours are free RGB.** The SNES itself is 15-bit (32 levels per channel), so snapping
+  to that grid is authentic but optional. `docs/nes-palette.js` keeps the NES table as a
+  reference; it is no longer the constraint.
+- **Placeholders stay placeholders.** Rectangles and procedural shapes keep their
+  primary/secondary/outline look until a sprite replaces them.
+
+### Sprite art is drawn on the owner's request
+
+Character art, silhouettes and arena backgrounds belong to the owner's direction. The
+owner drew the line between *AI-supported* and *AI-created* work and moves it, asset by
+asset: **Claude may draw a sprite when the owner asks for that specific asset, and never
+adds or replaces one unasked.** The first such asset is the player's 16-bit sheet, which
+Claude drew at the owner's request on 2026-09-29 and the owner approved to replace the
+hand-drawn one.
+
+Bosses stay honest rectangles at true collision footprint until real art lands.
+`silhouette: null` in `bosses.js` is not a gap to fill.
 
 **What IS fair game to generate:** the procedural overworld terrain, the placeholder arena
 backdrops (shapes, not art — replaced when the owner draws the real ones), the HUD bitmap
@@ -803,9 +849,11 @@ a slot; those are different states and an unlocked weapon on the bench still lev
 
 `src/data/bosses.js` — 17, one per element. Shuffle bag: no repeats until all 17 seen.
 
-**Palette rule (NES constraint): exactly 3 colours + transparency.** Primary, secondary,
-and a shared near-black outline (`#0A0A12`). The outline is not decoration — it stops
-dark bosses dissolving into the dark background.
+**Palette rule: primary, secondary and a shared near-black outline (`#0A0A12`) are every
+boss's identity.** Placeholders and role-based sprites are drawn in exactly those three;
+16-bit art may use up to 15 colours plus transparency, built as ramps from the primary and
+secondary, and keeps the shared outline (see *16-bit art direction*). The outline is not
+decoration — it stops dark bosses dissolving into the dark background.
 
 The 17 primaries were **perceptually optimised**: minimum CIELAB dE between any two is
 ~27.7 while each still reads as its element.
@@ -898,7 +946,7 @@ definitions.
 walks its span and turns at pit edges) and **DRIFTER** (air, drifts left while tracking
 your altitude). Bosses are events; minions are weather.
 
-Same 3-colour NES palette rule as bosses, but the minion palette is **unrelated to the
+Same palette rule as bosses, but the minion palette is **unrelated to the
 boss palette** and carries no spacing constraint against it. Minions are not part of the
 perceptually-optimised 17; pick whatever colour suits the minion.
 
@@ -1175,7 +1223,7 @@ second copy of the design or a progress report, because both drift and neither a
 it. Anything that is a COUNT, a ROSTER or a CURRENT STATE belongs in the tracker or in the
 board; anything that is a CONSTRAINT belongs here.
 
-**Where this file names a number, it is a rule with a reason** (the 3-colour palette, the
+**Where this file names a number, it is a rule with a reason** (the 15-colour sprite palette, the
 224px playfield, Lv 1/3/6/10). Where it names an inventory, treat it as a convenience copy
 and verify against the code before relying on it — three separate inventories in this file
 had gone stale by the time anyone checked.
@@ -1465,8 +1513,10 @@ An element is DONE when all of this is true for its boss:
 Art is NOT in the slice. Sprites and arena backdrops are the owner's to draw and land
 whenever they land, per actor, via `MANIFEST` — the game stays playable without them.
 
-**The player's sheet has landed** (`public/sprites/player.png`, 336×24, fourteen 24×24
-frames — twelve at the handoff, and a slide that has since grown from two poses to three). It is the first real art in the game and the proof the abstraction works: landing
+**The player's sheet has landed**, and has since had its 16-bit pass
+(`public/sprites/player.png`, 528×24, twenty-two 24×24 frames in 12 colours: a six-frame
+idle that breathes and blinks, an eight-frame run on the same 30-step cycle, the three jump
+poses, and a five-frame slide on the same 26 steps). It is the first real art in the game and the proof the abstraction works: landing
 it changed no gameplay code. Two things it did need, and both are general rather than
 player-specific — an `ActorLayer.gAboveSprites` graphics that stays above the layer's sprites (a
 status flash drawn on `g` goes *behind* the art), and the jump registered as three

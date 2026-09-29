@@ -193,12 +193,12 @@
     <b>5 steps</b> — which is why 5 is the default. <code>idle</code> overrode
     it with <code>animFps: 1.5</code>, so its frames hold for <b>40 steps</b>.
     One number for a whole sheet; now one per frame.<br><br>
-    <b>IDLE</b> — 2 frames, 40 steps each (0.67s), full cycle 1.33s. A breath,
-    not a cycle: at the run's 12fps a two-frame idle blinks six times a second
-    and reads as a strobe.<br>
-    <b>RUN</b> — 6 frames, 5 steps each (0.083s), full stride 30 steps (0.5s),
+    <b>IDLE</b> — 6 frames, 127 steps (2.1s): two 40-step breaths with 6-step
+    in-betweens and a 5-step visor blink. A breath, not a cycle: at the run's
+    12fps a two-frame idle blinks six times a second and reads as a strobe.<br>
+    <b>RUN</b> — 8 frames at 4·4·3·4·4·4·3·4 steps, full stride 30 steps (0.5s),
     carrying him 41px. <b>JUMP</b> — three one-frame poses picked from velocity,
-    never cycled. <b>SLIDE</b> — held for all 26 steps (0.43s).
+    never cycled. <b>SLIDE</b> — 5 frames at 4·4·4·9·5, exactly the 26 steps (0.43s).
   </div>
   <div id="prev" hidden>
     <canvas id="pcv"></canvas>
@@ -334,7 +334,7 @@ import {
   readRegion, clearRegion, stampRegion, STATUSES,
   DEFAULT_HOLD, renumber, actionsOf, framesOf, splitLegacyName, rolesFromPixels, resizeDoc,
 } from './sprite-fmt.js';
-import { mergeSprite } from './sprite-fmt.js';
+import { mergeSprite, declaredPalette } from './sprite-fmt.js';
 import { markAfterEdit, changedPixels } from './marks.js';
 import {
   OWNER, REPO, token, setToken, gh, b64encode as b64, b64decode as unb64,
@@ -556,6 +556,9 @@ async function open(id) {
   // The grid always comes from the live target, never from the file: a class
   // whose grid changed must not be edited at the old size.
   doc.w = t.grid.w; doc.h = t.grid.h;
+  // A 16-BIT SPRITE DRAWS FROM ITS OWN PALETTE. The four pen buttons are the
+  // three roles; every other colour is reached with the eyedropper.
+  if (declaredPalette(doc)) flash(`16-bit sprite: ${declaredPalette(doc).length} colours from its own palette. Use the eyedropper (I) to pick any of them.`);
 
   // The assertion rule measures every later edit against THIS state.
   rebaseAll();
@@ -833,7 +836,7 @@ $('#impForm').onsubmit = (ev) => {
   const cc = cv.getContext('2d', { willReadFrequently: true });
   cc.drawImage(impBits, 0, 0);
   const { data } = cc.getImageData(0, 0, doc.w, doc.h);
-  const { rows, offPalette, solid } = rolesFromPixels(data, doc.w, doc.h, paletteOf(target.id));
+  const { rows, offPalette, solid } = rolesFromPixels(data, doc.w, doc.h, declaredPalette(doc) || paletteOf(target.id));
 
   const mine = framesOf(doc, action);
   const n = Math.max(1, Math.min(mine.length + 1, +$('#impIdx').value || 1));
@@ -1031,6 +1034,7 @@ function buildPalette() {
     b.onclick = () => {
       if (pen === EMPTY) { flash('pick a role first — ERASE has no colour'); return; }
       const role = ROLES.find((r) => r.key === pen);
+      if (!role || declaredPalette(doc)) { flash('this sprite declares its own palette — its colours live in the palette lines of the .sprite file'); return; }
       $(`#role${ROLES.indexOf(role)}`).value = hex;
       applyRoles();
     };
@@ -1547,7 +1551,13 @@ async function pickOnion(id) {
 }
 
 const roleColours = () => ROLES.map((_, i) => $(`#role${i}`).value);
-const colourOf = (ch, cols) => cols[ROLES.findIndex((r) => r.key === ch)] || '#f0f';
+// A declared (16-bit) palette wins; a role-based sprite reads the role pickers.
+const colourOf = (ch, cols) => {
+  const dp = doc && declaredPalette(doc);
+  const hit = dp && dp.find((p) => p.key === ch);
+  if (hit) return hit.hex;
+  return cols[ROLES.findIndex((r) => r.key === ch)] || '#f0f';
+};
 
 function draw() {
   if (!doc) return;
@@ -1972,7 +1982,7 @@ function beginStroke(c) {
     const ch = cur().rows[c.y][c.x];
     pen = ch;
     syncButtons();
-    flash(ch === EMPTY ? 'picked TRANSPARENT' : `picked ${ROLES.find((r) => r.key === ch).label}`);
+    flash(ch === EMPTY ? 'picked TRANSPARENT' : `picked ${(declaredPalette(doc)?.find((p) => p.key === ch)?.name || ROLES.find((r) => r.key === ch)?.label || ch).toUpperCase()}`);
     return;
   }
   if (tool === 'fill') {
