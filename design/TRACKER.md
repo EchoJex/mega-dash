@@ -716,14 +716,17 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Music
 
 Background music ships OUTSIDE the game download: every push rebuilds the APK
-and the phone re-downloads all of it, so music waits in `design/music/` (which
-the game build never includes) until the music pack is built. Sound effects are
+and the phone re-downloads all of it, so music lives in `design/music/` and the
+game downloads it from there, once, and keeps it on the phone. Sound effects are
 the opposite — small, and built into the game. Each boss slice carries a
 `bgm stage` and a `bgm arena` line beside these. `[wip]` means no file yet;
-`[ready]` means the file named in the line is in `design/music/`.
+`[ready]` means the file named in the line is in `design/music/` and the game
+plays it.
 
 - **bgm main menu** `[ready]` `bgm-menu-main.ogg` — plays on the title screen and main menu.
 - **bgm post fight** `[ready]` `bgm-post-fight.ogg` — plays after any boss goes down, while the player stays in the cleared room. Shared by all seventeen bosses.
+- **transitions** `[ready]` Music fades out and in with the picture. A door's fade to black fades the old track out over the same time; the new track fades in as the black lifts. A boss's death fades his track out, and the post-fight track fades in when his death animation has finished. A place with no track yet is silent.
+- **audio settings** `[ready]` An AUDIO screen, from the title screen's top-left corner and from the pause menu. MASTER, MUSIC and SFX sliders — touch or drag anywhere along the bar — and ON/OFF switches for MUSIC and SFX that leave the slider where it was. Remembered on the phone, separately from the save.
 
 # BUGS
 

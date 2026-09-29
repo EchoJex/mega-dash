@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse, serialize, fieldsOf, rawOf } from '../docs/tracker-md.js';
 import { MARKS } from '../docs/marks.js';
+import { musicDir, packFor, AUDIO_RE } from '../tools/music-lib.mjs';
 
 const SRC = new URL('../design/TRACKER.md', import.meta.url);
 const raw = readFileSync(SRC, 'utf8');
@@ -205,7 +206,17 @@ test('every [ready] bgm field names a file in design/music, and every file is cl
       claimed.add(name);
     }
   }
-  const files = existsSync(dir) ? readdirSync(dir) : [];
+  const files = existsSync(dir) ? readdirSync(dir).filter((n) => AUDIO_RE.test(n)) : [];
   const orphans = files.filter((n) => !claimed.has(n));
   assert.deepEqual(orphans, [], 'files in design/music/ that no [ready] bgm field names');
+});
+
+/**
+ * The phone downloads what `design/music/pack.json` lists, at the fingerprints
+ * it lists. A track added or re-exported without re-running `npm run music`
+ * would never reach a phone — nothing would crash, it would just stay silent.
+ */
+test('design/music/pack.json is current — run `npm run music` if not', () => {
+  const written = JSON.parse(readFileSync(new URL('pack.json', musicDir), 'utf8'));
+  assert.deepEqual(written, packFor(musicDir));
 });

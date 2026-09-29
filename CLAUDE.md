@@ -58,6 +58,7 @@ npm run pages-test      # OPT-IN: drive both web apps against a fake GitHub (~40
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
 npm run sprites:build   # design/sprites/*.sprite -> the PNGs + the derived MANIFEST entries
 npm run sprites:ship    # GIVE THE WORD: verify every [draft] frame reaches the game, mark it [ready]
+npm run music    # after handing off a track: rewrite design/music/pack.json
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
 
@@ -252,8 +253,10 @@ would cost a forced reinstall for nothing.
 was getting "Harmful app blocked" on every update. Because the key is unchanged, a release
 build still installs cleanly over an older debug build.
 
-**The game itself is entirely offline.** It bundles every asset and fetches nothing. There
-is no Pages deploy, no service worker, no remote content. The manifest requests exactly two
+**The game itself is offline except for music.** It bundles every asset except the
+background music, which it fetches from `design/music/` on `main` and keeps on the phone
+(see "the music pack" below) — and it plays silently without it. There is no Pages deploy,
+no service worker, no other remote content. The manifest requests exactly two
 permissions, both for the updater: `INTERNET` and `REQUEST_INSTALL_PACKAGES`. There are no
 services and no manifest-declared receivers. Adding a permission to a sideloaded app with no
 store reputation costs real trust — treat that list as closed unless a feature genuinely
@@ -326,12 +329,45 @@ a sprite FRAME (`sfx=` in the `.sprite` header), and a footstep that has to wait
 download is a footstep that does not play. The editor caps an upload at 128KB and 2 seconds,
 which is what keeps this row at 1MB rather than making it the new problem.
 
-**NOTHING FETCHES A MUSIC PACK YET, and that is on purpose.** There is no music, so the
-format, the hosting and the versioning would all be invented against zero files — and this
-game currently fetches nothing but its own updates, so adding a network path is a real cost
-to a closed surface. Build it on the day there is a track to deliver, not before. What it
-will need when that day comes: a pack URL, a version check the updater already knows how to
-do, somewhere writable to cache it, and a game that plays silently when it is absent.
+#### The music pack — `src/systems/music.js`
+
+**The pack is `design/music/` on `main`, read from raw.githubusercontent.com**, in every
+built game whatever branch it came from. `npm run dev` reads the working copy instead, so a
+track can be heard before it is pushed. `design/**` is outside both the bundle and the
+APK workflow's trigger, so handing off a track costs no APK build.
+
+**`pack.json` is the version check, and `npm run music` writes it** — every audio file's
+name, size and a fingerprint of its bytes (the first 16 hex digits of its SHA-256). On
+launch the game reads that one small file and downloads only what it does not hold at that
+fingerprint, re-checks the fingerprint on the downloaded bytes, and keeps it in Cache
+Storage. A stale copy is deleted only when the list was read FRESH — an offline launch
+reading the last-seen list must never throw away what it has. `tests/tracker.test.js`
+fails if `pack.json` is out of date, because a stale one fails silently: the track just
+never reaches a phone.
+
+**Cache Storage survives an APK update and dies with an uninstall.** An update installs
+over the same app with the same signing key, so app data — the save and this cache — is
+kept. That is one more reason the keystore never changes.
+
+**A track is an `<audio>` element routed into the WebAudio graph, never a decoded buffer.**
+`decodeAudioData` on a three-minute track is ~70MB of raw samples; streaming the compressed
+file is a few MB, and the element still passes through the MUSIC and MASTER gains.
+
+**The track name is the address.** The game asks for `bgm-<boss id>-stage`,
+`bgm-<boss id>-arena`, `bgm-menu-main` and `bgm-post-fight` (`TRACK` in `music.js`), and
+`tests/music.test.js` checks every one of them is named in the tracker. A name with no file
+is silence, and the old track still fades out.
+
+**Fades follow the picture.** The warp fades the music out over its own fade to black and
+`GameScene.music()` fades the next track in over the warp's fade back in, both read from
+`WARP`/`ARENA_WARP` so the two cannot drift. A boss's death fades his track out; the
+post-fight track arrives when the death animation has resolved, with the door.
+
+**The mixer is per device** (`megadash_audio_v1`, beside the dev settings, never in the
+save): MASTER, MUSIC and SFX sliders, and ON/OFF switches for the last two that leave the
+slider where it was. `AudioScene` is the one screen for it, launched over the title screen
+or the pause menu; while it is up the pause menu's key handlers stand down, and it closes on
+Esc key UP so the same press cannot also step the menu beneath it.
 
 **These numbers are a BUDGET, not a measurement.** Nothing derives them and nothing checks
 them, so they will drift the way every hand-written inventory in this file has. Re-measure

@@ -4,12 +4,14 @@ import { fitCamera, label, plate } from '../systems/text.js';
 import { UPGRADES, upgradeLevel, upgradeCost } from '../data/upgrades.js';
 import { save, persist } from '../systems/save.js';
 import { hexNum } from '../systems/assets.js';
+import { playMusic, TRACK } from '../systems/music.js';
 
 /** Dr. Light's Lab — spend Chips on permanent Upgrades. */
 export default class HubScene extends Phaser.Scene {
   constructor() { super('Hub'); }
 
   create() {
+    playMusic(TRACK.menu);   // same track as the title: carries on, never restarts
     const w = viewWidthOf(this.scale);
     fitCamera(this, w);
     this.add.rectangle(0, 0, w, VIEW_H, 0x060614).setOrigin(0);

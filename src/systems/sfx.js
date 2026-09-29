@@ -28,8 +28,58 @@
  */
 
 let ctx = null;
-let master = null;
+let main = null;      // MASTER slider -> speakers
+let master = null;    // the effects bus: every synthesised voice and sample
+let music = null;     // the BGM bus, fed by systems/music.js
 let enabled = true;
+
+/** Headroom on the effects bus: several effects can overlap. */
+const SFX_HEADROOM = 0.32;
+
+/**
+ * THE MIXER — master, music and effects, each a slider and the last two also a
+ * switch. Per DEVICE, not per save: it lives in its own key the way the dev
+ * settings do, so a volume choice is never shaped by, or wiped with, a run.
+ *
+ * A switch and a slider are kept apart on purpose. Turning music OFF and back
+ * ON returns it at the level it was set to, rather than at a volume the switch
+ * had to overwrite to mean "off".
+ */
+const MIX_KEY = 'megadash_audio_v1';
+export const MIX_DEFAULTS = Object.freeze({ master: 0.8, bgm: 0.7, sfx: 1, bgmOn: true, sfxOn: true });
+export const mix = { ...MIX_DEFAULTS };
+try {
+  const saved = JSON.parse(localStorage.getItem(MIX_KEY) || '{}');
+  for (const k of Object.keys(MIX_DEFAULTS)) {
+    if (typeof saved[k] === typeof MIX_DEFAULTS[k]) mix[k] = saved[k];
+  }
+} catch { /* no storage, or a bad value: defaults */ }
+
+/** Change one mixer setting, apply it to the live graph, and remember it. */
+export function setMix(key, value) {
+  if (!(key in MIX_DEFAULTS)) return;
+  mix[key] = typeof MIX_DEFAULTS[key] === 'number'
+    ? Math.max(0, Math.min(1, Number(value) || 0)) : !!value;
+  applyMix();
+  try { localStorage.setItem(MIX_KEY, JSON.stringify(mix)); } catch { /* unsaved, still applied */ }
+}
+
+function applyMix() {
+  if (!main) return;
+  main.gain.value = enabled ? mix.master : 0;
+  master.gain.value = mix.sfxOn ? mix.sfx * SFX_HEADROOM : 0;
+  music.gain.value = mix.bgmOn ? mix.bgm : 0;
+}
+
+/**
+ * The shared context and the music bus, for systems/music.js. Null until the
+ * browser allows audio at all. One context for everything: phones cap how many
+ * a page may open, and two would mean two clocks.
+ */
+export function audioGraph() {
+  const c = audio();
+  return c ? { ctx: c, bus: music } : null;
+}
 
 /** Lazily build the graph. Returns null until the browser allows audio. */
 function audio() {
@@ -42,9 +92,13 @@ function audio() {
     const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!AC) { enabled = false; return null; }
     ctx = new AC();
+    main = ctx.createGain();
+    main.connect(ctx.destination);
     master = ctx.createGain();
-    master.gain.value = 0.32;      // headroom: several effects can overlap
-    master.connect(ctx.destination);
+    master.connect(main);
+    music = ctx.createGain();
+    music.connect(main);
+    applyMix();
   } catch {
     enabled = false;               // no audio available; the game plays on
     return null;
@@ -58,9 +112,10 @@ export function unlockAudio() {
   if (c && c.state === 'suspended') c.resume?.().catch(() => {});
 }
 
+/** Silence everything, whatever the mixer says. The headless sim uses this. */
 export function setMuted(m) {
   enabled = !m;
-  if (master) master.gain.value = m ? 0 : 0.32;
+  applyMix();
 }
 
 /**

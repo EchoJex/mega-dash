@@ -424,7 +424,12 @@ export default class UIScene extends Phaser.Scene {
 
     // Warp fade — above every other overlay, including the HUD, so a transition
     // is a clean cut to black rather than a dimmed-but-still-readable screen.
-    this.fade = this.add.rectangle(0, 0, w, VIEW_H, 0x000000, 0)
+    //
+    // THE FILL MUST BE OPAQUE. `update()` drives the fade with setAlpha, and a
+    // shape's object alpha MULTIPLIES its fill alpha — so a fill of 0 made every
+    // warp alpha from 0 to 1 draw as nothing. The door froze the game for three
+    // seconds with the screen fully visible and then the room popped in.
+    this.fade = this.add.rectangle(0, 0, w, VIEW_H, 0x000000, 1)
       .setOrigin(0).setDepth(100).setVisible(false);
   }
 
@@ -608,6 +613,7 @@ export default class UIScene extends Phaser.Scene {
    * while their overlay stayed up.
    */
   togglePause() {
+    if (this.audioOpen()) return;
     if (this.pausePanel) return this.closePause();
     // The exit confirmation joins the list for the same reason the others are
     // on it: it already owns `paused`, and this panel would open beneath it.
@@ -658,6 +664,7 @@ export default class UIScene extends Phaser.Scene {
       y += t.height + 3;
     };
     btn('RESUME', '#5CADD5', () => this.closePause());
+    btn('AUDIO', '#5CADD5', () => this.scene.launch('Audio'));
     btn('ABORT RUN', '#C04040', () => this.abortRun());
     note('ends the run and banks your Chips', '#6A5A5A');
     // The route back to every dial there used to be a button for. Said out
@@ -677,6 +684,9 @@ export default class UIScene extends Phaser.Scene {
     this.drawPauseCursor();
   }
 
+  /** The AUDIO screen, opened from this menu, sits on top and takes the keys. */
+  audioOpen() { return this.scene.isActive('Audio'); }
+
   /** Park the caret beside the cursored row. */
   drawPauseCursor() {
     const row = this.pauseRows?.[this.pauseAt];
@@ -686,7 +696,7 @@ export default class UIScene extends Phaser.Scene {
 
   /** Walk the cursor, wrapping — the same one-tap-advances rule the dev menu has. */
   pauseStep(d) {
-    if (!this.pauseRows?.length) return;
+    if (!this.pauseRows?.length || this.audioOpen()) return;
     const n = this.pauseRows.length;
     this.pauseAt = ((this.pauseAt + d) % n + n) % n;
     sfx('select', { pitch: 1.1 });
@@ -695,6 +705,7 @@ export default class UIScene extends Phaser.Scene {
 
   /** Enter: do whatever the cursored row does when tapped. */
   pauseConfirm() {
+    if (this.audioOpen()) return;   // the AUDIO screen owns the keys while it is up
     this.pauseRows?.[this.pauseAt]?.fn();
   }
 
@@ -705,6 +716,7 @@ export default class UIScene extends Phaser.Scene {
    * fired by whatever the cursor is on.
    */
   pauseBack() {
+    if (this.audioOpen()) return;   // the AUDIO screen owns the keys while it is up
     if (this.pauseAt !== 0) { this.pauseAt = 0; sfx('select'); this.drawPauseCursor(); return; }
     this.closePause();
   }

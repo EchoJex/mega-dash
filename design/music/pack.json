@@ -1,0 +1,19 @@
+{
+  "tracks": {
+    "bgm-drake-stage": {
+      "file": "bgm-drake-stage.ogg",
+      "bytes": 4498661,
+      "sha": "4a5209e17b65f777"
+    },
+    "bgm-menu-main": {
+      "file": "bgm-menu-main.ogg",
+      "bytes": 2385067,
+      "sha": "95c3fc2b9e0e97cf"
+    },
+    "bgm-post-fight": {
+      "file": "bgm-post-fight.ogg",
+      "bytes": 2404479,
+      "sha": "5dac76bc2fc371bc"
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { save, persist } from '../systems/save.js';
 import { MAX_RANK } from '../systems/loadout.js';
 import { hexNum } from '../systems/assets.js';
 import { sfx } from '../systems/sfx.js';
+import { playMusic, TRACK } from '../systems/music.js';
 
 /**
  * THE DEV MENU — every dev control in the game, in one place, off the title
@@ -47,6 +48,7 @@ export default class DevMenuScene extends Phaser.Scene {
   constructor() { super('DevMenu'); }
 
   create() {
+    playMusic(TRACK.menu);   // same track as the title: carries on, never restarts
     const w = viewWidthOf(this.scale);
     fitCamera(this, w);
     this.w = w;

@@ -4,6 +4,7 @@ import { fitCamera, label, plate } from '../systems/text.js';
 import { save, fullReset, saveWiped, SAVE_BREAK } from '../systems/save.js';
 import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
 import { DEV } from '../config/dev.js';
+import { playMusic, TRACK } from '../systems/music.js';
 
 const LONG_PRESS_MS = 500;
 
@@ -75,6 +76,9 @@ export default class TitleScene extends Phaser.Scene {
     if (DEV.enabled) {
       this.btn(w - 34, 12, 'DEV', () => this.scene.start('DevMenu'), '#F5D328');
     }
+    // The other top corner, mirroring DEV. Present in every launch.
+    this.btn(38, 12, 'AUDIO', () => this.scene.launch('Audio'));
+    playMusic(TRACK.menu);
 
     this.btn(cx, 136, this.won ? 'PLAY AGAIN' : this.died ? 'TRY AGAIN' : 'START',
       () => this.scene.start('Game'));

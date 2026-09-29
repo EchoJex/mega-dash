@@ -140,6 +140,10 @@ it reads better. Nobody has to translate.
 | **MANIFEST** | The game's list of what art exists. Generated for you now. |
 | **promote** | Move a marker up: `draft` → `ready`. What `npm run sprites:ship` does. |
 | **gate** | A rule deciding whether something reaches the game. `wip` frames are gated out. |
+| **music pack** | The background music, kept in `design/music/` and downloaded by the game rather than built into it, so a code fix never re-downloads the music. |
+| **pack.json** | The music pack's list: every track's name, size and fingerprint. `npm run music` writes it after a track is handed off. |
+| **fingerprint** | A short code worked out from a file's exact bytes. Change one byte and it changes, which is how the phone knows a track was re-exported and needs downloading again. |
+| **BGM / SFX** | Background music / sound effects. SFX are built into the game; BGM is the music pack. |
 
 ## Markers
 

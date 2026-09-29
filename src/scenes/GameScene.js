@@ -38,6 +38,7 @@ import * as Attr from '../systems/attributes.js';
 import * as Loadout from '../systems/loadout.js';
 import * as Wpn from '../systems/weaponry.js';
 import { sfx } from '../systems/sfx.js';
+import { playMusic, fadeOutMusic, TRACK } from '../systems/music.js';
 import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
@@ -510,6 +511,7 @@ export default class GameScene extends Phaser.Scene {
     this.deaths = [];
     this.arena = null;
     this.areaFrame = 0;
+    this.music(TRACK.stage(this.upcoming.id));
     Terrain.generate(this.world, 0, this.viewW);
     if (forceBoss) this.placeDoorAhead();
   }
@@ -564,6 +566,8 @@ export default class GameScene extends Phaser.Scene {
      * again, so `draw` reads the same two fields either way and needs no branch
      * on which kind of warp is running.
      */
+    // The music leaves at the same rate the picture does.
+    fadeOutMusic(W.out * FIXED_DT);
     this.warp = {
       phase: 'out', t: W.out, alpha: 0, build, staged,
       reveal: staged ? 0 : 1, beam: staged ? 0 : 1,
@@ -635,7 +639,23 @@ export default class GameScene extends Phaser.Scene {
       this.player.y = GROUND_Y - 24;
       this.player.vx = 0; this.player.vy = 0;
       this.spawnBoss(def, layer);
+      this.music(TRACK.arena(def.id));
     }, true);   // staged: room, then furniture, then the boss beams down
+  }
+
+  /**
+   * Ask for a track, faded in at the rate the SCREEN is fading in.
+   *
+   * Called from inside a warp's build step, `this.warp` is still set, so the
+   * new track rises exactly as the black lifts: the boss door's one-second
+   * room reveal, or the wrap door's short fade. Anywhere else — a run starting
+   * from the title — it takes a second. Read from the warp's own timings so
+   * the sound and the picture cannot drift apart.
+   */
+  music(name) {
+    const w = this.warp;
+    const steps = !w ? 60 : w.staged ? Arena.ARENA_WARP.bg : Arena.WARP.in;
+    playMusic(name, { fadeIn: steps * FIXED_DT, fadeOut: 300 });
   }
 
   /** Wrap door contact -> out of the arena into a fresh area. */
@@ -963,6 +983,7 @@ export default class GameScene extends Phaser.Scene {
       // out and a wheel: there is nothing left to walk to and nothing left to
       // carry. See the note at recordBossKill.
       if (this.run.won) { this.endRun(true); return; }
+      this.music(TRACK.postFight);
       this.spawnWrapDoor();
       if (this.run.requipOpen) this.scene.get('UI')?.promptRequip();
     }
@@ -2143,6 +2164,9 @@ export default class GameScene extends Phaser.Scene {
   killBoss() {
     const b = this.boss;
     sfx('bossDie');
+    // The fight's music goes with him; the post-fight track arrives when his
+    // death animation has finished (stepDeaths), with the door and the wheel.
+    fadeOutMusic(1000);
     // The body comes apart in its own element. Purely cosmetic and deliberately
     // NOT gated on anything below: the unlock, the drops and the wrap door all
     // land on this frame, so a death sequence can never strand a run. The

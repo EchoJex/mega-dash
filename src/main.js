@@ -19,6 +19,9 @@ import DevMenuScene from './scenes/DevMenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import HubScene from './scenes/HubScene.js';
 import UIScene from './scenes/UIScene.js';
+import AudioScene from './scenes/AudioScene.js';
+import { unlockAudio } from './systems/sfx.js';
+import { syncMusic, resumeMusic, musicState } from './systems/music.js';
 
 const viewW = computeViewWidth(window.innerWidth, window.innerHeight);
 
@@ -61,7 +64,7 @@ const game = new Phaser.Game({
   // unconditionally and reached conditionally — BootScene sends the game
   // straight to Title when DEV.available is false, and nothing else links to
   // either of them, so a shipped build never constructs one.
-  scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene],
+  scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene, AudioScene],
 });
 
 /**
@@ -75,3 +78,18 @@ const game = new Phaser.Game({
  * DEV.available = false, and this vanishes with the rest of the dev branch.
  */
 if (DEV.available) globalThis.__game = game;
+// Same terms: lets a browser test ask which track is wanted, playing and held.
+if (DEV.available) globalThis.__music = musicState;
+
+/**
+ * AUDIO UNLOCK, ONCE, FOR EVERY SCENE. A phone will not start sound until the
+ * player has touched something, and the title screen's music is asked for
+ * before that. Listening on the whole page means no scene can be the one that
+ * forgot to wire it.
+ */
+const unlock = () => { unlockAudio(); resumeMusic(); };
+window.addEventListener('pointerdown', unlock);
+window.addEventListener('keydown', unlock);
+
+// Fetch any music the phone does not hold yet, in the background.
+syncMusic();
