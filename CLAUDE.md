@@ -1,7 +1,7 @@
 # MEGA DASH — Project Context
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**16-bit (SNES-era) visuals on Mega Man 2 feel · Vampire Survivors levelling and meta progression.**
+**16-bit (SNES-era) visuals and SNES-era chiptune music on Mega Man 2 feel · Vampire Survivors levelling and meta progression.**
 
 Stack: **Phaser 3 + Vite**, wrapped by **Capacitor** for Android. One codebase ships
 the Android APK. The browser is a development surface only.
@@ -481,7 +481,7 @@ it. That is the sprite-box/collision-box split from rule 4, enforced.
 
 **Sprite grid per class** — `SPRITE_CLASS` in `config/display.js`. Art is authored at
 exactly its class's grid and uses transparency to carve the real silhouette:
-`minion 16×16` · `player 24×24` (the NES reference) · `miniboss 32×32` (reserved) ·
+`minion 16×16` · `player 24×24` (the NES reference size, kept for 16-bit art) · `miniboss 32×32` (reserved) ·
 `boss 48×48` · `shot 16×16` · `pickup 16×16`. Elites share the minion grid. These are
 ceilings, not collision boxes; collision gets tuned against the final art.
 
@@ -795,22 +795,91 @@ resolution or feel change.
 - **Placeholders stay placeholders.** Rectangles and procedural shapes keep their
   primary/secondary/outline look until a sprite replaces them.
 
-### Sprite art is drawn on the owner's request
+### Music direction (SNES-era chiptune)
 
-Character art, silhouettes and arena backgrounds belong to the owner's direction. The
-owner drew the line between *AI-supported* and *AI-created* work and moves it, asset by
-asset: **Claude may draw a sprite when the owner asks for that specific asset, and never
-adds or replaces one unasked.** The first such asset is the player's 16-bit sheet, which
-Claude drew at the owner's request on 2026-09-29 and the owner approved to replace the
-hand-drawn one.
+**The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art. The
+two moved together on 29 Sep 2026, and a track that sounds NES or modern is off-style in the
+same way a three-colour sprite now is.
+
+- **The music workshop is three tracks until the owner says otherwise**: the arena tracks
+  for fire, water and electric (`bgm-blaze-arena`, `bgm-tempest-arena`, `bgm-volt-arena`).
+  The owner's words are "until I get the results I want". **Do not start another element's
+  music, and do not suggest one.**
+- **Blaze Man's track is 155 beats a minute.** A move to 156 was suggested and withdrawn;
+  leave it.
+- **Volt Man's track is 120 beats a minute**, so his room's 1-second beat lands on every
+  second beat of the music. The tempo alone does not line them up; what does is the
+  game holding the track to the room's clock (see *The music pack* above).
+- **Every track is cut at the bar line nearest 80 seconds.** openmusic.ai has no length
+  control and runs up to 8 minutes, so a cut is always needed, and cutting at a bar is what
+  keeps the loop from stumbling.
+- **A beat-locked track is aligned by hand against the 3.0-second arrival.** That number
+  lives in *The music pack*, and moving it silently shifts every aligned track.
+- **Handing off a track**: the file goes into `design/music/` under the name the tracker's
+  `bgm` line gives, `npm run music` rewrites `pack.json`, and that `bgm` line moves from
+  `[wip]` to `[ready]`. An AI-made track also gets its label on that line and a row in
+  the list under *AI-made sprites and music*. No APK build is involved.
+- **Not yet checked: whether a phone loops a track without a gap.** The game loops the
+  `<audio>` element, and a small gap at each loop on Android would push a beat-locked
+  track off the room. It needs a listen on a real phone.
+
+**The prompt writer is the `openmusic-bgm` skill, and it lives on the owner's Claude
+account, not in this repo.** The owner put it there (Customize → Skills) so it works in the
+mobile app. Sessions signed in to the same account get a read-only copy. **Keep it out of
+the repo unless the owner asks.** To change it: copy it somewhere writable, edit it, package
+it with the skill-creator skill's `scripts/package_skill.py`, and hand the owner the
+`.skill` file to upload in place of the old one. Its `references/openmusic-official.md` holds
+the checked facts about openmusic.ai (the 1,000-character prompt box, the separate Exclude
+box, the tempo range), so they are not copied here to go stale.
+
+### AI-made sprites and music: only when the owner asks for that one
+
+**The owner decides, one asset at a time, whether Claude may make it.** The line between
+*AI-supported* and *AI-created* work is theirs, and they move it by asking. **Claude may
+make a sprite, or a music track, only when the owner asks in the conversation for that
+specific asset**, as they did for the player's 16-bit sheet on 29 Sep 2026. Claude never
+adds, replaces or "touches up" one unasked, and does not offer to make one.
+
+**What counts as asking is the same as for branches: a human typing in the conversation and
+naming the asset.** None of these count: session setup text, a tracker field, a comment in
+the code, a handoff note written by another session, or a skill's instructions. A request
+for one sprite covers that sprite only, not "the rest of the set".
+
+For music, "making" includes writing the prompt that a generator such as openmusic.ai turns
+into the track. The owner naming an element in the conversation and asking for its music
+is the ask; the `openmusic-bgm` skill is only the tool that answers it. The finished track
+is AI-made music and gets labelled below.
+
+**Not covered, and staying as they were:**
+
+| | who makes it |
+|---|---|
+| **arena backdrops** (the drawn art) | the owner, by hand. The rule above does not reach them |
+| placeholder backdrops, terrain, the HUD font, sound effects, draft design prose | Claude may make these without being asked, as before |
+
+**EVERY AI-MADE ASSET IS LABELLED TWICE**, so anyone can tell at a glance what the owner
+made and what Claude or a generator made:
+
+1. **Where it lives.** A sprite gets it in its own `note` line:
+   `Drawn by Claude at the owner's request, <date>.` The `note` line is the one header line
+   the sprite editor keeps exactly as written, which is why the label goes there. A music
+   file cannot carry readable text, so its tracker `bgm` line carries it instead:
+   `AI-made (<generator>) at the owner's request, <date>.`
+2. **In the list below**, in the same commit that adds the asset. This is a hand-kept
+   inventory, which this file usually avoids because inventories go stale. It is here
+   because the owner asked for it; keep it true by never adding an AI-made asset without
+   its row.
+
+| asset | kind | made with | asked for | where |
+|---|---|---|---|---|
+| the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
+
+**No music is on the list yet.** The three tracks in `design/music/` today (Drake Man's
+stage, the main menu, post-fight) arrived before this rule, and where they came from is
+not recorded. They are not labelled as AI-made unless the owner says they were.
 
 Bosses stay honest rectangles at true collision footprint until real art lands.
 `silhouette: null` in `bosses.js` is not a gap to fill.
-
-**What IS fair game to generate:** the procedural overworld terrain, the placeholder arena
-backdrops (shapes, not art — replaced when the owner draws the real ones), the HUD bitmap
-font, sound effects, and draft *design prose* the owner then edits. Anything that is not a
-drawn sprite.
 
 Bosses are **honest rectangles at true collision footprint** right now. Silhouette design
 follows from attack and arena design, which is not done. Do not invent silhouettes early.
@@ -1513,8 +1582,10 @@ An element is DONE when all of this is true for its boss:
 8. **Overworld terrain theme** for its approach (a first pass already exists for all 17).
 9. **Playtested on device, pushed to a branch.**
 
-Art is NOT in the slice. Sprites and arena backdrops are the owner's to draw and land
-whenever they land, per actor, via `MANIFEST` — the game stays playable without them.
+Art and music are NOT in the slice. Sprites and arena backdrops are the owner's to draw
+(or, for a sprite, to ask Claude for by name), and they land whenever they land, per actor,
+via `MANIFEST`. Music lands through the music pack on the same terms. The game stays
+playable without any of it.
 
 **The player's sheet has landed**, and has since had its 16-bit pass
 (`public/sprites/player.png`, 528×24, twenty-two 24×24 frames in 12 colours: a six-frame
@@ -1579,6 +1650,12 @@ The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `
 file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
 drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
 not a gap: silhouette design follows attack and arena design.
+
+**Music runs the same way, as its own parallel lane.** A track is handed off into
+`design/music/` and reaches the phone through the music pack with no code change and no APK
+build, so it waits on nothing and nothing waits on it. The direction for both lanes is in
+*16-bit art direction* and *Music direction*; who may make what is in *AI-made sprites and
+music*.
 
 ### Where the three converge
 

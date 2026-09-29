@@ -17,8 +17,8 @@
  * to the sprites instead of like a browser rendering text over them.
  *
  * NOT SPRITE ART. This is generated on purpose: a font is a system, not a
- * drawing, and CLAUDE.md's rule about human-authored art is about characters and
- * backdrops. Tweak any glyph below by editing its rows.
+ * drawing, and CLAUDE.md's rules on who may make art cover sprites, music and
+ * arena backdrops, not the HUD font. Tweak any glyph below by editing its rows.
  *
  * FORMAT
  * ------
