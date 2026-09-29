@@ -725,7 +725,7 @@ plays it.
 
 - **bgm main menu** `[ready]` `bgm-menu-main.ogg` — plays on the title screen and main menu.
 - **bgm post fight** `[ready]` `bgm-post-fight.ogg` — plays after any boss goes down, while the player stays in the cleared room. Shared by all seventeen bosses.
-- **transitions** `[ready]` Music fades out and in with the picture. A door's fade to black fades the old track out over the same time; the new track fades in as the black lifts. A boss's death fades his track out, and the post-fight track fades in when his death animation has finished. A place with no track yet is silent.
+- **transitions** `[ready]` Music fades out and in with the picture. A door's fade to black fades the old track out over the same time; the new track fades in as the black lifts — at a boss door, across the whole 3-second arrival (room, furniture, boss). The boss room's clock starts when that arrival ends, so its first beat always falls 3.0 seconds into the arena track: line a beat-locked track's first downbeat up at 3.0s. A boss's death fades his track out, and the post-fight track fades in when his death animation has finished. A place with no track yet is silent.
 - **audio settings** `[ready]` An AUDIO screen, from the title screen's top-left corner and from the pause menu. MASTER, MUSIC and SFX sliders — touch or drag anywhere along the bar — and ON/OFF switches for MUSIC and SFX that leave the slider where it was. Remembered on the phone, separately from the save.
 
 # BUGS

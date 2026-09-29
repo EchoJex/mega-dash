@@ -157,9 +157,10 @@ function mimeOf(file) {
  *   fadeIn   ms for the new track to reach full volume
  *   fadeOut  ms for the old one to go, if it has not already been faded
  */
-export function playMusic(name, { fadeIn = 1000, fadeOut = 500 } = {}) {
-  if (now?.name === name && !now.leaving) { wanted = { name, fadeIn }; return; }
-  wanted = { name, fadeIn };
+export function playMusic(name, { fadeIn = 1000, fadeOut = 500, sync = false } = {}) {
+  const at = performance.now();
+  if (now?.name === name && !now.leaving) { wanted = { name, fadeIn, at, sync }; return; }
+  wanted = { name, fadeIn, at, sync };
   stopMusic(fadeOut);
   startIfWanted();
 }
@@ -200,10 +201,33 @@ function startIfWanted() {
   const gain = g.ctx.createGain();
   try { g.ctx.createMediaElementSource(el).connect(gain); } catch { return; }
   gain.connect(g.bus);
+  /**
+   * THE FADE IS COUNTED FROM THE MOMENT THE GAME ASKED, not from the moment
+   * the file happened to open. Opening a stored track takes a few
+   * milliseconds on a fast phone and longer on a slow one; counted from
+   * the request, the fade always ends when the picture's does.
+   */
+  const w = wanted;
+  const fade = Math.max(1, w.fadeIn);
+  const elapsed = performance.now() - w.at;
   const t = g.ctx.currentTime;
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(1, t + Math.max(1, wanted.fadeIn) / 1000);
-  now = { name: wanted.name, el, gain, leaving: false };
+  gain.gain.setValueAtTime(Math.min(1, elapsed / fade), t);
+  gain.gain.linearRampToValueAtTime(1, t + Math.max(0, fade - elapsed) / 1000);
+  now = { name: w.name, el, gain, leaving: false };
+  /**
+   * SYNC: THE TRACK IS WHERE IT WOULD BE HAD IT STARTED ON TIME. A beat-locked
+   * room (Volt Man's) only lines up with its music if the track's position
+   * at the room's first beat is the same on every visit and every phone. So
+   * once playback really begins, any delay since the request is skipped
+   * over: the track jumps forward by exactly the time it lost. Once, at the
+   * start — never mid-track, where a jump would be heard.
+   */
+  if (w.sync) {
+    el.addEventListener('playing', () => {
+      const lag = (performance.now() - w.at) / 1000;
+      if (lag > 0.02 && lag < 10) el.currentTime = el.duration ? lag % el.duration : lag;
+    }, { once: true });
+  }
   el.play().catch(() => {});
 }
 
@@ -235,5 +259,6 @@ export const musicState = () => ({
   playing: now?.name ?? null,
   // Seconds into the track — moving means the file is really being played.
   at: now ? now.el.currentTime : 0,
+  gain: now ? now.gain.gain.value : 0,
   held: [...ready.keys()],
 });

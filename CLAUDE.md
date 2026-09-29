@@ -360,8 +360,18 @@ is silence, and the old track still fades out.
 
 **Fades follow the picture.** The warp fades the music out over its own fade to black and
 `GameScene.music()` fades the next track in over the warp's fade back in, both read from
-`WARP`/`ARENA_WARP` so the two cannot drift. A boss's death fades his track out; the
-post-fight track arrives when the death animation has resolved, with the door.
+`WARP`/`ARENA_WARP` so the two cannot drift. At a boss door that is the WHOLE three-second
+arrival — room, furniture, boss beaming down — by the owner's call. A boss's death fades his
+track out; the post-fight track arrives when the death animation has resolved, with the door.
+
+**AN ARENA TRACK IS 3.0 SECONDS IN AT THE ROOM'S FIRST BEAT, every visit.** It starts on the
+warp's build step and the room clock (`arena.t`, which Volt Man's beat counts from) starts
+at 0 when the warp releases 180 steps later. `sync` in `playMusic` makes that exact on a slow
+phone: the fade is counted from the request, and a track that opened late jumps forward by
+the time it lost, once, as it starts. The owner lines up a beat-locked track by hand in
+Audacity against that 3.0s, so **do not move the start or change the arrival's length
+without saying so** — it silently shifts every hand-aligned track. Measured in Chromium:
+3.06–3.09s, with the file stored and with it arriving mid-warp.
 
 **The mixer is per device** (`megadash_audio_v1`, beside the dev settings, never in the
 save): MASTER, MUSIC and SFX sliders, and ON/OFF switches for the last two that leave the

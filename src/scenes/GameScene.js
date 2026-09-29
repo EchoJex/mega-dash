@@ -647,15 +647,24 @@ export default class GameScene extends Phaser.Scene {
    * Ask for a track, faded in at the rate the SCREEN is fading in.
    *
    * Called from inside a warp's build step, `this.warp` is still set, so the
-   * new track rises exactly as the black lifts: the boss door's one-second
-   * room reveal, or the wrap door's short fade. Anywhere else — a run starting
+   * new track rises exactly as the black lifts: across the boss door's whole
+   * three-second arrival (room, furniture, boss beaming down — the owner's
+   * call), or the wrap door's short fade.
+   *
+   * THE ARENA TRACK IS 3.0 SECONDS IN AT THE ROOM'S FIRST BEAT, every visit.
+   * It starts on the build step, the arrival runs 180 steps of real time, and
+   * the room clock (`arena.t`, which every beat is counted from) starts at 0
+   * when the warp releases. `sync` makes the start exact on a slow phone too.
+   * So a beat-locked track (Volt Man's) is lined up by placing its first
+   * downbeat 3.0s into the file. Anywhere else — a run starting
    * from the title — it takes a second. Read from the warp's own timings so
    * the sound and the picture cannot drift apart.
    */
   music(name) {
     const w = this.warp;
-    const steps = !w ? 60 : w.staged ? Arena.ARENA_WARP.bg : Arena.WARP.in;
-    playMusic(name, { fadeIn: steps * FIXED_DT, fadeOut: 300 });
+    const W = Arena.ARENA_WARP;
+    const steps = !w ? 60 : w.staged ? W.bg + W.furn + W.beam : Arena.WARP.in;
+    playMusic(name, { fadeIn: steps * FIXED_DT, fadeOut: 300, sync: true });
   }
 
   /** Wrap door contact -> out of the arena into a fresh area. */
