@@ -874,9 +874,18 @@ made and what Claude or a generator made:
 |---|---|---|---|---|
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
 
-**No music is on the list yet.** The three tracks in `design/music/` today (Drake Man's
-stage, the main menu, post-fight) arrived before this rule, and where they came from is
-not recorded. They are not labelled as AI-made unless the owner says they were.
+**No music is on the list yet**, because none of it is AI-made. The three tracks in
+`design/music/` today (Drake Man's stage, the main menu, post-fight) are from
+**opengameart.org**, by the owner's account, and which pages they came from is lost. The
+files carry no title or artist to recover it from: they were re-saved by a tool that kept
+only its own name.
+
+**That missing credit matters the day a build leaves the owner's phone.** OpenGameArt pieces
+come under different licences, and several (CC-BY, CC-BY-SA, OGA-BY, GPL) require the author
+to be named wherever the work is shared. Nothing is owed while the game stays a private
+playtest. Before handing a build to anyone else, find each track's page or replace the
+track. A track added from outside from now on gets its source page and licence on its
+tracker `bgm` line when it is handed off.
 
 Bosses stay honest rectangles at true collision footprint until real art lands.
 `silhouette: null` in `bosses.js` is not a gap to fill.
