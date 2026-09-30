@@ -806,7 +806,13 @@ same way a three-colour sprite now is.
   The owner's words are "until I get the results I want". **Do not start another element's
   music, and do not suggest one.**
 - **Blaze Man's track is 155 beats a minute.** A move to 156 was suggested and withdrawn;
-  leave it.
+  leave it. **Round one (30 Sep 2026) measured both candidates at 152**, so the loop cut is
+  always worked out from the tempo the file actually has, never from the one asked for.
+- **A prompt needs an EMBLEM, not just techniques.** Round one asked for Phrygian, tremolo and a
+  backbeat and got a stock boss loop in plain E — the mode's own note was the weakest in the
+  track — and the owner did not feel the fire. The skill now gives every element one or two
+  sounds a listener tags in a single bar (fire: the flamenco scale, a bolero snare, low toms),
+  written as a style name the generator knows. Style names are allowed; mood words still are not.
 - **Volt Man's track is 120 beats a minute**, so his room's 1-second beat lands on every
   second beat of the music. The tempo alone does not line them up; what does is the
   game holding the track to the room's clock (see *The music pack* above).
