@@ -1,5 +1,10 @@
 {
   "tracks": {
+    "bgm-blaze-stage": {
+      "file": "bgm-blaze-stage.ogg",
+      "bytes": 1265901,
+      "sha": "ab0c00d26ea581c0"
+    },
     "bgm-drake-stage": {
       "file": "bgm-drake-stage.ogg",
       "bytes": 4498661,

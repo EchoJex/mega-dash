@@ -882,8 +882,9 @@ made and what Claude or a generator made:
 | asset | kind | made with | asked for | where |
 |---|---|---|---|---|
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
+| Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
 
-**No music is on the list yet**, because none of it is AI-made. The three tracks in
+**The three older tracks are not on the list**, because they are not AI-made. The three tracks in
 `design/music/` today (Drake Man's stage, the main menu, post-fight) are from
 **opengameart.org**, by the owner's account, and which pages they came from is lost. The
 files carry no title or artist to recover it from: they were re-saved by a tool that kept
