@@ -806,8 +806,11 @@ same way a three-colour sprite now is.
   The owner's words are "until I get the results I want". **Do not start another element's
   music, and do not suggest one.**
 - **Blaze Man's track is 155 beats a minute.** A move to 156 was suggested and withdrawn;
-  leave it. **Round one (30 Sep 2026) measured both candidates at 152**, so the loop cut is
-  always worked out from the tempo the file actually has, never from the one asked for.
+  leave it. Round one (30 Sep 2026) landed it: both candidates measured 154.4 and 155.1 once
+  the beats were counted across the whole file. A first, coarser reading had said 152, so the
+  loop cut is always worked out from a tempo measured by counting beats, never from a quick
+  estimate or from the site's own description (which tagged these 155 tracks "140 BPM", its
+  default).
 - **A prompt needs an EMBLEM, not just techniques.** Round one asked for Phrygian, tremolo and a
   backbeat and got a stock boss loop in plain E — the mode's own note was the weakest in the
   track — and the owner did not feel the fire. The skill now gives every element one or two
