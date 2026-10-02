@@ -819,9 +819,13 @@ same way a three-colour sprite now is.
 - **Volt Man's track is 120 beats a minute**, so his room's 1-second beat lands on every
   second beat of the music. The tempo alone does not line them up; what does is the
   game holding the track to the room's clock (see *The music pack* above).
-- **Every track is cut at the bar line nearest 80 seconds.** openmusic.ai has no length
-  control and runs up to 8 minutes, so a cut is always needed, and cutting at a bar is what
-  keeps the loop from stumbling.
+- **A track has no target length.** The owner's call: "80s, 73s, 95s or anything in-between
+  that makes for the best possible loop is fine." openmusic.ai has no length control and runs up
+  to 8 minutes, so a cut is always needed. Cut a whole number of bars, counted from the file's
+  first beat, at the point where the end flows back into the start; a shorter loop that joins
+  cleanly beats a longer one that does not. (An earlier version of this file said "nearest 80
+  seconds". That number was never a design decision, and Blaze Man's stage track was cut to it
+  by habit.)
 - **A beat-locked track is aligned by hand against the 3.0-second arrival.** That number
   lives in *The music pack*, and moving it silently shifts every aligned track.
 - **Handing off a track**: the file goes into `design/music/` under the name the tracker's
