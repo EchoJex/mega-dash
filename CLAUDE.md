@@ -191,6 +191,68 @@ CI publishes `ch-<branch>` for every branch, and the rolling `latest` **only fro
 so a feature branch can never become the default update. Release notes carry
 `versionCode=NNNN`, which is what the updater compares against the installed build.
 
+### The Windows app — `desktop/`
+
+**The game in its own window, with its own copy of Chromium inside, as one portable `.exe`.**
+The owner's reasons are the Android app's reasons: the game should not depend on whichever
+browser a player happens to have, and they will not have Edge's WebView2 ("avoid edge").
+Electron is the tool that carries a Chromium, and **its version is pinned exactly** in
+`desktop/package.json` (no `^`, no range) so the Chromium inside never moves by itself.
+Electron has no long-term-support line, so "long-term stable" means this: one version, changed
+only on purpose, after the checks below. It is built for friends and playtesters, not the
+public, so it is **not signed** and Windows shows an "unknown publisher" box once.
+
+**TWO DIFFERENT THINGS TRAVEL, ON DIFFERENT SCHEDULES.** This is the design, and it is why the
+UPDATE button works in seconds:
+
+| | what it is | size | when it is built | where it lands |
+|---|---|---|---|---|
+| **the window** | `MegaDash-Windows.exe`: Chromium, a launcher, and a starting copy of the game (build 0) | ~100MB | only when `desktop/` changes — `build-windows-shell.yml` | attached to the `latest` release |
+| **the game's files** | `MegaDash-<code>-game.asar`: the web bundle in one archive | ~2MB | every push, by the `windows-game` job in `build-apk.yml` | attached to `latest` and to `ch-<branch>` |
+
+UPDATE downloads **only the game's files**, puts them in the player's data folder and reloads
+the window — no restart, no installer, and it works wherever the `.exe` sits. Replacing a 100MB
+program on every push would be the mistake the music pack exists to avoid. The build number is
+the APK's, so "newer" means the same on both, and the two jobs are separate so a Windows
+failure can never hold back the APK release that is the main development loop.
+
+**It reads the same releases as Android** — `latest`, `ch-<branch>`, `branch=` in the notes —
+through `desktop/updater.js`, whose decisions live in `desktop/updater-core.js` so
+`tests/desktop.test.js` can run them without a window. Tap means newest `main`; hold lists
+every branch at the pointer. Messages go to the title screen's note line, because Windows has
+no toasts.
+
+**Rules, each of which was a real hazard while building it:**
+
+- **Electron never goes in the root `package.json`.** It downloads ~100MB when it installs, and
+  the root install runs on every APK build. `desktop/` is its own package with its own lockfile,
+  installed only by the Windows workflow. A test enforces it.
+- **A channel's build number comes from the game file's NAME, never from the release notes.** The
+  APK job writes `versionCode=` the moment it publishes; the game file arrives minutes later. In
+  between, the notes name the new build and the attached file is the old one.
+- **The APK job's clean-up deletes only `.apk` files.** It used to delete every asset that was not
+  its own APK, which would have taken the game files with it. A test checks the filter.
+- **The save is not in the game's files.** It lives in `%APPDATA%\Mega Dash`, so updating,
+  replacing the `.exe` or going back never touches it. **A plain tap never steps back to an older
+  build**, and the list asks first, because a save carries the format number it was written under
+  and going back to a lower one wipes it (`SAVE_BREAK`).
+- **Electron treats any `.asar` file as a folder**, so the normal file tools cannot rename or
+  delete one. `desktop/updater.js` uses `original-fs` for anything done to the archive itself.
+- **The page trusts the Windows bridge only if it says `desktop: true`.** Capacitor's plugin object
+  on Android answers to ANY method name with a callable stub, so asking "does `onMessage` exist"
+  is true on a phone, and calling it would ask the phone for something it does not have, which the
+  crash overlay would report as a crash. Two files spell that word and a test holds them together.
+- **The game is served from `app://game/`, not `file://`.** Its music lives in Cache Storage, which
+  needs a secure address, and its scripts are modules, which a plain file cannot load. The same
+  address gives the save one stable home.
+- **Esc is not bound** — the game uses it to pause. F11 and Alt+Enter toggle fullscreen.
+
+**How it was checked, and what was not.** The app was run for real under a virtual screen on
+Linux, against a pretend GitHub: it boots, the game renders, an UPDATE swaps the game files in
+place, the choice is remembered across a restart, and the old files are cleared. **The `.exe`
+was packaged here too (a real 99MB Windows program, with the game inside and no debug files), but
+it can only be RUN on Windows, so running it is proven by the CI build and by the owner, not here.** To run it locally: `npm run build`, then `cd desktop && npm ci && npm start`.
+
 ### Work on `main` by default
 
 **`main` is where work lands unless the owner asks for a branch.** They will say so
