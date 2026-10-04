@@ -223,7 +223,7 @@ where each one stands.
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
-- **boss weakness B** `[ready]` Bug
+- **boss weakness B** `[wip]` Poison
 - **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
 - **arena furniture** `[wip]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal. Applying Hot attribute to an overgrown tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and start burned for 2x normal burn duration.
 - **hazard L1** `[wip]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. At level 1 ground cover will only cause a noticeable movement speed drop.
@@ -583,7 +583,7 @@ where each one stands.
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Metal Barrage
 - **weapon name** `[ready]` Alloy Blade
-- **boss weakness A** `[wip]` Fire
+- **boss weakness A** `[wip]` Fighting
 - **boss weakness B** `[wip]` Ground
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.

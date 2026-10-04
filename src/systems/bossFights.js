@@ -2079,7 +2079,9 @@ function thornHazard(layer) {
      * Caller's; the arena only tells them not to expire and gives them a second
      * job, so a run without that weapon simply never sees this paragraph.
      */
-    for (const ally of ctx.run.allies || []) {
+    // DEFERRED: the room has not asked the swarm to stay (`arena.bugsPersist`,
+    // set in arena.js), so no bug is sent after the overgrowth.
+    for (const ally of a.bugsPersist ? (ctx.run.allies || []) : []) {
       if (ally.owner !== 'swarm_caller') continue;
       // Standing over a tile is what puts it down; the bug does not have to
       // shoot it, because a bug does not shoot.

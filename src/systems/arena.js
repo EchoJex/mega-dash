@@ -415,16 +415,17 @@ const FURNITURE = {
       burnt: 0,
     }));
     /**
-     * THE ROOM ASKS THE SWARM TO STAY — "for this arena the bug has unlimited
-     * duration, but new ones will continue to spawn at their normal rate".
+     * BUG-VS-GRASS IS DEFERRED, by the owner's call (Grass is no longer weak to
+     * Bug). The room used to ask the Swarm Caller to stay — "for this arena the
+     * bug has unlimited duration, but new ones will continue to spawn" — and
+     * `thornHazard` read this same flag to send the bugs after the overgrowth.
      *
-     * A property of the ROOM rather than of the weapon, so the Swarm Caller
-     * needs to know nothing about greenhouses: it reads one flag and the arena
-     * that sets it is the only thing that had to think about why. Fire and Bug
-     * are Grass's two answers on the type chart, and this is the Bug one
-     * arriving as a mechanic rather than as a damage multiplier.
+     * NOTHING WAS DELETED. The Swarm Caller still knows how to persist when a
+     * room asks (`weaponry.js`, `bugsPersist`) and `thornHazard` still has the
+     * bug errand behind this flag, so bringing the idea back is changing this
+     * one line to true. Fire against Grass (Hot) is untouched and unrelated.
      */
-    a.bugsPersist = true;
+    a.bugsPersist = false;
   },
 };
 

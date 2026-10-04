@@ -2039,8 +2039,10 @@ Every slice carries **`boss weakness A`** and **`boss weakness B` (optional)**: 
 two elemental types that this boss's ARENA reacts to in a way no other type does. They are
 dropdowns in the tracker app, and they are design, not combat maths — nothing multiplies
 damage. Two are already built and both fall straight out of the chart: Thorn Man (Grass) is
-weak to **Fire** and **Bug**, so Hot burns his ground cover down for three times as long and
-a Swarm Caller bug never expires in his greenhouse; Strike Man (Fighting) is weak to
+weak to **Fire** and **Poison**, so Hot burns his ground cover down for three times as long
+(the Poison half is not built). He was weak to Bug until the owner dropped it: the Swarm
+Caller no longer lives forever in his greenhouse or works the overgrowth, and that code is
+dormant behind `bugsPersist` in `arena.js`, not deleted. Strike Man (Fighting) is weak to
 **Psychic**, so a psychic hit lifts a training bag and drops it on him.
 
 **`src/data/typechart.js` is the chart, and the GENERATION is load-bearing.** Gen 2 through
