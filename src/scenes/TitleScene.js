@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { VIEW_H, viewWidthOf } from '../config/display.js';
 import { fitCamera, label, plate } from '../systems/text.js';
 import { save, fullReset, saveWiped, SAVE_BREAK } from '../systems/save.js';
-import { checkForUpdate, pickChannel, canUpdate } from '../systems/updater.js';
+import { checkForUpdate, pickChannel, canUpdate, onUpdateMessage } from '../systems/updater.js';
 import { DEV } from '../config/dev.js';
 import { playMusic, TRACK } from '../systems/music.js';
 
@@ -97,6 +97,11 @@ export default class TitleScene extends Phaser.Scene {
      */
     this.note = label(this, cx, VIEW_H - 24, saveWiped ? SAVE_BREAK.note : '',
       { color: saveWiped ? '#F5D328' : '#3A6A8A', origin: 0.5 });
+
+    // The Windows app reports update progress on this same line. Cleared on the
+    // way out so a message arriving after this screen is gone cannot reach it.
+    onUpdateMessage((m) => this.say(m));
+    this.events.once('shutdown', () => onUpdateMessage(null));
 
     label(this, cx, VIEW_H - 12, 'full reset', { color: '#804040', origin: 0.5 })
       .setInteractive({ useHandCursor: true })

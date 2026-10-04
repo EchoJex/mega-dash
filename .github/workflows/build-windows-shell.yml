@@ -1,0 +1,78 @@
+# Builds the Windows app: the game in its own window, with its own pinned copy
+# of Chromium, as one portable .exe that needs no installing.
+#
+# THIS IS THE WINDOW, NOT THE GAME. The game's files reach the app through its
+# UPDATE button (see the `windows-game` job in build-apk.yml), so this workflow
+# runs only when something in desktop/ changes, which is rare. The .exe carries a
+# copy of the game from the day it was built as a starting point (build 0), and
+# the first tap of UPDATE brings it level.
+#
+# Not in build-apk.yml because it needs a Windows machine, which costs more build
+# minutes, and because nothing here should ever be able to hold back an APK.
+name: Build Windows app
+
+on:
+  push:
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/build-windows-shell.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-windows-shell-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  shell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install the game's dependencies
+        run: npm ci
+
+      # Build 0 means "the game that shipped inside the .exe": every published
+      # build is newer, so UPDATE always has something to offer on a fresh copy.
+      - name: Build the game that ships inside
+        env:
+          BUILD_CODE: '0'
+        run: npm run build
+
+      - name: Install the window program's tools
+        working-directory: desktop
+        run: npm ci
+
+      # Not signed. A signing certificate costs money and this is for friends and
+      # playtesters, who click through Windows' "unknown publisher" warning once
+      # (the README says how).
+      - name: Package the portable .exe
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --win portable --publish never
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mega-dash-windows
+          path: desktop/release/MegaDash-Windows.exe
+          retention-days: 30
+
+      # Only main's build becomes the one everybody downloads, and only onto the
+      # release that already exists. The APK job creates it and it is never
+      # recreated, so the .exe survives from one build to the next.
+      - name: Attach to the latest release
+        if: github.ref_name == 'main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest >/dev/null
+          gh release upload latest desktop/release/MegaDash-Windows.exe --clobber
