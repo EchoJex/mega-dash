@@ -129,7 +129,7 @@ where each one stands.
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[deferred]`
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Ground
+- **boss weakness B** `[wip]` Rock
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -253,7 +253,7 @@ where each one stands.
 - **attack name** `[ready]` Glacier Spike
 - **weapon name** `[ready]` Frost Guard
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[wip]` Fighting
+- **boss weakness B** `[wip]` Steel
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
@@ -344,7 +344,7 @@ where each one stands.
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Grass
+- **boss weakness B** `[wip]` Ice
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
@@ -434,7 +434,7 @@ where each one stands.
 - **attack name** `[ready]` Infestation
 - **weapon name** `[ready]` Swarm Caller
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[wip]` Rock
+- **boss weakness B** `[wip]` Flying
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
@@ -464,7 +464,7 @@ where each one stands.
 - **attack name** `[ready]` Boulder Roll
 - **weapon name** `[wip]` Granite Form
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Fighting
+- **boss weakness B** `[wip]` Grass
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
