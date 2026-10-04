@@ -22,7 +22,7 @@ test('all weapons share the same level-1 DPS', {
 }, () => {
   for (const w of WEAPONS) {
     assert.ok(
-      Math.abs(dpsAtLevel(w, 1) - FEEL.dpsTarget) < 0.01,
+      Math.abs(dpsAtLevel(w, 1) - FEEL.dpsTarget * (1 + (w.damageBonus || 0))) < 0.01,
       `${w.name} is off target: ${dpsAtLevel(w, 1).toFixed(3)} vs ${FEEL.dpsTarget}`,
     );
   }

@@ -1263,7 +1263,10 @@ weapon's own slice.
 
 ### Balance and ladders
 
-**Balance invariant: every weapon deals identical DPS at level 1.**
+**Balance invariant: every weapon deals identical DPS at level 1.** One exception, by the
+owner's call: Drake Breath carries `damageBonus: 0.30`, because Dragon is super effective
+against Dragon only and a run never meets that boss after earning the weapon, so it is the one
+weapon with no boss it can ever be strong against.
 `damage = dpsTarget × cooldown/60 ÷ projectiles`. The test asserting this is deliberately
 skipped until the late tuning phase — these numbers are placeholders.
 Weapon choice is about *utility*, not power. If you add projectiles or pierce,

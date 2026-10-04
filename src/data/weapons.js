@@ -740,7 +740,18 @@ const DEFS = [
     cooldown: 30, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Brief invulnerability and invisibility.' },
   // Provisional class — its tracker field is still `[wip]`.
+  //
+  // `damageBonus: 0.30` — THE ONE WEAPON THAT BREAKS THE LEVEL-1 DPS RULE, on
+  // purpose. In the type chart Dragon is super effective against Dragon and
+  // nothing else, and a weapon is earned from its own boss, whom a run never
+  // meets again (the bag does not repeat before all 17 are seen). So this is
+  // the one weapon with no boss it can ever be strong against; every other
+  // element has at least one. 30% is the middle of the 25-35% the owner asked
+  // for, kept mild because a stronger number would make it the default pick
+  // rather than a fair trade for having no matchup. It is a multiplier on base
+  // damage, so it carries through every level.
   { id: 'drake_breath', name: 'DRAKE BREATH', short: 'DRAKE', cls: OFFENSIVE, boss: 'drake',
+    damageBonus: 0.30,
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },
   // RENAMED AND RECLASSIFIED. This was an offensive boomerang called the Astral
@@ -768,7 +779,7 @@ export const WEAPONS = DEFS.map((d) => {
     // from `name` so N-DRONE reads NDR instead of NUL, and hyphens never eat a
     // character. All 18 are distinct — see tests/data.test.js.
     abbr: d.short.replace(/-/g, '').slice(0, 3),
-    damage: weaponDamage(d.cooldown, d.projectiles),
+    damage: +(weaponDamage(d.cooldown, d.projectiles) * (1 + (d.damageBonus || 0))).toFixed(3),
     radius: d.shape === 'stream' || d.shape === 'spray' ? 2 : 3,
     palette: src
       ? { primary: src.primary, secondary: src.secondary, outline: src.outline }
