@@ -195,8 +195,11 @@ const WEAKNESS_TYPES = [
  */
 const CHOICE_FIELDS = {
   'weapon class': ['Offensive', 'Defensive'],
-  'boss weakness A': WEAKNESS_TYPES,
-  'boss weakness B': WEAKNESS_TYPES,
+  // THE "NO WEAKNESS" ANSWERS ARE REAL CHOICES. Proto Mk0 is Typeless and has no
+  // weakness A at all, and most bosses have no second weakness. Without these two
+  // entries the dropdown could not say so, and showed Fire instead.
+  'boss weakness A': ['Typeless', ...WEAKNESS_TYPES],
+  'boss weakness B': ['None', ...WEAKNESS_TYPES],
 };
 /**
  * A FIELD THAT TRACKS ART, NOT PROSE. `sprite sheet` answers "which pieces of
@@ -496,18 +499,27 @@ function fieldRow(f, head) {
       txt.appendChild(lab);
     });
   } else if (choices) {
+    // A stored value may carry prose after the choice ("None — this boss has no
+    // second weakness"), so match on the leading word, not the whole string.
+    const now = f.text.trim().toLowerCase();
+    const hit = choices.find((c) => now === c.toLowerCase()
+      || (now.startsWith(c.toLowerCase()) && !/[a-z]/.test(now[c.length])));
     for (const c of choices) {
       const o = document.createElement('option');
       o.value = c; o.textContent = c;
-      o.selected = c.toLowerCase() === f.text.trim().toLowerCase();
       txt.appendChild(o);
     }
     // An unrecognised existing value keeps its place rather than being silently
-    // rewritten to the first option the moment the card is opened.
-    if (![...txt.options].some((o) => o.selected)) {
+    // rewritten to the first option. The match is decided HERE, not by asking the
+    // options: a dropdown always reports its first option as selected, so asking
+    // made every unrecognised value read as the first entry.
+    if (hit) {
+      txt.value = hit;
+    } else {
       const o = document.createElement('option');
-      o.value = f.text; o.textContent = f.text || '(unset)'; o.selected = true;
+      o.value = f.text; o.textContent = f.text || '(unset)';
       txt.insertBefore(o, txt.firstChild);
+      txt.value = f.text;
     }
     txt.onchange = () => { f.text = txt.value; dirty(); };
   } else {
