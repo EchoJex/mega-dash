@@ -17,7 +17,8 @@ platforming, hazards, and minion spawning between boss doors whose difficulty sc
 
 Built with Phaser 3 + Vite, wrapped by Capacitor. **The Android APK is the delivery
 target** — shipping inside a known WebView rather than whatever browser a player happens
-to open keeps the experience consistent. The browser only ever runs the dev server.
+to open keeps the experience consistent. On a PC the game runs in your browser instead;
+see *Playing on a Windows PC* below.
 
 ## Quick start — no PC setup required
 
@@ -49,14 +50,54 @@ one counter shared across every branch, so a branch build is numbered *above* th
 `main` build and Android will not install the lower number over it. The game says so
 rather than claiming you are up to date.
 
-### Optional: run it on a desktop browser
+## Playing on a Windows PC
 
-Only needed for quick checks — the phone loop above does not require it.
+There is no Windows installer and no standalone app yet. The way to play on a PC is in
+your browser (Chrome or Edge), with a small program on your own computer handing the game
+to it. Nothing is uploaded anywhere; the game runs from the folder you download.
 
-```bash
-npm install
+**One-time setup, about five minutes:**
+
+1. **Install Node.js** — the program that runs that small server. Download the "LTS"
+   version from [nodejs.org](https://nodejs.org), or in PowerShell run
+   `winget install OpenJS.NodeJS.LTS`. The release builds use Node 22; newer is fine.
+   Close and reopen PowerShell afterwards so it can find it.
+2. **Get the game.** On this page click **Code → Download ZIP** and unzip it, or run
+   `git clone https://github.com/echojex/mega-dash.git`.
+3. **Open PowerShell in the game's folder.** In File Explorer, click the address bar,
+   type `powershell` and press Enter. Then run `npm install` once. It downloads the
+   parts the game is built from.
+
+**Every time you want to play:**
+
+```powershell
 npm run dev
 ```
+
+Leave that window open, then go to **<http://localhost:5173/?dev=0>** in your browser.
+Close the window (or press Ctrl+C in it) to stop. `?dev=0` plays the game as it ships. Leave
+it off and the game first asks DEV MODE or PLAYTESTER; pick PLAYTESTER for the same thing.
+
+Things worth knowing:
+
+- **Your save lives in the browser, under that exact address.** A different browser, or
+  a different number after `localhost:`, is a different, empty save. If the window says
+  it started on a port other than 5173, the old one was busy: use the number it shows,
+  and expect a fresh save.
+- **Windows may ask about its firewall** the first time. The server also offers the game
+  to other devices on your wifi, which is how a phone can try it. Playing on this PC
+  works whether you allow it or cancel.
+- **Keyboard only.** The keys are in
+  [CLAUDE.md → Controls — as bound](CLAUDE.md), which is the one place they are written down.
+- **The music downloads from GitHub the first time**, then is kept on your PC. With no
+  internet on that first run the game plays silently.
+- **The UPDATE button does nothing on a PC** (it says "Updates are APK-only"). To get a
+  newer version, download the ZIP again, or `git pull` if you cloned it, and run
+  `npm install` again.
+- **Do not double-click `dist/index.html`** after a build. Browsers refuse to run the
+  game's scripts from a plain file, so it opens to a blank page. To play the finished
+  build instead of the development one, run `npm run build` and then
+  `npm run preview`, and open **<http://localhost:4173/?dev=0>**.
 
 ## Commands
 
