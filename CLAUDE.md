@@ -929,7 +929,7 @@ is AI-made music and gets labelled below.
 
 | | who makes it |
 |---|---|
-| **arena backdrops** (the drawn art) | the owner, by hand. The rule above does not reach them |
+| **arena backdrops** (the drawn art) | the owner, by hand — unless the owner asks Claude for a room by name, as they did for six rooms on 4 Oct 2026. Those count as AI-made and are labelled like any other |
 | placeholder backdrops, terrain, the HUD font, sound effects, draft design prose | Claude may make these without being asked, as before |
 
 **EVERY AI-MADE ASSET IS LABELLED TWICE**, so anyone can tell at a glance what the owner
@@ -939,7 +939,8 @@ made and what Claude or a generator made:
    `Drawn by Claude at the owner's request, <date>.` The `note` line is the one header line
    the sprite editor keeps exactly as written, which is why the label goes there. A music
    file cannot carry readable text, so its tracker `bgm` line carries it instead:
-   `AI-made (<generator>) at the owner's request, <date>.`
+   `AI-made (<generator>) at the owner's request, <date>.` A room drawn in code carries
+   it in the opening comment of its own file in `src/systems/arena-art/`.
 2. **In the list below**, in the same commit that adds the asset. This is a hand-kept
    inventory, which this file usually avoids because inventories go stale. It is here
    because the owner asked for it; keep it true by never adding an AI-made asset without
@@ -949,6 +950,7 @@ made and what Claude or a generator made:
 |---|---|---|---|---|
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
+| six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 
 **The three older tracks are not on the list**, because they are not AI-made. The three tracks in
 `design/music/` today (Drake Man's stage, the main menu, post-fight) are from
@@ -1071,10 +1073,64 @@ fades to black, builds the room behind full black, then fades back in and resume
 is ever seen half-constructed. On the boss's death a **wrap door** appears and warps you
 out to a fresh area themed to the next boss in the bag.
 
-`src/systems/arena.js` owns the room, the placeholder backdrop (a darkened wash of the
-boss's own primary until `background:<bossId>` art exists), and **screen shake** — whole
-virtual pixels only, because the render is integer-scaled and a fractional offset would
-shimmer. Shake moves the world, never the HUD.
+`src/systems/arena.js` owns the room, the placeholder look (a darkened wash of the boss's
+own primary, and plain shapes for the furniture), and **screen shake** — whole virtual
+pixels only, because the render is integer-scaled and a fractional offset would shimmer.
+Shake moves the world, never the HUD. A room with 16-bit art draws itself instead — next.
+
+### The 16-bit boss rooms — `src/systems/arena-art/`
+
+**One file per room, listed in `ROOMS` in `index.js`.** A room in that list draws its own
+backdrop, furniture and the hazards it knows; any other room keeps the placeholder look, so
+a boss whose room is not drawn yet is unaffected. Adding a room is one file and one line.
+The six there were drawn in Claude Design and approved by the owner on 4 Oct 2026; their
+drawing code is the design's own, kept as written so the rooms come out as approved.
+
+**EVERYTHING THAT MOVES IS DRAWN AHEAD OF TIME, by the owner's call.** While the room is
+built behind the warp's full black, each moving thing — a searchlight's sweep, a lava
+surface, rain, sparks — is painted once into numbered frames or small named pieces. Playing
+the room only picks a frame and a position for each, the way an SNES game did. **Never
+repaint a picture pixel by pixel every frame and hand it to Phaser** — that is the slow work
+this exists to keep off a phone. Crowds of small things (sparks, drops, embers) are drawn by
+Phaser in one go (`S.pool`), and a piece that kept its picture costs only its position. The
+pictures are made when the room is first drawn and thrown away when the run leaves the room
+or the game screen closes, so they never pile up in the phone's memory.
+
+**Built from `draw()`, never from `makeArena`**, so `npm run sim` — thousands of fights that
+never draw a frame — never pays for a picture.
+
+**THE PICTURES FOLLOW THE GAME, NEVER THE OTHER WAY ROUND.** A room reads what arena.js and
+bossFights.js keep track of and changes nothing that plays. Where a picture needed something
+the game did not keep, the game now writes it down for the picture and nothing in the game
+reads it back: where each turret is aiming (`aim`), how long until the next burst
+(`burstIn`), when a platform appeared (`born`). Things only the picture needs — the debris a
+rock breaks into, splashes, a bag's swing — live inside the room's own file and move once
+per game step, never once per screen refresh.
+
+**A ROOM SAYS WHAT IT DRAWS, AND EVERYTHING ELSE STILL DRAWS.** A room lists the hazards and
+ground effects it draws itself (`hazards`, `patches`); arena.js draws any other kind the old
+way, so a hazard added later shows up as a plain shape rather than not at all. **A warning
+the game draws must survive in the art** — the flashing bar on a bag Strike Man is about to
+punch is the game's, and his room keeps it.
+
+**Furniture fades in a beat after the room** on the warp in (`furn` layers follow `reveal`),
+and a `far` layer moves at 0.3x of the screen shake; everything else moves with it fully.
+
+**A ROOM THAT LOSES POWER DARKENS ITSELF** (`dim: true`, Volt Man's). Everything in it that
+gives off light — the lamp, the spark rods, the meters, the traces, the panels, the bolts —
+is drawn after its own darkness, so it still glows. **By the owner's call, the bodies in the
+room are darkened separately and stay in front**, so Volt Man walking in front of the lamp
+blocks its light. The player and the shots in the air are not darkened.
+
+**A BOSS'S SHOTS MUST SHOW AGAINST HIS OWN ROOM.** Proto Mk0's grey shots vanished into his
+grey bunker once it was drawn, which the owner caught; they are now the bunker's warning red
+with a near-black `rim`. Check a new room by putting that boss's own shots across it before
+it ships.
+
+**Checked three ways:** `tests/arena-art.test.js`, part of `npm test` — every room is built
+and run through its states (lightning, the blackout, the flood, Hot ground, burnt cover, a
+lifted bag) and must never ask for a frame or a piece that was never painted; `npm run
+smoke`, the real game in a browser; and screenshots held against the design by eye.
 
 ---
 
@@ -1671,9 +1727,9 @@ An element is DONE when all of this is true for its boss:
 9. **Playtested on device, pushed to a branch.**
 
 Art and music are NOT in the slice. Sprites and arena backdrops are the owner's to draw
-(or, for a sprite, to ask Claude for by name), and they land whenever they land, per actor,
-via `MANIFEST`. Music lands through the music pack on the same terms. The game stays
-playable without any of it.
+(or to ask Claude for by name), and they land whenever they land: a sprite per actor via
+`MANIFEST`, a room's 16-bit art via `src/systems/arena-art/`. Music lands through the music
+pack on the same terms. The game stays playable without any of it.
 
 **The player's sheet has landed**, and has since had its 16-bit pass
 (`public/sprites/player.png`, 528×24, twenty-two 24×24 frames in 12 colours: a six-frame
@@ -1738,6 +1794,10 @@ The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `
 file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
 drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
 not a gap: silhouette design follows attack and arena design.
+
+**Rooms are on this track too** (`src/systems/arena-art/`, see *The 16-bit boss rooms*).
+Which rooms are drawn is the `sprite sheet` line in each slice of the tracker, not a count
+kept here.
 
 **Music runs the same way, as its own parallel lane.** A track is handed off into
 `design/music/` and reaches the phone through the music pack with no code change and no APK
@@ -2096,7 +2156,8 @@ are opposite gestures and must stay separate — one subtracts light and holds, 
 it and clears. **Anything that EMITS light draws after the dim**, which is why
 `drawArenaBolts` is exported and called from `GameScene.draw` rather than living inside
 `drawArena`: a bolt drawn with the rest of the room was the one thing in the scene being
-dimmed hardest, and "luminous" then meant nothing.
+dimmed hardest, and "luminous" then meant nothing. Volt Man's room now has 16-bit art, which
+does this itself and darkens the bodies in front — see *The 16-bit boss rooms*.
 
 ### Boss weaknesses — the Gen 3 type chart, and it must be the Gen 3 one
 
