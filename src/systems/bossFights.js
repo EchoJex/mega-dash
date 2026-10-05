@@ -170,6 +170,22 @@ function coreHazard(layer) {
     const a = ctx.arena;
     if (!a || !a.turrets.length) return;   // no ceiling to mount on outside an arena
     const hs = ctx.boss.hs || (ctx.boss.hs = { t: 150, left: 0, gap: 0, aim: [] });
+    const p = ctx.player;
+    const aimOf = (t) => {
+      const v = aimAt(t.x + t.w / 2, t.y + t.h, p.x + 12, p.y + 12);
+      return snapAngle(Math.atan2(v.y, v.x), CORE_HAZ.snap[layer]);
+    };
+
+    /**
+     * "VISIBLY TRACK AND AIM" — stamped onto the turrets for the room's art,
+     * the way Volt Man's panels carry their own state. Between bursts the
+     * barrel follows the player at this layer's snap; during a burst it holds
+     * the angle the volley locked, so it points where the bullets go. The
+     * countdown is what the alarm light on the ceiling beam spins up on.
+     * Pictures only: nothing reads these back.
+     */
+    a.turrets.forEach((t, i) => { t.aim = hs.left > 0 ? hs.aim[i] : aimOf(t); });
+    a.burstIn = hs.left > 0 ? Infinity : hs.t;
 
     if (hs.left > 0) {
       if (--hs.gap > 0) return;
@@ -191,11 +207,7 @@ function coreHazard(layer) {
     if (--hs.t > 0) return;
     // Every turret locks its angle at the same instant, so the burst reads as
     // one coordinated volley rather than a stagger.
-    const p = ctx.player;
-    hs.aim = a.turrets.map((t) => {
-      const v = aimAt(t.x + t.w / 2, t.y + t.h, p.x + 12, p.y + 12);
-      return snapAngle(Math.atan2(v.y, v.x), CORE_HAZ.snap[layer]);
-    });
+    hs.aim = a.turrets.map(aimOf);
     hs.left = CORE_HAZ.shots;
     hs.gap = 1;
   };

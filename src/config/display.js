@@ -198,6 +198,7 @@ export const SPRITE_CLASS = {
  */
 export const DEPTH = {
   background: 10,
+  arena: 15,   // a boss room's 16-bit art and furniture (systems/arena-art)
   world: 20,   // terrain, spikes, platforms, boss doors
   pickups: 30,
   minions: 40,

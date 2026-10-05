@@ -45,6 +45,7 @@ import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
   playerClip, hexNum,
 } from '../systems/assets.js';
+import { makeArenaArt } from '../systems/arena-art/index.js';
 
 /**
  * How far into the arena track the room's clock starts: the boss door's whole
@@ -96,6 +97,30 @@ const AREA_PLAT   = 0x4d7da0;   // floating platforms, read against the backdrop
 /** Copy of an array in random order. Used for the arsenal head start. */
 const shuffled = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
+/**
+ * DARKEN ONE BODY in a room that has put its own lights out — see `shadeA` in
+ * draw. A sprite is tinted, and untinted again when the lights come back,
+ * because sprites are pooled and would otherwise keep the tint. A placeholder
+ * gets the dark laid over its own rectangle, which is its whole body.
+ */
+function shadeBody(layer, sprite, x, y, w, h, a) {
+  if (sprite) {
+    if (a > 0) {
+      const v = Math.round(255 * (1 - a));
+      sprite.setTint((v << 16) | (v << 8) | v);
+      sprite.shaded = true;
+    } else if (sprite.shaded) {
+      sprite.clearTint();
+      sprite.shaded = false;
+    }
+    return;
+  }
+  if (a > 0) {
+    layer.g.fillStyle(0x02010A, a);
+    layer.g.fillRect(x, y, w, h);
+  }
+}
+
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
 
@@ -124,6 +149,14 @@ export default class GameScene extends Phaser.Scene {
       boss: new ActorLayer(this, DEPTH.boss),
       player: new ActorLayer(this, DEPTH.player),
     };
+    /**
+     * A boss room's 16-bit art (systems/arena-art), built on the first frame
+     * drawn in that room. It owns textures, which outlive the scene's own
+     * objects, so it is released whenever this scene stops — not only when the
+     * room changes.
+     */
+    this.arenaArt = null;
+    this.events.once('shutdown', () => { this.arenaArt?.destroy(); this.arenaArt = null; });
     /**
      * A PLAYTESTER ONLY MEETS CONTENT THAT HAS BEEN DEVELOPED. Dev mode draws
      * from all seventeen because testing the unbuilt is what it is for; the
@@ -2781,11 +2814,30 @@ export default class GameScene extends Phaser.Scene {
      */
     const sy = (wy) => wy + sh.y;
 
+    // The room's 16-bit art, if it has any — rebuilt whenever the room is new,
+    // released when the run leaves it.
+    if (this.arenaArt?.arena !== this.arena) {
+      this.arenaArt?.destroy();
+      this.arenaArt = this.arena ? makeArenaArt(this, this.arena, this.viewW) : null;
+    }
+    const art = this.arenaArt;
+    /**
+     * HOW DARK A SELF-DARKENING ROOM IS, for the bodies standing in it. Volt
+     * Man's room puts its own lights out and keeps its glowing parts lit, so a
+     * wash over the whole screen would put those out too; instead the room
+     * darkens itself and the boss and the minions are darkened here, in front
+     * of it, so a body still blocks the glow behind it. Eighths, like the
+     * room's own step down.
+     */
+    const shadeA = art?.dim && this.arena.dim > 0 ? Math.round(this.arena.dim * 0.72 * 8) / 8 : 0;
+
     if (this.arena) {
       // `reveal` is 1 except during a staged arena warp's furniture beat.
-      Arena.drawArena(g, this.arena, this.viewW, sh, this.warp?.reveal ?? 1);
+      const rv = this.warp?.reveal ?? 1;
+      art?.update(sh, rv);
+      Arena.drawArena(g, this.arena, this.viewW, sh, rv, art);
       // After the room, so a barrel floats ON the water rather than under it.
-      Arena.drawHazards(g, this.arena, sh);
+      Arena.drawHazards(g, this.arena, sh, art?.hazards);
     } else {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
@@ -2841,7 +2893,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     for (const e of this.minions) {
-      L.minions.draw({
+      const body = L.minions.draw({
         id: e.id, x: sx(e.x), y: sy(e.y), w: e.w, h: e.h,
         facing: Math.sign(e.vx) || 1,
         clip: e.def.kind === 'ground' ? 'walk' : 'fly',
@@ -2853,6 +2905,7 @@ export default class GameScene extends Phaser.Scene {
           outline: e.elite ? ELITE_OUTLINE : e.def.outline,
         },
       });
+      shadeBody(L.minions, body, sx(e.x), sy(e.y), e.w, e.h, shadeA);
       // Same flashing readout the player gets. An enemy that is burning or
       // frozen has to say so, or a status weapon has no visible effect at all
       // until the health bar you cannot see runs out.
@@ -2929,7 +2982,7 @@ export default class GameScene extends Phaser.Scene {
       // He materialises out of the last quarter of the beam rather than
       // appearing when it is already gone.
       if (beam >= 0.75) {
-        L.boss.draw({
+        const body = L.boss.draw({
           id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
           facing: -1, clip: b.state,
           palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
@@ -2937,6 +2990,7 @@ export default class GameScene extends Phaser.Scene {
         // Hardware whose orientation is game state — see drawBossRig. Not a
         // silhouette: the rectangle underneath is still the honest footprint.
         drawBossRig(L.boss.g, b, sx(b.x), sy(b.y));
+        shadeBody(L.boss, body, sx(b.x), sy(b.y), b.w, b.h, shadeA);
       }
       const bf = Attr.statusFlash(b.status);
       if (bf.tint !== null && Math.floor(r.frame / 4) % 2 === 0) {
@@ -3009,7 +3063,8 @@ export default class GameScene extends Phaser.Scene {
      * enough that a neon bolt is the brightest thing in the room and light
      * enough that the floor is still readable.
      */
-    if (this.arena?.dim > 0) {
+    // A room with its own darkness has already drawn it — see `shadeA`.
+    if (this.arena?.dim > 0 && !art?.dim) {
       L.player.g.fillStyle(0x02040C, Math.min(0.72, this.arena.dim * 0.72));
       L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
     }
@@ -3022,7 +3077,7 @@ export default class GameScene extends Phaser.Scene {
     // different displacement from the room they are attached to — during a
     // shake Volt Man's power-line arcs visibly detached from their own
     // conductors. One roll per frame, shared.
-    Arena.drawArenaBolts(L.player.g, this.arena, sh);
+    if (!art?.dim) Arena.drawArenaBolts(L.player.g, this.arena, sh);
 
     // A lightning or arc flash washes the whole room. Drawn on the topmost
     // world layer and WITHOUT the shake offset: light does not shake, and a
