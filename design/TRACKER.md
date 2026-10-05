@@ -99,7 +99,7 @@ where each one stands.
 - **palette notes** `[ready]` Light grey / dark grey
 - **boss weakness A** `[ready]` Typeless — no elemental weakness.
 - **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
-- **arena** `[draft]` Military weapons bunker, grey all over, with red kept for warnings. Two small ceiling turrets; sand-coloured sandbag positions at both ends with olive ammo cans; a rack of arm cannons; a rack of artillery shells; a firing chart on the back wall with a tracer round flying its arcs; an armour test plate dented by bullet strikes; a blast door marked 01; bullet pockmarks in the walls and spent brass cases on the floor. Two searchlights sweep the back wall, and a red alarm light on the ceiling beam spins up just before the turrets fire.
+- **arena** `[ready]` Military weapons bunker, grey all over, with red kept for warnings. Two small ceiling turrets; sand-coloured sandbag positions at both ends with olive ammo cans; a rack of arm cannons; a rack of artillery shells; a firing chart on the back wall with a tracer round flying its arcs; an armour test plate dented by bullet strikes; a blast door marked 01; bullet pockmarks in the walls and spent brass cases on the floor. Two searchlights sweep the back wall, and a red alarm light on the ceiling beam spins up just before the turrets fire.
 - **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[ready]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
@@ -113,7 +113,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-proto-arena.ogg` — plays inside Proto Mk0's boss room.
 
@@ -144,7 +144,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.47 s) at the bar line.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-blaze-arena.ogg` — plays inside Blaze Man's boss room.
 
@@ -177,7 +177,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room.
 
@@ -208,7 +208,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-volt-arena.ogg` — plays inside Volt Man's boss room.
 
@@ -238,7 +238,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room.
 
@@ -298,7 +298,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
-- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-strike-arena.ogg` — plays inside Strike Man's boss room.
 
