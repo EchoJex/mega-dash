@@ -688,7 +688,8 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Minions
 
 - **roster** `[wip]` Ongoing lost of minimum, don't passive. Some good, don't hostile. Some passive and good minions become enraged when damaged by the player. 
-  SPIGLET walks its span and turns at pit edges; DRIFTER drifts left while tracking the player's altitude.
+  SPIGLET walks its span and turns at pit edges; 
+  DRIFTER drifts left while tracking the player's altitude.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
 - **spawn ramp** `[wip]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may summon based on description within boss attack layer.
 
