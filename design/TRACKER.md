@@ -1110,7 +1110,6 @@ it is ready to be real.
 
 
 ## Play feel
-
-
+Some minions are passive or good until damaged, engaging them into an aggressive mode
 ## Cosmetics
 
