@@ -166,7 +166,7 @@ export function makeArena(bossDef, layer, viewW, floorY) {
 export const BEAT_LEN = 60;
 
 /** Frames the plasma lamp holds one lightning shape before jumping to another. */
-const VOLT_LAMP_HOLD = 14;
+export const VOLT_LAMP_HOLD = 14;
 
 /**
  * VOLT MAN'S PLATFORM RHYTHM, in BEATS rather than frames — the field states it

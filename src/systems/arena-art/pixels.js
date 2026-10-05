@@ -216,7 +216,8 @@ export function solid(w, h, c) {
  * becomes `put(x, y, c)`). Packed in rows; a 1px gap keeps neighbours apart.
  */
 export function pieces(list) {
-  const items = list.map((e) => (typeof e === 'string' ? [e, solid(1, 1, e)] : e));
+  // Tallest first, so each row is filled with pictures of about its own height.
+  const items = list.map((e) => (typeof e === 'string' ? [e, solid(1, 1, e)] : e)).sort((p, q) => q[1].height - p[1].height);
   const cells = [], names = [];
   let x = 0, y = 0, rowH = 0, W = 0;
   for (const [name, cv] of items) {

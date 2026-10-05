@@ -22,8 +22,9 @@ import { DEPTH } from '../../config/display.js';
 import proto from './proto.js';
 import blaze from './blaze.js';
 import tempest from './tempest.js';
+import volt from './volt.js';
 
-const ROOMS = { proto, blaze, tempest };
+const ROOMS = { proto, blaze, tempest, volt };
 
 /** Does this boss's room have 16-bit art? */
 export const hasArenaArt = (id) => Object.prototype.hasOwnProperty.call(ROOMS, id);
