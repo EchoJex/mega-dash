@@ -739,9 +739,10 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| other | `[ready]` | Dev mode boss picker does not work when after returning to Dev mode options screen |
-| other | `[ready]` | In Dev mode only, Re-quip wheel should just always act like between fights wheel. Dev mode toggle for how the wheel should behave (playtester version with both mid-fight and between fights vs between fights wheel at all times) |
-| 1111 (main) | `[ready]` | Post Boss Re-quip wheel: increase the touch tolerance when selecting a weapon; exciting out of this wheel should require tapping in the movement or action button zones |
+| — | `[deferred]` | _no open bugs_ |
+
+
+
 
 
 
