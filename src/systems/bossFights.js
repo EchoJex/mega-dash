@@ -75,12 +75,21 @@ const CORE = {
   homing: 0.012,         // "mild" auto-aim
 };
 
+/**
+ * PROTO MK0'S SHOTS ARE THE BUNKER'S WARNING RED, WITH A DARK RIM — his own and
+ * his turrets' alike. They used to be his grey and a lighter grey, and once his
+ * room became a grey bunker they vanished into its walls (the owner, playing on
+ * the phone, 5 Oct 2026). Red is the colour that room keeps for warnings, and
+ * the rim is the art direction's outline on anything that can touch you.
+ */
+const CORE_SHOT = { color: '#FF4A32', rim: '#0A0A12' };
+
 function coreShot(ctx, vx, vy, homing) {
   const b = ctx.boss;
   ctx.shoot({
     x: b.x + b.w / 2, y: b.y + b.h * 0.45,
     vx, vy, radius: 2.5, damage: 1,
-    color: b.primary, shape: 'bolt', homing,
+    ...CORE_SHOT, shape: 'bolt', homing,
   });
 }
 
@@ -197,7 +206,7 @@ function coreHazard(layer) {
         ctx.shoot({
           x: t.x + t.w / 2, y: t.y + t.h + 2,
           vx: Math.cos(th) * CORE_HAZ.speed, vy: Math.sin(th) * CORE_HAZ.speed,
-          radius: 2, damage: 1, color: '#9AA4B4', shape: 'bolt',
+          radius: 2, damage: 1, ...CORE_SHOT, shape: 'bolt',
         });
       });
       if (hs.left <= 0) hs.t = CORE_HAZ.cooldown[layer];

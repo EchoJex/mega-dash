@@ -577,6 +577,14 @@ export function drawProjectile(g, b, frame) {
       g.fillRect(b.x - r * 0.25, b.y - r * 1.2, r * 0.5, r * 2.4);
       break;
     default: // 'bolt'
+      // A near-black rim, for a shot that must read against a busy or
+      // same-coloured room — the art direction's outline on anything that can
+      // touch you. Only shots that ask for one get it.
+      if (b.rim) {
+        g.fillStyle(hexNum(b.rim), 1);
+        g.fillRect(b.x - r - 1, b.y - r * 0.5 - 1, r * 2 + 2, r + 2);
+        g.fillStyle(c, 1);
+      }
       g.fillRect(b.x - r, b.y - r * 0.5, r * 2, r);
   }
 }
