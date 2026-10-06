@@ -157,7 +157,7 @@ export function installFont(scene) {
   }));
 }
 
-/** Uppercase-fold and drop anything the font cannot draw. */
+/** Uppercase-fold, and show `?` for anything the font cannot draw. */
 export const fold = (s) => String(s).toUpperCase()
   .split('')
   .map((c) => {
