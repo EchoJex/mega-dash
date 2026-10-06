@@ -58,8 +58,11 @@ it reads better. Nobody has to translate.
 | **sheet** | All of a sprite's pictures in one PNG strip. |
 | **grid / cell** | The fixed box each picture is drawn in. Player 24×24, bullet 16×16. |
 | **anchor** | Which part of the picture sits at the character's position. Feet on the ground for actors, middle for bullets. |
-| **role** | A pixel is stored as *primary / secondary / outline*, never as a colour. Re-tune the palette and every sprite recolours. |
-| **declared palette** | The 16-bit alternative to roles: `palette` lines at the top of a `.sprite` file list up to 15 fixed colours, and each pixel names one of them. The player is drawn this way. Those colours do not follow a palette re-tune; they are changed by hand. |
+| **16-bit** | The game's look since 29 Sep 2026, after the SNES: up to 15 colours plus see-through per sprite, shaded in colour ramps, with the near-black outline. The player's sheet and the drawn boss rooms are the examples to follow. |
+| **declared palette** | How a 16-bit sprite stores its colours: `palette` lines at the top of a `.sprite` file list up to 15 fixed colours, and each pixel names one of them. The standard for new art. Those colours do not follow a palette re-tune; they are changed by hand. |
+| **role** | The original, three-colour way: a pixel is stored as *primary / secondary / outline*, never as a colour, so re-tuning the palette recolours every sprite drawn this way. What the placeholder era drew in. |
+| **colour ramp** | Three to five shades of one material, dark to light, used to shade a 16-bit sprite. Nothing to do with the difficulty **ramp** below. |
+| **outline** | The shared near-black edge, `#0A0A12`, round every character and bullet. It is what keeps them readable against a dark room. |
 | **silhouette** | The drawn shape, ignoring transparency. |
 | **collision box** | The invisible rectangle the game uses for hits. Deliberately not the same as the drawing. |
 | **fudge factor** | The ratio between the two. 0.70 wide, 1.00 tall. |
@@ -100,7 +103,11 @@ it reads better. Nobody has to translate.
 | **elite** | A tougher version of a minion, same size and shape, told apart by a gold outline. |
 | **boss** | One of the seventeen, one per element. An event, met behind a door. |
 | **hazard** | The room hurting you on its own timer, separately from the boss. Every arena runs both at once. |
-| **furniture** | The things built into a boss room that its hazards need — platforms, turrets, conveyors. |
+| **furniture** | The things built into a boss room that its hazards need — platforms, turrets, conveyors. A room with 16-bit art draws its own. |
+| **room art** | A boss room's 16-bit drawing: backdrop, furniture, and the hazards it knows. It is code in `src/systems/arena-art/`, one file per room, not a picture file. |
+| **pre-drawn** | Painted once, while the room builds behind the warp's black, and after that only picked and placed. Everything that moves in a room is pre-drawn, so a phone never repaints pixels one at a time during a fight. |
+| **blackout** | Volt Man's room losing power. The room goes dark, its lights keep glowing, and the bodies in front of them go dark. `dim` in the code. |
+| **rim** | A one-pixel near-black edge round a shot, so it shows against its own room. Proto Mk0's red shots have one. |
 
 ## Weapons, and what you are carrying
 
@@ -145,6 +152,9 @@ it reads better. Nobody has to translate.
 | **pack.json** | The music pack's list: every track's name, size and fingerprint. `npm run music` writes it after a track is handed off. |
 | **fingerprint** | A short code worked out from a file's exact bytes. Change one byte and it changes, which is how the phone knows a track was re-exported and needs downloading again. |
 | **BGM / SFX** | Background music / sound effects. SFX are built into the game; BGM is the music pack. |
+| **design brief** | `design/DESIGN-BRIEF.md`: the game's look and its limits on one page, for Claude Design to read before it draws anything for this game. |
+| **design system** | Claude Design's reusable reference — a rules page, named colours, preview cards and images — read before every new design. MEGA DASH's is built from the design brief. |
+| **handoff** | The zip Claude Design exports for Claude Code: the drawings, the chat, a README, and a note saying what is approved and what to build. |
 
 ## Markers
 

@@ -10,7 +10,7 @@
 > from the tool that edits it.
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
+**16-bit (SNES-era) visuals and SNES-era chiptune music on Mega Man 2 feel · Vampire Survivors levelling and meta progression.**
 
 17 elemental robot masters, each  unlocking a special weapon. Procedurally generated
 platforming, hazards, and minion spawning between boss doors whose difficulty scales with time to prevent camping. Bosses you have beaten return harder, permanently. 

@@ -352,14 +352,16 @@ dwarf. Treat it as the floor.
 `public/sprites/player.png` measures **0.1018 bytes per pixel** — 14 frames of 24x24 in 821
 bytes — and the Volt Spark agrees at 0.1172. Three colours plus transparency is the most
 compressible thing a PNG can hold, and that number is why. The 16-bit player sheet that
-replaced it (22 frames, 12 colours) is still under 10KB, so the art direction moving to
-16-bit changes nothing below.
+replaced it (22 frames, 12 colours) is 1,436 bytes, 0.113 bytes per pixel, so the art
+direction moving to 16-bit changes nothing below.
 
 Take the player's own fluidity as the template for everything (6-frame locomotion cycle,
 2-frame idle, single poses for the jump states) and **every animated thing in the finished
 game is ~105KB**: 17 bosses at 22 frames each is 85KB of that, and everything else together
 is 20KB. Triple the frame counts AND treble the entropy for busier art and it reaches 1MB.
-Seventeen arena backdrops at 480x224 add 0.18MB at three colours, ~1MB drawn at 16-bit richness.
+The boss rooms turned out not to be pictures at all: each one is code that paints itself
+while the room builds (*The 16-bit boss rooms*). The six drawn so far are 134KB of code,
+44KB compressed — about 7KB a room in the download.
 
 **So no amount of sprite-squeezing buys anything, and no fluidity target is too expensive.**
 Never ask the owner to cut frames, share a sheet, or drop a pose for size. If art ever
@@ -372,7 +374,7 @@ appears in a size conversation, the conversation has gone wrong.
 | wrapper | 2.9 MB | **fixed.** Not content, not negotiable |
 | game code | 1 MB | 17 fights, 18 ladders, arenas. Roughly doubles from today's 0.4MB |
 | every sprite | 1 MB | pessimistic: 2x the frames at 2x the entropy |
-| arena backdrops | 1 MB | 17, drawn richly |
+| room art | 1 MB | 17 rooms, drawn in code — about 7KB compressed each so far |
 | SFX | 1 MB | ~40 one-shots, in the APK — see below |
 | **total inside the APK** | **~7 MB** | |
 | headroom to 500MB | ~493 MB | **not the APK's to spend** — see below |
@@ -660,12 +662,14 @@ anchor, and `tests/sprites.test.js` pins `DEFAULT_HOLD` against it so the two ca
 The editor's (i) beside the field carries this terminology, because "step" is the word
 that stops meaning anything a month later.
 
-**A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
-seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
-change in the tracker recolours every sprite drawn against it with no art reopened.
+**THE ORIGINAL FORMAT: A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never
+`#EA6A34`. The seventeen boss primaries are optimised as a SET and get re-tuned as a set, so
+a palette change in the tracker recolours every sprite drawn against it with no art
+reopened. That is three colours, which is what the placeholder era drew in.
 
-**A SPRITE MAY DECLARE ITS OWN PALETTE instead** — the 16-bit path. `palette` lines in the
-header give it up to 15 colours, one key character each:
+**A SPRITE MAY DECLARE ITS OWN PALETTE instead — the 16-bit path, and the standard for new
+art since 29 Sep 2026.** `palette` lines in the header give it up to 15 colours, one key
+character each:
 
     palette   0 #0A0A12 outline
     palette   1 #FFFFFF highlight
@@ -856,6 +860,15 @@ resolution or feel change.
   reference; it is no longer the constraint.
 - **Placeholders stay placeholders.** Rectangles and procedural shapes keep their
   primary/secondary/outline look until a sprite replaces them.
+- **The references are the player's sheet and the six drawn rooms.** A sprite with no
+  `palette` lines is the older three-colour kind and predates this direction; it is not a
+  reference for new art.
+- **A boss's shots must show against his own room** — see *The 16-bit boss rooms*.
+
+**`design/DESIGN-BRIEF.md` is this section, the room rules and the screen rules on one
+page, for Claude Design** — and the MEGA DASH design system in Claude Design is built from
+it. Change a rule here and change the brief in the same commit; the brief says which
+design system to update.
 
 ### Music direction (SNES-era chiptune)
 
@@ -965,11 +978,10 @@ playtest. Before handing a build to anyone else, find each track's page or repla
 track. A track added from outside from now on gets its source page and licence on its
 tracker `bgm` line when it is handed off.
 
-Bosses stay honest rectangles at true collision footprint until real art lands.
-`silhouette: null` in `bosses.js` is not a gap to fill.
-
-Bosses are **honest rectangles at true collision footprint** right now. Silhouette design
-follows from attack and arena design, which is not done. Do not invent silhouettes early.
+Bosses are **honest rectangles at true collision footprint** until their own sprite is
+drawn, even standing in a 16-bit room — the rooms were drawn first on purpose, because a
+silhouette follows from the attacks and the arena. `silhouette: null` in `bosses.js` is not
+a gap to fill, and a boss's sprite is made only when the owner asks for that boss by name.
 
 ---
 
@@ -1115,6 +1127,11 @@ punch is the game's, and his room keeps it.
 
 **Furniture fades in a beat after the room** on the warp in (`furn` layers follow `reveal`),
 and a `far` layer moves at 0.3x of the screen shake; everything else moves with it fully.
+
+**A drawn room's furniture lives in its room file, not in the sprite editor.** The editor's
+`furniture-<boss>-<n>` slots were made from the old placeholder shapes before any room was
+drawn, and nothing in the game reads them — a piece drawn there would never appear. Change
+a drawn room by changing its file in `src/systems/arena-art/`.
 
 **A ROOM THAT LOSES POWER DARKENS ITSELF** (`dim: true`, Volt Man's). Everything in it that
 gives off light — the lamp, the spark rods, the meters, the traces, the panels, the bolts —
@@ -1791,8 +1808,9 @@ a finished sprite drops into a game that was already playable without it, and la
 player's sheet changed no gameplay code at all.
 
 The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `.sprite`
-file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
-drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
+file to `npm run sprites:build` to the PNG the game loads. What has been drawn is what is
+in `public/sprites/`, not a count kept here, and a sheet whose source has `palette` lines
+is 16-bit. Bosses stay honest rectangles until their art lands, which is a deliberate look,
 not a gap: silhouette design follows attack and arena design.
 
 **Rooms are on this track too** (`src/systems/arena-art/`, see *The 16-bit boss rooms*).
@@ -1845,8 +1863,9 @@ constants, procedural terrain with traversability guarantees, themed overworld.
 time-keyed ramp, pickups, EXP and level-up cards, Chips and meta upgrades, the 2+2+sidearm
 loadout and the RE-QUIP wheel, the per-weapon runtime, the elemental attribute framework.
 
-**Presentation** — the sprite path (`MANIFEST`), the hand-authored bitmap font, procedural
-sound, boss death animations, touch controls.
+**Presentation** — the 16-bit look (the player's sheet and the drawn boss rooms), the
+sprite path (`MANIFEST`), the hand-authored bitmap font, procedural sound, boss death
+animations, touch controls.
 
 **The workshop** — and this is the part that grew most recently, because it is what makes
 the three tracks above independently runnable:
@@ -1857,7 +1876,7 @@ the three tracks above independently runnable:
 | `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
 | `npm run sim` | headless difficulty measurement; `--save` keeps a run and diffs it against the one before |
 | `npm run smoke` | the real bundle, played in a browser, against every built fight |
-| the sprite editor + `npm run sprites*` | pixel-exact templates and a role-based sprite format that survives a palette change |
+| the sprite editor + `npm run sprites*` | pixel-exact templates, and a sprite format that stores either its own 16-bit palette or roles that follow a palette re-tune |
 | the in-app updater + per-branch CI | every push becomes an installable build; iterating costs one tap |
 | the playtester content gate | derived from `hasFight` and `hasLadder`, so unfinished content cannot reach a playtest |
 
