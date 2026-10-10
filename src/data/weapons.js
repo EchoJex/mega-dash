@@ -388,22 +388,55 @@ export const WEAPON_LADDERS = {
   },
 
   // ── QUAKE HAMMER — offensive, Ground ──────────────────────────────
-  // "Slow, delayed baseball-swing on tap for high damage and high knockback;
-  //  long press 1.5s to hold the hammer overhead and on release swing downward
-  //  producing shockwaves and stunning nearby enemies. Per-level scaling:
-  //  shockwave size + stun duration."
-  //  Lv1  an airborne pound drives the player down fast; the wave is born
-  //       where he actually lands.
-  //  Lv3  larger wave, longer stun, and the wave climbs low obstacles.
+  // THE OWNER'S 10 OCT 2026 BRIEF (given in conversation, not yet a `[draft]`
+  // tracker field): King Dedede's hammer from Smash Ultimate.
+  //   TAP         a quick short swing, three presses in a row (Dedede's A-A-A)
+  //   TAP + HOLD  the hammer is carried over the shoulder; fully charged it
+  //               sheds tiny dust clouds. Letting go swings it.
+  //   RELEASE     a small / medium / large dust cloud, sized by how long it was
+  //               held, where the hammer lands (on an enemy or on the ground)
+  //   FULL CHARGE and the hammer lands on the GROUND: long sandy spikes stab
+  //               diagonally forward, stay half a second, crumble to sand that
+  //               falls and fades.
+  // The older tracker text still applies underneath: a ground hit stuns what
+  // is nearby and sends shockwaves along the floor; Lv3 makes the wave larger,
+  // the stun longer and lets the wave climb low obstacles.
   // PARTIAL LADDER: Lv6 and Lv10 are still `[wip]` in the tracker.
   //
-  // `holdFrames` IS THE TRACKER'S 1.5 SECONDS and is this weapon's own, not the
-  // shared LONG_PRESS_FRAMES: the hold is a commitment here, not a modifier, and
-  // 0.4s would let it happen by accident on a slightly slow tap.
+  // FRAME NUMBERS ARE GAME STEPS (60 a second), the same count Smash uses.
+  // Where Smash's number is known it is used as-is; where it is not it is
+  // marked INFERRED. Known (SmashWiki, King Dedede SSBU): jab 1 hits on frame
+  // 10 and ends on 33; jab 2 hits about 13 frames after jab 1's hit (frames
+  // 23-24 in a fastest chain); the finisher hits 4 frames after the twirl that
+  // leads into it. Dedede's rapid-fire twirl in the middle is NOT built: on
+  // this weapon holding the button means charging, not rapid jabs.
+  //
+  // `hit` is counted from the PRESS, so a tap that lasted 5 steps has only
+  // `hit - 5` left to wait. That keeps the weapon exactly as quick as the
+  // frame data says no matter how long a thumb stays down.
+  //
+  // `holdFrames` IS THE TRACKER'S 1.5 SECONDS and is this weapon's own: it is
+  // now the time to FULL charge. `tapFrames` is the longest press that still
+  // counts as a tap.
   quake_hammer: {
     1: {
-      swingFrames: 30, reach: 22, swingDmgMult: 1.8, swingKnock: 3.6,
-      holdFrames: 90, poundFrames: 26, poundAccel: 1.2,
+      tapFrames: 9,
+      jab: [
+        { hit: 10, total: 33, reach: 22, dmg: 1.00, knock: 1.2 },
+        { hit: 13, total: 40, reach: 24, dmg: 0.88, knock: 1.6 },   // total INFERRED
+        { hit: 10, total: 50, reach: 26, dmg: 1.20, knock: 3.4 },   // hit INFERRED
+      ],
+      jabBase: 1.0,
+      holdFrames: 90,
+      smashHit: 16, smashTotal: 56,   // INFERRED
+      reach: 24,   // the big swing's reach (also what npm run sim reads as the weapon's range)
+      swingDmgMult: 1.8, chargeDmgGain: 1.2, swingKnock: 3.6,
+      poundAccel: 1.2,
+      cloud: [10, 16, 24],            // dust cloud radius: small, medium, large
+      cloudStun: [0.45, 0.7, 1],      // share of the stun a cloud of that size gives
+      spikeAngles: [24, 38, 52, 66], spikeLens: [58, 64, 54, 42],
+      spikeStab: 5, spikeStay: 30, sandFrames: 180, sandFade: 45,
+      spikeDmgMult: 1.1, spikeKnock: 2.6, spikeLaunch: 2.4,
       waveSpeed: 2.4, waveSize: 5, waveDmgMult: 0.7, waveLife: 70,
       waveKnock: 2.2, waveClimbs: false, stunFrames: 45, stunRange: 40,
     },

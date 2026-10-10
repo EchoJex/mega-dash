@@ -298,7 +298,7 @@ test('the Swarm Caller inverts from a timed group to a standing swarm at Lv10', 
   assert.ok(ladderAt('swarm_caller', 10).kamikaze > 0);
 });
 
-test('the Quake Hammer declares its own 1.5 second hold', () => {
+test('the Quake Hammer takes 1.5 seconds to reach a full charge', () => {
   // The tracker says 1.5s for this weapon specifically. It must not silently
   // fall back to the shared 0.4s long press every other weapon uses.
   const hold = ladderAt('quake_hammer', 1).holdFrames;

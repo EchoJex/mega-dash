@@ -785,100 +785,281 @@ function stepLunge(st, lv, ctx) {
 
 // ── QUAKE HAMMER — Ground, offensive ─────────────────────────────────
 /**
- * "Large rock shaped hammer visible when active. Slow, delayed baseball-swing
- *  on tap for high damage and high knockback; long press 1.5s to hold the
- *  hammer overhead and on release swing downward producing shockwaves and
- *  stunning nearby enemies. Per-level scaling: shockwave size + stun duration."
- *  Lv1  "airborne swings cause the player to swing downward and rapidly travel
- *        downward where a shockwave will be generated on contact with the
- *        ground."
- *  Lv3  larger shockwave, longer stun, and the wave climbs low obstacles.
+ * King Dedede's hammer, by the owner's brief of 10 Oct 2026 (see the ladder in
+ * data/weapons.js for the full wording and for which frame numbers are Smash's
+ * own and which are inferred).
  *
- * Lv6 and Lv10 are still `[wip]`, so the ladder stops at Lv3.
+ *   TAP        a short quick swing, three presses in a row (Dedede's A-A-A).
+ *   HOLD       the hammer rides over the shoulder while the charge builds, and
+ *              sheds tiny dust once it is full.
+ *   RELEASE    the big swing. On an enemy or on the ground it makes a dust
+ *              cloud sized small / medium / large by how long it was held.
+ *   FULL + GROUND   sandy spikes stab diagonally forward, stay half a second,
+ *              then crumble into sand that falls and fades.
  *
- * A 1.5 SECOND HOLD, NOT THE SHARED 0.4. This weapon's long press is a
- * commitment — you stop, you wind up, you are open — so it has to be long
- * enough that it can never happen by accident on a slightly slow tap. It
- * declares its own via `holdFrames`; every other long-press weapon still uses
- * LONG_PRESS_FRAMES.
+ * ONE BUTTON, DECIDED ON RELEASE. GameScene calls `hold` every step the button
+ * is down and `fire` once when it comes up, with how many steps it was down.
+ * Short means tap. Because a tap's hit frame is counted from the PRESS, the
+ * wait for the release is taken out of the swing's start-up, so a quick tap
+ * lands on exactly the frame Smash's data says.
  *
- * The pound resolves ON LANDING, not on the press. Committing to a slam and
- * then watching it land is the whole appeal of the move, and it also means the
- * shockwave always originates from real ground rather than from wherever the
- * player happened to be floating.
+ * Everything the player sees that has to outlive the weapon being benched
+ * (clouds, spikes, sand) lives in `ctx.fx`; only the swing itself is `st`.
+ *
+ * The airborne dive is kept from the earlier version: letting go of a charge
+ * in the air drives the player down fast and the swing resolves on landing, so
+ * a full charge dropped from a jump still makes its spikes.
  */
+const POSES = {
+  // degrees: 0 forward, 90 straight up, 180 behind. [start, at the hit, after].
+  jab0: [75, -5, -20],
+  jab1: [-35, 80, 100],
+  jab2: [140, -25, -30],
+  smash: [125, -25, -28],
+};
+const SHOULDER_DEG = 125;
+const HANDLE = 20;
+
+const chargeOf = (st, L) => Math.min(1, st.chargeF / Math.max(1, L.holdFrames - L.tapFrames));
+const tierOf = (c) => (c < 1 / 3 ? 0 : c < 2 / 3 ? 1 : 2);
+
+/** Where the hammer points, or null while it is put away. Shared by the step (which
+ *  emits dust from the head) and the draw. */
+function quakePose(st, L) {
+  const a = st.act;
+  if (st.diving) return { deg: -60 };
+  if (st.charging && !a) {
+    const shake = st.full ? Math.sin(st.t * 0.9) * 4 : 0;
+    return { deg: SHOULDER_DEG + shake };
+  }
+  if (!a) return null;
+  const [s0, s1, s2] = POSES[a.kind === 'smash' ? 'smash' : `jab${a.n}`];
+  let deg;
+  if (a.t < a.hit) {
+    const u = a.t / a.hit;
+    deg = s0 + (s1 - s0) * u * u * (3 - 2 * u);
+  } else {
+    deg = s1 + (s2 - s1) * Math.min(1, (a.t - a.hit) / 6);
+  }
+  return a.t < a.total - 4 ? { deg } : null;
+}
+
+const pivotOf = (p) => ({ x: p.x + 12 + p.facing * 5, y: p.y + 12 });
+function headOf(p, deg) {
+  const pv = pivotOf(p), r = (deg * Math.PI) / 180;
+  return {
+    pv, r,
+    x: pv.x + Math.cos(r) * p.facing * HANDLE,
+    y: pv.y - Math.sin(r) * HANDLE,
+  };
+}
+
+function startJab(st, L, ctx, n, pressedAt) {
+  const j = L.jab[n];
+  const waited = Math.max(0, st.t - pressedAt);
+  const hit = Math.max(1, j.hit - waited);
+  st.act = { kind: 'jab', n, t: 0, hit, total: Math.max(hit + 4, j.total - waited), done: false };
+  ctx.sfx('shootBig', { pitch: n === 2 ? 1.0 : 1.45, dur: 0.6 });
+}
+
+function jabHit(st, L, lv, ctx, a) {
+  const j = L.jab[a.n], p = ctx.player;
+  const box = {
+    x: p.facing > 0 ? p.x + 12 : p.x + 12 - j.reach, y: p.y - 2, w: j.reach, h: 28,
+  };
+  for (const e of enemiesIn(ctx, box)) {
+    ctx.hitEnemy(e, dmgOf('quake_hammer', lv, ctx) * L.jabBase * j.dmg, {
+      knockback: j.knock, from: p.x + 12,
+    });
+  }
+}
+
+function startSmash(st, L, ctx, c, full) {
+  const p = ctx.player;
+  ctx.sfx('shootBig', { pitch: 0.7 });
+  if (p.onGround) {
+    st.act = { kind: 'smash', n: 0, t: 0, hit: L.smashHit, total: L.smashTotal, done: false, c, full };
+  } else {
+    st.diving = { c, full, age: 0 };
+  }
+}
+
+function resolveSmash(st, L, lv, ctx, c, full) {
+  const p = ctx.player, f = p.facing, fx = ctx.fx;
+  const tier = tierOf(c);
+  const base = dmgOf('quake_hammer', lv, ctx) * L.swingDmgMult * (1 + L.chargeDmgGain * c);
+  const box = {
+    x: f > 0 ? p.x + 12 : p.x + 12 - L.reach - 4, y: p.y - 6, w: L.reach + 4, h: 36,
+  };
+  const struck = enemiesIn(ctx, box);
+  for (const e of struck) {
+    ctx.hitEnemy(e, base, { knockback: L.swingKnock * (0.7 + 0.6 * c), from: p.x + 12 });
+  }
+
+  const cx = p.x + 12 + f * (L.reach - 2);
+  const gy = p.y + 24;
+  const ground = !!p.onGround && ctx.overGround(cx);
+  let ix = null, iy = null;
+  if (ground) { ix = cx; iy = gy; }
+  else if (struck.length) { const m = centreOf(struck[0]); ix = m.x; iy = m.y; }
+  if (ix === null) return;                         // a swing at nothing, in the air
+
+  fx.dust.push({ x: ix, y: iy, r: L.cloud[tier], t: 0, life: 26 + tier * 8, seed: Math.random() });
+  ctx.shake(1 + tier, 12 + tier * 6);
+  ctx.sfx('rumble', { dur: 0.25 + tier * 0.15, pitch: 0.9 - tier * 0.1 });
+
+  // "STUNS NEARBY ENEMIES" — the cloud itself, whatever size it is.
+  const share = L.cloudStun[tier];
+  for (const e of ctx.enemies) {
+    if (e.hp <= 0) continue;
+    const m = centreOf(e);
+    if (Math.abs(m.x - ix) > L.stunRange * share || Math.abs(m.y - iy) > 48) continue;
+    Attr.applyStatus(e.status, 'stun', Math.round(L.stunFrames * share), { step: FEEL.stunEnemyStep });
+  }
+  if (!ground) return;
+
+  // Shockwaves along the floor from a medium charge up, smaller at medium.
+  if (tier >= 1) {
+    for (const dir of [-1, 1]) {
+      ctx.spawn({
+        x: ix, y: gy - 5, vx: dir * L.waveSpeed, vy: 0,
+        radius: L.waveSize * (tier === 1 ? 0.7 : 1),
+        damage: dmgOf('quake_hammer', lv, ctx) * L.waveDmgMult,
+        color: '#A76625', shape: 'wave', weapon: 'quake_hammer',
+        life: L.waveLife, pierce: 99, knockback: L.waveKnock,
+        hugsFloor: true, climbsLedges: !!L.waveClimbs, stun: L.stunFrames,
+      });
+    }
+  }
+
+  // THE SPIKES: only a FULL charge, only on the ground.
+  if (full) {
+    const hitSet = new Set();
+    const dmg = base * L.spikeDmgMult;
+    L.spikeAngles.forEach((deg, i) => {
+      fx.spikes.push({
+        x: ix, y: gy, dir: f, deg, len: L.spikeLens[i % L.spikeLens.length],
+        t: 0, stab: L.spikeStab, stay: L.spikeStay, hitSet, dmg,
+        knock: L.spikeKnock, launch: L.spikeLaunch,
+        sandLife: L.sandFrames + L.sandFade, sandFade: L.sandFade,
+      });
+    });
+    ctx.sfx('rumble', { dur: 0.35, pitch: 1.3 });
+  }
+}
+
+/** Damage from a spike while it is still stabbing out. Once each per enemy per cast. */
+function stepSpikes(L, ctx) {
+  for (const s of ctx.fx.spikes) {
+    if (s.t > s.stab) continue;
+    const reach = s.len * Math.min(1, (s.t + 1) / s.stab);
+    const rad = (s.deg * Math.PI) / 180;
+    for (const e of ctx.enemies) {
+      if (e.hp <= 0 || s.hitSet.has(e)) continue;
+      for (let d = 0; d <= reach; d += 4) {
+        const px = s.x + Math.cos(rad) * s.dir * d, py = s.y - Math.sin(rad) * d;
+        if (px > e.x - 2 && px < e.x + e.w + 2 && py > e.y - 2 && py < e.y + e.h + 2) {
+          s.hitSet.add(e);
+          ctx.hitEnemy(e, s.dmg, { knockback: s.knock, launch: s.launch, from: s.x });
+          break;
+        }
+      }
+    }
+  }
+}
+
 const quake = {
-  longPress: true,
+  chargeRelease: true,
   holdFrames: (lv) => ladderAt('quake_hammer', lv).holdFrames,
 
-  init(st) { st.anim = 0; st.pounding = false; },
+  init(st) {
+    st.t = 0; st.act = null; st.queued = null; st.diving = null;
+    st.holdSeen = false; st.charging = false; st.chargeF = 0; st.full = false;
+  },
 
   step(st, lv, ctx) {
-    if (st.anim > 0) st.anim--;
-    if (st.pounding && !ctx.player.onGround) {
-      const L = ladderAt('quake_hammer', lv);
-      ctx.player.vy = Math.min(FEEL.maxFallSpeed, ctx.player.vy + L.poundAccel);
+    const L = ladderAt('quake_hammer', lv), p = ctx.player;
+    st.t++;
+    // No hold arrived last step: the button was let go some way that is not a
+    // release (a beam, a pause, another weapon aimed). The charge is dropped.
+    if (st.charging && !st.holdSeen) { st.charging = false; st.chargeF = 0; st.full = false; }
+    st.holdSeen = false;
+
+    const a = st.act;
+    if (a) {
+      a.t++;
+      if (!a.done && a.t >= a.hit) {
+        a.done = true;
+        if (a.kind === 'smash') resolveSmash(st, L, lv, ctx, a.c, a.full);
+        else jabHit(st, L, lv, ctx, a);
+      }
+      if (a.kind === 'jab' && a.done && st.queued && a.n < L.jab.length - 1) {
+        const q = st.queued;
+        st.queued = null;
+        startJab(st, L, ctx, a.n + 1, q.pressed);
+      } else if (a.t >= a.total) {
+        st.act = null; st.queued = null;
+      }
+    }
+
+    if (st.diving) {
+      st.diving.age++;
+      if (!p.onGround) {
+        p.vy = Math.min(FEEL.maxFallSpeed, p.vy + L.poundAccel);
+      } else if (st.diving.age > 1) {
+        const d = st.diving;
+        st.diving = null;
+        st.act = { kind: 'smash', n: 0, t: L.smashHit, hit: L.smashHit, total: L.smashTotal, done: true };
+        resolveSmash(st, L, lv, ctx, d.c, d.full);
+      }
+    }
+
+    stepSpikes(L, ctx);
+
+    // A full charge sheds tiny dust from the head, which then drifts down.
+    if (st.charging && st.full && !st.act && st.t % 4 === 0) {
+      const h = headOf(p, SHOULDER_DEG);
+      ctx.fx.dust.push({
+        x: h.x + (Math.random() - 0.5) * 12, y: h.y + 3 + Math.random() * 4,
+        r: 3 + Math.random() * 2, t: 0, life: 30, mote: true, vy: 0, seed: Math.random(),
+      });
+    }
+  },
+
+  hold(st, lv, ctx, held) {
+    st.holdSeen = true;
+    if (st.act || st.diving) return;
+    const L = ladderAt('quake_hammer', lv);
+    if (held <= L.tapFrames) return;
+    if (!st.charging) { st.charging = true; st.chargeF = 0; st.full = false; }
+    st.chargeF++;
+    if (!st.full && st.chargeF >= L.holdFrames - L.tapFrames) {
+      st.full = true;
+      ctx.sfx('select', { pitch: 0.6 });
     }
   },
 
   fire(st, lv, ctx, held) {
-    if (st.anim > 0 || st.pounding) return false;
     const L = ladderAt('quake_hammer', lv);
+    if (st.diving) return false;
 
-    if (held >= L.holdFrames) {
-      st.pounding = true;
-      st.anim = L.poundFrames;
-      ctx.sfx('shootBig', { pitch: 0.7 });
-      // Already grounded: no flight, resolve immediately.
-      if (ctx.player.onGround) quake.land(st, lv, ctx);
+    if (held <= L.tapFrames) {                       // a tap
+      if (st.act) {
+        // Press during a jab: the next jab is already asked for.
+        if (st.act.kind === 'jab' && st.act.n < L.jab.length - 1) {
+          st.queued = { pressed: st.t - held };
+        }
+        return true;
+      }
+      startJab(st, L, ctx, 0, st.t - held);
       return true;
     }
 
-    st.anim = L.swingFrames;
-    ctx.sfx('shootBig', { pitch: 1.05 });
-    const p = ctx.player;
-    const box = { x: p.facing > 0 ? p.x + 12 : p.x + 12 - L.reach, y: p.y - 2, w: L.reach, h: 26 };
-    ctx.puff({ x: box.x + box.w / 2, y: box.y + 13, w: box.w, life: 8, color: 0xA76625 });
-    for (const e of enemiesIn(ctx, box)) {
-      ctx.hitEnemy(e, dmgOf('quake_hammer', lv, ctx) * L.swingDmgMult, {
-        knockback: L.swingKnock, from: p.x + 12,
-      });
-    }
+    if (!st.charging) return false;                  // a hold that was never a charge
+    const c = chargeOf(st, L), full = st.full;
+    st.charging = false; st.chargeF = 0; st.full = false;
+    startSmash(st, L, ctx, c, full);
     return true;
-  },
-
-  land(st, lv, ctx) {
-    if (!st.pounding) return;
-    st.pounding = false;
-    const L = ladderAt('quake_hammer', lv);
-    const p = ctx.player;
-    ctx.shake(2, 20);
-    ctx.sfx('rumble', { dur: 0.5, pitch: 0.8 });
-
-    // "STUNS NEARBY ENEMIES" — the impact itself, separate from the waves it
-    // sends out. Without this the stun would only ever reach whatever the wave
-    // happened to catch, and an enemy standing on top of the player would be
-    // the one thing the ground pound did not touch.
-    for (const e of ctx.enemies) {
-      if (e.hp <= 0) continue;
-      const c = centreOf(e);
-      if (Math.abs(c.x - (p.x + 12)) > L.stunRange) continue;
-      Attr.applyStatus(e.status, 'stun', L.stunFrames, { step: FEEL.stunEnemyStep });
-    }
-
-    for (const dir of [-1, 1]) {
-      ctx.spawn({
-        x: p.x + 12, y: (ctx.arena ? ctx.arena.floorY : ctx.floorY) - 5,
-        vx: dir * L.waveSpeed, vy: 0,
-        radius: L.waveSize, damage: dmgOf('quake_hammer', lv, ctx) * L.waveDmgMult,
-        color: '#A76625', shape: 'wave', weapon: 'quake_hammer',
-        life: L.waveLife, pierce: 99, knockback: L.waveKnock,
-        hugsFloor: true,
-        // Lv3: "the wave now climbs low obstacles instead of stopping at them."
-        climbsLedges: !!L.waveClimbs,
-        stun: L.stunFrames,
-      });
-    }
   },
 };
 
@@ -1658,6 +1839,18 @@ export function fireActive(ctx, id, held) {
   return beh.fire(st, lv, ctx, held) !== false;
 }
 
+/**
+ * Tell a charge-and-release weapon the fire button is still down this step.
+ * `held` counts steps since the press. The release itself arrives through
+ * `fireActive`, exactly like any other press.
+ */
+export function holdActive(ctx, id, held) {
+  const beh = RUNTIME[id];
+  if (!beh?.hold) return;
+  const lv = ctx.levelOf(id);
+  beh.hold(stateFor(ctx.run.wstate, id, lv, ctx), lv, ctx, held);
+}
+
 /** Tick down the per-weapon cooldowns the fire path uses. */
 /**
  * ONE TICK PER FRAME, AND IT HAPPENS HERE.
@@ -1682,7 +1875,7 @@ export function coolWeapons(store) {
  * hitbox you cannot see legible. Real art replaces nothing here; a sprite for
  * a punch would be a different thing entirely.
  */
-export const makeFx = () => ({ puffs: [], arcs: [] });
+export const makeFx = () => ({ puffs: [], arcs: [], dust: [], spikes: [], sand: [] });
 
 /** A fading rectangle of light where a hitbox was. `life` doubles as its fade. */
 /**
@@ -1709,6 +1902,43 @@ export function arcFx(fx, a, b) {
 export function stepFx(fx) {
   for (let i = fx.puffs.length - 1; i >= 0; i--) if (--fx.puffs[i].life <= 0) fx.puffs.splice(i, 1);
   for (let i = fx.arcs.length - 1; i >= 0; i--) if (--fx.arcs[i].life <= 0) fx.arcs.splice(i, 1);
+  stepQuakeFx(fx);
+}
+
+/**
+ * The Quake Hammer's dust, spikes and sand. A spike lives for its stab plus
+ * half a second, then becomes a line of sand grains that fall and rest on the
+ * ground it was struck from; the grains stay for three seconds, then fade.
+ */
+function stepQuakeFx(fx) {
+  for (let i = fx.dust.length - 1; i >= 0; i--) {
+    const d = fx.dust[i];
+    if (d.mote) { d.vy += 0.03; d.y += d.vy; }
+    if (++d.t >= d.life) fx.dust.splice(i, 1);
+  }
+  for (let i = fx.spikes.length - 1; i >= 0; i--) {
+    const s = fx.spikes[i];
+    if (++s.t < s.stab + s.stay) continue;
+    fx.spikes.splice(i, 1);
+    const rad = (s.deg * Math.PI) / 180;
+    for (let d = 2; d <= s.len; d += 3) {
+      const thick = 2.5 * (1 - d / s.len) + 0.5;
+      fx.sand.push({
+        x: s.x + Math.cos(rad) * s.dir * d + (Math.random() - 0.5) * thick * 2,
+        y: s.y - Math.sin(rad) * d,
+        vx: s.dir * (Math.random() * 0.5 - 0.1), vy: -Math.random() * 0.7,
+        gy: s.y, life: s.sandLife, fade: s.sandFade, shade: Math.random() < 0.5 ? 0 : 1,
+      });
+    }
+  }
+  for (let i = fx.sand.length - 1; i >= 0; i--) {
+    const g = fx.sand[i];
+    g.vy += 0.09;                                    // pulled down
+    g.x += g.vx; g.y += g.vy;
+    if (g.y >= g.gy - 1) { g.y = g.gy - 1; g.vy = 0; g.vx *= 0.6; }
+    if (--g.life <= 0) fx.sand.splice(i, 1);
+  }
+  if (fx.sand.length > 400) fx.sand.splice(0, fx.sand.length - 400);
 }
 
 /**
@@ -1728,6 +1958,73 @@ export function drawPuff(g, q, cx) {
   g.fillStyle(q.color, 0.55 * t);
   const h = 4 + 10 * (1 - t);
   g.fillRect(cx - q.w / 2, q.y - h / 2, q.w, h);
+}
+
+/** The hammer, as shapes: a handle and a blocky rock head, in Quake Man's colours. */
+function drawQuakeHammer(g, sx, p, st, L) {
+  const pose = quakePose(st, L);
+  if (!pose) return;
+  const { pv, r, x, y } = headOf(p, pose.deg);
+  const f = p.facing;
+  const x0 = sx(pv.x), x1 = sx(x), y0 = pv.y, y1 = y;
+  g.lineStyle(4, 0x0A0A12, 1); g.lineBetween(x0, y0, x1, y1);
+  g.lineStyle(2, 0x8A5A2B, 1); g.lineBetween(x0, y0, x1, y1);
+  // The head sits across the end of the handle.
+  const dx = Math.cos(r) * f, dy = -Math.sin(r);
+  const px = -dy, py = dx;
+  const hx = x1 + dx * 3, hy = y1 + dy * 3;
+  g.lineStyle(11, 0x0A0A12, 1); g.lineBetween(hx - px * 6.5, hy - py * 6.5, hx + px * 6.5, hy + py * 6.5);
+  g.lineStyle(8, 0xA76625, 1); g.lineBetween(hx - px * 6, hy - py * 6, hx + px * 6, hy + py * 6);
+  g.lineStyle(2, 0xD08A44, 1);
+  g.lineBetween(hx - px * 5 - dx * 2, hy - py * 5 - dy * 2, hx + px * 5 - dx * 2, hy + py * 5 - dy * 2);
+
+  // A thin charge readout over the head, so the 1.5 seconds is not a blind wait.
+  if (st.charging) {
+    const c = chargeOf(st, L), bx = sx(p.x + 5), by = p.y + 26;
+    g.fillStyle(0x0A0A12, 1); g.fillRect(bx - 1, by - 1, 16, 4);
+    g.fillStyle(st.full ? 0xF5D328 : 0xD9B56A, 1); g.fillRect(bx, by, Math.round(14 * c), 2);
+  }
+}
+
+/** Dust clouds, spikes and sand. Plain shapes until Claude Design's art replaces them. */
+function drawQuakeFx(g, sx, fx) {
+  for (const g1 of fx.sand) {
+    const a = g1.life > g1.fade ? 1 : g1.life / g1.fade;
+    g.fillStyle(g1.shade ? 0xB8923F : 0xD9B56A, a);
+    g.fillRect(Math.round(sx(g1.x)), Math.round(g1.y), 2, 2);
+  }
+  for (const s of fx.spikes) {
+    const u = Math.min(1, (s.t + 1) / s.stab);
+    const len = s.len * (1 - (1 - u) * (1 - u));
+    const rad = (s.deg * Math.PI) / 180;
+    const ux = Math.cos(rad) * s.dir, uy = -Math.sin(rad);
+    const bx = sx(s.x), by = s.y;
+    const tx = bx + ux * len, ty = by + uy * len;
+    const wx = -uy * 3, wy = ux * 3;
+    const crumble = s.t > s.stab + s.stay - 6 && s.t % 2 === 0;
+    g.fillStyle(0x6E5226, 1);
+    g.fillTriangle(bx + wx * 1.3, by + wy * 1.3, bx - wx * 1.3, by - wy * 1.3, tx, ty);
+    g.fillStyle(crumble ? 0xF0D898 : 0xD9B56A, 1);
+    g.fillTriangle(bx + wx, by + wy, bx - wx, by - wy, tx, ty);
+    g.fillStyle(0xA88445, 1);
+    g.fillTriangle(bx, by, bx - wx, by - wy, tx, ty);
+  }
+  for (const d of fx.dust) {
+    const u = d.t / d.life;
+    if (d.mote) {
+      g.fillStyle(0xE6D6B0, 1 - u);
+      const m = Math.max(1, Math.round(d.r / 1.5));
+      g.fillRect(Math.round(sx(d.x)), Math.round(d.y), m, m);
+      continue;
+    }
+    for (let k = 0; k < 6; k++) {
+      const ang = d.seed * 6.283 + k * 1.047;
+      const dist = d.r * (0.25 + 0.75 * u) * (0.6 + 0.4 * (((k * 37) % 5) / 5));
+      const rr = d.r * 0.45 * (0.5 + 0.5 * u);
+      g.fillStyle(k % 2 ? 0xE6D6B0 : 0xCDB892, (1 - u) * 0.7);
+      g.fillCircle(sx(d.x + Math.cos(ang) * dist), d.y - Math.abs(Math.sin(ang)) * dist * 0.7, rr);
+    }
+  }
 }
 
 export function drawWeaponry(g, sx, ctx) {
@@ -1876,6 +2173,15 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillStyle(0x4D5C1A, 1);
     g.fillRect(sx(a.x) - 1, a.y + Math.sin(a.life * 0.5), 3, 1);
   }
+
+  // QUAKE HAMMER — the hammer itself while it is out, then the dust and sand it
+  // leaves behind (which outlive the weapon being equipped).
+  const qh = run.wstate.quake_hammer;
+  if (qh && ctx.equipped.includes('quake_hammer')) {
+    const L = ladderAt('quake_hammer', ctx.levelOf('quake_hammer'));
+    drawQuakeHammer(g, sx, p, qh, L);
+  }
+  drawQuakeFx(g, sx, fx);
 
   for (const q of fx.puffs) {
     // A puff that names a weapon is drawn by GameScene through the art layer,

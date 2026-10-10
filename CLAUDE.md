@@ -1955,6 +1955,16 @@ the button down through both taps. The 8-frame window is what protects the apex 
 cannot be near the top of a nineteen-frame rise inside eight frames, and a HELD jump at
 its apex has not been cut, so it still gets its double jump.
 
+**A WEAPON MAY BE CHARGE-AND-RELEASE** (`chargeRelease` on its runtime — the Quake Hammer).
+`GameScene` tells it every step the button is down (`hold`) and the release arrives as the
+press (`fire`, with how many steps it was held), so the weapon itself decides tap or charge.
+Because a tap is only known to be a tap when the thumb comes up, the time already spent
+holding is taken off the swing's start-up — otherwise every tap would arrive late by exactly
+as long as it was held. A hold that stops without a release (a beam, a pause, another weapon
+aimed) simply drops the charge: the weapon notices no `hold` arrived. Dust, spikes and sand
+live in the shared `fx` rather than in the weapon's own state, so they carry on when it is
+benched mid-effect.
+
 ### Reporting a playtest — read this before asking the owner to describe a bug
 
 The owner playtests on a phone with no debugger attached, so anything the game does not

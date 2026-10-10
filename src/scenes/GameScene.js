@@ -1155,8 +1155,7 @@ export default class GameScene extends Phaser.Scene {
    *               the sidearm and eleven specials use.
    *   repeat      a runtime that fires while held (Blaze Wheel, Volt Spark).
    *               It paces itself; this just keeps offering.
-   *   longPress   a runtime with two moves on one button (Strike Gauntlet,
-   *               Quake Hammer). The heavy move fires the INSTANT the hold
+   *   longPress   a runtime with two moves on one button (Strike Gauntlet). The heavy move fires the INSTANT the hold
    *               crosses 0.4s rather than waiting for release, because making
    *               the player release to commit adds latency to the move that
    *               can least afford it. Releasing before then gives the tap.
@@ -1175,13 +1174,21 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const ctx = this.weaponCtx();
+    // CHARGE-AND-RELEASE (Quake Hammer): the weapon is told every step the
+    // button is down, and the release arrives as the press, with how long it
+    // was held. Tap or charge is the weapon's decision.
+    if (beh.chargeRelease) {
+      if (this.intent.fireHeld) Wpn.holdActive(ctx, id, held);
+      if (this.intent.fireReleased) Wpn.fireActive(ctx, id, held);
+      return;
+    }
     if (!beh.longPress) {
       if (this.intent.fireHeld) Wpn.fireActive(ctx, id, held);
       return;
     }
-    // A weapon may declare its OWN hold length. The Quake Hammer's is 1.5s
-    // because its long press is a commitment rather than a modifier; everything
-    // else takes the shared 0.4s.
+    // A weapon may declare its OWN hold length (none does today; the Quake
+    // Hammer used to, before it became a charge-and-release weapon above);
+    // everything else takes the shared 0.4s.
     const holdFor = beh.holdFrames
       ? beh.holdFrames(r.wpLevels[id] || 1)
       : Wpn.LONG_PRESS_FRAMES;
