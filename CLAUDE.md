@@ -251,7 +251,7 @@ no toasts.
 Linux, against a pretend GitHub: it boots, the game renders, an UPDATE swaps the game files in
 place, the choice is remembered across a restart, and the old files are cleared. **The `.exe`
 was packaged here too (a real 99MB Windows program, with the game inside and no debug files), but
-it can only be RUN on Windows, so running it is proven by the CI build and by the owner, not here.** To run it locally: `npm run build`, then `cd desktop && npm ci && npm start`.
+it can only be RUN on Windows, so running it is proven by the CI build and by the owner, not here. The owner confirmed on 10 Oct 2026 that the downloaded `.exe` runs on Windows and that both tap UPDATE and the hold-for-list work.** To run it locally: `npm run build`, then `cd desktop && npm ci && npm start`.
 
 ### Work on `main` by default
 
