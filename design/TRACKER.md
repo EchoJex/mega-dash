@@ -145,7 +145,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.47 s) at the bar line.
+- **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.42 s) at the bar line, starting on the first sound.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-blaze-arena.ogg` — plays inside Blaze Man's boss room.
 
 ## Tempest Man — Water

@@ -823,9 +823,11 @@ same way a three-colour sprite now is.
   that makes for the best possible loop is fine." openmusic.ai has no length control and runs up
   to 8 minutes, so a cut is always needed. Cut a whole number of bars, counted from the file's
   first beat, at the point where the end flows back into the start; a shorter loop that joins
-  cleanly beats a longer one that does not. (An earlier version of this file said "nearest 80
-  seconds". That number was never a design decision, and Blaze Man's stage track was cut to it
-  by habit.)
+  cleanly beats a longer one that does not — but length counts a little in the other direction
+  too, by the owner's call: even a good loop of about a minute gets annoying, so prefer the
+  longer clean cut. Start the file on its first sound (trim any silence before it). Do not
+  over-work the join; much of this music may be placeholder. (An earlier version of this file
+  said "nearest 80 seconds". That number was never a design decision.)
 - **A beat-locked track is aligned by hand against the 3.0-second arrival.** That number
   lives in *The music pack*, and moving it silently shifts every aligned track.
 - **Handing off a track**: the file goes into `design/music/` under the name the tracker's
