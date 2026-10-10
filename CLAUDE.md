@@ -1422,13 +1422,18 @@ furniture, enemies, positioning — or make the path openable by any heavy hit, 
 explosion, any fall from height. A weapon may be the *fastest* way through something. It
 must never be the *only* way.
 
+**A rung may state damage in WORDS** — `low`, `lowMedium`, `medium`, `mediumHeavy`,
+`heavy` — by the owner's call: "use broad terms ... we will dial in damage later".
+`DAMAGE_WORDS` in `data/weapons.js` turns each word into a multiple of that weapon's own base
+hit, so dialling damage in is five numbers in one table, not a hunt through the ladders.
+
 Real feature jumps at **Lv 1 / 3 / 6 / 10** per the design tracker; intermediate levels
 are damage-only. `ladderAt(id, level)` merges every rung up to the current level, so a
 rung only states what it *changes*. A weapon uses the flat placeholder step until it gains
 a `WEAPON_LADDERS` entry, which happens in its element's slice — never ahead of it.
 
-**A partial ladder is legal and expected.** Frost Guard, Quake Hammer and Swarm Caller all
-stop short of Lv10 because the tracker leaves those rungs `[wip]`. Level 7 then plays as
+**A partial ladder is legal and expected.** Frost Guard and Swarm Caller stop short of
+Lv10 because the tracker leaves those rungs `[wip]`. Level 7 then plays as
 the last written rung with more damage, which is the correct degradation — the weapon is
 unfinished, not broken. Fill the rung in when the owner writes it; do not invent it.
 
@@ -1960,10 +1965,17 @@ its apex has not been cut, so it still gets its double jump.
 press (`fire`, with how many steps it was held), so the weapon itself decides tap or charge.
 Because a tap is only known to be a tap when the thumb comes up, the time already spent
 holding is taken off the swing's start-up — otherwise every tap would arrive late by exactly
-as long as it was held. A hold that stops without a release (a beam, a pause, another weapon
-aimed) simply drops the charge: the weapon notices no `hold` arrived. Dust, spikes and sand
-live in the shared `fx` rather than in the weapon's own state, so they carry on when it is
-benched mid-effect.
+as long as it was held. A press during a swing is remembered, not dropped: inside the jab's
+window it becomes the next jab, just after it a fresh one. A hold that stops without a
+release (a beam, a pause, another weapon aimed) simply drops the charge: the weapon notices
+no `hold` arrived. Dust, spikes and sand live in the shared `fx` rather than in the weapon's
+own state, so they carry on when it is benched mid-effect.
+
+**A WEAPON MAY SLOW OR ROOT THE PLAYER WHILE IT IS BUSY** — `run.moveScale`, a per-step grant
+like the others: cleared in `stepEquipped`, re-asserted by the weapon, so a benched weapon can
+never leave anyone stuck. 0 is rooted (no walking and no turning round; jumping still works),
+0.5 is walking speed, 1 leaves the player alone. Which moves root and which only slow is the
+ladder's to say, rung by rung.
 
 ### Reporting a playtest — read this before asking the owner to describe a bug
 
@@ -2240,7 +2252,8 @@ drops too — so L1 is 2 and L2 is 1. That number is an inference, flagged at th
 
 `systems/attributes.js` implements the elemental attribute layer. Hot (terrain) / Burn
 (character) are live on Blaze Man and the Blaze Wheel; **Stun** is live on Volt Man's
-panels and conductors, the Volt Spark and the Quake Hammer's impact; **Freeze** is live on
+panels and conductors and the Volt Spark (the Quake Hammer stuns nothing, by the owner's
+call); **Freeze** is live on
 Frost Guard; **Constrict** is live on Simon's Whip (id `simons_whip`) from Lv3, where it holds a minion through its own toss. Wet and Poisoned are defined
 and tested but nothing applies them yet, because their sources are weapons whose slices
 have not happened.

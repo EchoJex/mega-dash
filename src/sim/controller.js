@@ -337,7 +337,9 @@ export class SimController {
 
     const id = r.activeWeapon;
     const beh = RUNTIME[id];
-    const hold = beh?.longPress
+    // A charge-and-release weapon (the Quake Hammer) is held to a full charge,
+    // like a long press: the charged swing is the move that defines it.
+    const hold = beh?.longPress || beh?.chargeRelease
       ? (beh.holdFrames ? beh.holdFrames(r.wpLevels[id] || 1) : LONG_PRESS_FRAMES) + 2
       : 30;
 

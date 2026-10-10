@@ -120,6 +120,11 @@ it reads better. Nobody has to translate.
 | **class** | Whether a weapon is **offensive** (shares the fire button, you aim it) or **defensive** (runs by itself — a drone, a shield, a jetpack). |
 | **live / aimed** | Two different things. Several weapons can be *live* (running); exactly one offensive weapon is *aimed* (on the fire button). |
 | **ladder / rung** | A weapon's list of upgrades by level. Each **rung** — levels 1, 3, 6 and 10 — adds a real feature; the levels between just add damage. |
+| **jab / chain / window** | A jab is a quick attack from a tap. A chain is jabs in a row: on the Quake Hammer, jab, jab, finisher. The window is the stretch of steps in which another press carries on into the next jab; press after it closes and you start again from the first. |
+| **charge** | Holding the fire button to wind up a stronger attack, which goes off when you let go. The Quake Hammer's is modelled on King Dedede's Jet Hammer. A **full charge** is one held long enough to reach its strongest. |
+| **rooted** | Unable to walk or turn round while a weapon is busy. Jumping still works. `moveScale` 0 in the code. |
+| **walking speed** | Half the normal running speed: what a weapon may slow you to instead of rooting you. `moveScale` 0.5. |
+| **damage words** | How a rung states damage until the numbers are tuned: low, low-medium, medium, medium-heavy, heavy. Each word is a multiple of that weapon's own base hit, set in one table (`DAMAGE_WORDS`). |
 | **mastery** | The meta upgrade that decides how many slots you own at all, and how many run at once. Rank 0 to 3, bought separately for each class. |
 | **re-quip** | Changing which weapons are in your slots. Coined here; it just means re-equip. |
 | **the wheel** | The screen where you do it. Two modes: the **mid-fight wheel** (slow motion, aim or switch off a slot, nothing else) and the **between-fights wheel** (hard pause, actually swap weapons). |

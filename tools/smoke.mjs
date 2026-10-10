@@ -363,12 +363,15 @@ for (const level of [1, 3, 6, 10]) {
     }, [off, def, level]);
     if (!ok) { fail(`could not select ${off} at Lv${level}`); continue; }
 
-    // Tap-fire, then a long hold — the two branches of a long-press weapon.
+    // Tap-fire, then a long hold on FIRE — the two branches of a long-press
+    // weapon, and a full charge for a charge-and-release one (the Quake
+    // Hammer's slowest is two seconds). This hold used to be on Space, which
+    // has been jump since the keys swapped, so the long branch went untested.
     await play(3, ['Space', 'ArrowRight', 'ShiftLeft', 'Space', 'ArrowLeft', 'KeyS']);
-    await page.keyboard.down('Space');
-    await page.waitForTimeout(1100);
-    await page.keyboard.up('Space');
-    await page.waitForTimeout(400);
+    await page.keyboard.down('ShiftRight');
+    await page.waitForTimeout(2300);
+    await page.keyboard.up('ShiftRight');
+    await page.waitForTimeout(1500);
 
     const crash = await crashText();
     if (crash) { fail(`${off}+${def} Lv${level} crashed:\n${crash}`); break; }

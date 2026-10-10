@@ -30,7 +30,7 @@ function harness(id, level) {
     wstate: {}, allies: [], lastDamaged: null,
     // Every per-frame grant a weapon may assert. GameScene clears these before
     // the weapons run; the harness just has to have them.
-    meleeArmor: 0, rootFrames: 0, glideFall: null, airControl: 1,
+    meleeArmor: 0, rootFrames: 0, moveScale: 1, glideFall: null, airControl: 1,
     aggroFire: 1, aggroPause: null,
     wpLevels: { [id]: level },
   };
@@ -116,8 +116,8 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
           Wpn.coolWeapons(h.run.wstate);
           Wpn.stepWeapons(h.ctx, [id]);
           Wpn.stepAllies(h.ctx);
-          // Long enough to trip every long press, including the Quake Hammer's
-          // own 1.5s one — a shared 0.4s ceiling would never reach it.
+          // Long enough to trip every long press. (The Quake Hammer charges
+          // through `holdActive` instead, which its own test file drives.)
           if (beh.fire) Wpn.fireActive(h.ctx, id, i % 120);
           if (i % 90 === 0) Wpn.notify(h.ctx, [id], 'land');
           if (i % 70 === 0) Wpn.notify(h.ctx, [id], 'jump');
@@ -235,8 +235,8 @@ test('ladderAt merges rungs upward and leaves unmentioned fields alone', () => {
 });
 
 /**
- * PARTIAL LADDERS ARE LEGAL. Frost Guard, Quake Hammer and Swarm Caller all
- * stop short because the tracker leaves their top rungs blank. This asserts the
+ * PARTIAL LADDERS ARE LEGAL. Frost Guard and Swarm Caller stop short because
+ * the tracker leaves their top rungs blank. This asserts the
  * degradation is graceful rather than asserting which rungs exist — the answer
  * changes the moment the owner writes one.
  */
@@ -267,9 +267,13 @@ test('every ladder moves in the direction its tracker field describes', () => {
   // "More ricochets + higher damage."
   grows('alloy_blade', 'bounces', [1, 3]);
   grows('alloy_blade', 'pierce', [1, 3]);
-  // "Larger shockwave and longer Stun."
-  grows('quake_hammer', 'waveSize', [1, 3]);
-  grows('quake_hammer', 'stunFrames', [1, 3]);
+  // "L3 charge is faster ... L6 ... significantly increased charge speed", and
+  // the jab goes from rooted, to walking speed, to full speed.
+  grows('quake_hammer', 'jabMove', [1, 3, 6]);
+  for (const [lo, hi] of [[1, 3], [3, 6]]) {
+    assert.ok(ladderAt('quake_hammer', hi).holdFrames < ladderAt('quake_hammer', lo).holdFrames,
+      `the Quake Hammer must charge faster at Lv${hi} than at Lv${lo}`);
+  }
   // "2 allies", then 3, then 5 — and a longer duration with them.
   grows('swarm_caller', 'count', [1, 3, 6, 10]);
   grows('swarm_caller', 'lifeFrames', [1, 3, 10]);
@@ -298,13 +302,14 @@ test('the Swarm Caller inverts from a timed group to a standing swarm at Lv10', 
   assert.ok(ladderAt('swarm_caller', 10).kamikaze > 0);
 });
 
-test('the Quake Hammer takes 1.5 seconds to reach a full charge', () => {
-  // The tracker says 1.5s for this weapon specifically. It must not silently
-  // fall back to the shared 0.4s long press every other weapon uses.
-  const hold = ladderAt('quake_hammer', 1).holdFrames;
-  assert.equal(hold, 90);
-  assert.ok(hold > Wpn.LONG_PRESS_FRAMES);
-  assert.equal(Wpn.RUNTIME.quake_hammer.holdFrames(1), hold);
+test("the Quake Hammer's charge is its own, and the runtime reads it from the ladder", () => {
+  // A charge is a commitment on this weapon, so it must never quietly fall back
+  // to the shared 0.4s long press every other weapon uses.
+  for (const lv of [1, 3, 6, 10]) {
+    const hold = ladderAt('quake_hammer', lv).holdFrames;
+    assert.ok(hold > Wpn.LONG_PRESS_FRAMES, `Lv${lv}`);
+    assert.equal(Wpn.RUNTIME.quake_hammer.holdFrames(lv), hold);
+  }
 });
 
 test('a status-immune weapon clears whatever has been applied', () => {

@@ -378,6 +378,9 @@ export default class GameScene extends Phaser.Scene {
       // re-asserted every step by stepEquipped — see the note there.
       meleeArmor: 0,
       rootFrames: 0,
+      // How fast the player may move while a weapon is busy: 0 is rooted, 1 is
+      // untouched. The Quake Hammer's rungs set it (see its ladder).
+      moveScale: 1,
       glideFall: null,
       airControl: 1,
       aggroFire: 1,
@@ -832,7 +835,11 @@ export default class GameScene extends Phaser.Scene {
          * 1 every frame by the hazard loop, exactly like `arena.push`, so
          * stepping off it is instant and no state can be left behind.
          */
-        speedMult: Attr.speedMult(this.status) * (this.run.coverSlowActive ?? 1),
+        speedMult: Attr.speedMult(this.status) * (this.run.coverSlowActive ?? 1)
+          // The Quake Hammer's walking speed while it swings or charges. Zero
+          // is handled as `rooted` below instead, so a rooted player cannot
+          // turn round on the spot either.
+          * (r.moveScale > 0 ? r.moveScale : 1),
         // "Jumps while in contact with knee-deep water have half the jump
         // strength; midair jumps are only affected by the rain forces." Wading
         // is the cost of standing in Tempest Man's floor water, and it does
@@ -842,11 +849,11 @@ export default class GameScene extends Phaser.Scene {
         // and how long it hangs there first. Rank 0 is near enough to zero.
         cliffGrab: r.cliffGrab,
         cliffStick: r.cliffRank > 0 ? FEEL.cliffStickFrames : 0,
-        // Simon's Whip plants you for the length of a lash, and the Gale
-        // Vortex trades fall speed for air control. Both are asserted by the
-        // weapon each frame and cleared in stepEquipped, so an unequipped
-        // weapon cannot leave either of them switched on.
-        rooted: r.rootFrames > 0,
+        // Simon's Whip plants you for the length of a lash, the Quake Hammer
+        // can too (moveScale 0), and the Gale Vortex trades fall speed for air
+        // control. All are asserted by the weapon each frame and cleared in
+        // stepEquipped, so an unequipped weapon cannot leave one switched on.
+        rooted: r.rootFrames > 0 || r.moveScale === 0,
         fallCap: r.glideFall,
         airControl: r.airControl,
       }, GROUND_Y);
@@ -856,8 +863,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     // A landing is an EVENT, not a state — Torrent Cannon vents on it and
-    // Quake Hammer resolves its pound on it, and both need the impact speed,
-    // which is gone by the time stepPlayer returns.
+    // needs the impact speed, which is gone by the time stepPlayer returns.
     this.landVy = fallVy;
     this.justLanded = !wasOnGround && p.onGround;
 
@@ -1010,11 +1016,12 @@ export default class GameScene extends Phaser.Scene {
     // EVERY PER-FRAME GRANT IS CLEARED HERE AND RE-ASSERTED BY WHOEVER GRANTS
     // IT. Otherwise benching the Strike Gauntlet mid-swing would leave its
     // damage reduction switched on for the rest of the run, and the same is
-    // true of the Gale Vortex's glide, Simon's Whip's root and the Astral
-    // Cloak's aggro tax. A weapon that is not running grants nothing, and this
-    // is the one line that guarantees it.
+    // true of the Gale Vortex's glide, Simon's Whip's root, the Quake Hammer's
+    // slowdown and the Astral Cloak's aggro tax. A weapon that is not running
+    // grants nothing, and this is the one line that guarantees it.
     r.meleeArmor = 0;
     r.rootFrames = 0;
+    r.moveScale = 1;
     r.glideFall = null;
     r.airControl = 1;
     r.aggroFire = 1;
@@ -1549,7 +1556,7 @@ export default class GameScene extends Phaser.Scene {
         b.vx = (b.vx / sp) * next;
         b.vy = (b.vy / sp) * next;
       }
-      // A ground-hugging wave (Torrent's tidal, Quake's shockwave) rides the
+      // A ground-hugging wave (Torrent's tidal) rides the
       // floor line instead of falling, so it stays a floor attack whatever the
       // terrain under it is doing.
       if (b.hugsFloor) b.y = (this.arena ? this.arena.floorY : GROUND_Y) - 5;

@@ -155,6 +155,25 @@ const EMERGENCY_PER_ROUND = 18;
  */
 const droneReload = (clip) => clip * EMERGENCY_PER_ROUND;
 
+/**
+ * DAMAGE IN WORDS, by the owner's call (10 Oct 2026): "use broad terms like
+ * low-medium damage for jab, heavy damage for hit from full charge ... we will
+ * dial in damage later."
+ *
+ * A rung names a word and this table turns the word into a multiple of that
+ * weapon's own base hit (`damageAtLevel`, the same number every other weapon
+ * starts from). Dialling damage in later is changing these five numbers, not
+ * hunting for multipliers through the ladders. Only the Quake Hammer speaks in
+ * words so far; any rung may.
+ */
+export const DAMAGE_WORDS = {
+  low: 0.5,
+  lowMedium: 0.8,
+  medium: 1.2,
+  mediumHeavy: 1.8,
+  heavy: 3,
+};
+
 export const WEAPON_LADDERS = {
   /**
    * NULLFIRE DRONE — defensive, Typeless. "A small gray drone hovers well above
@@ -388,61 +407,81 @@ export const WEAPON_LADDERS = {
   },
 
   // ── QUAKE HAMMER — offensive, Ground ──────────────────────────────
-  // THE OWNER'S 10 OCT 2026 BRIEF (given in conversation, not yet a `[draft]`
-  // tracker field): King Dedede's hammer from Smash Ultimate.
-  //   TAP         a quick short swing, three presses in a row (Dedede's A-A-A)
-  //   TAP + HOLD  the hammer is carried over the shoulder; fully charged it
-  //               sheds tiny dust clouds. Letting go swings it.
-  //   RELEASE     a small / medium / large dust cloud, sized by how long it was
-  //               held, where the hammer lands (on an enemy or on the ground)
-  //   FULL CHARGE and the hammer lands on the GROUND: long sandy spikes stab
-  //               diagonally forward, stay half a second, crumble to sand that
-  //               falls and fades.
-  // The older tracker text still applies underneath: a ground hit stuns what
-  // is nearby and sends shockwaves along the floor; Lv3 makes the wave larger,
-  // the stun longer and lets the wave climb low obstacles.
-  // PARTIAL LADDER: Lv6 and Lv10 are still `[wip]` in the tracker.
+  // King Dedede's hammer, from the owner's messages of 10 Oct 2026.
+  //   TAP x3   jab, jab, finisher: Dedede's neutral A-A-A from Smash Ultimate,
+  //            without the rapid-fire spin he does in the middle.
+  //   HOLD     the charge, modelled on Dedede's Jet Hammer; the hammer is held
+  //            overhead the way he holds it for his forward smash.
+  //   RELEASE  the swing. Heavy damage at full charge.
+  //  Lv1  slow charge, nothing special at full charge, and the player cannot
+  //       walk while charging or swinging (jabs included).
+  //  Lv3  faster charge; the swing leaves a small / medium / large DAMAGING dust
+  //       cloud where it lands (an enemy or the ground); a full charge shows
+  //       itself with small dust clouds puffing round the hammer head; jabs can
+  //       be thrown while walking, at walking speed.
+  //  Lv6  jabs at full running speed; a much faster charge; still slowed while
+  //       charging.
+  //  Lv10 a full charge that lands on the GROUND throws long sand spikes
+  //       diagonally forward. They hurt only while growing, then stand for half
+  //       a second blocking enemy shots and minions, then fall as a shower of
+  //       sand that vanishes grain by grain within three seconds.
+  // No stun anywhere, by the owner's call.
   //
-  // FRAME NUMBERS ARE GAME STEPS (60 a second), the same count Smash uses.
-  // Where Smash's number is known it is used as-is; where it is not it is
-  // marked INFERRED. Known (SmashWiki, King Dedede SSBU): jab 1 hits on frame
-  // 10 and ends on 33; jab 2 hits about 13 frames after jab 1's hit (frames
-  // 23-24 in a fastest chain); the finisher hits 4 frames after the twirl that
-  // leads into it. Dedede's rapid-fire twirl in the middle is NOT built: on
-  // this weapon holding the button means charging, not rapid jabs.
+  // FRAME NUMBERS ARE STEPS (60 a second), the same count Smash uses, read
+  // from SmashWiki's pages for Dedede in Ultimate. A jab:
+  //   hit    the step its hitbox comes out
+  //   open..close  the steps in which a press carries on into the next jab
+  //   total  the step the player can act again
+  // Jab 1 is SmashWiki's 10 / 13-30 / 33 and jab 2 its 11 / 18-27 / 28. Jab 3
+  // is the finisher Dedede ends his rapid jab with: it hits 4 steps in and
+  // lets go on 50. A jab's `hit` is counted from the PRESS, so the wait for a
+  // tap to be recognised as a tap never makes it late.
   //
-  // `hit` is counted from the PRESS, so a tap that lasted 5 steps has only
-  // `hit - 5` left to wait. That keeps the weapon exactly as quick as the
-  // frame data says no matter how long a thumb stays down.
+  // The swing is Jet Hammer's: full charge in 120 steps (2 seconds), the hit
+  // 10 steps after release (9 at full charge), free again at 60 (70 at full).
+  // `holdFrames` is the time from press to full charge; the rungs above shorten
+  // it ("faster", then "significantly increased").
   //
-  // `holdFrames` IS THE TRACKER'S 1.5 SECONDS and is this weapon's own: it is
-  // now the time to FULL charge. `tapFrames` is the longest press that still
-  // counts as a tap.
+  // MOVEMENT while the hammer is busy, as a share of normal speed: 0 is rooted
+  // (no walking and no turning), 0.5 is walking speed, 1 is full speed.
   quake_hammer: {
     1: {
       tapFrames: 9,
       jab: [
-        { hit: 10, total: 33, reach: 22, dmg: 1.00, knock: 1.2 },
-        { hit: 13, total: 40, reach: 24, dmg: 0.88, knock: 1.6 },   // total INFERRED
-        { hit: 10, total: 50, reach: 26, dmg: 1.20, knock: 3.4 },   // hit INFERRED
+        { hit: 10, open: 13, close: 30, total: 33, reach: 22, dmg: 'lowMedium', knock: 1.2 },
+        { hit: 11, open: 18, close: 27, total: 28, reach: 22, dmg: 'lowMedium', knock: 1.4 },
+        { hit: 4, total: 50, reach: 26, dmg: 'medium', knock: 3.4, launch: 2 },
       ],
-      jabBase: 1.0,
-      holdFrames: 90,
-      smashHit: 16, smashTotal: 56,   // INFERRED
-      reach: 24,   // the big swing's reach (also what npm run sim reads as the weapon's range)
-      swingDmgMult: 1.8, chargeDmgGain: 1.2, swingKnock: 3.6,
-      poundAccel: 1.2,
-      cloud: [10, 16, 24],            // dust cloud radius: small, medium, large
-      cloudStun: [0.45, 0.7, 1],      // share of the stun a cloud of that size gives
-      spikeAngles: [24, 38, 52, 66], spikeLens: [58, 64, 54, 42],
-      spikeStab: 5, spikeStay: 30, sandFrames: 180, sandFade: 45,
-      spikeDmgMult: 1.1, spikeKnock: 2.6, spikeLaunch: 2.4,
-      waveSpeed: 2.4, waveSize: 5, waveDmgMult: 0.7, waveLife: 70,
-      waveKnock: 2.2, waveClimbs: false, stunFrames: 45, stunRange: 40,
+      holdFrames: 120,
+      swing: { hit: 10, hitFull: 9, total: 60, totalFull: 70 },
+      // The swing's reach, which is also what `npm run sim` reads as the range
+      // to stand at.
+      reach: 24,
+      // Jet Hammer climbs from its uncharged damage toward full and then jumps
+      // to full damage only at full charge (12% rising toward 30%, then 40%).
+      // `partialShare` is that "toward": how far up a nearly-full charge gets.
+      swingDmg: 'mediumHeavy', swingDmgFull: 'heavy', partialShare: 0.65,
+      swingKnock: 3.6, fullLaunch: 2.5,
+      jabMove: 0, chargeMove: 0, swingMove: 0,
+      cloud: null,
+      fullTell: false,
+      spikes: null,
     },
     3: {
-      waveSize: 8, waveLife: 110, stunFrames: 120, waveClimbs: true,
-      stunRange: 56,
+      holdFrames: 90,
+      jabMove: 0.5, chargeMove: 0.5,
+      // Small below half a charge, medium up to full, large only at full.
+      cloud: { radius: [10, 16, 24], dmg: 'low', knock: 1 },
+      fullTell: true,
+    },
+    6: { holdFrames: 45, jabMove: 1 },
+    10: {
+      spikes: {
+        angles: [24, 38, 52, 66], lens: [58, 64, 54, 42],
+        grow: 5, stand: 30, dmg: 'medium', knock: 2.6, launch: 2.4,
+        // Each grain of sand vanishes at its own random moment, 0.1s to 3s.
+        sandMin: 6, sandMax: 180,
+      },
     },
   },
 
@@ -741,7 +780,7 @@ const DEFS = [
     desc: 'Poison cone leaving lingering Toxic clouds.' },
   { id: 'quake_hammer', name: 'QUAKE HAMMER', short: 'QUAKE', cls: OFFENSIVE, boss: 'quake',
     cooldown: 40, projectiles: 1, shape: 'wave', speed: 2.0,
-    desc: 'Rock hammer; long-press for a stunning ground pound.' },
+    desc: 'Rock hammer; tap to swing, hold to charge a heavy blow.' },
   // The tracker replaced the tornado with a fall-arresting glide; the name and
   // id stayed. Higher rungs of its ladder still describe the tornado and are
   // `[wip]`, so only Lv1 is built.
