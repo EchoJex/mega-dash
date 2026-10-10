@@ -25,6 +25,9 @@ on:
       - 'design/**'
       - 'docs/**'
       - '**.md'
+      # The Windows app has its own workflow (build-windows-shell.yml), and
+      # nothing in desktop/ reaches an APK.
+      - 'desktop/**'
   workflow_dispatch:
 
 # Needed to publish releases.
@@ -221,7 +224,77 @@ jobs:
           # The old APK assets accumulate under a tag we now reuse rather than
           # recreate, so drop everything that is not this build's.
           for tag in "ch-$SLUG" $([ "$BRANCH" = "main" ] && echo latest); do
+            # ONLY APKs. The Windows game files (MegaDash-N-game.asar) are attached
+            # to these same releases by the next job, and this loop used to delete
+            # every asset that was not this build's APK.
             gh release view "$tag" --json assets --jq '.assets[].name' 2>/dev/null \
+              | grep -E '^MegaDash-[0-9]+\.apk$' \
               | grep -v "^MegaDash-$CODE.apk$" \
               | while read -r old; do gh release delete-asset "$tag" "$old" --yes || true; done
           done
+
+  # THE GAME'S FILES FOR THE WINDOWS APP, attached to the releases the APK job
+  # just published. The Windows app is installed once (see build-windows-shell.yml)
+  # and its UPDATE button pulls only this: the web bundle packed into one archive,
+  # a couple of megabytes. The build number is the APK's, so "newer" means the
+  # same thing on both.
+  #
+  # A SEPARATE JOB, so a failure here can never hold back the APK release that
+  # is the main development loop. It is cheap (Linux, no Android SDK).
+  windows-game:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Compute build code (the same number the APK got)
+        run: echo "BUILD_CODE=$((1000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      # The sourcemaps are ~11MB and the player's machine has no use for them.
+      # The version is pinned so the archive format cannot change under us.
+      - name: Pack the game into one archive
+        run: |
+          rm -f dist/assets/*.map
+          npx --yes @electron/asar@4.3.1 pack dist "MegaDash-$BUILD_CODE-game.asar"
+          ls -la MegaDash-*-game.asar
+
+      - name: Attach to the release channels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CODE=$BUILD_CODE
+          BRANCH="$GITHUB_REF_NAME"
+          SLUG=$(printf '%s' "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9-')
+          ASSET="MegaDash-$CODE-game.asar"
+
+          attach() {
+            local tag="$1"
+            # SKIP IF A NEWER BUILD HAS ALREADY BEEN PUBLISHED. Two pushes close
+            # together run these jobs in either order, and the one that finishes
+            # last would otherwise put an OLDER game on the channel.
+            local now
+            now=$(gh release view "$tag" --json body --jq '.body' | sed -n 's/^versionCode=//p' | head -1)
+            if [ -n "$now" ] && [ "$now" -gt "$CODE" ]; then
+              echo "$tag is already at build $now; skipping build $CODE"
+              return 0
+            fi
+            gh release upload "$tag" "$ASSET" --clobber
+            gh release view "$tag" --json assets --jq '.assets[].name' \
+              | grep -E '^MegaDash-[0-9]+-game\.asar$' \
+              | grep -v "^$ASSET$" \
+              | while read -r old; do gh release delete-asset "$tag" "$old" --yes || true; done
+          }
+
+          attach "ch-$SLUG"
+          if [ "$BRANCH" = "main" ]; then attach latest; fi

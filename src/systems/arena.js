@@ -166,7 +166,7 @@ export function makeArena(bossDef, layer, viewW, floorY) {
 export const BEAT_LEN = 60;
 
 /** Frames the plasma lamp holds one lightning shape before jumping to another. */
-const VOLT_LAMP_HOLD = 14;
+export const VOLT_LAMP_HOLD = 14;
 
 /**
  * VOLT MAN'S PLATFORM RHYTHM, in BEATS rather than frames — the field states it
@@ -415,16 +415,17 @@ const FURNITURE = {
       burnt: 0,
     }));
     /**
-     * THE ROOM ASKS THE SWARM TO STAY — "for this arena the bug has unlimited
-     * duration, but new ones will continue to spawn at their normal rate".
+     * BUG-VS-GRASS IS DEFERRED, by the owner's call (Grass is no longer weak to
+     * Bug). The room used to ask the Swarm Caller to stay — "for this arena the
+     * bug has unlimited duration, but new ones will continue to spawn" — and
+     * `thornHazard` read this same flag to send the bugs after the overgrowth.
      *
-     * A property of the ROOM rather than of the weapon, so the Swarm Caller
-     * needs to know nothing about greenhouses: it reads one flag and the arena
-     * that sets it is the only thing that had to think about why. Fire and Bug
-     * are Grass's two answers on the type chart, and this is the Bug one
-     * arriving as a mechanic rather than as a damage multiplier.
+     * NOTHING WAS DELETED. The Swarm Caller still knows how to persist when a
+     * room asks (`weaponry.js`, `bugsPersist`) and `thornHazard` still has the
+     * bug errand behind this flag, so bringing the idea back is changing this
+     * one line to true. Fire against Grass (Hot) is untouched and unrelated.
      */
-    a.bugsPersist = true;
+    a.bugsPersist = false;
   },
 };
 
@@ -533,7 +534,7 @@ export function stepArena(arena) {
       const on = phase < b.on;
       if (on !== pl.on) {
         pl.on = on;
-        if (on) roamPlatform(pl);
+        if (on) { roamPlatform(pl); pl.born = arena.t; }
       }
       /**
        * KEEP `t` MEANING "FRAMES LEFT IN THIS STATE" on a beat platform too.
@@ -554,7 +555,8 @@ export function stepArena(arena) {
     if (--pl.t > 0) continue;
     pl.on = !pl.on;
     pl.t = pl.on ? 220 + Math.random() * 160 : 90 + Math.random() * 70;
-    if (pl.on) roamPlatform(pl);
+    // `born` is when it last arrived, for the art's phase-in flicker. Picture only.
+    if (pl.on) { roamPlatform(pl); pl.born = arena.t; }
   }
 
   for (const p of arena.panels) {
@@ -607,7 +609,7 @@ export function stepArena(arena) {
   // the beat by itself on the next transition.
   const shelter = arena.platforms.filter((p) => !p.lift);
   if (shelter.length && !shelter.some((p) => p.on)) {
-    shelter[0].on = true; shelter[0].t = 200;
+    shelter[0].on = true; shelter[0].t = 200; shelter[0].born = arena.t;
   }
 
   const q = arena.liquid;
@@ -670,9 +672,19 @@ export function drawArenaBolts(g, arena, shake) {
   }
 }
 
-/** Draw the sealed room: walls, ceiling, floor, furniture, attributes. */
-export function drawArena(g, arena, viewW, shake, reveal = 1) {
+/**
+ * Draw the sealed room: walls, ceiling, floor, furniture, attributes.
+ *
+ * A ROOM WITH 16-BIT ART DRAWS ITSELF (systems/arena-art), so `art` turns all
+ * of this off except what the art leaves to the shared code — terrain patches,
+ * which any weapon can lay in any room.
+ */
+export function drawArena(g, arena, viewW, shake, reveal = 1, art = null) {
   const sx = shake?.x || 0, sy = shake?.y || 0;
+  if (art) {
+    if (reveal > 0) drawPatches(g, arena, sx, sy, reveal, art.patches);
+    return;
+  }
 
   g.fillStyle(arena.theme.fill, 1);
   g.fillRect(0, 0, viewW, VIEW_H);
@@ -916,22 +928,7 @@ export function drawArena(g, arena, viewW, shake, reveal = 1) {
     g.fillRect(sx, rail.y + sy, viewW, 1);
   }
 
-  // Terrain attributes: a translucent wash that fades as the attribute subsides,
-  // plus a brighter 1px cap on the surface itself.
-  //
-  // The cap is what makes a SMALL patch fair. Patches are now sized to whatever
-  // made them — a 6px fireball leaves a 6px mark — and a 6px wash at fading alpha
-  // is easy to miss while platforming. The cap keeps the EDGES of the hot ground
-  // legible right up to the moment it expires, so you can always see exactly
-  // where it stops.
-  for (const p of arena.patches) {
-    const tint = Attr.ATTR[p.id]?.tint ?? 0xffffff;
-    const a = Attr.patchAlpha(p);
-    g.fillStyle(tint, (a) * rv);
-    g.fillRect(p.x + sx, p.y + sy, p.w, p.h);
-    g.fillStyle(tint, (Math.min(1, a * 2.2)) * rv);
-    g.fillRect(p.x + sx, p.y + sy, p.w, 1);
-  }
+  drawPatches(g, arena, sx, sy, rv);
 
   // RAIN. Drawn from `rainDir`, which is the same number that drives the push
   // on the player — so what you see leaning on you is what is leaning on you.
@@ -967,15 +964,41 @@ export function drawArena(g, arena, viewW, shake, reveal = 1) {
 }
 
 /**
+ * Terrain attributes: a translucent wash that fades as the attribute subsides,
+ * plus a brighter 1px cap on the surface itself.
+ *
+ * The cap is what makes a SMALL patch fair. Patches are now sized to whatever
+ * made them — a 6px fireball leaves a 6px mark — and a 6px wash at fading alpha
+ * is easy to miss while platforming. The cap keeps the EDGES of the hot ground
+ * legible right up to the moment it expires, so you can always see exactly
+ * where it stops.
+ */
+function drawPatches(g, arena, sx, sy, rv, skip = null) {
+  for (const p of arena.patches) {
+    if (skip?.has(p.id)) continue;
+    const tint = Attr.ATTR[p.id]?.tint ?? 0xffffff;
+    const a = Attr.patchAlpha(p);
+    g.fillStyle(tint, (a) * rv);
+    g.fillRect(p.x + sx, p.y + sy, p.w, p.h);
+    g.fillStyle(tint, (Math.min(1, a * 2.2)) * rv);
+    g.fillRect(p.x + sx, p.y + sy, p.w, 1);
+  }
+}
+
+/**
  * Loose objects a hazard loop has put in the room.
  *
  * Drawn AFTER the liquid, not inside drawArena, because a barrel floats on the
  * water rather than under it — and a spike ball you cannot see through the
  * surface is a spike ball you walk into.
+ *
+ * `skip` is the kinds a room's 16-bit art draws itself. Anything else still
+ * draws here, so a hazard kind added later is never invisible.
  */
-export function drawHazards(g, arena, shake) {
+export function drawHazards(g, arena, shake, skip = null) {
   const sx = shake?.x || 0, sy = shake?.y || 0;
   for (const h of arena.hazards) {
+    if (skip?.has(h.kind)) continue;
     const x = h.x + sx, y = h.y + sy;
     if (h.kind === 'rock') {
       // A hot core with a darker crust, so it reads as burning debris rather

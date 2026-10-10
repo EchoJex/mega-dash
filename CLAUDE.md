@@ -191,6 +191,68 @@ CI publishes `ch-<branch>` for every branch, and the rolling `latest` **only fro
 so a feature branch can never become the default update. Release notes carry
 `versionCode=NNNN`, which is what the updater compares against the installed build.
 
+### The Windows app — `desktop/`
+
+**The game in its own window, with its own copy of Chromium inside, as one portable `.exe`.**
+The owner's reasons are the Android app's reasons: the game should not depend on whichever
+browser a player happens to have, and they will not have Edge's WebView2 ("avoid edge").
+Electron is the tool that carries a Chromium, and **its version is pinned exactly** in
+`desktop/package.json` (no `^`, no range) so the Chromium inside never moves by itself.
+Electron has no long-term-support line, so "long-term stable" means this: one version, changed
+only on purpose, after the checks below. It is built for friends and playtesters, not the
+public, so it is **not signed** and Windows shows an "unknown publisher" box once.
+
+**TWO DIFFERENT THINGS TRAVEL, ON DIFFERENT SCHEDULES.** This is the design, and it is why the
+UPDATE button works in seconds:
+
+| | what it is | size | when it is built | where it lands |
+|---|---|---|---|---|
+| **the window** | `MegaDash-Windows.exe`: Chromium, a launcher, and a starting copy of the game (build 0) | ~100MB | only when `desktop/` changes — `build-windows-shell.yml` | attached to the `latest` release |
+| **the game's files** | `MegaDash-<code>-game.asar`: the web bundle in one archive | ~2MB | every push, by the `windows-game` job in `build-apk.yml` | attached to `latest` and to `ch-<branch>` |
+
+UPDATE downloads **only the game's files**, puts them in the player's data folder and reloads
+the window — no restart, no installer, and it works wherever the `.exe` sits. Replacing a 100MB
+program on every push would be the mistake the music pack exists to avoid. The build number is
+the APK's, so "newer" means the same on both, and the two jobs are separate so a Windows
+failure can never hold back the APK release that is the main development loop.
+
+**It reads the same releases as Android** — `latest`, `ch-<branch>`, `branch=` in the notes —
+through `desktop/updater.js`, whose decisions live in `desktop/updater-core.js` so
+`tests/desktop.test.js` can run them without a window. Tap means newest `main`; hold lists
+every branch at the pointer. Messages go to the title screen's note line, because Windows has
+no toasts.
+
+**Rules, each of which was a real hazard while building it:**
+
+- **Electron never goes in the root `package.json`.** It downloads ~100MB when it installs, and
+  the root install runs on every APK build. `desktop/` is its own package with its own lockfile,
+  installed only by the Windows workflow. A test enforces it.
+- **A channel's build number comes from the game file's NAME, never from the release notes.** The
+  APK job writes `versionCode=` the moment it publishes; the game file arrives minutes later. In
+  between, the notes name the new build and the attached file is the old one.
+- **The APK job's clean-up deletes only `.apk` files.** It used to delete every asset that was not
+  its own APK, which would have taken the game files with it. A test checks the filter.
+- **The save is not in the game's files.** It lives in `%APPDATA%\Mega Dash`, so updating,
+  replacing the `.exe` or going back never touches it. **A plain tap never steps back to an older
+  build**, and the list asks first, because a save carries the format number it was written under
+  and going back to a lower one wipes it (`SAVE_BREAK`).
+- **Electron treats any `.asar` file as a folder**, so the normal file tools cannot rename or
+  delete one. `desktop/updater.js` uses `original-fs` for anything done to the archive itself.
+- **The page trusts the Windows bridge only if it says `desktop: true`.** Capacitor's plugin object
+  on Android answers to ANY method name with a callable stub, so asking "does `onMessage` exist"
+  is true on a phone, and calling it would ask the phone for something it does not have, which the
+  crash overlay would report as a crash. Two files spell that word and a test holds them together.
+- **The game is served from `app://game/`, not `file://`.** Its music lives in Cache Storage, which
+  needs a secure address, and its scripts are modules, which a plain file cannot load. The same
+  address gives the save one stable home.
+- **Esc is not bound** — the game uses it to pause. F11 and Alt+Enter toggle fullscreen.
+
+**How it was checked, and what was not.** The app was run for real under a virtual screen on
+Linux, against a pretend GitHub: it boots, the game renders, an UPDATE swaps the game files in
+place, the choice is remembered across a restart, and the old files are cleared. **The `.exe`
+was packaged here too (a real 99MB Windows program, with the game inside and no debug files), but
+it can only be RUN on Windows, so running it is proven by the CI build and by the owner, not here. The owner confirmed on 10 Oct 2026 that the downloaded `.exe` runs on Windows and that both tap UPDATE and the hold-for-list work.** To run it locally: `npm run build`, then `cd desktop && npm ci && npm start`.
+
 ### Work on `main` by default
 
 **`main` is where work lands unless the owner asks for a branch.** They will say so
@@ -290,14 +352,16 @@ dwarf. Treat it as the floor.
 `public/sprites/player.png` measures **0.1018 bytes per pixel** — 14 frames of 24x24 in 821
 bytes — and the Volt Spark agrees at 0.1172. Three colours plus transparency is the most
 compressible thing a PNG can hold, and that number is why. The 16-bit player sheet that
-replaced it (22 frames, 12 colours) is still under 10KB, so the art direction moving to
-16-bit changes nothing below.
+replaced it (22 frames, 12 colours) is 1,436 bytes, 0.113 bytes per pixel, so the art
+direction moving to 16-bit changes nothing below.
 
 Take the player's own fluidity as the template for everything (6-frame locomotion cycle,
 2-frame idle, single poses for the jump states) and **every animated thing in the finished
 game is ~105KB**: 17 bosses at 22 frames each is 85KB of that, and everything else together
 is 20KB. Triple the frame counts AND treble the entropy for busier art and it reaches 1MB.
-Seventeen arena backdrops at 480x224 add 0.18MB at three colours, ~1MB drawn at 16-bit richness.
+The boss rooms turned out not to be pictures at all: each one is code that paints itself
+while the room builds (*The 16-bit boss rooms*). The six drawn so far are 134KB of code,
+44KB compressed — about 7KB a room in the download.
 
 **So no amount of sprite-squeezing buys anything, and no fluidity target is too expensive.**
 Never ask the owner to cut frames, share a sheet, or drop a pose for size. If art ever
@@ -310,7 +374,7 @@ appears in a size conversation, the conversation has gone wrong.
 | wrapper | 2.9 MB | **fixed.** Not content, not negotiable |
 | game code | 1 MB | 17 fights, 18 ladders, arenas. Roughly doubles from today's 0.4MB |
 | every sprite | 1 MB | pessimistic: 2x the frames at 2x the entropy |
-| arena backdrops | 1 MB | 17, drawn richly |
+| room art | 1 MB | 17 rooms, drawn in code — about 7KB compressed each so far |
 | SFX | 1 MB | ~40 one-shots, in the APK — see below |
 | **total inside the APK** | **~7 MB** | |
 | headroom to 500MB | ~493 MB | **not the APK's to spend** — see below |
@@ -598,12 +662,14 @@ anchor, and `tests/sprites.test.js` pins `DEFAULT_HOLD` against it so the two ca
 The editor's (i) beside the field carries this terminology, because "step" is the word
 that stops meaning anything a month later.
 
-**A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never `#EA6A34`. The
-seventeen boss primaries are optimised as a SET and get re-tuned as a set, so a palette
-change in the tracker recolours every sprite drawn against it with no art reopened.
+**THE ORIGINAL FORMAT: A PIXEL STORES ITS ROLE, NOT ITS COLOUR** — `1` for primary, never
+`#EA6A34`. The seventeen boss primaries are optimised as a SET and get re-tuned as a set, so
+a palette change in the tracker recolours every sprite drawn against it with no art
+reopened. That is three colours, which is what the placeholder era drew in.
 
-**A SPRITE MAY DECLARE ITS OWN PALETTE instead** — the 16-bit path. `palette` lines in the
-header give it up to 15 colours, one key character each:
+**A SPRITE MAY DECLARE ITS OWN PALETTE instead — the 16-bit path, and the standard for new
+art since 29 Sep 2026.** `palette` lines in the header give it up to 15 colours, one key
+character each:
 
     palette   0 #0A0A12 outline
     palette   1 #FFFFFF highlight
@@ -794,6 +860,15 @@ resolution or feel change.
   reference; it is no longer the constraint.
 - **Placeholders stay placeholders.** Rectangles and procedural shapes keep their
   primary/secondary/outline look until a sprite replaces them.
+- **The references are the player's sheet and the six drawn rooms.** A sprite with no
+  `palette` lines is the older three-colour kind and predates this direction; it is not a
+  reference for new art.
+- **A boss's shots must show against his own room** — see *The 16-bit boss rooms*.
+
+**`design/DESIGN-BRIEF.md` is this section, the room rules and the screen rules on one
+page, for Claude Design** — and the MEGA DASH design system in Claude Design is built from
+it. Change a rule here and change the brief in the same commit; the brief says which
+design system to update.
 
 ### Music direction (SNES-era chiptune)
 
@@ -869,7 +944,7 @@ is AI-made music and gets labelled below.
 
 | | who makes it |
 |---|---|
-| **arena backdrops** (the drawn art) | the owner, by hand. The rule above does not reach them |
+| **arena backdrops** (the drawn art) | the owner, by hand — unless the owner asks Claude for a room by name, as they did for six rooms on 4 Oct 2026. Those count as AI-made and are labelled like any other |
 | placeholder backdrops, terrain, the HUD font, sound effects, draft design prose | Claude may make these without being asked, as before |
 
 **EVERY AI-MADE ASSET IS LABELLED TWICE**, so anyone can tell at a glance what the owner
@@ -879,7 +954,8 @@ made and what Claude or a generator made:
    `Drawn by Claude at the owner's request, <date>.` The `note` line is the one header line
    the sprite editor keeps exactly as written, which is why the label goes there. A music
    file cannot carry readable text, so its tracker `bgm` line carries it instead:
-   `AI-made (<generator>) at the owner's request, <date>.`
+   `AI-made (<generator>) at the owner's request, <date>.` A room drawn in code carries
+   it in the opening comment of its own file in `src/systems/arena-art/`.
 2. **In the list below**, in the same commit that adds the asset. This is a hand-kept
    inventory, which this file usually avoids because inventories go stale. It is here
    because the owner asked for it; keep it true by never adding an AI-made asset without
@@ -889,6 +965,7 @@ made and what Claude or a generator made:
 |---|---|---|---|---|
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
+| six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 
 **The three older tracks are not on the list**, because they are not AI-made. The three tracks in
 `design/music/` today (Drake Man's stage, the main menu, post-fight) are from
@@ -903,11 +980,10 @@ playtest. Before handing a build to anyone else, find each track's page or repla
 track. A track added from outside from now on gets its source page and licence on its
 tracker `bgm` line when it is handed off.
 
-Bosses stay honest rectangles at true collision footprint until real art lands.
-`silhouette: null` in `bosses.js` is not a gap to fill.
-
-Bosses are **honest rectangles at true collision footprint** right now. Silhouette design
-follows from attack and arena design, which is not done. Do not invent silhouettes early.
+Bosses are **honest rectangles at true collision footprint** until their own sprite is
+drawn, even standing in a 16-bit room — the rooms were drawn first on purpose, because a
+silhouette follows from the attacks and the arena. `silhouette: null` in `bosses.js` is not
+a gap to fill, and a boss's sprite is made only when the owner asks for that boss by name.
 
 ---
 
@@ -1011,10 +1087,69 @@ fades to black, builds the room behind full black, then fades back in and resume
 is ever seen half-constructed. On the boss's death a **wrap door** appears and warps you
 out to a fresh area themed to the next boss in the bag.
 
-`src/systems/arena.js` owns the room, the placeholder backdrop (a darkened wash of the
-boss's own primary until `background:<bossId>` art exists), and **screen shake** — whole
-virtual pixels only, because the render is integer-scaled and a fractional offset would
-shimmer. Shake moves the world, never the HUD.
+`src/systems/arena.js` owns the room, the placeholder look (a darkened wash of the boss's
+own primary, and plain shapes for the furniture), and **screen shake** — whole virtual
+pixels only, because the render is integer-scaled and a fractional offset would shimmer.
+Shake moves the world, never the HUD. A room with 16-bit art draws itself instead — next.
+
+### The 16-bit boss rooms — `src/systems/arena-art/`
+
+**One file per room, listed in `ROOMS` in `index.js`.** A room in that list draws its own
+backdrop, furniture and the hazards it knows; any other room keeps the placeholder look, so
+a boss whose room is not drawn yet is unaffected. Adding a room is one file and one line.
+The six there were drawn in Claude Design and approved by the owner on 4 Oct 2026; their
+drawing code is the design's own, kept as written so the rooms come out as approved.
+
+**EVERYTHING THAT MOVES IS DRAWN AHEAD OF TIME, by the owner's call.** While the room is
+built behind the warp's full black, each moving thing — a searchlight's sweep, a lava
+surface, rain, sparks — is painted once into numbered frames or small named pieces. Playing
+the room only picks a frame and a position for each, the way an SNES game did. **Never
+repaint a picture pixel by pixel every frame and hand it to Phaser** — that is the slow work
+this exists to keep off a phone. Crowds of small things (sparks, drops, embers) are drawn by
+Phaser in one go (`S.pool`), and a piece that kept its picture costs only its position. The
+pictures are made when the room is first drawn and thrown away when the run leaves the room
+or the game screen closes, so they never pile up in the phone's memory.
+
+**Built from `draw()`, never from `makeArena`**, so `npm run sim` — thousands of fights that
+never draw a frame — never pays for a picture.
+
+**THE PICTURES FOLLOW THE GAME, NEVER THE OTHER WAY ROUND.** A room reads what arena.js and
+bossFights.js keep track of and changes nothing that plays. Where a picture needed something
+the game did not keep, the game now writes it down for the picture and nothing in the game
+reads it back: where each turret is aiming (`aim`), how long until the next burst
+(`burstIn`), when a platform appeared (`born`). Things only the picture needs — the debris a
+rock breaks into, splashes, a bag's swing — live inside the room's own file and move once
+per game step, never once per screen refresh.
+
+**A ROOM SAYS WHAT IT DRAWS, AND EVERYTHING ELSE STILL DRAWS.** A room lists the hazards and
+ground effects it draws itself (`hazards`, `patches`); arena.js draws any other kind the old
+way, so a hazard added later shows up as a plain shape rather than not at all. **A warning
+the game draws must survive in the art** — the flashing bar on a bag Strike Man is about to
+punch is the game's, and his room keeps it.
+
+**Furniture fades in a beat after the room** on the warp in (`furn` layers follow `reveal`),
+and a `far` layer moves at 0.3x of the screen shake; everything else moves with it fully.
+
+**A drawn room's furniture lives in its room file, not in the sprite editor.** The editor's
+`furniture-<boss>-<n>` slots were made from the old placeholder shapes before any room was
+drawn, and nothing in the game reads them — a piece drawn there would never appear. Change
+a drawn room by changing its file in `src/systems/arena-art/`.
+
+**A ROOM THAT LOSES POWER DARKENS ITSELF** (`dim: true`, Volt Man's). Everything in it that
+gives off light — the lamp, the spark rods, the meters, the traces, the panels, the bolts —
+is drawn after its own darkness, so it still glows. **By the owner's call, the bodies in the
+room are darkened separately and stay in front**, so Volt Man walking in front of the lamp
+blocks its light. The player and the shots in the air are not darkened.
+
+**A BOSS'S SHOTS MUST SHOW AGAINST HIS OWN ROOM.** Proto Mk0's grey shots vanished into his
+grey bunker once it was drawn, which the owner caught; they are now the bunker's warning red
+with a near-black `rim`. Check a new room by putting that boss's own shots across it before
+it ships.
+
+**Checked three ways:** `tests/arena-art.test.js`, part of `npm test` — every room is built
+and run through its states (lightning, the blackout, the flood, Hot ground, burnt cover, a
+lifted bag) and must never ask for a frame or a piece that was never painted; `npm run
+smoke`, the real game in a browser; and screenshots held against the design by eye.
 
 ---
 
@@ -1265,7 +1400,10 @@ weapon's own slice.
 
 ### Balance and ladders
 
-**Balance invariant: every weapon deals identical DPS at level 1.**
+**Balance invariant: every weapon deals identical DPS at level 1.** One exception, by the
+owner's call: Drake Breath carries `damageBonus: 0.30`, because Dragon is super effective
+against Dragon only and a run never meets that boss after earning the weapon, so it is the one
+weapon with no boss it can ever be strong against.
 `damage = dpsTarget × cooldown/60 ÷ projectiles`. The test asserting this is deliberately
 skipped until the late tuning phase — these numbers are placeholders.
 Weapon choice is about *utility*, not power. If you add projectiles or pierce,
@@ -1608,9 +1746,9 @@ An element is DONE when all of this is true for its boss:
 9. **Playtested on device, pushed to a branch.**
 
 Art and music are NOT in the slice. Sprites and arena backdrops are the owner's to draw
-(or, for a sprite, to ask Claude for by name), and they land whenever they land, per actor,
-via `MANIFEST`. Music lands through the music pack on the same terms. The game stays
-playable without any of it.
+(or to ask Claude for by name), and they land whenever they land: a sprite per actor via
+`MANIFEST`, a room's 16-bit art via `src/systems/arena-art/`. Music lands through the music
+pack on the same terms. The game stays playable without any of it.
 
 **The player's sheet has landed**, and has since had its 16-bit pass
 (`public/sprites/player.png`, 528×24, twenty-two 24×24 frames in 12 colours: a six-frame
@@ -1672,9 +1810,14 @@ a finished sprite drops into a game that was already playable without it, and la
 player's sheet changed no gameplay code at all.
 
 The pipeline is built and proven end to end — `docs/sprite-editor.html` to a `.sprite`
-file to `npm run sprites:build` to the PNG the game loads. **One actor of roughly twenty is
-drawn.** Bosses stay honest rectangles until their art lands, which is a deliberate look,
+file to `npm run sprites:build` to the PNG the game loads. What has been drawn is what is
+in `public/sprites/`, not a count kept here, and a sheet whose source has `palette` lines
+is 16-bit. Bosses stay honest rectangles until their art lands, which is a deliberate look,
 not a gap: silhouette design follows attack and arena design.
+
+**Rooms are on this track too** (`src/systems/arena-art/`, see *The 16-bit boss rooms*).
+Which rooms are drawn is the `sprite sheet` line in each slice of the tracker, not a count
+kept here.
 
 **Music runs the same way, as its own parallel lane.** A track is handed off into
 `design/music/` and reaches the phone through the music pack with no code change and no APK
@@ -1722,8 +1865,9 @@ constants, procedural terrain with traversability guarantees, themed overworld.
 time-keyed ramp, pickups, EXP and level-up cards, Chips and meta upgrades, the 2+2+sidearm
 loadout and the RE-QUIP wheel, the per-weapon runtime, the elemental attribute framework.
 
-**Presentation** — the sprite path (`MANIFEST`), the hand-authored bitmap font, procedural
-sound, boss death animations, touch controls.
+**Presentation** — the 16-bit look (the player's sheet and the drawn boss rooms), the
+sprite path (`MANIFEST`), the hand-authored bitmap font, procedural sound, boss death
+animations, touch controls.
 
 **The workshop** — and this is the part that grew most recently, because it is what makes
 the three tracks above independently runnable:
@@ -1734,7 +1878,7 @@ the three tracks above independently runnable:
 | `npm run status` | the board, derived from live code and the tracker so it cannot go stale |
 | `npm run sim` | headless difficulty measurement; `--save` keeps a run and diffs it against the one before |
 | `npm run smoke` | the real bundle, played in a browser, against every built fight |
-| the sprite editor + `npm run sprites*` | pixel-exact templates and a role-based sprite format that survives a palette change |
+| the sprite editor + `npm run sprites*` | pixel-exact templates, and a sprite format that stores either its own 16-bit palette or roles that follow a palette re-tune |
 | the in-app updater + per-branch CI | every push becomes an installable build; iterating costs one tap |
 | the playtester content gate | derived from `hasFight` and `hasLadder`, so unfinished content cannot reach a playtest |
 
@@ -2033,7 +2177,8 @@ are opposite gestures and must stay separate — one subtracts light and holds, 
 it and clears. **Anything that EMITS light draws after the dim**, which is why
 `drawArenaBolts` is exported and called from `GameScene.draw` rather than living inside
 `drawArena`: a bolt drawn with the rest of the room was the one thing in the scene being
-dimmed hardest, and "luminous" then meant nothing.
+dimmed hardest, and "luminous" then meant nothing. Volt Man's room now has 16-bit art, which
+does this itself and darkens the bodies in front — see *The 16-bit boss rooms*.
 
 ### Boss weaknesses — the Gen 3 type chart, and it must be the Gen 3 one
 
@@ -2041,8 +2186,10 @@ Every slice carries **`boss weakness A`** and **`boss weakness B` (optional)**: 
 two elemental types that this boss's ARENA reacts to in a way no other type does. They are
 dropdowns in the tracker app, and they are design, not combat maths — nothing multiplies
 damage. Two are already built and both fall straight out of the chart: Thorn Man (Grass) is
-weak to **Fire** and **Bug**, so Hot burns his ground cover down for three times as long and
-a Swarm Caller bug never expires in his greenhouse; Strike Man (Fighting) is weak to
+weak to **Fire** and **Poison**, so Hot burns his ground cover down for three times as long
+(the Poison half is not built). He was weak to Bug until the owner dropped it: the Swarm
+Caller no longer lives forever in his greenhouse or works the overgrowth, and that code is
+dormant behind `bugsPersist` in `arena.js`, not deleted. Strike Man (Fighting) is weak to
 **Psychic**, so a psychic hit lifts a training bag and drops it on him.
 
 **`src/data/typechart.js` is the chart, and the GENERATION is load-bearing.** Gen 2 through

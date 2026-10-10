@@ -1,0 +1,47 @@
+{
+  "name": "mega-dash-desktop",
+  "productName": "Mega Dash",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mega Dash for Windows: the game in its own window with its own copy of Chromium.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.megadash.game",
+    "productName": "Mega Dash",
+    "copyright": "Mega Dash",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "updater.js",
+      "updater-core.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "game",
+        "filter": [
+          "**/*",
+          "!**/*.map"
+        ]
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "MegaDash-Windows.exe"
+    }
+  }
+}

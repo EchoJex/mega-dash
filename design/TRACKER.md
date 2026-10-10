@@ -99,7 +99,7 @@ where each one stands.
 - **palette notes** `[ready]` Light grey / dark grey
 - **boss weakness A** `[ready]` Typeless — no elemental weakness.
 - **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
-- **arena** `[ready]` Plain light grey room with a couple of small ceiling turrets. Background shall be of various size metal gears
+- **arena** `[ready]` Military weapons bunker, grey all over, with red kept for warnings. Two small ceiling turrets; sand-coloured sandbag positions at both ends with olive ammo cans; a rack of arm cannons; a rack of artillery shells; a firing chart on the back wall with a tracer round flying its arcs; an armour test plate dented by bullet strikes; a blast door marked 01; bullet pockmarks in the walls and spent brass cases on the floor. Two searchlights sweep the back wall, and a red alarm light on the ceiling beam spins up just before the turrets fire.
 - **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[ready]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
@@ -113,7 +113,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Weapon auto aims; Bullet does not auto-aim. 3-bullet burst of bullets. One set of bullets per 3 seconds, like a rifle. 9 bullet clip
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
-- **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-proto-arena.ogg` — plays inside Proto Mk0's boss room.
 
@@ -129,7 +129,7 @@ where each one stands.
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[deferred]`
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Ground
+- **boss weakness B** `[draft]` Rock
 - **arena** `[ready]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot.
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -144,7 +144,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` 5s Hot trail duration on ground; moderate roll distance with rapid deceleration while on the ground.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
-- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.42 s) at the bar line, starting on the first sound.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-blaze-arena.ogg` — plays inside Blaze Man's boss room.
 
@@ -177,7 +177,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
-- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room.
 
@@ -208,7 +208,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-volt-arena.ogg` — plays inside Volt Man's boss room.
 
@@ -223,12 +223,15 @@ where each one stands.
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
-- **boss weakness B** `[ready]` Bug
+- **boss weakness B** `[draft]` Poison
 - **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[wip]` Thorny overgrowth tiles, referred below as ground cover. Players damage sources cause the growth to recede. For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal. Applying Hot attribute to an overgrown tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and start burned for 2x normal burn duration.
-- **hazard L1** `[wip]` Arena starts with 8 Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. At level 1 ground cover will only cause a noticeable movement speed drop.
-- **hazard L2** `[ready]` First instance of player damage source nearby a time causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile applied constrict status
-- **hazard L3** `[wip]` Creepers cover the floor almost entirely, leaving a slowly wandering clear channel that the player must track and stay inside. Seed pods fall on a continuous cycle.
+- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one later above the player, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrown tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and stays with burn status for 2x normal burn duration.
+  
+  
+  DEFERRED FUNCTION: For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal.
+- **hazard L1** `[draft]` Arena starts with many Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. Hazard level 1 ground cover will only cause a moderate movement speed drop at full height, scaled to the height of that tiles ground cover.
+- **hazard L2** `[wip]` First instance of player damage source nearby causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration. Standing on a ground covered tile
+- **hazard L3** `[draft]`  2 large, high hp Seed pods slowly grow on either corner of the arena, at full size they burst, releasing a5 way shot upward. If destroyed by player damage will take 3 times the normal grow/burst cycle time
 - **attack L1** `[wip]` Shoots a pair of large straight vines directly at the player's current location. On hit: constrict for several seconds, reel the player in, then toss diagonally to the far wall — heavy damage on wall contact. On miss: pulls the boss to that point and fires again, up to 3 times before a cooldown.
 - **attack L2** `[wip]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
@@ -238,7 +241,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
-- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room.
 
@@ -253,7 +256,7 @@ where each one stands.
 - **attack name** `[ready]` Glacier Spike
 - **weapon name** `[ready]` Frost Guard
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[wip]` Fighting
+- **boss weakness B** `[draft]` Steel
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
@@ -298,7 +301,7 @@ where each one stands.
 - **weapon Lv3** `[ready]` Jab chain extends to three hits; the third hit causes flinch and moderate knockback. Long-press finisher gains a short forward lunge that travels through the current target, stopping on contact with a second enemy or the edge of a platform or the edge of a pit or a short distance.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
-- **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-strike-arena.ogg` — plays inside Strike Man's boss room.
 
@@ -344,7 +347,7 @@ where each one stands.
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Grass
+- **boss weakness B** `[draft]` Ice
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
@@ -403,8 +406,8 @@ where each one stands.
 - **scale** `[ready]` 1.55x player height (petite build)
 - **attack name** `[ready]` Mind Lift
 - **weapon name** `[ready]` Psi Orb
-- **boss weakness A** `[wip]` Dark
-- **boss weakness B** `[wip]` Bug
+- **boss weakness A** `[draft]` Bug
+- **boss weakness B** `[draft]` Ghost
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
@@ -434,7 +437,7 @@ where each one stands.
 - **attack name** `[ready]` Infestation
 - **weapon name** `[ready]` Swarm Caller
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[wip]` Rock
+- **boss weakness B** `[draft]` Flying
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
@@ -463,8 +466,8 @@ where each one stands.
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
 - **weapon name** `[wip]` Granite Form
-- **boss weakness A** `[wip]` Water
-- **boss weakness B** `[wip]` Fighting
+- **boss weakness A** `[draft]` Grass
+- **boss weakness B** `[draft]` Steel
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
@@ -583,7 +586,7 @@ where each one stands.
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Metal Barrage
 - **weapon name** `[ready]` Alloy Blade
-- **boss weakness A** `[wip]` Fire
+- **boss weakness A** `[draft]` Fighting
 - **boss weakness B** `[wip]` Ground
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
@@ -687,7 +690,9 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## Minions
 
-- **roster** `[ready]` Exactly two, one per plane of movement. SPIGLET walks its span and turns at pit edges; DRIFTER drifts left while tracking the player's altitude. Bosses are events; minions are weather.
+- **roster** `[wip]` Ongoing lost of minimum, don't passive. Some good, don't hostile. Some passive and good minions become enraged when damaged by the player. 
+  SPIGLET walks its span and turns at pit edges; 
+  DRIFTER drifts left while tracking the player's altitude.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
 - **spawn ramp** `[wip]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may summon based on description within boss attack layer.
 
@@ -696,7 +701,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad.
 - **keyboard** `[ready]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the mid-fight wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc closes the between-fights wheel
 - **slide** `[ready]` Double-tap jump. The jump always wins the first tap — detecting a double-tap first would put latency on every jump in the game — and the second tap inside the window puts the player back where he launched and slides instead.
-- **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` silently drops any glyph it lacks, so HUD strings stay inside plain uppercase, digits and spaces.
+- **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` shows `?` in place of any glyph it lacks, so HUD strings stay inside plain uppercase, digits, spaces and the punctuation the font has.
 - **dev HUD** `[ready]` A `[DEV]` marker whenever dev mode is on, plus a diagnostic line carrying the build, the run's world seed, and render density with the viewport it was picked from. The marker is not switchable; the diagnostic line is.
 
 ## Meta progression
@@ -713,6 +718,13 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **door and warp** `[ready]` The door does not open into the arena, it warps you there: contact freezes everything even player position, slow fade to black over 3s, builds the room behind full black, then fades back in 3s. Fade in the boss arena background for 1s then fade in arena furniture for 1s, then have the boss beam down as an elementally appropriate beam of light before unfreezing everything
 - **pacing targets** `[ready]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
 
+## Look
+
+- **art direction** `[ready]` 16-bit, SNES-era pixel art, by the owner's call on 29 Sep 2026. A visual upgrade, not a resolution or feel change: the 224-pixel playfield, the sprite grids and the movement stay exactly as they were. Each sprite may use up to 15 colours plus see-through, shaded in ramps of 3 to 5 tones per material, with the shared near-black outline (#0A0A12) round the outside. Identity colours rule: the player stays white with the #3CBCFC accent and is never tinted, and a boss's shades are built from his own primary and secondary. Placeholders keep their plain look until art replaces them. The player's sheet and the drawn boss rooms are the examples to follow.
+- **boss rooms** `[ready]` A drawn boss room paints itself while it builds behind the warp's black: backdrop, furniture and the hazards it knows. Everything that moves in it is drawn ahead of time, so during a fight the phone only picks and places finished pictures. The pictures never change how a fight plays. Six rooms were drawn in Claude Design and approved on 4 Oct 2026; which rooms are drawn is each slice's `sprite sheet` line, and a room without art keeps the placeholder look.
+- **readable shots** `[ready]` A boss's shots must show against his own room. Proto Mk0's shots and his turrets' are the bunker's warning red (#FF4A32) with a one-pixel near-black rim, because grey shots vanished into the grey bunker. A new room is checked with its boss's own shots across it before it is approved.
+- **blackout** `[ready]` When a room loses power, as Volt Man's does, the room darkens and everything in it that gives off light keeps glowing. The bodies in the room — the boss and any minions — darken too but stay in front, so Volt Man walking in front of the lamp blocks its light. The player and the shots in the air are never darkened.
+
 ## Music
 
 Background music ships OUTSIDE the game download: every push rebuilds the APK
@@ -723,6 +735,7 @@ the opposite — small, and built into the game. Each boss slice carries a
 `[ready]` means the file named in the line is in `design/music/` and the game
 plays it.
 
+- **direction** `[ready]` SNES-era chiptune, chosen with the 16-bit art on 29 Sep 2026. A track that sounds NES-era or modern is off-style, the same way a three-colour sprite now is.
 - **bgm main menu** `[ready]` `bgm-menu-main.ogg` — plays on the title screen and main menu.
 - **bgm post fight** `[ready]` `bgm-post-fight.ogg` — plays after any boss goes down, while the player stays in the cleared room. Shared by all seventeen bosses.
 - **transitions** `[ready]` Music fades out and in with the picture. A door's fade to black fades the old track out over the same time; the new track fades in as the black lifts — at a boss door, across the whole 3-second arrival (room, furniture, boss). The boss room's clock starts when that arrival ends, so its first beat always falls 3.0 seconds into the arena track: line a beat-locked track's first downbeat up at 3.0s. During the fight the track is checked against the room's clock every half second and put back if it has drifted. The music slows with the re-quip wheel's slow motion (the pitch drops with it, like a slowed tape) and speeds back up with the game. The pause menu plays the main menu track; leaving it brings the fight's track back where it stopped, and the game and the music both ramp from slow motion back to full speed, the same way leaving the re-quip wheel does. The level-up cards do the same, except the music is silent while they are up rather than playing the menu track; several level-ups in a row keep it silent until the last card is picked. A boss's death fades his track out, and the post-fight track fades in when his death animation has finished. A place with no track yet is silent.
@@ -739,9 +752,10 @@ still describing it, and `[ready]` means already fixed.
 
 | build | status | bug |
 |---|---|---|
-| other | `[ready]` | Dev mode boss picker does not work when after returning to Dev mode options screen |
-| other | `[ready]` | In Dev mode only, Re-quip wheel should just always act like between fights wheel. Dev mode toggle for how the wheel should behave (playtester version with both mid-fight and between fights vs between fights wheel at all times) |
-| 1111 (main) | `[ready]` | Post Boss Re-quip wheel: increase the touch tolerance when selecting a weapon; exciting out of this wheel should require tapping in the movement or action button zones |
+| — | `[deferred]` | _no open bugs_ |
+
+
+
 
 
 
@@ -1110,7 +1124,6 @@ it is ready to be real.
 
 
 ## Play feel
-
-
+Some minions are passive or good until damaged, engaging them into an aggressive mode
 ## Cosmetics
 

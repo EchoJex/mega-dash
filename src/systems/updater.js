@@ -18,12 +18,15 @@
 
 const plugin = () => globalThis.Capacitor?.Plugins?.Updater;
 
-/** True only inside the APK, where the native plugin is registered. */
+/**
+ * True only where a native side registered the plugin: the APK, and the Windows
+ * app (desktop/preload.js gives the page the same `Capacitor.Plugins.Updater`).
+ */
 export const canUpdate = () => !!plugin();
 
 /** Reason the button is unavailable, or null when it works. */
 const unavailableReason = () =>
-  canUpdate() ? null : 'Updates are APK-only — this is the browser build';
+  canUpdate() ? null : 'Updates only work in the Android and Windows apps — this is the browser build';
 
 /**
  * TAP — check main for a newer build and install it.
@@ -47,4 +50,20 @@ export function pickChannel() {
   if (!p) return unavailableReason();
   p.pickChannel();
   return null;
+}
+
+/**
+ * Windows only: the app reports progress here, because it has no toasts. Pass
+ * null to stop listening. One listener at a time, which is all a title screen
+ * needs.
+ *
+ * GATED ON `desktop === true`, NOT ON `onMessage` EXISTING. Capacitor's plugin
+ * object on Android answers to ANY property name with a callable stub, so
+ * `plugin().onMessage` is truthy there and calling it asks the native side for a
+ * method it does not have: a rejected promise that the crash overlay would
+ * report as a crash. Only the Windows bridge sets this flag to exactly `true`.
+ */
+export function onUpdateMessage(cb) {
+  const p = plugin();
+  if (p?.desktop === true) p.onMessage(cb);
 }

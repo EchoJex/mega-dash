@@ -10,14 +10,16 @@
 > from the tool that edits it.
 
 A mobile-first, landscape-only 2D side-scrolling platformer.
-**Mega Man 2 aesthetics · Vampire Survivors levelling and meta progression.**
+**16-bit (SNES-era) visuals and SNES-era chiptune music on Mega Man 2 feel · Vampire Survivors levelling and meta progression.**
 
 17 elemental robot masters, each  unlocking a special weapon. Procedurally generated
 platforming, hazards, and minion spawning between boss doors whose difficulty scales with time to prevent camping. Bosses you have beaten return harder, permanently. 
 
 Built with Phaser 3 + Vite, wrapped by Capacitor. **The Android APK is the delivery
 target** — shipping inside a known WebView rather than whatever browser a player happens
-to open keeps the experience consistent. The browser only ever runs the dev server.
+to open keeps the experience consistent. On a PC the same idea is a **Windows app**: the
+game in its own window, with its own copy of Chromium inside (not Edge). See
+*Playing on a Windows PC* below.
 
 ## Quick start — no PC setup required
 
@@ -49,14 +51,79 @@ one counter shared across every branch, so a branch build is numbered *above* th
 `main` build and Android will not install the lower number over it. The game says so
 rather than claiming you are up to date.
 
-### Optional: run it on a desktop browser
+## Playing on a Windows PC
 
-Only needed for quick checks — the phone loop above does not require it.
+### The Windows app (easiest)
 
-```bash
-npm install
+One file, nothing to install. The game runs in its own window with its own copy of
+Chromium packed inside, so it behaves the same on every PC whatever browser is
+installed. Windows 10 or 11, 64-bit.
+
+1. Download **`MegaDash-Windows.exe`** from the
+   **[latest release](../../releases/tag/latest)** and put it anywhere (the Desktop is fine).
+2. Double-click it. **The first time, Windows shows a blue "Windows protected your PC"
+   box.** Click **More info**, then **Run anyway**. It appears because the app is not
+   signed with a paid publisher certificate, which is not worth buying for a playtest.
+   The file is built from this repository by GitHub's own build servers.
+3. **Tap UPDATE on the title screen once.** The `.exe` holds a copy of the game from the day
+   the app itself was last rebuilt, so a fresh download is behind. UPDATE fetches the
+   current game (about 2 megabytes), reloads the window, and says so on the line under the
+   buttons. From then on it works like the phone: **tap** for the newest build of `main`,
+   **press and hold** to pick any branch from a list. You almost never need a new `.exe`;
+   that only changes when the window program itself changes.
+
+Things worth knowing:
+
+- **Keyboard only.** The keys are in [CLAUDE.md → Controls — as bound](CLAUDE.md).
+  **F11** (or **Alt+Enter**) toggles fullscreen. Esc stays the game's pause key.
+- **Your save is kept outside the game's files**, in `%APPDATA%\Mega Dash`. Updating,
+  replacing the `.exe` or moving it never touches it. Deleting the `.exe` does not delete
+  the save either; delete that folder as well to remove everything.
+- **Going back to an older build can reset your save** if the save format changed in
+  between, so the list asks before it does it. A plain tap never steps you back.
+- **The music downloads from GitHub the first time**, then is kept on your PC. With no
+  internet on that first run the game plays silently.
+- **One copy at a time.** Opening it again just brings the open window forward, so two
+  copies cannot fight over the same save.
+
+### Or in a browser, from the source
+
+For quick checks, or if you would rather not run an `.exe`. This route needs more setup.
+
+**One-time setup, about five minutes:**
+
+1. **Install Node.js** — the program that runs a small server for the game. Download the
+   "LTS" version from [nodejs.org](https://nodejs.org), or in PowerShell run
+   `winget install OpenJS.NodeJS.LTS`. The release builds use Node 22; newer is fine.
+   Close and reopen PowerShell afterwards so it can find it.
+2. **Get the game.** On this page click **Code → Download ZIP** and unzip it, or run
+   `git clone https://github.com/echojex/mega-dash.git`.
+3. **Open PowerShell in the game's folder.** In File Explorer, click the address bar,
+   type `powershell` and press Enter. Then run `npm install` once.
+
+**Every time you want to play:**
+
+```powershell
 npm run dev
 ```
+
+Leave that window open, then go to **<http://localhost:5173/?dev=0>** in your browser.
+Close the window (or press Ctrl+C in it) to stop. `?dev=0` plays the game as it ships. Leave
+it off and the game first asks DEV MODE or PLAYTESTER; pick PLAYTESTER for the same thing.
+
+- **Your save lives in the browser, under that exact address.** A different browser, or
+  a different number after `localhost:`, is a different, empty save. If the window says
+  it started on a port other than 5173, the old one was busy: use the number it shows,
+  and expect a fresh save.
+- **Windows may ask about its firewall** the first time. The server also offers the game
+  to other devices on your wifi, which is how a phone can try it. Playing on this PC
+  works whether you allow it or cancel.
+- **The UPDATE button does nothing in a browser.** To get a newer version, download the ZIP
+  again, or `git pull` if you cloned it, and run `npm install` again.
+- **Do not double-click `dist/index.html`** after a build. Browsers refuse to run the
+  game's scripts from a plain file, so it opens to a blank page. To play the finished
+  build instead of the development one, run `npm run build` and then
+  `npm run preview`, and open **<http://localhost:4173/?dev=0>**.
 
 ## Commands
 

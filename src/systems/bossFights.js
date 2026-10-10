@@ -75,12 +75,21 @@ const CORE = {
   homing: 0.012,         // "mild" auto-aim
 };
 
+/**
+ * PROTO MK0'S SHOTS ARE THE BUNKER'S WARNING RED, WITH A DARK RIM — his own and
+ * his turrets' alike. They used to be his grey and a lighter grey, and once his
+ * room became a grey bunker they vanished into its walls (the owner, playing on
+ * the phone, 5 Oct 2026). Red is the colour that room keeps for warnings, and
+ * the rim is the art direction's outline on anything that can touch you.
+ */
+const CORE_SHOT = { color: '#FF4A32', rim: '#0A0A12' };
+
 function coreShot(ctx, vx, vy, homing) {
   const b = ctx.boss;
   ctx.shoot({
     x: b.x + b.w / 2, y: b.y + b.h * 0.45,
     vx, vy, radius: 2.5, damage: 1,
-    color: b.primary, shape: 'bolt', homing,
+    ...CORE_SHOT, shape: 'bolt', homing,
   });
 }
 
@@ -170,6 +179,22 @@ function coreHazard(layer) {
     const a = ctx.arena;
     if (!a || !a.turrets.length) return;   // no ceiling to mount on outside an arena
     const hs = ctx.boss.hs || (ctx.boss.hs = { t: 150, left: 0, gap: 0, aim: [] });
+    const p = ctx.player;
+    const aimOf = (t) => {
+      const v = aimAt(t.x + t.w / 2, t.y + t.h, p.x + 12, p.y + 12);
+      return snapAngle(Math.atan2(v.y, v.x), CORE_HAZ.snap[layer]);
+    };
+
+    /**
+     * "VISIBLY TRACK AND AIM" — stamped onto the turrets for the room's art,
+     * the way Volt Man's panels carry their own state. Between bursts the
+     * barrel follows the player at this layer's snap; during a burst it holds
+     * the angle the volley locked, so it points where the bullets go. The
+     * countdown is what the alarm light on the ceiling beam spins up on.
+     * Pictures only: nothing reads these back.
+     */
+    a.turrets.forEach((t, i) => { t.aim = hs.left > 0 ? hs.aim[i] : aimOf(t); });
+    a.burstIn = hs.left > 0 ? Infinity : hs.t;
 
     if (hs.left > 0) {
       if (--hs.gap > 0) return;
@@ -181,7 +206,7 @@ function coreHazard(layer) {
         ctx.shoot({
           x: t.x + t.w / 2, y: t.y + t.h + 2,
           vx: Math.cos(th) * CORE_HAZ.speed, vy: Math.sin(th) * CORE_HAZ.speed,
-          radius: 2, damage: 1, color: '#9AA4B4', shape: 'bolt',
+          radius: 2, damage: 1, ...CORE_SHOT, shape: 'bolt',
         });
       });
       if (hs.left <= 0) hs.t = CORE_HAZ.cooldown[layer];
@@ -191,11 +216,7 @@ function coreHazard(layer) {
     if (--hs.t > 0) return;
     // Every turret locks its angle at the same instant, so the burst reads as
     // one coordinated volley rather than a stagger.
-    const p = ctx.player;
-    hs.aim = a.turrets.map((t) => {
-      const v = aimAt(t.x + t.w / 2, t.y + t.h, p.x + 12, p.y + 12);
-      return snapAngle(Math.atan2(v.y, v.x), CORE_HAZ.snap[layer]);
-    });
+    hs.aim = a.turrets.map(aimOf);
     hs.left = CORE_HAZ.shots;
     hs.gap = 1;
   };
@@ -2079,7 +2100,9 @@ function thornHazard(layer) {
      * Caller's; the arena only tells them not to expire and gives them a second
      * job, so a run without that weapon simply never sees this paragraph.
      */
-    for (const ally of ctx.run.allies || []) {
+    // DEFERRED: the room has not asked the swarm to stay (`arena.bugsPersist`,
+    // set in arena.js), so no bug is sent after the overgrowth.
+    for (const ally of a.bugsPersist ? (ctx.run.allies || []) : []) {
       if (ally.owner !== 'swarm_caller') continue;
       // Standing over a tile is what puts it down; the bug does not have to
       // shoot it, because a bug does not shoot.
