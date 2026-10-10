@@ -381,6 +381,8 @@ export default class GameScene extends Phaser.Scene {
       // How fast the player may move while a weapon is busy: 0 is rooted, 1 is
       // untouched. The Quake Hammer's rungs set it (see its ladder).
       moveScale: 1,
+      // Rooted AND unable to jump: the Quake Hammer's released swing.
+      planted: false,
       glideFall: null,
       airControl: 1,
       aggroFire: 1,
@@ -1022,6 +1024,7 @@ export default class GameScene extends Phaser.Scene {
     r.meleeArmor = 0;
     r.rootFrames = 0;
     r.moveScale = 1;
+    r.planted = false;
     r.glideFall = null;
     r.airControl = 1;
     r.aggroFire = 1;
@@ -2601,6 +2604,10 @@ export default class GameScene extends Phaser.Scene {
    */
   doJump() {
     const p = this.player, r = this.run;
+    // A weapon may plant the player outright — the Quake Hammer's swing, by
+    // the owner's call: once the charge is let go he cannot move at all. The
+    // slide is a move too, so this comes before the double-tap check.
+    if (r?.planted) return;
     if (this.tryCancelIntoSlide()) return;
     this.intent.jumpHeld = true;
     if (p.onGround) { p.jumpFromY = p.y; this.jumpTapFrame = r.frame; }

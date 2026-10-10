@@ -42,7 +42,8 @@ hammer is put away.
 | **jab 2** (tap again) | swung back up | 11 | steps 18–27 | 28 |
 | **jab 3** (tap again) | the finisher: over the top and down, launches what it hits | 4 | — | 50 |
 | **charge** (hold) | hammer held overhead and kept there for as long as the button is down | — | — | — |
-| **swing** (let go) | from overhead down onto the ground in front | 10 (9 at full charge) | — | 60 to 70, longer the fuller the charge |
+| **swing** (let go) | from overhead down onto the ground in front; the player cannot move, turn or jump until it is over | 10 (9 at full charge) | — | 60 to 70, longer the fuller the charge |
+| **air dive** (let go in the air) | the hammer swung down and leading, dragging the player straight down fast | when he lands — the swing then plays on from its hit | — | as the swing |
 
 A chained jab starts on the first "next press accepted" step of the one before it, so the
 fastest A-A-A lands on steps 10, 24 and 35. How long a charge takes to fill:
@@ -63,7 +64,7 @@ three jabs, 71 to 90 for Jet Hammer — but in this game the hammer is put away 
 | **Lv1–2** | the hammer only. Full charge shows nothing extra, and the swing makes no dust. |
 | **Lv3** | **the full-charge tell**: once full, small dust clouds puff round the hammer head (a burst of 8 the moment it fills, then 2 more every 5 steps) and the hammer trembles. **The dust cloud**: where the swing lands — on an enemy, or on the ground in front — a cloud billows out: **small** under half a charge (radius 10 pixels), **medium** up to full (16), **large** at full (24). It lasts 24, 32 or 40 steps. |
 | **Lv6** | nothing new to draw (jabs at full speed, a faster charge). |
-| **Lv10** | **the spikes**: a full charge that lands on the GROUND throws 4 long, slender sand spikes diagonally forward from where the hammer hit — about 24°, 38°, 52° and 66° above the floor, 42 to 64 pixels long. They stab out in 5 steps, stand for 30 (half a second), and flicker for the last few. **The sand**: then each spike falls apart into a shower of grains, about one every 3 pixels along it, that drop to the floor and lie there; every grain vanishes at its own random moment between 0.1 and 3 seconds. A standing spike also stops enemy shots, and each stopped shot leaves a tiny puff. |
+| **Lv10** | **the spikes**: a full charge that lands on the GROUND throws 4 long, slender sand spikes diagonally forward from where the hammer hit — about 24°, 38°, 52° and 66° above the floor, 42 to 64 pixels long. They stab out in 5 steps, stand for 30 (half a second), and flicker for the last few. **The sand**: then each spike falls apart into a shower of grains, about one every 3 pixels along it, that drop to the floor and lie there; every grain vanishes at its own random moment between 0.1 and 3 seconds. A standing spike also stops enemy shots, and each stopped shot leaves a tiny puff. **A boss walks straight through**: a spike he touches skips the rest of its half second and falls to sand at once. |
 
 ## What the code tells the art every step
 
@@ -71,7 +72,7 @@ All of the drawing is in two functions in `src/systems/weaponry.js`, and nothing
 game draws the hammer: **`drawQuakeHammer`** (the hammer itself) and **`drawQuakeFx`** (dust,
 spikes, sand). They only read; replacing them cannot change how the weapon plays.
 
-- **The hammer** — `quakePose` gives which move (`jab1`, `jab2`, `jab3`, `swing` or `charge`),
+- **The hammer** — `quakePose` gives which move (`jab1`, `jab2`, `jab3`, `swing`, `charge` or `dive`),
   how many steps into it (`t`), the step it hits and the step it is put away, and for a
   charge whether it is full and whether this rung shows it. The player's position and
   facing come with it; the hand is 5 pixels in front of his middle, 12 below the top of his

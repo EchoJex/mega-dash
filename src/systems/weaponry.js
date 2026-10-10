@@ -804,8 +804,11 @@ function stepLunge(st, lv, ctx) {
  *
  * MOVEMENT is the rung's to decide (`jabMove`, `chargeMove`, `swingMove`) and
  * is asserted every step as `run.moveScale`: 0 roots the player, 0.5 is
- * walking speed, 1 leaves him alone. GameScene clears it every step, so a
- * benched hammer can never leave the player stuck.
+ * walking speed, 1 leaves him alone. The released swing goes further and
+ * PLANTS him (`run.planted`): by the owner's call he "shouldn't be able to
+ * move once the hold is released", so jumping stops too, for the whole swing
+ * and for the air dive. GameScene clears both every step, so a benched hammer
+ * can never leave the player stuck.
  *
  * WHAT IS DRAWN IS READ, NEVER WRITTEN. `quakePose` is everything the picture
  * of the hammer needs — which move, how many steps into it, where the hand is
@@ -845,7 +848,8 @@ function headOf(p, deg) {
 /**
  * What the hammer is doing this step, or null while it is put away.
  *
- *   move   'jab1' 'jab2' 'jab3' 'swing' or 'charge'
+ *   move   'jab1' 'jab2' 'jab3' 'swing', 'charge', or 'dive' (falling to
+ *          the ground after a charge let go in the air)
  *   t      steps since that move began (for a charge, steps spent charging)
  *   hit    the step the move connects on; total, the step it lets go
  *   deg    which way the placeholder hammer points (0 forward, 90 up)
@@ -853,6 +857,7 @@ function headOf(p, deg) {
  */
 function quakePose(st, L) {
   const a = st.act;
+  if (st.diving) return { move: 'dive', t: st.diving.age, deg: -60 };
   if (a) {
     const [s0, s1, s2] = POSES[a.move];
     let deg;
@@ -876,12 +881,22 @@ function quakePose(st, L) {
   return null;
 }
 
-/** How fast the player may move while the hammer is busy. Never raises it. */
+/**
+ * How fast the player may move while the hammer is busy. Never raises it.
+ * The swing and the dive also plant him, and a jump he pressed a moment before
+ * letting go is thrown away rather than left waiting to fire mid-swing.
+ */
 function moveGrant(st, L, ctx) {
+  const swinging = st.diving || st.act?.move === 'swing';
   let m = 1;
-  if (st.act) m = st.act.move === 'swing' ? L.swingMove : L.jabMove;
+  if (swinging) m = L.swingMove;
+  else if (st.act) m = L.jabMove;
   else if (st.charging) m = L.chargeMove;
   if (m < (ctx.run.moveScale ?? 1)) ctx.run.moveScale = m;
+  if (swinging) {
+    ctx.run.planted = true;
+    ctx.player.jumpBuffer = 0;
+  }
 }
 
 /** `t0` is how many steps of this jab have already passed (see `fire`). */
@@ -922,6 +937,15 @@ function settle(st, L, lv, ctx) {
       startJab(st, L, ctx, 0, Math.max(0, a.t - Math.max(a.total, q.at)));
     }
   }
+}
+
+/** The released swing, from its first step. A dive's landing moves it on to its hit. */
+function swingAct(L, c, full) {
+  const sw = L.swing;
+  return {
+    move: 'swing', n: -1, t: 0, hit: full ? sw.hitFull : sw.hit,
+    total: Math.round(sw.total + (sw.totalFull - sw.total) * c), done: false, c, full,
+  };
 }
 
 function jabHit(L, lv, ctx, a) {
@@ -1033,6 +1057,14 @@ function stepSpikes(ctx) {
       }
       continue;
     }
+    // A BOSS WALKS STRAIGHT THROUGH, by the owner's call, and the spike he
+    // touches goes to sand at once instead of standing out its half second.
+    // Brought forward to its last standing step, so the effects step that
+    // follows crumbles it this same step.
+    if (ctx.enemies.some((e) => e.isBoss && e.hp > 0 && spikeBand(e, s, rad))) {
+      s.t = s.grow + s.stand - 1;
+      continue;
+    }
     const tx = s.x + ux * s.len, ty = s.y + uy * s.len;
     for (const b of ctx.bullets) {
       if (!b.enemy || b.life <= 0 || b.push) continue;
@@ -1063,21 +1095,32 @@ function distToSegment(px, py, ax, ay, bx, by) {
  * against it. Knockback into the spike is cancelled for the same reason.
  */
 function blockBody(e, s, rad) {
-  const sin = Math.sin(rad), tan = Math.tan(rad);
-  const tipY = s.y - s.len * sin;
-  const y0 = Math.max(e.y, tipY), y1 = Math.min(e.y + e.h, s.y);
-  if (y0 > y1) return;
-  const lineX = (y) => s.x + (s.dir * (s.y - y)) / tan;
-  const xa = lineX(y0), xb = lineX(y1);
-  const lo = Math.min(xa, xb), hi = Math.max(xa, xb);
-  if (hi <= e.x || lo >= e.x + e.w) return;
-  const ym = Math.max(tipY, Math.min(s.y, e.y + e.h / 2));
-  const front = (e.x + e.w / 2 - lineX(ym)) * s.dir > 0;
-  const right = front === (s.dir > 0);
-  e.x = right ? hi : lo - e.w;
+  const band = spikeBand(e, s, rad);
+  if (!band) return;
+  const right = band.front === (s.dir > 0);
+  e.x = right ? band.hi : band.lo - e.w;
   const into = right ? -1 : 1;
   if (e.def?.kind === 'ground' && Math.sign(e.vx) === into) e.vx = -e.vx;
   if (Math.sign(e.kbVx || 0) === into) e.kbVx = 0;
+}
+
+/**
+ * Where a standing spike crosses an actor's box, or null if it does not.
+ * Over the height of the box the spike covers a band of x from `lo` to `hi`;
+ * `front` says whether the actor's middle is on the far side of the spike from
+ * the player who raised it.
+ */
+function spikeBand(e, s, rad) {
+  const sin = Math.sin(rad), tan = Math.tan(rad);
+  const tipY = s.y - s.len * sin;
+  const y0 = Math.max(e.y, tipY), y1 = Math.min(e.y + e.h, s.y);
+  if (y0 > y1) return null;
+  const lineX = (y) => s.x + (s.dir * (s.y - y)) / tan;
+  const xa = lineX(y0), xb = lineX(y1);
+  const lo = Math.min(xa, xb), hi = Math.max(xa, xb);
+  if (hi <= e.x || lo >= e.x + e.w) return null;
+  const ym = Math.max(tipY, Math.min(s.y, e.y + e.h / 2));
+  return { lo, hi, front: (e.x + e.w / 2 - lineX(ym)) * s.dir > 0 };
 }
 
 /** Lv3+: a full charge puffs small dust clouds round the hammer head. */
@@ -1093,12 +1136,37 @@ function puffAround(ctx, p, n) {
   }
 }
 
+/**
+ * THE AIR DIVE. A charge let go in the air drives the player straight down,
+ * and the swing lands where he lands — already at its hit, so it connects on
+ * the step he touches the ground and the rest of it plays out from there. A
+ * full charge dropped from a jump still makes its spikes that way.
+ *
+ * A pit ends it: falling in one beams the player out, and a dive that carried
+ * on through the beam would land a swing wherever he was set down.
+ */
+function stepDive(st, L, lv, ctx) {
+  const d = st.diving, p = ctx.player;
+  if (p.beam) { st.diving = null; return; }
+  d.age++;
+  if (!p.onGround) {
+    p.vy = Math.min(FEEL.maxFallSpeed, p.vy + L.diveAccel);
+    return;
+  }
+  if (d.age < 2) return;                     // let go on the step he took off
+  st.diving = null;
+  const a = swingAct(L, d.c, d.full);
+  a.t = a.hit;
+  st.act = a;
+  settle(st, L, lv, ctx);
+}
+
 const quake = {
   chargeRelease: true,
   holdFrames: (lv) => ladderAt('quake_hammer', lv).holdFrames,
 
   init(st) {
-    st.t = 0; st.act = null; st.queued = null; st.freeAt = -Infinity;
+    st.t = 0; st.act = null; st.queued = null; st.freeAt = -Infinity; st.diving = null;
     st.holdSeen = false; st.charging = false; st.chargeF = 0; st.full = false;
   },
 
@@ -1110,6 +1178,7 @@ const quake = {
     if (st.charging && !st.holdSeen) { st.charging = false; st.chargeF = 0; st.full = false; }
     st.holdSeen = false;
     if (st.act) { st.act.t++; settle(st, L, lv, ctx); }
+    if (st.diving) stepDive(st, L, lv, ctx);
     stepSpikes(ctx);
     if (L.fullTell && st.charging && st.full && !st.act && st.t % 5 === 0) {
       puffAround(ctx, ctx.player, 2);
@@ -1122,7 +1191,7 @@ const quake = {
     const L = ladderAt('quake_hammer', lv);
     // A press that started during a swing only starts charging once the
     // hammer is free, so time spent jabbing never counts toward a charge.
-    if (!st.act && held > L.tapFrames) {
+    if (!st.act && !st.diving && held > L.tapFrames) {
       if (!st.charging) { st.charging = true; st.chargeF = 0; st.full = false; }
       st.chargeF++;
       if (!st.full && st.chargeF >= chargeNeed(L)) {
@@ -1138,6 +1207,7 @@ const quake = {
 
   fire(st, lv, ctx, held) {
     const L = ladderAt('quake_hammer', lv);
+    if (st.diving) return true;              // committed: nothing starts mid-dive
     if (held <= L.tapFrames) {
       if (st.act) {
         // Remembered against the swing in progress: its own clock at the press.
@@ -1153,11 +1223,9 @@ const quake = {
     if (!st.charging) return false;          // a hold that never got to charge
     const c = chargeOf(st, L), full = st.full;
     st.charging = false; st.chargeF = 0; st.full = false;
-    const sw = L.swing;
-    st.act = {
-      move: 'swing', n: -1, t: 0, hit: full ? sw.hitFull : sw.hit,
-      total: Math.round(sw.total + (sw.totalFull - sw.total) * c), done: false, c, full,
-    };
+    // Let go in the air: the air dive. The swing waits for the ground.
+    if (L.airDive && !ctx.player.onGround) st.diving = { c, full, age: 0 };
+    else st.act = swingAct(L, c, full);
     ctx.sfx('shootBig', { pitch: 0.7 });
     moveGrant(st, L, ctx);
     return true;

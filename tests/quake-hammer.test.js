@@ -23,7 +23,7 @@ const FLOOR = 184;
 function rig({ level = 1, onGround = true, over = true } = {}) {
   const run = {
     frame: 0, dmgMult: 1, wstate: {}, allies: [], lastDamaged: null,
-    meleeArmor: 0, rootFrames: 0, moveScale: 1, glideFall: null, airControl: 1,
+    meleeArmor: 0, rootFrames: 0, moveScale: 1, planted: false, glideFall: null, airControl: 1,
     aggroFire: 1, aggroPause: null, wpLevels: { [ID]: level },
   };
   const player = { x: 100, y: FLOOR - 24, vx: 0, vy: 0, facing: 1, onGround };
@@ -51,6 +51,7 @@ function rig({ level = 1, onGround = true, over = true } = {}) {
   const step = () => {
     run.frame++;
     run.moveScale = 1;
+    run.planted = false;
     Wpn.stepWeapons(ctx, [ID]);
     Wpn.stepFx(fx);
   };
@@ -67,6 +68,7 @@ function rig({ level = 1, onGround = true, over = true } = {}) {
 }
 
 const L1 = ladderAt(ID, 1);
+const L10_HOLD = () => ladderAt(ID, 10).holdFrames;
 const base = (lv) => damageAtLevel(weaponOf(ID), lv);
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 
@@ -235,6 +237,79 @@ test('the runtime asserts that movement every step, and lets go after', () => {
   }
 });
 
+test('the swing plants the player: no walking, turning or jumping until it is over', () => {
+  const r = rig();
+  r.press(1);
+  assert.ok(!r.run.planted, 'a jab only roots');
+  r.steps(40);
+  r.holdFor(30);
+  assert.ok(!r.run.planted, 'a charge only roots');
+  r.player.jumpBuffer = 5;                   // a jump pressed just before letting go
+  r.step();
+  Wpn.fireActive(r.ctx, ID, 30);
+  assert.equal(r.run.planted, true);
+  assert.equal(r.run.moveScale, 0);
+  assert.equal(r.player.jumpBuffer, 0, 'the early jump is thrown away, not saved for mid-swing');
+  r.steps(L1.swing.total - 2);
+  assert.equal(r.run.planted, true, 'all the way through the swing');
+  r.steps(L1.swing.totalFull);
+  assert.equal(r.run.planted, false, 'and free again after');
+});
+
+// ── The air dive ────────────────────────────────────────────────────
+
+test('a charge let go in the air dives, and the swing lands where the player does', () => {
+  const L = ladderAt(ID, 3);
+  const r = rig({ level: 3, onGround: false });
+  r.enemy.x = 500;
+  r.holdFor(30);
+  r.step();
+  Wpn.fireActive(r.ctx, ID, 30);
+  assert.ok(r.st().diving, 'diving');
+  assert.equal(r.st().act, null, 'no swing in mid-air');
+  const vys = [];
+  for (let i = 0; i < 4; i++) { r.step(); vys.push(r.player.vy); }
+  assert.ok(vys[3] > vys[0], 'driven down, faster each step');
+  assert.equal(r.run.planted, true, 'no control on the way down');
+  assert.equal(r.fx.dust.length, 0, 'nothing lands before he does');
+  r.player.onGround = true;
+  r.step();
+  assert.equal(r.st().diving, null);
+  assert.equal(r.st().act.move, 'swing', 'the swing plays out from its hit');
+  const cloud = r.fx.dust.find((d) => !d.puff);
+  assert.ok(cloud, 'it lands with a cloud');
+  assert.equal(cloud.y, r.player.y + 24, 'on the ground');
+  assert.ok(L.airDive);
+});
+
+test('a full charge dropped from a jump still makes its spikes', () => {
+  const r = rig({ level: 10, onGround: false });
+  r.enemy.x = 500;
+  r.holdFor(L10_HOLD());
+  r.step();
+  Wpn.fireActive(r.ctx, ID, L10_HOLD());
+  r.steps(3);
+  r.player.onGround = true;
+  r.step();
+  assert.equal(r.fx.spikes.length, ladderAt(ID, 10).spikes.angles.length);
+});
+
+test('a dive that ends in a pit lands nothing', () => {
+  const r = rig({ level: 3, onGround: false });
+  r.holdFor(30);
+  r.step();
+  Wpn.fireActive(r.ctx, ID, 30);
+  r.steps(2);
+  r.player.beam = true;                      // fell in: the game lifts him out
+  r.step();
+  assert.equal(r.st().diving, null, 'the dive is over');
+  r.player.beam = false;
+  r.player.onGround = true;
+  r.steps(20);
+  assert.equal(r.fx.dust.length, 0, 'no swing where he was set down');
+  assert.equal(r.run.planted, false);
+});
+
 // ── Lv3: the dust cloud and the full-charge tell ────────────────────
 
 const swingAndLook = (lv, heldSteps, opts = {}) => {
@@ -288,14 +363,14 @@ test('the cloud hurts what is caught in it, but not the enemy the hammer hit', (
   assert.ok(near(onOther[0].dmg, base(3) * DAMAGE_WORDS[L.cloud.dmg]));
 });
 
-test('a cloud forms where the swing hits an enemy in the air, too', () => {
-  const r = rig({ level: 3, onGround: false });
-  r.enemy.y = r.player.y + 4;
+test('with no ground under the hammer, the cloud forms on the enemy it hit', () => {
+  const r = rig({ level: 3, over: false });  // standing at the lip of a pit
   r.press(30);
   r.steps(20);
   const cloud = r.fx.dust.find((d) => !d.puff);
   assert.ok(cloud, 'a cloud');
-  assert.ok(Math.abs(cloud.x - (r.enemy.x + 6)) < 20, 'at the enemy, not on the ground');
+  assert.ok(Math.abs(cloud.x - (r.enemy.x + 6)) < 4 && Math.abs(cloud.y - (r.enemy.y + 6)) < 4,
+    'at the enemy, not over the pit');
 });
 
 test('nothing the hammer does stuns', () => {
@@ -361,7 +436,7 @@ test('standing spikes stop enemy shots, but not the player\'s', () => {
   assert.equal(mine.life, 100, 'the player\'s own shot is not');
 });
 
-test('a standing spike turns a walking minion round and leaves the boss alone', () => {
+test('a standing spike turns a walking minion round', () => {
   const r = spikeRig();
   r.steps(L10.spikes.grow + 1);
   // A few pixels in front of where the lowest spike crosses its head height.
@@ -369,9 +444,7 @@ test('a standing spike turns a walking minion round and leaves the boss alone', 
   const top = FLOOR - 12;
   const crossAt = low.x + (low.y - top) / Math.tan((low.deg * Math.PI) / 180);
   const walker = r.mk(crossAt + 4, top, { def: { kind: 'ground' }, vx: -0.6 });
-  const boss = r.mk(low.x + 10, FLOOR - 30, { isBoss: true, w: 20, h: 30 });
-  r.ctx.enemies.push(walker, boss);
-  const bossX = boss.x;
+  r.ctx.enemies.push(walker);
   let furthest = Infinity;
   for (let i = 0; i < L10.spikes.stand - 4; i++) {
     r.step();
@@ -380,6 +453,20 @@ test('a standing spike turns a walking minion round and leaves the boss alone', 
   }
   assert.ok(walker.vx > 0, 'it turned round');
   assert.ok(furthest >= crossAt - 1, 'it never got into the spike');
+});
+
+test('a boss is hurt by a growing spike, then walks through it and it goes to sand at once', () => {
+  const S = L10.spikes;
+  const r = spikeRig();                      // the spikes have just started growing
+  const low = r.fx.spikes.reduce((a, s) => (s.deg < a.deg ? s : a));
+  const boss = r.mk(low.x + 20, FLOOR - 30, { isBoss: true, w: 20, h: 30 });
+  r.ctx.enemies.push(boss);
+  const bossX = boss.x;
+  r.steps(S.grow + 1);
+  assert.equal(r.hits.filter((h) => h.e === boss && h.opts.launch === S.launch).length, 1,
+    'hurt once while the spikes grew');
+  assert.ok(r.fx.spikes.length < S.angles.length, 'the spikes he touches are gone');
+  assert.ok(r.fx.sand.length > 0, 'straight to sand, long before half a second');
   assert.equal(boss.x, bossX, 'a boss is never moved by the player\'s weapons');
 });
 

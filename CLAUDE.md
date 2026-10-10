@@ -1975,7 +1975,11 @@ own state, so they carry on when it is benched mid-effect.
 like the others: cleared in `stepEquipped`, re-asserted by the weapon, so a benched weapon can
 never leave anyone stuck. 0 is rooted (no walking and no turning round; jumping still works),
 0.5 is walking speed, 1 leaves the player alone. Which moves root and which only slow is the
-ladder's to say, rung by rung.
+ladder's to say, rung by rung. **`run.planted` goes one further and stops the jump as well**,
+on the same terms — the Quake Hammer's released swing and air dive, because by the owner's
+call the player "shouldn't be able to move once the hold is released". `doJump` is the one
+door every jump comes through (keyboard, touch and `npm run sim`), so that is where it is
+refused.
 
 ### Reporting a playtest — read this before asking the owner to describe a bug
 

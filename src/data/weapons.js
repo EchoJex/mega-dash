@@ -424,8 +424,13 @@ export const WEAPON_LADDERS = {
   //  Lv10 a full charge that lands on the GROUND throws long sand spikes
   //       diagonally forward. They hurt only while growing, then stand for half
   //       a second blocking enemy shots and minions, then fall as a shower of
-  //       sand that vanishes grain by grain within three seconds.
-  // No stun anywhere, by the owner's call.
+  //       sand that vanishes grain by grain within three seconds. A boss walks
+  //       straight through: the spike he touches goes to sand at once.
+  //  Every rung: once the charge is let go the player cannot move at all — no
+  //       walking, turning or jumping — until the swing is over; let go in the
+  //       air and the hammer drives him straight down (the air dive), the swing
+  //       landing on the ground where he lands.
+  // No stun anywhere, and no floor shockwaves, by the owner's call.
   //
   // FRAME NUMBERS ARE STEPS (60 a second), the same count Smash uses, read
   // from SmashWiki's pages for Dedede in Ultimate. A jab:
@@ -462,6 +467,9 @@ export const WEAPON_LADDERS = {
       // `partialShare` is that "toward": how far up a nearly-full charge gets.
       swingDmg: 'mediumHeavy', swingDmgFull: 'heavy', partialShare: 0.65,
       swingKnock: 3.6, fullLaunch: 2.5,
+      // The air dive: how hard the hammer pulls the player down, added to his
+      // fall every step until he lands.
+      airDive: true, diveAccel: 1.2,
       jabMove: 0, chargeMove: 0, swingMove: 0,
       cloud: null,
       fullTell: false,
