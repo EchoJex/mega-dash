@@ -307,6 +307,39 @@ export class ActorLayer {
     return s;
   }
 
+  /**
+   * Draw ONE CELL of a sheet, held by its PIVOT — weapon art, whose frame the
+   * game picks itself from frame data (`systems/frame-data.js`) rather than
+   * leaving it to a Phaser animation clock. A move's hit lands on a step, and
+   * the picture has to change on that same step, slow motion included.
+   *
+   * `actor` is `{ id, x, y, cell, facing, alpha }`: x/y is where the sheet's
+   * pivot goes (a grip, a spike's foot), already on screen. Facing left
+   * mirrors the drawing around the pivot, so a hand stays a hand.
+   *
+   * THE SAME ONE RULE AS `draw`: with no sheet, or no drawn frame to stand in
+   * (`cell` -1), `fallback(g, actor)` paints the plain shapes instead.
+   */
+  drawCell(actor, fallback) {
+    const def = MANIFEST[actor.id];
+    if (!def || !(actor.cell >= 0)) { fallback?.(this.g, actor); return null; }
+    const s = this.acquire(actor.id, def);
+    if (s.cellShown !== actor.cell) {
+      s.anims?.stop();
+      s.setFrame(actor.cell);
+      s.cellShown = actor.cell;
+    }
+    const flip = (actor.facing ?? 1) < 0;
+    const [px, py] = def.pivot ?? [def.frameW / 2, def.frameH / 2];
+    // Phaser mirrors a sprite about its own middle, so the origin moves to
+    // where the pivot lands in the mirrored picture.
+    s.setFlipX(flip);
+    s.setOrigin((flip ? def.frameW - px : px) / def.frameW, py / def.frameH);
+    s.setPosition(Math.round(actor.x), Math.round(actor.y));
+    s.setAlpha(actor.alpha ?? 1);
+    return s;
+  }
+
   /** Background helper: a TileSprite that scrolls at the entry's parallax rate. */
   drawBackground(viewW, viewH, camX, fallbackColor) {
     const def = MANIFEST.background;

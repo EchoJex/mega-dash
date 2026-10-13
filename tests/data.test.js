@@ -115,10 +115,13 @@ test('sprite grids escalate minion < player < miniboss < boss', () => {
 });
 
 test('the player draws above every world actor', () => {
-  const world = Object.entries(DEPTH).filter(([k]) => k !== 'player');
+  // `held` is not a world actor: it is the weapon in his hand, part of him,
+  // and the one band allowed in front of his body.
+  const world = Object.entries(DEPTH).filter(([k]) => k !== 'player' && k !== 'held');
   for (const [name, d] of world) {
     assert.ok(DEPTH.player > d, `player must draw above ${name}`);
   }
+  assert.equal(DEPTH.held, DEPTH.player + 1, 'what he holds sits directly in front of him, below nothing else');
 });
 
 test('the null weapon is an outline-only silhouette that fires nothing', () => {

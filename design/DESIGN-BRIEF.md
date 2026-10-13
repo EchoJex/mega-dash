@@ -85,6 +85,7 @@ the code wins if they ever differ.
 | miniboss | 32×32 | reserved, nothing uses it yet |
 | shot | 16×16 | the biggest shot is an 8-pixel ball; the rest is room for a glow or trail |
 | pickup | 16×16 | its pick-up box is 7×7 |
+| weapon art | set per sheet | a weapon's own sheets (the hammer in his hand, its dust): sizes, pivots, timing and hit areas are in `design/weapon-art/<weapon>.md` |
 
 - **The drawing is not the hit box.** The hit box stays still while the drawing changes, so
   draw the silhouette freely inside the box; never stretch a drawing to fit a hit box.
@@ -96,9 +97,12 @@ the code wins if they ever differ.
 ## 5. Draw order, back to front
 
 background → **room art** → ground, spikes, doors → pickups → minions → bullets → boss →
-**player** → HUD and thumb pads (a separate layer above the game).
+a weapon's dust and debris → **player** → the weapon in his hand → HUD and thumb pads (a
+separate layer above the game).
 
-**The player is always in front of everything in the world.** Nothing may hide him.
+**The player is always in front of everything in the world.** Nothing may hide him. The
+weapon in his hand is part of him and is drawn in front of his body, so it must never cover
+his visor for more than a few steps.
 
 ## 6. Drawing a boss room so it goes straight into the game
 
@@ -151,6 +155,10 @@ background → **room art** → ground, spikes, doors → pickups → minions �
 
 ## 9. Handing work to Claude Code
 
+- **A weapon's art has its own page: `design/weapon-art/README.md`.** Its timing and hit
+  areas are drawn into its sheets, the handoff is the `.sprite` files plus a `HANDOFF.md`
+  note, and by the owner's call it goes into the game as soon as it passes the checks.
+
 - **Show the worst moments before asking for approval**: layer 3, every hazard at once, a
   blackout or flood, and the player and the boss's own shots across the room — at 320 and
   480 wide.
@@ -174,6 +182,9 @@ background → **room art** → ground, spikes, doors → pickups → minions �
 | the screen, sprite boxes, draw order | `src/config/display.js` |
 | boss and minion colours and sizes | `src/data/bosses.js`, `src/data/minions.js` |
 | sprite sources and built sheets | `design/sprites/*.sprite`, `public/sprites/*.png` |
+| how to draw a weapon, and each weapon's brief | `design/weapon-art/` |
+| the format's reader and writer, and a preview kit | `docs/sprite-fmt.js`, `docs/sprite-kit.js` |
+| past handoffs: what came in and what changed | `design/handoffs/` |
 | the drawn rooms and their drawing kit | `src/systems/arena-art/` |
 | room state and furniture | `src/systems/arena.js` |
 | fights and hazards | `src/systems/bossFights.js` |

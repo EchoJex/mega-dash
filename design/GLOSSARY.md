@@ -58,6 +58,9 @@ it reads better. Nobody has to translate.
 | **sheet** | All of a sprite's pictures in one PNG strip. |
 | **grid / cell** | The fixed box each picture is drawn in. Player 24×24, bullet 16×16. |
 | **anchor** | Which part of the picture sits at the character's position. Feet on the ground for actors, middle for bullets. |
+| **pivot** | The one pixel the game holds a sheet by, written on the sheet's `pivot` line: the Quake Hammer's grip goes in his hand, a spike's foot on the floor. Facing left, the picture is mirrored around it. |
+| **weapon art** | A weapon drawn as its own sheets — the hammer in his hand, the dust it throws up — rather than as a bullet. Listed in `src/data/weapon-art.js`; drawn in front of the player (in his hand) or behind him (effects). |
+| **placeholder sheet** | A weapon's sheet painted in plain shapes by `npm run art:placeholders`, with its real timing and hit areas already in it, so the game plays it exactly as it will play the finished drawing. |
 | **16-bit** | The game's look since 29 Sep 2026, after the SNES: up to 15 colours plus see-through per sprite, shaded in colour ramps, with the near-black outline. The player's sheet and the drawn boss rooms are the examples to follow. |
 | **declared palette** | How a 16-bit sprite stores its colours: `palette` lines at the top of a `.sprite` file list up to 15 fixed colours, and each pixel names one of them. The standard for new art. Those colours do not follow a palette re-tune; they are changed by hand. |
 | **role** | The original, three-colour way: a pixel is stored as *primary / secondary / outline*, never as a colour, so re-tuning the palette recolours every sprite drawn this way. What the placeholder era drew in. |
@@ -87,6 +90,10 @@ it reads better. Nobody has to translate.
 |---|---|
 | **hurtbox** | The invisible rectangle where a character CAN BE hurt. |
 | **hitbox** | The invisible rectangle that DOES the hurting. Two words one letter apart, which is unhelpful and is what the industry calls them. |
+| **hit area** | A weapon's hitbox, drawn on the frame where its move lands: `hit=x,y,w,h` on that frame's line in the `.sprite` file, in the sheet's own pixels. Move it in the drawing and the game hits there. |
+| **connects** | The step a move lands its blow: the first step of the frame carrying the hit area. "Jab one connects on step 10." |
+| **frame data** | A move's timing and hit areas — how long each frame shows, the step it connects on, what it hits, where things come out. Kept on the frames in the weapon's `.sprite` files, so it moves with the drawing; the game reads it from `src/data/frame-data.json`. Fighting games use the same name for the same thing. |
+| **spawn point** | `spawn=x,y` on a frame: where something comes out of the drawing on that frame — the dust where the hammer head meets the floor. |
 | **i-frames** | Short for *invulnerability frames*: the moment after taking a hit where nothing can hit you again. It is why you flicker. |
 | **flinch / knockback** | The stagger and the shove that every hit causes. Present on every hit regardless of element — they are NOT status effects. |
 | **beam out** | What a pit or a spike bed does to you: massive damage, then lifted off the screen and set down at the nearest safe spot. Never an instant death, and it is what stops spikes being walkable. |
@@ -162,6 +169,10 @@ it reads better. Nobody has to translate.
 | **design brief** | `design/DESIGN-BRIEF.md`: the game's look and its limits on one page, for Claude Design to read before it draws anything for this game. |
 | **design system** | Claude Design's reusable reference — a rules page, named colours, preview cards and images — read before every new design. MEGA DASH's is built from the design brief. |
 | **handoff** | The zip Claude Design exports for Claude Code: the drawings, the chat, a README, and a note saying what is approved and what to build. |
+| **contract** | What a weapon's code needs from its sheets: their sizes, and every clip it plays, each of the right kind. `npm run design:import` and the build refuse a sheet that breaks it. |
+| **clip kind** | What the code expects of a clip: **hit** (plays once and connects on one frame), **loop** (repeats while the move lasts), **once** (plays once; its length is how long the thing lasts), **grow** (hurts while its first frames show, then stands), **still** (one picture). |
+| **design import** | `npm run design:import`: brings a Claude Design handoff into the game. It checks every sheet, puts the files in, builds and runs every test — and if anything fails, puts every file back. What changed is written to `design/handoffs/`. |
+| **weapon brief** | `design/weapon-art/<weapon>.md`: what a weapon is and every number of its sheets, for Claude Design. Its tables and its prompt are generated (`npm run art:brief`), so they cannot go stale. |
 
 ## Markers
 

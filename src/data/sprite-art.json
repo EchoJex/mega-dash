@@ -144,5 +144,314 @@
         5
       ]
     }
+  },
+  "weapon:quake_hammer:dust": {
+    "file": "weapon-quake_hammer-dust.png",
+    "frameW": 64,
+    "frameH": 40,
+    "anchor": "pivot",
+    "pivot": [
+      32,
+      40
+    ],
+    "tintable": false,
+    "anims": {
+      "small": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "medium": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "large": [
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "holds": {
+      "small": [
+        4,
+        4,
+        6,
+        10
+      ],
+      "medium": [
+        4,
+        6,
+        8,
+        14
+      ],
+      "large": [
+        4,
+        6,
+        10,
+        20
+      ]
+    }
+  },
+  "weapon:quake_hammer:held": {
+    "file": "weapon-quake_hammer-held.png",
+    "frameW": 56,
+    "frameH": 56,
+    "anchor": "pivot",
+    "pivot": [
+      28,
+      28
+    ],
+    "tintable": false,
+    "anims": {
+      "jabOne": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "jabTwo": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "jabThree": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "charge": [
+        20,
+        21
+      ],
+      "chargeFull": [
+        22,
+        23
+      ],
+      "swing": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "dive": [
+        31,
+        32
+      ]
+    },
+    "holds": {
+      "jabOne": [
+        4,
+        4,
+        2,
+        3,
+        6,
+        7,
+        7
+      ],
+      "jabTwo": [
+        4,
+        4,
+        3,
+        3,
+        5,
+        9
+      ],
+      "jabThree": [
+        2,
+        2,
+        4,
+        6,
+        10,
+        12,
+        14
+      ],
+      "charge": [
+        20,
+        20
+      ],
+      "chargeFull": [
+        3,
+        3
+      ],
+      "swing": [
+        3,
+        3,
+        4,
+        4,
+        6,
+        20,
+        30
+      ],
+      "dive": [
+        4,
+        4
+      ]
+    }
+  },
+  "weapon:quake_hammer:puff": {
+    "file": "weapon-quake_hammer-puff.png",
+    "frameW": 12,
+    "frameH": 12,
+    "anchor": "pivot",
+    "pivot": [
+      6,
+      6
+    ],
+    "tintable": false,
+    "anims": {
+      "tell": [
+        0,
+        1,
+        2
+      ],
+      "block": [
+        3,
+        4,
+        5
+      ]
+    },
+    "holds": {
+      "tell": [
+        4,
+        6,
+        8
+      ],
+      "block": [
+        3,
+        4,
+        5
+      ]
+    }
+  },
+  "weapon:quake_hammer:sand": {
+    "file": "weapon-quake_hammer-sand.png",
+    "frameW": 4,
+    "frameH": 4,
+    "anchor": "pivot",
+    "pivot": [
+      2,
+      2
+    ],
+    "tintable": false,
+    "anims": {
+      "light": [
+        0
+      ],
+      "dark": [
+        1
+      ]
+    },
+    "holds": {
+      "light": [
+        5
+      ],
+      "dark": [
+        5
+      ]
+    }
+  },
+  "weapon:quake_hammer:spike": {
+    "file": "weapon-quake_hammer-spike.png",
+    "frameW": 60,
+    "frameH": 50,
+    "anchor": "pivot",
+    "pivot": [
+      4,
+      47
+    ],
+    "tintable": false,
+    "anims": {
+      "flat": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "low": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "high": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "steep": [
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ]
+    },
+    "holds": {
+      "flat": [
+        2,
+        2,
+        1,
+        24,
+        2,
+        2,
+        2
+      ],
+      "low": [
+        2,
+        2,
+        1,
+        24,
+        2,
+        2,
+        2
+      ],
+      "high": [
+        2,
+        2,
+        1,
+        24,
+        2,
+        2,
+        2
+      ],
+      "steep": [
+        2,
+        2,
+        1,
+        24,
+        2,
+        2,
+        2
+      ]
+    }
   }
 }

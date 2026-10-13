@@ -22,7 +22,8 @@ const sheets = () => readdirSync(SPRITES).filter((f) => f.endsWith('.sprite'))
   .map((f) => ({ id: f.replace(/\.sprite$/, ''), doc: parse(readFileSync(new URL(f, SPRITES), 'utf8')) }));
 const keyOf = (id) => (id === 'player' ? 'player'
   : targets.minions.find((x) => x.id === id)?.id
-  || (targets.bosses[id] || targets.shots[id] || targets.pickups[id])?.key || id);
+  || (targets.bosses[id] || targets.shots[id] || targets.pickups[id]
+    || targets.furniture?.[id] || targets.menu?.[id] || targets.weapons?.[id])?.key || id);
 const shippable = (f) => f.status === 'ready' || f.status === 'draft';
 
 /**

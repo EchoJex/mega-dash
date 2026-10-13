@@ -311,10 +311,14 @@ export const FEEL = {
    * TIGHT ON PURPOSE. The jump fires on the first tap, so every frame of this
    * window is a frame in which an already-visible jump can be un-done. Too
    * generous and ordinary double-jump inputs start eating themselves; too mean
-   * and the slide is unreachable on a touchscreen. 8 frames is about 130ms,
+   * and the slide is unreachable on a touchscreen. 10 steps is about 170ms,
    * which is a deliberate double-tap and not a fumbled one.
+   *
+   * It was 8 (about 130ms) until the owner's playtest of 12 Oct 2026 found it
+   * "just a tiny bit too narrow". Still far short of the jump's nineteen-step
+   * rise, so a tap near the top of an arc is still a double jump.
    */
-  slideTapFrames: 8,
+  slideTapFrames: 10,
   weaponDamagePerLevel: 0.12, // placeholder until real Lv1/3/6/10 ladders land
 };
 

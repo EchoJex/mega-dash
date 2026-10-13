@@ -62,11 +62,14 @@ const RANGE = { min: 40, max: 110 };
  * So a rung that declares a `range`, `reach` or `jabReach` is a weapon that has
  * to be walked into, and the band becomes "get inside it". Everything else
  * keeps the standoff. The ladder is the right place to ask, because it is where
- * the weapon already states its own geometry.
+ * the weapon already states its own geometry — unless its hit areas are drawn
+ * into its sprite sheets (the Quake Hammer), when its runtime's `reach()`
+ * reads them from there.
  */
 function bandFor(id, lv) {
   const L = ladderAt(id, lv) || {};
-  const melee = L.range ?? L.reach ?? L.jabReach;
+  // A weapon drawn with frame data says its own reach, read off its art.
+  const melee = RUNTIME[id]?.reach?.(lv) ?? L.range ?? L.reach ?? L.jabReach;
   if (!melee) return RANGE;
   // Aim for two thirds of the reach so a step in either direction still lands.
   return { min: 0, max: Math.max(12, melee * 0.66) };

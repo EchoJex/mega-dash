@@ -147,7 +147,11 @@ export default class GameScene extends Phaser.Scene {
       minions: new ActorLayer(this, DEPTH.minions),
       bullets: new ActorLayer(this, DEPTH.bullets),
       boss: new ActorLayer(this, DEPTH.boss),
+      // Weapon art (src/data/weapon-art.js): the dust, spikes and sand a
+      // weapon leaves behind, and the weapon in his hand in front of him.
+      effects: new ActorLayer(this, DEPTH.effects),
       player: new ActorLayer(this, DEPTH.player),
+      held: new ActorLayer(this, DEPTH.held),
     };
     /**
      * A boss room's 16-bit art (systems/arena-art), built on the first frame
@@ -2644,8 +2648,8 @@ export default class GameScene extends Phaser.Scene {
    * keyboard, where the field now gives the slide no key of its own, it would
    * have removed the move outright.
    *
-   * The apex case the `vy` test was protecting is covered by the window: eight
-   * frames is nowhere near the top of a jump that rises for nineteen, and a
+   * The apex case the `vy` test was protecting is covered by the window: ten
+   * steps is nowhere near the top of a jump that rises for nineteen, and a
    * HELD jump at its apex has `jumpCut` false, so it still gets its double jump.
    */
   tryCancelIntoSlide() {
@@ -3068,7 +3072,12 @@ export default class GameScene extends Phaser.Scene {
      * Still on the player's layer, so the drone and the shield sit above every
      * world actor with him.
      */
-    Wpn.drawWeaponry(L.player.gAboveSprites, sx, this.weaponCtx());
+    const wctx = this.weaponCtx();
+    Wpn.drawWeaponry(L.player.gAboveSprites, sx, wctx);
+    // A weapon drawn from its own sheets — the hammer in his hand, its dust
+    // behind him — with the frame picked from frame data, so the picture
+    // changes on the step the hit lands. Shaken like everything in the world.
+    Wpn.drawWeaponArt({ effects: L.effects, held: L.held }, sx, sy, wctx);
 
     /**
      * THE ROOM LOSING POWER. Volt Man's layer-2 sweep ends by flickering the

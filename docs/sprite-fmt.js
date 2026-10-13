@@ -35,11 +35,20 @@
  *     fudge     0.70 x 1.00
  *     note      anything after this is ignored, so notes are free
  *     palette   0 #0A0A12 outline   <- optional, one line per colour (16-bit)
+ *     pivot     28 28               <- optional: the pixel the game holds it by
  *
  *     [idle 1] status=ready hold=40
  *     ........................
  *     ....00000000............
  *     ...
+ *
+ * A frame of a weapon's move can also carry its FRAME DATA on the same line:
+ *
+ *     [jabOne 4] status=ready hold=3 hit=28,21,23,19 spawn=44,40
+ *
+ * `hit=x,y,w,h` is where the move connects (this frame's first step) and its
+ * hit area; a bare `hit` hurts with a shape the code computes; `spawn=x,y` is
+ * where something comes out. All in the sheet's own pixels, facing right.
  *
  * One block per frame, each exactly `grid` rows of `grid` characters.
  * `.` transparent, `0` outline, `1` primary, `2` secondary — see ROLES. A sprite
@@ -116,7 +125,7 @@ export function parse(text) {
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   const doc = {
     id: null, w: 0, h: 0,
-    fudgeW: 0.7, fudgeH: 1, note: '', palette: [], frames: [],
+    fudgeW: 0.7, fudgeH: 1, note: '', palette: [], pivot: null, frames: [],
   };
   let frame = null;
   // The pre-per-frame sheet-wide `status` line, if this file still has one.
@@ -158,12 +167,35 @@ export function parse(text) {
        * number saying which frame it really meant.
        */
       const sfx = at('sfx');
+      /**
+       * FRAME DATA: WHERE A MOVE HITS, AND WHERE SOMETHING COMES OUT.
+       *
+       * `hit=x,y,w,h` says the move connects on this frame's first step, and
+       * the rectangle is its hit area in this sheet's own pixels, drawn facing
+       * right. A bare `hit` is a frame that hurts with a shape the code works
+       * out for itself (a spike's slanted line, which no rectangle fits).
+       * `spawn=x,y` is the point something leaves from on this frame — the dust
+       * where the hammer meets the floor.
+       *
+       * THEY LIVE ON THE FRAME BECAUSE THAT IS WHERE THE ART IS. Whoever moves
+       * the drawing moves the hit with it, in the same line, and the game reads
+       * its timing from these files rather than keeping a second copy that the
+       * drawing could drift away from (see `npm run sprites:build`).
+       */
+      const hitRaw = at('hit');
+      const hitRect = hitRaw && /^(-?\d+),(-?\d+),(\d+),(\d+)$/.exec(hitRaw);
+      const hitBare = !hitRaw && /(?:^|\s)hit(?=\s|$)/.test(attrs);
+      const spawnRaw = at('spawn');
+      const spawnPt = spawnRaw && /^(-?\d+),(-?\d+)$/.exec(spawnRaw);
       frame = {
         action,
         index,
         status: STATUSES.includes(st) ? st : 'wip',
         hold: Number.isFinite(hold) && hold > 0 ? Math.round(hold) : DEFAULT_HOLD,
         ...(sfx ? { sfx } : {}),
+        ...(hitRect ? { hit: { x: +hitRect[1], y: +hitRect[2], w: +hitRect[3], h: +hitRect[4] } }
+          : hitBare ? { hit: true } : {}),
+        ...(spawnPt ? { spawn: { x: +spawnPt[1], y: +spawnPt[2] } } : {}),
         rows: [],
       };
       doc.frames.push(frame);
@@ -184,6 +216,11 @@ export function parse(text) {
         } else if (k === 'fudge') {
           const f = /^([0-9.]+)\s*x\s*([0-9.]+)$/.exec(v.trim());
           if (f) { doc.fudgeW = +f[1]; doc.fudgeH = +f[2]; }
+        } else if (k === 'pivot') {
+          // `pivot   x y` — the pixel the game holds this sheet by (a hammer's
+          // grip, a spike's foot). Only sheets that need one say it.
+          const pv = /^(-?\d+)\s+(-?\d+)$/.exec(v.trim());
+          if (pv) doc.pivot = { x: +pv[1], y: +pv[2] };
         } else if (k === 'note') doc.note = v.trim();
         else if (k === 'palette') {
           // `palette   <key> <#RRGGBB> <name>` — kept exactly as written, hex
@@ -260,11 +297,119 @@ export const framesOf = (doc, action) => doc.frames
   .map((f, at) => ({ ...f, at }))
   .filter((f) => f.action === action);
 
+// ── Frame data ────────────────────────────────────────────────────────
+
+/**
+ * A SHEET'S FRAME DATA, AS THE GAME READS IT. Per clip: every frame's hold, the
+ * sheet cell it draws from, whether that cell is drawn yet, how long the clip
+ * lasts, the step each hit lands on, and the hit areas and spawn points
+ * measured from the pivot (so the game can place them at a hand or a foot and
+ * mirror them for facing left).
+ *
+ * STATUS IS IGNORED FOR TIMING, ON PURPOSE. How far the drawing has got must
+ * never change when a move hits: a frame being redrawn (`wip`) keeps its hold
+ * and its place, and only the picture falls back. `ship` says which cells have
+ * a picture.
+ */
+export function frameDataOf(doc) {
+  const pv = doc.pivot || { x: 0, y: 0 };
+  const clips = {};
+  for (const action of actionsOf(doc)) {
+    const c = { holds: [], cells: [], ship: [], total: 0, hits: [], spawns: [] };
+    let step = 0;
+    framesOf(doc, action).forEach((f, i) => {
+      c.holds.push(f.hold);
+      c.cells.push(f.at);
+      c.ship.push(f.status === 'ready' || f.status === 'draft');
+      if (f.hit) {
+        c.hits.push({
+          frame: i, step, len: f.hold,
+          ...(f.hit === true ? {} : { x: f.hit.x - pv.x, y: f.hit.y - pv.y, w: f.hit.w, h: f.hit.h }),
+        });
+      }
+      if (f.spawn) c.spawns.push({ frame: i, step, x: f.spawn.x - pv.x, y: f.spawn.y - pv.y });
+      step += f.hold;
+    });
+    c.total = step;
+    clips[action] = c;
+  }
+  return { grid: { w: doc.w, h: doc.h }, pivot: doc.pivot ? { ...doc.pivot } : null, clips };
+}
+
+/**
+ * WHAT KIND OF CLIP THE CODE EXPECTS. The registry (src/data/weapon-art.js)
+ * gives every clip one of these; `checkFrameData` holds the file to it.
+ */
+export const CLIP_KINDS = {
+  hit: 'plays once; exactly one frame carries hit=x,y,w,h — the step it connects and its hit area',
+  loop: 'loops for as long as the move lasts; no hit',
+  once: 'plays once, and its length is how long the thing lasts; no hit',
+  grow: 'plays once; starts with frames marked with a bare hit (they hurt), then frames without (they stand)',
+  still: 'a single frame; no hit',
+};
+
+/**
+ * Every way this sheet breaks its contract, in plain words — empty when it is
+ * sound. `spec` is `{ grid: { w, h }, clips: { name: kind } }`.
+ *
+ * THIS IS THE CHECK A HANDOFF HAS TO PASS to go straight in, by the owner's
+ * call. It looks only at SHAPE — the clips the code plays are there, each is
+ * the kind the code expects, every hit area and point is on the paper. It does
+ * not judge timing: a move that now hits two steps later is a change the owner
+ * reads about afterwards, not an error.
+ */
+export function checkFrameData(doc, spec) {
+  const out = [];
+  const W = doc.w, H = doc.h;
+  if (spec.grid && (W !== spec.grid.w || H !== spec.grid.h)) {
+    out.push(`the sheet is ${W}x${H} pixels; it has to be ${spec.grid.w}x${spec.grid.h}`);
+  }
+  if (!doc.pivot) out.push('it has no `pivot` line — the pixel the game holds it by');
+  else if (doc.pivot.x < 0 || doc.pivot.y < 0 || doc.pivot.x > W || doc.pivot.y > H) {
+    out.push(`its pivot (${doc.pivot.x}, ${doc.pivot.y}) is off the ${W}x${H} sheet`);
+  }
+  const on = (r) => r.x >= 0 && r.y >= 0 && r.w >= 1 && r.h >= 1 && r.x + r.w <= W && r.y + r.h <= H;
+  const have = actionsOf(doc);
+  for (const name of Object.keys(spec.clips)) {
+    if (!have.includes(name)) out.push(`clip '${name}' is missing — the game plays it`);
+  }
+  for (const name of have) {
+    const kind = spec.clips[name];
+    if (!kind) { out.push(`clip '${name}' is not one the game plays (${Object.keys(spec.clips).join(', ')})`); continue; }
+    const fr = framesOf(doc, name);
+    const rects = fr.filter((f) => f.hit && f.hit !== true);
+    const bares = fr.filter((f) => f.hit === true);
+    for (const f of fr) {
+      if (f.hit && f.hit !== true && !on(f.hit)) {
+        out.push(`${name} ${f.index}: its hit area ${f.hit.x},${f.hit.y},${f.hit.w},${f.hit.h} is not inside the ${W}x${H} sheet`);
+      }
+      if (f.spawn && (f.spawn.x < 0 || f.spawn.y < 0 || f.spawn.x > W || f.spawn.y > H)) {
+        out.push(`${name} ${f.index}: its spawn point ${f.spawn.x},${f.spawn.y} is off the sheet`);
+      }
+    }
+    if (kind === 'hit') {
+      if (rects.length !== 1) out.push(`${name} needs exactly one frame with a hit area (hit=x,y,w,h); it has ${rects.length}`);
+      if (bares.length) out.push(`${name}: a bare 'hit' means nothing here — give it a hit area`);
+    } else if (kind === 'grow') {
+      const lead = fr.findIndex((f) => !f.hit);
+      if (rects.length) out.push(`${name}: a spike's hit is its own shape — mark growing frames with a bare 'hit'`);
+      if (!fr.length || !fr[0].hit) out.push(`${name} has to start with at least one frame marked 'hit' (growing)`);
+      else if (lead < 0) out.push(`${name} has to end with at least one frame not marked 'hit' (standing)`);
+      else if (fr.slice(lead).some((f) => f.hit)) out.push(`${name}: every 'hit' frame has to come before the first standing one`);
+    } else {
+      if (rects.length || bares.length) out.push(`${name} is a ${kind} clip and cannot carry a hit`);
+      if (kind === 'still' && fr.length !== 1) out.push(`${name} is a single picture; it has ${fr.length} frames`);
+    }
+  }
+  return out;
+}
+
 export function serialize(doc) {
   renumber(doc);
   const out = [`# ${doc.id}`];
   out.push(`grid      ${doc.w}x${doc.h}`);
   out.push(`fudge     ${doc.fudgeW.toFixed(2)} x ${doc.fudgeH.toFixed(2)}`);
+  if (doc.pivot) out.push(`pivot     ${doc.pivot.x} ${doc.pivot.y}`);
   for (const p of doc.palette || []) out.push(`palette   ${p.key} ${p.hex}${p.name ? ` ${p.name}` : ''}`);
   if (doc.note) out.push(`note      ${doc.note}`);
   for (const f of doc.frames) {
@@ -272,7 +417,11 @@ export function serialize(doc) {
     // feature does not rewrite every existing file — `serialize(parse(x)) === x`
     // is the guarantee tests/sprites.test.js holds this format to.
     const sfx = f.sfx ? ` sfx=${f.sfx}` : '';
-    out.push('', `[${f.action} ${f.index}] status=${f.status} hold=${f.hold}${sfx}`, ...f.rows);
+    // Frame data, likewise only when present.
+    const hit = f.hit === true ? ' hit'
+      : f.hit ? ` hit=${f.hit.x},${f.hit.y},${f.hit.w},${f.hit.h}` : '';
+    const spawn = f.spawn ? ` spawn=${f.spawn.x},${f.spawn.y}` : '';
+    out.push('', `[${f.action} ${f.index}] status=${f.status} hold=${f.hold}${sfx}${hit}${spawn}`, ...f.rows);
   }
   out.push('');
   return out.join('\n');
@@ -520,8 +669,10 @@ export function resizeDoc(doc, w, h) {
 export function mergeSprite(theirs, mine, base) {
   const T = parse(theirs), M = parse(mine), B = parse(base);
   const at = (f) => `${f.action}\u0000${f.index}`;
+  const data = (f) => JSON.stringify([f.hit ?? null, f.spawn ?? null]);
   const same = (a, b) => a && b
     && a.status === b.status && a.hold === b.hold && (a.sfx || '') === (b.sfx || '')
+    && data(a) === data(b)
     && a.rows.join('\n') === b.rows.join('\n');
 
   const bIx = new Map(B.frames.map((f) => [at(f), f]));
@@ -531,7 +682,13 @@ export function mergeSprite(theirs, mine, base) {
     const key = at(f);
     if (same(bIx.get(key), f)) continue;      // untouched here — nothing to contribute
     const there = tIx.get(key);
-    if (there) Object.assign(there, { status: f.status, hold: f.hold, sfx: f.sfx, rows: f.rows });
+    if (there) {
+      Object.assign(there, { status: f.status, hold: f.hold, sfx: f.sfx, rows: f.rows });
+      // Frame data moves with the frame it was drawn on, as the pixels do.
+      for (const k of ['hit', 'spawn']) {
+        if (f[k] === undefined) delete there[k]; else there[k] = f[k];
+      }
+    }
     else T.frames.push(f);                    // a frame added here since the last save
   }
   // The dials, the note and the palette belong to whoever moved them, same rule.
@@ -539,6 +696,7 @@ export function mergeSprite(theirs, mine, base) {
     if (M[k] !== B[k]) T[k] = M[k];
   }
   if (JSON.stringify(M.palette) !== JSON.stringify(B.palette)) T.palette = M.palette;
+  if (JSON.stringify(M.pivot) !== JSON.stringify(B.pivot)) T.pivot = M.pivot;
   renumber(T);
   return serialize(T);
 }

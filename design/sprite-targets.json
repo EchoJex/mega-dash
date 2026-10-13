@@ -2283,6 +2283,134 @@
       ]
     }
   },
+  "weapons": {
+    "weapon-quake_hammer-held": {
+      "label": "QUAKE HAMMER · HELD",
+      "cls": "weapon",
+      "key": "weapon:quake_hammer:held",
+      "weapon": "quake_hammer",
+      "sheet": "held",
+      "boss": "quake",
+      "layer": "held",
+      "grid": {
+        "w": 56,
+        "h": 56
+      },
+      "box": null,
+      "clips": {
+        "jabOne": "hit",
+        "jabTwo": "hit",
+        "jabThree": "hit",
+        "charge": "loop",
+        "chargeFull": "loop",
+        "swing": "hit",
+        "dive": "loop"
+      },
+      "frames": [
+        "jabOne",
+        "jabTwo",
+        "jabThree",
+        "charge",
+        "chargeFull",
+        "swing",
+        "dive"
+      ]
+    },
+    "weapon-quake_hammer-dust": {
+      "label": "QUAKE HAMMER · DUST",
+      "cls": "weapon",
+      "key": "weapon:quake_hammer:dust",
+      "weapon": "quake_hammer",
+      "sheet": "dust",
+      "boss": "quake",
+      "layer": "effects",
+      "grid": {
+        "w": 64,
+        "h": 40
+      },
+      "box": null,
+      "clips": {
+        "small": "hit",
+        "medium": "hit",
+        "large": "hit"
+      },
+      "frames": [
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "weapon-quake_hammer-puff": {
+      "label": "QUAKE HAMMER · PUFF",
+      "cls": "weapon",
+      "key": "weapon:quake_hammer:puff",
+      "weapon": "quake_hammer",
+      "sheet": "puff",
+      "boss": "quake",
+      "layer": "effects",
+      "grid": {
+        "w": 12,
+        "h": 12
+      },
+      "box": null,
+      "clips": {
+        "tell": "once",
+        "block": "once"
+      },
+      "frames": [
+        "tell",
+        "block"
+      ]
+    },
+    "weapon-quake_hammer-spike": {
+      "label": "QUAKE HAMMER · SPIKE",
+      "cls": "weapon",
+      "key": "weapon:quake_hammer:spike",
+      "weapon": "quake_hammer",
+      "sheet": "spike",
+      "boss": "quake",
+      "layer": "effects",
+      "grid": {
+        "w": 60,
+        "h": 50
+      },
+      "box": null,
+      "clips": {
+        "flat": "grow",
+        "low": "grow",
+        "high": "grow",
+        "steep": "grow"
+      },
+      "frames": [
+        "flat",
+        "low",
+        "high",
+        "steep"
+      ]
+    },
+    "weapon-quake_hammer-sand": {
+      "label": "QUAKE HAMMER · SAND",
+      "cls": "weapon",
+      "key": "weapon:quake_hammer:sand",
+      "weapon": "quake_hammer",
+      "sheet": "sand",
+      "boss": "quake",
+      "layer": "effects",
+      "grid": {
+        "w": 4,
+        "h": 4
+      },
+      "box": null,
+      "clips": {
+        "light": "still",
+        "dark": "still"
+      },
+      "frames": [
+        "light",
+        "dark"
+      ]
+    }
+  },
   "avgBoss": {
     "scale": 1.69,
     "box": {

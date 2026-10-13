@@ -204,5 +204,11 @@ export const DEPTH = {
   minions: 40,
   bullets: 50,
   boss: 60,
+  // A weapon's dust, spikes and sand (weapon art, `effects` layer): over the
+  // boss so a cloud on him shows, under the player so it never hides him.
+  effects: 70,
   player: 100,
+  // The weapon IN HIS HAND (weapon art, `held` layer). It is part of him, so
+  // it sits just in front of his body rather than behind it.
+  held: 101,
 };

@@ -432,20 +432,30 @@ export const WEAPON_LADDERS = {
   //       landing on the ground where he lands.
   // No stun anywhere, and no floor shockwaves, by the owner's call.
   //
-  // FRAME NUMBERS ARE STEPS (60 a second), the same count Smash uses, read
-  // from SmashWiki's pages for Dedede in Ultimate. A jab:
-  //   hit    the step its hitbox comes out
-  //   open..close  the steps in which a press carries on into the next jab
-  //   total  the step the player can act again
-  // Jab 1 is SmashWiki's 10 / 13-30 / 33 and jab 2 its 11 / 18-27 / 28. Jab 3
-  // is the finisher Dedede ends his rapid jab with: it hits 4 steps in and
-  // lets go on 50. A jab's `hit` is counted from the PRESS, so the wait for a
-  // tap to be recognised as a tap never makes it late.
+  // THE MOVES' TIMING AND HIT AREAS ARE NOT HERE. They are drawn into the
+  // hammer's sprite sheets (design/sprites/weapon-quake_hammer-*.sprite) and
+  // read back from src/data/frame-data.json, so the art and the moment it hits
+  // cannot drift apart. They started as Smash Ultimate's numbers for Dedede,
+  // read off SmashWiki, in steps (60 a second, the count Smash uses too):
+  //   jab 1 hits on step 10 and lets go on 33; jab 2, 11 and 28; the finisher,
+  //   4 and 50. The swing is Jet Hammer's: it hits 10 steps after release and
+  //   lets go on 70 at full charge.
+  // Every one of those can now move when the art is redrawn (by the owner's
+  // call, a handoff's changes go in when the checks pass, and the owner reads
+  // the list afterwards). `design/weapon-art/quake_hammer.md` has the current
+  // values, regenerated from the files.
   //
-  // The swing is Jet Hammer's: full charge in 120 steps (2 seconds), the hit
-  // 10 steps after release (9 at full charge), free again at 60 (70 at full).
-  // `holdFrames` is the time from press to full charge; the rungs above shorten
-  // it ("faster", then "significantly increased").
+  // What stays here is what is not animation:
+  //   open..close  the steps of a jab in which a press carries on into the next
+  //                jab — SmashWiki's 13-30 for jab 1, 18-27 for jab 2
+  //   holdFrames   press to full charge (Jet Hammer's 2 seconds at Lv1); the
+  //                rungs above shorten it ("faster", then "significantly")
+  //   fullSooner   a full charge's swing starts this many steps in, so it
+  //                lands a step sooner, as Jet Hammer's does
+  //   weakShorter  an uncharged swing lets go this many steps before the end
+  //                of its clip, closing to the whole clip at full charge
+  // A jab's hit is counted from the PRESS, so the wait for a tap to be
+  // recognised as a tap never makes it late.
   //
   // MOVEMENT while the hammer is busy, as a share of normal speed: 0 is rooted
   // (no walking and no turning), 0.5 is walking speed, 1 is full speed.
@@ -453,15 +463,12 @@ export const WEAPON_LADDERS = {
     1: {
       tapFrames: 9,
       jab: [
-        { hit: 10, open: 13, close: 30, total: 33, reach: 22, dmg: 'lowMedium', knock: 1.2 },
-        { hit: 11, open: 18, close: 27, total: 28, reach: 22, dmg: 'lowMedium', knock: 1.4 },
-        { hit: 4, total: 50, reach: 26, dmg: 'medium', knock: 3.4, launch: 2 },
+        { open: 13, close: 30, dmg: 'lowMedium', knock: 1.2 },
+        { open: 18, close: 27, dmg: 'lowMedium', knock: 1.4 },
+        { dmg: 'medium', knock: 3.4, launch: 2 },
       ],
       holdFrames: 120,
-      swing: { hit: 10, hitFull: 9, total: 60, totalFull: 70 },
-      // The swing's reach, which is also what `npm run sim` reads as the range
-      // to stand at.
-      reach: 24,
+      swing: { fullSooner: 1, weakShorter: 10 },
       // Jet Hammer climbs from its uncharged damage toward full and then jumps
       // to full damage only at full charge (12% rising toward 30%, then 40%).
       // `partialShare` is that "toward": how far up a nearly-full charge gets.
@@ -478,15 +485,18 @@ export const WEAPON_LADDERS = {
     3: {
       holdFrames: 90,
       jabMove: 0.5, chargeMove: 0.5,
-      // Small below half a charge, medium up to full, large only at full.
-      cloud: { radius: [10, 16, 24], dmg: 'low', knock: 1 },
+      // Small below half a charge, medium up to full, large only at full. How
+      // big each is, how long it lasts and where it hurts are its clip's.
+      cloud: { dmg: 'low', knock: 1 },
       fullTell: true,
     },
     6: { holdFrames: 45, jabMove: 1 },
     10: {
+      // One spike per angle, shallowest first; each angle has its own clip in
+      // the spike sheet, which says how long it grows (and hurts) and stands.
       spikes: {
         angles: [24, 38, 52, 66], lens: [58, 64, 54, 42],
-        grow: 5, stand: 30, dmg: 'medium', knock: 2.6, launch: 2.4,
+        dmg: 'medium', knock: 2.6, launch: 2.4,
         // Each grain of sand vanishes at its own random moment, 0.1s to 3s.
         sandMin: 6, sandMax: 180,
       },

@@ -18,6 +18,9 @@
     "sprites:build": "node tools/sprites-build.mjs",
     "sprites:geo": "node tools/geo-sprites.mjs",
     "sprites:ship": "node tools/sprites-ship.mjs",
+    "art:placeholders": "node tools/art-placeholders.mjs",
+    "design:import": "node tools/design-import.mjs",
+    "art:brief": "node tools/art-brief.mjs",
     "glossary": "node tools/glossary-shots.mjs",
     "sprite-import-test": "node tools/sprite-import-test.mjs",
     "music": "node tools/music-pack.mjs"

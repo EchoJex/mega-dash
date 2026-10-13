@@ -34,6 +34,8 @@ import { encodePng } from './png.mjs';
 // The rooms themselves, so furniture sizes are measured rather than described.
 import { makeArena } from '../src/systems/arena.js';
 import { BOSS_BY_ID } from '../src/data/bosses.js';
+// The weapon sheets the code plays, so their paper is the registry's.
+import { weaponSheets } from '../src/data/weapon-art.js';
 
 // The PNG writer lives in tools/png.mjs — one copy, shared with
 // tools/sprites-build.mjs, which carried a verbatim duplicate of it.
@@ -675,6 +677,29 @@ const targets = {
     grid: f.grid, box: null, spare: f.spare,
     frames: ['idle0'],
   }])),
+  /**
+   * WEAPON ART — a weapon drawn as its own sheets (the hammer in his hand, the
+   * dust it throws up), straight from `src/data/weapon-art.js`.
+   *
+   * These carry FRAME DATA: the game reads each move's timing and hit area out
+   * of the `.sprite` file, so `clips` says what the code will ask for and of
+   * which kind, and the build refuses a file that does not answer. Like a
+   * shot, no per-actor hurtbox: a weapon is not something that gets hit.
+   *
+   * `frames` is one name per clip — only what a blank sheet opens with. The
+   * real frame lists, holds and hit areas are the files' own.
+   */
+  weapons: Object.fromEntries(weaponSheets().map((w) => {
+    const owner = weaponRows.find((r) => r.id === w.weapon);
+    if (!owner) throw new Error(`weapon art for '${w.weapon}', which is not in data/weapons.js`);
+    return [w.id, {
+      label: `${owner.name} · ${w.sheet.toUpperCase()}`, cls: 'weapon', key: w.key,
+      weapon: w.weapon, sheet: w.sheet, boss: owner.boss, layer: w.layer,
+      grid: { ...w.grid }, box: null,
+      clips: { ...w.clips },
+      frames: Object.keys(w.clips),
+    }];
+  })),
   /**
    * THE FUDGE DEFAULT, MEASURED RATHER THAN CHOSEN.
    *

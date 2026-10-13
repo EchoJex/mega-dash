@@ -5,10 +5,12 @@
  * from the press, three of them chain inside Smash's windows, a hold is a
  * charge, the swing lands after release, what each rung lets the player do
  * while swinging, the Lv3 dust cloud, the Lv10 spikes that hurt only while
- * growing and then block, and the sand they turn into. Frame counts and damage
- * are read OUT of the ladder rather than written here, because they are the
- * owner's to tune — what this checks is that the hammer obeys whatever they
- * say. tests/weapons.test.js already runs the weapon for thousands of steps.
+ * growing and then block, and the sand they turn into. Frame counts, hit
+ * areas and damage are read OUT of the hammer's frame data and ladder rather
+ * than written here, because they are the owner's and the art's to change —
+ * a redrawn sheet that moves a hit by two steps must still pass. What this
+ * checks is that the hammer obeys whatever they say. tests/weapons.test.js
+ * already runs the weapon for thousands of steps.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,6 +18,7 @@ import {
   ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS,
 } from '../src/data/weapons.js';
 import * as Wpn from '../src/systems/weaponry.js';
+import { clipOf, growStepsOf, areaAt, pointAt } from '../src/systems/frame-data.js';
 
 const ID = 'quake_hammer';
 const FLOOR = 184;
@@ -69,6 +72,38 @@ function rig({ level = 1, onGround = true, over = true } = {}) {
 
 const L1 = ladderAt(ID, 1);
 const L10_HOLD = () => ladderAt(ID, 10).holdFrames;
+
+/**
+ * THE MOVES' TIMING, AS THE ART SAYS IT — the hammer's sheets, through
+ * src/data/frame-data.json. Each jab carries the ladder's windows and words
+ * plus the step its frame data hits on and the step it lets go.
+ */
+const HELD = 'weapon:quake_hammer:held';
+const held = (name) => clipOf(HELD, name);
+const JAB = L1.jab.map((j, i) => {
+  const c = held(['jabOne', 'jabTwo', 'jabThree'][i]);
+  return { ...j, hit: c.hits[0].step, total: c.total };
+});
+const SWING = (() => {
+  const c = held('swing'), sw = L1.swing;
+  return {
+    hit: c.hits[0].step, hitFull: c.hits[0].step - sw.fullSooner,
+    total: c.total - sw.weakShorter, totalFull: c.total - sw.fullSooner,
+  };
+})();
+/** Spikes may each be timed differently: the first to stop growing, the last to fall. */
+const SP = (() => {
+  const cs = ['flat', 'low', 'high', 'steep'].map((n) => clipOf('weapon:quake_hammer:spike', n));
+  return {
+    grow: Math.max(...cs.map(growStepsOf)),
+    endMin: Math.min(...cs.map((c) => c.total)),
+    endMax: Math.max(...cs.map((c) => c.total)),
+  };
+})();
+/** His hand, facing right, for a player whose box starts at `p`. */
+const gripAt = (p) => ({ x: p.x + 17, y: p.y + 12 });
+const isCloud = (d) => d.sheet === 'dust';
+const isPuff = (d) => d.sheet === 'puff';
 const base = (lv) => damageAtLevel(weaponOf(ID), lv);
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 
@@ -81,7 +116,7 @@ test('a tap is jab 1, landing on its hit frame counted from the PRESS', () => {
     r.press(held);
     r.steps(30);
     assert.equal(r.hits.length, 1, `held ${held}`);
-    assert.equal(r.hits[0].at - pressedAt, L1.jab[0].hit, `held ${held}: the wait to know it was a tap is not added`);
+    assert.equal(r.hits[0].at - pressedAt, JAB[0].hit, `held ${held}: the wait to know it was a tap is not added`);
   }
   // Pressed and released between two steps: the game reports 0 steps held.
   const r = rig();
@@ -89,12 +124,12 @@ test('a tap is jab 1, landing on its hit frame counted from the PRESS', () => {
   const at = r.run.frame;
   Wpn.fireActive(r.ctx, ID, 0);
   r.steps(30);
-  assert.equal(r.hits[0].at - at, L1.jab[0].hit);
+  assert.equal(r.hits[0].at - at, JAB[0].hit);
 });
 
 test('three taps chain jab, jab, finisher inside the windows', () => {
   const r = rig();
-  const [j1, j2, j3] = L1.jab;
+  const [j1, j2, j3] = JAB;
   const P = r.run.frame + 1;
   r.press(2);                       // jab 1
   r.press(2);                       // pressed early: kept until jab 1's window opens
@@ -120,7 +155,7 @@ test('there is no rapid jab and no fourth jab', () => {
   const r2 = rig();
   r2.press(2); r2.press(2); r2.steps(15); r2.press(2);
   assert.equal(r2.st().act.move, 'jab2');
-  r2.steps(L1.jab[1].open);
+  r2.steps(JAB[1].open);
   assert.equal(r2.st().act.move, 'jab3');
   r2.press(2);                               // early in the finisher: too early to buffer
   r2.steps(80);
@@ -130,7 +165,7 @@ test('there is no rapid jab and no fourth jab', () => {
 
 test('a press after the window closes starts jab 1 over, not jab 2', () => {
   const r = rig();
-  const j1 = L1.jab[0];
+  const j1 = JAB[0];
   const P = r.run.frame + 1;
   r.press(1);
   r.steps(j1.close - 1);                     // pressed just after the window shuts
@@ -141,6 +176,47 @@ test('a press after the window closes starts jab 1 over, not jab 2', () => {
   assert.equal(r.hits.length, 2);
   assert.equal(r.hits[1].at - P, j1.total + j1.hit, 'a fresh jab 1, the moment the hammer is free');
   assert.equal(r.hits[1].opts.knockback, j1.knock, 'jab 1, not jab 2');
+});
+
+/**
+ * THE LADDER AND THE ART HAVE TO AGREE. The chain's windows are the ladder's
+ * (input rules, not animation), the moves' timing is the art's — so a redrawn
+ * jab must still hit before its window opens and last until it closes, or the
+ * chain would carry on from a jab that is already over.
+ */
+test('each jab still fits its chain window, and the swing its charge rules', () => {
+  JAB.forEach((j, i) => {
+    if (j.open === undefined) return;
+    assert.ok(j.hit < j.open, `jab ${i + 1} hits on ${j.hit}, after its window opens (${j.open})`);
+    assert.ok(j.open <= j.close && j.close <= j.total,
+      `jab ${i + 1} lasts ${j.total} steps but its window runs to ${j.close}`);
+  });
+  const c = held('swing');
+  assert.ok(L1.swing.fullSooner < c.hits[0].step, 'a full charge cannot start past the swing\'s hit');
+  assert.ok(c.hits[0].step < c.total - L1.swing.weakShorter, 'a weak swing must not let go before it lands');
+});
+
+/**
+ * THE ONE RULE A REDRAWN HIT AREA HAS TO KEEP. The art may move any hit area
+ * (the owner's call: a handoff's changes go in when the checks pass), but
+ * every blow has to connect with the smallest thing that walks up to him — a
+ * minion standing against his front, on either side. A hit area drawn
+ * entirely over its head is a hammer that whiffs on the weather.
+ */
+test('every jab and the swing reach a minion standing right against him, either way he faces', () => {
+  const p = { x: 100, y: FLOOR - 24 };
+  for (const facing of [1, -1]) {
+    const g = { x: p.x + 12 + facing * 5, y: p.y + 12 };
+    // His collision box is the middle 12 of his 24; the minion touches it.
+    const minion = { x: facing > 0 ? p.x + 18 : p.x - 6, y: FLOOR - 12, w: 12, h: 12 };
+    for (const name of ['jabOne', 'jabTwo', 'jabThree', 'swing']) {
+      const b = areaAt(held(name).hits[0], g.x, g.y, facing);
+      const meets = b.x < minion.x + minion.w && b.x + b.w > minion.x
+        && b.y < minion.y + minion.h && b.y + b.h > minion.y;
+      assert.ok(meets, `${name} facing ${facing > 0 ? 'right' : 'left'}: its hit area `
+        + `(${b.x - g.x}, ${b.y - g.y}, ${b.w}x${b.h} from his hand) misses a minion against his front`);
+    }
+  }
 });
 
 // ── Charge and swing ────────────────────────────────────────────────
@@ -156,7 +232,7 @@ test('a hold charges instead of jabbing, and the swing lands after release', () 
   assert.equal(r.st().act.move, 'swing');
   r.steps(80);
   assert.equal(r.hits.length, 1);
-  assert.equal(r.hits[0].at - released, L1.swing.hit);
+  assert.equal(r.hits[0].at - released, SWING.hit);
 });
 
 test('a full charge lands sooner and is the heaviest blow; damage follows the words', () => {
@@ -167,7 +243,7 @@ test('a full charge lands sooner and is the heaviest blow; damage follows the wo
   Wpn.fireActive(r.ctx, ID, L1.holdFrames);
   const released = r.run.frame;
   r.steps(80);
-  assert.equal(r.hits[0].at - released, L1.swing.hitFull);
+  assert.equal(r.hits[0].at - released, SWING.hitFull);
   assert.ok(near(r.hits[0].dmg, base(1) * DAMAGE_WORDS[L1.swingDmgFull]), 'full charge is the heavy word');
 
   const half = rig();
@@ -175,7 +251,7 @@ test('a full charge lands sooner and is the heaviest blow; damage follows the wo
   half.steps(80);
   const jab = rig();
   jab.press(1); jab.steps(30);
-  assert.ok(near(jab.hits[0].dmg, base(1) * DAMAGE_WORDS[L1.jab[0].dmg]), 'a jab is its word');
+  assert.ok(near(jab.hits[0].dmg, base(1) * DAMAGE_WORDS[JAB[0].dmg]), 'a jab is its word');
   assert.ok(r.hits[0].dmg > half.hits[0].dmg && half.hits[0].dmg > jab.hits[0].dmg,
     'full > half charge > jab');
   assert.ok(DAMAGE_WORDS.heavy > DAMAGE_WORDS.medium && DAMAGE_WORDS.medium > DAMAGE_WORDS.lowMedium);
@@ -199,9 +275,9 @@ test('letting go any way but a release drops the charge', () => {
 test('holding through a jab does not count toward the charge', () => {
   const r = rig();
   r.press(1);                                // jab 1 under way
-  r.holdFor(L1.jab[0].total + 5);            // held from inside the jab
+  r.holdFor(JAB[0].total + 5);               // held from inside the jab
   assert.equal(r.st().charging, true);
-  assert.ok(r.st().chargeF < L1.jab[0].total, 'the charge began only once the hammer was free');
+  assert.ok(r.st().chargeF < JAB[0].total, 'the charge began only once the hammer was free');
 });
 
 // ── Movement, rung by rung ──────────────────────────────────────────
@@ -227,7 +303,7 @@ test('the runtime asserts that movement every step, and lets go after', () => {
     assert.equal(r.run.moveScale, L.jabMove, `Lv${lv} jab`);
     r.steps(5);
     assert.equal(r.run.moveScale, L.jabMove, `Lv${lv} still jabbing`);
-    r.steps(L.jab[0].total);
+    r.steps(JAB[0].total);
     assert.equal(r.run.moveScale, 1, `Lv${lv} free again`);
     r.holdFor(L.tapFrames + 3);
     assert.equal(r.run.moveScale, L.chargeMove, `Lv${lv} charging`);
@@ -250,9 +326,9 @@ test('the swing plants the player: no walking, turning or jumping until it is ov
   assert.equal(r.run.planted, true);
   assert.equal(r.run.moveScale, 0);
   assert.equal(r.player.jumpBuffer, 0, 'the early jump is thrown away, not saved for mid-swing');
-  r.steps(L1.swing.total - 2);
+  r.steps(SWING.total - 2);
   assert.equal(r.run.planted, true, 'all the way through the swing');
-  r.steps(L1.swing.totalFull);
+  r.steps(SWING.totalFull);
   assert.equal(r.run.planted, false, 'and free again after');
 });
 
@@ -276,7 +352,7 @@ test('a charge let go in the air dives, and the swing lands where the player doe
   r.step();
   assert.equal(r.st().diving, null);
   assert.equal(r.st().act.move, 'swing', 'the swing plays out from its hit');
-  const cloud = r.fx.dust.find((d) => !d.puff);
+  const cloud = r.fx.dust.find(isCloud);
   assert.ok(cloud, 'it lands with a cloud');
   assert.equal(cloud.y, r.player.y + 24, 'on the ground');
   assert.ok(L.airDive);
@@ -336,23 +412,38 @@ test('from Lv3 a full charge puffs dust round the hammer head, and not before', 
   r.holdFor(L.holdFrames - 5);
   assert.equal(r.fx.dust.length, 0);
   r.holdFor(20);
-  assert.ok(r.fx.dust.filter((d) => d.puff).length >= 4, 'an obvious burst');
+  assert.ok(r.fx.dust.filter(isPuff).length >= 4, 'an obvious burst');
 });
 
 test('from Lv3 the cloud is small, medium or large by how long it was held', () => {
   const L = ladderAt(ID, 3);
   const span = L.holdFrames - L.tapFrames;
-  const radius = (n) => swingAndLook(3, n).fx.dust.find((d) => !d.puff).r;
-  const small = radius(L.tapFrames + Math.round(span * 0.25));
-  const medium = radius(L.tapFrames + Math.round(span * 0.75));
-  const large = radius(L.holdFrames);
-  assert.deepEqual([small, medium, large], L.cloud.radius);
+  const size = (n) => swingAndLook(3, n).fx.dust.find(isCloud).clip;
+  const small = size(L.tapFrames + Math.round(span * 0.25));
+  const medium = size(L.tapFrames + Math.round(span * 0.75));
+  const large = size(L.holdFrames);
+  assert.deepEqual([small, medium, large], ['small', 'medium', 'large']);
+  // Each lasts as long as its own clip.
+  for (const c of [small, medium, large]) {
+    const d = swingAndLook(3, c === 'small' ? L.tapFrames + 5 : c === 'medium'
+      ? L.tapFrames + Math.round(span * 0.75) : L.holdFrames).fx.dust.find(isCloud);
+    assert.equal(d.life, clipOf('weapon:quake_hammer:dust', c).total);
+  }
 });
 
 test('the cloud hurts what is caught in it, but not the enemy the hammer hit', () => {
   const L = ladderAt(ID, 3);
   const r = rig({ level: 3 });
-  const other = r.mk(r.player.x + 12 + L.reach + 8, FLOOR - 12);
+  // Somewhere the full charge's cloud reaches and the hammer's own hit area
+  // does not, worked out from the art's own areas.
+  const g = gripAt(r.player), sh = held('swing').hits[0];
+  const swingBox = areaAt(sh, g.x, g.y, 1);
+  const sp = held('swing').spawns[0];
+  const land = pointAt(sp, g.x, g.y, 1);
+  const cloudBox = areaAt(clipOf('weapon:quake_hammer:dust', 'large').hits[0], land.x, FLOOR, 1);
+  const x = swingBox.x + swingBox.w;
+  assert.ok(x < cloudBox.x + cloudBox.w, 'the full cloud reaches past the hammer');
+  const other = r.mk(x, FLOOR - 12);
   r.ctx.enemies.push(other);
   r.press(L.holdFrames);
   r.steps(20);
@@ -367,10 +458,10 @@ test('with no ground under the hammer, the cloud forms on the enemy it hit', () 
   const r = rig({ level: 3, over: false });  // standing at the lip of a pit
   r.press(30);
   r.steps(20);
-  const cloud = r.fx.dust.find((d) => !d.puff);
+  const cloud = r.fx.dust.find(isCloud);
   assert.ok(cloud, 'a cloud');
-  assert.ok(Math.abs(cloud.x - (r.enemy.x + 6)) < 4 && Math.abs(cloud.y - (r.enemy.y + 6)) < 4,
-    'at the enemy, not over the pit');
+  assert.ok(Math.abs(cloud.x - (r.enemy.x + 6)) < 1 && Math.abs(cloud.y - (r.enemy.y + 12)) < 1,
+    'billowing up from under the enemy, not over the pit');
 });
 
 test('nothing the hammer does stuns', () => {
@@ -390,9 +481,11 @@ const spikeRig = (opts = {}) => {
   const r = rig({ level: 10, ...opts });
   r.enemy.x = 500;
   r.press(L10.holdFrames);
-  r.steps(L10.swing.hitFull);
+  r.steps(SWING.hitFull);
   return r;
 };
+/** Where the swing meets the floor: the spikes' foot, for a player at `p`. */
+const footAt = (p) => pointAt(held('swing').spawns[0], gripAt(p).x, gripAt(p).y, 1);
 
 test('spikes come only at Lv10, only from a full charge, only where it met the ground', () => {
   const count = (lv, held, over = true) => swingAndLook(lv, held, { over }).fx.spikes.length;
@@ -408,23 +501,23 @@ test('a spike hurts only while it grows, once per enemy', () => {
   const r = rig({ level: 10 });
   const S = L10.spikes;
   // In the path of the lowest spike, a little way out from where it starts.
-  r.enemy.x = r.player.x + 12 + L10.reach + 16;
+  r.enemy.x = footAt(r.player).x + 19;
   r.enemy.y = FLOOR - 16;
   r.press(L10.holdFrames);
-  r.steps(L10.swing.hitFull + S.grow + 2);
+  r.steps(SWING.hitFull + SP.grow + 2);
   const spiked = r.hits.filter((h) => h.opts.launch === S.launch);
   assert.equal(spiked.length, 1, 'struck once while growing');
   // Walk a fresh enemy into a standing spike: it is blocked, never hurt.
   const late = r.mk(r.player.x + 70, FLOOR - 12, { def: { kind: 'ground' }, vx: -0.5 });
   r.ctx.enemies.push(late);
   const before = r.hits.length;
-  for (let i = 0; i < S.stand - 4; i++) { r.step(); late.x += late.vx; }
+  for (let i = 0; i < SP.endMin - SP.grow - 4; i++) { r.step(); late.x += late.vx; }
   assert.equal(r.hits.length, before, 'a standing spike deals no damage');
 });
 
 test('standing spikes stop enemy shots, but not the player\'s', () => {
   const r = spikeRig();
-  r.steps(L10.spikes.grow + 1);
+  r.steps(SP.grow + 1);
   const s = r.fx.spikes[0];
   const rad = (s.deg * Math.PI) / 180;
   const onSpike = { x: s.x + Math.cos(rad) * 20, y: s.y - Math.sin(rad) * 20 };
@@ -438,7 +531,7 @@ test('standing spikes stop enemy shots, but not the player\'s', () => {
 
 test('a standing spike turns a walking minion round', () => {
   const r = spikeRig();
-  r.steps(L10.spikes.grow + 1);
+  r.steps(SP.grow + 1);
   // A few pixels in front of where the lowest spike crosses its head height.
   const low = r.fx.spikes.reduce((a, s) => (s.deg < a.deg ? s : a));
   const top = FLOOR - 12;
@@ -446,7 +539,7 @@ test('a standing spike turns a walking minion round', () => {
   const walker = r.mk(crossAt + 4, top, { def: { kind: 'ground' }, vx: -0.6 });
   r.ctx.enemies.push(walker);
   let furthest = Infinity;
-  for (let i = 0; i < L10.spikes.stand - 4; i++) {
+  for (let i = 0; i < SP.endMin - SP.grow - 4; i++) {
     r.step();
     walker.x += walker.vx;                   // the minion's own walk, after the weapons
     furthest = Math.min(furthest, walker.x);
@@ -462,7 +555,7 @@ test('a boss is hurt by a growing spike, then walks through it and it goes to sa
   const boss = r.mk(low.x + 20, FLOOR - 30, { isBoss: true, w: 20, h: 30 });
   r.ctx.enemies.push(boss);
   const bossX = boss.x;
-  r.steps(S.grow + 1);
+  r.steps(SP.grow + 1);
   assert.equal(r.hits.filter((h) => h.e === boss && h.opts.launch === S.launch).length, 1,
     'hurt once while the spikes grew');
   assert.ok(r.fx.spikes.length < S.angles.length, 'the spikes he touches are gone');
@@ -473,9 +566,9 @@ test('a boss is hurt by a growing spike, then walks through it and it goes to sa
 test('after half a second standing, the spikes fall as sand that vanishes within 3s', () => {
   const r = spikeRig();
   const S = L10.spikes;
-  r.steps(S.grow + S.stand - 2);
+  r.steps(SP.endMin - 2);
   assert.equal(r.fx.spikes.length, S.angles.length, 'still standing');
-  r.steps(2);
+  r.steps(SP.endMax - SP.endMin + 2);
   assert.equal(r.fx.spikes.length, 0, 'crumbled');
   const grains = r.fx.sand.slice();
   assert.ok(grains.length > 20, 'a shower of sand');

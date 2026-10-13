@@ -49,7 +49,8 @@ const art = JSON.parse(readFileSync(join(REPO, 'src/data/sprite-art.json'), 'utf
 const targets = JSON.parse(readFileSync(join(REPO, 'design/sprite-targets.json'), 'utf8'));
 const targetOf = (id) => (id === 'player' ? targets.player
   : targets.minions.find((x) => x.id === id)
-  || targets.bosses[id] || targets.shots[id] || targets.pickups[id] || null);
+  || targets.bosses[id] || targets.shots[id] || targets.pickups[id]
+  || targets.furniture?.[id] || targets.menu?.[id] || targets.weapons?.[id] || null);
 
 /**
  * WHICH CLIP NAMES THE GAME CAN ASK FOR, PER ACTOR.
@@ -79,11 +80,16 @@ const PLAYER_STATES = [
   { sliding: false, onGround: false, vx: 0, vy: 5 },
 ];
 const { playerClip } = await import('../src/systems/assets.js');
+const { weaponSheets } = await import('../src/data/weapon-art.js');
 const CLIPS = {
   player: new Set(PLAYER_STATES.map(playerClip)),
   // GameScene picks these inline from the minion's plane of movement.
   spiglet: new Set(['walk']),
   drifter: new Set(['fly']),
+  // WEAPON ART names its clips in the registry, and the build refuses a sheet
+  // whose clips are not exactly those — so the registry IS the list the weapon
+  // code plays from (systems/weaponry.js asks for each by name).
+  ...Object.fromEntries(weaponSheets().map((w) => [w.key, new Set(Object.keys(w.clips))])),
 };
 const named = (key, action) => CLIPS[key]?.has(action) ?? false;
 

@@ -1,0 +1,20 @@
+# weapon-quake_hammer-sand
+grid      4x4
+fudge     0.70 x 1.00
+pivot     2 2
+palette   0 #0A0A12 outline
+palette   1 #D9B56A sand
+palette   2 #B8923F sand shade
+note      PLACEHOLDER — plain shapes painted by npm run art:placeholders. Redraw any frame; the clips, holds, hit areas and pivot are what the game plays.
+
+[light 1] status=ready hold=5
+....
+....
+..11
+....
+
+[dark 1] status=ready hold=5
+....
+....
+..2.
+....

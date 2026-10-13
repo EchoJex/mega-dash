@@ -464,6 +464,16 @@ function buildTargetList() {
   for (const [id, m] of Object.entries(targets.menu || {})) {
     menu(id, `${m.label}  ${m.grid.w}x${m.grid.h}`);
   }
+  /**
+   * WEAPON ART — a weapon drawn as its own sheets (src/data/weapon-art.js).
+   * These carry FRAME DATA: the game reads each move's timing and hit area out
+   * of the file, so the overlay below draws the grip (pivot) and the hit area
+   * of the frame on screen, and editing a hold here changes the game.
+   */
+  const weapons = group('WEAPON ART');
+  for (const [id, w] of Object.entries(targets.weapons || {})) {
+    weapons(id, `${w.label}  ${w.grid.w}x${w.grid.h}`);
+  }
 }
 
 /** Neither carries a collision box, so neither gets the box or the fudge dials. */
@@ -474,7 +484,7 @@ function buildTargetList() {
  * dials, or the MAX BOSS reference figure.
  */
 const isProp = (t) => t && (t.cls === 'shot' || t.cls === 'pickup'
-  || t.cls === 'furniture' || t.cls === 'menu');
+  || t.cls === 'furniture' || t.cls === 'menu' || t.cls === 'weapon');
 
 /**
  * A CONTACT ZONE IS NOT A HITBOX, AND THE FUDGE RUNS THE OTHER WAY.
@@ -495,7 +505,7 @@ function targetOf(id) {
   if (id === 'player') return targets.player;
   const m = targets.minions.find((x) => x.id === id);
   return m || targets.bosses[id] || targets.shots[id] || targets.pickups[id]
-    || targets.furniture?.[id] || targets.menu?.[id];
+    || targets.furniture?.[id] || targets.menu?.[id] || targets.weapons?.[id];
 }
 
 /**
@@ -1210,8 +1220,13 @@ function hintText() {
    */
   const mine = framesOf(doc, f.action);
   const steps = mine.reduce((n, x) => n + x.hold, 0);
+  // A weapon's move also says WHEN it hits, because that is the number a
+  // change of hold moves in the game (frame data; see the overlay in draw()).
+  let at = 0, hitAt = null;
+  for (const x of mine) { if (x.hit && hitAt === null) hitAt = at; at += x.hold; }
   const drift = ` · ${f.action}: ${mine.length} frame(s), `
-    + `${steps} steps (${(steps / 60).toFixed(2)}s per cycle)`;
+    + `${steps} steps (${(steps / 60).toFixed(2)}s per cycle)`
+    + (hitAt !== null ? ` · hits on step ${hitAt}` : '');
   if (!b) return `${doc.w}x${doc.h} grid · empty · ${engine}${drift}`;
   if (!t.box) return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · ${engine}${drift}`;
   return `${doc.w}x${doc.h} grid · silhouette ${b.w}x${b.h} · `
@@ -1738,6 +1753,29 @@ function draw() {
     if (box) {
       ctx.strokeStyle = '#f5d328'; ctx.lineWidth = 2;
       ctx.strokeRect(ox + box.x * z, oy + box.y * z, box.w * z, box.h * z);
+    }
+  }
+  /**
+   * FRAME DATA, drawn where the game reads it: the PIVOT (the pixel the game
+   * holds the sheet by — a grip, a spike's foot) as a cross, and on a frame
+   * that hits, its HIT AREA in red and its spawn point as a dot. Read-only
+   * here; they live on the frame's line in the file (`hit=x,y,w,h`).
+   */
+  if (view.boxes) {
+    const fr = doc.frames[frameIx];
+    if (doc.pivot) {
+      const cx = ox + doc.pivot.x * z, cy = oy + doc.pivot.y * z, k = Math.max(4, z);
+      ctx.strokeStyle = '#5ccdd5'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx - k, cy); ctx.lineTo(cx + k, cy);
+      ctx.moveTo(cx, cy - k); ctx.lineTo(cx, cy + k); ctx.stroke();
+    }
+    if (fr?.hit && fr.hit !== true) {
+      ctx.strokeStyle = '#ff4a32'; ctx.lineWidth = 2;
+      ctx.strokeRect(ox + fr.hit.x * z, oy + fr.hit.y * z, fr.hit.w * z, fr.hit.h * z);
+    }
+    if (fr?.spawn) {
+      ctx.fillStyle = '#ff4a32';
+      ctx.beginPath(); ctx.arc(ox + fr.spawn.x * z, oy + fr.spawn.y * z, Math.max(3, z / 2), 0, 7); ctx.fill();
     }
   }
   $('#hint').textContent = hintText();

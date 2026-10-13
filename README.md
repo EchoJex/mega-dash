@@ -139,6 +139,9 @@ it off and the game first asks DEV MODE or PLAYTESTER; pick PLAYTESTER for the s
 | `npm run sprites` | regenerate the pixel-exact drawing templates |
 | `npm run sprites:build` | `design/sprites/*.sprite` → the PNGs MANIFEST loads |
 | `npm run sprites:ship` | verify every `[draft]` frame reaches the game, mark it `[ready]` |
+| `npm run art:placeholders -- <weapon>` | paint a weapon's placeholder sheets, with its real timing and hit areas |
+| `npm run art:brief` | regenerate the numbers and the Claude Design prompt in `design/weapon-art/*.md` |
+| `npm run design:import -- <zip>` | bring a Claude Design handoff in: checked, built, tested, or put back |
 | `npm run tracker-test` | OPT-IN: drives the tracker app against a faked GitHub (~15s) |
 | `npm run apk` | local APK build (CI does this automatically) |
 

@@ -33,6 +33,7 @@
 import { FEEL } from '../config/feel.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
 import * as Attr from './attributes.js';
+import { clipOf, cellAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
 
 /** Frames of held fire that count as a long press. The tracker says 0.4s. */
 export const LONG_PRESS_FRAMES = 24;
@@ -786,8 +787,11 @@ function stepLunge(st, lv, ctx) {
 // ── QUAKE HAMMER — Ground, offensive ─────────────────────────────────
 /**
  * King Dedede's hammer: three quick jabs on taps, a Jet Hammer charge on a
- * hold. The ladder in data/weapons.js carries the owner's words, the frame
- * numbers and what each rung adds; this is only what those numbers do.
+ * hold. The ladder in data/weapons.js carries the owner's words and what each
+ * rung adds. THE MOVES THEMSELVES — how long each lasts, the step it hits on,
+ * and the area it hits — are drawn into the hammer's sprite sheets and read
+ * back from `src/data/frame-data.json` (src/data/weapon-art.js says which).
+ * Moving a hold or a hit area in the art moves the game with it.
  *
  * ONE BUTTON, DECIDED ON RELEASE. GameScene calls `hold` every step the button
  * is down and `fire` once when it comes up, with how many steps it was down.
@@ -810,24 +814,49 @@ function stepLunge(st, lv, ctx) {
  * and for the air dive. GameScene clears both every step, so a benched hammer
  * can never leave the player stuck.
  *
- * WHAT IS DRAWN IS READ, NEVER WRITTEN. `quakePose` is everything the picture
- * of the hammer needs — which move, how many steps into it, where the hand is
- * and which way the hammer points — and the dust, spikes and sand live in the
- * shared `fx`, so they finish even if the hammer is benched mid-effect.
- * `drawQuakeHammer` and `drawQuakeFx` are the only things that draw any of it,
- * so they are the two functions the real art replaces.
+ * WHAT IS DRAWN IS READ, NEVER WRITTEN. `quakePose` says which clip of the
+ * hammer's sheet is showing and how many steps into it; the dust, spikes and
+ * sand live in the shared `fx`, so they finish even if the hammer is benched
+ * mid-effect. `drawWeaponArt` is the only thing that draws any of it.
  */
 const BUFFER = 10;                       // steps a too-early press is kept for
-const POSES = {
-  // Degrees: 0 points forward, 90 straight up, 180 straight back.
-  // [where the move starts, where the hammer is on the hit, where it ends]
-  jab1: [60, -10, -25],                  // a short forward swing
-  jab2: [-30, 80, 95],                   // swung back up
-  jab3: [150, -30, -40],                 // the finisher: over the top and down
-  swing: [105, -25, -28],                // from overhead to the ground in front
+
+// The sheets, by MANIFEST key, and the clips the code plays — the registry in
+// src/data/weapon-art.js names the same ones, and the build holds the files to it.
+const HAMMER = 'weapon:quake_hammer:held';
+const DUST = 'weapon:quake_hammer:dust';
+const PUFF = 'weapon:quake_hammer:puff';
+const SPIKE = 'weapon:quake_hammer:spike';
+const SAND = 'weapon:quake_hammer:sand';
+const JAB_CLIPS = ['jabOne', 'jabTwo', 'jabThree'];
+const DUST_CLIPS = ['small', 'medium', 'large'];
+const SPIKE_CLIPS = ['flat', 'low', 'high', 'steep'];   // one per ladder angle, shallowest first
+
+/**
+ * THE PLAIN HAMMER — the shapes drawn when its sheet has nothing drawn, and
+ * the shapes `npm run art:placeholders` paints the placeholder sheet from.
+ * Nothing in how the hammer PLAYS reads these: that is all frame data.
+ *
+ * A QUARTER SHORTER since the 12 Oct 2026 playtest ("the hammer is a bit too
+ * long"): the head's middle is 16 pixels from his hand, where it was 23, so
+ * its far edge is about 21 out against the player's 24 of height.
+ *
+ * Poses in degrees: 0 points forward, 90 straight up, 180 straight back —
+ * [where the move starts, where the hammer is on the hit, where it ends]. The
+ * low ends rest the head on the floor line rather than through it.
+ */
+export const HAMMER_SHAPE = {
+  reach: 16,                             // hand to the middle of the head
+  head: { across: 12, thick: 8 },
+  poses: {
+    jab1: [60, -10, -14],                // a short forward swing
+    jab2: [-12, 15, 60],                 // swung back up, hitting on the way through
+    jab3: [150, -14, -14],               // the finisher: over the top and down
+    swing: [105, -14, -15],              // from overhead to the ground in front
+  },
+  overhead: 105,                         // the charge: held up, like Dedede's forward smash
+  dive: -60,
 };
-const OVERHEAD_DEG = 105;                // the charge: held up, like Dedede's forward smash
-const HANDLE = 20;
 
 const words = (w) => DAMAGE_WORDS[w] ?? 1;
 const chargeNeed = (L) => Math.max(1, L.holdFrames - L.tapFrames);
@@ -835,14 +864,30 @@ const chargeOf = (st, L) => Math.min(1, st.chargeF / chargeNeed(L));
 /** 0 small below half a charge, 1 medium up to full, 2 large only at full. */
 const cloudSize = (c, full) => (full ? 2 : c < 0.5 ? 0 : 1);
 
-const pivotOf = (p) => ({ x: p.x + 12 + p.facing * 5, y: p.y + 12 });
-function headOf(p, deg) {
-  const pv = pivotOf(p), r = (deg * Math.PI) / 180;
-  return {
-    pv, r,
-    x: pv.x + Math.cos(r) * p.facing * HANDLE,
-    y: pv.y - Math.sin(r) * HANDLE,
-  };
+/**
+ * HIS HAND: 5 pixels in front of his middle, halfway down. The hammer sheet's
+ * pivot goes here, and every hit area on that sheet is measured from it.
+ */
+const gripOf = (p) => ({ x: p.x + 12 + p.facing * 5, y: p.y + 12 });
+
+/**
+ * Which way the plain hammer points `t` steps into a move that hits on `hit`:
+ * eased from its start pose to its hit pose, then settling to its end pose
+ * over six steps. Exported for the placeholder sheets, painted from the same.
+ */
+export function hammerDeg(move, t, hit) {
+  const [s0, s1, s2] = HAMMER_SHAPE.poses[move];
+  if (t < hit) {
+    const u = Math.max(0, t) / hit;
+    return s0 + (s1 - s0) * u * u * (3 - 2 * u);
+  }
+  return s1 + (s2 - s1) * Math.min(1, (t - hit) / 6);
+}
+
+/** Where the plain hammer's head is for a pose. */
+function headAt(gx, gy, facing, deg) {
+  const r = (deg * Math.PI) / 180, R = HAMMER_SHAPE.reach;
+  return { x: gx + Math.cos(r) * facing * R, y: gy - Math.sin(r) * R };
 }
 
 /**
@@ -850,32 +895,29 @@ function headOf(p, deg) {
  *
  *   move   'jab1' 'jab2' 'jab3' 'swing', 'charge', or 'dive' (falling to
  *          the ground after a charge let go in the air)
+ *   clip   which clip of the hammer's sheet shows, and `loop` if it repeats
  *   t      steps since that move began (for a charge, steps spent charging)
  *   hit    the step the move connects on; total, the step it lets go
- *   deg    which way the placeholder hammer points (0 forward, 90 up)
+ *   deg    which way the plain hammer points (0 forward, 90 up)
  *   full   a full charge, and `tell` whether this rung shows it
  */
 function quakePose(st, L) {
   const a = st.act;
-  if (st.diving) return { move: 'dive', t: st.diving.age, deg: -60 };
+  if (st.diving) {
+    return { move: 'dive', clip: 'dive', loop: true, t: st.diving.age, deg: HAMMER_SHAPE.dive };
+  }
   if (a) {
-    const [s0, s1, s2] = POSES[a.move];
-    let deg;
-    if (a.t < a.hit) {
-      const u = Math.max(0, a.t) / a.hit;
-      deg = s0 + (s1 - s0) * u * u * (3 - 2 * u);
-    } else {
-      deg = s1 + (s2 - s1) * Math.min(1, (a.t - a.hit) / 6);
-    }
-    return { move: a.move, t: a.t, hit: a.hit, total: a.total, deg };
+    const clip = a.move === 'swing' ? 'swing' : JAB_CLIPS[a.n];
+    return { move: a.move, clip, t: a.t, hit: a.hit, total: a.total, deg: hammerDeg(a.move, a.t, a.hit) };
   }
   if (st.charging) {
     const tell = !!L.fullTell && st.full;
     // A full charge trembles as well as puffing dust, so it reads even in the
-    // middle of a busy room.
+    // middle of a busy room. With art, that is the `chargeFull` clip.
     return {
-      move: 'charge', t: st.chargeF, full: st.full, tell,
-      deg: OVERHEAD_DEG + (tell ? Math.sin(st.t * 0.9) * 4 : 0),
+      move: 'charge', clip: tell ? 'chargeFull' : 'charge', loop: true,
+      t: st.chargeF, full: st.full, tell,
+      deg: HAMMER_SHAPE.overhead + (tell ? Math.sin(st.t * 0.9) * 4 : 0),
     };
   }
   return null;
@@ -901,8 +943,8 @@ function moveGrant(st, L, ctx) {
 
 /** `t0` is how many steps of this jab have already passed (see `fire`). */
 function startJab(st, L, ctx, n, t0) {
-  const j = L.jab[n];
-  st.act = { move: `jab${n + 1}`, n, t: t0, hit: j.hit, total: j.total, done: false };
+  const c = clipOf(HAMMER, JAB_CLIPS[n]);
+  st.act = { move: `jab${n + 1}`, n, t: t0, hit: c.hits[0].step, total: c.total, done: false };
   ctx.sfx('shootBig', { pitch: n === 2 ? 1.0 : 1.45, dur: 0.5 });
 }
 
@@ -939,20 +981,25 @@ function settle(st, L, lv, ctx) {
   }
 }
 
-/** The released swing, from its first step. A dive's landing moves it on to its hit. */
+/**
+ * The released swing. Its hit and its length are the swing clip's. A full
+ * charge starts `fullSooner` steps in, because Jet Hammer's full charge comes
+ * out a step quicker; a weaker one lets go `weakShorter` steps before the end
+ * of the clip at no charge, closing to the whole clip at full. A dive's
+ * landing moves it straight on to its hit.
+ */
 function swingAct(L, c, full) {
-  const sw = L.swing;
+  const sw = L.swing, clip = clipOf(HAMMER, 'swing');
   return {
-    move: 'swing', n: -1, t: 0, hit: full ? sw.hitFull : sw.hit,
-    total: Math.round(sw.total + (sw.totalFull - sw.total) * c), done: false, c, full,
+    move: 'swing', n: -1, t: full ? sw.fullSooner : 0, hit: clip.hits[0].step,
+    total: clip.total - Math.round(sw.weakShorter * (1 - c)), done: false, c, full,
   };
 }
 
+/** A jab lands: everything in its hit frame's hit area, measured from his hand. */
 function jabHit(L, lv, ctx, a) {
-  const j = L.jab[a.n], p = ctx.player;
-  const box = {
-    x: p.facing > 0 ? p.x + 12 : p.x + 12 - j.reach, y: p.y - 2, w: j.reach, h: 28,
-  };
+  const j = L.jab[a.n], p = ctx.player, g = gripOf(p);
+  const box = areaAt(clipOf(HAMMER, JAB_CLIPS[a.n]).hits[0], g.x, g.y, p.facing);
   const dmg = dmgOf('quake_hammer', lv, ctx) * words(j.dmg);
   for (const e of enemiesIn(ctx, box)) {
     ctx.hitEnemy(e, dmg, { knockback: j.knock, launch: j.launch || 0, from: p.x + 12 });
@@ -965,14 +1012,12 @@ function jabHit(L, lv, ctx, a) {
  * how far up the climb a nearly full charge gets before that jump.
  */
 function swingHit(L, lv, ctx, a) {
-  const p = ctx.player, f = p.facing, fx = ctx.fx;
+  const p = ctx.player, f = p.facing, fx = ctx.fx, g = gripOf(p);
   const base = dmgOf('quake_hammer', lv, ctx);
   const lo = words(L.swingDmg), hi = words(L.swingDmgFull);
   const dmg = base * (a.full ? hi : lo + (hi - lo) * a.c * L.partialShare);
-  const box = {
-    x: f > 0 ? p.x + 12 : p.x + 12 - L.reach - 4, y: p.y - 6, w: L.reach + 4, h: 36,
-  };
-  const struck = enemiesIn(ctx, box);
+  const clip = clipOf(HAMMER, 'swing'), h = clip.hits[0];
+  const struck = enemiesIn(ctx, areaAt(h, g.x, g.y, f));
   for (const e of struck) {
     ctx.hitEnemy(e, dmg, {
       knockback: L.swingKnock * (0.7 + 0.6 * a.c),
@@ -981,46 +1026,69 @@ function swingHit(L, lv, ctx, a) {
     });
   }
 
-  // Where it landed: the ground in front if there is ground there, otherwise
-  // the first thing it hit, otherwise nowhere (a swing at the air).
-  const cx = p.x + 12 + f * (L.reach - 2), gy = p.y + 24;
-  const ground = !!p.onGround && ctx.overGround(cx);
+  // Where it landed: the ground under the hammer head if there is ground
+  // there, otherwise the first thing it hit, otherwise nowhere (a swing at the
+  // air). The head is the swing's spawn point on its hit frame — wherever the
+  // drawing puts it — or the bottom of its hit area if it has none.
+  const sp = clip.spawns.find((s) => s.frame === h.frame) ?? { x: h.x + h.w / 2, y: h.y + h.h };
+  const head = pointAt(sp, g.x, g.y, f);
+  const gy = p.y + 24;
+  const ground = !!p.onGround && ctx.overGround(head.x);
   let ix = null, iy = null;
-  if (ground) { ix = cx; iy = gy; } else if (struck.length) {
-    const m = centreOf(struck[0]);
-    ix = m.x; iy = m.y;
+  if (ground) { ix = head.x; iy = gy; } else if (struck.length) {
+    // The cloud billows up from under whatever it hit.
+    const e = struck[0];
+    ix = e.x + e.w / 2; iy = e.y + e.h;
   }
   if (ix === null) return;
   ctx.shake(a.full ? 2 : 1, a.full ? 16 : 8);
   ctx.sfx('rumble', { dur: 0.2 + 0.2 * a.c, pitch: 1 - 0.2 * a.c });
 
-  // Lv3: the dust cloud. It damages what is caught in it, apart from whatever
-  // the hammer itself just hit — the cloud is the splash, not a second blow.
+  // Lv3: the dust cloud, sized by the charge. How long it lasts and where it
+  // hurts are its clip's; a cloud whose hit is its first frame hurts now.
   if (L.cloud) {
-    const size = cloudSize(a.c, a.full);
-    const r = L.cloud.radius[size];
-    fx.dust.push({ x: ix, y: iy, r, size, t: 0, life: 24 + size * 8, seed: Math.random() });
-    const cdmg = base * words(L.cloud.dmg);
-    for (const e of ctx.enemies) {
-      if (e.hp <= 0 || struck.includes(e)) continue;
-      const nx = Math.max(e.x, Math.min(ix, e.x + e.w));
-      const ny = Math.max(e.y, Math.min(iy, e.y + e.h));
-      if ((nx - ix) ** 2 + (ny - iy) ** 2 > r * r) continue;
-      ctx.hitEnemy(e, cdmg, { knockback: L.cloud.knock, from: ix });
-    }
+    const clipName = DUST_CLIPS[cloudSize(a.c, a.full)];
+    const d = {
+      sheet: 'dust', clip: clipName, x: ix, y: iy, dir: f, t: 0,
+      life: clipOf(DUST, clipName).total, seed: Math.random(),
+      struck, dmg: base * words(L.cloud.dmg), knock: L.cloud.knock, done: false,
+    };
+    fx.dust.push(d);
+    cloudHit(d, ctx);
   }
 
   // Lv10: the spikes. A FULL charge, and only where it met the GROUND.
   if (L.spikes && a.full && ground) raiseSpikes(L.spikes, ix, gy, f, base, ctx);
 }
 
+/**
+ * A dust cloud HURTS ONCE, on the step its clip's hit frame begins: everything
+ * in that frame's hit area, apart from whatever the hammer itself just hit —
+ * the cloud is the splash, not a second blow.
+ */
+function cloudHit(d, ctx) {
+  if (d.done || d.sheet !== 'dust') return;
+  const h = clipOf(DUST, d.clip).hits[0];
+  if (d.t < h.step) return;
+  d.done = true;
+  for (const e of enemiesIn(ctx, areaAt(h, d.x, d.y, d.dir))) {
+    if (!d.struck.includes(e)) ctx.hitEnemy(e, d.dmg, { knockback: d.knock, from: d.x });
+  }
+}
+
+/**
+ * Lv10's spikes, one per ladder angle, each playing its own clip: it hurts
+ * for as long as that clip's frames marked `hit` show, then stands for the
+ * rest of it. Their angles and lengths stay the ladder's.
+ */
 function raiseSpikes(S, x, y, dir, base, ctx) {
   const hitSet = new Set();
   const dmg = base * words(S.dmg);
   S.angles.forEach((deg, i) => {
+    const clip = SPIKE_CLIPS[i], c = clipOf(SPIKE, clip), grow = growStepsOf(c);
     ctx.fx.spikes.push({
-      x, y, dir, deg, len: S.lens[i % S.lens.length], t: 0,
-      grow: S.grow, stand: S.stand, hitSet, dmg, knock: S.knock, launch: S.launch,
+      x, y, dir, deg, len: S.lens[i % S.lens.length], clip, t: 0,
+      grow, stand: c.total - grow, hitSet, dmg, knock: S.knock, launch: S.launch,
       sandMin: S.sandMin, sandMax: S.sandMax,
     });
   });
@@ -1070,7 +1138,10 @@ function stepSpikes(ctx) {
       if (!b.enemy || b.life <= 0 || b.push) continue;
       if (distToSegment(b.x, b.y, s.x, s.y, tx, ty) > (b.radius || 2) + 1.5) continue;
       b.life = -1;
-      ctx.fx.dust.push({ x: b.x, y: b.y, r: 3, t: 0, life: 12, seed: Math.random(), puff: true });
+      ctx.fx.dust.push({
+        sheet: 'puff', clip: 'block', x: b.x, y: b.y, t: 0,
+        life: clipOf(PUFF, 'block').total, seed: Math.random(),
+      });
     }
     for (const e of ctx.enemies) {
       if (!e.isBoss && e.hp > 0) blockBody(e, s, rad);
@@ -1123,15 +1194,21 @@ function spikeBand(e, s, rad) {
   return { lo, hi, front: (e.x + e.w / 2 - lineX(ym)) * s.dir > 0 };
 }
 
-/** Lv3+: a full charge puffs small dust clouds round the hammer head. */
+/**
+ * Lv3+: a full charge puffs small dust clouds round the hammer head. The head
+ * is the `chargeFull` clip's spawn point, so the puffs follow the drawing.
+ */
 function puffAround(ctx, p, n) {
-  const h = headOf(p, OVERHEAD_DEG);
+  const g = gripOf(p);
+  const sp = clipOf(HAMMER, 'chargeFull').spawns[0];
+  const h = sp ? pointAt(sp, g.x, g.y, p.facing) : headAt(g.x, g.y, p.facing, HAMMER_SHAPE.overhead);
+  const life = clipOf(PUFF, 'tell').total;
   for (let i = 0; i < n; i++) {
     const ang = Math.random() * Math.PI * 2;
     ctx.fx.dust.push({
-      x: h.x + Math.cos(ang) * 7, y: h.y + Math.sin(ang) * 6,
+      sheet: 'puff', clip: 'tell', x: h.x + Math.cos(ang) * 7, y: h.y + Math.sin(ang) * 6,
       vx: Math.cos(ang) * 0.25, vy: Math.sin(ang) * 0.2 - 0.12,
-      r: 3 + Math.random() * 1.5, t: 0, life: 18, seed: Math.random(), puff: true,
+      t: 0, life, seed: Math.random(),
     });
   }
 }
@@ -1164,6 +1241,14 @@ function stepDive(st, L, lv, ctx) {
 const quake = {
   chargeRelease: true,
   holdFrames: (lv) => ladderAt('quake_hammer', lv).holdFrames,
+  /**
+   * How far in front of his middle the first jab reaches, off its hit area —
+   * `npm run sim` stands inside it, so the simulator follows the art too.
+   */
+  reach() {
+    const h = clipOf(HAMMER, 'jabOne').hits[0];
+    return 5 + h.x + h.w;
+  },
 
   init(st) {
     st.t = 0; st.act = null; st.queued = null; st.freeAt = -Infinity; st.diving = null;
@@ -1179,6 +1264,7 @@ const quake = {
     st.holdSeen = false;
     if (st.act) { st.act.t++; settle(st, L, lv, ctx); }
     if (st.diving) stepDive(st, L, lv, ctx);
+    for (const d of ctx.fx.dust) cloudHit(d, ctx);
     stepSpikes(ctx);
     if (L.fullTell && st.charging && st.full && !st.act && st.t % 5 === 0) {
       puffAround(ctx, ctx.player, 2);
@@ -2142,64 +2228,118 @@ export function drawPuff(g, q, cx) {
   g.fillRect(cx - q.w / 2, q.y - h / 2, q.w, h);
 }
 
-/**
- * THE HAMMER — placeholder shapes: a handle and a blocky rock head in Quake
- * Man's colours, pointed by `quakePose`. There is deliberately no charge bar:
- * by the owner's call the tell is the hammer held overhead, and at Lv3 and up
- * the dust that puffs round its head once the charge is full.
- */
-function drawQuakeHammer(g, sx, p, st, L) {
-  const pose = quakePose(st, L);
-  if (!pose || pose.t > (pose.total ?? Infinity) - 4) return;
-  const { pv, r, x, y } = headOf(p, pose.deg);
-  const f = p.facing;
-  const x0 = sx(pv.x), x1 = sx(x), y0 = pv.y, y1 = y;
-  g.lineStyle(4, 0x0A0A12, 1); g.lineBetween(x0, y0, x1, y1);
-  g.lineStyle(2, 0x8A5A2B, 1); g.lineBetween(x0, y0, x1, y1);
-  // The head sits across the end of the handle.
-  const dx = Math.cos(r) * f, dy = -Math.sin(r);
-  const px = -dy, py = dx;
-  const hx = x1 + dx * 3, hy = y1 + dy * 3;
-  g.lineStyle(11, 0x0A0A12, 1); g.lineBetween(hx - px * 6.5, hy - py * 6.5, hx + px * 6.5, hy + py * 6.5);
-  g.lineStyle(8, 0xA76625, 1); g.lineBetween(hx - px * 6, hy - py * 6, hx + px * 6, hy + py * 6);
-  g.lineStyle(2, 0xD08A44, 1);
-  g.lineBetween(hx - px * 5 - dx * 2, hy - py * 5 - dy * 2, hx + px * 5 - dx * 2, hy + py * 5 - dy * 2);
-}
+// ── QUAKE HAMMER on screen ────────────────────────────────────────────
 
-/** Dust clouds and puffs, spikes and sand. Plain shapes until the art lands. */
-function drawQuakeFx(g, sx, fx) {
+/**
+ * THE QUAKE HAMMER ON SCREEN: the hammer in his hand on the `held` layer, in
+ * front of him, and the dust, spikes and sand on the `effects` layer, behind
+ * him (the player is never hidden).
+ *
+ * Every one of them is ONE CELL OF ITS SHEET, picked by frame data — the clip
+ * it is in and how many steps into it — so a picture changes on exactly the
+ * step the game says it does, and a hit lands on the frame drawn for it.
+ * `ActorLayer.drawCell` falls back to the plain shapes below when a sheet has
+ * nothing drawn: one rule, and nothing here asks which case it is in.
+ *
+ * There is deliberately no charge bar: by the owner's call the tell is the
+ * hammer held overhead, and from Lv3 the dust that puffs round its head once
+ * the charge is full.
+ */
+export function drawWeaponArt(layers, sx, sy, ctx) {
+  const { run, player: p, fx } = ctx;
+  const back = layers.effects;
   for (const s of fx.sand) {
-    g.fillStyle(s.shade ? 0xB8923F : 0xD9B56A, 1);
-    g.fillRect(Math.round(sx(s.x)), Math.round(s.y), s.shade ? 1 : 2, 1);
+    back.drawCell(
+      { id: SAND, x: sx(s.x), y: sy(s.y), facing: 1, cell: cellAt(clipOf(SAND, s.shade ? 'dark' : 'light'), 0) },
+      (g) => drawSandShape(g, sx(s.x), sy(s.y), s.shade),
+    );
   }
   for (const s of fx.spikes) {
-    const u = Math.min(1, (s.t + 1) / s.grow);
-    const len = s.len * (1 - (1 - u) * (1 - u));
-    const rad = (s.deg * Math.PI) / 180;
-    const ux = Math.cos(rad) * s.dir, uy = -Math.sin(rad);
-    const bx = sx(s.x), by = s.y;
-    const tx = bx + ux * len, ty = by + uy * len;
-    const wx = -uy * 3, wy = ux * 3;
-    // The last few steps before it crumbles, it flickers pale.
-    const going = s.t >= s.grow + s.stand - 6 && s.t % 2 === 0;
-    g.fillStyle(0x6E5226, 1);
-    g.fillTriangle(bx + wx * 1.3, by + wy * 1.3, bx - wx * 1.3, by - wy * 1.3, tx, ty);
-    g.fillStyle(going ? 0xF0D898 : 0xD9B56A, 1);
-    g.fillTriangle(bx + wx, by + wy, bx - wx, by - wy, tx, ty);
-    g.fillStyle(0xA88445, 1);
-    g.fillTriangle(bx, by, bx - wx, by - wy, tx, ty);
+    back.drawCell(
+      { id: SPIKE, x: sx(s.x), y: sy(s.y), facing: s.dir, cell: cellAt(clipOf(SPIKE, s.clip), s.t) },
+      (g) => drawSpikeShape(g, sx(s.x), sy(s.y), s.dir, s.deg, s.len, Math.min(1, (s.t + 1) / s.grow),
+        // The last few steps before it crumbles, it flickers pale.
+        s.t >= s.grow + s.stand - 6 && s.t % 2 === 0),
+    );
   }
   for (const d of fx.dust) {
-    const u = d.t / d.life;
-    const n = d.puff ? 3 : 6;
-    for (let k = 0; k < n; k++) {
-      const ang = d.seed * 6.283 + k * (6.283 / n);
-      const dist = d.r * (0.25 + 0.75 * u) * (0.6 + 0.4 * (((k * 37) % 5) / 5));
-      const rr = d.r * (d.puff ? 0.6 : 0.45) * (0.5 + 0.5 * u);
-      g.fillStyle(k % 2 ? 0xE6D6B0 : 0xCDB892, (1 - u) * (d.puff ? 0.95 : 0.7));
-      g.fillCircle(sx(d.x + Math.cos(ang) * dist), d.y - Math.abs(Math.sin(ang)) * dist * 0.7, rr);
-    }
+    const key = d.sheet === 'puff' ? PUFF : DUST, c = clipOf(key, d.clip);
+    const r = d.sheet === 'puff' ? 3 : c.hits[0].w / 2;
+    back.drawCell(
+      { id: key, x: sx(d.x), y: sy(d.y), facing: d.dir || 1, cell: cellAt(c, d.t) },
+      (g) => drawDustShape(g, sx(d.x), sy(d.y), r, d.t / d.life, d.seed, d.sheet === 'puff'),
+    );
   }
+
+  const st = run.wstate.quake_hammer;
+  if (!st || !ctx.equipped.includes('quake_hammer')) return;
+  const pose = quakePose(st, ladderAt('quake_hammer', ctx.levelOf('quake_hammer')));
+  // Put away the step the move lets go.
+  if (!pose || (pose.total !== undefined && pose.t >= pose.total)) return;
+  const g = gripOf(p);
+  layers.held.drawCell(
+    { id: HAMMER, x: sx(g.x), y: sy(g.y), facing: p.facing, cell: cellAt(clipOf(HAMMER, pose.clip), pose.t, pose.loop) },
+    (gr) => drawHammerShape(gr, sx(g.x), sy(g.y), p.facing, pose.deg),
+  );
+}
+
+/**
+ * THE PLAIN SHAPES — what each sheet falls back to with nothing drawn, and
+ * what `npm run art:placeholders` paints the placeholder sheets from, through
+ * a stand-in for Phaser's Graphics. Exported for that tool and nothing else.
+ */
+
+/** The hammer: a handle and a blocky rock head across its end, pointed at `deg` from the grip. */
+export function drawHammerShape(g, gx, gy, facing, deg) {
+  const r = (deg * Math.PI) / 180, R = HAMMER_SHAPE.reach;
+  const { across, thick } = HAMMER_SHAPE.head;
+  const dx = Math.cos(r) * facing, dy = -Math.sin(r);
+  const hx = gx + dx * R, hy = gy + dy * R;                  // the head's middle
+  const ex = hx - dx * (thick / 2), ey = hy - dy * (thick / 2);
+  g.lineStyle(4, 0x0A0A12, 1); g.lineBetween(gx, gy, ex, ey);
+  g.lineStyle(2, 0x8A5A2B, 1); g.lineBetween(gx, gy, ex, ey);
+  // The head sits across the end of the handle.
+  const px = -dy, py = dx, a = across / 2;
+  g.lineStyle(thick + 3, 0x0A0A12, 1);
+  g.lineBetween(hx - px * (a + 0.5), hy - py * (a + 0.5), hx + px * (a + 0.5), hy + py * (a + 0.5));
+  g.lineStyle(thick, 0xA76625, 1);
+  g.lineBetween(hx - px * a, hy - py * a, hx + px * a, hy + py * a);
+  g.lineStyle(2, 0xD08A44, 1);
+  g.lineBetween(hx - px * (a - 1) - dx * 2, hy - py * (a - 1) - dy * 2,
+    hx + px * (a - 1) - dx * 2, hy + py * (a - 1) - dy * 2);
+}
+
+/** One sand spike from its foot: `u` is how far it has grown (0 to 1), `pale` its last flicker. */
+export function drawSpikeShape(g, bx, by, dir, deg, len, u, pale) {
+  const l = len * (1 - (1 - u) * (1 - u));
+  const rad = (deg * Math.PI) / 180;
+  const ux = Math.cos(rad) * dir, uy = -Math.sin(rad);
+  const tx = bx + ux * l, ty = by + uy * l;
+  const wx = -uy * 3, wy = ux * 3;
+  g.fillStyle(0x6E5226, 1);
+  g.fillTriangle(bx + wx * 1.3, by + wy * 1.3, bx - wx * 1.3, by - wy * 1.3, tx, ty);
+  g.fillStyle(pale ? 0xF0D898 : 0xD9B56A, 1);
+  g.fillTriangle(bx + wx, by + wy, bx - wx, by - wy, tx, ty);
+  g.fillStyle(0xA88445, 1);
+  g.fillTriangle(bx, by, bx - wx, by - wy, tx, ty);
+}
+
+/** A dust cloud or puff of radius `r` around (x, y), `u` of the way through its life. */
+export function drawDustShape(g, x, y, r, u, seed, puff) {
+  const n = puff ? 3 : 6;
+  for (let k = 0; k < n; k++) {
+    const ang = seed * 6.283 + k * (6.283 / n);
+    const dist = r * (0.25 + 0.75 * u) * (0.6 + 0.4 * (((k * 37) % 5) / 5));
+    const rr = r * (puff ? 0.6 : 0.45) * (0.5 + 0.5 * u);
+    g.fillStyle(k % 2 ? 0xE6D6B0 : 0xCDB892, (1 - u) * (puff ? 0.95 : 0.7));
+    g.fillCircle(x + Math.cos(ang) * dist, y - Math.abs(Math.sin(ang)) * dist * 0.7, rr);
+  }
+}
+
+/** One grain of sand. */
+export function drawSandShape(g, x, y, shade) {
+  g.fillStyle(shade ? 0xB8923F : 0xD9B56A, 1);
+  g.fillRect(Math.round(x), Math.round(y), shade ? 1 : 2, 1);
 }
 
 export function drawWeaponry(g, sx, ctx) {
@@ -2349,14 +2489,7 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(a.x) - 1, a.y + Math.sin(a.life * 0.5), 3, 1);
   }
 
-  // QUAKE HAMMER — the hammer itself while it is out, then the dust and sand it
-  // leaves behind (which outlive the weapon being equipped).
-  const qh = run.wstate.quake_hammer;
-  if (qh && ctx.equipped.includes('quake_hammer')) {
-    const L = ladderAt('quake_hammer', ctx.levelOf('quake_hammer'));
-    drawQuakeHammer(g, sx, p, qh, L);
-  }
-  drawQuakeFx(g, sx, fx);
+  // The QUAKE HAMMER and its dust are drawn from its sheets: drawWeaponArt.
 
   for (const q of fx.puffs) {
     // A puff that names a weapon is drawn by GameScene through the art layer,

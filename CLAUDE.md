@@ -58,6 +58,9 @@ npm run pages-test      # OPT-IN: drive both web apps against a fake GitHub (~40
 npm run sprites  # regenerate the pixel-exact drawing templates in design/sprite-templates/
 npm run sprites:build   # design/sprites/*.sprite -> the PNGs + the derived MANIFEST entries
 npm run sprites:ship    # GIVE THE WORD: verify every [draft] frame reaches the game, mark it [ready]
+npm run art:placeholders -- <weapon>   # a weapon's placeholder sheets, with its real frame data
+npm run art:brief       # regenerate the numbers + Claude Design prompt in design/weapon-art/*.md
+npm run design:import -- <zip>         # a Claude Design handoff: checked, built, tested — or put back
 npm run music    # after handing off a track: rewrite design/music/pack.json
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
@@ -556,7 +559,10 @@ room for a glow, a spin or a trail, none of which collision ever sees.
 **Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
 construction order. **The player is always above every world actor** — hazards, pickups,
 minions, projectiles, bosses — because losing sight of the player is losing the run. Only
-UI overlays go above, and those live in UIScene, a whole scene above this one.
+UI overlays go above, and those live in UIScene, a whole scene above this one. **The one
+band in front of him is `held`: the weapon in his hand**, which is part of him rather than
+a world actor; a weapon's dust and debris (`effects`) stay behind him like everything else.
+`tests/data.test.js` holds both halves.
 
 **Palette:** the player is a **fixed white suit with a #3CBCFC accent** on the visor, the
 arm-cannon muzzle and the helmet fin. His 12 colours are declared in
@@ -835,6 +841,59 @@ lengths in the same cycle.
 **Undo is one snapshot per STROKE.** A drag across twelve pixels is one thing the artist
 did, and twelve taps to take it back is how an undo stack becomes useless. Snapshotting the
 frame LIST rather than the current frame is what makes +FRAME and −FRAME undoable at all.
+
+### Weapon art — the frame data lives in the drawing
+
+**Every weapon goes through the same loop, by the owner's call (12 Oct 2026), and the
+`weapon-art` skill (`.claude/skills/weapon-art/SKILL.md`) is the procedure.** Claude Code
+builds the weapon and its placeholder sheets; Claude Design reads them from the repo and
+redraws them in the same files; the handoff zip comes back through `npm run
+design:import`. Design's side of it is `design/weapon-art/README.md`, and each weapon's
+brief beside it.
+
+**A MOVE'S TIMING AND HIT AREAS ARE DRAWN INTO ITS SHEET, AND THE GAME READS THEM FROM
+THERE.** A frame line carries `hit=x,y,w,h` (the move connects on that frame's first step,
+and that rectangle is what it hits), a bare `hit` (hurts while it shows, along a shape the
+code works out — a spike's line) or `spawn=x,y` (where something comes out); a sheet
+carries a `pivot`, the pixel the game holds it by. `npm run sprites:build` writes it all to
+`src/data/frame-data.json`, which `systems/frame-data.js` reads. **Never copy a hit step or
+a move's length into the ladder** — that is the second copy the drawing would drift from.
+The ladder keeps what is not animation: damage words, input windows, charge times, the
+geometry of effects.
+
+**HOW FAR THE DRAWING HAS GOT NEVER CHANGES WHEN A MOVE HITS.** Frame data ignores status:
+a `wip` frame keeps its hold and its place, and only its picture falls back to the last
+drawn frame before it (or the plain shapes, if there is none).
+
+**`src/data/weapon-art.js` is the code's half of the contract**: each sheet's grid, its
+layer, and every clip the code plays with its kind (`hit`, `loop`, `once`, `grow`,
+`still` — `CLIP_KINDS` in `docs/sprite-fmt.js`). The build refuses a sheet whose clips are
+not exactly those. **Clip names never end in a digit**: the editor reads `jab1` as clip
+`jab`, frame 2.
+
+**A HANDOFF GOES STRAIGHT IN WHEN ITS CHECKS PASS, by the owner's call** — pictures,
+timing and hit areas alike — and the owner reads the list of changes afterwards. The
+checks are the contract, the build and `npm test`; on any failure every file is put back.
+So the tests must check MECHANICS, never a placeholder number: the Quake Hammer's tests
+read every step and area from frame data, and a redrawn sheet that moves a hit two steps
+still passes. A weapon's real rules are tests (a jab still fits its chain window; **every
+blow reaches a minion standing against him**) and appear in words in its brief.
+
+**Hit areas follow the drawing, a pixel generous**, like the player's shots. The
+placeholder hammer's second jab first hit at the top of its upswing and passed over every
+minion, which is why the reach rule exists.
+
+**Played on the game's clock, not Phaser's.** `ActorLayer.drawCell` takes the cell the
+weapon's step says, held by the sheet's pivot and mirrored about it for facing left, so a
+picture changes on exactly the step the hit lands, slow motion included.
+
+**Placeholders are transcriptions, not art.** `npm run art:placeholders` paints a weapon's
+own fallback shapes into its sheets through a stand-in for Phaser's Graphics
+(`tools/art/raster.mjs`), with the weapon's rig (`tools/art/<weapon>.mjs`) supplying the
+starting frame data. They land at `ready`, carry no AI-made label, and the tool never
+overwrites a sheet whose `note` no longer starts with PLACEHOLDER. Design's drawings are
+AI-made: the import writes the label into each sheet's `note`, and the row in the list
+below is added in the commit that brings them in.
 
 ### 16-bit art direction (SNES era)
 
@@ -1949,15 +2008,15 @@ which is why the jump key has to be one a person will actually double-tap — th
 
 **The jump always wins the first tap.** Detecting a double-tap before jumping would put
 latency on every jump in the game, which this genre cannot afford — so the jump fires
-immediately and a second tap inside `FEEL.slideTapFrames` (8) puts the player back at the
+immediately and a second tap inside `FEEL.slideTapFrames` (10) puts the player back at the
 height he launched from and slides instead. It refuses when a slide could not start anyway
 (Slide Mastery rank 0), falling through to the double jump. Never a dead input.
 
 **The cancel accepts a jump that is rising OR one the player has already released.**
 `FEEL.jumpCutMult` is 0, so letting go mid-rise zeroes the velocity — and a double TAP is
 press, release, press, so a "still rising" test could only ever fire for someone holding
-the button down through both taps. The 8-frame window is what protects the apex case: you
-cannot be near the top of a nineteen-frame rise inside eight frames, and a HELD jump at
+the button down through both taps. The 10-step window is what protects the apex case: you
+cannot be near the top of a nineteen-step rise inside ten steps, and a HELD jump at
 its apex has not been cut, so it still gets its double jump.
 
 **A WEAPON MAY BE CHARGE-AND-RELEASE** (`chargeRelease` on its runtime — the Quake Hammer).
@@ -2320,7 +2379,7 @@ script that opens a panel and screenshots it at both 320 and 480 virtual width c
 minute and settles it.
 
 **Two knobs the owner expects to tune after playing:** `FEEL.slideTapFrames` (the
-jump→slide cancel window, currently 8) and `MID_FIGHT_TIMEOUT_MS` in UIScene (currently 7000).
+jump→slide cancel window, currently 10 — widened from 8 after the 12 Oct 2026 playtest) and `MID_FIGHT_TIMEOUT_MS` in UIScene (currently 7000).
 
 
 - **Held touch inputs are tracked at scene level, never via a zone's `pointerout`.** A
