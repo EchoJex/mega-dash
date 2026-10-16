@@ -507,7 +507,7 @@ where each one stands.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
 - **weapon class** `[draft]` Defensive
-- **weapon** `[wip]` 3 very small bats circle overheadTemporary invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.
+- **weapon** `[wip]` A set of 3 very small bats circle overhead. Temporary invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.
 - **weapon Lv1** `[draft]` Brief invisibility (depicted as a white dashed line silhouette) on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
