@@ -495,7 +495,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.6x player height (petite build)
 - **attack name** `[ready]` Spectral Shift
-- **weapon name** `[wip]` Corporeal Cloak
+- **weapon name** `[draft]` Corporeal core
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
 - **arena** `[draft]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
