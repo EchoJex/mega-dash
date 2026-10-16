@@ -495,7 +495,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.6x player height (petite build)
 - **attack name** `[ready]` Spectral Shift
-- **weapon name** `[ready]` Wraith Cloak
+- **weapon name** `[wip]` Corporeal Cloak
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
 - **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
@@ -507,8 +507,8 @@ where each one stands.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
 - **weapon class** `[wip]` Defensive
-- **weapon** `[wip]` Temporary invulnerability + invisibility with a damaging reappear burst. Per-level scaling: duration + burst damage.
-- **weapon Lv1** `[wip]` Brief invulnerability and invisibility on activation; reappearing deals a small burst around the player.
+- **weapon** `[wip]` Temporary invulnerability + invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.
+- **weapon Lv1** `[wip]` Brief invulnerability and invisibility (depicted as a died line silhouette) on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
@@ -567,8 +567,8 @@ where each one stands.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[ready]` Defensive; reduces aggro and become immune to stays affects.
-- **weapon Lv1** `[ready]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
+- **weapon** `[wip]` Defensive; reduces aggro and become immune to status affects.
+- **weapon Lv1** `[wip]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
