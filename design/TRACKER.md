@@ -498,7 +498,7 @@ where each one stands.
 - **weapon name** `[wip]` Corporeal Cloak
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
-- **arena** `[wip]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with unlit candelabra in the background.
+- **arena** `[draft]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[draft]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[draft]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
