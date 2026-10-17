@@ -17,20 +17,18 @@ page: when this page changes, update it too (link at the bottom).
   pixel at a time and then scaled up by a whole number, so nothing is ever blurred, rotated
   smoothly or placed between pixels. **Draw and check every screen at both 320 and 480.**
 - **The floor line is at y = 184.** Below it is a 40-pixel band, and the thumb pads cover
-  its lower part (y = 194 to 224). The top 33 pixels can carry the HUD text.
+  its lower part (y = 199 to 224). The top 33 pixels can carry the HUD text.
   Anything the player must see happen goes between the two.
 - **A boss room is exactly one screen**: walls at both edges, ceiling at y = 0, the camera
   never moves. The whole fight is always in view.
-- **One clock: 60 steps a second.** "Frames" in a duration means steps. A beat is one
-  second (Volt Man's room runs on it).
+- **One clock: 60 steps a second.** "Frames" in a duration means steps. A beat is two
+  seconds (Volt Man's room runs on it).
 
 ## 2. The look — 16-bit, SNES era (the owner's call, 29 Sep 2026)
 
-- **A sprite has up to 15 colours plus see-through.** Shade each material in a **colour
-  ramp** of 3 to 5 tones, shadows a little cool, highlights sparing. Far limbs sit one tone
-  darker than near ones so a flipped sprite still reads.
-- **Every character and bullet has the near-black outline `#0A0A12` round the outside.**
-  Inside edges may use a dark tone of the fill instead.
+- **A sprite has up to 15 colours plus see-through.** How it is shaded and outlined is
+  yours to decide, by the owner's call (17 Oct 2026) — keep every character and bullet
+  readable against a dark room.
 - **Colours are free.** Snapping to the SNES's 32 levels per channel is optional.
 - **Rooms are richer than sprites** and have no colour cap: the approved rooms build their
   own ramps and use ordered dithering and row-by-row gradients, as SNES backgrounds did.
@@ -116,8 +114,7 @@ his visor for more than a few steps.
   `pieces`) and the stage in `src/systems/arena-art/index.js` (`S.layer`, `S.image`,
   `S.tile`, `S.rect`, `S.crops`, `S.pool`). A room is one function `(S, arena, viewW)` that
   returns `{ update(arena) }`, plus the lists of hazards and ground effects it draws itself.
-- **The picture follows the game; it never changes it.** Read the room's real state — the
-  room in `src/systems/arena.js`, the fight in `src/systems/bossFights.js` — and use their
+- **Read the room's real state** — the room in `src/systems/arena.js`, the fight in `src/systems/bossFights.js` — and use their
   names (`turrets`, `panels`, `cover`, `rails`). A demo may need stand-in movement to show
   something; **label every stand-in "not to be built"**.
 - **Warnings the game draws must stay visible**, such as the flashing bar on a bag Strike
@@ -129,8 +126,7 @@ his visor for more than a few steps.
 - **Blackout:** in a room that loses power, everything that gives off light is drawn after
   the darkness so it keeps glowing; the boss and minions darken but stay in front of it.
   The player and shots are never darkened.
-- **Furniture lives in the room's file.** The sprite editor's `furniture-…` slots are not
-  read by the game.
+- **Furniture lives in the room's file.**
 - **Budgets measured on the approved rooms:** 0.9 to 2.5 thousandths of a second per frame
   in a browser slowed to a sixth of its speed (the old plain rooms: 0.7), and about 7KB of
   download each. A new room should land in that range.
@@ -142,8 +138,8 @@ his visor for more than a few steps.
   case; anything else (`@`, `&`, `$`…) shows as `?`.
 - **Check text and menus by drawing them**, at 320 and 480 wide. Working spacing out from
   the letter size has put things on top of each other three times.
-- Touch targets are for thumbs: the movement and action pads are 30 pixels tall along the
-  bottom edge.
+- Touch targets are for thumbs: the movement and action pads are 25 pixels tall along the
+  bottom edge, see-through, each with a thin yellow border.
 
 ## 8. Who may make what
 
@@ -169,8 +165,6 @@ his visor for more than a few steps.
   - what is a stand-in and must not be built;
   - which tracker lines change, and to which marker. `[draft]` is the owner's word: it is
     written only by the owner, or when the owner says so.
-- **Do not hand over an edited copy of `TRACKER.md`.** Claude Code edits the live file on
-  `main`, field by field, because the owner may be editing it at the same time.
 
 ## 10. Where things live
 
@@ -183,7 +177,7 @@ his visor for more than a few steps.
 | boss and minion colours and sizes | `src/data/bosses.js`, `src/data/minions.js` |
 | sprite sources and built sheets | `design/sprites/*.sprite`, `public/sprites/*.png` |
 | how to draw a weapon, and each weapon's brief | `design/weapon-art/` |
-| the format's reader and writer, and a preview kit | `docs/sprite-fmt.js`, `docs/sprite-kit.js` |
+| the sprite format's reader and writer, and a preview kit | `docs/sprite-fmt.js`, `docs/sprite-kit.js` |
 | past handoffs: what came in and what changed | `design/handoffs/` |
 | the drawn rooms and their drawing kit | `src/systems/arena-art/` |
 | room state and furniture | `src/systems/arena.js` |

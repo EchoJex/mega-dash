@@ -69,6 +69,7 @@ export default class DevMenuScene extends Phaser.Scene {
      * other per-visit field is initialised and it covers every route back in.
      */
     this.picker = null;
+    this.popup = null;      // the description box; per-visit, like the picker
     const left = this.runRows();
     const right = this.metaRows();
 
@@ -98,28 +99,16 @@ export default class DevMenuScene extends Phaser.Scene {
     right.forEach((r, i) => this.place(r, col2, TOP + i * pitch));
 
     /**
-     * THE ROW SAYS WHAT IT IS. Every name here is an abbreviation — NO LOCKS,
-     * FREE CARDS, LOADOUT NOW mean nothing to anyone who has not read the code
-     * that implements them, and a settings screen you have to be told about is
-     * a settings screen nobody uses past the two rows they already know.
-     *
-     * So touching a row describes it, in the empty band the left column leaves
-     * under itself. Two lines because one is not enough to say both what a
-     * setting does AND what its values mean, and those are different questions.
-     *
-     * It costs nothing to read: every row wraps, so tapping one to find out
-     * what it is always leaves you a tap away from where you were. The three
-     * WIPE rows are the exception and they ARM instead — see `place`.
+     * THE ROW SAYS WHAT IT IS. Every name here is an abbreviation — NO LOCKS
+     * and FREE CARDS mean nothing to anyone who has not read the code. So
+     * tapping a row changes it AND pops up a box with one sentence, about 120
+     * characters, saying what it does and what its values mean (the owner's
+     * call of 17 Oct 2026). Every row wraps, so tapping to find out is always
+     * a tap from where you were; the three WIPE rows ARM instead — see `place`.
      */
-    // Fenced between the LAST ROW'S BOTTOM and the buttons, not placed at a
-    // guessed offset — at one row's pitch past the last row the second line
-    // drew straight through the BOSS PICKER plate. `rows - 1` because the
-    // count includes the row at TOP itself.
     const rows = Math.max(left.length, right.length);
-    const DESC_Y = TOP + (rows - 1) * pitch + lineH + 8;
-    this.descA = label(this, LEFT, DESC_Y, '', { color: '#5CADD5' });
-    this.descB = label(this, LEFT, DESC_Y + 10, '', { color: '#4A6A7A' });
-    this.describe(null);
+    label(this, LEFT, TOP + (rows - 1) * pitch + lineH + 8,
+      'TAP A ROW TO CHANGE IT AND SEE WHAT IT DOES', { color: '#4A6A7A' });
 
     // The two ways out, and the one action. BOSS PICKER starts a run rather
     // than arming a setting — the whole point of it is to be at the door.
@@ -147,8 +136,8 @@ export default class DevMenuScene extends Phaser.Scene {
   row(name, read, tap, opts = {}) {
     const r = {
       name, read, tap, head: !!opts.head, pad: opts.pad ?? 12,
-      // Two lines: what the setting DOES, then what its values MEAN.
-      desc: opts.desc || ['', ''],
+      // One sentence, about 120 characters: what it does and what its values mean.
+      desc: opts.desc || '',
       // Destructive and irreversible — the first tap only arms it.
       confirm: !!opts.confirm, armed: false,
       colour: opts.colour || (opts.head ? '#6A6A5A' : '#B8C4D0'),
@@ -159,11 +148,31 @@ export default class DevMenuScene extends Phaser.Scene {
     return r;
   }
 
-  /** Put the touched row's two lines up, or the default prompt for none. */
+  /**
+   * Pop up the touched row's sentence, in a box on the half of the screen the
+   * row is NOT in, so it never covers what you just tapped. It goes away after
+   * a few seconds or on the next tap, and never blocks a row.
+   */
   describe(r) {
-    this.descA.setText(r ? r.desc[0] : 'TAP A ROW TO CHANGE IT');
-    this.descB.setText(r ? r.desc[1] : 'SETTINGS ARE REMEMBERED BETWEEN LAUNCHES');
-    this.descA.setTint(hexNum(r?.armed ? '#F5D328' : '#5CADD5'));
+    this.popup?.destroy(true);
+    this.popup = null;
+    if (!r?.desc) return;
+    const words = r.desc.split(' '), lines = [''];
+    for (const wd of words) {
+      if ((lines[lines.length - 1] + ' ' + wd).trim().length > 40) lines.push('');
+      lines[lines.length - 1] = (lines[lines.length - 1] + ' ' + wd).trim();
+    }
+    const colour = r.armed ? '#F5D328' : '#5CADD5';
+    const t = label(this, 0, 0, lines.join('\n'), { color: colour });
+    const bw = Math.min(this.w - 16, t.width + 14), bh = t.height + 12;
+    const x = Math.round((this.w - bw) / 2);
+    const y = r.t.y < VIEW_H / 2 ? VIEW_H - 26 - bh : 26;
+    const box = this.add.rectangle(x, y, bw, bh, 0x0d1420, 0.97).setOrigin(0)
+      .setStrokeStyle(1, hexNum(colour));
+    t.setPosition(x + 7, y + 6);
+    this.popup = this.add.container(0, 0, [box, t]).setDepth(10);
+    const mine = this.popup;
+    this.time.delayedCall(4500, () => { if (this.popup === mine) { mine.destroy(true); this.popup = null; } });
   }
 
   /** Put a built row on the page and give it a full-width touch target. */
@@ -244,24 +253,20 @@ export default class DevMenuScene extends Phaser.Scene {
        * should not have to play most of a run to see it.
        */
       this.flag('WEAPONS', 'startUnlocked',
-        ['WHAT THE RUN STARTS WITH',
-          'ALL: EVERYTHING. EARNED: BOSS DROPS ONLY'],
+        'WHAT THE RUN STARTS WITH. ALL: EVERY WEAPON UNLOCKED FROM THE FIRST STEP. EARNED: ONLY WHAT BOSSES DROP, LIKE THE REAL GAME.',
         'ALL', 'EARNED'),
       this.row('START LV',
         () => `LV ${DEV.startLevel}`,
         () => { DEV.startLevel = DEV.startLevel % FEEL.weaponMaxLevel + 1; },
-        { desc: ['WHAT RUNG EVERY WEAPON ARRIVES AT',
-          'REAL FEATURES LAND AT LV 1, 3, 6 AND 10'] }),
+        { desc: 'THE LEVEL EVERY WEAPON ARRIVES AT. NEW FEATURES ONLY LAND AT LV 1, 3, 6 AND 10; THE LEVELS BETWEEN ADD DAMAGE.' }),
       /**
        * AUTO here means `maxMastery`'s blanket 3. The numbered ranks are the
        * only way to feel 0-2, which is exactly what that switch cannot show.
        */
       this.wheel('OFF RANK', 'offRank', rank,
-        ['SIZE OF THE OFFENSIVE LOADOUT ROW',
-          '0: SIDE ARM ONLY. 3: TWO SPECIALS LIVE']),
+        'HOW BIG THE OFFENSIVE ROW IS. 0: SIDE ARM ONLY. 1: A SPECIAL OR THE SIDE ARM. 3: TWO SPECIALS LIVE. AUTO MEANS 3.'),
       this.wheel('DEF RANK', 'defRank', rank,
-        ['SIZE OF THE DEFENSIVE LOADOUT ROW',
-          '0: NO DEFENSIVE SLOTS. 3: TWO, BOTH LIVE']),
+        'HOW BIG THE DEFENSIVE ROW IS. 0: NO SLOTS. 1: ONE. 2: TWO, ONE LIVE AT A TIME. 3: TWO, BOTH LIVE. AUTO MEANS 3.'),
       /**
        * An OVERRIDE, never a write to `save.bossKills`. Faking clears to reach
        * layer 3 would permanently raise that boss's shipped layer on this
@@ -269,16 +274,9 @@ export default class DevMenuScene extends Phaser.Scene {
        */
       this.wheel('BOSS LAYER', 'nextLayer',
         [[0, 'AUTO'], [1, 'L1'], [2, 'L2'], [3, 'L3']],
-        ['HOW HARD EVERY BOSS FIGHTS YOU',
-          'AUTO: WHAT YOUR CLEARS HAVE EARNED HIM']),
+        'HOW HARD EVERY BOSS FIGHTS. AUTO: THE LAYER YOUR CLEARS HAVE EARNED HIM. L1 TO L3 FORCE ONE WITHOUT TOUCHING THE SAVE.'),
       this.flag('LAYER WRAP', 'cycleLayers',
-        ['AFTER THREE CLEARS OF ONE BOSS',
-          'ON: LAYERS LOOP 1-2-3. OFF: STICK AT 3']),
-      // The between-fights wheel, granted at run start. See DEV.requipAtStart — this
-      // is the only way to reach the loadout without beating a boss first.
-      this.flag('LOADOUT NOW', 'requipAtStart',
-        ['ON: RUN OPENS ON THE RE-QUIP WHEEL',
-          'OFF: WAIT FOR A BOSS, LIKE THE REAL GAME']),
+        'AFTER THREE CLEARS OF ONE BOSS. ON: HIS FOURTH FIGHT IS LAYER 1 AGAIN, THEN 2, THEN 3. OFF: HE STAYS AT LAYER 3.'),
       /**
        * WHICH WHEEL THE RE-QUIP BUTTON OPENS. `POST BOSS` is for working ON
        * that wheel: reaching it otherwise costs a whole fight, and slow motion
@@ -287,17 +285,13 @@ export default class DevMenuScene extends Phaser.Scene {
        */
       this.wheel('WHEEL', 'wheelMode',
         [['playtest', 'PLAYTEST'], ['postboss', 'POST BOSS']],
-        ['WHICH WHEEL THE RE-QUIP BUTTON OPENS',
-          'PLAYTEST: IN-SITU IN A FIGHT. POST BOSS: ALWAYS']),
+        'WHAT THE RE-QUIP BUTTON OPENS. PLAYTEST: THE ACTIVE WHEEL IN A FIGHT, LIKE THE REAL GAME. POST BOSS: THE LOADOUT WHEEL, ALWAYS.'),
       this.flag('HP FLOOR', 'hpFloor',
-        ['ON: HITS LAND BUT ENERGY STOPS AT 1',
-          'YOU FEEL EVERY HIT. THE RUN DOES NOT END']),
+        'ON: EVERY HIT STILL LANDS, FLINCHES AND KNOCKS YOU BACK, BUT YOUR ENERGY STOPS AT 1, SO THE RUN NEVER ENDS.'),
       this.flag('NO LOCKS', 'unlockAnyWeapon',
-        ['ON: PADLOCKS ARE DRAWN, NOT ENFORCED',
-          'TAP A LOCKED SLOT AND IT EQUIPS ANYWAY']),
+        'ON: A LOCKED SLOT STILL SHOWS ITS PADLOCK, BUT TAPPING IT EQUIPS IT ANYWAY. OFF: LOCKS WORK LIKE THE REAL GAME.'),
       this.flag('FREE CARDS', 'cardsFromAllWeapons',
-        ['ON: CARDS OFFER LOCKED WEAPONS TOO',
-          'TAKING ONE UNLOCKS IT FOR THIS RUN']),
+        'ON: LEVEL-UP CARDS MAY OFFER WEAPONS YOU HAVE NOT UNLOCKED YET, AND TAKING ONE UNLOCKS IT FOR THE REST OF THE RUN.'),
     ];
   }
 
@@ -313,31 +307,26 @@ export default class DevMenuScene extends Phaser.Scene {
       // optional — a playtest note that does not say it came from a dev build
       // is a playtest note that gets misread as balance data.
       this.flag('DEBUG HUD', 'debugHud',
-        ['ON: BUILD, SEED AND DENSITY ON THE HUD',
-          'THE DEV MARKER BY THE SCORE IS ALWAYS ON']),
+        'ON: A LINE UNDER THE SCORE SHOWS THE BUILD, THE WORLD SEED AND SCREEN SHARPNESS. THE DEV MARKER STAYS ON EITHER WAY.'),
       this.row('', null, null, { head: true }),
       this.row('META  SAVE', null, null, { head: true }),
       this.row('CHIPS +250',
         () => `${save.chips}`,
         () => { save.chips += 250; return write(); },
-        { desc: ['ADDS 250. THE NUMBER IS WHAT YOU HAVE',
-          'CHIPS BUY PERMANENT UPGRADES IN THE HUB'] }),
+        { desc: 'ADDS 250 CHIPS TO THE SAVE ON EVERY TAP. THE NUMBER IS WHAT YOU HAVE. CHIPS BUY PERMANENT UPGRADES IN THE HUB.' }),
       this.row('WIPE CHIPS', () => '',
         () => { save.chips = 0; return write(); },
-        { confirm: true, desc: ['SETS SAVED CHIPS BACK TO ZERO',
-          'CANNOT BE UNDONE. TAP AGAIN TO CONFIRM'] }),
+        { confirm: true, desc: 'SETS YOUR SAVED CHIPS BACK TO ZERO. IT CANNOT BE UNDONE, SO THE FIRST TAP ONLY ARMS IT: TAP AGAIN TO CONFIRM.' }),
       this.row('MAX UPGRADE',
         () => `${bought()}/${capacity}`,
         () => {
           for (const u of UPGRADES) save.upgrades[u.id] = u.maxLv;
           return write();
         },
-        { desc: ['BUYS EVERY HUB UPGRADE TO ITS TOP RANK',
-          'SLIDE, CLIFF GRAB AND LOADOUT LADDERS TOO'] }),
+        { desc: 'BUYS EVERY HUB UPGRADE TO ITS TOP RANK, INCLUDING THE SLIDE, THE CLIFF GRAB AND BOTH LOADOUT MASTERY LADDERS.' }),
       this.row('WIPE UPGRADE', () => '',
         () => { save.upgrades = {}; return write(); },
-        { confirm: true, desc: ['REMOVES EVERY HUB UPGRADE YOU HAVE BOUGHT',
-          'CANNOT BE UNDONE. TAP AGAIN TO CONFIRM'] }),
+        { confirm: true, desc: 'REMOVES EVERY HUB UPGRADE YOU HAVE BOUGHT. IT CANNOT BE UNDONE, SO THE FIRST TAP ONLY ARMS IT: TAP AGAIN.' }),
       /**
        * Lifetime clears, which is what earns a boss his LAYER. Wiping them puts
        * every boss back to layer 1 honestly — which the BOSS LAYER override
@@ -346,8 +335,7 @@ export default class DevMenuScene extends Phaser.Scene {
       this.row('WIPE KILLS',
         () => `${kills()}`,
         () => { save.bossKills = {}; return write(); },
-        { confirm: true, desc: ['LIFETIME CLEARS EARN EACH BOSS HIS LAYER',
-          'WIPING PUTS THEM ALL BACK TO LAYER 1'] }),
+        { confirm: true, desc: 'LIFETIME CLEARS EARN EACH BOSS HIS LAYER. WIPING THEM PUTS EVERY BOSS BACK TO LAYER 1. TAP TWICE TO CONFIRM.' }),
     ];
   }
 

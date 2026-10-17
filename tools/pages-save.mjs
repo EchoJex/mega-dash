@@ -1,9 +1,8 @@
 /**
  * DO THE TWO WEB PAGES ACTUALLY KEEP WHAT THE OWNER MAKES?
  *
- * The design tracker and the sprite editor, driven in a real browser. They
- * share one save engine now (docs/autosave.js), and this runs both of them
- * through the same three questions.
+ * The design tracker, driven in a real browser, through the three questions
+ * its save engine (docs/autosave.js) has to answer.
  *
  * Three things have to hold, and each one is a way work has really been lost:
  *
@@ -140,69 +139,13 @@ await waitFor(/saved to main/);
 check('and it is sent to GitHub without being asked',
   repo.text.includes('TYPED WHILE GITHUB WAS UNREACHABLE'));
 
-// ── THE SPRITE EDITOR ─────────────────────────────────────────────────
-// Same engine, same three questions. It reads its reference data straight
-// from raw.githubusercontent.com rather than through the API, so that host
-// has to be faked too.
-const raw = {
-  'design/sprite-targets.json': fs.readFileSync(path.join(ROOT, 'design/sprite-targets.json'), 'utf8'),
-  'design/boss-data.json': fs.readFileSync(path.join(ROOT, 'design/boss-data.json'), 'utf8'),
-};
-const sprite = { text: fs.readFileSync(path.join(ROOT, 'design/sprites/player.sprite'), 'utf8'), sha: 'sp0' };
-let spritePuts = 0;
-
-await page.route('**://raw.githubusercontent.com/**', (route) => {
-  const key = new URL(route.request().url()).pathname.split('/').slice(4).join('/');
-  return raw[key] !== undefined
-    ? route.fulfill({ status: 200, body: raw[key] })
-    : route.fulfill({ status: 404, body: '{}' });
-});
-await page.route('**://api.github.com/**/contents/design/sprites/player.sprite*', async (route) => {
-  const req = route.request();
-  const json = (body, status = 200) =>
-    route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-  if (req.method() !== 'PUT') return json({ sha: sprite.sha, content: b64(sprite.text) });
-  if (!writesAllowed) return json({ message: 'nope' }, 500);
-  const body = JSON.parse(req.postData());
-  if ((body.sha || null) !== sprite.sha) return json({ message: 'Conflict' }, 409);
-  sprite.text = un64(body.content);
-  sprite.sha = `sp${++spritePuts}`;
-  return json({ content: { sha: sprite.sha } });
-});
-
-await page.goto(`${SITE}/sprite-editor.html`);
-await waitFor(/loaded/);
-check('the sprite editor has no PUBLISH button left to forget', !(await page.$('#saveBtn')));
-
-// A frame's status is a real edit and a far steadier thing to drive than a
-// pointer gesture on a canvas. It has to be a value the frame does not
-// already hold, or nothing changes and the pill says "saved" for a write that
-// never happened — which is how this check first passed while doing nothing.
-const firstStatus = await page.inputValue('#status');
-const other = firstStatus === 'wip' ? 'deferred' : 'wip';
-await page.selectOption('#status', other);
-await waitFor(/kept here/);
-await waitFor(/saved/);
-check('an edit in the sprite editor reaches main with no button pressed',
-  spritePuts > 0 && new RegExp(`status=${other}`).test(sprite.text));
-
-writesAllowed = false;
-await page.selectOption('#status', firstStatus);
-await waitFor(/kept here/);
-writesAllowed = true;
-await page.goto(`${SITE}/sprite-editor.html`);
-await waitFor(/restored|saved/);
-await waitFor(/saved/);
-check('a sprite edit that never reached GitHub is sent after a reload',
-  new RegExp(`status=${firstStatus}`).test(sprite.text) && spritePuts > 1);
-
 check('no page errors', pageErrors.length === 0);
 
 for (const [name, ok] of checks) console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${name}`);
 if (pageErrors.length) console.log('\n' + pageErrors.join('\n'));
 const passed = checks.every(([, ok]) => ok);
 console.log(passed
-  ? '\nPASS — both pages keep what is put into them'
+  ? '\nPASS — the tracker keeps what is put into it'
   : '\nFAIL — work can still be lost');
 
 await browser.close();

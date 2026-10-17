@@ -318,7 +318,10 @@ export const frictionMult = (bag) =>
  * A patch of attributed ground. `source` decides who it can hurt: the player is
  * immune to its own Hot, so Blaze Wheel can leave a trail you can stand in.
  */
-export function makePatch(id, x, y, w, h, frames, source = 'boss') {
+/** Terrain attributes last five seconds unless reapplied or the design says otherwise. */
+export const TERRAIN_FRAMES = 300;
+
+export function makePatch(id, x, y, w, h, frames = TERRAIN_FRAMES, source = 'boss') {
   return { id, x, y, w, h, t: frames, tMax: frames, source, tick: 0 };
 }
 
@@ -336,7 +339,7 @@ export function makePatch(id, x, y, w, h, frames, source = 'boss') {
  * the surface so it reads as scorched ground rather than a floating bar.
  */
 const PATCH_H = 4;
-export const surfacePatch = (id, srcX, srcW, surfaceY, frames, source = 'boss') =>
+export const surfacePatch = (id, srcX, srcW, surfaceY, frames = TERRAIN_FRAMES, source = 'boss') =>
   makePatch(id, srcX, surfaceY - 3, Math.max(2, srcW), PATCH_H, frames, source);
 
 export function stepPatches(list) {

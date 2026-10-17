@@ -1,6 +1,6 @@
 # MEGA DASH — GLOSSARY
 
-The vocabulary the tracker, the sprite editor and the code all use. If a word here
+The vocabulary the tracker and the code use. If a word here
 means something different in a field you are writing, the word is wrong, not the field.
 
 **If you meet a word in the code, in CLAUDE.md or in a tracker field that is not on this
@@ -10,27 +10,18 @@ is a name that will be wrong in six months and nobody will notice.
 
 ---
 
-## FRAMES ARE STEPS. This is the alias, and it is the important line on the page.
+## FRAMES ARE STEPS, at 60 a second.
 
-**When you write "hold for 10 frames" in a tracker field, you mean 10 STEPS**, and the
-code will read it that way. Both words point at the same unit: **one 1/60th of a second
-of the game's simulation clock.**
-
-They are aliases because the game must play identically at any refresh rate. A 120Hz
-phone paints twice as often as a 60Hz one, and if "frame" ever came to mean "one repaint"
-the same animation would run at half speed on half the devices. So the game has exactly
-one clock, every duration is counted in it, and the screen just shows whatever the clock
-has reached.
+**A "frame" in anything you write is one sixtieth of a second** — one step of the game's
+clock. Write it however reads best; the game makes sure a 90Hz or 120Hz phone plays at
+exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 
 | you might write | it means |
 |---|---|
 | 10 frames | 10 steps = 1/6 second |
 | 30 frames | 30 steps = half a second |
-| 60 frames, 1 second, 1 beat | 60 steps |
-
-The only place the distinction matters is **screen refresh**, and nothing you write
-should ever mean that. Say "steps" when you want to be unambiguous; say "frames" when
-it reads better. Nobody has to translate.
+| 60 frames, 1 second | 60 steps |
+| 1 beat (Volt Man's room) | 2 seconds = 120 steps |
 
 ---
 
@@ -40,10 +31,10 @@ it reads better. Nobody has to translate.
 |---|---|
 | **step** *(alias: frame)* | 1/60s of the simulation. Every duration in the game is a whole number of these. |
 | **screen refresh** | One repaint of the display — 60 or 120 a second depending on the phone. Never a unit for design. |
-| **hold** | How many steps one drawn picture stays on screen. Your slide is 3 then 23. |
+| **hold** | How many steps one drawn picture stays on screen. The player's slide holds 8, then 5, then 13. |
 | **fps** | The old way of spelling hold: one number for a whole sheet. 12fps means every picture holds 5 steps, because 60 ÷ 12 = 5. It is the same idea with less control. |
 | **cycle** | One pass through an animation. The run is 6 pictures × 5 steps = 30 steps. |
-| **beat** | One second — 60 steps. Volt Man's room runs on it. |
+| **beat** | Two seconds — 120 steps, one bar of Volt Man's music. His room runs on it. |
 
 ## Pictures
 
@@ -61,7 +52,7 @@ it reads better. Nobody has to translate.
 | **pivot** | The one pixel the game holds a sheet by, written on the sheet's `pivot` line: the Quake Hammer's grip goes in his hand, a spike's foot on the floor. Facing left, the picture is mirrored around it. |
 | **weapon art** | A weapon drawn as its own sheets — the hammer in his hand, the dust it throws up — rather than as a bullet. Listed in `src/data/weapon-art.js`; drawn in front of the player (in his hand) or behind him (effects). |
 | **placeholder sheet** | A weapon's sheet painted in plain shapes by `npm run art:placeholders`, with its real timing and hit areas already in it, so the game plays it exactly as it will play the finished drawing. |
-| **16-bit** | The game's look since 29 Sep 2026, after the SNES: up to 15 colours plus see-through per sprite, shaded in colour ramps, with the near-black outline. The player's sheet and the drawn boss rooms are the examples to follow. |
+| **16-bit** | The game's look since 29 Sep 2026, after the SNES: up to 15 colours plus see-through per sprite. How it is shaded is Claude Design's call. The player's sheet and the drawn boss rooms are the examples to follow. |
 | **declared palette** | How a 16-bit sprite stores its colours: `palette` lines at the top of a `.sprite` file list up to 15 fixed colours, and each pixel names one of them. The standard for new art. Those colours do not follow a palette re-tune; they are changed by hand. |
 | **role** | The original, three-colour way: a pixel is stored as *primary / secondary / outline*, never as a colour, so re-tuning the palette recolours every sprite drawn this way. What the placeholder era drew in. |
 | **colour ramp** | Three to five shades of one material, dark to light, used to shade a 16-bit sprite. Nothing to do with the difficulty **ramp** below. |
@@ -127,6 +118,7 @@ it reads better. Nobody has to translate.
 | **class** | Whether a weapon is **offensive** (shares the fire button, you aim it) or **defensive** (runs by itself — a drone, a shield, a jetpack). |
 | **live / aimed** | Two different things. Several weapons can be *live* (running); exactly one offensive weapon is *aimed* (on the fire button). |
 | **ladder / rung** | A weapon's list of upgrades by level. Each **rung** — levels 1, 3, 6 and 10 — adds a real feature; the levels between just add damage. |
+| **tier** | Another name for those four rungs: Lv 1, 3, 6 and 10. Beating a boss whose weapon you already carry pushes it up a tier. |
 | **jab / chain / window** | A jab is a quick attack from a tap. A chain is jabs in a row: on the Quake Hammer, jab, jab, finisher. The window is the stretch of steps in which another press carries on into the next jab; press after it closes and you start again from the first. |
 | **charge** | Holding the fire button to wind up a stronger attack, which goes off when you let go. The Quake Hammer's is modelled on King Dedede's Jet Hammer. A **full charge** is one held long enough to reach its strongest. |
 | **rooted** | Unable to walk or turn round while a weapon is busy. Jumping still works. `moveScale` 0 in the code. |
@@ -136,9 +128,9 @@ it reads better. Nobody has to translate.
 | **damage words** | How a rung states damage until the numbers are tuned: low, low-medium, medium, medium-heavy, heavy. Each word is a multiple of that weapon's own base hit, set in one table (`DAMAGE_WORDS`). |
 | **mastery** | The meta upgrade that decides how many slots you own at all, and how many run at once. Rank 0 to 3, bought separately for each class. |
 | **re-quip** | Changing which weapons are in your slots. Coined here; it just means re-equip. |
-| **the wheel** | The screen where you do it. Two modes: the **mid-fight wheel** (slow motion, aim or switch off a slot, nothing else) and the **between-fights wheel** (hard pause, actually swap weapons). |
-| **in-situ** | RETIRED. It was the code's name for the mid-fight wheel — Latin for "in place" — and you will still meet it in commits before the rename. It means `midFight`, and its timeout is now `MID_FIGHT_TIMEOUT_MS`. |
-| **post-boss** | RETIRED, same way. The between-fights wheel, `betweenFights` in the code. |
+| **the wheel** | The screen where you do it. Two modes: the **Active wheel** (during a fight: slow motion, aim a slot or switch one on or off) and the **Post Boss wheel** (after a boss falls: hard pause, actually swap weapons). The code still calls them `midFight` and `betweenFights`. |
+| **in-situ / mid-fight** | RETIRED names for the Active wheel. You will still meet them in old commits. |
+| **between-fights** | RETIRED name for the Post Boss wheel. |
 
 ## What you earn
 
@@ -216,8 +208,3 @@ the caption was wrong the moment that field moved on.
 
 ![the tracker, labelled](glossary-tracker.png)
 
-**The sprite editor** — sprite, action, index, marker and hold across the header, with the
-cycle cost along the bottom. The hold box reads in **steps**; write "frames" in a field if
-you prefer, it is the same unit.
-
-![the sprite editor, labelled](glossary-editor.png)

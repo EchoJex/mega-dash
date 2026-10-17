@@ -7,9 +7,7 @@ you may change and what to hand back. This page is the Quake Hammer itself.
 the end, and plain circles, triangles and dots for the dust, spikes and sand. The frames,
 their timing and their hit areas are real: the game plays them now exactly as it will play
 the finished art. To see them move, play a dev build with the hammer equipped (dev menu →
-WEAPONS: ALL, START LV to try each rung), or open each sheet in the sprite editor
-(`docs/sprite-editor.html`, under WEAPON ART), which plays a clip at game speed and draws
-the hit area and the pivot.
+WEAPONS: ALL, START LV to try each rung).
 
 ## What it is, in the owner's words
 

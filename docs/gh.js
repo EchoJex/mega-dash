@@ -1,5 +1,5 @@
 /**
- * GitHub REST plumbing — shared by the tracker app and the sprite editor.
+ * GitHub REST plumbing — used by the tracker app.
  *
  * ONE copy on purpose, for the same reason as tracker-md.js. Both apps talk to
  * the same repo with the same token, and both had their own copy of this until

@@ -471,10 +471,10 @@ function tidalWave(ctx, lv, L, fuel) {
  * are either close enough or you are not. Everything the ladder buys is in the
  * chain, so the weapon rewards fighting inside a crowd.
  *
- * "No enemy can be hit more than twice in one complete hit+chain attack" is the
- * rule that stops a two-enemy room turning into an infinite loop, and it is
- * enforced with a hit tally rather than a visited set — an enemy is allowed to
- * be caught by two different branches, just not three.
+ * THE OWNER'S CHAIN RULES (17 Oct 2026): every enemy the chain touches is
+ * stunned; one zap never touches the same enemy twice; and when choosing where
+ * to jump, an enemy the PREVIOUS zap did not hit is preferred, then the nearest,
+ * then a coin toss.
  */
 const volt = {
   step() {},
@@ -503,11 +503,12 @@ const volt = {
     const first = enemiesIn(ctx, box)[0];
     if (!first) return true;
 
-    const hits = new Map();
+    const prev = st.lastHits || new Set();
+    const hits = new Set();
+    st.lastHits = hits;
     const strike = (e, depth) => {
-      const n = hits.get(e) || 0;
-      if (n >= 2) return false;              // the twice rule
-      hits.set(e, n + 1);
+      if (hits.has(e)) return false;         // one zap never touches an enemy twice
+      hits.add(e);
       const falloff = L.chainFalloff ** depth;
       ctx.hitEnemy(e, dmgOf('volt_spark', lv, ctx) * falloff, { from: p.x + 12 });
       const stunF = depth === 0 ? L.stunFrames : L.chainStunFrames;
@@ -533,7 +534,15 @@ const volt = {
       for (const src of front) {
         const c = centreOf(src);
         let taken = 0;
-        for (const e of enemiesByRange(ctx, c.x, c.y, null, L.chainRange)) {
+        const near = enemiesByRange(ctx, c.x, c.y, hits, L.chainRange);
+        // Distance to the nearest whole pixel, so near-equal jumps are a real
+        // tie that the coin toss settles.
+        const rank = new Map(near.map((e) => {
+          const ce = centreOf(e);
+          return [e, Math.round(Math.hypot(ce.x - c.x, ce.y - c.y)) + Math.random() * 0.5];
+        }));
+        near.sort((a, b) => (prev.has(a) - prev.has(b)) || (rank.get(a) - rank.get(b)));
+        for (const e of near) {
           if (taken >= width) break;
           if (e === src) continue;
           if (!strike(e, depth + 1)) continue;
@@ -1731,7 +1740,7 @@ const thorn = {
  *
  * The escort projectile is what other enemies feel: damage 0, very large
  * knockback, per "minion projectile does not deal damage but has very large
- * knockback". It carries the body along with it and hands the damage back when
+ * knockback". It carries the body along with it and hands the damage over when
  * it stops.
  */
 function tossMinion(st, lv, ctx, L, e) {
@@ -1754,24 +1763,41 @@ function tossMinion(st, lv, ctx, L, e) {
   ctx.sfx('shootBig', { pitch: 0.95 });
 }
 
-/** Ride the body along with its ram, and settle up when the ram stops. */
+/**
+ * Ride the body along with its ram. THE THROWN MINION IS HURT ONLY WHEN IT
+ * STRIKES SOMETHING — another enemy, a wall, the floor or a platform — by the
+ * owner's call of 17 Oct 2026. Sailing off into a pit costs it nothing. The
+ * damage lands once, through the normal path so a kill still scores, drops
+ * and counts toward the combo.
+ */
 function stepTossed(st, ctx) {
   if (!st.tossed?.length) return;
   st.tossed = st.tossed.filter((t) => {
     if (t.e.hp <= 0) return false;                  // died to something else
     const flying = t.ram.life > 0 && ctx.bullets.includes(t.ram);
-    if (flying) {
-      t.e.x = t.ram.x - t.e.w / 2;
-      t.e.y = t.ram.y - t.e.h / 2;
-      t.e.kbVx = 0;
-      t.e.vy = 0;
-      return true;
+    if (!flying) return false;
+    const e = t.e;
+    e.x = t.ram.x - e.w / 2;
+    e.y = t.ram.y - e.h / 2;
+    e.kbVx = 0;
+    e.vy = 0;
+    if (!t.paid && struck(e, ctx)) {
+      t.paid = true;
+      ctx.hitEnemy(e, t.dmg, { from: t.ram.x });
     }
-    // AT REST. Now the damage lands, through the normal path so a kill still
-    // scores, drops and counts toward the combo.
-    ctx.hitEnemy(t.e, t.dmg, { from: t.ram.x });
-    return false;
+    return true;
   });
+}
+
+/** Is this body touching another enemy, a wall, the floor or a platform? */
+function struck(e, ctx) {
+  const a = ctx.arena;
+  const touches = (o) => o.x < e.x + e.w && o.x + o.w > e.x && o.y < e.y + e.h && o.y + o.h > e.y;
+  if (ctx.enemies.some((o) => o !== e && o.hp > 0 && touches(o))) return true;
+  if (a && (e.x <= a.x0 || e.x + e.w >= a.x1)) return true;
+  const floor = a ? a.floorY : ctx.floorY;
+  if (e.y + e.h >= floor && (a || ctx.overGround(e.x + e.w / 2))) return true;
+  return (ctx.platforms || []).some((pl) => touches(pl));
 }
 
 /** The tip of the lash, and what it has found there. */

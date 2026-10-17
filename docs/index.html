@@ -28,11 +28,6 @@
   button:hover{filter:brightness(1.25)}
   button.primary{background:var(--ui);color:#06220f;border-color:transparent;font-weight:700}
   button.warn{background:#3a2430;color:#f0a0b0}
-  /* Styled as a button rather than a link, because it sits in a row of them
-     and a bare anchor here reads as prose that happens to be blue. */
-  .applink{background:#243044;color:var(--ink);border:1px solid var(--grid);padding:7px 12px;
-           border-radius:3px;text-decoration:none;font-size:13px;white-space:nowrap}
-  .applink:hover{filter:brightness(1.25)}
   /* The status line is a <button> so it can be tapped to save now; it should
      still read as text rather than as a control competing with Reload. */
   #state{font-size:12px;color:var(--dim);background:none;border:0;padding:0;
@@ -117,7 +112,6 @@
     <!-- The two apps are siblings on one Pages site and share a token, so each
          links to the other: one bookmark reaches both, and neither has to be
          remembered as a URL. -->
-    <a class="applink" href="./sprite-editor.html" title="hand-draw sprites">✏️ Sprites</a>
     <button id="tokenBtn" title="GitHub token">🔑</button>
   </div>
   <nav id="nav"></nav>
@@ -462,7 +456,7 @@ function fieldRow(f, head) {
   const txt = document.createElement(choices ? 'select' : 'div');
   txt.className = boxes ? 'txt checks' : 'txt';
   /**
-   * THE ASSERTION RULE lives in marks.js, shared with the sprite editor.
+   * THE ASSERTION RULE lives in marks.js.
    *
    * A SMALL EDIT TO A FINISHED FIELD LANDS ON `draft`, NOT `wip`. Fixing one
    * word used to drop the whole field to `wip`, where nothing looks at it — so
@@ -547,8 +541,8 @@ function bugCard(sec) {
   el.className = 'card'; el.dataset.group = sec.title;
   el.innerHTML = '<div class="head"><h2>Bugs</h2></div>'
     + '<div class="note">Shorthand is fine. Build is the versionCode on the title screen. '
-    + 'Claude fixes <b>draft</b> bugs; <b>wip</b> means you are still describing it; '
-    + '<b>ready</b> means already fixed.</div>';
+    + 'Every Claude Code session starts by fixing the bugs not yet struck through, '
+    + 'tells you what it fixed, then strikes them through.</div>';
   const body = document.createElement('div');
   body.className = 'body open';
 

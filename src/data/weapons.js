@@ -341,7 +341,7 @@ export const WEAPON_LADDERS = {
   volt_spark: {
     1: {
       cooldown: 12, range: 34, chainRange: 44, chainFalloff: 0.7,
-      fanout: [], stunFrames: 60, chainStunFrames: 0,
+      fanout: [], stunFrames: 60, chainStunFrames: 30,   // every enemy the chain touches is stunned
     },
     3: { fanout: [2], chainRange: 56 },
     6: { fanout: [3], chainRange: 70, stunFrames: 120, chainStunFrames: 60 },
@@ -670,6 +670,17 @@ export const hasLadder = (id) => Object.prototype.hasOwnProperty.call(WEAPON_LAD
  * field and leaves everything it does not mention alone.
  */
 /**
+ * THE FOUR TIERS — Lv 1 / 3 / 6 / 10, where a weapon's real features arrive.
+ *
+ * Re-beating a boss whose weapon you carry pushes it to the tier for the layer
+ * you beat him at (layer 1 to Lv3, 2 to Lv6, 3 to Lv10), or one tier past
+ * where it already is, whichever is higher. The owner's call, 17 Oct 2026.
+ */
+export const TIERS = [1, 3, 6, 10];
+export const tierAfterRebeat = (level, layer) =>
+  Math.max(TIERS[Math.min(Math.max(layer | 0, 1), 3)], TIERS.find((t) => t > level) ?? TIERS[3]);
+
+/**
  * MEMOISED, because this is called several times per frame per weapon.
  *
  * `stepWeapons` calls it once per equipped weapon per frame, `drawWeaponry`
@@ -826,7 +837,7 @@ const DEFS = [
     cooldown: 20, projectiles: 1, shape: 'rock', speed: 2.8,
     desc: 'Hardens the player into stone while no input is given.' },
   // Provisional class — its tracker field is still `[wip]`.
-  { id: 'wraith_cloak', name: 'WRAITH CLOAK', short: 'WRAITH', cls: DEFENSIVE, boss: 'wraith',
+  { id: 'wraith_cloak', name: 'VAMPIRIC TOUCH', short: 'VAMPIRE', cls: DEFENSIVE, boss: 'wraith',
     cooldown: 30, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Brief invulnerability and invisibility.' },
   // Provisional class — its tracker field is still `[wip]`.
@@ -853,7 +864,7 @@ const DEFS = [
   // `BOSSES[].dropWeapon` — a code-to-code join, which is the only kind that
   // makes an id load-bearing. It is NOT a save key: unlocks and weapon levels
   // are run-scoped and never persisted.
-  { id: 'astral_cloak', name: 'ASTRAL CLOAK', short: 'ASTRAL', cls: DEFENSIVE, boss: 'eclipse',
+  { id: 'astral_cloak', name: 'EVIL ENERGY', short: 'EVIL', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
   { id: 'alloy_blade', name: 'ALLOY BLADE', short: 'ALLOY', cls: OFFENSIVE, boss: 'alloy',

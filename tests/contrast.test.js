@@ -61,7 +61,7 @@ test('every boss backdrop separates from the area ground', () => {
 });
 
 test('the cap line — the pit edge itself — clears every backdrop harder', () => {
-  // The cap sits in the 10px strip above the control pads, so it is the only
+  // The cap sits in the 15px strip above the control pads, so it is the only
   // part of the ground guaranteed never to be behind a thumb. It carries the
   // edge where the pad band crushes the body contrast, and so is held higher.
   for (const b of BOSSES) {

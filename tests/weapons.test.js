@@ -556,3 +556,30 @@ test('only weapons with a runtime report a ladder', () => {
     assert.equal(hasLadder(w.id), Wpn.hasRuntime(w.id), w.id);
   }
 });
+
+test('re-beating a boss pushes his weapon to the tier for that layer, or one tier on', async () => {
+  const { tierAfterRebeat } = await import('../src/data/weapons.js');
+  assert.equal(tierAfterRebeat(1, 1), 3);
+  assert.equal(tierAfterRebeat(1, 2), 6);
+  assert.equal(tierAfterRebeat(2, 3), 10);
+  assert.equal(tierAfterRebeat(3, 1), 6, 'already at the layer-1 tier: one tier on');
+  assert.equal(tierAfterRebeat(9, 1), 10);
+});
+
+test('the Volt Spark chain stuns everything it touches, never twice, and prefers fresh targets', async () => {
+  const { RUNTIME } = Wpn;
+  const mk = (x) => ({ x, y: 100, w: 10, h: 10, hp: 99, status: {} });
+  const hitLog = [];
+  const run = (enemies, st) => {
+    const ctx = {
+      player: { x: 0, y: 96, facing: 1 }, enemies, sfx() {}, puff() {}, arc() {},
+      hitEnemy(e) { hitLog.push(e); }, levelOf: () => 10, run: { dmgMult: 1 },
+    };
+    return RUNTIME.volt_spark.fire(st, 10, ctx);
+  };
+  const a = mk(16), b = mk(40), c = mk(60), d = mk(80);
+  const st = { cool: 0 };
+  run([a, b, c, d], st);
+  assert.equal(new Set(hitLog).size, hitLog.length, 'one zap never hits an enemy twice');
+  for (const e of hitLog) assert.ok(e.status.stun, 'every enemy the chain touched is stunned');
+});

@@ -88,7 +88,14 @@ page.on('pageerror', (e) => fail(`pageerror: ${e.message}\n${e.stack}`));
 // vs PLAYTESTER choice, and every perk this script relies on — the whole
 // arsenal unlocked, the boss jump, the HP floor — lives down the dev branch.
 await page.goto(`${SITE}/?seed=4821&dev=1`, { waitUntil: 'networkidle' });
-await page.waitForTimeout(1200);
+/**
+ * WAIT FOR THE TITLE SCREEN, NOT FOR A CLOCK. This was a flat 1.2s, and on a
+ * slow start the run below began while Boot was still loading — before the
+ * font existed — so the HUD's first label crashed ("Invalid BitmapText key").
+ * A player cannot get there: START only exists once the title is up.
+ */
+await page.waitForFunction(() => globalThis.__game?.scene.isActive('Title'), null, { timeout: 15000 })
+  .catch(() => {});
 
 const has = await page.evaluate(() => !!globalThis.__game);
 if (!has) { console.log('FAIL — no __game handle; is DEV.available off?'); process.exit(1); }
@@ -139,7 +146,7 @@ const running = await page.evaluate(() => !globalThis.__game.scene.getScene('Gam
 if (!running) fail('still paused after Esc — did the start-of-run wheel close?');
 
 /**
- * THE MID-FIGHT WHEEL, WHICH NOTHING ELSE HERE TOUCHES.
+ * THE ACTIVE WHEEL, WHICH NOTHING ELSE HERE TOUCHES.
  *
  * The two wheels are told apart by a string on `UIScene.mode`, and a string
  * comparison is the one thing that fails SILENTLY when it is wrong: a stale
@@ -156,12 +163,12 @@ const mid = await page.evaluate(() => ({
   mode: globalThis.__game.scene.getScene('UI')?.mode ?? null,
   paused: !!globalThis.__game.scene.getScene('Game').paused,
 }));
-if (mid.mode !== 'midFight') fail(`Q did not open the mid-fight wheel (mode: ${mid.mode})`);
-if (mid.paused) fail('the mid-fight wheel hard-paused the game; it should only slow it');
+if (mid.mode !== 'midFight') fail(`Q did not open the Active wheel (mode: ${mid.mode})`);
+if (mid.paused) fail('the Active wheel hard-paused the game; it should only slow it');
 await page.keyboard.press('KeyQ');
 await page.waitForTimeout(350);
 const shut = await page.evaluate(() => globalThis.__game.scene.getScene('UI')?.mode ?? null);
-if (shut !== null) fail(`Q did not put the mid-fight wheel away (mode: ${shut})`);
+if (shut !== null) fail(`Q did not put the Active wheel away (mode: ${shut})`);
 
 await play(6, ['ArrowRight', 'Space', 'ShiftRight', 'ArrowRight', 'Space', 'ArrowLeft', 'KeyW']);
 await page.screenshot({ path: shot('area.png') });

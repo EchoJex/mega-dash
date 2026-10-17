@@ -27,7 +27,7 @@
  * The kinds are listed in `CLIP_KINDS` (docs/sprite-fmt.js), beside the
  * checker that enforces them.
  *
- * CLIP NAMES NEVER END IN A DIGIT. The sprite editor reads a trailing number
+ * CLIP NAMES NEVER END IN A DIGIT. The sprite format reads a trailing number
  * as a frame index (`jab1` would become action `jab`, frame 2), so the jabs are
  * `jabOne`, `jabTwo`, `jabThree`.
  *

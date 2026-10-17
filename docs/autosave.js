@@ -198,10 +198,8 @@ export function createSaver({ textNow, apply, merge, message, onState = () => {}
   }
 
   /**
-   * Open a file. Flushes whatever the last one was still holding first — the
-   * sprite editor switches file every time you pick another sprite, and
-   * "I changed sprite and lost my last stroke" is exactly the kind of quiet
-   * loss this module exists to stop.
+   * Open a file. Flushes whatever the last one was still holding first, so
+   * switching files can never drop the last edit.
    *
    * Returns { text, restored, missing }. `missing` means the file is not in
    * the repo yet and the app should start from its own blank.

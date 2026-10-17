@@ -142,10 +142,10 @@ it off and the game first asks DEV MODE or PLAYTESTER; pick PLAYTESTER for the s
 | `npm run art:placeholders -- <weapon>` | paint a weapon's placeholder sheets, with its real timing and hit areas |
 | `npm run art:brief` | regenerate the numbers and the Claude Design prompt in `design/weapon-art/*.md` |
 | `npm run design:import -- <zip>` | bring a Claude Design handoff in: checked, built, tested, or put back |
-| `npm run tracker-test` | OPT-IN: drives the tracker app against a faked GitHub (~15s) |
+| `npm run pages-test` | OPT-IN: drives the tracker app against a faked GitHub (~15s) |
 | `npm run apk` | local APK build (CI does this automatically) |
 
-`sim`, `smoke` and `tracker-test` need Chromium and are deliberately not dependencies — Playwright's
+`sim`, `smoke` and `pages-test` need Chromium and are deliberately not dependencies — Playwright's
 postinstall would pull ~150MB onto every APK build for jobs CI does not run:
 
 ```bash
@@ -171,21 +171,16 @@ buying rank 1 in the Hub.
 - **[design/TRACKER.md](design/TRACKER.md)** — the design source of truth: slices, bugs
   and brainstorming, in plain readable Markdown.
 - **[design/GLOSSARY.md](design/GLOSSARY.md)** — the shared vocabulary. A step is 1/60s and
-  a frame is the same thing; if a word here means something else in a field you are
+  a frame is the same thing, at 60 a second; if a word here means something else in a field you are
   writing, the word is wrong.
 
-**Two apps, one Pages site, one bookmark.** Both are served from `docs/` on `main`, share
-one GitHub token and one save engine, and link to each other in their headers. What you
+**The tracker app** is served from `docs/` on `main` by GitHub Pages. What you
 type is copied into the browser straight away and written to `main` a few seconds later —
 there is no Publish button and no branch to pick, because forgetting the one and mis-tapping
 the other were how work kept going missing:
 
 - **[Tracker web app](https://echojex.github.io/mega-dash/)** — a friendlier lens over
   TRACKER.md. Saves itself into the repo; no export, no download.
-- **[Sprite editor](https://echojex.github.io/mega-dash/sprite-editor.html)** — draws
-  `design/sprites/*.sprite`, the source `npm run sprites:build` turns into the PNGs the
-  game loads. Deliberately not in the game's own dev menu: the APK is entirely offline
-  and an in-game editor would put a GitHub token inside a sideloaded app.
 
-Both need a fine-grained GitHub token (Contents: read/write on this repo only), stored in
-your browser and never committed. Both stay READ-ONLY without one rather than going blank.
+It needs a fine-grained GitHub token (Contents: read/write on this repo only), stored in
+your browser and never committed, and stays READ-ONLY without one rather than going blank.

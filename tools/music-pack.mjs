@@ -1,7 +1,7 @@
 /**
  * `npm run music` — write design/music/pack.json, the list the game downloads.
  *
- * MUSIC SHIPS OUTSIDE THE APK (see CLAUDE.md, "the size budget"). The phone
+ * MUSIC SHIPS OUTSIDE THE APK (see CLAUDE.md, "Size, and audio"). The phone
  * reads this one small file on launch, compares each track's fingerprint with
  * the copy it already holds, and downloads only what is new or changed. So the
  * fingerprint is the whole versioning scheme: re-export a track under the same

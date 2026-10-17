@@ -238,7 +238,7 @@ export const FEEL = {
   // Two independent rolls per enemy killed, one per drop type. Neither is
   // guaranteed. Bosses always drop EXP regardless of expDropChance — see
   // dropsFor() in systems/pickups.js.
-  pickupChance: 0.10,       // E-Tank
+  pickupChance: 0.05,       // E-Tank (5%, the owner's call of 17 Oct 2026)
   expDropChance: 0.5,       // EXP orb from minions and elites
   pickupHeal: 1,            // energy pips restored by a field E-Tank
   pickupMagnetRange: 18,    // base attract radius, widened by the Item Magnet

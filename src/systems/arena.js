@@ -82,17 +82,17 @@ export function makeArena(bossDef, layer, viewW, floorY) {
     t: 0,
     /**
      * THE ROOM'S BEAT. "All furniture, hazards, and boss layer attacks shall be
-     * synched to a common 1s beat" — Volt Man's arena field, and the first room
-     * to ask for one.
+     * synched to a common beat" — Volt Man's arena field, and the first room to
+     * ask for one. The beat is two seconds (BEAT_LEN).
      *
      * DERIVED FROM `t` RATHER THAN COUNTED SEPARATELY, so a second counter can
      * never drift from the first. `beat` is the frame within the current beat
      * and `beatN` is how many have passed.
      *
      * A BEAT-LOCKED DURATION IS STATED IN BEATS, not in the frames it happens to
-     * come to. The tracker states them in seconds and a beat is a second, so
-     * written that way the code and the field agree by construction rather than
-     * by arithmetic somebody has to redo — see BEAT in bossFights.js, which is
+     * come to. The tracker states them in beats, so written that way the code
+     * and the field agree by construction rather than by arithmetic somebody
+     * has to redo — see BEAT in bossFights.js, which is
      * where Volt Man's sweep, wind-up and end-of-sweep sequence are all built
      * from multiples of it. That agreement is the whole point: the platform
      * sets, the panel sweep and the speaker membranes landing together is what
@@ -158,19 +158,22 @@ export function makeArena(bossDef, layer, viewW, floorY) {
  * everything else gets a bare room, which is correct rather than missing.
  */
 /**
- * ONE SECOND, IN FIXED STEPS. Exported because `bossFights.js` states Volt Man's
- * whole sweep in multiples of it, and two declarations of the same 60 is how a
- * hazard quietly stops landing on the beat it is supposed to be synchronised
- * with. The arena owns it because the arena is what has a beat.
+ * ONE BEAT OF THE ROOM, IN FIXED STEPS: TWO SECONDS, by the owner's call of
+ * 17 Oct 2026 — one bar of Volt Man's 120-beats-a-minute track, so the room
+ * and the music land together. It was one second. Exported because
+ * `bossFights.js` states Volt Man's whole sweep in multiples of it, and two
+ * declarations of one number is how a hazard quietly stops landing on the beat.
+ * The arena owns it because the arena is what has a beat.
  */
-export const BEAT_LEN = 60;
+export const BEAT_LEN = 120;
 
 /** Frames the plasma lamp holds one lightning shape before jumping to another. */
 export const VOLT_LAMP_HOLD = 14;
 
 /**
  * VOLT MAN'S PLATFORM RHYTHM, in BEATS rather than frames — the field states it
- * in seconds and the beat is a second, so the two agree by construction.
+ * in seconds when the beat was one second; at two seconds a beat (the owner's
+ * call, 17 Oct 2026) every one of them runs half as fast, as asked.
  *
  * `period` is not a free number: two sets three apart, each lasting five, only
  * repeats cleanly on a six-beat cycle. Change `apart` or `on` and this has to

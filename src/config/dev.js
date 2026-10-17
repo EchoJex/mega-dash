@@ -117,12 +117,16 @@ export const DEV = {
    * falls, which is exactly the wrong order for a session that wants to test a
    * weapon against a fight.
    *
-   * So the run OPENS on the real between-fights wheel: the same control, the same
+   * So the run OPENS on the real Post Boss wheel: the same control, the same
    * window, the same rules, just granted rather than earned. Set the loadout,
    * tap away, walk. It shuts on the first arena warp like any other window.
    *
    * This is also the answer to re-quipping mid-run: abort the run, and the next
    * one opens on the wheel again.
+   *
+   * ALWAYS ON IN DEV MODE, by the owner's call of 17 Oct 2026: there is no menu
+   * row for it and it is not remembered between launches, so a stale "off"
+   * can never hide the wheel. Only the boss simulator switches it off.
    */
   requipAtStart: true,
 
@@ -161,8 +165,8 @@ export const DEV = {
   /**
    * WHICH RE-QUIP WHEEL THE BUTTON OPENS, in dev mode only.
    *
-   * `playtest` is the shipped pair: the mid-fight wheel under fire, the hard-
-   * paused between-fights wheel between fights. `postboss` makes the button always
+   * `playtest` is the shipped pair: the Active wheel under fire, the hard-
+   * paused Post Boss wheel between fights. `postboss` makes the button always
    * open the between-fights one, which is what you want while you are BUILDING that
    * wheel — reaching it otherwise costs a whole fight, and slow motion is not
    * the state you want to inspect a layout in.
@@ -184,7 +188,7 @@ export const DEV = {
  */
 const PERSISTED = [
   'hpFloor', 'unlockAnyWeapon', 'cardsFromAllWeapons', 'startUnlocked',
-  'maxMastery', 'bossSelect', 'cycleLayers', 'requipAtStart', 'debugHud',
+  'maxMastery', 'bossSelect', 'cycleLayers', 'debugHud',
   'nextLayer', 'startLevel', 'offRank', 'defRank', 'wheelMode',
 ];
 

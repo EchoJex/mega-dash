@@ -31,13 +31,6 @@ field still describes the same built thing, so it keeps the marker it had.
 Moving markers on a rename would either un-build correct fields or have Claude
 handing out green lights, and neither is what a rename means.
 
-`[na]` is gone. "Deliberately not applicable" was a fifth state off the side of
-the ladder that three fields used, and each was a settled answer — which is what
-`[ready]` means. Where a field genuinely has no answer, **the prose says so**:
-Proto Mk0's weakness reads "Typeless — no elemental weakness", and
-`tests/typechart.test.js` now checks that claim against the chart rather than
-skipping it.
-
 This is a deliberate reversal of the earlier scheme, where `[ready]` was the
 build signal and `[draft]` meant Claude-generated prose awaiting review. Old
 comments in code may still describe it the other way round; this table wins.
@@ -137,7 +130,7 @@ where each one stands.
 - **hazard L3** `[ready]` Same arena hazard as Layer 2.
 - **attack L1** `[ready]` Launches a 1 very bouncy fireball toward the player that climb up walls and leave hot trails everywhere it contacts.
 - **attack L2** `[ready]` 2 fireballs, much higher bounce heights ; boss has multiple stem angle to choose from
-- **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. Rocks shall fall, but not from right above the platforms while the lava is up.
+- **attack L3** `[ready]` Same as Layer 2; additionally, the boss will regularly pause their normal attack and jump up to a small platform that moves up and down just for himself a few seconds before the screen shake/Rock fall event. the red pixels of the background ebb rapidly, then the entire floor fills with lava, slowly, up to about one default player height; the lava recedes after 20 seconds, leaving Hot on the ground. ~~Rocks shall fall, but not from right above the platforms while the lava is up.~~ 17 Oct 2026: Semi random spawning of falling rocks, up to 5. If an adjacent platform is not Hot, or won't be hot in the next 3 seconds, then it's okay for rocks to fall there
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; orange/red glowing backpack sits high on the players back like a backpack. From that backpack fire wheels are lobbed in the direction the player is facing, like a backpack catapult; applies Hot to ground or burn to enemy on contact for a scalable time. Base fire rate fixed for all levels at once set per 3 seconds, and up to 2 fireballs on screen at once. High Fireball contact damage, low rolling contact damage. Standard burn dps standard response to gravity, pits, and platforms.
 - **weapon Lv1** `[ready]` Very slight rolling distance; up to 2 on screen; 2s Hot duration applied to surfaces and 2s burn applied on contact with enemies.
@@ -194,20 +187,20 @@ where each one stands.
 - **palette notes** `[ready]` Yellow primary; deep purple secondary.
 - **boss weakness A** `[wip]` Ground
 - **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
-- **arena** `[ready]` All furniture, hazards, and boss layer attacks shall be synched to a common 1s beat. Two industrial speakers with pulsing membrane pulse every 1s indicating this arena wide beat; several platforms phase in and out slowly in genuinely random locations, 2 at a time, 3 seconds apart, each set lasting 5 seconds.
-- **arena furniture** `[ready]` Four phasing platforms that phase in at a new location each time they phase IN, 2 at a time, 3 seconds apart, each set lasting 5 seconds. eight floor panels. Two large industrial speakers that are visual only. two long industrial power lines at 30% and 70% arena width. The cables are drawn at every layer and but the conductors and the electrified tip are only drawn at layer 2 and layer 3.
-- **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, visually discharging and leaving that panel electrified. The start of each panels hurt box will be telegraphed by a blinking red and yellow light on the panel 1s before it electrically discharges. Discharge animation lasts 1s and causes flinch and moderate damage and but not stun. Lingering electrification of the panel lasts 3s. Lingering electrified panel deals mild damage and a short Stun. Next panel telegraph starts immediately after discharge duration.
-- **hazard L2** `[ready]` Per sweep: after final panel has finished discharging, the arena brightness flickers dark normal dark, staying dark. then after the last of the electrified panels have finished being electrified the two power lines sparkle for 1s then discharge luminous,  neon purple lightning bolts that stay still for 1s before fading over a second period while the arena brightness returns to normal equivalently. The power lines are inert between arcs and can be stood under safely.
+- **arena** `[ready]` All furniture, hazards, and boss layer attacks shall be synched to a common ~~1s~~ 2s beat. Two industrial speakers with pulsing membrane pulse every ~~1s~~ 2s indicating this arena wide beat; several platforms phase in and out slowly in genuinely random locations, 2 at a time, ~~3 seconds apart, each set lasting 5 seconds~~ 6 seconds apart, each set lasting 10 seconds. 17 Oct 2026: It needs to be 2 second beat, lining up with every other audio beat. Everything in the room runs half as fast.
+- **arena furniture** `[ready]` Four phasing platforms that phase in at a new location each time they phase IN, 2 at a time, ~~3 seconds apart, each set lasting 5 seconds~~ 6 seconds apart, each set lasting 10 seconds. eight floor panels. Two large industrial speakers that are visual only. two long industrial power lines at 30% and 70% arena width. The cables are drawn at every layer and but the conductors and the electrified tip are only drawn at layer 2 and layer 3.
+- **hazard L1** `[ready]` Floor panels electrify in a very slow left-to-right sweep, one panel at a time, visually discharging and leaving that panel electrified. The start of each panels hurt box will be telegraphed by a blinking red and yellow light on the panel ~~1s~~ 2s before it electrically discharges. Discharge animation lasts ~~1s~~ 2s and causes flinch and moderate damage and but not stun. Lingering electrification of the panel lasts ~~3s~~ 6s. Lingering electrified panel deals mild damage and a short Stun. Next panel telegraph starts immediately after discharge duration.
+- **hazard L2** `[ready]` Per sweep: after final panel has finished discharging, the arena brightness flickers dark normal dark, staying dark. then after the last of the electrified panels have finished being electrified the two power lines sparkle for ~~1s~~ 2s then discharge luminous,  neon purple lightning bolts that stay still for ~~1s~~ 2s before fading over a ~~second~~ two-second period while the arena brightness returns to normal equivalently. The power lines are inert between arcs and can be stood under safely.
 - **hazard L3** `[ready]` The sweep runs in both directions at once, meeting in the middle. Vertical Bolts at the end of a sweep now chain through nearby minions and into the player if the player is close to them, destroying the minions and damaging the player and applying stun
 - **attack L1** `[ready]` Infrequently fires up to 1 zigzag lightning bolt toward the player that has a long yellow tail. These lightning bolts ricochet on surfaces. contact with the player deals mild damage and apply mild stun. Damage and size and stun duration decrease with total travel distance
 - **attack L2** `[ready]` 2 sets of bolts with a longer bounce life, fired as a primary bolt and a secondary bolt which is shot on a slightly shallower angle causing the two paths to eventually intersect.
 - **attack L3** `[ready]` Bolts no longer lose size on bounce, only reduce in damage delt. Occasionally the boss jumps and slams into the floor, briefly energising every panel destroying any ground minions that are on those panels.
 - **weapon class** `[ready]` Offensive
-- **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage. Chain distance tolerance scaled with level
+- **weapon** `[ready]` Fixed-range electric burst with typical fire rate and base damage that chains to nearby enemies with diminishing damage. Chain distance tolerance scaled with level. 17 Oct 2026: I think all enemies touched by the chain get stunned. The same chain shouldn't retouch an enemy, and when breaking ties for distance away to receive the chain hit, prefer the chain. Aim for an enemy that was not hit by a previous chain attack. If a tie continues to persist after this, choose one at random
 - **weapon Lv1** `[ready]` 0 chains; 1s stun on first enemy contact.
-- **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. No enemy can be hit more than twice in one complete hit+chain hit attack
-- **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. No enemy can be hit more than twice in one complete hit+chain hit attack
+- **weapon Lv3** `[ready]` Chain damage to 2 additional enemy, ~~first enemy gets stunned, additional enemies do not get stunned. No enemy can be hit more than twice in one complete hit+chain hit attack~~
+- **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. ~~No enemy can be hit more than twice in one complete hit+chain hit attack~~
+- **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. ~~No enemy can be hit more than twice in one complete hit+chain hit attack~~
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
 - **bgm arena** `[wip]` No file yet. Hand off as `bgm-volt-arena.ogg` — plays inside Volt Man's boss room.
@@ -236,9 +229,9 @@ where each one stands.
 - **attack L2** `[wip]` Fires three vines in a fan rather than a pair, and on a miss the boss reels itself to the ceiling instead of to the miss point, attacking downward on the next pass.
 - **attack L3** `[wip]` On a successful grab the toss now aims at the nearest thorn-covered ground rather than the far wall. On a miss the vines stay embedded for a few seconds and act as temporary walls that block shots.
 - **weapon class** `[ready]` Offensive
-- **weapon** `[ready]` Stand still while cracking a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. The crack itself is fast — out and back inside a sixth of a second — but the fire rate is low, so each one is a committed read rather than a stream. A small glint marks the tip: a narrow, high-damage zone, and the only part of the vine that catches anything. Contact anywhere else along it deals medium damage and lets go.
+- **weapon** `[ready]` Stand still while cracking a directional-input whip-like vine that reels in enemies then immediately throws them back as projectiles. The crack itself is fast — out and back inside a sixth of a second — but the fire rate is low, so each one is a committed read rather than a stream. A small glint marks the tip: a narrow, high-damage zone, and the only part of the vine that catches anything. Contact anywhere else along it deals medium damage and lets go. 17 Oct 2026: What defines the tip will have to be a sweet spot hitbox versus sour spot, which is the rest of the length of the whip.
 - **weapon Lv1** `[ready]` Short reach; can only reel in and damage minions; mild knockback but does not toss or constrict them.
-- **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. Check for lethal damage after completing the toss and the minion comes to rest. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
+- **weapon Lv3** `[ready]` Increased reach. Each hit applies a stack of constrict and if a minion then tosses straight forward a moderate distance before being affected by gravity and rolling to a stop. ~~Check for lethal damage after completing the toss and the minion comes to rest.~~ 17 Oct 2026: Level three when the minion gets pulled in and tossed back that minion only receives damage on collision with other enemies or obstacles. Minion projectile does not deal damage butt has very large knockback. Affected by diagonal inputs; On enemy contact: perform the attack as described. Else if on the ground and contacting the outer 20% of a platform: grapple on top of that platform. If in the air and contacting a platform or ceiling: swing forward in the current direction, then release.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
@@ -495,7 +488,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.6x player height (petite build)
 - **attack name** `[ready]` Spectral Shift
-- **weapon name** `[draft]` Corporeal core
+- **weapon name** `[wip]` Vampiric Touch
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
 - **arena** `[draft]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
@@ -507,7 +500,7 @@ where each one stands.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
 - **weapon class** `[draft]` Defensive
-- **weapon** `[wip]` A set of 3 very small bats circle overhead. Temporary invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.
+- **weapon** `[wip]` Defensive; Vampiric Touch, themed around life steal. (Before: A set of 3 very small bats circle overhead. Temporary invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.)
 - **weapon Lv1** `[draft]` Brief invisibility (depicted as a white dashed line silhouette) on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
@@ -555,7 +548,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.75x player height (average build)
 - **attack name** `[ready]` Shadow Bind
-- **weapon name** `[ready]` Astral Cloak
+- **weapon name** `[wip]` Evil Energy
 - **boss weakness A** `[wip]` Fighting
 - **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
@@ -567,7 +560,7 @@ where each one stands.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[wip]` Defensive; reduces aggro and become immune to status affects.
+- **weapon** `[wip]` Defensive; Evil Energy acts like the bug swarm, only it is a light black, semi-transparent, sparkly cloud. Instead of damaging the target it touches, it makes that target move confused, like Pac-Man's Clyde, with its scatter corner being the spot it spawned in from.
 - **weapon Lv1** `[wip]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
@@ -613,6 +606,11 @@ where each one stands.
 Terrain form / character form pairs, shared across bosses and weapons.
 **Flinch and knockback are NOT attributes** — they are basic hitbox
 interaction present on every hit.
+
+## All attributes
+- **owner** `[ready]` An attribute never affects whoever applied it: a boss's never affects that boss, and a weapon's never affects the player. 17 Oct 2026: This goes for all attributes
+- **terrain duration** `[ready]` 17 Oct 2026: All ground, terrain, attributes last 5s unless reapplied or otherwise specified
+- **terrain width** `[ready]` 17 Oct 2026: Attributes applied to terrain shall be as wide as the circumference of the project that applied it unless otherwise specified
 
 ## Hot
 - **shared** `[ready]` Environmental attribute: Faint red hue that gets more faint until the attribute subsides. Causes burn on contact
@@ -670,7 +668,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **sprite grid** `[ready]` 24x24, the NES reference size, drawn 16-bit. Twenty-two frames in one 528x24 sheet: a six-frame idle that breathes and blinks, an eight-frame run on the same 30-step stride, three jump poses and a five-frame slide on the same 26 steps. The jump is registered as three one-frame clips rather than a loop, so the pose is picked from `vy` and the arc reads.
 - **equipment visuals** `[ready]` What the player is carrying is told by weapon hardware DRAWN ON him, never by his colour. Live recolouring of the suit from the source boss's palette is scrubbed and must not return: a tint multiplies the whole texture, so it was quietly blocking the real baked-colour art, and a protagonist whose colour changes is one you have to re-find after every re-quip.
 - **collision box** `[ready]` The sprite box and the collision box are deliberately different. The silhouette changes constantly — arm cannon extends, legs tuck, slide flattens — and a hitbox that followed the art would make vulnerability change frame to frame. A stable narrower box is both precise and fair.
-- **movement** `[ready]` Walk, jump, gravity, terminal velocity, slide speed and duration are the classic NES Mega Man values converted from that game's 8.8 fixed point. A known-good reference feel to tune away from, not a finished tune.
+- **movement** `[ready]` Walk, jump, gravity, terminal velocity, slide speed and duration are the classic NES Mega Man values converted from that game's 8.8 fixed point. A known-good reference feel to tune away from, not a finished tune. 17 Oct 2026: The numbers feel okay for now, but I need the flexibility to reference other games physics to model.
 - **hazard response** `[ready]` Pits and spikes deal the same massive damage, never an instant kill, then beam the player up past the top of the screen and back down at the leftmost clear spot. The 90-frame invulnerability is preserved in full and its countdown is frozen while the beam travels.
 
 ## Loadout
@@ -683,10 +681,10 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## The re-quip wheel
 
-- **mid-fight wheel** `[ready]` Opened by the RE-QUIP button during a fight. Slow motion, HUD stays up, the ring of weapons is dimmed to scenery and cannot be touched — you may aim a slot or switch one off, and nothing else. One tap, or one diagonal swipe. It closes itself after seven seconds, because slow motion with no way out is a soft lock for anyone who opened it by accident. The code calls this mode `midFight` and the seven seconds `MID_FIGHT_TIMEOUT_MS`. It used to be called `in-situ`, which is Latin for "in place" and told you nothing.
-- **between-fights wheel** `[ready]` Opens by itself after the boss death animation has fully resolved plus a small delay. Hard pause, while staying in the boss room after their defeat, continue to use this Post Boss mode. This mode is the only way the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon. Continue allowing adjustments until the player taps outside the wheel
+- **Active wheel** `[ready]` Opened by the RE-QUIP button during a fight. Slow motion, HUD stays up, the ring of weapons is dimmed to scenery and cannot be touched — you may aim a slot or switch one off, and nothing else. One tap, or one diagonal swipe. It closes itself after seven seconds, because slow motion with no way out is a soft lock for anyone who opened it by accident. The code calls this mode `midFight` and the seven seconds `MID_FIGHT_TIMEOUT_MS`. It used to be called `in-situ`, which is Latin for "in place" and told you nothing.
+- **Post Boss wheel** `[ready]` Opens by itself after the boss death animation has fully resolved plus a small delay. Hard pause, while staying in the boss room after their defeat, continue to use this Post Boss mode. This mode is the only way the loadout can be rearranged. Two taps in either order — a weapon then a module, or a module then a weapon. Continue allowing adjustments until the player taps outside the wheel. 17 Oct 2026: It's both. Tapping significantly outside the weapon wheel area or in any of the zones interface zones
 - **ring layout** `[ready]` An oval, because the playfield is 224 tall and 320-480 wide. Arc positions fan out from the centre as weapons unlock, spreading at the full arc's step so a weapon lands where it will eventually live. Trades absolute position for relative position deliberately. Maintain a distinct gap between the top half and the bottom half separating offensive slots and offensive weapons vs defensive slots and defensive weapons
-- **keyboard and gamepad** `[ready]` There is no way to re-quip without a mouse or a touchscreen. The mid-fight wheel has Q/E/Z/C; the between-fights wheel shall have a simple cursor to cycle through the weapon you want attached and the slot you want it attached to. Repeat until escape key or jump key
+- **keyboard and gamepad** `[ready]` ~~There is no way to re-quip without a mouse or a touchscreen.~~ The Active wheel has Q/E/Z/C; the Post Boss wheel shall have a simple cursor to cycle through the weapon you want attached and the slot you want it attached to. Repeat until escape key or jump key
 
 ## Minions
 
@@ -698,11 +696,13 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## HUD and controls
 
-- **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad.
-- **keyboard** `[ready]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the mid-fight wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc closes the between-fights wheel
+- **touch layout** `[ready]` Four zones. Movement is four adjacent real buttons, not an invisible band; jump and fire are separate pads so both can be held. A held input ends when the finger lifts, never when it wanders off a 44px pad. 17 Oct 2026: Make them 25px tall, and fully transparent with a thin yellow border for each button
+- **keyboard** `[ready]` A/D walks, W aims up, RSHIFT fires, double tap jump to cancel into a slide, SPACE jumps, Q or E open the Active wheel. Q, E, ESC closes it. Esc or Enter pauses and brings up pause menu. Esc or enter key while Resume is cursored closes and unpauses. Esc closes the Post Boss wheel
 - **slide** `[ready]` Double-tap jump. The jump always wins the first tap — detecting a double-tap first would put latency on every jump in the game — and the second tap inside the window puts the player back where he launched and slides instead.
 - **font** `[ready]` A hand-authored 5x7 bitmap font. `fold()` shows `?` in place of any glyph it lacks, so HUD strings stay inside plain uppercase, digits, spaces and the punctuation the font has.
 - **dev HUD** `[ready]` A `[DEV]` marker whenever dev mode is on, plus a diagnostic line carrying the build, the run's world seed, and render density with the viewport it was picked from. The marker is not switchable; the diagnostic line is.
+- **dev menu** `[ready]` Every dev setting is one tap to change. 17 Oct 2026: tapping on a feature makes a pop-up with a ~120 character description
+- **dev run start** `[ready]` 17 Oct 2026: Dev mode always starts a run with the post boss requip wheel
 
 ## Meta progression
 
@@ -710,18 +710,20 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **upgrades** `[wip]` Twenty-five permanent stat boosts bought with Chips in the Hub, split into 21 ordinary percentage upgrades and the 4 MASTERY ladders that unlock abilities. A ramp-difficulty-for-reward upgrade (Vampire Survivors' Curse) was considered and rejected — this game does not want one.
 - **boss layers** `[ready]` Per boss, 1 to 3, earned by lifetime clears of that boss. A layer-2 boss uses layer-2 hazards AND layer-2 attacks. Game over once lifetime kill of all bosses at level 1-3 is >0
 - **run progression** `[ready]` Weapons are earned by killing the boss that carries them. EXP is COLLECTED from enemy drops and never granted; distance grants nothing. A level is a flat 100 EXP and pauses for a card screen.
+- **beating a boss again** `[ready]` 17 Oct 2026: Subsequent boss defeats push the corresponding weapon to the next tier e.g. layer 1 boss defeat pushes their weapon to lv3, layer 2 boss defeat pushes their weapon to level 6, layer 3 defeat pushes their weapon to lv10
+- **E-Tank drops** `[ready]` An enemy has a chance to drop an E-Tank. 17 Oct 2026: Make it 5%
 
 ## Run structure
 
 - **area** `[ready]` The endless procedural stream. Its background and its ground are themed to the boss whose door is coming, so the arena is foreshadowed before you reach it.
-- **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible.
+- **arena** `[ready]` Exactly one screen, walled left and right, floored and ceilinged, camera locked, no ambient minions. One screen wide matches the NES boss rooms and guarantees the whole fight stays visible. 17 Oct 2026: There is a happy accident that currently causes minions to spawn after a boss is defeated, I want that codified
 - **door and warp** `[ready]` The door does not open into the arena, it warps you there: contact freezes everything even player position, slow fade to black over 3s, builds the room behind full black, then fades back in 3s. Fade in the boss arena background for 1s then fade in arena furniture for 1s, then have the boss beam down as an elementally appropriate beam of light before unfreezing everything
 - **pacing targets** `[ready]` Early: about 5 minutes and 1 boss on minimal meta with weapons below Lv3, and it should feel hard. Mid: 10-15 minutes and 2-3 bosses at Lv3-6. Late: 15-35+ minutes and 4-6 bosses. Boss COUNT is the real dial, since run length is boss count. How to ramp difficulty without the player feeling it is still open.
 
 ## Look
 
-- **art direction** `[ready]` 16-bit, SNES-era pixel art, by the owner's call on 29 Sep 2026. A visual upgrade, not a resolution or feel change: the 224-pixel playfield, the sprite grids and the movement stay exactly as they were. Each sprite may use up to 15 colours plus see-through, shaded in ramps of 3 to 5 tones per material, with the shared near-black outline (#0A0A12) round the outside. Identity colours rule: the player stays white with the #3CBCFC accent and is never tinted, and a boss's shades are built from his own primary and secondary. Placeholders keep their plain look until art replaces them. The player's sheet and the drawn boss rooms are the examples to follow.
-- **boss rooms** `[ready]` A drawn boss room paints itself while it builds behind the warp's black: backdrop, furniture and the hazards it knows. Everything that moves in it is drawn ahead of time, so during a fight the phone only picks and places finished pictures. The pictures never change how a fight plays. Six rooms were drawn in Claude Design and approved on 4 Oct 2026; which rooms are drawn is each slice's `sprite sheet` line, and a room without art keeps the placeholder look.
+- **art direction** `[ready]` 16-bit, SNES-era pixel art, by the owner's call on 29 Sep 2026. A visual upgrade, not a resolution or feel change: the 224-pixel playfield, the sprite grids and the movement stay exactly as they were. Each sprite may use up to 15 colours plus see-through. ~~Shaded in ramps of 3 to 5 tones per material, with the shared near-black outline (#0A0A12) round the outside.~~ Identity colours rule: the player stays white with the #3CBCFC accent and is never tinted, and a boss's shades are built from his own primary and secondary. ~~Placeholders keep their plain look until art replaces them.~~ The player's sheet and the drawn boss rooms are the examples to follow. 17 Oct 2026: Shading and outlines are Claude Design's problem now.
+- **boss rooms** `[ready]` A drawn boss room paints itself while it builds behind the warp's black: backdrop, furniture and the hazards it knows. Everything that moves in it is drawn ahead of time, so during a fight the phone only picks and places finished pictures. ~~The pictures never change how a fight plays.~~ Six rooms were drawn in Claude Design and approved on 4 Oct 2026; which rooms are drawn is each slice's `sprite sheet` line, and a room without art keeps the placeholder look.
 - **readable shots** `[ready]` A boss's shots must show against his own room. Proto Mk0's shots and his turrets' are the bunker's warning red (#FF4A32) with a one-pixel near-black rim, because grey shots vanished into the grey bunker. A new room is checked with its boss's own shots across it before it is approved.
 - **blackout** `[ready]` When a room loses power, as Volt Man's does, the room darkens and everything in it that gives off light keeps glowing. The bodies in the room — the boss and any minions — darken too but stay in front, so Volt Man walking in front of the lamp blocks its light. The player and the shots in the air are never darkened.
 
@@ -744,8 +746,9 @@ plays it.
 # BUGS
 
 Shorthand is fine. `build` is the versionCode shown on the title screen.
-Same markers as everywhere else: Claude fixes `[draft]` bugs, `[wip]` means
-still describing it, and `[ready]` means already fixed.
+Every Claude Code session starts by fixing the bugs here that are not yet
+struck through, tells you what it fixed, then strikes them through
+(`~~like this~~`) and marks them `[ready]`.
 
 
 ---

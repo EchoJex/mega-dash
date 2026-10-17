@@ -1,18 +1,17 @@
 /**
  * THE `.sprite` FORMAT — round-trip, and the guarantees the pipeline rests on.
  *
- * The same deal `tracker.test.js` has with TRACKER.md: the editor rewrites these
- * files every few seconds, so a parser that quietly drops or reformats something
- * it did not understand would erase art rather than prose. Byte-for-byte is the
+ * The same deal `tracker.test.js` has with TRACKER.md: Claude Design's handoffs
+ * and the build rewrite these files, so a parser that quietly drops or reformats
+ * something it did not understand would erase art rather than prose. Byte-for-byte is the
  * only standard worth holding it to.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import {
-  parse, serialize, bounds, proposedBox, blankFrame, outlineFrame,
-  readRegion, clearRegion, stampRegion, STATUSES,
-  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf, rolesFromPixels, resizeDoc,
+  parse, serialize, blankFrame, STATUSES,
+  DEFAULT_HOLD, splitLegacyName, renumber, framesOf, actionsOf,
 } from '../docs/sprite-fmt.js';
 import { MANIFEST, holdsOf } from '../src/systems/assets.js';
 import { FEEL } from '../src/config/feel.js';
@@ -181,36 +180,6 @@ test('inserting a frame renumbers its own action and no other', () => {
     'slide moved along the sheet, and that is exactly why nothing may store its index');
 });
 
-/**
- * THE FUDGE FACTORS, CHECKED AGAINST THE ART THEY WERE MEASURED FROM.
- *
- * This is the assertion that matters. The defaults are not a preference — they
- * are the ratio between the shipped player's drawn silhouette and the collision
- * box somebody already tuned by feel, and if applying them to that same
- * silhouette does not reproduce that same box, the number is wrong.
- */
-test('the default horizontal fudge reproduces the shipped player box', () => {
-  const src = new URL('../design/sprites/player.sprite', import.meta.url);
-  if (!existsSync(src)) return;
-  const doc = parse(readFileSync(src, 'utf8'));
-  const idle = framesOf(doc, 'idle')[0];
-  const b = bounds(idle, doc.w, doc.h);
-  assert.deepEqual({ w: b.w, h: b.h }, { w: 17, h: 23 }, 'the player silhouette changed');
-
-  const box = proposedBox(idle, doc.w, doc.h, targets.fudge.w, targets.fudge.h);
-  assert.equal(box.w, targets.player.box.w,
-    `0.70 wide on a 17px silhouette must give ${targets.player.box.w}, the engine's own box`);
-});
-
-test('vertical fudge is 1.00 by default, and that is the point of it', () => {
-  // Horizontal buys fairness; vertical decides where the feet land. If a future
-  // edit makes the vertical default anything but 1, the editor's standing
-  // warning is describing a rule the tool itself no longer follows.
-  assert.equal(targets.fudge.h, 1);
-  assert.ok(targets.fudge.w < 1, 'horizontal fudge must actually narrow the box');
-  assert.equal(targets.fudge.step, 0.05);
-});
-
 // ── The palette ───────────────────────────────────────────────────────
 
 test('the NES table is 64 slots with the hardware blacks marked', () => {
@@ -244,122 +213,6 @@ test('every drawable actor has a grid its collision box fits inside', () => {
       `${id}: box ${t.box.w}x${t.box.h} overflows grid ${t.grid.w}x${t.grid.h}`);
     assert.ok(t.frames.length >= 1, `${id} has no frames`);
   }
-});
-
-test('auto-outline wraps the silhouette outward and stops growing', () => {
-  const one = outlineFrame(['...', '.1.', '...'], 3, 3);
-  assert.deepEqual(one.rows, ['.0.', '010', '.0.']);
-  assert.equal(one.clipped, false);
-  // Outline is not solid, so a second pass has nothing left to wrap. An artist
-  // who taps it twice must not end up two pixels thicker than they drew.
-  assert.deepEqual(outlineFrame(one.rows, 3, 3).rows, one.rows);
-});
-
-test('auto-outline reports when the grid edge stopped it', () => {
-  assert.equal(outlineFrame(['1..', '...', '...'], 3, 3).clipped, true);
-  assert.equal(outlineFrame(['...', '.2.', '...'], 3, 3).clipped, false);
-});
-
-test('region ops move a shape without punching a hole around it', () => {
-  const rows = ['.1.', '.2.', '111'];
-  const sel = { x: 1, y: 0, w: 1, h: 2 };
-  const region = readRegion(rows, 3, 3, sel);
-  assert.deepEqual(region, ['1', '2']);
-  const cleared = clearRegion(rows, 3, 3, sel);
-  assert.deepEqual(cleared, ['...', '...', '111']);
-  // Stamped one left: the floor row survives, because a transparent cell in
-  // the lifted rectangle does not paint.
-  assert.deepEqual(stampRegion(cleared, 3, 3, region, 0, 0), ['1..', '2..', '111']);
-});
-
-test('a region hanging off the grid pads on read and clips on stamp', () => {
-  const rows = ['.1', '2.'];
-  assert.deepEqual(readRegion(rows, 2, 2, { x: 1, y: 1, w: 2, h: 2 }), ['..', '..']);
-  // Two columns stamped at x=1 on a 2-wide grid: the first lands, the second
-  // falls off the right edge and is gone.
-  assert.deepEqual(stampRegion(['..', '..'], 2, 2, ['12'], 1, 0), ['.1', '..']);
-});
-
-/**
- * PNG IMPORT — the colour-to-role snap.
- *
- * The browser half (decode, size refusal, the dialog) is driven for real by
- * `npm run sprite-import-test`. What is asserted here is the one piece that is
- * pure: a PNG carries colours and this format stores roles, and that mapping is
- * where a silhouette gets quietly destroyed if it is wrong.
- */
-test('rolesFromPixels snaps to the three roles and counts what was off palette', () => {
-  const pal = { outline: '#0A0A12', primary: '#2AAB1C', secondary: '#8FD97F' };
-  const px = (list) => new Uint8ClampedArray(list.flat());
-  const T = [0, 0, 0, 0];
-
-  const exact = rolesFromPixels(px([T, [0x2A, 0xAB, 0x1C, 255], [0x0A, 0x0A, 0x12, 255],
-    [0x8F, 0xD9, 0x7F, 255]]), 2, 2, pal);
-  assert.deepEqual(exact.rows, ['.1', '02'], 'each palette colour maps to its own role');
-  assert.equal(exact.offPalette, 0, 'exact palette hits are not reported as off palette');
-  assert.equal(exact.solid, 3, 'a transparent cell is not a drawn pixel');
-
-  // A colour that belongs to none of the three still has to land somewhere —
-  // the format cannot hold a fourth — so it snaps and is COUNTED, which is the
-  // only way the artist finds out their PNG was not on palette.
-  const off = rolesFromPixels(px([[0xFF, 0, 0, 255], [0x2A, 0xAB, 0x1C, 255]]), 2, 1, pal);
-  assert.equal(off.offPalette, 1);
-  assert.equal(off.rows[0].length, 2, 'every cell still resolves to a role or a hole');
-
-  // ALPHA IS A CLIFF. There is no partial transparency in the format, so a
-  // soft edge has to become a hard one on the way in rather than at build time.
-  const soft = rolesFromPixels(px([[0x2A, 0xAB, 0x1C, 128], [0x2A, 0xAB, 0x1C, 129]]), 2, 1, pal);
-  assert.deepEqual(soft.rows, ['.1'], 'alphaMin is the boundary, inclusive on the hole side');
-});
-
-/**
- * A MENU ELEMENT'S GRID IS ADJUSTABLE — the one class where it is.
- *
- * Every other sprite's grid is its CLASS's grid and not negotiable. A UI
- * element's size is whatever UIScene lays out and those differ per element, so
- * the editor can move it. What must never happen is a resize that moves art.
- */
-test('resizeDoc anchors top-left and reports what a shrink drops', () => {
-  const doc = { w: 2, h: 2, frames: [{ action: 'idle', index: 1, rows: ['11', '1.'] }] };
-
-  const grown = resizeDoc(doc, 3, 3);
-  assert.deepEqual(grown.frames[0].rows, ['11.', '1..', '...']);
-  assert.equal(grown.lost, 0, 'growing can never drop a pixel');
-  // TOP-LEFT IS THE CORRECTNESS QUESTION. Centring would re-index every drawn
-  // pixel on an odd delta, shifting finished art half a cell.
-  assert.equal(grown.frames[0].rows[0][0], doc.frames[0].rows[0][0]);
-  assert.equal(grown.w, 3);
-
-  const shrunk = resizeDoc(doc, 1, 1);
-  assert.deepEqual(shrunk.frames[0].rows, ['1']);
-  assert.equal(shrunk.lost, 2, 'a shrink says exactly how many drawn pixels it ate');
-
-  // Trimming blank space is free and must not be reported as loss.
-  const padded = { w: 3, h: 3, frames: [{ action: 'idle', index: 1, rows: ['1..', '...', '...'] }] };
-  assert.equal(resizeDoc(padded, 1, 1).lost, 0);
-
-  assert.equal(resizeDoc(doc, 0, 0).w, 1, 'a grid never goes below 1');
-});
-
-/**
- * THE MENU ARENA'S TARGETS ARE MEASURED, NOT WRITTEN DOWN — the same rule the
- * arena furniture grids follow, applied to the UI.
- */
-test('every MENU target carries a contact zone at least as big as its drawing', () => {
-  const targets = JSON.parse(readFileSync(new URL('../design/sprite-targets.json', import.meta.url), 'utf8'));
-  const menu = Object.entries(targets.menu || {});
-  assert.ok(menu.length > 0, 'the MENU arena has no targets');
-  for (const [id, m] of menu) {
-    assert.equal(m.box, null, `${id}: a UI element must not claim a collision box`);
-    assert.ok(m.zone, `${id}: a UI element needs a contact zone`);
-    // THE FUDGE RUNS THE OTHER WAY HERE. A touch target is never SMALLER than
-    // what it is a target for — that is the one direction that is a bug.
-    assert.ok(m.zone.w >= m.grid.w && m.zone.h >= m.grid.h,
-      `${id}: contact zone ${m.zone.w}x${m.zone.h} is smaller than its ${m.grid.w}x${m.grid.h} drawing`);
-  }
-  // The dot is the case the whole idea came from: 6px of disc, 9px of target.
-  const dot = targets.menu['menu-weapon-dot'];
-  assert.ok(dot.zone.w > dot.grid.w, 'the weapon dot should still be bigger than it looks');
 });
 
 /**
@@ -425,18 +278,6 @@ test('a declared palette round-trips and a 3-role file is untouched', () => {
   const plain = parse('# x\ngrid 2x1\n\n[idle 1] status=ready hold=5\n12\n');
   assert.deepEqual(plain.palette, []);
   assert.ok(!serialize(plain).includes('palette'), 'a 3-role file never grows a palette line');
-});
-
-test('auto-outline treats every declared colour but the outline as solid', () => {
-  assert.deepEqual(outlineFrame(['...', '.9.', '...'], 3, 3).rows, ['.0.', '090', '.0.']);
-});
-
-test('PNG import snaps to a declared palette when the sprite has one', () => {
-  const pal = [{ key: '0', hex: '#0A0A12' }, { key: '9', hex: '#3CBCFC' }];
-  const px = new Uint8ClampedArray([0x3C, 0xBC, 0xFC, 255, 0x0A, 0x0A, 0x12, 255]);
-  const r = rolesFromPixels(px, 2, 1, pal);
-  assert.deepEqual(r.rows, ['90']);
-  assert.equal(r.offPalette, 0);
 });
 
 test('no sprite exceeds the SNES colour limit, and every pixel is declared', () => {

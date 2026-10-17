@@ -90,20 +90,3 @@ export function changedChars(before = '', after = '') {
   return Math.max(a.length, b.length) - head - tail;
 }
 
-/**
- * The size of the edit between two frames, as a count of pixels whose ROLE
- * changed — the sprite equivalent of changedChars.
- *
- * Role and not colour, because a palette re-tune changes every pixel's colour
- * and none of its meaning; that is not an edit anybody made.
- */
-export function changedPixels(before = [], after = []) {
-  let n = 0;
-  const rows = Math.max(before.length, after.length);
-  for (let y = 0; y < rows; y++) {
-    const a = before[y] || '', b = after[y] || '';
-    const cols = Math.max(a.length, b.length);
-    for (let x = 0; x < cols; x++) if (a[x] !== b[x]) n++;
-  }
-  return n;
-}

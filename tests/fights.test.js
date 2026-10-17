@@ -397,42 +397,33 @@ test('the layer-3 flood always leaves somewhere safe to stand', () => {
 });
 
 /**
- * ROCKS KEEP FALLING DURING THE FLOOD, BUT NEVER ONTO A PLATFORM.
+ * ROCKS KEEP FALLING, AND NEVER LEAVE EVERY PLATFORM HOT.
  *
- * The tracker is explicit: "Rocks shall fall, but not from right above the
- * platforms while the lava is up." While the floor is gone the platforms are
- * the only footing in the room, so a rock landing on one would make it Hot and
- * take away the last safe place to stand — but stopping the shower entirely
- * (which an earlier reading did) turned the flood into a rest.
- *
- * This guards the SAFETY property, not the rock count: a column is checked
- * against every platform's span at the moment the rock is released.
+ * The owner's rule of 17 Oct 2026: rocks fall semi-randomly, up to five at
+ * once, and may land on a platform only while a platform next to it is safe.
+ * The property that protects the player is that some platform (not the boss's
+ * lift) is always cool — checked every frame, flood or not — and that the
+ * shower does not simply stop during the flood.
  */
-test('rocks keep falling during the flood but never above a platform', () => {
-  const h = harness('blaze', 3);
-  const { attack, hazard } = fightFor('blaze', 3);
-  let flooded = 0, rocksDuringFlood = 0;
-  const seen = new Set();
-
-  for (let i = 0; i < 8000; i++) {
-    attack.step(h.ctx);
-    hazard.step(h.ctx);
-    Arena.stepArena(h.arena);
-    if (h.arena.liquid.h <= 0.5) continue;
-    flooded++;
-    for (const r of h.arena.hazards) {
-      if (seen.has(r)) continue;
-      seen.add(r);
-      rocksDuringFlood++;
-      for (const pl of h.arena.platforms) {
-        const over = r.x + r.w > pl.x && r.x < pl.x + pl.w;
-        assert.ok(!over,
-          `a rock was released above a platform during the flood at frame ${i}`);
-      }
+test('rocks keep falling and never leave every platform Hot', () => {
+  for (const layer of [1, 3]) {
+    const h = harness('blaze', layer);
+    const { attack, hazard } = fightFor('blaze', layer);
+    let rocksDuringFlood = 0, most = 0;
+    const seen = new Set();
+    for (let i = 0; i < 8000; i++) {
+      attack.step(h.ctx);
+      hazard.step(h.ctx);
+      Arena.stepArena(h.arena);
+      const rocks = h.arena.hazards.filter((r) => r.kind === 'rock');
+      most = Math.max(most, rocks.length);
+      const guests = h.arena.platforms.filter((pl) => pl !== h.arena.lift);
+      assert.ok(guests.some((pl) => !pl.hot), `layer ${layer}: every platform Hot at frame ${i}`);
+      if (h.arena.liquid?.h > 0.5) for (const r of rocks) if (!seen.has(r)) { seen.add(r); rocksDuringFlood++; }
     }
+    assert.ok(most <= 5, `layer ${layer}: ${most} rocks in the air at once`);
+    if (layer === 3) assert.ok(rocksDuringFlood > 0, 'the shower stopped entirely during the flood');
   }
-  assert.ok(flooded > 600, 'the flood never ran, so this proved nothing');
-  assert.ok(rocksDuringFlood > 0, 'the shower stopped entirely during the flood');
 });
 
 /**

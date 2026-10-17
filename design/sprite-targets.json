@@ -728,284 +728,6 @@
       ]
     }
   },
-  "menu": {
-    "menu-move-left": {
-      "label": "PAD LEFT",
-      "cls": "menu",
-      "key": "menu:move_left",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 36,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 36,
-        "h": 30
-      },
-      "note": "the outer left pad",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-move-upleft": {
-      "label": "PAD UP-LEFT",
-      "cls": "menu",
-      "key": "menu:move_upleft",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 36,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 36,
-        "h": 30
-      },
-      "note": "walks left, records the ul diagonal",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-move-upright": {
-      "label": "PAD UP-RIGHT",
-      "cls": "menu",
-      "key": "menu:move_upright",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 36,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 36,
-        "h": 30
-      },
-      "note": "walks right, records the ur diagonal",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-move-right": {
-      "label": "PAD RIGHT",
-      "cls": "menu",
-      "key": "menu:move_right",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 36,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 36,
-        "h": 30
-      },
-      "note": "the outer right pad",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-jump": {
-      "label": "JUMP PAD",
-      "cls": "menu",
-      "key": "menu:jump",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 54,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 54,
-        "h": 30
-      },
-      "note": "double-tap is the slide",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-fire": {
-      "label": "FIRE PAD",
-      "cls": "menu",
-      "key": "menu:fire",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 54,
-        "h": 30
-      },
-      "box": null,
-      "zone": {
-        "w": 54,
-        "h": 30
-      },
-      "note": "aims whichever offensive weapon holds the trigger",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-requip": {
-      "label": "RE-QUIP BUTTON",
-      "cls": "menu",
-      "key": "menu:requip",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 44,
-        "h": 24
-      },
-      "box": null,
-      "zone": {
-        "w": 44,
-        "h": 24
-      },
-      "note": "opens the mid-fight wheel on contact",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-pause": {
-      "label": "PAUSE PLATE",
-      "cls": "menu",
-      "key": "menu:pause",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 18,
-        "h": 12
-      },
-      "box": null,
-      "zone": {
-        "w": 18,
-        "h": 12
-      },
-      "note": "the || plate, top right",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-slot-offensive": {
-      "label": "OFFENSIVE SLOT",
-      "cls": "menu",
-      "key": "menu:slot_offensive",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 26,
-        "h": 26
-      },
-      "box": null,
-      "zone": {
-        "w": 26,
-        "h": 26
-      },
-      "note": "a wheel module. A cyan bar along its bottom says the fire button is pointed here",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-slot-defensive": {
-      "label": "DEFENSIVE SLOT",
-      "cls": "menu",
-      "key": "menu:slot_defensive",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 26,
-        "h": 26
-      },
-      "box": null,
-      "zone": {
-        "w": 26,
-        "h": 26
-      },
-      "note": "a wheel module. Never draws the aimed bar - every live defensive slot acts at once",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-weapon-dot": {
-      "label": "WEAPON SELECT DOT",
-      "cls": "menu",
-      "key": "menu:weapon_dot",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 12,
-        "h": 12
-      },
-      "box": null,
-      "zone": {
-        "w": 18,
-        "h": 18
-      },
-      "note": "drawn at 6px radius inside a 9px target - the clearest contact-zone case in the game",
-      "frames": [
-        "idle0"
-      ]
-    },
-    "menu-wheel-ring": {
-      "label": "RE-QUIP WHEEL",
-      "cls": "menu",
-      "key": "menu:wheel_ring",
-      "palette": {
-        "primary": "#5CADD5",
-        "secondary": "#0D1420",
-        "outline": "#0A0A12"
-      },
-      "grid": {
-        "w": 192,
-        "h": 104
-      },
-      "box": null,
-      "zone": {
-        "w": 192,
-        "h": 104
-      },
-      "note": "the oval the discs fan out along",
-      "frames": [
-        "idle0"
-      ]
-    }
-  },
   "furniture": {
     "furniture-proto-1": {
       "label": "PROTO MK0 TURRETS",
@@ -1023,7 +745,7 @@
       ]
     },
     "furniture-proto-2": {
-      "label": "PROTO MK0 SPARE 2",
+      "label": "PROTO MK0 ASSET2",
       "cls": "furniture",
       "key": "furniture:proto:2",
       "boss": "proto",
@@ -1038,7 +760,7 @@
       ]
     },
     "furniture-proto-3": {
-      "label": "PROTO MK0 SPARE 3",
+      "label": "PROTO MK0 ASSET3",
       "cls": "furniture",
       "key": "furniture:proto:3",
       "boss": "proto",
@@ -1053,7 +775,7 @@
       ]
     },
     "furniture-proto-4": {
-      "label": "PROTO MK0 SPARE 4",
+      "label": "PROTO MK0 ASSET4",
       "cls": "furniture",
       "key": "furniture:proto:4",
       "boss": "proto",
@@ -1068,9 +790,84 @@
       ]
     },
     "furniture-proto-5": {
-      "label": "PROTO MK0 SPARE 5",
+      "label": "PROTO MK0 ASSET5",
       "cls": "furniture",
       "key": "furniture:proto:5",
+      "boss": "proto",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-proto-6": {
+      "label": "PROTO MK0 ASSET6",
+      "cls": "furniture",
+      "key": "furniture:proto:6",
+      "boss": "proto",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-proto-7": {
+      "label": "PROTO MK0 ASSET7",
+      "cls": "furniture",
+      "key": "furniture:proto:7",
+      "boss": "proto",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-proto-8": {
+      "label": "PROTO MK0 ASSET8",
+      "cls": "furniture",
+      "key": "furniture:proto:8",
+      "boss": "proto",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-proto-9": {
+      "label": "PROTO MK0 ASSET9",
+      "cls": "furniture",
+      "key": "furniture:proto:9",
+      "boss": "proto",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-proto-10": {
+      "label": "PROTO MK0 ASSET10",
+      "cls": "furniture",
+      "key": "furniture:proto:10",
       "boss": "proto",
       "grid": {
         "w": 16,
@@ -1113,7 +910,7 @@
       ]
     },
     "furniture-blaze-3": {
-      "label": "BLAZE MAN SPARE 3",
+      "label": "BLAZE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:blaze:3",
       "boss": "blaze",
@@ -1128,7 +925,7 @@
       ]
     },
     "furniture-blaze-4": {
-      "label": "BLAZE MAN SPARE 4",
+      "label": "BLAZE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:blaze:4",
       "boss": "blaze",
@@ -1143,9 +940,84 @@
       ]
     },
     "furniture-blaze-5": {
-      "label": "BLAZE MAN SPARE 5",
+      "label": "BLAZE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:blaze:5",
+      "boss": "blaze",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-blaze-6": {
+      "label": "BLAZE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:blaze:6",
+      "boss": "blaze",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-blaze-7": {
+      "label": "BLAZE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:blaze:7",
+      "boss": "blaze",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-blaze-8": {
+      "label": "BLAZE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:blaze:8",
+      "boss": "blaze",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-blaze-9": {
+      "label": "BLAZE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:blaze:9",
+      "boss": "blaze",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-blaze-10": {
+      "label": "BLAZE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:blaze:10",
       "boss": "blaze",
       "grid": {
         "w": 16,
@@ -1173,7 +1045,7 @@
       ]
     },
     "furniture-tempest-2": {
-      "label": "TEMPEST MAN SPARE 2",
+      "label": "TEMPEST MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:tempest:2",
       "boss": "tempest",
@@ -1188,7 +1060,7 @@
       ]
     },
     "furniture-tempest-3": {
-      "label": "TEMPEST MAN SPARE 3",
+      "label": "TEMPEST MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:tempest:3",
       "boss": "tempest",
@@ -1203,7 +1075,7 @@
       ]
     },
     "furniture-tempest-4": {
-      "label": "TEMPEST MAN SPARE 4",
+      "label": "TEMPEST MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:tempest:4",
       "boss": "tempest",
@@ -1218,9 +1090,84 @@
       ]
     },
     "furniture-tempest-5": {
-      "label": "TEMPEST MAN SPARE 5",
+      "label": "TEMPEST MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:tempest:5",
+      "boss": "tempest",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-tempest-6": {
+      "label": "TEMPEST MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:tempest:6",
+      "boss": "tempest",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-tempest-7": {
+      "label": "TEMPEST MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:tempest:7",
+      "boss": "tempest",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-tempest-8": {
+      "label": "TEMPEST MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:tempest:8",
+      "boss": "tempest",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-tempest-9": {
+      "label": "TEMPEST MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:tempest:9",
+      "boss": "tempest",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-tempest-10": {
+      "label": "TEMPEST MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:tempest:10",
       "boss": "tempest",
       "grid": {
         "w": 16,
@@ -1293,9 +1240,84 @@
       ]
     },
     "furniture-volt-5": {
-      "label": "VOLT MAN SPARE 5",
+      "label": "VOLT MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:volt:5",
+      "boss": "volt",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-volt-6": {
+      "label": "VOLT MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:volt:6",
+      "boss": "volt",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-volt-7": {
+      "label": "VOLT MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:volt:7",
+      "boss": "volt",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-volt-8": {
+      "label": "VOLT MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:volt:8",
+      "boss": "volt",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-volt-9": {
+      "label": "VOLT MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:volt:9",
+      "boss": "volt",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-volt-10": {
+      "label": "VOLT MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:volt:10",
       "boss": "volt",
       "grid": {
         "w": 16,
@@ -1323,7 +1345,7 @@
       ]
     },
     "furniture-thorn-2": {
-      "label": "THORN MAN SPARE 2",
+      "label": "THORN MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:thorn:2",
       "boss": "thorn",
@@ -1338,7 +1360,7 @@
       ]
     },
     "furniture-thorn-3": {
-      "label": "THORN MAN SPARE 3",
+      "label": "THORN MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:thorn:3",
       "boss": "thorn",
@@ -1353,7 +1375,7 @@
       ]
     },
     "furniture-thorn-4": {
-      "label": "THORN MAN SPARE 4",
+      "label": "THORN MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:thorn:4",
       "boss": "thorn",
@@ -1368,7 +1390,7 @@
       ]
     },
     "furniture-thorn-5": {
-      "label": "THORN MAN SPARE 5",
+      "label": "THORN MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:thorn:5",
       "boss": "thorn",
@@ -1382,8 +1404,83 @@
         "idle0"
       ]
     },
+    "furniture-thorn-6": {
+      "label": "THORN MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:thorn:6",
+      "boss": "thorn",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-thorn-7": {
+      "label": "THORN MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:thorn:7",
+      "boss": "thorn",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-thorn-8": {
+      "label": "THORN MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:thorn:8",
+      "boss": "thorn",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-thorn-9": {
+      "label": "THORN MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:thorn:9",
+      "boss": "thorn",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-thorn-10": {
+      "label": "THORN MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:thorn:10",
+      "boss": "thorn",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-frost-1": {
-      "label": "FROST MAN SPARE 1",
+      "label": "FROST MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:frost:1",
       "boss": "frost",
@@ -1398,7 +1495,7 @@
       ]
     },
     "furniture-frost-2": {
-      "label": "FROST MAN SPARE 2",
+      "label": "FROST MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:frost:2",
       "boss": "frost",
@@ -1413,7 +1510,7 @@
       ]
     },
     "furniture-frost-3": {
-      "label": "FROST MAN SPARE 3",
+      "label": "FROST MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:frost:3",
       "boss": "frost",
@@ -1428,7 +1525,7 @@
       ]
     },
     "furniture-frost-4": {
-      "label": "FROST MAN SPARE 4",
+      "label": "FROST MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:frost:4",
       "boss": "frost",
@@ -1443,7 +1540,7 @@
       ]
     },
     "furniture-frost-5": {
-      "label": "FROST MAN SPARE 5",
+      "label": "FROST MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:frost:5",
       "boss": "frost",
@@ -1457,8 +1554,83 @@
         "idle0"
       ]
     },
+    "furniture-frost-6": {
+      "label": "FROST MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:frost:6",
+      "boss": "frost",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-frost-7": {
+      "label": "FROST MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:frost:7",
+      "boss": "frost",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-frost-8": {
+      "label": "FROST MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:frost:8",
+      "boss": "frost",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-frost-9": {
+      "label": "FROST MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:frost:9",
+      "boss": "frost",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-frost-10": {
+      "label": "FROST MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:frost:10",
+      "boss": "frost",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-strike-1": {
-      "label": "STRIKE MAN SPARE 1",
+      "label": "STRIKE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:strike:1",
       "boss": "strike",
@@ -1473,7 +1645,7 @@
       ]
     },
     "furniture-strike-2": {
-      "label": "STRIKE MAN SPARE 2",
+      "label": "STRIKE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:strike:2",
       "boss": "strike",
@@ -1488,7 +1660,7 @@
       ]
     },
     "furniture-strike-3": {
-      "label": "STRIKE MAN SPARE 3",
+      "label": "STRIKE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:strike:3",
       "boss": "strike",
@@ -1503,7 +1675,7 @@
       ]
     },
     "furniture-strike-4": {
-      "label": "STRIKE MAN SPARE 4",
+      "label": "STRIKE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:strike:4",
       "boss": "strike",
@@ -1518,7 +1690,7 @@
       ]
     },
     "furniture-strike-5": {
-      "label": "STRIKE MAN SPARE 5",
+      "label": "STRIKE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:strike:5",
       "boss": "strike",
@@ -1532,8 +1704,83 @@
         "idle0"
       ]
     },
+    "furniture-strike-6": {
+      "label": "STRIKE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:strike:6",
+      "boss": "strike",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-strike-7": {
+      "label": "STRIKE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:strike:7",
+      "boss": "strike",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-strike-8": {
+      "label": "STRIKE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:strike:8",
+      "boss": "strike",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-strike-9": {
+      "label": "STRIKE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:strike:9",
+      "boss": "strike",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-strike-10": {
+      "label": "STRIKE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:strike:10",
+      "boss": "strike",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-venom-1": {
-      "label": "VENOM MAN SPARE 1",
+      "label": "VENOM MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:venom:1",
       "boss": "venom",
@@ -1548,7 +1795,7 @@
       ]
     },
     "furniture-venom-2": {
-      "label": "VENOM MAN SPARE 2",
+      "label": "VENOM MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:venom:2",
       "boss": "venom",
@@ -1563,7 +1810,7 @@
       ]
     },
     "furniture-venom-3": {
-      "label": "VENOM MAN SPARE 3",
+      "label": "VENOM MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:venom:3",
       "boss": "venom",
@@ -1578,7 +1825,7 @@
       ]
     },
     "furniture-venom-4": {
-      "label": "VENOM MAN SPARE 4",
+      "label": "VENOM MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:venom:4",
       "boss": "venom",
@@ -1593,7 +1840,7 @@
       ]
     },
     "furniture-venom-5": {
-      "label": "VENOM MAN SPARE 5",
+      "label": "VENOM MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:venom:5",
       "boss": "venom",
@@ -1607,8 +1854,83 @@
         "idle0"
       ]
     },
+    "furniture-venom-6": {
+      "label": "VENOM MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:venom:6",
+      "boss": "venom",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-venom-7": {
+      "label": "VENOM MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:venom:7",
+      "boss": "venom",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-venom-8": {
+      "label": "VENOM MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:venom:8",
+      "boss": "venom",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-venom-9": {
+      "label": "VENOM MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:venom:9",
+      "boss": "venom",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-venom-10": {
+      "label": "VENOM MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:venom:10",
+      "boss": "venom",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-quake-1": {
-      "label": "QUAKE MAN SPARE 1",
+      "label": "QUAKE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:quake:1",
       "boss": "quake",
@@ -1623,7 +1945,7 @@
       ]
     },
     "furniture-quake-2": {
-      "label": "QUAKE MAN SPARE 2",
+      "label": "QUAKE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:quake:2",
       "boss": "quake",
@@ -1638,7 +1960,7 @@
       ]
     },
     "furniture-quake-3": {
-      "label": "QUAKE MAN SPARE 3",
+      "label": "QUAKE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:quake:3",
       "boss": "quake",
@@ -1653,7 +1975,7 @@
       ]
     },
     "furniture-quake-4": {
-      "label": "QUAKE MAN SPARE 4",
+      "label": "QUAKE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:quake:4",
       "boss": "quake",
@@ -1668,7 +1990,7 @@
       ]
     },
     "furniture-quake-5": {
-      "label": "QUAKE MAN SPARE 5",
+      "label": "QUAKE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:quake:5",
       "boss": "quake",
@@ -1682,8 +2004,83 @@
         "idle0"
       ]
     },
+    "furniture-quake-6": {
+      "label": "QUAKE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:quake:6",
+      "boss": "quake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-quake-7": {
+      "label": "QUAKE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:quake:7",
+      "boss": "quake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-quake-8": {
+      "label": "QUAKE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:quake:8",
+      "boss": "quake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-quake-9": {
+      "label": "QUAKE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:quake:9",
+      "boss": "quake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-quake-10": {
+      "label": "QUAKE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:quake:10",
+      "boss": "quake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-gale-1": {
-      "label": "GALE MAN SPARE 1",
+      "label": "GALE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:gale:1",
       "boss": "gale",
@@ -1698,7 +2095,7 @@
       ]
     },
     "furniture-gale-2": {
-      "label": "GALE MAN SPARE 2",
+      "label": "GALE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:gale:2",
       "boss": "gale",
@@ -1713,7 +2110,7 @@
       ]
     },
     "furniture-gale-3": {
-      "label": "GALE MAN SPARE 3",
+      "label": "GALE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:gale:3",
       "boss": "gale",
@@ -1728,7 +2125,7 @@
       ]
     },
     "furniture-gale-4": {
-      "label": "GALE MAN SPARE 4",
+      "label": "GALE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:gale:4",
       "boss": "gale",
@@ -1743,7 +2140,7 @@
       ]
     },
     "furniture-gale-5": {
-      "label": "GALE MAN SPARE 5",
+      "label": "GALE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:gale:5",
       "boss": "gale",
@@ -1757,8 +2154,83 @@
         "idle0"
       ]
     },
+    "furniture-gale-6": {
+      "label": "GALE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:gale:6",
+      "boss": "gale",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-gale-7": {
+      "label": "GALE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:gale:7",
+      "boss": "gale",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-gale-8": {
+      "label": "GALE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:gale:8",
+      "boss": "gale",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-gale-9": {
+      "label": "GALE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:gale:9",
+      "boss": "gale",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-gale-10": {
+      "label": "GALE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:gale:10",
+      "boss": "gale",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-psi-1": {
-      "label": "PSI MAN SPARE 1",
+      "label": "PSI MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:psi:1",
       "boss": "psi",
@@ -1773,7 +2245,7 @@
       ]
     },
     "furniture-psi-2": {
-      "label": "PSI MAN SPARE 2",
+      "label": "PSI MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:psi:2",
       "boss": "psi",
@@ -1788,7 +2260,7 @@
       ]
     },
     "furniture-psi-3": {
-      "label": "PSI MAN SPARE 3",
+      "label": "PSI MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:psi:3",
       "boss": "psi",
@@ -1803,7 +2275,7 @@
       ]
     },
     "furniture-psi-4": {
-      "label": "PSI MAN SPARE 4",
+      "label": "PSI MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:psi:4",
       "boss": "psi",
@@ -1818,7 +2290,7 @@
       ]
     },
     "furniture-psi-5": {
-      "label": "PSI MAN SPARE 5",
+      "label": "PSI MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:psi:5",
       "boss": "psi",
@@ -1832,8 +2304,83 @@
         "idle0"
       ]
     },
+    "furniture-psi-6": {
+      "label": "PSI MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:psi:6",
+      "boss": "psi",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-psi-7": {
+      "label": "PSI MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:psi:7",
+      "boss": "psi",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-psi-8": {
+      "label": "PSI MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:psi:8",
+      "boss": "psi",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-psi-9": {
+      "label": "PSI MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:psi:9",
+      "boss": "psi",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-psi-10": {
+      "label": "PSI MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:psi:10",
+      "boss": "psi",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-swarm-1": {
-      "label": "SWARM MAN SPARE 1",
+      "label": "SWARM MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:swarm:1",
       "boss": "swarm",
@@ -1848,7 +2395,7 @@
       ]
     },
     "furniture-swarm-2": {
-      "label": "SWARM MAN SPARE 2",
+      "label": "SWARM MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:swarm:2",
       "boss": "swarm",
@@ -1863,7 +2410,7 @@
       ]
     },
     "furniture-swarm-3": {
-      "label": "SWARM MAN SPARE 3",
+      "label": "SWARM MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:swarm:3",
       "boss": "swarm",
@@ -1878,7 +2425,7 @@
       ]
     },
     "furniture-swarm-4": {
-      "label": "SWARM MAN SPARE 4",
+      "label": "SWARM MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:swarm:4",
       "boss": "swarm",
@@ -1893,7 +2440,7 @@
       ]
     },
     "furniture-swarm-5": {
-      "label": "SWARM MAN SPARE 5",
+      "label": "SWARM MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:swarm:5",
       "boss": "swarm",
@@ -1907,8 +2454,83 @@
         "idle0"
       ]
     },
+    "furniture-swarm-6": {
+      "label": "SWARM MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:swarm:6",
+      "boss": "swarm",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-swarm-7": {
+      "label": "SWARM MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:swarm:7",
+      "boss": "swarm",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-swarm-8": {
+      "label": "SWARM MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:swarm:8",
+      "boss": "swarm",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-swarm-9": {
+      "label": "SWARM MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:swarm:9",
+      "boss": "swarm",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-swarm-10": {
+      "label": "SWARM MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:swarm:10",
+      "boss": "swarm",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-granite-1": {
-      "label": "GRANITE MAN SPARE 1",
+      "label": "GRANITE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:granite:1",
       "boss": "granite",
@@ -1923,7 +2545,7 @@
       ]
     },
     "furniture-granite-2": {
-      "label": "GRANITE MAN SPARE 2",
+      "label": "GRANITE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:granite:2",
       "boss": "granite",
@@ -1938,7 +2560,7 @@
       ]
     },
     "furniture-granite-3": {
-      "label": "GRANITE MAN SPARE 3",
+      "label": "GRANITE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:granite:3",
       "boss": "granite",
@@ -1953,7 +2575,7 @@
       ]
     },
     "furniture-granite-4": {
-      "label": "GRANITE MAN SPARE 4",
+      "label": "GRANITE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:granite:4",
       "boss": "granite",
@@ -1968,7 +2590,7 @@
       ]
     },
     "furniture-granite-5": {
-      "label": "GRANITE MAN SPARE 5",
+      "label": "GRANITE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:granite:5",
       "boss": "granite",
@@ -1982,8 +2604,83 @@
         "idle0"
       ]
     },
+    "furniture-granite-6": {
+      "label": "GRANITE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:granite:6",
+      "boss": "granite",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-granite-7": {
+      "label": "GRANITE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:granite:7",
+      "boss": "granite",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-granite-8": {
+      "label": "GRANITE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:granite:8",
+      "boss": "granite",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-granite-9": {
+      "label": "GRANITE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:granite:9",
+      "boss": "granite",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-granite-10": {
+      "label": "GRANITE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:granite:10",
+      "boss": "granite",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-wraith-1": {
-      "label": "WRAITH MAN SPARE 1",
+      "label": "WRAITH MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:wraith:1",
       "boss": "wraith",
@@ -1998,7 +2695,7 @@
       ]
     },
     "furniture-wraith-2": {
-      "label": "WRAITH MAN SPARE 2",
+      "label": "WRAITH MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:wraith:2",
       "boss": "wraith",
@@ -2013,7 +2710,7 @@
       ]
     },
     "furniture-wraith-3": {
-      "label": "WRAITH MAN SPARE 3",
+      "label": "WRAITH MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:wraith:3",
       "boss": "wraith",
@@ -2028,7 +2725,7 @@
       ]
     },
     "furniture-wraith-4": {
-      "label": "WRAITH MAN SPARE 4",
+      "label": "WRAITH MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:wraith:4",
       "boss": "wraith",
@@ -2043,7 +2740,7 @@
       ]
     },
     "furniture-wraith-5": {
-      "label": "WRAITH MAN SPARE 5",
+      "label": "WRAITH MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:wraith:5",
       "boss": "wraith",
@@ -2057,8 +2754,83 @@
         "idle0"
       ]
     },
+    "furniture-wraith-6": {
+      "label": "WRAITH MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:wraith:6",
+      "boss": "wraith",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-wraith-7": {
+      "label": "WRAITH MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:wraith:7",
+      "boss": "wraith",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-wraith-8": {
+      "label": "WRAITH MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:wraith:8",
+      "boss": "wraith",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-wraith-9": {
+      "label": "WRAITH MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:wraith:9",
+      "boss": "wraith",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-wraith-10": {
+      "label": "WRAITH MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:wraith:10",
+      "boss": "wraith",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-drake-1": {
-      "label": "DRAKE MAN SPARE 1",
+      "label": "DRAKE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:drake:1",
       "boss": "drake",
@@ -2073,7 +2845,7 @@
       ]
     },
     "furniture-drake-2": {
-      "label": "DRAKE MAN SPARE 2",
+      "label": "DRAKE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:drake:2",
       "boss": "drake",
@@ -2088,7 +2860,7 @@
       ]
     },
     "furniture-drake-3": {
-      "label": "DRAKE MAN SPARE 3",
+      "label": "DRAKE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:drake:3",
       "boss": "drake",
@@ -2103,7 +2875,7 @@
       ]
     },
     "furniture-drake-4": {
-      "label": "DRAKE MAN SPARE 4",
+      "label": "DRAKE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:drake:4",
       "boss": "drake",
@@ -2118,7 +2890,7 @@
       ]
     },
     "furniture-drake-5": {
-      "label": "DRAKE MAN SPARE 5",
+      "label": "DRAKE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:drake:5",
       "boss": "drake",
@@ -2132,8 +2904,83 @@
         "idle0"
       ]
     },
+    "furniture-drake-6": {
+      "label": "DRAKE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:drake:6",
+      "boss": "drake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-drake-7": {
+      "label": "DRAKE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:drake:7",
+      "boss": "drake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-drake-8": {
+      "label": "DRAKE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:drake:8",
+      "boss": "drake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-drake-9": {
+      "label": "DRAKE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:drake:9",
+      "boss": "drake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-drake-10": {
+      "label": "DRAKE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:drake:10",
+      "boss": "drake",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-eclipse-1": {
-      "label": "ECLIPSE MAN SPARE 1",
+      "label": "ECLIPSE MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:eclipse:1",
       "boss": "eclipse",
@@ -2148,7 +2995,7 @@
       ]
     },
     "furniture-eclipse-2": {
-      "label": "ECLIPSE MAN SPARE 2",
+      "label": "ECLIPSE MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:eclipse:2",
       "boss": "eclipse",
@@ -2163,7 +3010,7 @@
       ]
     },
     "furniture-eclipse-3": {
-      "label": "ECLIPSE MAN SPARE 3",
+      "label": "ECLIPSE MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:eclipse:3",
       "boss": "eclipse",
@@ -2178,7 +3025,7 @@
       ]
     },
     "furniture-eclipse-4": {
-      "label": "ECLIPSE MAN SPARE 4",
+      "label": "ECLIPSE MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:eclipse:4",
       "boss": "eclipse",
@@ -2193,7 +3040,7 @@
       ]
     },
     "furniture-eclipse-5": {
-      "label": "ECLIPSE MAN SPARE 5",
+      "label": "ECLIPSE MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:eclipse:5",
       "boss": "eclipse",
@@ -2207,8 +3054,83 @@
         "idle0"
       ]
     },
+    "furniture-eclipse-6": {
+      "label": "ECLIPSE MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:eclipse:6",
+      "boss": "eclipse",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-eclipse-7": {
+      "label": "ECLIPSE MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:eclipse:7",
+      "boss": "eclipse",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-eclipse-8": {
+      "label": "ECLIPSE MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:eclipse:8",
+      "boss": "eclipse",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-eclipse-9": {
+      "label": "ECLIPSE MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:eclipse:9",
+      "boss": "eclipse",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-eclipse-10": {
+      "label": "ECLIPSE MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:eclipse:10",
+      "boss": "eclipse",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
     "furniture-alloy-1": {
-      "label": "ALLOY MAN SPARE 1",
+      "label": "ALLOY MAN ASSET1",
       "cls": "furniture",
       "key": "furniture:alloy:1",
       "boss": "alloy",
@@ -2223,7 +3145,7 @@
       ]
     },
     "furniture-alloy-2": {
-      "label": "ALLOY MAN SPARE 2",
+      "label": "ALLOY MAN ASSET2",
       "cls": "furniture",
       "key": "furniture:alloy:2",
       "boss": "alloy",
@@ -2238,7 +3160,7 @@
       ]
     },
     "furniture-alloy-3": {
-      "label": "ALLOY MAN SPARE 3",
+      "label": "ALLOY MAN ASSET3",
       "cls": "furniture",
       "key": "furniture:alloy:3",
       "boss": "alloy",
@@ -2253,7 +3175,7 @@
       ]
     },
     "furniture-alloy-4": {
-      "label": "ALLOY MAN SPARE 4",
+      "label": "ALLOY MAN ASSET4",
       "cls": "furniture",
       "key": "furniture:alloy:4",
       "boss": "alloy",
@@ -2268,9 +3190,84 @@
       ]
     },
     "furniture-alloy-5": {
-      "label": "ALLOY MAN SPARE 5",
+      "label": "ALLOY MAN ASSET5",
       "cls": "furniture",
       "key": "furniture:alloy:5",
+      "boss": "alloy",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-alloy-6": {
+      "label": "ALLOY MAN ASSET6",
+      "cls": "furniture",
+      "key": "furniture:alloy:6",
+      "boss": "alloy",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-alloy-7": {
+      "label": "ALLOY MAN ASSET7",
+      "cls": "furniture",
+      "key": "furniture:alloy:7",
+      "boss": "alloy",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-alloy-8": {
+      "label": "ALLOY MAN ASSET8",
+      "cls": "furniture",
+      "key": "furniture:alloy:8",
+      "boss": "alloy",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-alloy-9": {
+      "label": "ALLOY MAN ASSET9",
+      "cls": "furniture",
+      "key": "furniture:alloy:9",
+      "boss": "alloy",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "spare": true,
+      "frames": [
+        "idle0"
+      ]
+    },
+    "furniture-alloy-10": {
+      "label": "ALLOY MAN ASSET10",
+      "cls": "furniture",
+      "key": "furniture:alloy:10",
       "boss": "alloy",
       "grid": {
         "w": 16,

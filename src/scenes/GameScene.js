@@ -22,7 +22,7 @@ import {
 } from '../data/bosses.js';
 import {
   WEAPONS, NULL_WEAPON, weaponOf, SIDEARM_ID, damageAtLevel, classOf, hasLadder,
-  elementOf,
+  elementOf, tierAfterRebeat,
 } from '../data/weapons.js';
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
@@ -176,7 +176,7 @@ export default class GameScene extends Phaser.Scene {
      *
      *   A / D          walk            SPACE    jump (double-tap to slide)
      *   W              aim up          RSHIFT   fire
-     *   arrows         walk (kept)     Q / E    open the mid-fight wheel
+     *   arrows         walk (kept)     Q / E    open the Active wheel
      *   ESC / ENTER    pause           ESC      close a wheel
      *
      * JUMP AND FIRE SWAPPED SIDES, and the swap is the point. Space is the
@@ -209,7 +209,7 @@ export default class GameScene extends Phaser.Scene {
      * and a held fire would re-stamp `fireStart` so no charge could ever build.
      */
     this.input.keyboard.on('keydown-SPACE', () => {
-      // The jump key is the between-fights wheel's other exit while it is up —
+      // The jump key is the Post Boss wheel's other exit while it is up —
       // checked before the jump so leaving the menu never also launches the
       // player.
       const ui = this.scene.get('UI');
@@ -219,7 +219,7 @@ export default class GameScene extends Phaser.Scene {
     });
     this.input.keyboard.on('keyup-SPACE', () => this.endJump());
     this.input.keyboard.on('keydown-SHIFT', () => {
-      // The between-fights wheel borrows the fire key as its confirm, so firing
+      // The Post Boss wheel borrows the fire key as its confirm, so firing
       // stands down while it is up. Both handlers are bound to the same key and
       // both run; without this, confirming a swap also queued a shot for the
       // frame the game resumed on.
@@ -235,7 +235,7 @@ export default class GameScene extends Phaser.Scene {
      * release with no matching press still set `fireReleased` — and only step()
      * clears that, which a paused game does not run.
      *
-     * SHIFT is the between-fights wheel's confirm and sits next to the pause key, so
+     * SHIFT is the Post Boss wheel's confirm and sits next to the pause key, so
      * this fired constantly: `releaseFire()` measured `now - fireStart` against
      * a `fireStart` from seconds earlier (or 0), decided the shot was fully
      * charged, and spat one out on the frame the game resumed. Exactly the bug
@@ -248,7 +248,7 @@ export default class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('A,D,W,LEFT,RIGHT');
 
     /**
-     * THE IN-SITU WHEEL ON A KEYBOARD. Q or E opens it; then Q/E/Z/C pick a
+     * THE ACTIVE WHEEL ON A KEYBOARD. Q or E opens it; then Q/E/Z/C pick a
      * slot, toggle it and close. The four keys sit in the same 2x2 shape on the
      * board that the modules do on screen — Q above Z on the left, E above C on
      * the right — so the mapping is spatial rather than memorised, exactly like
@@ -267,7 +267,7 @@ export default class GameScene extends Phaser.Scene {
       });
     }
     /**
-     * THE POST-BOSS WHEEL'S CURSOR. Left/right cycle, fire confirms, and either
+     * THE POST BOSS WHEEL'S CURSOR. Left/right cycle, fire confirms, and either
      * Esc or the jump key leaves — "repeat until escape key or jump key".
      *
      * Bound here with the other keys rather than inside UIScene because this is
@@ -398,12 +398,12 @@ export default class GameScene extends Phaser.Scene {
       // it after 2.5s, and the halo has to survive as long as the window does.
       freshWeapon: null,
       // A free level from re-beating a boss whose weapon you already own; the
-      // between-fights wheel announces it and then clears it.
+      // Post Boss wheel announces it and then clears it.
       bonusLevel: null,
       // Set when the player touches the exit door with the re-quip window still
       // open; UIScene turns it into the confirmation pop-up.
       confirmExit: null,
-      // DEV — ask UIScene to open the between-fights wheel once the first frame has
+      // DEV — ask UIScene to open the Post Boss wheel once the first frame has
       // drawn. See DEV.requipAtStart; it is cleared the moment it is honoured.
       devRequipPending: false,
     };
@@ -690,7 +690,9 @@ export default class GameScene extends Phaser.Scene {
       this.player.vx = 0; this.player.vy = 0;
       this.spawnBoss(def, layer);
       this.music(TRACK.arena(def.id));
-      this.beatTrack = TRACK.arena(def.id);
+      // Only Volt Man's room is held to its beat, by the owner's call of
+      // 17 Oct 2026; every other track just slows and recovers with the game.
+      this.beatTrack = def.id === 'volt' ? TRACK.arena(def.id) : null;
     }, true);   // staged: room, then furniture, then the boss beams down
   }
 
@@ -911,8 +913,8 @@ export default class GameScene extends Phaser.Scene {
        * RESYNC THE FIGHT'S TRACK TO THE ROOM, every half second. The track was
        * 3.0s in when this clock started, so that plus the clock is where it
        * should be; slow motion, a hard pause or a struggling phone can pull
-       * the two apart, and this pulls them back. Only while the boss is up —
-       * `beatTrack` is cleared the moment he dies.
+       * the two apart, and this pulls them back. Only in Volt Man's room and
+       * only while he is up — `beatTrack` is cleared the moment he dies.
        */
       if (this.beatTrack && this.arena.t % 30 === 0) {
         syncMusicTo(this.beatTrack, ARRIVAL_S + this.arena.t / 60);
@@ -1954,7 +1956,9 @@ export default class GameScene extends Phaser.Scene {
     // NO AMBIENT MINIONS DURING A BOSS FIGHT. A boss arena is sealed: the only
     // enemies in it are the boss and anything its own moveset summons (which
     // comes from systems/bossFights.js, not from here). The ambient stream resumes
-    // when the fight ends.
+    // the moment the boss dies — STILL INSIDE HIS ROOM, so minions arrive while
+    // you re-quip and walk to the exit. That began as an accident and is kept
+    // on purpose, by the owner's call of 17 Oct 2026.
     //
     // ONLY THE SPAWNER IS SUPPRESSED. This used to return outright, which also
     // switched off movement, collision and pruning — so a boss-summoned minion
@@ -2283,18 +2287,17 @@ export default class GameScene extends Phaser.Scene {
     // without a drop to place. See canRequip.
     this.run.requipOpen = true;
     /**
-     * ALREADY OWN IT? TAKE A LEVEL INSTEAD.
+     * ALREADY OWN IT? HIS WEAPON JUMPS A TIER.
      *
-     * A boss you have beaten before dropped literally nothing, which made the
-     * second and third clears of the same fight feel like a waste of a door.
-     * A level on that boss's own weapon keeps the reward tied to the thing you
-     * just beat — Chips are already the run-END payout and would read as the
-     * same generic trickle you get for existing.
+     * By the owner's call (17 Oct 2026): beating a boss whose weapon you carry
+     * pushes it to the tier for the layer you beat him at — layer 1 to Lv3,
+     * layer 2 to Lv6, layer 3 to Lv10 — or one tier past where it already is.
+     * The reward stays tied to the thing you just beat.
      */
     if (b.dropWeapon && this.run.unlocked.has(b.dropWeapon)) {
       const lv = this.run.wpLevels[b.dropWeapon] || 1;
       if (lv < FEEL.weaponMaxLevel) {
-        this.run.wpLevels[b.dropWeapon] = lv + 1;
+        this.run.wpLevels[b.dropWeapon] = tierAfterRebeat(lv, b.layer);
         this.run.bonusLevel = b.dropWeapon;
         this.run.wstate = {};   // runtimes cache their rung at creation
       }

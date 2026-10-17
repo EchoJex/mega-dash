@@ -220,7 +220,7 @@ export function createAnims(scene) {
 /**
  * How many 1/60s sim steps each frame of an animation is held for.
  *
- * Exported for the sprite editor's preview and for anything that needs to
+ * Exported for anything that needs to
  * reason about timing without a Phaser scene. Falls back to the sheet rate for
  * a sprite with no `.sprite` source.
  */

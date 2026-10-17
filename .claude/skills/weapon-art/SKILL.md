@@ -59,8 +59,7 @@ Start only when its mechanics are built from `[draft]` fields and tested.
   already covers every registered sheet.
 - [ ] **Look at it**: `npm test`, `npm run build && npm run smoke`, then a probe that
   pauses the game (`gs.paused = true`), steps it (`gs.step(); gs.draw()`) and screenshots
-  each clip's hit frame both ways round. It must read in the sprite editor too (WEAPON ART
-  group: hit area in red, pivot in cyan).
+  each clip's hit frame both ways round.
 - [ ] **Commit to `main` and push.**
 
 ## Phase 2 — hand it to Design

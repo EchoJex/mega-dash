@@ -7,7 +7,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MARKS, SMALL_EDIT, markAfterEdit, changedChars, changedPixels } from '../docs/marks.js';
+import { MARKS, SMALL_EDIT, markAfterEdit, changedChars } from '../docs/marks.js';
 
 test('the ladder is four rungs in order', () => {
   assert.deepEqual(MARKS, ['deferred', 'wip', 'draft', 'ready'],
@@ -65,22 +65,3 @@ test('changedChars measures the span that differs, not the whole text', () => {
   assert.equal(changedChars(undefined, undefined), 0, 'an unopened field must not read as an edit');
 });
 
-/**
- * ROLE, NOT COLOUR. A palette re-tune changes every pixel's colour and none of
- * its meaning, and that is not an edit anybody made.
- */
-test('changedPixels counts cells whose role changed', () => {
-  assert.equal(changedPixels(['..', '..'], ['..', '..']), 0);
-  assert.equal(changedPixels(['..', '..'], ['.1', '..']), 1);
-  assert.equal(changedPixels(['12'], ['21']), 2);
-  assert.equal(changedPixels([], []), 0, 'a frame with no rows is not an edit either');
-});
-
-/**
- * A ROW THAT GREW OR SHRANK STILL COUNTS. A menu element's grid is adjustable,
- * so +ROW / +COL genuinely changes the frame and has to read as an edit.
- */
-test('a resized frame reads as an edit', () => {
-  assert.equal(changedPixels(['..'], ['...']), 1);
-  assert.equal(changedPixels(['..'], ['..', '..']), 2);
-});

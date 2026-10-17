@@ -105,23 +105,4 @@ await page.waitForTimeout(200);
 console.log('tracker labels drawn:', n1);
 await page.screenshot({ path: '/home/user/mega-dash/design/glossary-tracker.png' });
 
-// ---------- sprite editor ----------
-await page.goto(url + '/sprite-editor.html', { waitUntil: 'networkidle' });
-await page.waitForTimeout(1000);
-await page.selectOption('#action', 'run');
-await page.waitForTimeout(300);
-const n2 = await page.evaluate((fn) => {
-  const label = eval(fn);
-  let n = 0;
-  n += label('#target', 'SPRITE', 'below') ? 1 : 0;
-  n += label('#action', 'ACTION', 'below') ? 1 : 0;
-  n += label('#frame', 'INDEX', 'below') ? 1 : 0;
-  n += label('#status', 'MARKER', 'below') ? 1 : 0;
-  n += label('#hold', 'HOLD — in STEPS (= frames)', 'below') ? 1 : 0;
-  n += label('#hint', 'the CYCLE cost, in steps and seconds', 'above') ? 1 : 0;
-  n += label('#tOnion', 'ONION SKIN', 'above') ? 1 : 0;
-  return n;
-}, LABEL);
-await page.screenshot({ path: '/home/user/mega-dash/design/glossary-editor.png' });
-console.log('editor labels drawn:', n2);
 await browser.close(); server.close();

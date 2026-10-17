@@ -34,14 +34,14 @@
 
 import { FEEL } from '../config/feel.js';
 /**
- * ONE SECOND, IN FRAMES — and it is the ARENA's number, not this file's.
- *
- * `makeArena` sets `beatLen` from it and derives `arena.beat`, so a second 60
- * declared here would be a second source for one fact: change either and Volt
- * Man's sweep silently stops landing on the speaker pulses it is supposed to be
- * synchronised with. One-way — arena.js must never import THIS file.
+ * ONE BEAT OF VOLT MAN'S ROOM (two seconds) — and it is the ARENA's number,
+ * not this file's. `makeArena` derives `arena.beat` from it, so a second copy
+ * here would let his sweep stop landing on the speaker pulses. One-way —
+ * arena.js must never import THIS file.
  */
 import { BEAT_LEN as BEAT } from './arena.js';
+/** One second, for durations that are real seconds rather than beats. */
+const SEC = 60;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -437,10 +437,10 @@ const BLAZE_HAZ = {
   lead: 96,                                // frames of shake before the first rock
   cycle: { 1: 1200, 2: 900, 3: 900 },      // "every 20 seconds or so"
   rocks: { 1: 6, 2: 9, 3: 9 },             // per cycle — more overall
-  // ...but never more than this many in the air at once. The cap, not the count,
-  // is what keeps the shower readable: a fourth rock waits for a slot instead of
-  // filling the sky, so there is always a gap you can see through and stand in.
-  airborne: 3,
+  // ...but never more than this many in the air at once — five, by the owner's
+  // call of 17 Oct 2026. The cap, not the count, keeps the shower readable: a
+  // sixth rock waits for a slot instead of filling the sky.
+  airborne: 5,
   // Spacing between rocks, tuned to ROUGHLY a third of a rock's flight time, so
   // the cap above is reached just as the first rock lands and the shower reads as
   // a steady staggered stream. Dropping them faster than that only clumps three
@@ -451,22 +451,33 @@ const BLAZE_HAZ = {
 };
 
 /**
- * Where the next rock falls.
+ * Where the next rock falls — semi-random, by the owner's call of 17 Oct 2026.
  *
- * Anywhere across the room normally. While the lava is up it must not be above
- * a platform, because those are the only footing left — so the column is
- * re-rolled a few times and the drop is skipped for a frame if the sky over
- * open lava is genuinely full.
+ * Anywhere across the room, EXCEPT that a rock may only fall onto a platform
+ * while a platform next to it is safe: not Hot now, and no rock above it that
+ * will land inside the next three seconds. So there is always somewhere to
+ * hop to, which is the old "never all the platforms Hot at once" kept at every
+ * moment rather than only during the flood. The column is re-rolled a few
+ * times, and the drop waits a frame if the sky is genuinely full.
  */
-function rockDropX(a, size, flooding) {
+const SAFE_AHEAD = 180;                  // "won't be Hot in the next 3 seconds"
+
+function rockDropX(a, size) {
   const lo = a.x0 + 8, hi = a.x1 - 8 - size;
-  if (!flooding) return rnd(lo, hi);
   for (let tries = 0; tries < 12; tries++) {
     const x = rnd(lo, hi);
-    const clear = !a.platforms.some((pl) => x + size > pl.x - 4 && x < pl.x + pl.w + 4);
-    if (clear) return x;
+    const pl = a.platforms.find((p) => x + size > p.x - 4 && x < p.x + p.w + 4);
+    if (!pl || hasSafeNeighbour(a, pl)) return x;
   }
   return null;
+}
+
+function hasSafeNeighbour(a, pl) {
+  const row = [...a.platforms].sort((p, q) => p.x - q.x);
+  const i = row.indexOf(pl);
+  return [row[i - 1], row[i + 1]].some((q) => q && q.on !== false && !q.hot
+    && !a.hazards.some((h) => h.kind === 'rock' && h.x + h.w > q.x && h.x < q.x + q.w
+      && (q.y - (h.y + h.h)) / h.vy <= SAFE_AHEAD));
 }
 
 function blazeHazard(layer) {
@@ -534,7 +545,7 @@ function blazeHazard(layer) {
       // rocks — it just paces them by what is on screen instead of by a timer.
       if (a.hazards.length >= BLAZE_HAZ.airborne) { hs.gap = 1; return; }
       const s = BLAZE_HAZ.size[layer];
-      const x = rockDropX(a, s, flooding);
+      const x = rockDropX(a, s);
       // While flooded, a cycle can run out of clear sky. Waiting a frame and
       // retrying is right — the shower should thin out over the platforms, not
       // lose its rocks.
@@ -896,7 +907,7 @@ const VOLT = {
   speed: 2.3,
   // Beat-locked like the rest of the room: a beat of wind-up, and a rest that
   // is a whole number of beats so a volley always lands on one.
-  windup: 60,
+  windup: BEAT,
   rest: { 1: [180, 300], 2: [120, 240], 3: [120, 180] },
   /**
    * THE FALLOFF CURVE. `fadeK` is what a bolt keeps after travelling `fadeDist`
@@ -1091,9 +1102,9 @@ function voltAttack(layer) {
  */
 /**
  * VOLT MAN'S HAZARD, STATED IN BEATS. "All furniture, hazards, and boss layer
- * attacks shall be synched to a common 1s beat", and the beat is one second, so
- * every number here is a whole multiple of `BEAT` and reads as the field's own
- * seconds rather than as a tuning value someone landed on.
+ * attacks shall be synched to a common beat", and a beat is two seconds, so
+ * every number here is a whole multiple of `BEAT` rather than a tuning value
+ * someone landed on.
  *
  * THE SWEEP IS A CHAIN, NOT A METRONOME. "Next panel telegraph starts
  * immediately after discharge duration" — so a panel owns two beats of the
@@ -1141,9 +1152,9 @@ const VOLT_HAZ = {
    * field ties the sparkle to that event rather than to a clock.
    */
   flicker: 30,                     // dark-normal-dark, three parts of ten frames
-  arcTell: BEAT,                   // "sparkle for 1s"
-  arcLive: BEAT,                   // "stay still for 1s"
-  arcFade: BEAT,                   // "fading over a second period"
+  arcTell: BEAT,                   // one beat of sparkle
+  arcLive: BEAT,                   // one beat still
+  arcFade: BEAT,                   // one beat of fade
   chainRange: 34,                  // L3 only
   // "Up to 1 airborne and 1 ground minion every 30 seconds." The cap is per
   // plane and counts what is already alive, so a fight where nothing dies
@@ -1159,7 +1170,7 @@ function voltHazard(layer) {
     const hs = ctx.boss.hs || (ctx.boss.hs = {
       // A beat of empty room before the first lamp, so the player sees the
       // speakers keep time once before anything is asking them to react to it.
-      t: 60, i: 0,
+      t: BEAT, i: 0,
       // The end-of-sweep sequence: null, or one of flicker/wait/sparkle/
       // strike/fade. `hold` parks the sweep while it runs.
       seq: null, seqT: 0, hold: 0,
@@ -2056,13 +2067,13 @@ const THORN_HAZ = {
   // player is 24px tall, so that is the number, measured from the top of the
   // grown cover rather than from the floor.
   scareDist: 24,
-  hold: BEAT * 5,          // "recede for 5 seconds"
+  hold: SEC * 5,           // "recede for 5 seconds"
   burn: 3,                 // Hot: "stay receded for 3 times the normal duration"
   // Layer 2's two-stage recede: the first scare leaves this much stubble, a
   // second inside `combo` bares it. 45% is "mostly recede" — visibly cut down
   // and still visibly there.
   partial: 0.45,
-  combo: BEAT,             // "2nd damage source within 1s"
+  combo: SEC,              // "2nd damage source within 1s"
   slow: 0.72,              // "a slightly noticeable movement speed drop"
   constrict: 90,           // layer 2 only
   // "Ground cover receded by bugs has a regrowth rate of 0.5x normal." Applied

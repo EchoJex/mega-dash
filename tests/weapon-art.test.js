@@ -69,9 +69,9 @@ test('a weapon sheet loads held by its pivot, and draws in a band that exists', 
 });
 
 /**
- * CLIP NAMES NEVER END IN A DIGIT. The sprite editor reads `jab1` as action
- * `jab`, frame 2 — so a weapon whose clip names ended in numbers would open
- * in the editor as different clips from the ones the game plays.
+ * CLIP NAMES NEVER END IN A DIGIT. The sprite format reads `jab1` as action
+ * `jab`, frame 2 — so a weapon whose clip names ended in numbers would be
+ * read back as different clips from the ones the game plays.
  */
 test('no weapon clip name ends in a digit', () => {
   for (const w of weaponSheets()) {

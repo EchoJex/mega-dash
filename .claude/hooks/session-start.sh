@@ -1,9 +1,12 @@
 #!/bin/bash
 #
-# SessionStart — two jobs, both about starting from the right place.
+# SessionStart — three jobs, all about starting from the right place.
 #
 # 1. INSTALL DEPS so `npm test` works on the first try in a fresh container.
-# 2. SAY SO OUT LOUD when the session was handed a `claude/*` branch, because
+# 2. LIST THE BUGS NOT YET FIXED. The owner logs bugs in the BUGS table of
+#    design/TRACKER.md while playtesting; every session fixes the ones not
+#    struck through before anything else (CLAUDE.md, the bug check).
+# 3. SAY SO OUT LOUD when the session was handed a `claude/*` branch, because
 #    that has twice been mistaken for the owner asking for one. See the branch
 #    section of CLAUDE.md — the short version is that remote sessions are
 #    created with a branch pre-assigned and setup text telling the agent to
@@ -28,12 +31,17 @@ case "$branch" in
     ;;
 esac
 
+# A row is pending until its words are struck through (~~like this~~).
+bugs="$(awk '/^# BUGS/{on=1;next} /^# /{on=0} on && /^\| / && !/^\| build/ && !/no open bugs/ && !/\| ~~/' design/TRACKER.md 2>/dev/null)"
+if [ -n "$bugs" ]; then
+  note="${note:+$note }BUG CHECK — the BUGS table in design/TRACKER.md has bugs not yet struck through. Before anything else: fix each one, tell the owner what was fixed, then strike its words through and mark it [ready]. Ask if one is unclear. Pending:
+$bugs"
+fi
+
 if [ -n "$note" ]; then
-  # jq is not guaranteed here, so the payload is assembled with printf. The note
-  # above must therefore contain NO double quotes, newlines or backslashes —
-  # an early draft used "quoted" words and produced invalid JSON, which a hook
-  # fails silently on. Backticks are fine and are what the markdown uses.
-  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$note"
+  # node builds the JSON so a quote or a line break in a bug's words cannot
+  # break it — a hook with invalid JSON fails silently.
+  NOTE="$note" node -e 'process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:process.env.NOTE}})+"\n")'
 fi
 
 exit 0
