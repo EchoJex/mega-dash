@@ -452,7 +452,9 @@ pickup's collision is a flat 7×7 — the rest of the 16 is room for a glow or a
 
 **Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
 construction order. The weapon in the player's hand (`held`) draws in front of him; a
-weapon's dust and debris (`effects`) draw behind. `tests/data.test.js` holds the order.
+weapon's dust and debris (`effects`) draw behind. **Draw order is not a fixed rule**, by the
+owner's call (17 Oct 2026): it follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
+section 5).
 
 **The player is a fixed white suit with a #3CBCFC accent** on the visor, the arm-cannon
 muzzle and the helmet fin. His 12 colours are declared in `design/sprites/player.sprite`;

@@ -98,9 +98,18 @@ background → **room art** → ground, spikes, doors → pickups → minions �
 a weapon's dust and debris → **player** → the weapon in his hand → HUD and thumb pads (a
 separate layer above the game).
 
-**The player is always in front of everything in the world.** Nothing may hide him. The
-weapon in his hand is part of him and is drawn in front of his body, so it must never cover
-his visor for more than a few steps.
+That is how the game layers things today (`DEPTH` in `src/config/display.js`). **It is not a
+fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D practice.
+
+- **Layer by role, in bands set on purpose**: far background, room, terrain, things to
+  collect, enemies, shots, the player, effects, then the HUD on its own layer.
+- **What can hurt the player, and the player himself, should read first** — by contrast,
+  outline and placement, not only by being on top. A foreground piece (a pillar, a wisp of
+  mist) may pass in front of actors if it is sparse or see-through.
+- **What belongs to an actor moves with it**: a weapon in the near hand in front of the body,
+  anything in the far hand behind it; a hit flash or glow on top of what it belongs to.
+- **Effects sit by what made them**: dust behind the feet, sparks over the impact.
+- **The HUD never moves with the world** and sits above it.
 
 ## 6. Drawing a boss room so it goes straight into the game
 

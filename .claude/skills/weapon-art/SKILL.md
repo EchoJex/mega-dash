@@ -29,7 +29,7 @@ Start only when its mechanics are built from `[draft]` fields and tested.
 - [ ] **Decide the sheets.** What is in his hand (`held` layer, drawn in front of him) and
   which effects it leaves (`effects` layer, behind him). One grid per sheet: the biggest
   frame plus a few pixels of slack. Clip names are camelCase and **never end in a digit**
-  (the editor reads `jab1` as clip `jab`, frame 2): `jabOne`, `jabTwo`.
+  (the sprite format reads `jab1` as clip `jab`, frame 2): `jabOne`, `jabTwo`.
 - [ ] **Register them** in `src/data/weapon-art.js`: `grid`, `layer`, `heldBy` (what the
   pivot is, in words) and `clips` with a kind each (`hit`, `loop`, `once`, `grow`,
   `still` — `CLIP_KINDS` in `docs/sprite-fmt.js` says what each requires).
@@ -48,7 +48,7 @@ Start only when its mechanics are built from `[draft]` fields and tested.
   shapes (the head on the hit frame and the frame before, back to the hand, plus a pixel).
   `constraints()` states the weapon's rules in words for the brief.
 - [ ] **Generate:** `npm run art:placeholders -- <weapon>`, then `npm run sprites:build`,
-  then `npm run sprites` (the editor's target list).
+  then `npm run sprites` (the list of drawable targets).
 - [ ] **Write the brief**: copy `design/weapon-art/quake_hammer.md`, rewrite the prose
   (what it is in the owner's words, the look, what each rung shows), keep the two
   `generated` blocks empty, then `npm run art:brief -- <weapon>`.

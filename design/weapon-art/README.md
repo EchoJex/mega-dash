@@ -86,8 +86,7 @@ note      Drawn by Claude Design ...   one line of credit (see section 7)
 - every clip the brief lists, under the same name — none added, none removed;
 - exactly one hit area on each move that hits; on a spike, its `hit` frames first;
 - every hit area, spawn point and the pivot inside the sheet;
-- at most 15 colours per sheet, each key declared once; `0` stays the shared outline
-  `#0A0A12`.
+- at most 15 colours per sheet, each key declared once.
 
 **Change freely — each goes straight into the game when the checks pass:**
 
@@ -104,14 +103,14 @@ that breaks one is refused with the reason.
 
 ## 5. Drawing it
 
-- **16-bit, SNES era** (`design/DESIGN-BRIEF.md`, section 2): colour ramps of 3 to 5
-  tones, the near-black outline `#0A0A12` round the outside, up to 15 colours a sheet.
+- **16-bit, SNES era** (`design/DESIGN-BRIEF.md`, section 2): up to 15 colours a sheet.
+  How it is shaded and outlined is yours to decide.
 - **Draw facing right.** The game mirrors the sheet around its pivot for the other way.
 - **Nothing is ever rotated or scaled by the game.** Every angle a thing is seen at is a
   frame you draw. That is how an SNES game did it, and it keeps the pixels crisp.
-- **The held weapon is drawn IN FRONT of the player.** It may cross him, but must never
-  cover his visor for more than a few steps: losing sight of the player is losing the run.
-  **Effects** (dust, spikes, sand) are drawn behind him.
+- **The held weapon is drawn in front of the player; effects** (dust, spikes, sand)
+  **behind him.** Layering follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
+  section 5) — keep the player readable.
 - **A hit area covers what you drew where the blow lands, plus a pixel.** The player's
   attacks are slightly generous; never smaller than the drawing. For a swing, cover the
   head where it is on the hit frame and where it was the frame before — the sweep the eye
@@ -158,8 +157,6 @@ only each other.
     moving with the weapon. Those are requests, not changes: the import cannot make them.
 - Leave the `note` line to the import: it writes the credit every AI-made drawing in this
   game carries, `Drawn by Claude Design at the owner's request, <date>.`
-- **Do not hand back an edited `design/TRACKER.md`.** The owner may be editing it at the
-  same time; Claude Code changes it field by field.
 
 ## 8. What happens next
 

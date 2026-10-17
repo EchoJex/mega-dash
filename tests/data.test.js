@@ -15,7 +15,7 @@ import {
   WEAPONS, NULL_WEAPON, weaponOf, WHEEL_ORDER,
   WEAPON_LADDERS, hasLadder, damageAtLevel, SIDEARM_ID,
 } from '../src/data/weapons.js';
-import { SPRITE_CLASS, DEPTH, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
+import { SPRITE_CLASS, PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../src/config/display.js';
 import { projectileHalfHeight, SHAPE_HALF_H } from '../src/systems/assets.js';
 import { readFileSync } from 'node:fs';
 
@@ -112,16 +112,6 @@ test('sprite grids escalate minion < player < miniboss < boss', () => {
     assert.ok(SPRITE_CLASS[order[i]].h > SPRITE_CLASS[order[i - 1]].h,
       `${order[i]} must be taller than ${order[i - 1]}`);
   }
-});
-
-test('the player draws above every world actor', () => {
-  // `held` is not a world actor: it is the weapon in his hand, part of him,
-  // and the one band allowed in front of his body.
-  const world = Object.entries(DEPTH).filter(([k]) => k !== 'player' && k !== 'held');
-  for (const [name, d] of world) {
-    assert.ok(DEPTH.player > d, `player must draw above ${name}`);
-  }
-  assert.equal(DEPTH.held, DEPTH.player + 1, 'what he holds sits directly in front of him, below nothing else');
 });
 
 test('the null weapon is an outline-only silhouette that fires nothing', () => {

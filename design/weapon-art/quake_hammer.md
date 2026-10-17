@@ -31,7 +31,7 @@ the air and the hammer drives him straight down (the air dive).
 - Dust and sand are warm tans; the placeholders' colours are in each sheet's palette, and
   the art may choose its own.
 - **The player is 24×24, white with a `#3CBCFC` accent, and is never tinted.** The hammer
-  is drawn in front of him and must not cover his visor for more than a few steps.
+  is drawn in front of him.
 
 ## What the player sees, move by move
 
