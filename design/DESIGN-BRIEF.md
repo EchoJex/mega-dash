@@ -40,7 +40,7 @@ page: when this page changes, update it too (link at the bottom).
 
 ## 3. Colours that carry meaning
 
-- **The player** is a white suit with a `#3CBCFC` accent (visor, arm-cannon muzzle, helmet
+- **The player** is a white suit with a `#3CBCFC` accent (visor and helmet
   fin), twelve colours in all. He is **never tinted or recoloured**, and must stay visible
   in every room — put him in front of the brightest and busiest part of each room and check.
 - **A boss's primary and secondary are his identity**; his 16-bit shades are built from
@@ -59,7 +59,7 @@ page: when this page changes, update it too (link at the bottom).
 | FROST MAN | Ice | `#A0EFE7` | `#FFFFFF` | 33×44 |
 | STRIKE MAN | Fighting | `#EA6A34` | `#7C2D12` | 35×47 |
 | VENOM MAN | Poison | `#A926D9` | `#84CC16` | 31×41 |
-| QUAKE MAN | Ground | `#A76625` | `#EA580C` | 35×47 |
+| QUAKE MAN | Ground | `#A76625` | `#D9B56A` | 35×47 |
 | GALE MAN | Flying | `#5CADD5` | `#F8FAFC` | 27×36 |
 | PSI MAN | Psychic | `#EA43BD` | `#F9A8D4` | 28×37 |
 | SWARM MAN | Bug | `#B8DC28` | `#4D5C1A` | 29×38 |

@@ -4,7 +4,7 @@ fudge     0.70 x 1.00
 pivot     28 28
 palette   0 #0A0A12 outline
 palette   1 #A76625 head (Quake Man primary)
-palette   2 #EA580C Quake Man secondary
+palette   2 #D9B56A Quake Man secondary
 palette   3 #8A5A2B handle
 palette   4 #D08A44 head highlight
 note      PLACEHOLDER — plain shapes painted by npm run art:placeholders. Redraw any frame; the clips, holds, hit areas and pivot are what the game plays.

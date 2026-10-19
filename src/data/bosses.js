@@ -128,7 +128,7 @@ export const BOSSES = [
   },
   {
     id: 'quake', name: 'QUAKE MAN', element: 'Ground',
-    primary: '#A76625', secondary: '#EA580C', outline: '#0A0A12',
+    primary: '#A76625', secondary: '#D9B56A', outline: '#0A0A12',
     scale: 1.95, baseHp: 76,
     attackName: 'Seismic Stomp', dropWeapon: 'quake_hammer',
     silhouette: null,

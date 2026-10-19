@@ -410,8 +410,8 @@ Phaser owns rendering, input, scenes, audio, asset pipeline. This file owns move
 
 ### 4. Sprite box ≠ collision box
 Collision boxes live in `config/feel.js`, sprite sizes in `systems/assets.js`, and they
-are deliberately different. The sprite changes silhouette constantly (arm cannon
-extends, legs tuck, slide flattens); if the hitbox followed the art, vulnerability would
+are deliberately different. The sprite changes silhouette constantly (arms
+swing, legs tuck, slide flattens); if the hitbox followed the art, vulnerability would
 change frame to frame — unlearnable, and it feels like cheating. A stable narrower box
 gives *precise* (predictable damage) and *fair* (near-misses visibly miss).
 
@@ -456,8 +456,8 @@ weapon's dust and debris (`effects`) draw behind. **Draw order is not a fixed ru
 owner's call (17 Oct 2026): it follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
 section 5).
 
-**The player is a fixed white suit with a #3CBCFC accent** on the visor, the arm-cannon
-muzzle and the helmet fin. His 12 colours are declared in `design/sprites/player.sprite`;
+**The player is a fixed white suit with a #3CBCFC accent** on the visor and the
+helmet fin. He has no arm cannon (owner, 18 Oct 2026): his front arm ends in a hand. His 12 colours are declared in `design/sprites/player.sprite`;
 `PLAYER_PALETTE` in `config/display.js` is only the placeholder fallback. He was blue for
 the whole placeholder era; the owner's sheet arrived white and **the art wins.**
 

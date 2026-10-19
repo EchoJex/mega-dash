@@ -173,7 +173,7 @@ export const FEEL = {
   // ── Hitboxes ─────────────────────────────────────────────────────────
   // The collision box is deliberately NARROWER than the 24x24 sprite.
   //
-  // Why: the sprite changes silhouette constantly (arm cannon extends, legs
+  // Why: the sprite changes silhouette constantly (arms swing, legs
   // tuck, walk cycle swings limbs). If the hitbox followed the art, your
   // vulnerability would change frame to frame — unlearnable, and it feels like
   // cheating. A stable box centred on the body means damage is predictable

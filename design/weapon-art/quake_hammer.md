@@ -23,7 +23,7 @@ the air and the hammer drives him straight down (the air dive).
 
 - SNES-era 16-bit (`design/DESIGN-BRIEF.md`): up to 15 colours a sheet, colour ramps, the
   near-black outline `#0A0A12` round the outside.
-- Quake Man's colours: primary `#A76625` (brown), secondary `#EA580C` (orange). A big,
+- Quake Man's colours: primary `#A76625` (brown), secondary `#D9B56A` (sand). A big,
   heavy, rock-headed hammer.
 - **A quarter shorter than it first was**, by the owner's playtest (12 Oct 2026: "the
   hammer is a bit too long"). The placeholder shows the size: the head's middle 16 pixels

@@ -84,7 +84,7 @@
     "quake": {
       "name": "Quake Man",
       "primary": "#A76625",
-      "secondary": "#EA580C",
+      "secondary": "#D9B56A",
       "outline": "#0A0A12",
       "scale": 1.95,
       "attackName": "Seismic Stomp",

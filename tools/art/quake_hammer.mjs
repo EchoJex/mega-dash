@@ -82,7 +82,7 @@ export function rig() {
     palette: [
       OUTLINE,
       { key: '1', hex: '#A76625', name: 'head (Quake Man primary)' },
-      { key: '2', hex: '#EA580C', name: 'Quake Man secondary' },
+      { key: '2', hex: '#D9B56A', name: 'Quake Man secondary' },
       { key: '3', hex: '#8A5A2B', name: 'handle' },
       { key: '4', hex: '#D08A44', name: 'head highlight' },
     ],
