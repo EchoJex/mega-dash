@@ -625,6 +625,7 @@ Claude or a generator made:
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
+| the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
 
 **The three older tracks are not on the list**, because they are not AI-made. The three tracks in
 `design/music/` from before (Drake Man's stage, the main menu, post-fight) are from
