@@ -206,7 +206,7 @@ export const SPRITE_CLASS = {
  *   'right'  the hands stay his own: facing right his right hand (slot 1) is
  *            nearer the screen; turning left brings his left hand (slot 2) forward
  */
-export const HANDS = 'front';
+export const HANDS = 'right';
 export const BACK_SHADE = 0xBFBFBF;
 
 export const DEPTH = {
