@@ -33,7 +33,7 @@
 import { FEEL } from '../config/feel.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
 import * as Attr from './attributes.js';
-import { clipOf, cellAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
+import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
 
 /** Frames of held fire that count as a long press. The tracker says 0.4s. */
 export const LONG_PRESS_FRAMES = 24;
@@ -1628,29 +1628,57 @@ function nearestEnemyShot(ctx, x, y, maxDist = 90) {
  *        minions as high-damage projectiles."
  *
  * STANDING STILL IS THE PRICE. The root is what makes a whip with this reach
- * fair — you commit to a spot for the length of the lash, so every use is a
+ * fair — you commit to a spot for the length of the crack, so every use is a
  * read on what is about to be where you are. It roots the INPUT rather than
  * freezing the player, so gravity, knockback and a hit landing on you all still
- * behave; you are braced, not paused.
+ * behave; you are braced, not paused. A crack started in a SLIDE keeps sliding,
+ * low, and stands up if the slide ends first (owner, 19 Oct 2026).
+ *
+ * THE CRACK IS PLAYED FROM ITS DRAWING (weapon-simons_whip-held.sprite): whip
+ * behind him, swung overhead, cracked out. Its frame data says when each part
+ * hurts and where — the overhead swing's area lightly, then the crack, whose
+ * area is the TIP. The shaft runs from his hand to the tip and is worked out
+ * here. How far the whip reaches is how far the drawing puts its tip.
  *
  * THE LV3 GRAPPLE IS THE SAME LASH WITH A DIFFERENT THING ON THE END. Enemy
  * first, terrain second, nothing third — one priority order, so the player
  * never has to choose a mode. A ledge lip pulls you up because you are on the
  * ground; a platform overhead swings you because you are not.
  */
+const WHIP = 'weapon:simons_whip:held';
+const WHIP_BODY = 'weapon:simons_whip:body';
+const WHIP_LEN = { short: '', long: 'Long', longer: 'Longer' };
+
+/** Which drawn crack plays: the rung's length, tilted up from Lv3, or low in a slide. */
+function whipClip(L, low, up) {
+  const n = WHIP_LEN[L.whip];
+  if (low) return `lowCrack${n}`;
+  return up && n ? `crackUp${n}` : `crack${n}`;
+}
+
+/** His hand, the whip's pivot. In a slide his body is half as tall, so it is lower. */
+const whipHand = (p, low) => ({ x: p.x + 12 + p.facing * 5, y: p.y + (low ? 18 : 12) });
+
 const thorn = {
-  init(st) { st.lash = null; st.root = 0; st.tossed = []; },
+  init(st) { st.lash = null; st.tossed = []; },
+
+  /** How far in front of his hand the tip reaches at this level, read off the drawing. */
+  reach(lv) {
+    const h = clipOf(WHIP, whipClip(ladderAt('simons_whip', lv), false, false)).hits[1];
+    return h.x + h.w;
+  },
 
   step(st, lv, ctx) {
     const L = ladderAt('simons_whip', lv);
-    if (st.root > 0) { st.root--; ctx.run.rootFrames = Math.max(ctx.run.rootFrames, 1); }
     stepTossed(st, ctx);
     const la = st.lash;
     if (!la) return;
 
     const p = ctx.player;
-    la.ox = p.x + 12; la.oy = p.y + 12;
-    la.len = Math.min(L.reach, la.len + L.reach / L.lashFrames);
+    // "Stands up mid-crack": a slide that ends first leaves the rest standing.
+    if (la.low && !p.sliding) { la.low = false; la.clip = whipClip(L, false, la.up); }
+    const hand = whipHand(p, la.low);
+    la.ox = hand.x; la.oy = hand.y;
 
     // REELING: whatever is on the end comes home, then resolves.
     if (la.grabbed) {
@@ -1676,46 +1704,53 @@ const thorn = {
 
     // SWINGING: the Lv3 airborne grapple carries the player forward instead.
     if (la.swing) {
-      p.x += L.swingSpeed * la.dir.x;
+      p.x += L.swingSpeed * p.facing;
       p.vy = Math.min(p.vy, 0.4);
       if (--la.swing <= 0) st.lash = null;
       return;
     }
 
-    if (la.t > 0 && --la.t === 0) { st.lash = null; return; }
-    thornProbe(st, lv, ctx, L);
+    // THE CRACK, one step of its clip at a time.
+    const c = clipOf(WHIP, la.clip);
+    if (la.t >= c.total) { st.lash = null; return; }
+    if (!la.low) ctx.run.rootFrames = Math.max(ctx.run.rootFrames, 1);
+    const h = c.hits.find((x) => la.t >= x.step && la.t < x.step + x.len);
+    la.t++;
+    if (!h) return;
+    const box = areaAt(h, hand.x, hand.y, p.facing);
+    if (h === c.hits[0]) whipArc(la, lv, ctx, L, box);
+    else thornProbe(st, lv, ctx, L, box);
   },
 
   fire(st, lv, ctx) {
     if (st.lash || st.cool > 0) return false;
     const L = ladderAt('simons_whip', lv);
     st.cool = L.cooldown;
-    st.root = L.rootFrames;
     const p = ctx.player;
     ctx.sfx('shoot', { pitch: 0.7 });
-
     // "Affected by diagonal inputs" from Lv3. `diagInput` is the reserved
-    // up-left / up-right hook; below Lv3 the lash is flat whatever is held.
-    let dy = 0;
-    if (L.diagonal && (p.diagInput === 'ul' || p.diagInput === 'ur')) dy = -0.7;
-    const dir = { x: p.facing, y: dy };
-    const d = Math.hypot(dir.x, dir.y) || 1;
-    dir.x /= d; dir.y /= d;
-
+    // up-left / up-right hook; below Lv3 the crack is flat whatever is held.
+    const up = !!L.diagonal && (p.diagInput === 'ul' || p.diagInput === 'ur');
+    const low = !!p.sliding;
+    const hand = whipHand(p, low);
     st.lash = {
-      ox: p.x + 12, oy: p.y + 12, len: 0, dir,
-      // Out in `lashFrames`, then held out for `holdFrames`. The hold is what
-      // gives the tip — and the Lv3 grapple, which only fires at full
-      // extension — a frame to actually be somewhere.
-      t: L.lashFrames + (L.holdFrames || 0), grabbed: null, swing: 0,
-      // Who the shaft has already brushed past. Body contact does not end the
-      // lash, so without this the vine would tick damage every frame it lay
-      // across a minion.
+      clip: whipClip(L, low, up), t: 0, low, up, ox: hand.x, oy: hand.y,
+      tip: null, grabbed: null, swing: 0,
+      // ONE CRACK PAYS A TARGET ONCE, whichever part of it lands first.
       hit: new Set(),
     };
     return true;
   },
 };
+
+/** The overhead swing before the crack: light damage to whatever is in its area. */
+function whipArc(la, lv, ctx, L, box) {
+  for (const o of enemiesIn(ctx, box)) {
+    if (la.hit.has(o)) continue;
+    la.hit.add(o);
+    ctx.hitEnemy(o, dmgOf('simons_whip', lv, ctx) * L.arcDmgMult, { from: la.ox });
+  }
+}
 
 /**
  * THE MINION IS THE PROJECTILE, and it survives the flight.
@@ -1801,35 +1836,24 @@ function struck(e, ctx) {
 }
 
 /** The tip of the lash, and what it has found there. */
-function thornTip(la) {
-  return { x: la.ox + la.dir.x * la.len, y: la.oy + la.dir.y * la.len };
-}
-
-function thornProbe(st, lv, ctx, L) {
+function thornProbe(st, lv, ctx, L, box) {
   const la = st.lash;
-  const tip = thornTip(la);
-  // No arc fx here any more. It was the Volt Spark's yellow chain hairline
-  // standing in for a vine, it faded in eight frames, and this function is not
-  // even called during the reel or the swing — so the lash vanished for half
-  // the move. drawWeaponry draws the real thing every frame it exists.
+  const tip = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+  la.tip = tip;
 
   /**
    * THE TIP FIRST, and it is a small box on purpose — "small hit box high
-   * damage at the tip of the whip". Ten pixels square against a 34px reach, so
+   * damage at the tip of the whip". The drawing's hit area IS the tip, so
    * landing it is a real aim rather than a consequence of pointing the right
    * way. It is also the only part that CATCHES: a grab is the tip closing on
    * something, and letting the shaft grab would make the aim worthless.
    *
    * A boss is never reeled — it is not moved by anything (see hitEnemy) — so it
-   * takes the damage and the lash ends there.
+   * takes the damage and the crack ends there.
+   *
+   * ONE CRACK PAYS A TARGET ONCE (the shared hit set), so the arc, the shaft
+   * and the tip never stack on one minion.
    */
-  const box = { x: tip.x - 5, y: tip.y - 5, w: 10, h: 10 };
-  // ONE CRACK PAYS A TARGET ONCE. The whip is out for ten frames and its two
-  // zones sweep past each other as it extends, so without the shared hit set a
-  // minion standing point-blank would take the shaft's medium hit early and the
-  // tip's high one a few frames later — the two tiers stacking into a third,
-  // best damage number for being as close as possible, which is the opposite of
-  // what aiming the tip is supposed to be worth.
   const e = enemiesIn(ctx, box).find((o) => !la.hit.has(o));
   if (e) {
     la.hit.add(e);
@@ -1859,10 +1883,11 @@ function thornProbe(st, lv, ctx, L) {
    * something and the tip bonus would be worth nothing.
    */
   if (L.bodyDmgMult) {
-    const steps = Math.max(2, Math.round(la.len / 7));
+    const len = Math.hypot(tip.x - la.ox, tip.y - la.oy);
+    const steps = Math.max(2, Math.round(len / 7));
     for (let i = 1; i < steps; i++) {
       const t = i / steps;
-      const bx = la.ox + la.dir.x * la.len * t, by = la.oy + la.dir.y * la.len * t;
+      const bx = la.ox + (tip.x - la.ox) * t, by = la.oy + (tip.y - la.oy) * t;
       for (const o of enemiesIn(ctx, { x: bx - 4, y: by - 4, w: 8, h: 8 })) {
         if (la.hit.has(o)) continue;
         la.hit.add(o);
@@ -1871,9 +1896,9 @@ function thornProbe(st, lv, ctx, L) {
     }
   }
 
-  if (!L.grapple || la.len < L.reach) return;
+  if (!L.grapple) return;
 
-  // TERRAIN SECOND, and only at full extension — a grapple that fired early
+  // TERRAIN SECOND, and only once cracked out — a grapple that fired early
   // would keep stealing the enemy hit the player was actually aiming at.
   const p = ctx.player;
   if (p.onGround) {
@@ -1897,7 +1922,7 @@ function thornProbe(st, lv, ctx, L) {
     (pl) => tip.x >= pl.x && tip.x <= pl.x + pl.w && Math.abs(tip.y - pl.y) < 10,
   ) || (ctx.arena && tip.y <= ctx.arena.ceilY + 4);
   if (overhead) {
-    la.swing = L.lashFrames;
+    la.swing = L.swingFrames;
     ctx.sfx('select', { pitch: 0.9 });
   }
 }
@@ -2297,6 +2322,16 @@ export function drawWeaponArt(layers, sx, sy, ctx) {
     );
   }
 
+  // Simon's Whip mid-crack: the frame its step says, held by his hand.
+  const wl = whipCracking(ctx);
+  if (wl) {
+    const c = clipOf(WHIP, wl.clip), t = Math.max(0, wl.t - 1), f = frameAt(c, t);
+    layers.held.drawCell(
+      { id: WHIP, x: sx(wl.ox), y: sy(wl.oy), facing: p.facing, cell: cellAt(c, t) },
+      (g) => drawWhipShape(g, sx(wl.ox), sy(wl.oy), p.facing, whipPoints(wl.clip, f), f === c.hits[1].frame),
+    );
+  }
+
   const st = run.wstate.quake_hammer;
   if (!st || !ctx.equipped.includes('quake_hammer')) return;
   const pose = quakePose(st, ladderAt('quake_hammer', ctx.levelOf('quake_hammer')));
@@ -2309,11 +2344,78 @@ export function drawWeaponArt(layers, sx, sy, ctx) {
   );
 }
 
+/** The whip's crack while it is being cracked — not reeling or swinging — or null. */
+function whipCracking(ctx) {
+  const la = ctx.run.wstate.simons_whip?.lash;
+  return la && !la.grabbed && !la.swing && ctx.equipped.includes('simons_whip') ? la : null;
+}
+
+/**
+ * HIS BODY WHILE A WEAPON WITH A BODY SHEET IS MID-MOVE, or null for his own
+ * picture. Drawn IN PLACE of him, on his layer, held by the same hand and
+ * clock as the weapon so hand and handle line up (Simon's Whip so far).
+ */
+export function bodyArt(ctx) {
+  const la = whipCracking(ctx);
+  if (!la) return null;
+  return {
+    id: WHIP_BODY, x: la.ox, y: la.oy, facing: ctx.player.facing,
+    cell: cellAt(clipOf(WHIP_BODY, la.clip), Math.max(0, la.t - 1)),
+  };
+}
+
 /**
  * THE PLAIN SHAPES — what each sheet falls back to with nothing drawn, and
  * what `npm run art:placeholders` paints the placeholder sheets from, through
  * a stand-in for Phaser's Graphics. Exported for that tool and nothing else.
  */
+
+/**
+ * THE WHIP'S PLAIN SHAPE, from the owner's Stick Nodes poses of Simon
+ * (19 Oct 2026) at the player's size: hanging behind him, swung overhead, then
+ * cracked straight out (or 45° up). Points are from his hand, facing right.
+ * The handle runs back to his hand because his body does not take the pose
+ * until it is drawn. Longer whips swing a bigger arc, and nothing goes
+ * through the floor.
+ */
+export const WHIP_SHAPE = {
+  lens: { '': 34, Long: 52, Longer: 78 },
+  behind: [[-24, -4], [-29, -4], [-28, 4], [-28, 10], [-26, 13]],
+  overhead: [[-18, -7], [-22, -8], [-26, -4], [-29, -1], [-28, 3], [-26, 6]],
+  tip: 10,
+};
+
+/** The whip's points for frame 0, 1 or 2 of a crack clip. */
+export function whipPoints(clip, frame) {
+  const m = /^(lowC|c)rack(Up)?(Longer|Long)?$/.exec(clip);
+  const len = WHIP_SHAPE.lens[m[3] || ''], floor = m[1] === 'lowC' ? 6 : 12;
+  if (frame >= 2) {
+    const a = m[2] ? -Math.PI / 4 : 0;
+    return [[0, 0], [Math.round(len * Math.cos(a)), Math.round(len * Math.sin(a))]];
+  }
+  const k = 1 + (len - 34) / 88;
+  const pts = [[0, 0], ...WHIP_SHAPE[frame ? 'overhead' : 'behind']
+    .map(([x, y]) => [Math.round(x * k), Math.min(floor, Math.round(y * k))])];
+  // Two points squashed onto the floor together would make a zero-length piece.
+  return pts.filter((q, i) => !i || q[0] !== pts[i - 1][0] || q[1] !== pts[i - 1][1]);
+}
+
+/** The whip: a green vine through `pts` from the hand, with a white glint on the tip when `glint`. */
+export function drawWhipShape(g, hx, hy, facing, pts, glint) {
+  const P = pts.map(([x, y]) => [hx + x * facing, hy + y]);
+  for (const [w, c] of [[3, 0x1A6B12], [1, 0x2AAB1C]]) {
+    g.lineStyle(w, c, 1);
+    for (let i = 1; i < P.length; i++) g.lineBetween(P[i - 1][0], P[i - 1][1], P[i][0], P[i][1]);
+  }
+  const [tx, ty] = P[P.length - 1].map(Math.round);
+  g.fillStyle(0x2AAB1C, 1);
+  g.fillRect(tx - 2, ty - 2, 4, 4);
+  if (glint) {
+    g.fillStyle(0xFFFFFF, 1);
+    g.fillRect(tx - 4, ty, 9, 1);
+    g.fillRect(tx, ty - 4, 1, 9);
+  }
+}
 
 /** The hammer: a handle and a blocky rock head across its end, pointed at `deg` from the grip. */
 export function drawHammerShape(g, gx, gy, facing, deg) {
@@ -2419,15 +2521,15 @@ export function drawWeaponry(g, sx, ctx) {
    * weapon's own green. The barbs are the segment ticks — enough to read as a
    * vine rather than a laser at 224px tall, and cheap enough to draw per frame.
    */
+  // The crack itself is drawn from its sheet (drawWeaponArt); this is the
+  // vine AFTER it, while it reels a catch home or swings him from a ledge.
   const tl = run.wstate.simons_whip;
-  if (tl?.lash && ctx.equipped.includes('simons_whip')) {
+  if ((tl?.lash?.grabbed || tl?.lash?.swing) && tl.lash.tip && ctx.equipped.includes('simons_whip')) {
     const la = tl.lash;
     // While reeling, the tip is the thing on the end of it — the vine has to
     // follow its catch home or the grab reads as the enemy moving by itself.
     const e = la.grabbed;
-    const tip = e
-      ? { x: e.x + e.w / 2, y: e.y + e.h / 2 }
-      : { x: la.ox + la.dir.x * la.len, y: la.oy + la.dir.y * la.len };
+    const tip = e ? { x: e.x + e.w / 2, y: e.y + e.h / 2 } : la.tip;
     const x0 = sx(la.ox), y0 = la.oy, x1 = sx(tip.x), y1 = tip.y;
     g.lineStyle(3, 0x1A6B12, 1);          // stem
     g.lineBetween(x0, y0, x1, y1);

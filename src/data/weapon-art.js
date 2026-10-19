@@ -35,6 +35,12 @@
  * and `npm run art:placeholders -- <weapon>` — see the `weapon-art` skill.
  */
 
+/** Every crack Simon's Whip plays: three lengths, tilted up from Lv3, and low during a slide. */
+export const WHIP_CLIPS = [
+  'crack', 'crackLong', 'crackLonger', 'crackUpLong', 'crackUpLonger',
+  'lowCrack', 'lowCrackLong', 'lowCrackLonger',
+];
+
 export const WEAPON_ART = {
   quake_hammer: {
     sheets: {
@@ -71,6 +77,33 @@ export const WEAPON_ART = {
       sand: {
         grid: { w: 4, h: 4 }, layer: 'effects', heldBy: 'the grain',
         clips: { light: 'still', dark: 'still' },
+      },
+    },
+  },
+
+  /**
+   * SIMON'S WHIP, timed after Super Castlevania IV's whip by the owner's call
+   * (19 Oct 2026, option B of three): whip hanging behind, swung overhead,
+   * then cracked out. Every crack is three frames; the overhead swing hurts
+   * lightly, the crack is the main hit and its hit area is the tip.
+   *
+   * One clip per length the ladder reaches (`crack`, `crackLong`,
+   * `crackLonger`), tilted up from Lv3 (`crackUp…`), and cracked low during
+   * a slide (`lowCrack…`, his hand nearer the floor).
+   */
+  simons_whip: {
+    sheets: {
+      // The whip itself, held by the handle in his hand, in front of him.
+      held: {
+        grid: { w: 136, h: 76 }, layer: 'held', heldBy: 'his hand, on the handle',
+        clips: Object.fromEntries(WHIP_CLIPS.map((c) => [c, 'lash'])),
+      },
+      // HIS BODY while he cracks it: drawn in place of his own picture, on the
+      // same paper, pivot and clock as the whip so hand and handle line up.
+      // Same clips, same frame counts, same holds; it carries no hits.
+      body: {
+        grid: { w: 136, h: 76 }, layer: 'player', heldBy: 'his hand — the same point as the whip\'s pivot',
+        clips: Object.fromEntries(WHIP_CLIPS.map((c) => [c, 'once'])),
       },
     },
   },

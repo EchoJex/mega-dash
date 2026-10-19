@@ -42,7 +42,7 @@ export async function contractSection(weapon) {
     const d = FD[w.key];
     const pv = d?.pivot ? `${d.pivot.x}, ${d.pivot.y} — ${w.heldBy}` : `none yet — ${w.heldBy}`;
     out.push(`| [\`${w.id}.sprite\`](${GITHUB}/design/sprites/${w.id}.sprite) | ${w.grid.w}×${w.grid.h} | ${pv} `
-      + `| ${w.layer === 'held' ? 'in front of the player' : 'behind the player'} | ${Object.keys(w.clips).join(', ')} |`);
+      + `| ${{ held: 'in front of the player', player: 'in place of the player' }[w.layer] ?? 'behind the player'} | ${Object.keys(w.clips).join(', ')} |`);
   }
   out.push('', '### Every clip, frame by frame', '',
     'Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bold** is the frame a move '
@@ -58,11 +58,12 @@ export async function contractSection(weapon) {
       if (!c) { out.push(`| ${name} | ${kind} | missing | | | | |`); continue; }
       const hitFrames = new Set(c.hits.map((h) => h.frame));
       const frames = c.holds.map((h, i) => (hitFrames.has(i) ? `**${h}**` : `${h}`)).join(' · ');
-      const rect = c.hits.find((h) => h.w);
-      const area = rect ? `${rect.x + d.pivot.x}, ${rect.y + d.pivot.y}, ${rect.w}×${rect.h}` : '—';
+      const rects = c.hits.filter((h) => h.w);
+      const area = rects.length
+        ? rects.map((r) => `${r.x + d.pivot.x}, ${r.y + d.pivot.y}, ${r.w}×${r.h}`).join(' then ') : '—';
       const on = !c.hits.length ? '—'
         : kind === 'grow' ? `hurts for steps 0–${c.hits[c.hits.length - 1].step + c.hits[c.hits.length - 1].len - 1}`
-          : `${c.hits[0].step}`;
+          : c.hits.map((h) => h.step).join(' then ');
       const sp = c.spawns.length ? c.spawns.map((s) => `${s.x + d.pivot.x}, ${s.y + d.pivot.y}`).join('; ') : '—';
       out.push(`| ${name} | ${kind} | ${frames} | ${c.total} | ${on} | ${area} | ${sp} |`);
     }

@@ -115,9 +115,13 @@ that breaks one is refused with the reason.
   attacks are slightly generous; never smaller than the drawing. For a swing, cover the
   head where it is on the hit frame and where it was the frame before — the sweep the eye
   sees. It must not reach further than the drawing does by more than that pixel.
-- **His body does not change pose** — only the weapon moves. If a move needs the player to
-  move too (a wind-up, a lean), say so in your note: that is new frames on the player's own
-  sheet, built separately.
+- **His body changes pose only through a BODY SHEET** (`weapon-<weapon>-body.sprite`),
+  and only weapons that have one (Simon's Whip so far). It is on the same paper and pivot
+  as the weapon's held sheet, with the same clips, frames and holds, and while a move
+  plays the game draws it **in place of his normal picture**, so his hand and the
+  handle line up exactly. It uses only the twelve colours of `player.sprite`. A weapon
+  without a body sheet keeps him in his own pose; if a move needs him to move, say so in
+  your note.
 - **The placeholder's sizes are the owner's.** The Quake Hammer was made a quarter shorter
   after a playtest; draw to the size the placeholder shows, not bigger.
 

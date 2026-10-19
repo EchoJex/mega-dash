@@ -262,8 +262,10 @@ test('every ladder moves in the direction its tracker field describes', () => {
       assert.ok(hi > lo, `${id}.${key} must grow from Lv${rungs[i - 1]} to Lv${rungs[i]}`);
     }
   };
-  // "Increased reach" at Lv3, "significantly increased reach" at Lv6.
-  grows('simons_whip', 'reach', [1, 3, 6]);
+  // "Increased reach" at Lv3, "significantly increased reach" at Lv6 — read
+  // off the whip's drawing, where its tip is.
+  const whipReach = (lv) => Wpn.RUNTIME.simons_whip.reach(lv);
+  assert.ok(whipReach(3) > whipReach(1) && whipReach(6) > whipReach(3), "Simon's Whip must reach further at Lv3 and Lv6");
   // "More ricochets + higher damage."
   grows('alloy_blade', 'bounces', [1, 3]);
   grows('alloy_blade', 'pierce', [1, 3]);

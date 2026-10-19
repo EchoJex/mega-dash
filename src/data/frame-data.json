@@ -648,5 +648,501 @@
         "spawns": []
       }
     }
+  },
+  "weapon:simons_whip:body": {
+    "grid": {
+      "w": 136,
+      "h": 76
+    },
+    "pivot": {
+      "x": 50,
+      "y": 62
+    },
+    "clips": {
+      "crack": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          0,
+          1,
+          2
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "crackLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          3,
+          4,
+          5
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "crackLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          6,
+          7,
+          8
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "crackUpLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          9,
+          10,
+          11
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "crackUpLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          12,
+          13,
+          14
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "lowCrack": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          15,
+          16,
+          17
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "lowCrackLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          18,
+          19,
+          20
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      },
+      "lowCrackLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          21,
+          22,
+          23
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": []
+      }
+    }
+  },
+  "weapon:simons_whip:held": {
+    "grid": {
+      "w": 136,
+      "h": 76
+    },
+    "pivot": {
+      "x": 50,
+      "y": 62
+    },
+    "clips": {
+      "crack": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          0,
+          1,
+          2
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -31,
+            "y": -10,
+            "w": 16,
+            "h": 19
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 29,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "crackLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          3,
+          4,
+          5
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -37,
+            "y": -12,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 47,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "crackLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          6,
+          7,
+          8
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -45,
+            "y": -14,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 73,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "crackUpLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          9,
+          10,
+          11
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -37,
+            "y": -12,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 32,
+            "y": -42,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "crackUpLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          12,
+          13,
+          14
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -45,
+            "y": -14,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 50,
+            "y": -60,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "lowCrack": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          15,
+          16,
+          17
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -31,
+            "y": -10,
+            "w": 16,
+            "h": 19
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 29,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "lowCrackLong": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          18,
+          19,
+          20
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -37,
+            "y": -12,
+            "w": 18,
+            "h": 21
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 47,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      },
+      "lowCrackLonger": {
+        "holds": [
+          5,
+          5,
+          10
+        ],
+        "cells": [
+          21,
+          22,
+          23
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [
+          {
+            "frame": 1,
+            "step": 5,
+            "len": 5,
+            "x": -45,
+            "y": -14,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "frame": 2,
+            "step": 10,
+            "len": 10,
+            "x": 73,
+            "y": -5,
+            "w": 10,
+            "h": 10
+          }
+        ],
+        "spawns": []
+      }
+    }
   }
 }

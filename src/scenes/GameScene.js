@@ -3034,9 +3034,13 @@ export default class GameScene extends Phaser.Scene {
     for (const d of this.deaths) Death.drawDeath(L.boss.gAboveSprites, sx, d, sy);
 
     // player — flashes while invulnerable
+    const wctx = this.weaponCtx();
     if (!(r.invuln > 0 && Math.floor(r.frame / 3) % 2 === 0)) {
       const p = this.player;
-      L.player.draw({
+      // A weapon mid-move may pose his whole body (Simon's Whip's body sheet);
+      // with nothing drawn for it he is drawn as himself.
+      const body = Wpn.bodyArt(wctx);
+      if (!body || !L.player.drawCell({ ...body, x: sx(body.x), y: sy(body.y) })) L.player.draw({
         id: 'player',
         x: sx(p.x), y: sy(p.y + (p.sliding ? 12 : 0)),
         w: 24, h: p.sliding ? 12 : 24,
@@ -3075,7 +3079,6 @@ export default class GameScene extends Phaser.Scene {
      * Still on the player's layer, so the drone and the shield sit above every
      * world actor with him.
      */
-    const wctx = this.weaponCtx();
     Wpn.drawWeaponry(L.player.gAboveSprites, sx, wctx);
     // A weapon drawn from its own sheets — the hammer in his hand, its dust
     // behind him — with the frame picked from frame data, so the picture

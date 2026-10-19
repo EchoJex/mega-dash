@@ -616,7 +616,7 @@
       ]
     },
     "shot-wraith_cloak": {
-      "label": "WRAITH CLOAK",
+      "label": "VAMPIRIC TOUCH",
       "cls": "shot",
       "key": "shot:wraith_cloak",
       "boss": "wraith",
@@ -652,7 +652,7 @@
       ]
     },
     "shot-astral_cloak": {
-      "label": "ASTRAL CLOAK",
+      "label": "EVIL ENERGY",
       "cls": "shot",
       "key": "shot:astral_cloak",
       "boss": "eclipse",
@@ -3405,6 +3405,74 @@
       "frames": [
         "light",
         "dark"
+      ]
+    },
+    "weapon-simons_whip-held": {
+      "label": "SIMON'S WHIP · HELD",
+      "cls": "weapon",
+      "key": "weapon:simons_whip:held",
+      "weapon": "simons_whip",
+      "sheet": "held",
+      "boss": "thorn",
+      "layer": "held",
+      "grid": {
+        "w": 136,
+        "h": 76
+      },
+      "box": null,
+      "clips": {
+        "crack": "lash",
+        "crackLong": "lash",
+        "crackLonger": "lash",
+        "crackUpLong": "lash",
+        "crackUpLonger": "lash",
+        "lowCrack": "lash",
+        "lowCrackLong": "lash",
+        "lowCrackLonger": "lash"
+      },
+      "frames": [
+        "crack",
+        "crackLong",
+        "crackLonger",
+        "crackUpLong",
+        "crackUpLonger",
+        "lowCrack",
+        "lowCrackLong",
+        "lowCrackLonger"
+      ]
+    },
+    "weapon-simons_whip-body": {
+      "label": "SIMON'S WHIP · BODY",
+      "cls": "weapon",
+      "key": "weapon:simons_whip:body",
+      "weapon": "simons_whip",
+      "sheet": "body",
+      "boss": "thorn",
+      "layer": "player",
+      "grid": {
+        "w": 136,
+        "h": 76
+      },
+      "box": null,
+      "clips": {
+        "crack": "once",
+        "crackLong": "once",
+        "crackLonger": "once",
+        "crackUpLong": "once",
+        "crackUpLonger": "once",
+        "lowCrack": "once",
+        "lowCrackLong": "once",
+        "lowCrackLonger": "once"
+      },
+      "frames": [
+        "crack",
+        "crackLong",
+        "crackLonger",
+        "crackUpLong",
+        "crackUpLonger",
+        "lowCrack",
+        "lowCrackLong",
+        "lowCrackLonger"
       ]
     }
   },

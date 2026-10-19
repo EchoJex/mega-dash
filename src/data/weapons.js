@@ -557,46 +557,37 @@ export const WEAPON_LADDERS = {
   simons_whip: {
     1: {
       /**
-       * A WHIP CRACK, NOT A REACH. "Needs to be much quicker, like a whip;
-       * small hit box high damage at the tip of the whip with a small glint to
-       * indicate that zone, medium damage anywhere else. Low fire rate."
+       * THE CRACK'S TIMING AND REACH LIVE IN ITS DRAWING, not here
+       * (design/sprites/weapon-simons_whip-held.sprite): whip behind, swung
+       * overhead, cracked out — 5, 5 and 10 steps by the owner's pick of
+       * 19 Oct 2026 ("B"), after Super Castlevania IV. `whip` names which of
+       * the three drawn lengths this rung cracks.
        *
-       * The two numbers moved in opposite directions on purpose. The vine used
-       * to take 18 frames to travel its own length, which is slower than a
-       * walking minion and made a 34px reach unusable — you aimed at where
-       * something had been. It now arrives in 6 and holds for 4, so the whole
-       * move is a sixth of a second. Paying for that with a cooldown half again
-       * as long is what keeps it a read rather than a stream: one crack, and
-       * you are committed to having been right.
-       *
-       * `holdFrames` is not decoration. `lashFrames` is only the extension, and
-       * without a hold the lash was destroyed on the very step it reached full
-       * length — so the Lv3 grapple, which fires only at full extension, could
-       * never fire at all. The hold is when the tip is where the player aimed.
+       * "Starting out base cooldown should be 90 steps" (owner, 19 Oct 2026):
+       * from one crack to the next, a second and a half.
        */
-      cooldown: 54, reach: 34, lashFrames: 6, holdFrames: 4, rootFrames: 10,
+      cooldown: 90, whip: 'short',
       // "Mild knockback" on the reel, which it did not have at all.
       reelSpeed: 3.2, reelKnock: 1.4,
       /**
-       * TWO ZONES ALONG ONE VINE. The tip is a 10x10 box carrying the high
-       * damage and it is the only part that catches anything; the shaft behind
-       * it deals medium damage and lets go. Landing the tip is worth about
-       * twice the shaft, which is enough to be worth aiming for and not so much
-       * that a body hit feels like a miss.
+       * THREE ZONES ON ONE CRACK. The tip is the main hit and the only part
+       * that catches; the shaft behind it deals medium damage and lets go;
+       * the overhead swing before the crack hurts lightly (owner, 19 Oct
+       * 2026: "Overhead arc hurts too").
        */
-      dmgMult: 2.2, bodyDmgMult: 1,
+      dmgMult: 2.2, bodyDmgMult: 1, arcDmgMult: 0.5,
       toss: false, tossDmgMult: 0, constrictFrames: 0,
       grapple: false, diagonal: false,
     },
     3: {
-      reach: 52, diagonal: true, grapple: true, swingSpeed: 3.4, ledgeGrab: 0.2,
+      whip: 'long', diagonal: true, grapple: true, swingSpeed: 3.4, swingFrames: 6, ledgeGrab: 0.2,
       toss: true, constrictFrames: 300,
       // The tossed minion is a BATTERING RAM, not a bullet: "does not deal
       // damage but has very large knockback". The damage it is carrying is its
       // OWN, resolved when it comes to rest.
       tossDmgMult: 2.6, tossSpeed: 5, tossKnock: 9,
     },
-    6: { reach: 78 },
+    6: { whip: 'longer' },
     10: { tossDmgMult: 3.4, tossSpeed: 6 },
   },
 

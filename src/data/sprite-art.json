@@ -453,5 +453,195 @@
         2
       ]
     }
+  },
+  "weapon:simons_whip:body": {
+    "file": "weapon-simons_whip-body.png",
+    "frameW": 136,
+    "frameH": 76,
+    "anchor": "pivot",
+    "pivot": [
+      50,
+      62
+    ],
+    "tintable": false,
+    "anims": {
+      "crack": [
+        0,
+        1,
+        2
+      ],
+      "crackLong": [
+        3,
+        4,
+        5
+      ],
+      "crackLonger": [
+        6,
+        7,
+        8
+      ],
+      "crackUpLong": [
+        9,
+        10,
+        11
+      ],
+      "crackUpLonger": [
+        12,
+        13,
+        14
+      ],
+      "lowCrack": [
+        15,
+        16,
+        17
+      ],
+      "lowCrackLong": [
+        18,
+        19,
+        20
+      ],
+      "lowCrackLonger": [
+        21,
+        22,
+        23
+      ]
+    },
+    "holds": {
+      "crack": [
+        5,
+        5,
+        10
+      ],
+      "crackLong": [
+        5,
+        5,
+        10
+      ],
+      "crackLonger": [
+        5,
+        5,
+        10
+      ],
+      "crackUpLong": [
+        5,
+        5,
+        10
+      ],
+      "crackUpLonger": [
+        5,
+        5,
+        10
+      ],
+      "lowCrack": [
+        5,
+        5,
+        10
+      ],
+      "lowCrackLong": [
+        5,
+        5,
+        10
+      ],
+      "lowCrackLonger": [
+        5,
+        5,
+        10
+      ]
+    }
+  },
+  "weapon:simons_whip:held": {
+    "file": "weapon-simons_whip-held.png",
+    "frameW": 136,
+    "frameH": 76,
+    "anchor": "pivot",
+    "pivot": [
+      50,
+      62
+    ],
+    "tintable": false,
+    "anims": {
+      "crack": [
+        0,
+        1,
+        2
+      ],
+      "crackLong": [
+        3,
+        4,
+        5
+      ],
+      "crackLonger": [
+        6,
+        7,
+        8
+      ],
+      "crackUpLong": [
+        9,
+        10,
+        11
+      ],
+      "crackUpLonger": [
+        12,
+        13,
+        14
+      ],
+      "lowCrack": [
+        15,
+        16,
+        17
+      ],
+      "lowCrackLong": [
+        18,
+        19,
+        20
+      ],
+      "lowCrackLonger": [
+        21,
+        22,
+        23
+      ]
+    },
+    "holds": {
+      "crack": [
+        5,
+        5,
+        10
+      ],
+      "crackLong": [
+        5,
+        5,
+        10
+      ],
+      "crackLonger": [
+        5,
+        5,
+        10
+      ],
+      "crackUpLong": [
+        5,
+        5,
+        10
+      ],
+      "crackUpLonger": [
+        5,
+        5,
+        10
+      ],
+      "lowCrack": [
+        5,
+        5,
+        10
+      ],
+      "lowCrackLong": [
+        5,
+        5,
+        10
+      ],
+      "lowCrackLonger": [
+        5,
+        5,
+        10
+      ]
+    }
   }
 }

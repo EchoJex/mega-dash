@@ -345,6 +345,7 @@ export const CLIP_KINDS = {
   loop: 'loops for as long as the move lasts; no hit',
   once: 'plays once, and its length is how long the thing lasts; no hit',
   grow: 'plays once; starts with frames marked with a bare hit (they hurt), then frames without (they stand)',
+  lash: 'plays once; exactly two frames carry hit=x,y,w,h — the first hurts lightly while it shows, the second is the main hit and its area is the tip',
   still: 'a single frame; no hit',
 };
 
@@ -389,6 +390,9 @@ export function checkFrameData(doc, spec) {
     }
     if (kind === 'hit') {
       if (rects.length !== 1) out.push(`${name} needs exactly one frame with a hit area (hit=x,y,w,h); it has ${rects.length}`);
+      if (bares.length) out.push(`${name}: a bare 'hit' means nothing here — give it a hit area`);
+    } else if (kind === 'lash') {
+      if (rects.length !== 2) out.push(`${name} needs exactly two frames with a hit area (hit=x,y,w,h); it has ${rects.length}`);
       if (bares.length) out.push(`${name}: a bare 'hit' means nothing here — give it a hit area`);
     } else if (kind === 'grow') {
       const lead = fr.findIndex((f) => !f.hit);
