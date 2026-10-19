@@ -3301,7 +3301,8 @@
         "charge": "loop",
         "chargeFull": "loop",
         "swing": "hit",
-        "dive": "loop"
+        "dive": "loop",
+        "rest": "still"
       },
       "frames": [
         "jabOne",
@@ -3310,7 +3311,8 @@
         "charge",
         "chargeFull",
         "swing",
-        "dive"
+        "dive",
+        "rest"
       ]
     },
     "weapon-quake_hammer-dust": {
@@ -3428,7 +3430,8 @@
         "crackUpLonger": "lash",
         "lowCrack": "lash",
         "lowCrackLong": "lash",
-        "lowCrackLonger": "lash"
+        "lowCrackLonger": "lash",
+        "rest": "still"
       },
       "frames": [
         "crack",
@@ -3438,7 +3441,8 @@
         "crackUpLonger",
         "lowCrack",
         "lowCrackLong",
-        "lowCrackLonger"
+        "lowCrackLonger",
+        "rest"
       ]
     },
     "weapon-simons_whip-body": {

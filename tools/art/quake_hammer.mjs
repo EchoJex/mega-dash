@@ -109,6 +109,8 @@ export function rig() {
       dive: [HAMMER_SHAPE.dive, HAMMER_SHAPE.dive + 4].map((deg) => ({
         hold: 4, paint: (g) => drawHammerShape(g, grip.x, grip.y, 1, deg),
       })),
+      // In his hand while it is live and not mid-move.
+      rest: [{ hold: 5, paint: (g) => drawHammerShape(g, grip.x, grip.y, 1, HAMMER_SHAPE.rest) }],
     },
   };
   // The swing lands where the head meets the floor: its spawn point. The floor

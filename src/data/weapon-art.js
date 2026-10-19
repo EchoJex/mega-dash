@@ -52,6 +52,8 @@ export const WEAPON_ART = {
           jabOne: 'hit', jabTwo: 'hit', jabThree: 'hit',
           charge: 'loop', chargeFull: 'loop',
           swing: 'hit', dive: 'loop',
+          // In his hand while it is live and not mid-move.
+          rest: 'still',
         },
       },
       // The dust cloud the swing throws up from Lv3, three sizes. Each one's
@@ -96,7 +98,8 @@ export const WEAPON_ART = {
       // The whip itself, held by the handle in his hand, in front of him.
       held: {
         grid: { w: 136, h: 76 }, layer: 'held', heldBy: 'his hand, on the handle',
-        clips: Object.fromEntries(WHIP_CLIPS.map((c) => [c, 'lash'])),
+        // Every crack, and `rest`: in his hand while it is live and not cracking.
+        clips: { ...Object.fromEntries(WHIP_CLIPS.map((c) => [c, 'lash'])), rest: 'still' },
       },
       // HIS BODY while he cracks it: drawn in place of his own picture, on the
       // same paper, pivot and clock as the whip so hand and handle line up.

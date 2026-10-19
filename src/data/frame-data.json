@@ -350,6 +350,20 @@
         "total": 8,
         "hits": [],
         "spawns": []
+      },
+      "rest": {
+        "holds": [
+          5
+        ],
+        "cells": [
+          33
+        ],
+        "ship": [
+          true
+        ],
+        "total": 5,
+        "hits": [],
+        "spawns": []
       }
     }
   },
@@ -1141,6 +1155,20 @@
             "h": 10
           }
         ],
+        "spawns": []
+      },
+      "rest": {
+        "holds": [
+          5
+        ],
+        "cells": [
+          24
+        ],
+        "ship": [
+          true
+        ],
+        "total": 5,
+        "hits": [],
         "spawns": []
       }
     }

@@ -82,7 +82,11 @@ export function rig() {
       { key: '2', hex: '#2AAB1C', name: 'vine core (Thorn Man primary)' },
       { key: '3', hex: '#FFFFFF', name: 'glint on the tip' },
     ],
-    clips: Object.fromEntries(WHIP_CLIPS.map((c) => [c, crack(c)])),
+    clips: {
+      ...Object.fromEntries(WHIP_CLIPS.map((c) => [c, crack(c)])),
+      // Coiled at his side while it is live and not cracking.
+      rest: [{ hold: 5, paint: (g) => drawWhipShape(g, HAND.x, HAND.y, 1, WHIP_SHAPE.rest, false) }],
+    },
   };
   const body = {
     sheet: 'body', pivot: HAND, palette: player.palette,

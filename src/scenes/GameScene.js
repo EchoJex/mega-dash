@@ -150,6 +150,7 @@ export default class GameScene extends Phaser.Scene {
       // Weapon art (src/data/weapon-art.js): the dust, spikes and sand a
       // weapon leaves behind, and the weapon in his hand in front of him.
       effects: new ActorLayer(this, DEPTH.effects),
+      heldBack: new ActorLayer(this, DEPTH.heldBack),
       player: new ActorLayer(this, DEPTH.player),
       held: new ActorLayer(this, DEPTH.held),
     };
@@ -3083,7 +3084,7 @@ export default class GameScene extends Phaser.Scene {
     // A weapon drawn from its own sheets — the hammer in his hand, its dust
     // behind him — with the frame picked from frame data, so the picture
     // changes on the step the hit lands. Shaken like everything in the world.
-    Wpn.drawWeaponArt({ effects: L.effects, held: L.held }, sx, sy, wctx);
+    Wpn.drawWeaponArt({ effects: L.effects, held: L.held, heldBack: L.heldBack }, sx, sy, wctx);
 
     /**
      * THE ROOM LOSING POWER. Volt Man's layer-2 sweep ends by flickering the

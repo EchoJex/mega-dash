@@ -70,7 +70,7 @@ the game is playing. Do not edit it by hand.
 
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
-| [`weapon-quake_hammer-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-held.sprite) | 56×56 | 28, 28 — his hand, on the grip | in front of the player | jabOne, jabTwo, jabThree, charge, chargeFull, swing, dive |
+| [`weapon-quake_hammer-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-held.sprite) | 56×56 | 28, 28 — his hand, on the grip | in front of the player | jabOne, jabTwo, jabThree, charge, chargeFull, swing, dive, rest |
 | [`weapon-quake_hammer-dust.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-dust.sprite) | 64×40 | 32, 40 — the floor under the middle of the cloud | behind the player | small, medium, large |
 | [`weapon-quake_hammer-puff.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-puff.sprite) | 12×12 | 6, 6 — its middle | behind the player | tell, block |
 | [`weapon-quake_hammer-spike.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-spike.sprite) | 60×50 | 4, 47 — its foot, on the floor | behind the player | flat, low, high, steep |
@@ -91,6 +91,7 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | chargeFull | loop | 3 · 3 | 6 | — | — | 24, 13 |
 | swing | hit | 3 · 3 · 4 · **4** · 6 · 20 · 30 | 70 | 10 | 27, 11, 25×30 | 44, 40 |
 | dive | loop | 4 · 4 | 8 | — | — | — |
+| rest | still | 5 | 5 | — | — | — |
 
 **weapon-quake_hammer-dust**
 

@@ -71,7 +71,7 @@ the game is playing. Do not edit it by hand.
 
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
-| [`weapon-simons_whip-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-held.sprite) | 136×76 | 50, 62 — his hand, on the handle | in front of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, lowCrack, lowCrackLong, lowCrackLonger |
+| [`weapon-simons_whip-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-held.sprite) | 136×76 | 50, 62 — his hand, on the handle | in front of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, lowCrack, lowCrackLong, lowCrackLonger, rest |
 | [`weapon-simons_whip-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-body.sprite) | 136×76 | 50, 62 — his hand — the same point as the whip's pivot | in place of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, lowCrack, lowCrackLong, lowCrackLonger |
 
 ### Every clip, frame by frame
@@ -90,6 +90,7 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | lowCrack | lash | 5 · **5** · **10** | 20 | 5 then 10 | 19, 52, 16×19 then 79, 57, 10×10 | — |
 | lowCrackLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 13, 50, 18×21 then 97, 57, 10×10 | — |
 | lowCrackLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 48, 21×23 then 123, 57, 10×10 | — |
+| rest | still | 5 | 5 | — | — | — |
 
 **weapon-simons_whip-body**
 

@@ -31,6 +31,7 @@
  */
 
 import { FEEL } from '../config/feel.js';
+import { HANDS, BACK_SHADE } from '../config/display.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
 import * as Attr from './attributes.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
@@ -865,6 +866,7 @@ export const HAMMER_SHAPE = {
   },
   overhead: 105,                         // the charge: held up, like Dedede's forward smash
   dive: -60,
+  rest: -20,                             // at rest: hanging down and forward at his side
 };
 
 const words = (w) => DAMAGE_WORDS[w] ?? 1;
@@ -2322,26 +2324,58 @@ export function drawWeaponArt(layers, sx, sy, ctx) {
     );
   }
 
-  // Simon's Whip mid-crack: the frame its step says, held by his hand.
-  const wl = whipCracking(ctx);
-  if (wl) {
-    const c = clipOf(WHIP, wl.clip), t = Math.max(0, wl.t - 1), f = frameAt(c, t);
-    layers.held.drawCell(
-      { id: WHIP, x: sx(wl.ox), y: sy(wl.oy), facing: p.facing, cell: cellAt(c, t) },
-      (g) => drawWhipShape(g, sx(wl.ox), sy(wl.oy), p.facing, whipPoints(wl.clip, f), f === c.hits[1].frame),
-    );
+  // THE TWO HELD WEAPONS, each in its hand (`handOf`): mid-move, the frame its
+  // step says; otherwise its rest pose, hanging at his side.
+  const rest = whipHand(p, p.sliding);
+  const wh = handOf(ctx, 'simons_whip', layers);
+  if (wh) {
+    const wl = run.wstate.simons_whip?.lash;
+    if (wl && !wl.grabbed && !wl.swing) {
+      const c = clipOf(WHIP, wl.clip), t = Math.max(0, wl.t - 1), f = frameAt(c, t);
+      wh.layer.drawCell(
+        { id: WHIP, x: sx(wl.ox), y: sy(wl.oy), facing: p.facing, cell: cellAt(c, t), tint: wh.tint },
+        (g) => drawWhipShape(g, sx(wl.ox), sy(wl.oy), p.facing, whipPoints(wl.clip, f), f === c.hits[1].frame),
+      );
+    } else if (!wl) {
+      wh.layer.drawCell(
+        { id: WHIP, x: sx(rest.x), y: sy(rest.y), facing: p.facing, cell: cellAt(clipOf(WHIP, 'rest'), 0), tint: wh.tint },
+        (g) => drawWhipShape(g, sx(rest.x), sy(rest.y), p.facing, WHIP_SHAPE.rest, false),
+      );
+    }
   }
 
+  const hh = handOf(ctx, 'quake_hammer', layers);
   const st = run.wstate.quake_hammer;
-  if (!st || !ctx.equipped.includes('quake_hammer')) return;
+  if (!hh || !st) return;
   const pose = quakePose(st, ladderAt('quake_hammer', ctx.levelOf('quake_hammer')));
-  // Put away the step the move lets go.
-  if (!pose || (pose.total !== undefined && pose.t >= pose.total)) return;
+  if (!pose || (pose.total !== undefined && pose.t >= pose.total)) {
+    hh.layer.drawCell(
+      { id: HAMMER, x: sx(rest.x), y: sy(rest.y), facing: p.facing, cell: cellAt(clipOf(HAMMER, 'rest'), 0), tint: hh.tint },
+      (gr) => drawHammerShape(gr, sx(rest.x), sy(rest.y), p.facing, HAMMER_SHAPE.rest),
+    );
+    return;
+  }
   const g = gripOf(p);
-  layers.held.drawCell(
-    { id: HAMMER, x: sx(g.x), y: sy(g.y), facing: p.facing, cell: cellAt(clipOf(HAMMER, pose.clip), pose.t, pose.loop) },
+  hh.layer.drawCell(
+    { id: HAMMER, x: sx(g.x), y: sy(g.y), facing: p.facing, cell: cellAt(clipOf(HAMMER, pose.clip), pose.t, pose.loop), tint: hh.tint },
     (gr) => drawHammerShape(gr, sx(g.x), sy(g.y), p.facing, pose.deg),
   );
+
+}
+
+/**
+ * WHICH HAND, AND SO WHICH LAYER. Offensive slot 1 is his right hand, slot 2
+ * his left (owner, 19 Oct 2026); only a LIVE weapon is in a hand at all. The
+ * front hand draws over his body, the back one behind it, a quarter darker.
+ * HANDS (config/display.js) says which hand is in front.
+ */
+export function handOf(c, id, layers) {
+  const lo = c.run.loadout;
+  if (!c.equipped.includes(id)) return null;
+  const i = lo ? lo.offensive.indexOf(id) : 0;
+  if (i < 0 || i > 1 || lo?.disabled?.has(id)) return null;
+  const front = HANDS === 'right' ? (i === 0) === (c.player.facing > 0) : i === 0;
+  return front ? { layer: layers.held } : { layer: layers.heldBack ?? layers.held, tint: BACK_SHADE };
 }
 
 /** The whip's crack while it is being cracked — not reeling or swinging — or null. */
@@ -2382,6 +2416,8 @@ export const WHIP_SHAPE = {
   lens: { '': 34, Long: 52, Longer: 78 },
   behind: [[-24, -4], [-29, -4], [-28, 4], [-28, 10], [-26, 13]],
   overhead: [[-18, -7], [-22, -8], [-26, -4], [-29, -1], [-28, 3], [-26, 6]],
+  // At rest: coiled, hanging from his hand.
+  rest: [[0, 0], [1, 5], [3, 8], [1, 11], [-2, 9], [-1, 6], [1, 5]],
   tip: 10,
 };
 
