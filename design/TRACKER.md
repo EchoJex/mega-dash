@@ -172,7 +172,7 @@ where each one stands.
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
-- **bgm arena** `[wip]` No file yet. Hand off as `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room.
+- **bgm arena** `[ready]` `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room. AI-made (openmusic.ai, from the water recipe in the openmusic-bgm skill) at the owner's request, 2026-10-19. 50.26 s, looped as handed off.
 
 ## Volt Man — Electric
 

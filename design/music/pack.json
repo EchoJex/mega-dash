@@ -19,6 +19,11 @@
       "file": "bgm-post-fight.ogg",
       "bytes": 2404479,
       "sha": "5dac76bc2fc371bc"
+    },
+    "bgm-tempest-arena": {
+      "file": "bgm-tempest-arena.ogg",
+      "bytes": 1064909,
+      "sha": "37c1827522da3489"
     }
   }
 }
