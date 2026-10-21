@@ -108,7 +108,7 @@ where each one stands.
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
 - **sprite sheet** `[draft]` [x] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
-- **bgm arena** `[wip]` military feeling,
+- **bgm arena** `[wip]`
 
 ## Blaze Man — Fire
 
