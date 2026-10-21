@@ -583,7 +583,9 @@ commit; the brief says which design system to update.
 **The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art.
 
 - **Each boss's `bgm arena` field is the owner's description of his arena music**, by the
-  owner's call (21 Oct 2026), and it replaces the skill's old fire, water and electric recipes.
+  owner's call (21 Oct 2026). The skill keeps its fire, water and electric recipes as worked
+  examples ("it was all good training data"), and **a track already in the game is not remade**
+  unless the owner asks for that boss's track again by name.
   The skill makes a track only when that field is **`[draft]`**, reading the boss's `arena` and
   stage details alongside it. It turns the owner's words into what the generator follows; it never
   rewrites the field. After the owner picks a song and it is handed off, the field moves to `[ready]`.
