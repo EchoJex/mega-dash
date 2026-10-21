@@ -582,12 +582,14 @@ commit; the brief says which design system to update.
 
 **The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art.
 
-- **Arena music is open for every element whose boss room is built, and locked for the rest**,
-  by the owner's call (21 Oct 2026), replacing the earlier three-track workshop. "Built" is the
-  ARENA column of `npm run status`: today Typeless, Fire, Water, Electric, Grass and Fighting.
-  A boss whose room is not built gets no arena track yet, and Claude does not suggest one; the
-  lock lifts by itself when his room is built. Each track still needs the owner to ask for it
-  (see *AI-made sprites and music*).
+- **Each boss's `bgm arena` field is the owner's description of his arena music**, by the
+  owner's call (21 Oct 2026), and it replaces the skill's old fire, water and electric recipes.
+  The skill makes a track only when that field is **`[draft]`**, reading the boss's `arena` and
+  stage details alongside it. It turns the owner's words into what the generator follows; it never
+  rewrites the field. After the owner picks a song and it is handed off, the field moves to `[ready]`.
+- **The file lives on its own line, `bgm arena file`**, directly under the description: the file
+  name, the AI-made label, and the loop's length. `tests/tracker.test.js` checks every `[ready]`
+  bgm line except the description against `design/music/`, both ways.
 - **Tempo is free** except where it has to be: it helps find a clean loop point, and Volt
   Man's track must land on his room's beat. His track is 120 beats a minute, so each
   2-second beat of his room is one bar of the music.
@@ -596,9 +598,9 @@ commit; the brief says which design system to update.
   the file's first beat, where the end flows back into the start; prefer the longer clean
   cut, since even a good one-minute loop gets annoying. Start the file on its first sound.
   Do not over-work the join; much of this music may be placeholder.
-- **Handing off a track**: the file goes into `design/music/` under the name the tracker's
-  `bgm` line gives, `npm run music` rewrites `pack.json`, and that `bgm` line moves from
-  `[wip]` to `[ready]`. An AI-made track also gets its label on that line and a row in
+- **Handing off a track**: the file goes into `design/music/` under the name its tracker line
+  gives (`bgm stage`, or `bgm arena file` for a boss room), `npm run music` rewrites `pack.json`,
+  and that line moves to `[ready]`. An AI-made track also gets its label on that line and a row in
   the list under *AI-made sprites and music*. No APK build is involved.
 - **Tracks loop cleanly on the phone** — checked by the owner, 17 Oct 2026.
 
@@ -627,7 +629,7 @@ Claude or a generator made:
 
 1. **Where it lives.** A sprite gets it in its own `note` line:
    `Drawn by Claude at the owner's request, <date>.` A music file cannot carry readable
-   text, so its tracker `bgm` line carries it instead:
+   text, so its tracker line (`bgm stage` or `bgm arena file`) carries it instead:
    `AI-made (<generator>) at the owner's request, <date>.` A room drawn in code carries
    it in the opening comment of its own file in `src/systems/arena-art/`.
 2. **In the list below**, in the same commit that adds the asset.

@@ -199,7 +199,8 @@ test('every [ready] bgm field names a file in design/music, and every file is cl
   const claimed = new Set();
   for (const sec of parse(raw).sections) for (const it of sec.items) {
     for (const f of fieldsOf(it)) {
-      if (!/^bgm /.test(f.label) || f.mark !== 'ready') continue;
+      // `bgm arena` is the owner's description of the music; its file is on `bgm arena file`.
+      if (!/^bgm /.test(f.label) || f.label === 'bgm arena' || f.mark !== 'ready') continue;
       const name = /`([^`]+\.(?:ogg|mp3|wav))`/.exec(f.text)?.[1];
       assert.ok(name, `${it.title} / ${f.label} is [ready] but names no audio file`);
       assert.ok(existsSync(new URL(name, dir)), `${it.title} / ${f.label}: design/music/${name} is missing`);
