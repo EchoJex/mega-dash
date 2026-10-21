@@ -1,5 +1,10 @@
 {
   "tracks": {
+    "bgm-blaze-arena": {
+      "file": "bgm-blaze-arena.ogg",
+      "bytes": 1813077,
+      "sha": "d63a13559dafeee1"
+    },
     "bgm-blaze-stage": {
       "file": "bgm-blaze-stage.ogg",
       "bytes": 1263800,

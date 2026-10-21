@@ -582,10 +582,12 @@ commit; the brief says which design system to update.
 
 **The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art.
 
-- **The music workshop is three tracks until the owner says otherwise**: the arena tracks
-  for fire, water and electric (`bgm-blaze-arena`, `bgm-tempest-arena`, `bgm-volt-arena`).
-  The owner's words are "until I get the results I want". **Do not start another element's
-  music, and do not suggest one.**
+- **Arena music is open for every element whose boss room is built, and locked for the rest**,
+  by the owner's call (21 Oct 2026), replacing the earlier three-track workshop. "Built" is the
+  ARENA column of `npm run status`: today Typeless, Fire, Water, Electric, Grass and Fighting.
+  A boss whose room is not built gets no arena track yet, and Claude does not suggest one; the
+  lock lifts by itself when his room is built. Each track still needs the owner to ask for it
+  (see *AI-made sprites and music*).
 - **Tempo is free** except where it has to be: it helps find a clean loop point, and Volt
   Man's track must land on his room's beat. His track is 120 beats a minute, so each
   2-second beat of his room is one bar of the music.
@@ -635,6 +637,7 @@ Claude or a generator made:
 | the player (16-bit sheet, 22 frames) | sprite | Claude | 2026-09-29 | `design/sprites/player.sprite` |
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
 | Tempest Man's arena track (his boss room) | music | openmusic.ai, from the skill's water prompt | 2026-10-19 | `design/music/bgm-tempest-arena.ogg` |
+| Blaze Man's arena track (his boss room) | music | openmusic.ai, from the skill's fire prompt | 2026-10-21 | `design/music/bgm-blaze-arena.ogg` |
 | Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 | the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
