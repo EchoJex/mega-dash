@@ -108,8 +108,11 @@ that breaks one is refused with the reason.
 - **Draw facing right.** The game mirrors the sheet around its pivot for the other way.
 - **Nothing is ever rotated or scaled by the game.** Every angle a thing is seen at is a
   frame you draw. That is how an SNES game did it, and it keeps the pixels crisp.
-- **The held weapon is drawn in front of the player; effects** (dust, spikes, sand)
-  **behind him.** Layering follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
+- **A held weapon is in one of his hands**: offensive slot 1 is his right hand, slot 2
+  his left, and his hands stay his own as he turns. The NEAR hand's weapon (facing right,
+  his right) is drawn in front of him; the FAR hand's is drawn behind him, a quarter
+  darker — the game shades it, so draw every weapon at full colour. **Effects** (dust,
+  spikes, sand) are **behind him.** Layering follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
   section 5) — keep the player readable.
 - **A hit area covers what you drew where the blow lands, plus a pixel.** The player's
   attacks are slightly generous; never smaller than the drawing. For a swing, cover the

@@ -95,7 +95,8 @@ the code wins if they ever differ.
 ## 5. Draw order, back to front
 
 background → **room art** → ground, spikes, doors → pickups → minions → bullets → boss →
-a weapon's dust and debris → **player** → the weapon in his hand → HUD and thumb pads (a
+a weapon's dust and debris → the weapon in his far hand (a quarter darker) → **player** → the weapon in
+his near hand → HUD and thumb pads (a
 separate layer above the game).
 
 That is how the game layers things today (`DEPTH` in `src/config/display.js`). **It is not a

@@ -451,7 +451,7 @@ ceilings, not collision boxes. The largest projectile the engine draws is an 8px
 pickup's collision is a flat 7×7 — the rest of the 16 is room for a glow or a trail.
 
 **Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
-construction order. The weapon in the player's hand (`held`) draws in front of him; a
+construction order. A weapon in his near hand (`held`) draws in front of him, one in his far hand (`heldBack`) behind him, a quarter darker (`BACK_SHADE`) — see *Hands* below; a
 weapon's dust and debris (`effects`) draw behind. **Draw order is not a fixed rule**, by the
 owner's call (17 Oct 2026): it follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
 section 5).
@@ -460,6 +460,16 @@ section 5).
 helmet fin. He has no arm cannon (owner, 18 Oct 2026): his front arm ends in a hand. His 12 colours are declared in `design/sprites/player.sprite`;
 `PLAYER_PALETTE` in `config/display.js` is only the placeholder fallback. He was blue for
 the whole placeholder era; the owner's sheet arrived white and **the art wins.**
+
+**HANDS — offensive slot 1 is his RIGHT hand, slot 2 his LEFT**, by the owner's call
+(19 Oct 2026), even for a weapon that is not literally held. **His hands stay his own as he
+turns** — the owner's pick of two trial builds (21 Oct 2026, `slot1-right-hand`): facing
+right his right hand is nearer the screen and drawn in front of him, facing left his left
+hand is. The far hand's weapon is drawn behind him, a quarter darker, even mid-attack ("I
+also like the shadow on the far hand"). Only a LIVE weapon is in a hand. `handOf` in
+`systems/weaponry.js` is the one rule. **Being workshopped with the whip and the hammer only**
+(the two weapons with a held sheet); each held weapon has a `rest` picture for between moves.
+Both hands are drawn from one point for now, so a hand never moves where a move hits.
 
 **Equipping a weapon never recolours him** — that was scrubbed and does not come back. What
 he carries is shown as weapon hardware drawn on him (so far the Nullfire Drone, the Torrent

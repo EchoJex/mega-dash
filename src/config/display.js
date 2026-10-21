@@ -197,16 +197,10 @@ export const SPRITE_CLASS = {
  * world layers that still belong beneath the player.
  */
 /**
- * WHICH HAND IS IN FRONT — being workshopped on two branches (owner, 19 Oct
- * 2026), with Simon's Whip and the Quake Hammer. Offensive slot 1 is his
- * RIGHT hand and slot 2 his LEFT; the hand in front is drawn over his body,
- * the other behind it, a quarter darker (`BACK_SHADE`).
- *
- *   'front'  slot 1 is always the front hand, whichever way he faces
- *   'right'  the hands stay his own: facing right his right hand (slot 1) is
- *            nearer the screen; turning left brings his left hand (slot 2) forward
+ * THE BACK HAND'S SHADE: a weapon in the hand further from the screen is drawn
+ * behind his body, a quarter darker (owner, 21 Oct 2026: "I also like the
+ * shadow on the far hand"). Which hand that is: `handOf` in systems/weaponry.js.
  */
-export const HANDS = 'right';
 export const BACK_SHADE = 0xBFBFBF;
 
 export const DEPTH = {
@@ -220,7 +214,7 @@ export const DEPTH = {
   // A weapon's dust, spikes and sand (weapon art, `effects` layer): over the
   // boss so a cloud on him shows, under the player so it never hides him.
   effects: 70,
-  // The weapon in his BACK hand: just behind his body, shaded (see HANDS).
+  // The weapon in his FAR hand: just behind his body, shaded (BACK_SHADE).
   heldBack: 99,
   player: 100,
   // The weapon IN HIS HAND (weapon art, `held` layer). It is part of him, so

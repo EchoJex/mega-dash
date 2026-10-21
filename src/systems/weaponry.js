@@ -31,7 +31,7 @@
  */
 
 import { FEEL } from '../config/feel.js';
-import { HANDS, BACK_SHADE } from '../config/display.js';
+import { BACK_SHADE } from '../config/display.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
 import * as Attr from './attributes.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
@@ -2365,16 +2365,19 @@ export function drawWeaponArt(layers, sx, sy, ctx) {
 
 /**
  * WHICH HAND, AND SO WHICH LAYER. Offensive slot 1 is his right hand, slot 2
- * his left (owner, 19 Oct 2026); only a LIVE weapon is in a hand at all. The
- * front hand draws over his body, the back one behind it, a quarter darker.
- * HANDS (config/display.js) says which hand is in front.
+ * his left (owner, 19 Oct 2026); only a LIVE weapon is in a hand at all.
+ *
+ * HIS HANDS STAY HIS OWN AS HE TURNS (owner's pick of two trial builds, 21 Oct
+ * 2026: "slot1-right-hand"). Facing right, his right hand is the one nearer the
+ * screen, drawn over his body; facing left, his left hand is. The far hand is
+ * drawn behind him, a quarter darker, even while it attacks.
  */
 export function handOf(c, id, layers) {
   const lo = c.run.loadout;
   if (!c.equipped.includes(id)) return null;
   const i = lo ? lo.offensive.indexOf(id) : 0;
   if (i < 0 || i > 1 || lo?.disabled?.has(id)) return null;
-  const front = HANDS === 'right' ? (i === 0) === (c.player.facing > 0) : i === 0;
+  const front = (i === 0) === (c.player.facing > 0);
   return front ? { layer: layers.held } : { layer: layers.heldBack ?? layers.held, tint: BACK_SHADE };
 }
 
