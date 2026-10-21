@@ -470,7 +470,7 @@ where each one stands.
 - **attack L2** `[wip]` Two boulders on staggered timing so the gap between them is the only safe window; boulders now break into two smaller rolling pieces on wall contact.
 - **attack L3** `[wip]` The boss rides a boulder, so the safe window is beneath a jump rather than behind the roll, and impacts shed debris upward.
 - **weapon class** `[wip]` Defensive
-- **weapon** `[wip]` Defensive; the player turns to stone — Kirby's Rock form. It is driven by the ABSENCE OF PLAYER INPUT, not by a lack of movement or momentum. Heavy damage reduction and total knockback immunity while hardened, and anything the stone lands on gets heavy knockback and heavy damage. Needs sprite art for 3 to 5 distinct rock statue forms.
+- **weapon** `[wip]` Defensive; the player turns to stone — Kirby's Rock form. It is driven by the ABSENCE OF PLAYER INPUT, not by a lack of movement or momentum. 80% damage reduction and total knockback immunity while hardened, and anything the stone lands on gets heavy knockback and heavy damage. Needs sprite art for 3 to 5 distinct rock statue forms.
 - **weapon Lv1** `[wip]` On the ground, hardening takes about a second of no input. In the air it takes HALF that time, and hardening mid-air slams the player downward with limited horizontal navigation on the way down. Once the statue contacts any horizontal surface, it cannot move, and the form wears off after 5 seconds.
 - **weapon Lv3** `[wip]` Heavier boulder that rolls further and crushes through minions instead of stopping on the first.
 - **weapon Lv6** `[wip]` Lv7+: boulders can be kicked or exploded on command.
