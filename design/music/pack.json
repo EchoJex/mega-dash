@@ -24,6 +24,11 @@
       "file": "bgm-tempest-arena.ogg",
       "bytes": 1064909,
       "sha": "37c1827522da3489"
+    },
+    "bgm-volt-arena": {
+      "file": "bgm-volt-arena.ogg",
+      "bytes": 868711,
+      "sha": "c645d3ead96059d4"
     }
   }
 }

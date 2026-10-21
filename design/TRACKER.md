@@ -203,7 +203,7 @@ where each one stands.
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. ~~No enemy can be hit more than twice in one complete hit+chain hit attack~~
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
-- **bgm arena** `[wip]` No file yet. Hand off as `bgm-volt-arena.ogg` — plays inside Volt Man's boss room.
+- **bgm arena** `[ready]` `bgm-volt-arena.ogg` — plays inside Volt Man's boss room. AI-made (openmusic.ai, from the electric recipe in the openmusic-bgm skill) at the owner's request, 2026-10-21. 20 bars, stretched from about 122 to exactly 120 beats a minute so each bar is one 2-second beat of his room: 40.00 s, looped as handed off.
 
 ## Thorn Man — Grass
 
