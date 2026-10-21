@@ -61,6 +61,15 @@ arm raised overhead, arm thrust forward. Use only the twelve colours of
 | **Lv6** | `crackLonger`, `crackUpLonger` and `lowCrackLonger`: the longest whip. |
 | **Lv10** | nothing new to draw. |
 
+## At rest, and which hand
+
+- **`rest`** is the whip in his hand between cracks, whenever it is live: coiled and
+  hanging at his side from the handle in his hand (the pivot). One picture.
+- **Offensive slot 1 is his right hand, slot 2 his left, and his hands stay his own as he
+  turns** (owner, 21 Oct 2026). When the whip is in his far hand, the game draws it behind
+  his body and a quarter darker, even while it cracks. **Draw it at full colour, facing
+  right, held in front**: the game does the shading and the layering.
+
 ## The contract
 
 Everything below is generated from the sheets by `npm run art:brief`, so it is always what
