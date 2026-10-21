@@ -123,7 +123,7 @@ where each one stands.
 - **palette notes** `[deferred]`
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[draft]` Rock
-- **arena** `[wip]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot. Wet cancels out Hot, sand from the quake hammer cancels Hot. Dealing damage to the boss with the quake hammer causes
+- **arena** `[draft]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot. Wet cancels out Hot, sand from the quake hammer cancels out Hot. Dealing damage to the boss with the quake hammer causes
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
 - **hazard L2** `[ready]` Slightly more overt screen shake → slightly more rocks on screen, slightly bigger, falling slightly faster.
