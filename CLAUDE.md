@@ -1259,7 +1259,8 @@ checking the floor checks all three. Every reachable boss carries a laddered wea
 `?dev=1` on the URL skips the dialog and `?dev=0` forces the clean branch, for
 `tools/smoke.mjs`.
 
-**EVERY DEV CONTROL LIVES IN THE DEV MENU** — title screen, gold DEV plate in the corner,
+**A DEV MODE LAUNCH OPENS STRAIGHT ON THE DEV MENU** (owner, 22 Oct 2026); its BACK leads to
+the title screen. **EVERY DEV CONTROL LIVES IN THE DEV MENU** — title screen, gold DEV plate in the corner,
 present only on a dev launch. The pause menu stays exactly as a playtester sees it.
 
 **Every row is one tap** — tap anywhere on the row to advance its value, wrapping — and

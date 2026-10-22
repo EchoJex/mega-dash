@@ -606,25 +606,28 @@ export const WEAPON_LADDERS = {
   // ability you aim.
   /**
    * GRANITE FORM — defensive, Rock. Kirby's Rock form, "driven by the ABSENCE
-   * OF PLAYER INPUT". No input for `groundIdle` steps on the ground (half that
-   * in the air, which slams him down) and he is a statue: `armor` off every
-   * hit, no knockback, no spikes, and he cannot move until it wears off
-   * `stoneFrames` after touching down. Each hit taken spawns a small stone
-   * (up to `stoneMax`) that one of your shots launches at the nearest foe.
+   * OF PLAYER INPUT". `groundIdle` steps of no input on the ground, or the
+   * first step of none in the air (which slams him straight down), and he is
+   * a statue: `armor` off every hit, no knockback, no spikes, unable to move
+   * until it wears off `stoneFrames` after touching down. The picture takes
+   * `morphFrames` to change, under a puff. Hits taken knock stones loose (up
+   * to `stoneMax`, `stoneSize` across) that fall, bounce and roll; a shot
+   * sends one flying at `stoneSpeed` like a billiard ball.
    *
-   * Lv3: "rolls for 5x the remaining horizontal movement". This game has no
-   * momentum, so the movement left at touchdown is the step's horizontal
-   * speed: the boulder starts at `rollMult` times it and slows to a stop over
-   * `rollFrames`.
+   * Lv3: a direction pressed during the slam makes it the boulder, which
+   * rolls that way on landing at `rollSpeed`, slowing to a stop over
+   * `rollFrames`. Lv10: a struck stone explodes on the enemy it hits.
    */
   granite_form: {
     1: {
-      groundIdle: 60, airIdle: 30, stoneFrames: 300,
-      armor: 0.8, slamAirControl: 0.35, slamDmg: 'heavy', slamKnock: 3.4,
-      stoneMax: 3, stoneSize: 6, stoneLife: 900, stoneSpeed: 3.2, stoneDmg: 'medium',
-      roll: false,
+      groundIdle: 90, stoneFrames: 300, morphFrames: 10,
+      armor: 0.8, slamDmg: 'heavy', slamKnock: 3.4,
+      stoneMax: 3, stoneSize: 8, stoneLife: 900, stoneSpeed: 3.4, stoneDmg: 'medium',
+      stoneBounce: 0.45, stoneRoll: 0.94,
+      roll: false, stoneExplode: false,
     },
-    3: { roll: true, rollMult: 5, rollFrames: 60, boulderSize: 29 },
+    3: { roll: true, rollSpeed: 2.4, rollFrames: 60, boulderSize: 29 },
+    10: { stoneExplode: true, blastR: 20, blastDmg: 'heavy' },
   },
 
   gale_vortex: {

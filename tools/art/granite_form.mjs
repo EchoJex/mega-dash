@@ -30,8 +30,8 @@ export function rig() {
       clips: { roll: [0, 1, 2, 3].map((q) => ({ hold: 4, paint: (g) => drawGraniteShape(g, FEET.x, FEET.y, 1, 'roll', q * 4) })) },
     },
     {
-      sheet: 'stone', pivot: { x: 5, y: 8 }, palette: PALETTE,
-      clips: { loose: [{ hold: 5, paint: (g) => drawStoneShape(g, 5, 8) }] },
+      sheet: 'stone', pivot: { x: 5, y: 9 }, palette: PALETTE,
+      clips: { loose: [{ hold: 5, paint: (g) => drawStoneShape(g, 5, 9) }] },
     },
   ];
 }

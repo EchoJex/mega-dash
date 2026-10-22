@@ -460,6 +460,7 @@ export default class UIScene extends Phaser.Scene {
    * showing you which control your thumb is on.
    */
   litPad(b, on) {
+    b.lit = on;
     b.rect.setStrokeStyle(1, PAD_EDGE, on ? 1 : PAD_EDGE_ALPHA);
     b.txt.setAlpha(on ? 0.3 : 0.95);
   }
@@ -580,6 +581,11 @@ export default class UIScene extends Phaser.Scene {
   bindZone4() {
     const held = new Map(); // pointer id -> button
     this.actBtns.forEach((b) => this.mkPad(b, b.glyph));
+    // THE FIRE PAD SHOWS THE AIMED WEAPON'S COOLDOWN (owner, 22 Oct 2026): a
+    // dark fill over the pad that drains away as the weapon comes ready, with
+    // the glyph dimmed until it has. Defensive weapons show nothing here.
+    const fb = this.actBtns.find((b) => b.id === 'fire');
+    this.fireCd = this.add.rectangle(fb.x + 1, fb.y + 1, fb.w - 2, 0, 0x05080e, 0.6).setOrigin(0);
 
     const start = (b, p) => {
       if (held.has(p.id) || b.owner != null) return;
@@ -2121,6 +2127,11 @@ export default class UIScene extends Phaser.Scene {
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
+
+    const cd = gm.fireCooldown(), fb = this.actBtns.find((b) => b.id === 'fire');
+    const ch = Math.round((fb.h - 2) * cd);
+    this.fireCd.setSize(fb.w - 2, ch).setY(fb.y + fb.h - 1 - ch).setVisible(ch > 0);
+    if (!fb.lit) fb.txt.setAlpha(cd > 0 ? 0.4 : 0.95);
 
     const wa = gm.warp?.alpha ?? 0;
     this.fade.setVisible(wa > 0).setAlpha(wa);

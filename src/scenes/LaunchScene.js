@@ -61,6 +61,8 @@ export default class LaunchScene extends Phaser.Scene {
     // what layer a boss fights at is exactly the kind of ghost this dialog
     // exists to rule out.
     if (DEV.enabled) loadDevSettings();
-    this.scene.start('Title');
+    // A dev launch goes straight to the dev menu (owner, 22 Oct 2026); its
+    // BACK leads on to the title screen.
+    this.scene.start(DEV.enabled ? 'DevMenu' : 'Title');
   }
 }

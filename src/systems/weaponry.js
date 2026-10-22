@@ -1985,31 +1985,31 @@ const gale = {
  *  around the player that can be attacked by the player to launch them at foes.
  *  Despawn stones after 15s or after being launched at opponents. Anything the
  *  stone lands on gets heavy knockback and heavy damage."
- *  Lv1  about a second of no input on the ground, half that in the air, and the
- *       mid-air form slams down with limited steering; once it touches ground
- *       it cannot move, and wears off 5 seconds later. Up to 3 stones.
- *  Lv3  touching down with horizontal movement left turns it into a boulder
- *       that rolls on, crushing through minions, and stops (form over) just
- *       before a cliff edge.
  *
- * THE STATUE IS ONE OF THREE SHAPES, picked at random each time it hardens
- * (owner, 22 Oct 2026): "a rocky treasure chest, 8bit megaman in shooting
- * pose, a simple geometric monolith rectangle like from 2001".
- *
- * STATUE OR BOULDER IS DECIDED IN THE AIR, never by changing on the ground
- * (owner, 22 Oct 2026): at Lv3 the first left or right pressed during the
- * slam makes it the boulder for the rest of the fall, and it rolls on landing
- * at the last sideways speed steered.
- *
- * By the owner's answers of 21 Oct 2026: once hardened it cannot be cancelled
- * (Lv10's jump-cancel is still `[wip]`); "anything the stone lands on" is the
- * statue's own slam; a stone launches when any of your shots touches it.
+ * As reworked with the owner, 22 Oct 2026:
+ *  - ON THE GROUND it hardens after `groundIdle` steps of no input (1.5 s).
+ *  - IN THE AIR it hardens the first step nothing is pressed, and slams
+ *    straight down. Nothing steers the slam. From Lv3, pressing a direction
+ *    during it puffs it into the round boulder, which rolls that way on
+ *    landing; at Lv1 a direction does nothing and the statue stays put.
+ *  - The statue is one of three shapes, at random: "a rocky treasure chest,
+ *    8bit megaman in shooting pose, a simple geometric monolith rectangle like
+ *    from 2001". Once hardened it lasts until it wears off (`stoneFrames`
+ *    after touching down); the player's own attacks still work.
+ *  - EVERY CHANGE OF FORM is covered by a quickly fading puff. The armour
+ *    starts on the first step; the picture changes `morphFrames` later.
+ *  - STONES knocked loose by hits fall, bounce and roll to a stop like round
+ *    pebbles. A shot (or a flying stone) striking one sends it away from the
+ *    point it was struck, like a billiard ball: straight, with no gravity,
+ *    bouncing off floors and walls and slowing, until it hits an enemy or
+ *    stops. Lv10: a struck stone explodes on the enemy it hits.
  *
  * Its grants — `stoneArmor`, `moveScale`, `planted` — are per-step, like every
  * other weapon's, so benching it mid-form frees the player at once.
- * GameScene's hurt() raises `stoneHit` when a hit lands on the statue.
+ * GameScene's hurt() raises `stoneHit` when a hit lands on the statue, and
+ * publishes `inputActive` / `moveInput` (the direction held) every step.
  */
-const STONE_SLOTS = [[-9, 6], [27, 6], [9, -9]];
+const STONE_SLOTS = [-10, 10, 0];
 export const STATUE_SHAPES = ['chest', 'megaman', 'monolith'];
 const STATUE = 'weapon:granite_form:statue';
 const BOULDER = 'weapon:granite_form:boulder';
@@ -2027,6 +2027,9 @@ function crush(st, L, lv, ctx, box, word) {
 
 const boulderBox = (p, L) => ({ x: p.x + 12 - L.boulderSize / 2, y: p.y + 24 - L.boulderSize, w: L.boulderSize, h: L.boulderSize });
 
+/** A puff big enough to hide him while the picture changes. */
+const morphPuff = (ctx, L) => ctx.puff({ x: ctx.player.x + 12, y: ctx.player.y + 12, w: 34, life: L.morphFrames + 4, fade: 4, color: 0xC8C2B6, cloud: true });
+
 function stepRoll(st, L, lv, ctx) {
   const p = ctx.player, rl = st.roll;
   const v = rl.v * (rl.t / L.rollFrames);
@@ -2034,7 +2037,7 @@ function stepRoll(st, L, lv, ctx) {
   const nx = p.x + v;
   // Stop, and drop the form, at the lip — the same probe the Strike lunge uses.
   if (!ctx.overGround(nx + (v > 0 ? 20 : 4))) { st.mode = null; return; }
-  // A wall, an arena edge or a raised block ends the roll; the statue stays.
+  // A wall, an arena edge or a raised block ends the roll; the boulder stays.
   const box = { x: nx + 4, y: p.y, w: 16, h: 23 };
   const a = ctx.arena;
   if ((a && (box.x < a.x0 || box.x + box.w > a.x1))
@@ -2045,26 +2048,79 @@ function stepRoll(st, L, lv, ctx) {
   if (rl.t <= 0) st.mode = 'stone';
 }
 
+/** Send a stone away from the point (hx, hy) that struck it. */
+function launchStone(s, L, hx, hy) {
+  const r = L.stoneSize / 2, dx = s.x + r - hx, dy = s.y + r - hy, d = Math.hypot(dx, dy) || 1;
+  s.flying = true; s.bounces = 0; s.life = 240;
+  s.vx = (dx / d) * L.stoneSpeed; s.vy = (dy / d) * L.stoneSpeed;
+}
+
+/** Where a stone at x could rest: the floor if there is ground there, or a platform top it passed. */
+function floorUnder(ctx, x, y0, y1) {
+  for (const pl of ctx.platforms || []) {
+    if (x >= pl.x && x <= pl.x + pl.w && y0 <= pl.y && y1 >= pl.y) return pl.y;
+  }
+  return ctx.overGround(x) ? ctx.floorY : Infinity;
+}
+
+function blast(s, L, lv, ctx) {
+  const cx = s.x + L.stoneSize / 2, cy = s.y + L.stoneSize / 2, R = L.blastR;
+  for (const e of enemiesIn(ctx, { x: cx - R, y: cy - R, w: R * 2, h: R * 2 })) {
+    ctx.hitEnemy(e, dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.blastDmg], { knockback: L.slamKnock, from: cx });
+  }
+  ctx.puff({ x: cx, y: cy, w: R * 2, life: 12, color: 0xFFC860, cloud: true });
+  ctx.shake(2, 6);
+  ctx.sfx('shootBig', { pitch: 0.6 });
+}
+
 function stepStones(st, L, lv, ctx) {
-  st.stones = st.stones.filter((s) => --s.life > 0);
+  const n = L.stoneSize, a = ctx.arena;
   for (const s of st.stones) {
-    const b = ctx.bullets.find((q) => !q.enemy && !q.stone && q.life > 0
-      && q.x + (q.radius || 2) > s.x && q.x - (q.radius || 2) < s.x + L.stoneSize
-      && q.y + (q.radius || 2) > s.y && q.y - (q.radius || 2) < s.y + L.stoneSize);
-    if (!b) continue;
-    b.life = -1;
-    s.life = 0;
-    const cx = s.x + L.stoneSize / 2, cy = s.y + L.stoneSize / 2;
-    const t = nearestEnemy(ctx, cx, cy);
-    let dx = Math.sign(b.vx || 1), dy = 0;
-    if (t) { const c = centreOf(t); const d = Math.hypot(c.x - cx, c.y - cy) || 1; dx = (c.x - cx) / d; dy = (c.y - cy) / d; }
-    ctx.spawn({
-      x: cx, y: cy, vx: dx * L.stoneSpeed, vy: dy * L.stoneSpeed, radius: 3,
-      damage: dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.stoneDmg],
-      knockback: L.slamKnock, color: '#A8A296', shape: 'rock', weapon: 'granite_form',
-      stone: true, life: 120,
-    });
-    ctx.sfx('shoot', { pitch: 0.7 });
+    s.life--;
+    if (!s.flying) {
+      // Loose: normal gravity, a small bounce, then rolling to a stop.
+      s.vy = Math.min(FEEL.maxFallSpeed, s.vy + FEEL.gravity);
+      const y1 = s.y + s.vy, fl = floorUnder(ctx, s.x + n / 2, s.y + n, y1 + n);
+      s.x += s.vx;
+      if (y1 + n >= fl) {
+        s.y = fl - n;
+        s.vy = s.vy > 1 ? -s.vy * L.stoneBounce : 0;
+        s.vx *= L.stoneRoll;
+        if (Math.abs(s.vx) < 0.05) s.vx = 0;
+      } else s.y = y1;
+      if (s.y > ctx.floorY + 80) s.life = 0;
+      // Struck by one of his shots: off it goes, away from where it was hit.
+      const b = ctx.bullets.find((q) => !q.enemy && q.life > 0
+        && q.x + (q.radius || 2) > s.x && q.x - (q.radius || 2) < s.x + n
+        && q.y + (q.radius || 2) > s.y && q.y - (q.radius || 2) < s.y + n);
+      if (b) { b.life = -1; launchStone(s, L, b.x - (b.vx || 0), b.y - (b.vy || 0)); ctx.sfx('shoot', { pitch: 0.7 }); }
+      continue;
+    }
+    // Flying: straight lines, no gravity, bouncing off floors, walls and the
+    // ceiling and losing speed each time.
+    s.x += s.vx; s.y += s.vy;
+    const fl = floorUnder(ctx, s.x + n / 2, s.y + n - s.vy, s.y + n);
+    let bounced = false;
+    if (s.y + n >= fl && s.vy > 0) { s.y = fl - n; s.vy = -s.vy; bounced = true; }
+    if (a && s.x < a.x0) { s.x = a.x0; s.vx = Math.abs(s.vx); bounced = true; }
+    if (a && s.x + n > a.x1) { s.x = a.x1 - n; s.vx = -Math.abs(s.vx); bounced = true; }
+    if (s.y < (a ? a.ceilY : -40) && s.vy < 0) { s.vy = -s.vy; bounced = true; }
+    if (bounced) {
+      s.vx *= L.stoneBounce * 1.6; s.vy *= L.stoneBounce * 1.6;
+      if (++s.bounces > 4 || Math.hypot(s.vx, s.vy) < 0.8) s.life = 0;
+    }
+    if (s.y > ctx.floorY + 80) s.life = 0;
+    // Billiards: a flying stone sets a loose one going.
+    for (const o of st.stones) {
+      if (o === s || o.flying || o.life <= 0) continue;
+      if (Math.abs(o.x - s.x) < n && Math.abs(o.y - s.y) < n) launchStone(o, L, s.x + n / 2, s.y + n / 2);
+    }
+    const hit = enemiesIn(ctx, { x: s.x, y: s.y, w: n, h: n })[0];
+    if (hit && s.life > 0) {
+      ctx.hitEnemy(hit, dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.stoneDmg], { knockback: L.slamKnock, from: s.x + n / 2 });
+      if (L.stoneExplode) blast(s, L, lv, ctx);
+      s.life = 0;
+    }
   }
   st.stones = st.stones.filter((s) => s.life > 0);
 }
@@ -2072,56 +2128,73 @@ function stepStones(st, L, lv, ctx) {
 const granite = {
   init(st) {
     st.mode = null; st.idle = 0; st.t = 0; st.stones = []; st.crushed = new Set(); st.roll = null;
-    st.shape = STATUE_SHAPES[0]; st.boulder = false; st.steer = 0;
+    st.shape = STATUE_SHAPES[0]; st.boulder = false; st.dir = 1;
+    st.pic = null; st.want = null; st.picT = 0;
   },
 
   step(st, lv, ctx) {
     const L = ladderAt('granite_form', lv), p = ctx.player, r = ctx.run;
     stepStones(st, L, lv, ctx);
+    granite.picture(st, L, ctx);
     if (p.beam) { st.mode = null; st.idle = 0; return; }
 
     if (!st.mode) {
       st.idle = r.inputActive ? 0 : st.idle + 1;
-      if (st.idle < (p.onGround ? L.groundIdle : L.airIdle)) return;
+      if (!st.idle || (p.onGround && st.idle < L.groundIdle)) return;
       st.idle = 0;
       st.crushed = new Set();
       st.mode = p.onGround ? 'stone' : 'slam';
       st.t = L.stoneFrames;
       st.shape = STATUE_SHAPES[Math.floor(Math.random() * STATUE_SHAPES.length)];
-      st.boulder = false; st.steer = 0;
-      ctx.puff({ x: p.x + 12, y: p.y + 14, w: 22, life: 10, color: 0xA8A296 });
+      st.boulder = false;
       ctx.sfx('select', { pitch: 0.5 });
+      granite.picture(st, L, ctx);
     }
 
     if (r.stoneHit) {
       r.stoneHit = false;
-      const free = STONE_SLOTS.find(([ox, oy]) => !st.stones.some((s) => s.ox === ox && s.oy === oy));
-      if (free && st.stones.length < L.stoneMax) {
-        st.stones.push({ ox: free[0], oy: free[1], x: p.x + free[0], y: p.y + free[1], life: L.stoneLife });
+      if (st.stones.length < L.stoneMax) {
+        const ox = STONE_SLOTS[st.stones.length];
+        st.stones.push({
+          x: p.x + 12 - L.stoneSize / 2 + ox, y: p.y + 2, vx: Math.sign(ox) * 0.6, vy: -2,
+          life: L.stoneLife, flying: false,
+        });
       }
     }
 
+    // The stats are his from the first step; only the picture waits.
     r.stoneArmor = L.armor;
     r.planted = true;
+    r.moveScale = 0;
     if (st.mode === 'slam') {
-      r.moveScale = L.slamAirControl;
       p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
-      if (L.roll && p.vx) { st.boulder = true; st.steer = p.vx; }
+      if (L.roll && !st.boulder && r.moveInput) {
+        st.boulder = true; st.dir = Math.sign(r.moveInput);
+        granite.picture(st, L, ctx);
+      }
       crush(st, L, lv, ctx, { x: p.x + 4, y: p.y, w: 16, h: 26 }, L.slamDmg);
       if (!p.onGround) return;
       ctx.shake(2, 8);
       ctx.puff({ x: p.x + 12, y: p.y + 24, w: 30, life: 12, color: 0xA8A296 });
-      if (st.boulder) {
-        st.mode = 'roll';
-        st.roll = { v: st.steer * L.rollMult, t: L.rollFrames };
-      } else st.mode = 'stone';
+      st.mode = st.boulder ? 'roll' : 'stone';
+      if (st.boulder) { st.roll = { v: st.dir * L.rollSpeed, t: L.rollFrames }; p.facing = st.dir; }
       st.t = L.stoneFrames;
       return;
     }
-    r.moveScale = 0;
     if (st.mode === 'roll') stepRoll(st, L, lv, ctx);
     if (--st.t <= 0) st.mode = null;
-    if (!st.mode) ctx.puff({ x: p.x + 12, y: p.y + 14, w: 22, life: 10, color: 0x5F443A });
+    if (!st.mode) granite.picture(st, L, ctx);
+  },
+
+  /**
+   * THE PICTURE LAGS THE FORM BY `morphFrames`, under a puff. `want` is the
+   * form the state says; `pic` is what is drawn, and it catches up when the
+   * countdown runs out.
+   */
+  picture(st, L, ctx) {
+    const want = !st.mode ? null : (st.mode === 'roll' || st.boulder) ? 'boulder' : 'statue';
+    if (want !== st.want) { st.want = want; st.picT = L.morphFrames; morphPuff(ctx, L); }
+    else if (st.picT > 0 && --st.picT === 0) st.pic = st.want;
   },
 };
 
@@ -2426,6 +2499,15 @@ function crumble(fx, s) {
  */
 export function drawPuff(g, q, cx) {
   const t = q.life / q.max;
+  // A cloud: solid until its last `fade` steps, so what changes behind it is
+  // hidden, then gone fast.
+  if (q.cloud) {
+    g.fillStyle(q.color, Math.min(1, q.life / (q.fade || 4)));
+    const r = q.w / 3;
+    g.fillCircle(cx - r * 0.6, q.y + r * 0.2, r); g.fillCircle(cx + r * 0.6, q.y + r * 0.2, r);
+    g.fillCircle(cx, q.y - r * 0.5, r);
+    return;
+  }
   g.fillStyle(q.color, 0.55 * t);
   const h = 4 + 10 * (1 - t);
   g.fillRect(cx - q.w / 2, q.y - h / 2, q.w, h);
@@ -2452,10 +2534,11 @@ export function drawWeaponArt(layers, sx, sy, ctx) {
   const { run, player: p, fx } = ctx;
   const back = layers.effects;
   const gr = ctx.equipped.includes('granite_form') && run.wstate.granite_form;
+  const sn = gr ? ladderAt('granite_form', ctx.levelOf('granite_form')).stoneSize : 0;
   for (const s of gr ? gr.stones : []) {
     back.drawCell(
-      { id: STONE, x: sx(s.x + 3), y: sy(s.y + 6), facing: 1, cell: cellAt(clipOf(STONE, 'loose'), 0) },
-      (g) => drawStoneShape(g, sx(s.x + 3), sy(s.y + 6)),
+      { id: STONE, x: sx(s.x + sn / 2), y: sy(s.y + sn), facing: 1, cell: cellAt(clipOf(STONE, 'loose'), 0) },
+      (g) => drawStoneShape(g, sx(s.x + sn / 2), sy(s.y + sn)),
     );
   }
   for (const s of fx.sand) {
@@ -2553,8 +2636,8 @@ export function bodyArt(ctx) {
   // THE GRANITE FORM takes his place while it holds: a statue, or the boulder.
   // Held by his feet, the middle of the floor under him.
   const gr = ctx.equipped.includes('granite_form') && ctx.run.wstate.granite_form;
-  if (gr?.mode) {
-    const p = ctx.player, rolling = gr.mode === 'roll' || (gr.mode === 'slam' && gr.boulder);
+  if (gr?.pic) {
+    const p = ctx.player, rolling = gr.pic === 'boulder';
     const t = gr.mode === 'roll' ? ctx.run.frame : 0;
     const form = rolling ? 'roll' : gr.shape;
     return {
@@ -2609,8 +2692,8 @@ export function drawGraniteShape(g, x, y, facing, form, t = 0) {
 
 /** One loose stone, standing on (x, y). */
 export function drawStoneShape(g, x, y) {
-  g.fillStyle(0x5F443A, 1); g.fillRect(x - 3, y - 6, 6, 6);
-  g.fillStyle(0xA8A296, 1); g.fillRect(x - 2, y - 5, 4, 4);
+  g.fillStyle(0x5F443A, 1); g.fillCircle(x, y - 4, 4);
+  g.fillStyle(0xA8A296, 1); g.fillCircle(x, y - 4, 3);
 }
 
 /**

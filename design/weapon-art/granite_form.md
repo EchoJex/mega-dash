@@ -13,22 +13,27 @@ mid-air; START LV 3 for the boulder.
 ## What it is, in the owner's words
 
 Granite Man's weapon (the Rock boss): "the player turns to stone — Kirby's Rock form. It is
-driven by the ABSENCE OF PLAYER INPUT, not by a lack of movement or momentum." About a
-second of no input on the ground hardens him where he stands; half a second in the air and
-he slams straight down as stone. The statue cannot move, takes far less damage, cannot be
-knocked back and ignores spikes, and wears off five seconds after it touches down.
+driven by the ABSENCE OF PLAYER INPUT, not by a lack of movement or momentum." A second and
+a half of no input on the ground hardens him where he stands; in the air, the first moment
+nothing is pressed he slams straight down as stone. The statue cannot move, takes far less
+damage, cannot be knocked back and ignores spikes, and wears off five seconds after it
+touches down. His own attacks still work while he is a statue.
 
 The statue is one of three shapes, picked at random each time (owner, 22 Oct 2026):
 **"a rocky treasure chest, 8bit megaman in shooting pose, a simple geometric monolith
 rectangle like from 2001"**.
 
-From Lv3, steering left or right during the slam makes it **a large round boulder** instead
-(1.2 times his size) that rolls on after landing, crushing through minions, and stops just
-before a cliff edge. It is decided in the air: a statue never turns into a boulder on the
-ground.
+From Lv3, pressing a direction during the slam **puffs it into a large round boulder**
+(1.2 times his size) that rolls that way after landing, crushing through minions, and
+stops just before a cliff edge.
 
-Hits taken while hardened knock **small stones** loose around him (up to three, a quarter
-of his size). Shooting one launches it at the nearest enemy.
+**Every change of form happens under a puff** that hides it and fades fast; the picture
+changes 10 steps after the form does.
+
+Hits taken while hardened knock **small round stones** loose (up to three). They fall,
+bounce and roll to a stop. Shooting one sends it flying away from where it was hit, like a
+billiard ball, bouncing off floors and walls until it hits an enemy; at Lv10 it explodes
+there.
 
 ## The look
 
@@ -53,7 +58,7 @@ the game really plays.
 |---|---|---|---|---|
 | [`weapon-granite_form-statue.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-statue.sprite) | 40×40 | 20, 38 — his feet — the floor under the middle of him | in place of the player | chest, megaman, monolith |
 | [`weapon-granite_form-boulder.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-boulder.sprite) | 40×40 | 20, 38 — the floor under the middle of it | in place of the player | roll |
-| [`weapon-granite_form-stone.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-stone.sprite) | 10×10 | 5, 8 — the floor under its middle | behind the player | loose |
+| [`weapon-granite_form-stone.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-stone.sprite) | 10×10 | 5, 9 — the floor under its middle | behind the player | loose |
 
 ### Every clip, frame by frame
 

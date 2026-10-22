@@ -816,6 +816,7 @@ export default class GameScene extends Phaser.Scene {
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
     // ANY INPUT AT ALL this step. The Granite Form hardens on its absence.
     r.inputActive = moveDir !== 0 || this.intent.jumpHeld || this.intent.fireHeld || k.W.isDown;
+    r.moveInput = moveDir;
 
     // DIAGONAL AIM ON A KEYBOARD. The touch pads have had up-left and up-right
     // buttons all along, so `player.diagInput` was reachable on a phone and
@@ -1157,6 +1158,21 @@ export default class GameScene extends Phaser.Scene {
       if (e === this.boss) this.killBoss();
       else this.killMinion(e);
     }
+  }
+
+  /**
+   * How much of the aimed weapon's cooldown is still to run, 0 (ready) to 1,
+   * for the fire pad. The generic path's wait is `run.cooldown`; a runtime's
+   * is its `cool`. Neither records where it started, so the start is the
+   * highest value seen since it was last ready.
+   */
+  fireCooldown() {
+    const r = this.run, id = r.activeWeapon;
+    const beh = Wpn.hasRuntime(id) ? Wpn.RUNTIME[id] : null;
+    const left = beh?.fire ? (r.wstate[id]?.cool || 0) : r.cooldown;
+    if (left <= 0 || id !== this.cdId) { this.cdId = id; this.cdPeak = left; }
+    this.cdPeak = Math.max(this.cdPeak, left);
+    return left > 0 ? left / this.cdPeak : 0;
   }
 
   /** A projectile owned by the player. Player shots use the generous pad. */

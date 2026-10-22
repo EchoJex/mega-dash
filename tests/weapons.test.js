@@ -586,45 +586,62 @@ test('the Volt Spark chain stuns everything it touches, never twice, and prefers
   for (const e of hitLog) assert.ok(e.status.stun, 'every enemy the chain touched is stunned');
 });
 
-test('Granite Form hardens on no input, slams, rolls at Lv3, and a shot launches its stone', () => {
-  const h = harness('granite_form', 3);
-  const step = () => { h.run.stoneArmor = 0; h.run.moveScale = 1; h.run.planted = false; Wpn.stepWeapons(h.ctx, ['granite_form']); };
-  const st = () => h.run.wstate.granite_form;
-  // Input keeps it soft.
+test('Granite Form: slow on the ground, instant in the air, boulder by direction from Lv3, billiard stones', () => {
+  const run = (lv) => {
+    const h = harness('granite_form', lv);
+    const step = () => { h.run.stoneArmor = 0; h.run.moveScale = 1; h.run.planted = false; Wpn.stepWeapons(h.ctx, ['granite_form']); };
+    return { h, step, st: () => h.run.wstate.granite_form };
+  };
+  const { h, step, st } = run(3);
+  // Input keeps it soft; on the ground a short pause is not enough.
   h.run.inputActive = true;
   for (let i = 0; i < 120; i++) step();
   assert.equal(st().mode, null);
-  // Half a second of nothing in the air: a slam, armoured and planted.
   h.run.inputActive = false;
-  h.player.onGround = false;
-  for (let i = 0; i < 30; i++) step();
-  assert.equal(st().mode, 'slam');
-  assert.ok(h.run.stoneArmor > 0 && h.run.planted);
-  // Steering during the fall decides boulder, in the air; it rolls on landing
-  // even though he let go before touching down.
-  h.player.vx = 0.5; step();
-  assert.ok(st().boulder, 'the first steer makes it the boulder');
-  h.player.vx = 0; h.player.onGround = true;
-  step();
-  assert.equal(st().mode, 'roll');
-  assert.ok(['chest', 'megaman', 'monolith'].includes(st().shape));
-  const x0 = h.player.x;
-  for (let i = 0; i < 70; i++) step();
-  assert.ok(h.player.x > x0, 'the boulder rolled');
+  for (let i = 0; i < 60; i++) step();
+  assert.equal(st().mode, null, 'a second of standing still is not yet a statue');
+  for (let i = 0; i < 40; i++) step();
   assert.equal(st().mode, 'stone');
-  // A hit on the statue knocks a stone loose; a shot through it launches it.
-  h.run.stoneHit = true;
-  step();
+  assert.ok(h.run.stoneArmor > 0 && h.run.planted, 'the armour is on at once');
+  assert.equal(st().pic, 'statue', 'and the picture has caught up');
+
+  // In the air: the first step with nothing pressed slams.
+  const air = run(3);
+  air.h.player.onGround = false;
+  air.h.run.inputActive = true; air.step();
+  air.h.run.inputActive = false; air.step();
+  assert.equal(air.st().mode, 'slam');
+  assert.equal(air.st().pic, null, 'the picture waits under the puff');
+  // A direction during the slam makes the boulder; it rolls that way on landing.
+  air.h.run.moveInput = -1; air.step();
+  assert.ok(air.st().boulder);
+  air.h.run.moveInput = 0; air.h.player.onGround = true;
+  air.step();
+  assert.equal(air.st().mode, 'roll');
+  const x0 = air.h.player.x;
+  for (let i = 0; i < 70; i++) air.step();
+  assert.ok(air.h.player.x < x0, 'the boulder rolled left');
+
+  // Lv1: a direction during the slam does nothing.
+  const one = run(1);
+  one.h.player.onGround = false; one.step();
+  one.h.run.moveInput = 1; one.step();
+  assert.equal(one.st().boulder, false);
+
+  // A hit knocks a stone loose; it falls to the floor and settles.
+  h.run.stoneHit = true; step();
   assert.equal(st().stones.length, 1);
+  for (let i = 0; i < 120; i++) step();
   const s = st().stones[0];
-  h.bullets.push({ x: s.x + 2, y: s.y + 2, vx: 3, vy: 0, radius: 2, life: 60, enemy: false });
+  assert.equal(s.y + 8, FLOOR, 'it came to rest on the floor');
+  // Struck from its left, it flies right, and is used up on the enemy it meets.
+  h.bullets.push({ x: s.x - 1, y: s.y + 4, vx: 3, vy: 0, radius: 2, life: 60, enemy: false });
+  h.enemies.length = 0;
+  const target = { x: s.x + 40, y: s.y - 2, w: 12, h: 12, hp: 999, vy: 0, kbVx: 0, status: {} };
+  h.enemies.push(target);
   step();
+  assert.ok(st().stones[0].flying && st().stones[0].vx > 0, 'it flies away from the side it was struck');
+  for (let i = 0; i < 30; i++) step();
+  assert.ok(h.hits.some((x) => x.e === target), 'the stone hit the enemy');
   assert.equal(st().stones.length, 0);
-  assert.ok(h.bullets.some((b) => b.stone), 'the stone flew');
-  // Input cannot cancel it, but it wears off by itself.
-  h.run.inputActive = true;
-  step();
-  assert.equal(st().mode, 'stone');
-  for (let i = 0; i < 400; i++) step();
-  assert.equal(st().mode, null);
 });
