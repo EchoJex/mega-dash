@@ -773,7 +773,27 @@ struck through, tells you what it fixed, then strikes them through
 | build | status | bug |
 |---|---|---|
 | 1185 (main) | `[wip]` | Hammer Jan 1 doesn't look or feel right. Remove jab1, instead testing the first attach press as the hold for the charge, but remove any minimums related to the charge and allow jab2 to follow any charge swing that was less than 50% charged |
-| 1185 (main) | `[wip]` |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
