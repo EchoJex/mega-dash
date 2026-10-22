@@ -772,7 +772,15 @@ struck through, tells you what it fixed, then strikes them through
 
 | build | status | bug |
 |---|---|---|
-| 1185 (main) | `[wip]` | Hammer Jan 1 doesn't look or feel right.  |
+| 1185 (main) | `[wip]` | Hammer Jan 1 doesn't look or feel right. Remove jab1, instead |
+
+
+
+
+
+
+
+
 
 
 
