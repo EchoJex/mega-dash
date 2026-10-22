@@ -382,6 +382,7 @@ export default class GameScene extends Phaser.Scene {
       // Per-frame grants from equipped weapons. All of these are cleared and
       // re-asserted every step by stepEquipped — see the note there.
       meleeArmor: 0,
+      stoneArmor: 0,
       rootFrames: 0,
       // How fast the player may move while a weapon is busy: 0 is rooted, 1 is
       // untouched. The Quake Hammer's rungs set it (see its ladder).
@@ -813,6 +814,8 @@ export default class GameScene extends Phaser.Scene {
     if (k.A.isDown || k.LEFT.isDown) kb = -1;
     if (k.D.isDown || k.RIGHT.isDown) kb = 1;
     const moveDir = kb !== 0 ? kb : this.intent.moveDir;
+    // ANY INPUT AT ALL this step. The Granite Form hardens on its absence.
+    r.inputActive = moveDir !== 0 || this.intent.jumpHeld || this.intent.fireHeld || k.W.isDown;
 
     // DIAGONAL AIM ON A KEYBOARD. The touch pads have had up-left and up-right
     // buttons all along, so `player.diagInput` was reachable on a phone and
@@ -890,7 +893,8 @@ export default class GameScene extends Phaser.Scene {
       this.hurt(p.x, this.hazardDamage());
       this.beamOut();
     } else {
-      for (const s of this.world.spikes) {
+      // The Granite Form's statue is immune to spikes.
+      for (const s of r.stoneArmor > 0 ? [] : this.world.spikes) {
         if (Phys.overlaps(box, s)) {
           // Check BEFORE hurt(), which sets the i-frames itself.
           const landed = r.invuln === 0;
@@ -1033,6 +1037,7 @@ export default class GameScene extends Phaser.Scene {
     r.moveScale = 1;
     r.planted = false;
     r.glideFall = null;
+    r.stoneArmor = 0;
     r.airControl = 1;
     r.aggroFire = 1;
     r.aggroPause = null;
@@ -2394,6 +2399,10 @@ export default class GameScene extends Phaser.Scene {
     // make a trade survivable, never make a hit free. Applied after the melee
     // window so the two stack multiplicatively rather than summing past 100%.
     if (r.damageReduce > 0) amount = Math.max(1, Math.ceil(amount * (1 - r.damageReduce)));
+    // The Granite Form's statue: same floor, and the weapon is told so it can
+    // knock a stone loose.
+    const stone = r.stoneArmor > 0;
+    if (stone) { amount = Math.max(1, Math.ceil(amount * (1 - r.stoneArmor))); r.stoneHit = true; }
     r.hp -= amount;
     // DEV: the hit lands in full — flinch, knockback and i-frames all apply —
     // it just cannot finish you.
@@ -2407,8 +2416,11 @@ export default class GameScene extends Phaser.Scene {
     p.hitAnim = 20;
     p.flinchTimer = FEEL.flinchFrames;
     const dir = Math.sign(p.x + 12 - sourceX) || -p.facing || 1;
-    p.knockbackVx = dir * FEEL.knockbackSpeed;
-    p.vy = Math.min(p.vy, -1.6);
+    // A statue is never knocked back.
+    if (!stone) {
+      p.knockbackVx = dir * FEEL.knockbackSpeed;
+      p.vy = Math.min(p.vy, -1.6);
+    }
     if (r.hp <= 0) {
       if (r.revivesLeft > 0) { r.revivesLeft--; r.hp = 3; r.invuln = 150; }
       else this.die();

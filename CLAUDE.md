@@ -762,6 +762,13 @@ ground-contrast rule than the overworld.
 
 ### The 16-bit boss rooms — `src/systems/arena-art/`
 
+**A ROOM'S PICTURES HINT AT WHERE ITS WEAPON CAME FROM; ITS MUSIC HINTS AT ITS ELEMENT.**
+The owner's words (22 Oct 2026): "Boss Arena visual cues will allude to the weapons game
+origin. Boss Arena musical theming will allude to the element itself." So the Rock boss's
+room nods to Kirby, because his weapon is Kirby's Rock form, and the Typeless bunker's field asks for
+Nullfire Drones lying about. The music half is the same rule the `bgm arena` field already
+follows.
+
 **One file per room, listed in `ROOMS` in `index.js`.** A room in that list draws its own
 backdrop, furniture and the hazards it knows; any other room keeps the placeholder look.
 Adding a room is one file and one line. A drawn room's furniture lives in its room file;

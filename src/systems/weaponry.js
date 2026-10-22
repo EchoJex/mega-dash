@@ -1976,6 +1976,136 @@ const gale = {
   },
 };
 
+// ── GRANITE FORM — Rock, defensive ───────────────────────────────────
+/**
+ * "The player turns to stone — Kirby's Rock form. It is driven by the ABSENCE
+ *  OF PLAYER INPUT, not by a lack of movement or momentum. 80% damage
+ *  reduction and total knockback immunity while hardened. Spike immunity while
+ *  in the rock form. Taking damage in this form causes small stones to spawn
+ *  around the player that can be attacked by the player to launch them at foes.
+ *  Despawn stones after 15s or after being launched at opponents. Anything the
+ *  stone lands on gets heavy knockback and heavy damage."
+ *  Lv1  about a second of no input on the ground, half that in the air, and the
+ *       mid-air form slams down with limited steering; once it touches ground
+ *       it cannot move, and wears off 5 seconds later. Up to 3 stones.
+ *  Lv3  touching down with horizontal movement left turns it into a boulder
+ *       that rolls on, crushing through minions, and stops (form over) just
+ *       before a cliff edge.
+ *
+ * By the owner's answers of 21 Oct 2026: once hardened it cannot be cancelled
+ * (Lv10's jump-cancel is still `[wip]`); "anything the stone lands on" is the
+ * statue's own slam; a stone launches when any of your shots touches it.
+ *
+ * Its grants — `stoneArmor`, `moveScale`, `planted` — are per-step, like every
+ * other weapon's, so benching it mid-form frees the player at once.
+ * GameScene's hurt() raises `stoneHit` when a hit lands on the statue.
+ */
+const STONE_SLOTS = [[-9, 6], [27, 6], [9, -9]];
+
+function crush(st, L, lv, ctx, box, word) {
+  for (const e of enemiesIn(ctx, box)) {
+    if (st.crushed.has(e)) continue;
+    st.crushed.add(e);
+    ctx.hitEnemy(e, dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[word], {
+      knockback: L.slamKnock, from: ctx.player.x + 12,
+    });
+  }
+}
+
+const boulderBox = (p, L) => ({ x: p.x + 12 - L.boulderSize / 2, y: p.y + 24 - L.boulderSize, w: L.boulderSize, h: L.boulderSize });
+
+function stepRoll(st, L, lv, ctx) {
+  const p = ctx.player, rl = st.roll;
+  const v = rl.v * (rl.t / L.rollFrames);
+  rl.t--;
+  const nx = p.x + v;
+  // Stop, and drop the form, at the lip — the same probe the Strike lunge uses.
+  if (!ctx.overGround(nx + (v > 0 ? 20 : 4))) { st.mode = null; return; }
+  // A wall, an arena edge or a raised block ends the roll; the statue stays.
+  const box = { x: nx + 4, y: p.y, w: 16, h: 23 };
+  const a = ctx.arena;
+  if ((a && (box.x < a.x0 || box.x + box.w > a.x1))
+    || (ctx.platforms || []).some((s) => box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y)) {
+    rl.t = 0;
+  } else p.x = nx;
+  crush(st, L, lv, ctx, boulderBox(p, L), L.slamDmg);
+  if (rl.t <= 0) st.mode = 'stone';
+}
+
+function stepStones(st, L, lv, ctx) {
+  st.stones = st.stones.filter((s) => --s.life > 0);
+  for (const s of st.stones) {
+    const b = ctx.bullets.find((q) => !q.enemy && !q.stone && q.life > 0
+      && q.x + (q.radius || 2) > s.x && q.x - (q.radius || 2) < s.x + L.stoneSize
+      && q.y + (q.radius || 2) > s.y && q.y - (q.radius || 2) < s.y + L.stoneSize);
+    if (!b) continue;
+    b.life = -1;
+    s.life = 0;
+    const cx = s.x + L.stoneSize / 2, cy = s.y + L.stoneSize / 2;
+    const t = nearestEnemy(ctx, cx, cy);
+    let dx = Math.sign(b.vx || 1), dy = 0;
+    if (t) { const c = centreOf(t); const d = Math.hypot(c.x - cx, c.y - cy) || 1; dx = (c.x - cx) / d; dy = (c.y - cy) / d; }
+    ctx.spawn({
+      x: cx, y: cy, vx: dx * L.stoneSpeed, vy: dy * L.stoneSpeed, radius: 3,
+      damage: dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.stoneDmg],
+      knockback: L.slamKnock, color: '#A8A296', shape: 'rock', weapon: 'granite_form',
+      stone: true, life: 120,
+    });
+    ctx.sfx('shoot', { pitch: 0.7 });
+  }
+  st.stones = st.stones.filter((s) => s.life > 0);
+}
+
+const granite = {
+  init(st) { st.mode = null; st.idle = 0; st.t = 0; st.stones = []; st.crushed = new Set(); st.roll = null; },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('granite_form', lv), p = ctx.player, r = ctx.run;
+    stepStones(st, L, lv, ctx);
+    if (p.beam) { st.mode = null; st.idle = 0; return; }
+
+    if (!st.mode) {
+      st.idle = r.inputActive ? 0 : st.idle + 1;
+      if (st.idle < (p.onGround ? L.groundIdle : L.airIdle)) return;
+      st.idle = 0;
+      st.crushed = new Set();
+      st.mode = p.onGround ? 'stone' : 'slam';
+      st.t = L.stoneFrames;
+      ctx.puff({ x: p.x + 12, y: p.y + 14, w: 22, life: 10, color: 0xA8A296 });
+      ctx.sfx('select', { pitch: 0.5 });
+    }
+
+    if (r.stoneHit) {
+      r.stoneHit = false;
+      const free = STONE_SLOTS.find(([ox, oy]) => !st.stones.some((s) => s.ox === ox && s.oy === oy));
+      if (free && st.stones.length < L.stoneMax) {
+        st.stones.push({ ox: free[0], oy: free[1], x: p.x + free[0], y: p.y + free[1], life: L.stoneLife });
+      }
+    }
+
+    r.stoneArmor = L.armor;
+    r.planted = true;
+    if (st.mode === 'slam') {
+      r.moveScale = L.slamAirControl;
+      p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
+      crush(st, L, lv, ctx, { x: p.x + 4, y: p.y, w: 16, h: 26 }, L.slamDmg);
+      if (!p.onGround) return;
+      ctx.shake(2, 8);
+      ctx.puff({ x: p.x + 12, y: p.y + 24, w: 30, life: 12, color: 0xA8A296 });
+      if (L.roll && Math.abs(p.vx) > 0.05) {
+        st.mode = 'roll';
+        st.roll = { v: p.vx * L.rollMult, t: L.rollFrames };
+      } else st.mode = 'stone';
+      st.t = L.stoneFrames;
+      return;
+    }
+    r.moveScale = 0;
+    if (st.mode === 'roll') stepRoll(st, L, lv, ctx);
+    if (--st.t <= 0) st.mode = null;
+    if (!st.mode) ctx.puff({ x: p.x + 12, y: p.y + 14, w: 22, life: 10, color: 0x5F443A });
+  },
+};
+
 // ── ASTRAL CLOAK — Dark, defensive ───────────────────────────────────
 /**
  * "Reduces aggro and become immune to status effects."
@@ -2090,6 +2220,7 @@ export const RUNTIME = {
   swarm_caller: swarm,
   simons_whip: thorn,
   gale_vortex: gale,
+  granite_form: granite,
   astral_cloak: eclipse,
   alloy_blade: alloy,
 };
@@ -2528,6 +2659,27 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(m.x) - 5, m.y - 6, 10, 2);
     g.fillStyle(dr.reloading ? 0x8A3040 : 0x5CADD5, 1);
     g.fillRect(sx(m.x) - 5, m.y - 6, Math.round(10 * frac), 2);
+  }
+
+  // GRANITE FORM — the statue (or Lv3's boulder) laid over him while the form
+  // holds, and the stones a hit knocks loose. Shapes until the art arrives.
+  const gr = run.wstate.granite_form;
+  if (gr && ctx.equipped.includes('granite_form')) {
+    const L = ladderAt('granite_form', ctx.levelOf('granite_form'));
+    if (gr.mode === 'roll') {
+      const b = boulderBox(p, L), rad = b.w / 2;
+      g.fillStyle(0x5F443A, 1); g.fillCircle(sx(b.x + rad), b.y + rad, rad);
+      g.fillStyle(0xA8A296, 1); g.fillCircle(sx(b.x + rad), b.y + rad, rad - 2);
+      g.fillStyle(0x5F443A, 1); g.fillRect(sx(b.x + rad) + Math.round(Math.cos(gr.roll.t * 0.3) * (rad - 6)) - 2, b.y + rad - 2, 4, 4);
+    } else if (gr.mode) {
+      g.fillStyle(0x5F443A, 1); g.fillRect(sx(p.x + 3), p.y + 2, 18, 22);
+      g.fillStyle(0xA8A296, 1); g.fillRect(sx(p.x + 5), p.y + 4, 14, 18);
+      g.fillStyle(0x5F443A, 1); g.fillRect(sx(p.x + 8), p.y + 9, 6, 2); g.fillRect(sx(p.x + 12), p.y + 15, 5, 2);
+    }
+    for (const s of gr.stones) {
+      g.fillStyle(0x5F443A, 1); g.fillRect(sx(s.x), s.y, L.stoneSize, L.stoneSize);
+      g.fillStyle(0xA8A296, 1); g.fillRect(sx(s.x) + 1, s.y + 1, L.stoneSize - 2, L.stoneSize - 2);
+    }
   }
 
   // TORRENT CANNON — two nozzles under a blue tank layer whose height IS the

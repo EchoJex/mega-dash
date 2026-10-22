@@ -114,6 +114,11 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 
 ## 6. Drawing a boss room so it goes straight into the game
 
+- **A room hints at the game its boss's weapon comes from.** The owner's words
+  (22 Oct 2026): "Boss Arena visual cues will allude to the weapons game origin. Boss Arena
+  musical theming will allude to the element itself." The weapon is named in the boss's
+  tracker slice (the Rock boss's is Kirby's Rock form; the Typeless bunker's field asks for Nullfire
+  Drones lying about). The music follows the element instead.
 - **Everything that moves is drawn ahead of time.** Paint each moving thing once, into
   numbered frames or small named pieces, while the room builds behind the warp's black.
   While playing, a room may only pick a frame and a position for each piece. **Never repaint

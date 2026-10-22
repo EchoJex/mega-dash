@@ -604,6 +604,29 @@ export const WEAPON_LADDERS = {
   // fire button: falling is the trigger, the count is the budget, and touching
   // the ground refills it. That makes it a safety net you spend rather than an
   // ability you aim.
+  /**
+   * GRANITE FORM — defensive, Rock. Kirby's Rock form, "driven by the ABSENCE
+   * OF PLAYER INPUT". No input for `groundIdle` steps on the ground (half that
+   * in the air, which slams him down) and he is a statue: `armor` off every
+   * hit, no knockback, no spikes, and he cannot move until it wears off
+   * `stoneFrames` after touching down. Each hit taken spawns a small stone
+   * (up to `stoneMax`) that one of your shots launches at the nearest foe.
+   *
+   * Lv3: "rolls for 5x the remaining horizontal movement". This game has no
+   * momentum, so the movement left at touchdown is the step's horizontal
+   * speed: the boulder starts at `rollMult` times it and slows to a stop over
+   * `rollFrames`.
+   */
+  granite_form: {
+    1: {
+      groundIdle: 60, airIdle: 30, stoneFrames: 300,
+      armor: 0.8, slamAirControl: 0.35, slamDmg: 'heavy', slamKnock: 3.4,
+      stoneMax: 3, stoneSize: 6, stoneLife: 900, stoneSpeed: 3.2, stoneDmg: 'medium',
+      roll: false,
+    },
+    3: { roll: true, rollMult: 5, rollFrames: 60, boulderSize: 29 },
+  },
+
   gale_vortex: {
     1: {
       puffs: 3, puffGap: 14, fallCut: 0.18, glideFall: 1.1,

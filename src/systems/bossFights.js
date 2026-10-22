@@ -195,6 +195,8 @@ function coreHazard(layer) {
      */
     a.turrets.forEach((t, i) => { t.aim = hs.left > 0 ? hs.aim[i] : aimOf(t); });
     a.burstIn = hs.left > 0 ? Infinity : hs.t;
+    // Where the searchlights point in the 3 seconds before a burst.
+    a.target = { x: p.x + 12, y: p.y + 12 };
 
     if (hs.left > 0) {
       if (--hs.gap > 0) return;

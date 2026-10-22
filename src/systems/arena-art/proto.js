@@ -8,6 +8,10 @@
  * has it; everything else — sandbags, racks, the firing chart, the blast door,
  * the searchlights, the alarm light — is background, and the alarm light is a
  * picture only, not a new hazard.
+ *
+ * "3 seconds before turrets fire, two searchlights sweep the arena, tracking
+ * the player (with no angle limitations)" — owner, 21 Oct 2026. The lights are
+ * dark the rest of the time, so a lit beam always means a burst is coming.
  */
 import {
   H, OL, OLc, hex, css, ramp, bayer, hash, noise1, noise2, canvas, pick,
@@ -16,10 +20,10 @@ import {
 
 /** Every aim the ceiling turrets can take: layer 3 snaps to 11.25 deg, 0..180. */
 const AIMS = 17;
-/** The searchlight's sweep is drawn at this many angles. */
-const NB = 13;
-/** How far the searchlight beam reaches, in pixels. */
-const BL = 200;
+/** The searchlight beam is drawn every 5 deg from flat to just past straight down. */
+const NB = 22, BSTEP = 5;
+/** Steps before a burst that the searchlights come on: 3 seconds. */
+const LIGHT_WARN = 180;
 
 export default function proto(S, a, viewW) {
   const FLOOR = a.floorY;
@@ -174,13 +178,14 @@ export default function proto(S, a, viewW) {
   for (const lx of [2, viewW - 12]) { R(sx, lx, 8, 10, 7, OL); R(sx, lx + 1, 9, 8, 5, Sc[5]); R(sx, lx + 1, 9, 8, 1, Sc[8]); R(sx, lx + (lx < 9 ? 7 : 1), 10, 1, 3, Sc[9]); R(sx, lx + 4, 0, 2, 8, Sc[2]); }
 
   // ── searchlights: the beam painted at every angle of its sweep
-  const beamC = hex('#E4E8ED');
+  const beamC = hex('#FFF0A0');
+  const BL = viewW; // reaches across the whole room
   const beams = frames(NB, 0, 0, BL, FLOOR, (ctx, i) => {
-    const ang = ((28 + (i * 44) / (NB - 1)) * Math.PI) / 180, ca = Math.cos(ang), sa = Math.sin(ang), r = new Raster(BL, FLOOR);
+    const ang = (i * BSTEP * Math.PI) / 180, ca = Math.cos(ang), sa = Math.sin(ang), r = new Raster(BL, FLOOR);
     for (let y = 12; y < FLOOR; y++) for (let x = 6; x < BL; x++) {
       const dx = x - 9, dy = y - 12, along = dx * ca + dy * sa, lat = Math.abs(-dx * sa + dy * ca), w = along * 0.12 + 1;
       if (along <= 4 || along > BL || lat > w) continue;
-      if (bayer(x, y) < 0.16 * (1 - along / BL) * (1 - lat / w) + 0.02) r.set(x, y, beamC);
+      if (bayer(x, y) < 0.34 * (1 - along / BL) * (1 - lat / w) + 0.04) r.set(x, y, beamC);
     }
     ctx.drawImage(r.flush(), 0, 0);
   });
@@ -227,7 +232,6 @@ export default function proto(S, a, viewW) {
     R(ctx, viewW - 27, 106, 4, 3, OL); R(ctx, viewW - 26, 106, 2, 2, f ? '#FF4A32' : '#5A1810');
   });
 
-  const dots = pieces(['#FFF0B0', '#E0C070', '#9A7A30', '#FFD070']);
   const eyes = pieces(['#FFB8A8', '#FF4A32', '#7A1810', '#C8301E'].map((c) => {
     const cv = canvas(2, 1), x = cv.getContext('2d'); x.fillStyle = c; x.fillRect(0, 0, 2, 1);
     return [c, cv];
@@ -236,10 +240,9 @@ export default function proto(S, a, viewW) {
   // ── the picture, back to front
   S.layer();
   S.image(wallCv);
-  const lightL = S.image(beams, 0, 0).setAlpha(0.55);
-  const lightR = S.image(beams, viewW - BL, 0).setAlpha(0.55).setFlipX(true);
+  const lightL = S.image(beams, 0, 0).setAlpha(0.7);
+  const lightR = S.image(beams, viewW - BL, 0).setAlpha(0.7).setFlipX(true);
   S.image(setCv);
-  const tracer = S.pool(dots);
   S.image(beamCv);
   const alarmImg = S.image(alarm);
   const lampImg = S.image(lamp);
@@ -252,21 +255,15 @@ export default function proto(S, a, viewW) {
   return {
     update(a) {
       const t = a.t;
-      lightL.show(Math.round(((Math.sin(t * 0.0065) + 1) / 2) * (NB - 1)));
-      lightR.show(Math.round(((Math.sin(t * 0.0065 + 2.2) + 1) / 2) * (NB - 1)));
-
-      // A tracer round flies one of the chart's three arcs every few seconds.
-      tracer.begin();
-      const tp = t % 150, A = ARC[Math.floor(t / 150) % 3];
-      if (tp < 70) {
-        const s = tp / 70;
-        for (let q = 4; q >= 0; q--) { const sq = s - q * 0.025; if (sq < 0) continue; const [x, y] = arcAt(A, sq); tracer.put(x, y, q === 0 ? '#FFF0B0' : q < 2 ? '#E0C070' : '#9A7A30'); }
-        if (tp < 4) { tracer.put(ox + 6, oy - 7, '#FFF0B0'); tracer.put(ox + 7, oy - 8, '#FFD070'); }
-      } else if (tp < 78) {
-        const x = arcAt(A, 1)[0], k = tp - 70;
-        for (let j = 0; j < 5; j++) { const an = (j / 4) * Math.PI; tracer.put(x + Math.cos(an) * (1 + k * 0.5), oy - 1 - Math.sin(an) * (1 + k * 0.5), k < 4 ? '#FFD070' : '#9A7A30'); }
+      // Each light's lamp is 9px in from its wall and 12px down; the beam
+      // frame nearest the angle to the player is the one shown.
+      const lit = (a.burstIn ?? Infinity) <= LIGHT_WARN && a.target;
+      lightL.setVisible(!!lit); lightR.setVisible(!!lit);
+      if (lit) {
+        const frameAt = (dx) => Math.max(0, Math.min(NB - 1, Math.round(Math.atan2(a.target.y - 12, dx) * 180 / Math.PI / BSTEP)));
+        lightL.show(frameAt(a.target.x - 9));
+        lightR.show(frameAt(viewW - 9 - a.target.x));
       }
-      tracer.end();
 
       // The alarm spins up in the last 50 frames before a burst.
       const warn = (a.burstIn ?? Infinity) < 50;

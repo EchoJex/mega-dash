@@ -585,3 +585,42 @@ test('the Volt Spark chain stuns everything it touches, never twice, and prefers
   assert.equal(new Set(hitLog).size, hitLog.length, 'one zap never hits an enemy twice');
   for (const e of hitLog) assert.ok(e.status.stun, 'every enemy the chain touched is stunned');
 });
+
+test('Granite Form hardens on no input, slams, rolls at Lv3, and a shot launches its stone', () => {
+  const h = harness('granite_form', 3);
+  const step = () => { h.run.stoneArmor = 0; h.run.moveScale = 1; h.run.planted = false; Wpn.stepWeapons(h.ctx, ['granite_form']); };
+  const st = () => h.run.wstate.granite_form;
+  // Input keeps it soft.
+  h.run.inputActive = true;
+  for (let i = 0; i < 120; i++) step();
+  assert.equal(st().mode, null);
+  // Half a second of nothing in the air: a slam, armoured and planted.
+  h.run.inputActive = false;
+  h.player.onGround = false;
+  for (let i = 0; i < 30; i++) step();
+  assert.equal(st().mode, 'slam');
+  assert.ok(h.run.stoneArmor > 0 && h.run.planted);
+  // Touching down still moving sideways: a boulder that rolls the player on.
+  h.player.onGround = true; h.player.vx = 0.5;
+  step();
+  assert.equal(st().mode, 'roll');
+  const x0 = h.player.x;
+  for (let i = 0; i < 70; i++) step();
+  assert.ok(h.player.x > x0, 'the boulder rolled');
+  assert.equal(st().mode, 'stone');
+  // A hit on the statue knocks a stone loose; a shot through it launches it.
+  h.run.stoneHit = true;
+  step();
+  assert.equal(st().stones.length, 1);
+  const s = st().stones[0];
+  h.bullets.push({ x: s.x + 2, y: s.y + 2, vx: 3, vy: 0, radius: 2, life: 60, enemy: false });
+  step();
+  assert.equal(st().stones.length, 0);
+  assert.ok(h.bullets.some((b) => b.stone), 'the stone flew');
+  // Input cannot cancel it, but it wears off by itself.
+  h.run.inputActive = true;
+  step();
+  assert.equal(st().mode, 'stone');
+  for (let i = 0; i < 400; i++) step();
+  assert.equal(st().mode, null);
+});
