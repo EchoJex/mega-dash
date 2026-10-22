@@ -997,7 +997,13 @@ the browser's own storage the instant it is made and written to `main` a few sec
 typing stops. **The browser copy is deleted only once GitHub confirms the write**, so if a
 browser copy exists there is work GitHub has not got, and the page puts it back on the next
 open. Every write names the version it replaces, and on a clash the app combines both sides
-field by field (`mergeTracker`).
+field by field, and the BUGS table row by row (`mergeTracker`). **The page never picks up a
+commit until it is reloaded**, so after Claude commits to the tracker the owner reloads
+before typing; until 22 Oct 2026 a clash dropped every bug the page had added.
+
+**Deleting a bug asks first** when the bug has words in it, and the Delete button sits on
+the row's top line, away from the text box — a dim × under the text box, where a phone's
+keyboard opens, deleted two bugs on 22 Oct 2026.
 
 **ONE COPY OF EACH PIECE OF PLUMBING:** `docs/tracker-md.js` is the one parser,
 `docs/gh.js` the one GitHub client, `docs/autosave.js` the one save engine, and

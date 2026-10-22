@@ -75,9 +75,13 @@
   i.f-ready{background:var(--ready)} i.f-wip{background:var(--wip)}
   i.f-draft{background:var(--draft)} i.f-deferred{background:var(--deferred)}
 
-  .bug{display:grid;grid-template-columns:150px 92px 1fr 34px;border-top:1px solid var(--grid)}
+  .bug{display:grid;grid-template-columns:150px 92px 1fr auto;border-top:1px solid var(--grid)}
   .bug input,.bug select{width:100%;background:#0d1015;color:var(--ink);border:none;border-right:1px solid var(--grid);padding:8px}
-  .bug .del{background:none;border:none;color:#7a4a55;cursor:pointer;font-size:16px}
+  /* DELETE IS A REAL BUTTON, AWAY FROM THE TEXT BOX. A dim 16px × sat right
+     under the bug's text box on a phone — where the keyboard opens — and a
+     thumb on it deleted two bugs on 22 Oct 2026 with nothing to undo it. */
+  .bug .del{background:none;border:1px solid #b5485a;border-radius:3px;color:#ff8a9a;
+    font:inherit;font-size:12px;padding:0 12px;margin:4px 6px;min-height:36px;cursor:pointer}
   .free{padding:10px 12px;white-space:pre-wrap;outline:none;min-height:64px}
   .free:focus{box-shadow:inset 0 0 0 1px var(--ui)}
   .note{padding:8px 12px;font-size:11.5px;color:var(--dim);background:#0d1015;border-bottom:1px solid var(--grid)}
@@ -90,7 +94,8 @@
     .field{grid-template-columns:1fr;}
     .lbl{padding:6px 10px 0;background:none}
     .st{background:none;padding:4px 10px}
-    .bug{grid-template-columns:1fr 1fr;}
+    .bug{grid-template-columns:1fr 1fr auto;}
+    .bug .del{grid-row:1;grid-column:3;min-height:44px}
     .bug .note-in{grid-column:1/-1}
   }
 </style>
@@ -609,6 +614,9 @@ function writeBugs(sec, rows) {
     keep.splice(at - 1, 1);
     at--;
   }
+  // ...and the ones directly below it, because the table brings its own. Without
+  // this every keystroke left one more blank line: 450 of them by 22 Oct 2026.
+  while (at < keep.length && keep[at].type === 'raw' && !keep[at].line.trim()) keep.splice(at, 1);
   const table = ['', '| build | status | bug |', '|---|---|---|'].concat(
     rows.length
       ? rows.map((b) => `| ${b.build} | \`[${b.mark}]\` | ${b.note} |`)
@@ -652,7 +660,9 @@ function bugRow(b, onDel, onChange) {
   note.oninput = () => { b.note = note.value; onChange(); touch(); };
 
   const del = document.createElement('button');
-  del.className = 'del'; del.textContent = '×'; del.onclick = onDel;
+  del.className = 'del'; del.textContent = '✕ Delete';
+  // An empty row has nothing to lose, so only a bug with words in it asks first.
+  del.onclick = () => { if (!b.note.trim() || confirm(`Delete this bug?\n\n${b.note}`)) onDel(); };
 
   const buildCell = document.createElement('div');
   buildCell.append(sel, free);

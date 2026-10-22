@@ -158,5 +158,41 @@ export function mergeTracker(theirs, mine, base) {
       }
     }
   }
+
+  /**
+   * TABLE ROWS ARE NOT FIELDS, so the loop above never saw them — and the BUGS
+   * table is where the owner types while playtesting. Without this, a clash kept
+   * GitHub's table whole and every bug this tab had added or edited was dropped
+   * with no warning. Row by row instead: start from GitHub's rows, take out the
+   * ones this tab deleted, add the ones it wrote. A row edited here becomes its
+   * new wording; if Claude struck the old wording through meanwhile, both show.
+   */
+  const isRow = (c) => c.type === 'raw' && /^\|/.test(c.line);
+  const rowsOf = (it) => it.content.filter(isRow).map((c) => c.line);
+  const bItems = items(B);
+  for (const sec of M.sections) {
+    for (const it of sec.items) {
+      const key = `${sec.title}\u0000${it.title}`;
+      const host = tItems.get(key);
+      if (!host) continue;
+      const mine = rowsOf(it);
+      const base = bItems.has(key) ? rowsOf(bItems.get(key)) : [];
+      if (mine.join('\n') === base.join('\n')) continue;
+      const theirs = rowsOf(host);
+      // GitHub has no table here at all: this tab's whole table is the only copy.
+      let rows = theirs.length
+        ? theirs.filter((l) => mine.includes(l) || !base.includes(l))
+        : mine.slice();
+      rows = rows.concat(mine.filter((l) => !base.includes(l) && !rows.includes(l)));
+      const at = host.content.findIndex(isRow);
+      const rest = host.content.filter((c) => !isRow(c));
+      const cut = at < 0 ? rest.length : host.content.slice(0, at).filter((c) => !isRow(c)).length;
+      host.content = [
+        ...rest.slice(0, cut),
+        ...rows.map((line) => ({ type: 'raw', line })),
+        ...rest.slice(cut),
+      ];
+    }
+  }
   return serialize(T);
 }

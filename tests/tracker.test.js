@@ -13,7 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parse, serialize, fieldsOf, rawOf } from '../docs/tracker-md.js';
+import { parse, serialize, fieldsOf, rawOf, mergeTracker } from '../docs/tracker-md.js';
 import { MARKS } from '../docs/marks.js';
 import { musicDir, packFor, AUDIO_RE } from '../tools/music-lib.mjs';
 
@@ -220,4 +220,19 @@ test('every [ready] bgm field names a file in design/music, and every file is cl
 test('design/music/pack.json is current — run `npm run music` if not', () => {
   const written = JSON.parse(readFileSync(new URL('pack.json', musicDir), 'utf8'));
   assert.deepEqual(written, packFor(musicDir));
+});
+
+test('a save clash keeps the bugs both sides wrote, and the ones deleted stay deleted', () => {
+  // The app edits the BUGS table while Claude commits. Before this, the clash
+  // kept GitHub's table whole and the app's bugs vanished.
+  const head = '| build | status | bug |\n|---|---|---|\n';
+  assert.ok(raw.includes(head), 'the BUGS table header moved; update this test');
+  const base = raw.replace(head, head + '| 1 | `[wip]` | old wording |\n');
+  const theirs = base.replace(head, head + '| 2 | `[wip]` | added by Claude |\n');
+  const mine = base.replace('| old wording |', '| typed in the app |');
+  const out = mergeTracker(theirs, mine, base);
+  assert.match(out, /added by Claude/);
+  assert.match(out, /typed in the app/);
+  assert.doesNotMatch(out, /old wording/);
+  assert.equal(mergeTracker(theirs, base, base), theirs, 'no table edit here: GitHub copy untouched');
 });
