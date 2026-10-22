@@ -2055,6 +2055,8 @@ export function spinUp(spin, dir, L) {
 function stepRoll(st, L, lv, ctx) {
   const p = ctx.player, rl = st.roll;
   const v = rl.v * (rl.t / rl.T);
+  // The boulder's picture turns at the speed it is rolling.
+  st.spinT += Math.abs(v) / L.rollSpeed;
   rl.t--;
   const nx = p.x + v;
   // Stop, and drop the form, at the lip — the same probe the Strike lunge uses.
@@ -2191,9 +2193,12 @@ const granite = {
     if (st.mode === 'slam') {
       p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
       if (L.roll && !st.boulder && r.moveInput) {
-        st.boulder = true; st.dir = Math.sign(r.moveInput); st.spin = 0;
+        st.boulder = true; st.dir = Math.sign(r.moveInput); st.spin = 0; st.spinT = 0;
         granite.picture(st, L, ctx);
       } else if (st.boulder && !p.onGround) st.spin++;
+      // THE SPIN-UP SHOWS IN THE AIR: the boulder turns at the speed it would
+      // roll if it landed now, so a long fall visibly winds it up.
+      if (st.boulder) st.spinT += Math.abs(spinUp(st.spin, 1, L).v) / L.rollSpeed;
       crush(st, L, lv, ctx, { x: p.x + 4, y: p.y, w: 16, h: 26 }, L.slamDmg);
       if (!p.onGround) return;
       ctx.shake(2, 8);
@@ -2660,7 +2665,7 @@ export function bodyArt(ctx) {
   const gr = ctx.equipped.includes('granite_form') && ctx.run.wstate.granite_form;
   if (gr?.pic) {
     const p = ctx.player, rolling = gr.pic === 'boulder';
-    const t = gr.mode === 'roll' ? ctx.run.frame : 0;
+    const t = rolling ? gr.spinT || 0 : 0;
     const form = rolling ? 'roll' : gr.shape;
     return {
       id: rolling ? BOULDER : STATUE, x: p.x + 12, y: p.y + 24, facing: p.facing,
