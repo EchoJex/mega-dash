@@ -622,6 +622,14 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   for (let i = 0; i < 70; i++) air.step();
   assert.ok(air.h.player.x < x0, 'the boulder rolled left');
 
+  // The spin-up: a longer fall after the press rolls further, with less
+  // extra for each step past a full jump + midair jump.
+  const L3 = ladderAt('granite_form', 3);
+  const d = (n) => Wpn.spinUp(n, 1, L3).d;
+  assert.ok(d(0) < d(6) && d(6) < d(13) && d(13) < d(26), 'more fall, more roll');
+  assert.ok(d(26) - d(13) < d(13) - d(0), 'diminishing past a full jump + midair jump');
+  assert.equal(Math.sign(Wpn.spinUp(10, -1, L3).v), -1);
+
   // Lv1: a direction during the slam does nothing.
   const one = run(1);
   one.h.player.onGround = false; one.step();

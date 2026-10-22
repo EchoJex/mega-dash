@@ -615,8 +615,10 @@ export const WEAPON_LADDERS = {
    * sends one flying at `stoneSpeed` like a billiard ball.
    *
    * Lv3: a direction pressed during the slam makes it the boulder, which
-   * rolls that way on landing at `rollSpeed`, slowing to a stop over
-   * `rollFrames`. Lv10: a struck stone explodes on the enemy it hits.
+   * rolls that way on landing. How far is the spin-up (`spinUp` in
+   * weaponry.js): `rollMin` pixels for a press just before landing, `rollRef`
+   * for one at the top of a full jump + midair jump, less and less extra
+   * beyond that. Lv10: a struck stone explodes on the enemy it hits.
    */
   granite_form: {
     1: {
@@ -626,7 +628,7 @@ export const WEAPON_LADDERS = {
       stoneBounce: 0.45, stoneRoll: 0.94,
       roll: false, stoneExplode: false,
     },
-    3: { roll: true, rollSpeed: 2.4, rollFrames: 60, boulderSize: 29 },
+    3: { roll: true, rollSpeed: 2.4, rollFrames: 60, rollMin: 24, rollRef: 120, boulderSize: 29 },
     10: { stoneExplode: true, blastR: 20, blastDmg: 'heavy' },
   },
 

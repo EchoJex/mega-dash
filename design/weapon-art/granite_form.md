@@ -25,7 +25,9 @@ rectangle like from 2001"**.
 
 From Lv3, pressing a direction during the slam **puffs it into a large round boulder**
 (1.2 times his size) that rolls that way after landing, crushing through minions, and
-stops just before a cliff edge.
+stops just before a cliff edge. The longer it falls after the press, the faster and further
+it rolls: a short nudge for a late press, about five body widths from the top of a full
+jump and midair jump.
 
 **Every change of form happens under a puff** that hides it and fades fast; the picture
 changes 10 steps after the form does.

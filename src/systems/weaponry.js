@@ -2030,9 +2030,31 @@ const boulderBox = (p, L) => ({ x: p.x + 12 - L.boulderSize / 2, y: p.y + 24 - L
 /** A puff big enough to hide him while the picture changes. */
 const morphPuff = (ctx, L) => ctx.puff({ x: ctx.player.x + 12, y: ctx.player.y + 12, w: 34, life: L.morphFrames + 4, fade: 4, color: 0xC8C2B6, cloud: true });
 
+/**
+ * THE SPIN-UP (owner, 22 Oct 2026): the longer the boulder falls after the
+ * direction is pressed, the further and faster it rolls. Counted in steps of
+ * falling. Up to the fall from a perfect jump + midair jump the roll grows
+ * evenly from `rollMin` to `rollRef` pixels; past it, by the square root, so
+ * a taller drop still adds but less and less. Speed and length both scale
+ * by the square root of the distance against the plain roll (`rollSpeed`
+ * slowing to a stop over `rollFrames`), so a big roll is both quicker and
+ * longer.
+ */
+export function spinUp(spin, dir, L) {
+  // Steps it takes the slam to fall the height of a full jump plus a full
+  // midair jump: about 13 with the NES numbers.
+  const peak = FEEL.jumpVelocity ** 2 / (2 * FEEL.gravity) * (1 + FEEL.doubleJumpHeightMult);
+  const H = peak / FEEL.maxFallSpeed;
+  const eff = spin <= H ? spin : H * Math.sqrt(spin / H);
+  const d = L.rollMin + (L.rollRef - L.rollMin) * (eff / H);
+  const k = Math.sqrt(d / (L.rollSpeed * L.rollFrames / 2));
+  const T = Math.max(1, Math.round(L.rollFrames * k));
+  return { v: dir * L.rollSpeed * k, t: T, T, d };
+}
+
 function stepRoll(st, L, lv, ctx) {
   const p = ctx.player, rl = st.roll;
-  const v = rl.v * (rl.t / L.rollFrames);
+  const v = rl.v * (rl.t / rl.T);
   rl.t--;
   const nx = p.x + v;
   // Stop, and drop the form, at the lip — the same probe the Strike lunge uses.
@@ -2169,15 +2191,15 @@ const granite = {
     if (st.mode === 'slam') {
       p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
       if (L.roll && !st.boulder && r.moveInput) {
-        st.boulder = true; st.dir = Math.sign(r.moveInput);
+        st.boulder = true; st.dir = Math.sign(r.moveInput); st.spin = 0;
         granite.picture(st, L, ctx);
-      }
+      } else if (st.boulder && !p.onGround) st.spin++;
       crush(st, L, lv, ctx, { x: p.x + 4, y: p.y, w: 16, h: 26 }, L.slamDmg);
       if (!p.onGround) return;
       ctx.shake(2, 8);
       ctx.puff({ x: p.x + 12, y: p.y + 24, w: 30, life: 12, color: 0xA8A296 });
       st.mode = st.boulder ? 'roll' : 'stone';
-      if (st.boulder) { st.roll = { v: st.dir * L.rollSpeed, t: L.rollFrames }; p.facing = st.dir; }
+      if (st.boulder) { st.roll = spinUp(st.spin, st.dir, L); p.facing = st.dir; }
       st.t = L.stoneFrames;
       return;
     }
