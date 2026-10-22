@@ -125,6 +125,9 @@ that breaks one is refused with the reason.
   handle line up exactly. It uses only the twelve colours of `player.sprite`. A weapon
   without a body sheet keeps him in his own pose; if a move needs him to move, say so in
   your note.
+- **The Granite Form replaces him outright** while it holds: its `statue` and `boulder`
+  sheets are drawn in place of his picture, standing on his feet. They are rock, in Granite
+  Man's colours, not the player's twelve.
 - **The placeholder's sizes are the owner's.** The Quake Hammer was made a quarter shorter
   after a playtest; draw to the size the placeholder shows, not bigger.
 

@@ -1992,6 +1992,15 @@ const gale = {
  *       that rolls on, crushing through minions, and stops (form over) just
  *       before a cliff edge.
  *
+ * THE STATUE IS ONE OF THREE SHAPES, picked at random each time it hardens
+ * (owner, 22 Oct 2026): "a rocky treasure chest, 8bit megaman in shooting
+ * pose, a simple geometric monolith rectangle like from 2001".
+ *
+ * STATUE OR BOULDER IS DECIDED IN THE AIR, never by changing on the ground
+ * (owner, 22 Oct 2026): at Lv3 the first left or right pressed during the
+ * slam makes it the boulder for the rest of the fall, and it rolls on landing
+ * at the last sideways speed steered.
+ *
  * By the owner's answers of 21 Oct 2026: once hardened it cannot be cancelled
  * (Lv10's jump-cancel is still `[wip]`); "anything the stone lands on" is the
  * statue's own slam; a stone launches when any of your shots touches it.
@@ -2001,6 +2010,10 @@ const gale = {
  * GameScene's hurt() raises `stoneHit` when a hit lands on the statue.
  */
 const STONE_SLOTS = [[-9, 6], [27, 6], [9, -9]];
+export const STATUE_SHAPES = ['chest', 'megaman', 'monolith'];
+const STATUE = 'weapon:granite_form:statue';
+const BOULDER = 'weapon:granite_form:boulder';
+const STONE = 'weapon:granite_form:stone';
 
 function crush(st, L, lv, ctx, box, word) {
   for (const e of enemiesIn(ctx, box)) {
@@ -2057,7 +2070,10 @@ function stepStones(st, L, lv, ctx) {
 }
 
 const granite = {
-  init(st) { st.mode = null; st.idle = 0; st.t = 0; st.stones = []; st.crushed = new Set(); st.roll = null; },
+  init(st) {
+    st.mode = null; st.idle = 0; st.t = 0; st.stones = []; st.crushed = new Set(); st.roll = null;
+    st.shape = STATUE_SHAPES[0]; st.boulder = false; st.steer = 0;
+  },
 
   step(st, lv, ctx) {
     const L = ladderAt('granite_form', lv), p = ctx.player, r = ctx.run;
@@ -2071,6 +2087,8 @@ const granite = {
       st.crushed = new Set();
       st.mode = p.onGround ? 'stone' : 'slam';
       st.t = L.stoneFrames;
+      st.shape = STATUE_SHAPES[Math.floor(Math.random() * STATUE_SHAPES.length)];
+      st.boulder = false; st.steer = 0;
       ctx.puff({ x: p.x + 12, y: p.y + 14, w: 22, life: 10, color: 0xA8A296 });
       ctx.sfx('select', { pitch: 0.5 });
     }
@@ -2088,13 +2106,14 @@ const granite = {
     if (st.mode === 'slam') {
       r.moveScale = L.slamAirControl;
       p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
+      if (L.roll && p.vx) { st.boulder = true; st.steer = p.vx; }
       crush(st, L, lv, ctx, { x: p.x + 4, y: p.y, w: 16, h: 26 }, L.slamDmg);
       if (!p.onGround) return;
       ctx.shake(2, 8);
       ctx.puff({ x: p.x + 12, y: p.y + 24, w: 30, life: 12, color: 0xA8A296 });
-      if (L.roll && Math.abs(p.vx) > 0.05) {
+      if (st.boulder) {
         st.mode = 'roll';
-        st.roll = { v: p.vx * L.rollMult, t: L.rollFrames };
+        st.roll = { v: st.steer * L.rollMult, t: L.rollFrames };
       } else st.mode = 'stone';
       st.t = L.stoneFrames;
       return;
@@ -2432,6 +2451,13 @@ export function drawPuff(g, q, cx) {
 export function drawWeaponArt(layers, sx, sy, ctx) {
   const { run, player: p, fx } = ctx;
   const back = layers.effects;
+  const gr = ctx.equipped.includes('granite_form') && run.wstate.granite_form;
+  for (const s of gr ? gr.stones : []) {
+    back.drawCell(
+      { id: STONE, x: sx(s.x + 3), y: sy(s.y + 6), facing: 1, cell: cellAt(clipOf(STONE, 'loose'), 0) },
+      (g) => drawStoneShape(g, sx(s.x + 3), sy(s.y + 6)),
+    );
+  }
   for (const s of fx.sand) {
     back.drawCell(
       { id: SAND, x: sx(s.x), y: sy(s.y), facing: 1, cell: cellAt(clipOf(SAND, s.shade ? 'dark' : 'light'), 0) },
@@ -2524,6 +2550,19 @@ function whipCracking(ctx) {
  * clock as the weapon so hand and handle line up (Simon's Whip so far).
  */
 export function bodyArt(ctx) {
+  // THE GRANITE FORM takes his place while it holds: a statue, or the boulder.
+  // Held by his feet, the middle of the floor under him.
+  const gr = ctx.equipped.includes('granite_form') && ctx.run.wstate.granite_form;
+  if (gr?.mode) {
+    const p = ctx.player, rolling = gr.mode === 'roll' || (gr.mode === 'slam' && gr.boulder);
+    const t = gr.mode === 'roll' ? ctx.run.frame : 0;
+    const form = rolling ? 'roll' : gr.shape;
+    return {
+      id: rolling ? BOULDER : STATUE, x: p.x + 12, y: p.y + 24, facing: p.facing,
+      cell: cellAt(clipOf(rolling ? BOULDER : STATUE, form), t, rolling),
+      shape: (g, x, y) => drawGraniteShape(g, x, y, p.facing, form, t),
+    };
+  }
   const la = whipCracking(ctx);
   if (!la) return null;
   return {
@@ -2537,6 +2576,42 @@ export function bodyArt(ctx) {
  * what `npm run art:placeholders` paints the placeholder sheets from, through
  * a stand-in for Phaser's Graphics. Exported for that tool and nothing else.
  */
+
+/**
+ * THE GRANITE FORM'S PLAIN SHAPES, standing on (x, y), the floor under his
+ * middle. `form` is a statue shape or `roll`; `t` turns the boulder.
+ */
+export function drawGraniteShape(g, x, y, facing, form, t = 0) {
+  const D = 0x5F443A, L = 0xA8A296, K = 0x0A0A12, f = facing < 0 ? -1 : 1;
+  const box = (bx, by, w, h, c) => { g.fillStyle(c, 1); g.fillRect(f > 0 ? x + bx : x - bx - w, y + by, w, h); };
+  if (form === 'roll') {
+    g.fillStyle(K, 1); g.fillCircle(x, y - 14, 14);
+    g.fillStyle(L, 1); g.fillCircle(x, y - 14, 12);
+    const a = (Math.floor(t / 4) % 4) * (Math.PI / 2) * f;
+    g.fillStyle(D, 1); g.fillRect(Math.round(x + Math.cos(a) * 7) - 2, Math.round(y - 14 + Math.sin(a) * 7) - 2, 4, 4);
+    return;
+  }
+  if (form === 'chest') {
+    box(-11, -15, 22, 15, K); box(-10, -14, 20, 13, L);
+    box(-10, -10, 20, 1, D); box(-2, -11, 4, 4, D);
+    return;
+  }
+  if (form === 'monolith') {
+    box(-6, -27, 12, 27, K); box(-5, -26, 10, 25, D);
+    return;
+  }
+  // megaman: legs apart, body, head, and the arm cannon pointed forward
+  box(-7, -6, 5, 6, K); box(2, -6, 5, 6, K);
+  box(-5, -16, 10, 11, K); box(-4, -15, 8, 9, L);
+  box(-4, -23, 9, 8, K); box(-3, -22, 7, 6, L);
+  box(4, -15, 9, 5, K); box(5, -14, 7, 3, L);
+}
+
+/** One loose stone, standing on (x, y). */
+export function drawStoneShape(g, x, y) {
+  g.fillStyle(0x5F443A, 1); g.fillRect(x - 3, y - 6, 6, 6);
+  g.fillStyle(0xA8A296, 1); g.fillRect(x - 2, y - 5, 4, 4);
+}
 
 /**
  * THE WHIP'S PLAIN SHAPE, from the owner's Stick Nodes poses of Simon
@@ -2659,27 +2734,6 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(m.x) - 5, m.y - 6, 10, 2);
     g.fillStyle(dr.reloading ? 0x8A3040 : 0x5CADD5, 1);
     g.fillRect(sx(m.x) - 5, m.y - 6, Math.round(10 * frac), 2);
-  }
-
-  // GRANITE FORM — the statue (or Lv3's boulder) laid over him while the form
-  // holds, and the stones a hit knocks loose. Shapes until the art arrives.
-  const gr = run.wstate.granite_form;
-  if (gr && ctx.equipped.includes('granite_form')) {
-    const L = ladderAt('granite_form', ctx.levelOf('granite_form'));
-    if (gr.mode === 'roll') {
-      const b = boulderBox(p, L), rad = b.w / 2;
-      g.fillStyle(0x5F443A, 1); g.fillCircle(sx(b.x + rad), b.y + rad, rad);
-      g.fillStyle(0xA8A296, 1); g.fillCircle(sx(b.x + rad), b.y + rad, rad - 2);
-      g.fillStyle(0x5F443A, 1); g.fillRect(sx(b.x + rad) + Math.round(Math.cos(gr.roll.t * 0.3) * (rad - 6)) - 2, b.y + rad - 2, 4, 4);
-    } else if (gr.mode) {
-      g.fillStyle(0x5F443A, 1); g.fillRect(sx(p.x + 3), p.y + 2, 18, 22);
-      g.fillStyle(0xA8A296, 1); g.fillRect(sx(p.x + 5), p.y + 4, 14, 18);
-      g.fillStyle(0x5F443A, 1); g.fillRect(sx(p.x + 8), p.y + 9, 6, 2); g.fillRect(sx(p.x + 12), p.y + 15, 5, 2);
-    }
-    for (const s of gr.stones) {
-      g.fillStyle(0x5F443A, 1); g.fillRect(sx(s.x), s.y, L.stoneSize, L.stoneSize);
-      g.fillStyle(0xA8A296, 1); g.fillRect(sx(s.x) + 1, s.y + 1, L.stoneSize - 2, L.stoneSize - 2);
-    }
   }
 
   // TORRENT CANNON — two nozzles under a blue tank layer whose height IS the

@@ -3053,7 +3053,11 @@ export default class GameScene extends Phaser.Scene {
       // A weapon mid-move may pose his whole body (Simon's Whip's body sheet);
       // with nothing drawn for it he is drawn as himself.
       const body = Wpn.bodyArt(wctx);
-      if (!body || !L.player.drawCell({ ...body, x: sx(body.x), y: sy(body.y) })) L.player.draw({
+      // A body with its own plain shape (the Granite Form) replaces him even
+      // before it is drawn; the whip's body falls back to him.
+      const posed = body && (L.player.drawCell({ ...body, x: sx(body.x), y: sy(body.y) },
+        body.shape && ((g) => body.shape(g, sx(body.x), sy(body.y)))) || body.shape);
+      if (!posed) L.player.draw({
         id: 'player',
         x: sx(p.x), y: sy(p.y + (p.sliding ? 12 : 0)),
         w: 24, h: p.sliding ? 12 : 24,

@@ -600,10 +600,14 @@ test('Granite Form hardens on no input, slams, rolls at Lv3, and a shot launches
   for (let i = 0; i < 30; i++) step();
   assert.equal(st().mode, 'slam');
   assert.ok(h.run.stoneArmor > 0 && h.run.planted);
-  // Touching down still moving sideways: a boulder that rolls the player on.
-  h.player.onGround = true; h.player.vx = 0.5;
+  // Steering during the fall decides boulder, in the air; it rolls on landing
+  // even though he let go before touching down.
+  h.player.vx = 0.5; step();
+  assert.ok(st().boulder, 'the first steer makes it the boulder');
+  h.player.vx = 0; h.player.onGround = true;
   step();
   assert.equal(st().mode, 'roll');
+  assert.ok(['chest', 'megaman', 'monolith'].includes(st().shape));
   const x0 = h.player.x;
   for (let i = 0; i < 70; i++) step();
   assert.ok(h.player.x > x0, 'the boulder rolled');

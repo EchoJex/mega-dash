@@ -110,6 +110,30 @@ export const WEAPON_ART = {
       },
     },
   },
+
+  /**
+   * GRANITE FORM. While it holds, the statue or the boulder is drawn IN PLACE
+   * of him (like the whip's body sheet), held by his feet. The statue is one
+   * of three shapes, picked at random each time (owner, 22 Oct 2026).
+   */
+  granite_form: {
+    sheets: {
+      statue: {
+        grid: { w: 40, h: 40 }, layer: 'player', heldBy: 'his feet — the floor under the middle of him',
+        clips: { chest: 'still', megaman: 'still', monolith: 'still' },
+      },
+      // Lv3's boulder, rolling. Its picture turns while it rolls.
+      boulder: {
+        grid: { w: 40, h: 40 }, layer: 'player', heldBy: 'the floor under the middle of it',
+        clips: { roll: 'loop' },
+      },
+      // A small stone a hit knocks loose, waiting to be shot at a foe.
+      stone: {
+        grid: { w: 10, h: 10 }, layer: 'effects', heldBy: 'the floor under its middle',
+        clips: { loose: 'still' },
+      },
+    },
+  },
 };
 
 /** `weapon-quake_hammer-held` — the `.sprite` file's name, and the editor's id. */

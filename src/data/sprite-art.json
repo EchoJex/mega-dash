@@ -145,6 +145,87 @@
       ]
     }
   },
+  "weapon:granite_form:boulder": {
+    "file": "weapon-granite_form-boulder.png",
+    "frameW": 40,
+    "frameH": 40,
+    "anchor": "pivot",
+    "pivot": [
+      20,
+      38
+    ],
+    "tintable": false,
+    "anims": {
+      "roll": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "roll": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "weapon:granite_form:statue": {
+    "file": "weapon-granite_form-statue.png",
+    "frameW": 40,
+    "frameH": 40,
+    "anchor": "pivot",
+    "pivot": [
+      20,
+      38
+    ],
+    "tintable": false,
+    "anims": {
+      "chest": [
+        0
+      ],
+      "megaman": [
+        1
+      ],
+      "monolith": [
+        2
+      ]
+    },
+    "holds": {
+      "chest": [
+        5
+      ],
+      "megaman": [
+        5
+      ],
+      "monolith": [
+        5
+      ]
+    }
+  },
+  "weapon:granite_form:stone": {
+    "file": "weapon-granite_form-stone.png",
+    "frameW": 10,
+    "frameH": 10,
+    "anchor": "pivot",
+    "pivot": [
+      5,
+      8
+    ],
+    "tintable": false,
+    "anims": {
+      "loose": [
+        0
+      ]
+    },
+    "holds": {
+      "loose": [
+        5
+      ]
+    }
+  },
   "weapon:quake_hammer:dust": {
     "file": "weapon-quake_hammer-dust.png",
     "frameW": 64,

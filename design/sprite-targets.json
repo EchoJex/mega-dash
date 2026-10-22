@@ -3478,6 +3478,70 @@
         "lowCrackLong",
         "lowCrackLonger"
       ]
+    },
+    "weapon-granite_form-statue": {
+      "label": "GRANITE FORM · STATUE",
+      "cls": "weapon",
+      "key": "weapon:granite_form:statue",
+      "weapon": "granite_form",
+      "sheet": "statue",
+      "boss": "granite",
+      "layer": "player",
+      "grid": {
+        "w": 40,
+        "h": 40
+      },
+      "box": null,
+      "clips": {
+        "chest": "still",
+        "megaman": "still",
+        "monolith": "still"
+      },
+      "frames": [
+        "chest",
+        "megaman",
+        "monolith"
+      ]
+    },
+    "weapon-granite_form-boulder": {
+      "label": "GRANITE FORM · BOULDER",
+      "cls": "weapon",
+      "key": "weapon:granite_form:boulder",
+      "weapon": "granite_form",
+      "sheet": "boulder",
+      "boss": "granite",
+      "layer": "player",
+      "grid": {
+        "w": 40,
+        "h": 40
+      },
+      "box": null,
+      "clips": {
+        "roll": "loop"
+      },
+      "frames": [
+        "roll"
+      ]
+    },
+    "weapon-granite_form-stone": {
+      "label": "GRANITE FORM · STONE",
+      "cls": "weapon",
+      "key": "weapon:granite_form:stone",
+      "weapon": "granite_form",
+      "sheet": "stone",
+      "boss": "granite",
+      "layer": "effects",
+      "grid": {
+        "w": 10,
+        "h": 10
+      },
+      "box": null,
+      "clips": {
+        "loose": "still"
+      },
+      "frames": [
+        "loose"
+      ]
     }
   },
   "avgBoss": {

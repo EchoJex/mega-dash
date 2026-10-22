@@ -1,0 +1,20 @@
+# weapon-granite_form-stone
+grid      10x10
+fudge     0.70 x 1.00
+pivot     5 8
+palette   0 #0A0A12 outline
+palette   1 #5F443A dark stone (Granite Man primary)
+palette   2 #A8A296 light stone (Granite Man secondary)
+note      PLACEHOLDER — plain shapes painted by npm run art:placeholders. Redraw any frame; the clips, holds, hit areas and pivot are what the game plays.
+
+[loose 1] status=ready hold=5
+..........
+..........
+..111111..
+..122221..
+..122221..
+..122221..
+..122221..
+..111111..
+..........
+..........
