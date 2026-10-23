@@ -43,10 +43,11 @@ arm raised overhead, arm thrust forward. Use only the twelve colours of
 `design/sprites/player.sprite`.
 
 - The **standing** clips are standing poses. **He cannot move while he cracks standing.**
-- The **low** clips (`lowCrack…`) are cracked **during a slide**, crouched low, and he
-  keeps sliding. If the slide ends first, the game switches to the standing clip at the
-  same step, so a low frame and the standing frame at the same step should match from
-  the waist up.
+- The **sliding** clips (`slidingCrack…`) are cracked **during a slide**, and he keeps
+  sliding: his slide's legs, both feet leading, under the cracking upper body. There is
+  no crouch in this game (owner, 23 Oct 2026). If the slide ends first, the game switches
+  to the standing clip at the same step, so a sliding frame and the standing frame at the
+  same step should match from the waist up.
 - **The whip's handle must start at his hand**, the pivot, in every frame of the crack
   (frame 3). In frames 1 and 2 his hand is behind or above him; draw the hand there and
   the handle with it. The placeholder runs the whip back to the pivot only because its
@@ -56,9 +57,9 @@ arm raised overhead, arm thrust forward. Use only the twelve colours of
 
 | rung | on screen |
 |---|---|
-| **Lv1–2** | `crack` (the short whip) and `lowCrack` in a slide. |
+| **Lv1–2** | `crack` (the short whip) and `slidingCrack` in a slide. |
 | **Lv3** | `crackLong` (a longer whip), and `crackUpLong`, cracked 45° up and forward when the player holds up-forward. After a crack catches a minion the game reels it in along a plain vine (no sheet). |
-| **Lv6** | `crackLonger`, `crackUpLonger` and `lowCrackLonger`: the longest whip. |
+| **Lv6** | `crackLonger`, `crackUpLonger` and `slidingCrackLonger`: the longest whip. |
 | **Lv10** | nothing new to draw. |
 
 ## At rest, and which hand
@@ -80,8 +81,8 @@ the game is playing. Do not edit it by hand.
 
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
-| [`weapon-simons_whip-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-held.sprite) | 136×76 | 50, 62 — his hand, on the handle | in front of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, lowCrack, lowCrackLong, lowCrackLonger, rest |
-| [`weapon-simons_whip-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-body.sprite) | 136×76 | 50, 62 — his hand — the same point as the whip's pivot | in place of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, lowCrack, lowCrackLong, lowCrackLonger |
+| [`weapon-simons_whip-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-held.sprite) | 136×76 | 50, 62 — his hand, on the handle | in front of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, slidingCrack, slidingCrackLong, slidingCrackLonger, rest |
+| [`weapon-simons_whip-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-simons_whip-body.sprite) | 136×76 | 50, 62 — his hand — the same point as the whip's pivot | in place of the player | crack, crackLong, crackLonger, crackUpLong, crackUpLonger, slidingCrack, slidingCrackLong, slidingCrackLonger |
 
 ### Every clip, frame by frame
 
@@ -91,14 +92,14 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
-| crack | lash | 5 · **5** · **10** | 20 | 5 then 10 | 19, 52, 16×19 then 79, 57, 10×10 | — |
-| crackLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 13, 50, 18×22 then 97, 57, 10×10 | — |
-| crackLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 48, 21×26 then 123, 57, 10×10 | — |
-| crackUpLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 13, 50, 18×22 then 82, 20, 10×10 | — |
-| crackUpLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 48, 21×26 then 100, 2, 10×10 | — |
-| lowCrack | lash | 5 · **5** · **10** | 20 | 5 then 10 | 19, 52, 16×19 then 79, 57, 10×10 | — |
-| lowCrackLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 13, 50, 18×21 then 97, 57, 10×10 | — |
-| lowCrackLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 48, 21×23 then 123, 57, 10×10 | — |
+| crack | lash | 5 · **5** · **10** | 20 | 5 then 10 | 18, 43, 25×22 then 79, 57, 10×10 | — |
+| crackLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 7, 42, 36×28 then 97, 57, 10×10 | — |
+| crackLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 43, 38×28 then 123, 57, 10×10 | — |
+| crackUpLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 7, 42, 36×28 then 82, 20, 10×10 | — |
+| crackUpLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 43, 38×28 then 100, 2, 10×10 | — |
+| slidingCrack | lash | 5 · **5** · **10** | 20 | 5 then 10 | 18, 43, 25×22 then 79, 57, 10×10 | — |
+| slidingCrackLong | lash | 5 · **5** · **10** | 20 | 5 then 10 | 7, 42, 36×28 then 97, 57, 10×10 | — |
+| slidingCrackLonger | lash | 5 · **5** · **10** | 20 | 5 then 10 | 5, 43, 38×28 then 123, 57, 10×10 | — |
 | rest | still | 5 | 5 | — | — | — |
 
 **weapon-simons_whip-body**
@@ -110,9 +111,9 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | crackLonger | once | 5 · 5 · 10 | 20 | — | — | — |
 | crackUpLong | once | 5 · 5 · 10 | 20 | — | — | — |
 | crackUpLonger | once | 5 · 5 · 10 | 20 | — | — | — |
-| lowCrack | once | 5 · 5 · 10 | 20 | — | — | — |
-| lowCrackLong | once | 5 · 5 · 10 | 20 | — | — | — |
-| lowCrackLonger | once | 5 · 5 · 10 | 20 | — | — | — |
+| slidingCrack | once | 5 · 5 · 10 | 20 | — | — | — |
+| slidingCrackLong | once | 5 · 5 · 10 | 20 | — | — | — |
+| slidingCrackLonger | once | 5 · 5 · 10 | 20 | — | — | — |
 
 Clip kinds: **hit** plays once; exactly one frame carries hit=x,y,w,h — the step it connects and its hit area; **loop** loops for as long as the move lasts; no hit; **once** plays once, and its length is how long the thing lasts; no hit; **grow** plays once; starts with frames marked with a bare hit (they hurt), then frames without (they stand); **lash** plays once; exactly two frames carry hit=x,y,w,h — the first hurts lightly while it shows, the second is the main hit and its area is the tip; **still** a single frame; no hit.
 
@@ -124,7 +125,7 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 - **the tip reaches further with level**: crack < crackLong < crackLonger, measured from the pivot.
 - **every crack reaches a minion standing against his front**, standing or sliding, at every length: a 12-pixel minion on the floor just past his hand is hit by the tip or the shaft. **The swing's area stays behind his hand**, so that minion takes the crack and not the light hit (one crack pays a target once).
 - **the body sheet** has exactly the whip's clips, frame counts and holds, on the same paper and pivot, and uses only the player's own twelve colours. It is drawn in place of him while he cracks.
-- **crackUp…** points up and forward; **lowCrack…** is the crack during a slide, his hand 6 pixels above the floor rather than 12.
+- **crackUp…** points up and forward; **slidingCrack…** is the crack during a slide, his hand 6 pixels above the floor rather than 12.
 <!-- /generated:contract -->
 
 ## Handing this weapon to Claude Design

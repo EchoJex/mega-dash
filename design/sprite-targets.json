@@ -3426,9 +3426,9 @@
         "crackLonger": "lash",
         "crackUpLong": "lash",
         "crackUpLonger": "lash",
-        "lowCrack": "lash",
-        "lowCrackLong": "lash",
-        "lowCrackLonger": "lash",
+        "slidingCrack": "lash",
+        "slidingCrackLong": "lash",
+        "slidingCrackLonger": "lash",
         "rest": "still"
       },
       "frames": [
@@ -3437,9 +3437,9 @@
         "crackLonger",
         "crackUpLong",
         "crackUpLonger",
-        "lowCrack",
-        "lowCrackLong",
-        "lowCrackLonger",
+        "slidingCrack",
+        "slidingCrackLong",
+        "slidingCrackLonger",
         "rest"
       ]
     },
@@ -3462,9 +3462,9 @@
         "crackLonger": "once",
         "crackUpLong": "once",
         "crackUpLonger": "once",
-        "lowCrack": "once",
-        "lowCrackLong": "once",
-        "lowCrackLonger": "once"
+        "slidingCrack": "once",
+        "slidingCrackLong": "once",
+        "slidingCrackLonger": "once"
       },
       "frames": [
         "crack",
@@ -3472,9 +3472,9 @@
         "crackLonger",
         "crackUpLong",
         "crackUpLonger",
-        "lowCrack",
-        "lowCrackLong",
-        "lowCrackLonger"
+        "slidingCrack",
+        "slidingCrackLong",
+        "slidingCrackLonger"
       ]
     },
     "weapon-granite_form-statue": {

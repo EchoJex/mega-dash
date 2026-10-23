@@ -653,6 +653,7 @@ Claude or a generator made:
 | Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 | the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
+| Simon's Whip — the vine (every crack) and his three Simon poses; not the coiled whip at rest, which the owner drew pixel by pixel | sprite | Claude (Claude Design) | 2026-10-22 | `design/sprites/weapon-simons_whip-{held,body}.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero

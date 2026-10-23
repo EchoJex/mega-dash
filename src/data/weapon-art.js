@@ -38,7 +38,7 @@
 /** Every crack Simon's Whip plays: three lengths, tilted up from Lv3, and low during a slide. */
 export const WHIP_CLIPS = [
   'crack', 'crackLong', 'crackLonger', 'crackUpLong', 'crackUpLonger',
-  'lowCrack', 'lowCrackLong', 'lowCrackLonger',
+  'slidingCrack', 'slidingCrackLong', 'slidingCrackLonger',
 ];
 
 export const WEAPON_ART = {
@@ -91,7 +91,7 @@ export const WEAPON_ART = {
    *
    * One clip per length the ladder reaches (`crack`, `crackLong`,
    * `crackLonger`), tilted up from Lv3 (`crackUp…`), and cracked low during
-   * a slide (`lowCrack…`, his hand nearer the floor).
+   * a slide (`slidingCrack…`, his hand nearer the floor).
    */
   simons_whip: {
     sheets: {

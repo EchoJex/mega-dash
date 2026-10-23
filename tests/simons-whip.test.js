@@ -126,7 +126,7 @@ test('standing, he is rooted for the whole crack; sliding, he is not', () => {
   s.press();
   s.steps(3);
   assert.equal(s.run.rootFrames, 0);
-  assert.equal(s.st().lash.clip, 'lowCrack');
+  assert.equal(s.st().lash.clip, 'slidingCrack');
 });
 
 test('a slide that ends mid-crack finishes it standing, at the same step', () => {

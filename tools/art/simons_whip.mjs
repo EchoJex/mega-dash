@@ -108,7 +108,7 @@ export function constraints() {
       + 'target once).',
     '**the body sheet** has exactly the whip\'s clips, frame counts and holds, on the same paper and pivot, '
       + 'and uses only the player\'s own twelve colours. It is drawn in place of him while he cracks.',
-    '**crackUp…** points up and forward; **lowCrack…** is the crack during a slide, his hand 6 pixels above '
+    '**crackUp…** points up and forward; **slidingCrack…** is the crack during a slide, his hand 6 pixels above '
       + 'the floor rather than 12.',
   ];
 }

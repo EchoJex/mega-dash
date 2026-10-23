@@ -1688,7 +1688,7 @@ const WHIP_LEN = { short: '', long: 'Long', longer: 'Longer' };
 /** Which drawn crack plays: the rung's length, tilted up from Lv3, or low in a slide. */
 function whipClip(L, low, up) {
   const n = WHIP_LEN[L.whip];
-  if (low) return `lowCrack${n}`;
+  if (low) return `slidingCrack${n}`;
   return up && n ? `crackUp${n}` : `crack${n}`;
 }
 
