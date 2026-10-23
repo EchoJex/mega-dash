@@ -77,8 +77,13 @@ export default class TitleScene extends Phaser.Scene {
       this.btn(w - 34, 12, 'DEV', () => this.scene.start('DevMenu'), '#F5D328');
     }
     // The other top corner, mirroring DEV. Present in every launch.
-    this.btn(38, 12, 'AUDIO', () => this.scene.launch('Audio'));
-    playMusic(TRACK.menu);
+    const audio = this.btn(38, 12, 'AUDIO', () => this.scene.launch('Audio'));
+    // CREDITS sits just right of AUDIO, because the far corner is DEV's.
+    const track = this.died && !this.won ? TRACK.gameOver : TRACK.menu;
+    const cr = plate(this, 0, 12, 'CREDITS', { color: '#5CADD5', padX: 8, padY: 4 });
+    cr.rect.x = cr.txt.x = Math.round(audio.x + audio.width / 2 + 4 + cr.rect.width / 2);
+    cr.rect.on('pointerdown', () => this.scene.launch('Credits', { back: track }));
+    playMusic(track);
 
     this.btn(cx, 136, this.won ? 'PLAY AGAIN' : this.died ? 'TRY AGAIN' : 'START',
       () => this.scene.start('Game'));

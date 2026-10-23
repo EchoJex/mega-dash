@@ -349,9 +349,17 @@ silently: the track just never reaches a phone.
 keystore never changes.
 
 **The track name is the address.** The game asks for `bgm-<boss id>-stage`,
-`bgm-<boss id>-arena`, `bgm-menu-main` and `bgm-post-fight` (`TRACK` in `music.js`), and
-`tests/music.test.js` checks every one of them is named in the tracker. A name with no file
-is silence, and the old track still fades out.
+`bgm-<boss id>-arena`, `bgm-menu-main`, `bgm-post-fight`, `bgm-game-over` and `bgm-credits`
+(`TRACK` in `music.js`), and `tests/music.test.js` checks every one of them is named in the
+tracker. A name with no file is silence, and the old track still fades out.
+
+**Every track is Ogg Vorbis**, by the owner's question of 22 Oct 2026: an MP3 carries a
+sliver of added silence at each end that a loop plays as a hiccup, and Ogg records its exact
+length. Convert with ffmpeg using libvorbis (not ffmpeg's own weaker Vorbis encoder), and
+trim an MP3's added silence before cutting a loop. **A track loops whole unless `LOOP_FROM`
+in `music.js` says otherwise**: a number is the second it jumps back to (the game over track
+plays its first 20.29 s once, then loops the rest), `null` plays once (credits). Jumping back
+when the file ends was measured in Chromium with a steady test tone: no dropout at all.
 
 **Fades follow the picture.** The warp fades the music out over its own fade to black and
 `GameScene.music()` fades the next track in over the warp's fade back in, both read from
@@ -646,14 +654,16 @@ Claude or a generator made:
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 | the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
 
-**The three older tracks are not on the list**, because they are not AI-made. The three tracks in
-`design/music/` from before (Drake Man's stage, the main menu, post-fight) are from
+**The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
+track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
+Immortal" by Trevor Lentz, CC-BY-SA 3.0) came in on 22 Oct 2026 with their pages and
+licences on their tracker lines, and the in-game CREDITS screen (`CreditsScene.js`) names
+them. **Two older tracks** (Drake Man's stage, post-fight) are also from
 **opengameart.org**, by the owner's account, and which pages they came from is lost.
 OpenGameArt pieces come under different licences, and several require the author to be
-named wherever the work is shared. Nothing is owed while the game stays a private
-playtest; **before handing a build to anyone else, find each track's page or replace the
-track.** A track added from outside gets its source page and licence on its tracker `bgm`
-line when it is handed off.
+named wherever the work is shared. **Before handing a build to anyone else, find those two
+tracks' pages or replace them.** A track added from outside gets its source page and licence
+on its tracker `bgm` line when it is handed off, and a line on the CREDITS screen.
 
 ---
 

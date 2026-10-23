@@ -20,6 +20,7 @@ import GameScene from './scenes/GameScene.js';
 import HubScene from './scenes/HubScene.js';
 import UIScene from './scenes/UIScene.js';
 import AudioScene from './scenes/AudioScene.js';
+import CreditsScene from './scenes/CreditsScene.js';
 import { unlockAudio } from './systems/sfx.js';
 import { syncMusic, resumeMusic, musicState } from './systems/music.js';
 
@@ -64,7 +65,7 @@ const game = new Phaser.Game({
   // unconditionally and reached conditionally — BootScene sends the game
   // straight to Title when DEV.available is false, and nothing else links to
   // either of them, so a shipped build never constructs one.
-  scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene, AudioScene],
+  scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene, AudioScene, CreditsScene],
 });
 
 /**

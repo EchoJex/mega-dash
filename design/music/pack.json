@@ -10,15 +10,25 @@
       "bytes": 1263800,
       "sha": "8b57200e666c06ae"
     },
+    "bgm-credits": {
+      "file": "bgm-credits.ogg",
+      "bytes": 4039809,
+      "sha": "5081d090f97e9672"
+    },
     "bgm-drake-stage": {
       "file": "bgm-drake-stage.ogg",
       "bytes": 4498661,
       "sha": "4a5209e17b65f777"
     },
+    "bgm-game-over": {
+      "file": "bgm-game-over.ogg",
+      "bytes": 755028,
+      "sha": "a99cc9850956e16e"
+    },
     "bgm-menu-main": {
       "file": "bgm-menu-main.ogg",
-      "bytes": 2385067,
-      "sha": "95c3fc2b9e0e97cf"
+      "bytes": 334653,
+      "sha": "84d29c4ac6852979"
     },
     "bgm-post-fight": {
       "file": "bgm-post-fight.ogg",

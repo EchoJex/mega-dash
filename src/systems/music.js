@@ -54,9 +54,21 @@ const PACK_KEY = 'megadash_music_pack_v1';
 export const TRACK = {
   menu: 'bgm-menu-main',
   postFight: 'bgm-post-fight',
+  gameOver: 'bgm-game-over',
+  credits: 'bgm-credits',
   stage: (bossId) => `bgm-${bossId}-stage`,
   arena: (bossId) => `bgm-${bossId}-arena`,
 };
+
+/**
+ * WHERE A TRACK GOES WHEN IT REACHES ITS END. Anything not listed starts again
+ * from the top. A number is the second it jumps back to, so what comes before
+ * it plays once as an intro; `null` plays the track once and stops.
+ *
+ * The game over track's loop is 0:20.293 to the file's end at 0:36.293:
+ * exactly 16 seconds, 7 bars at 105 beats a minute, both ends on a bar line.
+ */
+const LOOP_FROM = { [TRACK.gameOver]: 894914 / 44100, [TRACK.credits]: null };
 
 let pack = null;            // { tracks: { name: { file, bytes, sha } } }
 const ready = new Map();    // name -> object URL of the stored copy
@@ -199,7 +211,9 @@ function startIfWanted() {
   // silence from a file on another site. Harmless for a stored copy.
   el.crossOrigin = 'anonymous';
   el.src = url;
-  el.loop = true;
+  const from = LOOP_FROM[wanted.name];
+  el.loop = from === undefined;
+  if (from) el.addEventListener('ended', () => { el.currentTime = from; el.play().catch(() => {}); });
   el.preservesPitch = false;         // slow motion drops the pitch, like tape
   el.playbackRate = rate;
   const gain = g.ctx.createGain();

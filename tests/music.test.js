@@ -21,8 +21,9 @@ test('every boss\'s tracker lines name the file the game will ask for', () => {
       assert.ok(tracker.includes(want), `${b.id}: tracker never mentions ${want}`);
     }
   }
-  assert.ok(tracker.includes(`\`${TRACK.menu}.ogg\``));
-  assert.ok(tracker.includes(`\`${TRACK.postFight}.ogg\``));
+  for (const t of [TRACK.menu, TRACK.postFight, TRACK.gameOver, TRACK.credits]) {
+    assert.ok(tracker.includes(`\`${t}.ogg\``), `tracker never mentions ${t}.ogg`);
+  }
 });
 
 test('with no audio at all, asking for music is silence and never throws', () => {
