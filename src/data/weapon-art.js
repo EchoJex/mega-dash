@@ -28,8 +28,8 @@
  * checker that enforces them.
  *
  * CLIP NAMES NEVER END IN A DIGIT. The sprite format reads a trailing number
- * as a frame index (`jab1` would become action `jab`, frame 2), so the jabs are
- * `jabOne`, `jabTwo`, `jabThree`.
+ * as a frame index (`jab2` would become action `jab`, frame 3), so the jabs are
+ * `jabTwo` and `jabThree`.
  *
  * ADDING A WEAPON'S ART is one entry here, a placeholder rig in `tools/art/`,
  * and `npm run art:placeholders -- <weapon>` — see the `weapon-art` skill.
@@ -49,7 +49,7 @@ export const WEAPON_ART = {
       held: {
         grid: { w: 56, h: 56 }, layer: 'held', heldBy: 'his hand, on the grip',
         clips: {
-          jabOne: 'hit', jabTwo: 'hit', jabThree: 'hit',
+          jabTwo: 'hit', jabThree: 'hit',
           charge: 'loop', chargeFull: 'loop',
           swing: 'hit', dive: 'loop',
           // In his hand while it is live and not mid-move.

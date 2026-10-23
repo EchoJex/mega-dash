@@ -87,7 +87,6 @@ export function rig() {
       { key: '4', hex: '#D08A44', name: 'head highlight' },
     ],
     clips: {
-      jabOne: moveFrames('jab1', [4, 4, 2, 3, 6, 7, 7], 3, grip, heldGrid),
       jabTwo: moveFrames('jab2', [4, 4, 3, 3, 5, 9], 3, grip, heldGrid),
       jabThree: moveFrames('jab3', [2, 2, 4, 6, 10, 12, 14], 2, grip, heldGrid),
       // Held overhead, swaying a little; at full charge it trembles, and the
@@ -216,11 +215,11 @@ export function rig() {
  */
 export function constraints() {
   const L = ladderAt('quake_hammer', 1), L10 = ladderAt('quake_hammer', 10);
-  const names = ['jabOne', 'jabTwo', 'jabThree'];
+  const names = ['jabTwo', 'jabThree'];
   const out = [];
   L.jab.forEach((j, i) => {
     if (j.open === undefined) return;
-    out.push(`**${names[i]}**: a tap from step ${j.open} to step ${j.close} carries on into ${names[i + 1]}, `
+    out.push(`**${names[i]}**: a press from step ${j.open} to step ${j.close} carries on into ${names[i + 1]}, `
       + `so ${names[i]} has to hit before step ${j.open} and last at least ${j.close} steps.`);
   });
   out.push(`**swing**: a full charge starts it ${L.swing.fullSooner} step in, and an uncharged one lets go `

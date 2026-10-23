@@ -51,16 +51,16 @@ palette   0 #0A0A12 outline            up to 15 colours: a key, a colour, a name
 palette   1 #A76625 head
 note      Drawn by Claude Design ...   one line of credit (see section 7)
 
-[jabOne 1] status=draft hold=4          clip "jabOne", its 1st frame, shown for 4 steps
+[jabTwo 1] status=draft hold=4          clip "jabTwo", its 1st frame, shown for 4 steps
 ........................................................
 ....                                   56 rows of 56 characters: "." is see-through,
                                        anything else is a palette key
 
-[jabOne 4] status=draft hold=3 hit=27,21,25,19
-                                       this frame is where jab one connects
+[jabTwo 4] status=draft hold=3 hit=27,21,25,19
+                                       this frame is where jab two connects
 ```
 
-- **A clip** is one animation the game asks for by name (`jabOne`, `charge`, `swing`).
+- **A clip** is one animation the game asks for by name (`jabTwo`, `charge`, `swing`).
   Its frames are the blocks with that name, numbered from 1, in the order they appear.
 - **`hold`** is how many **steps** the frame stays on screen. The game runs at 60 steps a
   second, every frame shows for exactly its hold, and nothing else sets the speed. A clip
@@ -145,7 +145,7 @@ import { parse, serialize } from 'https://echojex.github.io/mega-dash/sprite-fmt
 import { frameAt, drawFrame, rowsFromCanvas } from 'https://echojex.github.io/mega-dash/sprite-kit.js';
 
 const doc = parse(text);                        // a .sprite file's text
-const f = frameAt(doc, 'jabOne', step);         // the frame showing `step` steps in
+const f = frameAt(doc, 'jabTwo', step);         // the frame showing `step` steps in
 drawFrame(ctx, doc, f, x, y, { scale: 4, facing: 1, marks: true });   // pivot at (x, y)
 // …after drawing a frame onto a canvas at 1:1:
 f.rows = rowsFromCanvas(canvasCtx, doc.w, doc.h, doc.palette);

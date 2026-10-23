@@ -1188,11 +1188,13 @@ one already released, because a double TAP is press, release, press, and
 `FEEL.jumpCutMult` 0 zeroes the rise on release.
 
 **A WEAPON MAY BE CHARGE-AND-RELEASE** (`chargeRelease` on its runtime — the Quake Hammer).
-`GameScene` tells it every step the button is down (`hold`) and the release arrives as the
-press (`fire`, with how many steps it was held), so the weapon itself decides tap or charge.
-The time already spent holding is taken off a tap's start-up, so a tap never arrives late. A
-press during a swing is remembered, not dropped. A hold that stops without a release simply
-drops the charge. Dust, spikes and sand live in the shared `fx`, so they carry on when the
+`GameScene` tells it every step the button is down (`hold`) and when it comes up (`fire`,
+with how many steps it was held), so the weapon itself decides what a press is. **The
+Hammer charges on every press, with no minimum** (a tap is a swing with no charge), and has
+no jab 1, by the owner's bug of build 1185. A press during a swing charged under half, or
+up to 10 steps after it, is jab 2; a press in jab 2's window is the finisher. Jabs are
+decided on the press and a press that became a jab never charges. A hold that stops without
+a release simply drops the charge. Dust, spikes and sand live in the shared `fx`, so they carry on when the
 weapon is benched mid-effect.
 
 **A WEAPON MAY SLOW OR ROOT THE PLAYER WHILE IT IS BUSY** — `run.moveScale`, a per-step grant

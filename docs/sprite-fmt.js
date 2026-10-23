@@ -44,7 +44,7 @@
  *
  * A frame of a weapon's move can also carry its FRAME DATA on the same line:
  *
- *     [jabOne 4] status=ready hold=3 hit=28,21,23,19 spawn=44,40
+ *     [jabTwo 4] status=ready hold=3 hit=28,21,23,19 spawn=44,40
  *
  * `hit=x,y,w,h` is where the move connects (this frame's first step) and its
  * hit area; a bare `hit` hurts with a shape the code computes; `spawn=x,y` is

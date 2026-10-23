@@ -1,9 +1,9 @@
 /**
  * THE QUAKE HAMMER'S RULES, from the owner's messages of 10 Oct 2026.
  *
- * These pin the SHAPE of the weapon, not its numbers: a tap is a jab timed
- * from the press, three of them chain inside Smash's windows, a hold is a
- * charge, the swing lands after release, what each rung lets the player do
+ * These pin the SHAPE of the weapon, not its numbers: every press is a
+ * charge from its first step, the swing lands after release, a swing charged
+ * under half chains into jab 2 and the finisher inside Smash's window, what each rung lets the player do
  * while swinging, the Lv3 dust cloud, the Lv10 spikes that hurt only while
  * growing and then block, and the sand they turn into. Frame counts, hit
  * areas and damage are read OUT of the hammer's frame data and ladder rather
@@ -81,7 +81,7 @@ const L10_HOLD = () => ladderAt(ID, 10).holdFrames;
 const HELD = 'weapon:quake_hammer:held';
 const held = (name) => clipOf(HELD, name);
 const JAB = L1.jab.map((j, i) => {
-  const c = held(['jabOne', 'jabTwo', 'jabThree'][i]);
+  const c = held(['jabTwo', 'jabThree'][i]);
   return { ...j, hit: c.hits[0].step, total: c.total };
 });
 const SWING = (() => {
@@ -107,75 +107,95 @@ const isPuff = (d) => d.sheet === 'puff';
 const base = (lv) => damageAtLevel(weaponOf(ID), lv);
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 
-// ── Jabs ─────────────────────────────────────────────────────────────
+// ── Every press is a charge; a weak swing chains into the jabs ──────
 
-test('a tap is jab 1, landing on its hit frame counted from the PRESS', () => {
-  for (const held of [1, 4, L1.tapFrames]) {
-    const r = rig();
-    const pressedAt = r.run.frame + 1;
-    r.press(held);
-    r.steps(30);
-    assert.equal(r.hits.length, 1, `held ${held}`);
-    assert.equal(r.hits[0].at - pressedAt, JAB[0].hit, `held ${held}: the wait to know it was a tap is not added`);
-  }
-  // Pressed and released between two steps: the game reports 0 steps held.
+test('every press charges from its first step, so a tap is a swing with no charge', () => {
   const r = rig();
   r.step();
-  const at = r.run.frame;
-  Wpn.fireActive(r.ctx, ID, 0);
-  r.steps(30);
-  assert.equal(r.hits[0].at - at, JAB[0].hit);
-});
-
-test('three taps chain jab, jab, finisher inside the windows', () => {
-  const r = rig();
-  const [j1, j2, j3] = JAB;
-  const P = r.run.frame + 1;
-  r.press(2);                       // jab 1
-  r.press(2);                       // pressed early: kept until jab 1's window opens
-  r.steps(j1.open - 6 + 3);         // jab 2 is now under way
-  assert.equal(r.st().act.move, 'jab2');
-  r.press(2);                       // during jab 2: kept until its window opens
-  r.steps(60);
-  assert.equal(r.hits.length, 3);
-  assert.equal(r.hits[0].at - P, j1.hit);
-  assert.equal(r.hits[1].at - P, j1.open + j2.hit, 'jab 2 starts as jab 1 opens its window');
-  assert.equal(r.hits[2].at - P, j1.open + j2.open + j3.hit, 'jab 3 starts as jab 2 opens its window');
-  assert.ok(r.hits[2].dmg > r.hits[0].dmg, 'the finisher hits harder');
-  assert.ok(r.hits[2].opts.launch > 0 && !r.hits[0].opts.launch, 'and it is the one that launches');
-});
-
-test('there is no rapid jab and no fourth jab', () => {
-  const r = rig();
-  for (let i = 0; i < 12; i++) r.press(2);   // mashing
-  r.steps(120);
-  const moves = r.hits.length;
-  assert.ok(moves <= 4, `mashing makes the chain (${moves} hits), not a rapid jab`);
-  // Whatever the mash did, the chain itself never goes past jab 3.
+  Wpn.holdActive(r.ctx, ID, 1);
+  assert.equal(r.st().charging, true, 'charging on the first step, with no minimum');
+  r.step();
+  Wpn.fireActive(r.ctx, ID, 1);
+  const released = r.run.frame;
+  assert.equal(r.st().act.move, 'swing');
+  r.steps(80);
+  assert.equal(r.hits.length, 1);
+  assert.equal(r.hits[0].at - released, SWING.hit);
+  // Pressed and released between two steps: the game reports 0 steps held.
   const r2 = rig();
-  r2.press(2); r2.press(2); r2.steps(15); r2.press(2);
-  assert.equal(r2.st().act.move, 'jab2');
-  r2.steps(JAB[1].open);
-  assert.equal(r2.st().act.move, 'jab3');
-  r2.press(2);                               // early in the finisher: too early to buffer
-  r2.steps(80);
-  assert.equal(r2.hits.length, 3);
-  assert.equal(r2.st().act, null);
+  r2.step();
+  Wpn.fireActive(r2.ctx, ID, 0);
+  assert.equal(r2.st().act.move, 'swing', 'still a swing');
 });
 
-test('a press after the window closes starts jab 1 over, not jab 2', () => {
+test('after a swing charged under half, a press during it is jab 2, and the finisher follows', () => {
   const r = rig();
-  const j1 = JAB[0];
-  const P = r.run.frame + 1;
+  const [j2, j3] = JAB;
+  r.press(1);                                // a swing with no charge
+  const R = r.run.frame;
+  r.press(1);                                // during it: kept until the swing lets go
+  r.steps(SWING.total - 2);
+  assert.equal(r.st().act.move, 'jab2', 'jab 2 starts the moment the swing lets go');
+  r.press(1);                                // early in jab 2: kept until its window opens
+  r.steps(80);
+  assert.equal(r.hits.length, 3);
+  assert.equal(r.hits[0].at - R, SWING.hit);
+  assert.equal(r.hits[1].at - R, SWING.total + j2.hit);
+  assert.equal(r.hits[2].at - R, SWING.total + j2.open + j3.hit, 'the finisher starts as jab 2 opens its window');
+  assert.ok(near(r.hits[1].dmg, base(1) * DAMAGE_WORDS[j2.dmg]), 'a jab is its word');
+  assert.ok(r.hits[2].dmg > r.hits[1].dmg, 'the finisher hits harder');
+  assert.ok(r.hits[2].opts.launch > 0 && !r.hits[1].opts.launch, 'and it is the one that launches');
+});
+
+test('a press up to the grace after a weak swing is still jab 2; one later is a charge', () => {
+  const { grace } = L1.afterSwing;
+  for (const late of [0, grace, grace + 1]) {
+    const r = rig();
+    r.press(1);
+    r.steps(SWING.total - 1 + late);         // the next step is `late` steps after it let go
+    r.step();
+    Wpn.holdActive(r.ctx, ID, 1);
+    if (late <= grace) assert.equal(r.st().act?.move, 'jab2', `${late} steps after`);
+    else assert.equal(r.st().charging, true, `${late} steps after: a new charge`);
+  }
+});
+
+test('a swing charged half or more is never followed by a jab', () => {
+  const half = Math.ceil(L1.holdFrames * L1.afterSwing.below);
+  const r = rig();
+  r.press(half);
+  assert.ok(r.st().act.c >= L1.afterSwing.below);
+  assert.equal(r.press(1), false, 'a press during it, let go while it is busy, does nothing');
+  r.steps(80);
+  assert.equal(r.st().act, null, 'no jab came out of it');
+  assert.equal(r.hits.length, 1);
+  r.step();
+  Wpn.holdActive(r.ctx, ID, 1);
+  assert.equal(r.st().charging, true, 'a press just after it is a fresh charge');
+});
+
+test('the chain ends at the finisher: a press during it does not jab again', () => {
+  const r = rig();
+  r.press(1); r.press(1);
+  r.steps(SWING.total - 2);
   r.press(1);
-  r.steps(j1.close - 1);                     // pressed just after the window shuts
-  const pressAt = r.run.frame + 1;
-  assert.ok(pressAt - P > j1.close);
+  r.steps(JAB[0].open);
+  assert.equal(r.st().act.move, 'jab3');
+  assert.equal(r.press(1), false, 'a press during the finisher, let go while it is busy, does nothing');
+  r.steps(80);
+  assert.equal(r.hits.length, 3);
+  assert.equal(r.st().act, null);
+});
+
+test('a press after jab 2\'s window closes is not the finisher', () => {
+  const r = rig();
+  r.press(1); r.press(1);
+  r.steps(SWING.total - 2);
+  r.steps(JAB[0].close);                     // the next press is just past the window
   r.press(1);
-  r.steps(40);
-  assert.equal(r.hits.length, 2);
-  assert.equal(r.hits[1].at - P, j1.total + j1.hit, 'a fresh jab 1, the moment the hammer is free');
-  assert.equal(r.hits[1].opts.knockback, j1.knock, 'jab 1, not jab 2');
+  assert.notEqual(r.st().act?.move, 'jab3');
+  r.steps(60);
+  assert.ok(!r.hits.some((h) => h.opts.launch === JAB[1].launch), 'no finisher');
 });
 
 /**
@@ -209,7 +229,7 @@ test('every jab and the swing reach a minion standing right against him, either 
     const g = { x: p.x + 12 + facing * 5, y: p.y + 12 };
     // His collision box is the middle 12 of his 24; the minion touches it.
     const minion = { x: facing > 0 ? p.x + 18 : p.x - 6, y: FLOOR - 12, w: 12, h: 12 };
-    for (const name of ['jabOne', 'jabTwo', 'jabThree', 'swing']) {
+    for (const name of ['jabTwo', 'jabThree', 'swing']) {
       const b = areaAt(held(name).hits[0], g.x, g.y, facing);
       const meets = b.x < minion.x + minion.w && b.x + b.w > minion.x
         && b.y < minion.y + minion.h && b.y + b.h > minion.y;
@@ -221,7 +241,7 @@ test('every jab and the swing reach a minion standing right against him, either 
 
 // ── Charge and swing ────────────────────────────────────────────────
 
-test('a hold charges instead of jabbing, and the swing lands after release', () => {
+test('a hold charges, and the swing lands after release', () => {
   const r = rig();
   r.holdFor(30);
   assert.equal(r.st().charging, true);
@@ -249,11 +269,11 @@ test('a full charge lands sooner and is the heaviest blow; damage follows the wo
   const half = rig();
   half.press(Math.round(L1.holdFrames / 2));
   half.steps(80);
-  const jab = rig();
-  jab.press(1); jab.steps(30);
-  assert.ok(near(jab.hits[0].dmg, base(1) * DAMAGE_WORDS[JAB[0].dmg]), 'a jab is its word');
-  assert.ok(r.hits[0].dmg > half.hits[0].dmg && half.hits[0].dmg > jab.hits[0].dmg,
-    'full > half charge > jab');
+  const none = rig();
+  none.press(1); none.steps(80);
+  assert.ok(none.hits[0].dmg >= base(1) * DAMAGE_WORDS[L1.swingDmg] - 1e-9, 'no charge is the swing\'s own word');
+  assert.ok(r.hits[0].dmg > half.hits[0].dmg && half.hits[0].dmg > none.hits[0].dmg,
+    'full > half charge > none');
   assert.ok(DAMAGE_WORDS.heavy > DAMAGE_WORDS.medium && DAMAGE_WORDS.medium > DAMAGE_WORDS.lowMedium);
 });
 
@@ -272,12 +292,20 @@ test('letting go any way but a release drops the charge', () => {
   assert.equal(Wpn.fireActive(r.ctx, ID, 500), false, 'a late release swings nothing');
 });
 
-test('holding through a jab does not count toward the charge', () => {
+test('a press made during a strong swing charges only once the hammer is free', () => {
   const r = rig();
-  r.press(1);                                // jab 1 under way
-  r.holdFor(JAB[0].total + 5);               // held from inside the jab
+  r.press(L1.holdFrames);                    // a full charge: nothing chains after it
+  r.holdFor(SWING.totalFull + 5);            // held from inside the swing
   assert.equal(r.st().charging, true);
-  assert.ok(r.st().chargeF < JAB[0].total, 'the charge began only once the hammer was free');
+  assert.ok(r.st().chargeF < SWING.totalFull, 'the charge began only once the hammer was free');
+});
+
+test('a press that became a jab never charges, however long it is held', () => {
+  const r = rig();
+  r.press(1);
+  r.holdFor(SWING.total + JAB[0].total + 30);   // pressed during the weak swing and never let go
+  assert.equal(r.hits.length, 2, 'the swing and jab 2');
+  assert.equal(r.st().charging, false);
 });
 
 // ── Movement, rung by rung ──────────────────────────────────────────
@@ -299,25 +327,27 @@ test('the runtime asserts that movement every step, and lets go after', () => {
   for (const lv of [1, 3, 6]) {
     const L = ladderAt(ID, lv);
     const r = rig({ level: lv });
-    r.press(1);
-    assert.equal(r.run.moveScale, L.jabMove, `Lv${lv} jab`);
-    r.steps(5);
-    assert.equal(r.run.moveScale, L.jabMove, `Lv${lv} still jabbing`);
-    r.steps(JAB[0].total);
-    assert.equal(r.run.moveScale, 1, `Lv${lv} free again`);
-    r.holdFor(L.tapFrames + 3);
+    r.holdFor(3);
     assert.equal(r.run.moveScale, L.chargeMove, `Lv${lv} charging`);
     r.step();
-    Wpn.fireActive(r.ctx, ID, L.tapFrames + 3);
+    Wpn.fireActive(r.ctx, ID, 3);
     assert.equal(r.run.moveScale, L.swingMove, `Lv${lv} swinging`);
+    r.press(1);                              // jab 2, once the weak swing lets go
+    r.steps(SWING.total);
+    assert.equal(r.st().act.move, 'jab2');
+    assert.equal(r.run.moveScale, L.jabMove, `Lv${lv} jabbing`);
+    r.steps(JAB[0].total);
+    assert.equal(r.run.moveScale, 1, `Lv${lv} free again`);
   }
 });
 
 test('the swing plants the player: no walking, turning or jumping until it is over', () => {
+  const j = rig();
+  j.press(1); j.press(1);
+  j.steps(SWING.total);
+  assert.equal(j.st().act.move, 'jab2');
+  assert.ok(!j.run.planted, 'a jab only roots');
   const r = rig();
-  r.press(1);
-  assert.ok(!r.run.planted, 'a jab only roots');
-  r.steps(40);
   r.holdFor(30);
   assert.ok(!r.run.planted, 'a charge only roots');
   r.player.jumpBuffer = 5;                   // a jump pressed just before letting go
@@ -417,16 +447,16 @@ test('from Lv3 a full charge puffs dust round the hammer head, and not before', 
 
 test('from Lv3 the cloud is small, medium or large by how long it was held', () => {
   const L = ladderAt(ID, 3);
-  const span = L.holdFrames - L.tapFrames;
+  const span = L.holdFrames;
   const size = (n) => swingAndLook(3, n).fx.dust.find(isCloud).clip;
-  const small = size(L.tapFrames + Math.round(span * 0.25));
-  const medium = size(L.tapFrames + Math.round(span * 0.75));
+  const small = size(Math.round(span * 0.25));
+  const medium = size(Math.round(span * 0.75));
   const large = size(L.holdFrames);
   assert.deepEqual([small, medium, large], ['small', 'medium', 'large']);
   // Each lasts as long as its own clip.
   for (const c of [small, medium, large]) {
-    const d = swingAndLook(3, c === 'small' ? L.tapFrames + 5 : c === 'medium'
-      ? L.tapFrames + Math.round(span * 0.75) : L.holdFrames).fx.dust.find(isCloud);
+    const d = swingAndLook(3, c === 'small' ? 5 : c === 'medium'
+      ? Math.round(span * 0.75) : L.holdFrames).fx.dust.find(isCloud);
     assert.equal(d.life, clipOf('weapon:quake_hammer:dust', c).total);
   }
 });
@@ -468,7 +498,7 @@ test('nothing the hammer does stuns', () => {
   const r = rig({ level: 10 });
   const other = r.mk(150, FLOOR - 12);
   r.ctx.enemies.push(other);
-  r.press(1); r.press(1); r.steps(15); r.press(1); r.steps(70);
+  r.press(1); r.press(1); r.steps(SWING.total); r.press(1); r.steps(70);
   r.press(ladderAt(ID, 10).holdFrames);
   r.steps(60);
   for (const e of r.ctx.enemies) assert.deepEqual(e.status, {}, 'no status at all');

@@ -11,13 +11,15 @@ WEAPONS: ALL, START LV to try each rung).
 
 ## What it is, in the owner's words
 
-**King Dedede's hammer.** Tap for a jab — three taps make Dedede's neutral A-A-A from Smash
-Ultimate, without the rapid-fire spin in the middle. Hold to charge, modelled on Dedede's
-**Jet Hammer**, with the hammer **held overhead the way he holds it for his forward
+**King Dedede's hammer.** Every press is a charge from its first moment, modelled on
+Dedede's **Jet Hammer**, with the hammer **held overhead the way he holds it for his forward
 smash** — that pose IS the tell that a charge is building, so there is no charge bar.
 Where Dedede's hammer bursts into flame at full charge, this one puffs **small dust clouds
-round the hammer head**, and that has to be obvious at a glance. Let go to swing; let go in
-the air and the hammer drives him straight down (the air dive).
+round the hammer head**, and that has to be obvious at a glance. Let go to swing — at once
+for a swing with no charge; let go in the air and the hammer drives him straight down (the
+air dive). After a swing charged less than half, pressing again gives **jab two** and then
+the **finisher**: the last two hits of Dedede's neutral A-A-A from Smash Ultimate. There is
+no jab one — the owner removed it on 22 Oct 2026 because it did not look or feel right.
 
 ## The look
 
@@ -37,19 +39,16 @@ the air and the hammer drives him straight down (the air dive).
 
 | move | how it starts | what it looks like |
 |---|---|---|
-| **jab one** (`jabOne`) | a tap | a short, quick forward swing at chest height |
-| **jab two** (`jabTwo`) | a tap during jab one | swung back up through the front, rising |
-| **jab three** (`jabThree`) | a tap during jab two | the finisher: over the top and down onto the floor; it launches what it hits |
-| **charge** (`charge`, looping) | holding the button | the hammer held overhead, for as long as the button is down |
+| **jab two** (`jabTwo`) | a press during a swing charged less than half, or just after it | swung back up through the front, rising — it follows on from the swing's low finish |
+| **jab three** (`jabThree`) | a press during jab two | the finisher: over the top and down onto the floor; it launches what it hits |
+| **charge** (`charge`, looping) | pressing the button | the hammer held overhead, for as long as the button is down |
 | **full charge** (`chargeFull`, looping) | held to full, from Lv3 | the same pose, trembling; small dust puffs round the head (the `tell` puff, from this clip's spawn point) |
 | **swing** (`swing`) | letting go | from overhead down onto the floor in front; the player cannot move, turn or jump until it is over |
 | **air dive** (`dive`, looping) | letting go in the air | the hammer swung down and leading, dragging him straight down; on landing the swing carries on from its hit |
 
-**A tap is only known to be a tap when the thumb comes up**, so a jab starts as many
-steps in as the button was held — usually 3 to 8. The first few steps of jab one are
-therefore rarely seen; put its reading pose just before the hit. (If this looks wrong once
-the art is in, tell the owner: the fix is for the game to show the wind-up while the thumb
-is still down, which is a code change, not an art one.)
+**A jab is decided the moment the button goes down**, so every frame of both jabs is seen,
+wind-up included. A quick tap is a swing with no charge: the charge pose shows for a step
+or two, then the swing.
 
 ## What appears, rung by rung
 
@@ -70,7 +69,7 @@ the game is playing. Do not edit it by hand.
 
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
-| [`weapon-quake_hammer-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-held.sprite) | 56×56 | 28, 28 — his hand, on the grip | in front of the player | jabOne, jabTwo, jabThree, charge, chargeFull, swing, dive, rest |
+| [`weapon-quake_hammer-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-held.sprite) | 56×56 | 28, 28 — his hand, on the grip | in front of the player | jabTwo, jabThree, charge, chargeFull, swing, dive, rest |
 | [`weapon-quake_hammer-dust.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-dust.sprite) | 64×40 | 32, 40 — the floor under the middle of the cloud | behind the player | small, medium, large |
 | [`weapon-quake_hammer-puff.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-puff.sprite) | 12×12 | 6, 6 — its middle | behind the player | tell, block |
 | [`weapon-quake_hammer-spike.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-quake_hammer-spike.sprite) | 60×50 | 4, 47 — its foot, on the floor | behind the player | flat, low, high, steep |
@@ -84,7 +83,6 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
-| jabOne | hit | 4 · 4 · 2 · **3** · 6 · 7 · 7 | 33 | 10 | 27, 21, 25×19 | — |
 | jabTwo | hit | 4 · 4 · 3 · **3** · 5 · 9 | 28 | 11 | 27, 15, 25×19 | — |
 | jabThree | hit | 2 · 2 · **4** · 6 · 10 · 12 · 14 | 50 | 4 | 24, 4, 28×37 | — |
 | charge | loop | 20 · 20 | 40 | — | — | — |
@@ -130,8 +128,7 @@ Clip kinds: **hit** plays once; exactly one frame carries hit=x,y,w,h — the st
 
 Worked out from the weapon's ladder; `npm test` checks every one, and a handoff that breaks one is refused with the reason.
 
-- **jabOne**: a tap from step 13 to step 30 carries on into jabTwo, so jabOne has to hit before step 13 and last at least 30 steps.
-- **jabTwo**: a tap from step 18 to step 27 carries on into jabThree, so jabTwo has to hit before step 18 and last at least 27 steps.
+- **jabTwo**: a press from step 18 to step 27 carries on into jabThree, so jabTwo has to hit before step 18 and last at least 27 steps.
 - **swing**: a full charge starts it 1 step in, and an uncharged one lets go 10 steps before its end — so it has to hit after step 1 and more than 10 steps before it ends.
 - **every jab and the swing** must reach a minion standing against his front: the hit area has to overlap the square from (29, 28) to (41, 40) on the held sheet — just right of his hand, down to the floor. Facing left is the same, mirrored.
 - **the swing's spawn point** is where the hammer head meets the floor: the dust and the spikes start there. The floor is 12 pixels below his hand (row 40 on the held sheet).

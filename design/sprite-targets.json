@@ -3295,7 +3295,6 @@
       },
       "box": null,
       "clips": {
-        "jabOne": "hit",
         "jabTwo": "hit",
         "jabThree": "hit",
         "charge": "loop",
@@ -3305,7 +3304,6 @@
         "rest": "still"
       },
       "frames": [
-        "jabOne",
         "jabTwo",
         "jabThree",
         "charge",

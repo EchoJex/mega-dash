@@ -20,7 +20,7 @@ The rules are in `CLAUDE.md` (*Weapon art*); what Design is told is
 procedure, not a copy of them. The Quake Hammer is the worked example of every step.
 
 Write to the owner in plain words (`CLAUDE.md`, first section): never "frame data
-changed", always what it does in the game — "jab one now lands two steps later".
+changed", always what it does in the game — "jab two now lands two steps later".
 
 ## Phase 1 — build a weapon's art contract
 
@@ -29,7 +29,7 @@ Start only when its mechanics are built from `[draft]` fields and tested.
 - [ ] **Decide the sheets.** What is in his hand (`held` layer, drawn in front of him) and
   which effects it leaves (`effects` layer, behind him). One grid per sheet: the biggest
   frame plus a few pixels of slack. Clip names are camelCase and **never end in a digit**
-  (the sprite format reads `jab1` as clip `jab`, frame 2): `jabOne`, `jabTwo`.
+  (the sprite format reads `jab1` as clip `jab`, frame 2): `jabTwo`, `jabThree`.
 - [ ] **Register them** in `src/data/weapon-art.js`: `grid`, `layer`, `heldBy` (what the
   pivot is, in words) and `clips` with a kind each (`hit`, `loop`, `once`, `grow`,
   `still` — `CLIP_KINDS` in `docs/sprite-fmt.js` says what each requires).

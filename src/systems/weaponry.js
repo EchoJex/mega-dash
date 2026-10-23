@@ -796,25 +796,28 @@ function stepLunge(st, lv, ctx) {
 
 // ── QUAKE HAMMER — Ground, offensive ─────────────────────────────────
 /**
- * King Dedede's hammer: three quick jabs on taps, a Jet Hammer charge on a
- * hold. The ladder in data/weapons.js carries the owner's words and what each
- * rung adds. THE MOVES THEMSELVES — how long each lasts, the step it hits on,
- * and the area it hits — are drawn into the hammer's sprite sheets and read
- * back from `src/data/frame-data.json` (src/data/weapon-art.js says which).
- * Moving a hold or a hit area in the art moves the game with it.
+ * King Dedede's hammer: every press is a Jet Hammer charge, and a weak swing
+ * can be followed by two quick jabs. The ladder in data/weapons.js carries the
+ * owner's words and what each rung adds. THE MOVES THEMSELVES — how long each
+ * lasts, the step it hits on, and the area it hits — are drawn into the
+ * hammer's sprite sheets and read back from `src/data/frame-data.json`
+ * (src/data/weapon-art.js says which). Moving a hold or a hit area in the art
+ * moves the game with it.
  *
- * ONE BUTTON, DECIDED ON RELEASE. GameScene calls `hold` every step the button
- * is down and `fire` once when it comes up, with how many steps it was down.
- * Up to `tapFrames` is a tap; longer was a charge. A jab's timing is counted
- * from the PRESS, so the few steps spent finding out that it was a tap come
- * off its start-up instead of being added to it.
+ * EVERY PRESS IS A CHARGE, FROM ITS FIRST STEP. GameScene calls `hold` every
+ * step the button is down and `fire` once when it comes up. The charge starts
+ * on the press with no minimum, so letting go at once swings with no charge.
+ * There is no jab 1: by the owner's call (bug, build 1185) it went, and the
+ * first press became the charge.
  *
- * A PRESS DURING A JAB IS REMEMBERED, not dropped. Pressed before that jab's
- * window closes, it becomes the next jab, starting no earlier than the window
- * opens. Pressed after, it becomes a fresh first jab the moment the hammer is
- * free — if that moment is near enough (`BUFFER`) to still feel like the same
- * press. That is how Smash treats a mashed button, and it is the difference
- * between a chain that comes out and one that eats inputs.
+ * A PRESS DURING A WEAK SWING IS JAB 2. Charged less than `afterSwing.below`,
+ * a swing remembers a press made during it, and jab 2 starts the moment the
+ * swing lets go; a press up to `afterSwing.grace` steps after it ends starts
+ * jab 2 at once. A press inside jab 2's window (`open`..`close`) is the
+ * finisher, starting no earlier than the window opens. Jabs are decided on the
+ * PRESS, not the release, and a press that became a jab never charges however
+ * long it is held. Any other press made while the hammer is busy charges once
+ * it is free, so time spent swinging never counts toward a charge.
  *
  * MOVEMENT is the rung's to decide (`jabMove`, `chargeMove`, `swingMove`) and
  * is asserted every step as `run.moveScale`: 0 roots the player, 0.5 is
@@ -829,8 +832,6 @@ function stepLunge(st, lv, ctx) {
  * sand live in the shared `fx`, so they finish even if the hammer is benched
  * mid-effect. `drawWeaponArt` is the only thing that draws any of it.
  */
-const BUFFER = 10;                       // steps a too-early press is kept for
-
 // The sheets, by MANIFEST key, and the clips the code plays — the registry in
 // src/data/weapon-art.js names the same ones, and the build holds the files to it.
 const HAMMER = 'weapon:quake_hammer:held';
@@ -838,7 +839,8 @@ const DUST = 'weapon:quake_hammer:dust';
 const PUFF = 'weapon:quake_hammer:puff';
 const SPIKE = 'weapon:quake_hammer:spike';
 const SAND = 'weapon:quake_hammer:sand';
-const JAB_CLIPS = ['jabOne', 'jabTwo', 'jabThree'];
+const JAB_CLIPS = ['jabTwo', 'jabThree'];
+const JAB_MOVES = ['jab2', 'jab3'];      // the owner's names for them, kept with jab 1 gone
 const DUST_CLIPS = ['small', 'medium', 'large'];
 const SPIKE_CLIPS = ['flat', 'low', 'high', 'steep'];   // one per ladder angle, shallowest first
 
@@ -859,7 +861,6 @@ export const HAMMER_SHAPE = {
   reach: 16,                             // hand to the middle of the head
   head: { across: 12, thick: 8 },
   poses: {
-    jab1: [60, -10, -14],                // a short forward swing
     jab2: [-12, 15, 60],                 // swung back up, hitting on the way through
     jab3: [150, -14, -14],               // the finisher: over the top and down
     swing: [105, -14, -15],              // from overhead to the ground in front
@@ -870,8 +871,7 @@ export const HAMMER_SHAPE = {
 };
 
 const words = (w) => DAMAGE_WORDS[w] ?? 1;
-const chargeNeed = (L) => Math.max(1, L.holdFrames - L.tapFrames);
-const chargeOf = (st, L) => Math.min(1, st.chargeF / chargeNeed(L));
+const chargeOf = (st, L) => Math.min(1, st.chargeF / L.holdFrames);
 /** 0 small below half a charge, 1 medium up to full, 2 large only at full. */
 const cloudSize = (c, full) => (full ? 2 : c < 0.5 ? 0 : 1);
 
@@ -904,7 +904,7 @@ function headAt(gx, gy, facing, deg) {
 /**
  * What the hammer is doing this step, or null while it is put away.
  *
- *   move   'jab1' 'jab2' 'jab3' 'swing', 'charge', or 'dive' (falling to
+ *   move   'jab2' 'jab3' 'swing', 'charge', or 'dive' (falling to
  *          the ground after a charge let go in the air)
  *   clip   which clip of the hammer's sheet shows, and `loop` if it repeats
  *   t      steps since that move began (for a charge, steps spent charging)
@@ -952,17 +952,24 @@ function moveGrant(st, L, ctx) {
   }
 }
 
-/** `t0` is how many steps of this jab have already passed (see `fire`). */
+/** `t0` is how many steps of this jab have already passed (see `settle`). */
 function startJab(st, L, ctx, n, t0) {
   const c = clipOf(HAMMER, JAB_CLIPS[n]);
-  st.act = { move: `jab${n + 1}`, n, t: t0, hit: c.hits[0].step, total: c.total, done: false };
-  ctx.sfx('shootBig', { pitch: n === 2 ? 1.0 : 1.45, dur: 0.5 });
+  st.act = { move: JAB_MOVES[n], n, t: t0, hit: c.hits[0].step, total: c.total, done: false };
+  ctx.sfx('shootBig', { pitch: n === L.jab.length - 1 ? 1.0 : 1.45, dur: 0.5 });
 }
+
+/** A swing charged too little to stand on its own, so a jab may follow it. */
+const weakSwing = (a, L) => a.move === 'swing' && a.c < L.afterSwing.below;
 
 /**
  * Resolve whatever is due this step: the hit, the next jab, or the hammer
  * coming free. A loop because starting a jab late can make its own hit due at
  * once — a guard of four is more than any one step can ever need.
+ *
+ * A remembered press (`queued`) was only ever kept if it may chain (see
+ * `press`): after a jab it is the next jab once that jab's window opens, after
+ * a weak swing it is jab 2 the moment the swing lets go.
  */
 function settle(st, L, lv, ctx) {
   for (let guard = 0; guard < 4 && st.act; guard++) {
@@ -973,9 +980,7 @@ function settle(st, L, lv, ctx) {
       else jabHit(L, lv, ctx, a);
     }
     const q = st.queued;
-    const chains = q && a.move !== 'swing' && a.n < L.jab.length - 1
-      && q.at <= L.jab[a.n].close;
-    if (chains) {
+    if (q && a.move !== 'swing') {
       const from = Math.max(L.jab[a.n].open, q.at);
       if (a.t < from) break;                       // waiting for the window
       st.queued = null;
@@ -986,10 +991,33 @@ function settle(st, L, lv, ctx) {
     st.act = null;
     st.freeAt = st.t;
     st.queued = null;
-    if (q && a.total - q.at <= BUFFER) {
-      startJab(st, L, ctx, 0, Math.max(0, a.t - Math.max(a.total, q.at)));
-    }
+    st.weakUntil = weakSwing(a, L) ? st.t + L.afterSwing.grace : -Infinity;
+    if (q) startJab(st, L, ctx, 0, a.t - a.total);
   }
+}
+
+/**
+ * A NEW PRESS, whether it arrived as the first `hold` or as a release with no
+ * hold before it. During a weak swing, or within `afterSwing.grace` steps of
+ * one ending, it is jab 2; inside jab 2's window it is the finisher. A free
+ * hammer starts charging on it. Anything else waits for `hold` to charge it
+ * once the hammer is free.
+ */
+function press(st, L, lv, ctx) {
+  const a = st.act;
+  if (a) {
+    const chains = weakSwing(a, L) || (a.move !== 'swing' && a.n < L.jab.length - 1 && a.t <= L.jab[a.n].close);
+    if (chains && !st.queued) { st.queued = { at: a.t }; st.jabPress = true; }
+    return;
+  }
+  if (st.diving) return;
+  if (st.t <= st.weakUntil) {
+    st.jabPress = true;
+    startJab(st, L, ctx, 0, 0);
+    settle(st, L, lv, ctx);
+    return;
+  }
+  st.charging = true; st.chargeF = 0; st.full = false;
 }
 
 /**
@@ -1253,25 +1281,30 @@ const quake = {
   chargeRelease: true,
   holdFrames: (lv) => ladderAt('quake_hammer', lv).holdFrames,
   /**
-   * How far in front of his middle the first jab reaches, off its hit area —
+   * How far in front of his middle the swing reaches, off its hit area —
    * `npm run sim` stands inside it, so the simulator follows the art too.
    */
   reach() {
-    const h = clipOf(HAMMER, 'jabOne').hits[0];
+    const h = clipOf(HAMMER, 'swing').hits[0];
     return 5 + h.x + h.w;
   },
 
   init(st) {
     st.t = 0; st.act = null; st.queued = null; st.freeAt = -Infinity; st.diving = null;
     st.holdSeen = false; st.charging = false; st.chargeF = 0; st.full = false;
+    st.down = false; st.jabPress = false; st.weakUntil = -Infinity;
   },
 
   step(st, lv, ctx) {
     const L = ladderAt('quake_hammer', lv);
     st.t++;
     // No hold arrived last step: the button went up some way that is not a
-    // release (a beam, a pause, another weapon aimed). The charge is dropped.
-    if (st.charging && !st.holdSeen) { st.charging = false; st.chargeF = 0; st.full = false; }
+    // release (a beam, a pause, another weapon aimed). The charge is dropped,
+    // and the next hold is a new press.
+    if (!st.holdSeen) {
+      st.charging = false; st.chargeF = 0; st.full = false;
+      st.down = false; st.jabPress = false;
+    }
     st.holdSeen = false;
     if (st.act) { st.act.t++; settle(st, L, lv, ctx); }
     if (st.diving) stepDive(st, L, lv, ctx);
@@ -1283,15 +1316,16 @@ const quake = {
     moveGrant(st, L, ctx);
   },
 
-  hold(st, lv, ctx, held) {
+  hold(st, lv, ctx) {
     st.holdSeen = true;
     const L = ladderAt('quake_hammer', lv);
-    // A press that started during a swing only starts charging once the
-    // hammer is free, so time spent jabbing never counts toward a charge.
-    if (!st.act && !st.diving && held > L.tapFrames) {
+    if (!st.down) { st.down = true; press(st, L, lv, ctx); }
+    // A press made while the hammer was busy only starts charging once it is
+    // free, so time spent swinging never counts toward a charge.
+    if (!st.act && !st.diving && !st.jabPress) {
       if (!st.charging) { st.charging = true; st.chargeF = 0; st.full = false; }
       st.chargeF++;
-      if (!st.full && st.chargeF >= chargeNeed(L)) {
+      if (!st.full && st.chargeF >= L.holdFrames) {
         st.full = true;
         if (L.fullTell) {
           ctx.sfx('select', { pitch: 0.6 });
@@ -1304,20 +1338,20 @@ const quake = {
 
   fire(st, lv, ctx, held) {
     const L = ladderAt('quake_hammer', lv);
-    if (st.diving) return true;              // committed: nothing starts mid-dive
-    if (held <= L.tapFrames) {
-      if (st.act) {
-        // Remembered against the swing in progress: its own clock at the press.
-        st.queued = { at: Math.max(0, st.act.t - held) };
-      } else {
-        // Counted from the press — but never from before the hammer was free.
-        startJab(st, L, ctx, 0, Math.min(held, st.t - st.freeAt));
-        settle(st, L, lv, ctx);
-      }
+    if (!st.down) {
+      // A release with no press seen: pressed and let go between two steps
+      // (held 0) is a tap; anything longer was a hold already dropped.
+      if (held > 0) return false;
+      press(st, L, lv, ctx);
+    }
+    st.down = false;
+    if (st.jabPress) {                       // that press was a jab: the release is nothing
+      st.jabPress = false;
       moveGrant(st, L, ctx);
       return true;
     }
-    if (!st.charging) return false;          // a hold that never got to charge
+    if (st.diving) return true;              // committed: nothing starts mid-dive
+    if (!st.charging) return false;          // pressed while busy, let go before it was free
     const c = chargeOf(st, L), full = st.full;
     st.charging = false; st.chargeF = 0; st.full = false;
     // Let go in the air: the air dive. The swing waits for the ground.

@@ -82,7 +82,7 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **hurtbox** | The invisible rectangle where a character CAN BE hurt. |
 | **hitbox** | The invisible rectangle that DOES the hurting. Two words one letter apart, which is unhelpful and is what the industry calls them. |
 | **hit area** | A weapon's hitbox, drawn on the frame where its move lands: `hit=x,y,w,h` on that frame's line in the `.sprite` file, in the sheet's own pixels. Move it in the drawing and the game hits there. |
-| **connects** | The step a move lands its blow: the first step of the frame carrying the hit area. "Jab one connects on step 10." |
+| **connects** | The step a move lands its blow: the first step of the frame carrying the hit area. "Jab two connects on step 11." |
 | **frame data** | A move's timing and hit areas — how long each frame shows, the step it connects on, what it hits, where things come out. Kept on the frames in the weapon's `.sprite` files, so it moves with the drawing; the game reads it from `src/data/frame-data.json`. Fighting games use the same name for the same thing. |
 | **spawn point** | `spawn=x,y` on a frame: where something comes out of the drawing on that frame — the dust where the hammer head meets the floor. |
 | **i-frames** | Short for *invulnerability frames*: the moment after taking a hit where nothing can hit you again. It is why you flicker. |
@@ -119,7 +119,7 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **live / aimed** | Two different things. Several weapons can be *live* (running); exactly one offensive weapon is *aimed* (on the fire button). |
 | **ladder / rung** | A weapon's list of upgrades by level. Each **rung** — levels 1, 3, 6 and 10 — adds a real feature; the levels between just add damage. |
 | **tier** | Another name for those four rungs: Lv 1, 3, 6 and 10. Beating a boss whose weapon you already carry pushes it up a tier. |
-| **jab / chain / window** | A jab is a quick attack from a tap. A chain is jabs in a row: on the Quake Hammer, jab, jab, finisher. The window is the stretch of steps in which another press carries on into the next jab; press after it closes and you start again from the first. |
+| **jab / chain / window** | A jab is a quick attack. A chain is attacks in a row: on the Quake Hammer, a swing charged less than half, then jab two, then the finisher (there is no jab one). The window is the stretch of steps in which another press carries on into the next jab; press after it closes and the chain is over. |
 | **charge** | Holding the fire button to wind up a stronger attack, which goes off when you let go. The Quake Hammer's is modelled on King Dedede's Jet Hammer. A **full charge** is one held long enough to reach its strongest. |
 | **rooted** | Unable to walk or turn round while a weapon is busy. Jumping still works. `moveScale` 0 in the code. |
 | **planted** | Rooted and unable to jump as well: the Quake Hammer's swing once a charge is let go. `planted` in the code. |

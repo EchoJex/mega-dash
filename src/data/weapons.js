@@ -408,11 +408,16 @@ export const WEAPON_LADDERS = {
 
   // ── QUAKE HAMMER — offensive, Ground ──────────────────────────────
   // King Dedede's hammer, from the owner's messages of 10 Oct 2026.
-  //   TAP x3   jab, jab, finisher: Dedede's neutral A-A-A from Smash Ultimate,
-  //            without the rapid-fire spin he does in the middle.
-  //   HOLD     the charge, modelled on Dedede's Jet Hammer; the hammer is held
-  //            overhead the way he holds it for his forward smash.
+  //   PRESS    the charge, from the first step, modelled on Dedede's Jet
+  //            Hammer; the hammer is held overhead the way he holds it for
+  //            his forward smash. There is no minimum: a tap is a swing with
+  //            no charge.
   //   RELEASE  the swing. Heavy damage at full charge.
+  //   THEN     after a swing charged less than half, a press during it (or
+  //            just after) is jab 2, and a press in jab 2's window the
+  //            finisher — the last two hits of Dedede's neutral A-A-A from
+  //            Smash Ultimate. There is no jab 1: it went by the owner's call
+  //            (bug, build 1185), because it did not look or feel right.
   //  Lv1  slow charge, nothing special at full charge, and the player cannot
   //       walk while charging or swinging (jabs included).
   //  Lv3  faster charge; the swing leaves a small / medium / large DAMAGING dust
@@ -437,36 +442,36 @@ export const WEAPON_LADDERS = {
   // read back from src/data/frame-data.json, so the art and the moment it hits
   // cannot drift apart. They started as Smash Ultimate's numbers for Dedede,
   // read off SmashWiki, in steps (60 a second, the count Smash uses too):
-  //   jab 1 hits on step 10 and lets go on 33; jab 2, 11 and 28; the finisher,
-  //   4 and 50. The swing is Jet Hammer's: it hits 10 steps after release and
-  //   lets go on 70 at full charge.
+  //   jab 2 hits on step 11 and lets go on 28; the finisher, 4 and 50. The
+  //   swing is Jet Hammer's: it hits 10 steps after release and lets go on 70
+  //   at full charge.
   // Every one of those can now move when the art is redrawn (by the owner's
   // call, a handoff's changes go in when the checks pass, and the owner reads
   // the list afterwards). `design/weapon-art/quake_hammer.md` has the current
   // values, regenerated from the files.
   //
   // What stays here is what is not animation:
-  //   open..close  the steps of a jab in which a press carries on into the next
-  //                jab — SmashWiki's 13-30 for jab 1, 18-27 for jab 2
+  //   open..close  the steps of jab 2 in which a press carries on into the
+  //                finisher — SmashWiki's 18-27
+  //   afterSwing   a swing charged less than `below` can be followed by jab 2:
+  //                a press during it, or up to `grace` steps after it ends
+  //                (the owner's pick, 22 Oct 2026)
   //   holdFrames   press to full charge (Jet Hammer's 2 seconds at Lv1); the
   //                rungs above shorten it ("faster", then "significantly")
   //   fullSooner   a full charge's swing starts this many steps in, so it
   //                lands a step sooner, as Jet Hammer's does
   //   weakShorter  an uncharged swing lets go this many steps before the end
   //                of its clip, closing to the whole clip at full charge
-  // A jab's hit is counted from the PRESS, so the wait for a tap to be
-  // recognised as a tap never makes it late.
   //
   // MOVEMENT while the hammer is busy, as a share of normal speed: 0 is rooted
   // (no walking and no turning), 0.5 is walking speed, 1 is full speed.
   quake_hammer: {
     1: {
-      tapFrames: 9,
       jab: [
-        { open: 13, close: 30, dmg: 'lowMedium', knock: 1.2 },
         { open: 18, close: 27, dmg: 'lowMedium', knock: 1.4 },
         { dmg: 'medium', knock: 3.4, launch: 2 },
       ],
+      afterSwing: { below: 0.5, grace: 10 },
       holdFrames: 120,
       swing: { fullSooner: 1, weakShorter: 10 },
       // Jet Hammer climbs from its uncharged damage toward full and then jumps
