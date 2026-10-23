@@ -92,7 +92,7 @@ where each one stands.
 - **palette notes** `[ready]` Light grey / dark grey
 - **boss weakness A** `[ready]` Typeless — no elemental weakness.
 - **boss weakness B** `[ready]` None — this boss has no second weakness on the chart.
-- **arena** `[draft]` Military weapons bunker, grey all over, with red kept for warnings. Two small ceiling turrets; sand-colored sandbag positions at both ends with olive ammo cans; a rack of bombs; a rack of artillery shells; a firing chart on the back wall; 3 Nullfire Drones lying about; an armor test plate dented by bullet strikes; a blast door marked 01; bullet pockmarks in the walls; and spent brass cases on the floor. 3 seconds before turrets fire, two searchlights sweep the arena, tracking the player (with no angle limitations), and a red alarm light on the ceiling beam spins up just before the turrets fire.
+- **arena** `[ready]` Military weapons bunker, grey all over, with red kept for warnings. Two small ceiling turrets; sand-colored sandbag positions at both ends with olive ammo cans; a rack of bombs; a rack of artillery shells; a firing chart on the back wall; 3 Nullfire Drones lying about; an armor test plate dented by bullet strikes; a blast door marked 01; bullet pockmarks in the walls; and spent brass cases on the floor. 3 seconds before turrets fire, two searchlights sweep the arena, tracking the player (with no angle limitations), and a red alarm light on the ceiling beam spins up just before the turrets fire.
 - **arena furniture** `[ready]` Two ceiling turrets at 28% and 72% of the room width. Same at every layer — what the layers change is how finely they aim, not what is in the room.
 - **hazard L1** `[ready]` Turrets visibly track and aim at player to nearest 45°, all firing simultaneous short 3-bullet bursts of slightly slow bullets; 15s cooldown.
 - **hazard L2** `[ready]` Same number of turrets; visibly track and aim within nearest 22.5°; slightly reduced cooldown.
@@ -222,7 +222,7 @@ where each one stands.
 - **boss weakness A** `[ready]` Fire
 - **boss weakness B** `[draft]` Poison
 - **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one later above the player, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrown tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and stays with burn status for 2x normal burn duration.
+- **arena furniture** `[ready]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one later above the player, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrown tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. If boss gets burned from player weapon or contact with Hot surfaces, it causes a small black smoke trail to follow the boss and stays with burn status for 2x normal burn duration.
   
   
   DEFERRED FUNCTION: For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal.
@@ -504,7 +504,7 @@ where each one stands.
 - **weapon name** `[wip]` Vampiric Touch
 - **boss weakness A** `[wip]` Dark
 - **boss weakness B** `[wip]` Ghost
-- **arena** `[draft]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
+- **arena** `[ready]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[draft]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
 - **hazard L2** `[draft]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.

@@ -654,6 +654,8 @@ Claude or a generator made:
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 | the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
 | Simon's Whip — the vine (every crack) and his three Simon poses; not the coiled whip at rest, which the owner drew pixel by pixel | sprite | Claude (Claude Design) | 2026-10-22 | `design/sprites/weapon-simons_whip-{held,body}.sprite` |
+| Wraith Man's room in 16-bit — a derelict chapel, with a possessed painting | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/wraith.js` |
+| Proto Mk0's room, redrawn in part — the bomb rack and three dead Nullfire Drones | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/proto.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
@@ -1365,7 +1367,7 @@ per boss and per layer. `FURNITURE` in `systems/arena.js` builds it.
 
 `systems/attributes.js`. Hot / Burn are live on Blaze Man and the Blaze Wheel; **Stun** on
 Volt Man's panels and conductors and the Volt Spark (every enemy its chain touches); 
-**Freeze** on Frost Guard; **Constrict** on Simon's Whip from Lv3. Wet and Poisoned are
+**Freeze** on Frost Guard; **Constrict** on Simon's Whip from Lv3. **Thorn Man holds a burn twice as long** (`BOSS_BURN_SCALE`), and the player's Hot ground burns him; no other boss stands in Hot. Wet and Poisoned are
 defined and tested, but nothing applies them yet.
 
 **Stun, Constrict and Freeze are ONE mechanic in three colours** — a stacking

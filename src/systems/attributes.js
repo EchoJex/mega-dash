@@ -133,9 +133,18 @@ function resync(s) {
   return s;
 }
 
+/**
+ * A bag that holds a burn longer than the burn it was given. Thorn Man's: "If
+ * boss gets burned from player weapon or contact with Hot surfaces, it ...
+ * stays with burn status for 2x normal burn duration" (his arena furniture
+ * field). A Symbol, so the loops over a bag's statuses never see it.
+ */
+export const BURN_SCALE = Symbol('burnScale');
+
 export function applyStatus(bag, id, frames, opts = {}) {
   const def = ATTR[id];
   if (!def) return bag;
+  if (id === 'burn' && bag[BURN_SCALE]) frames = Math.round(frames * bag[BURN_SCALE]);
   const cur = bag[id];
 
   if (def.stacks) {

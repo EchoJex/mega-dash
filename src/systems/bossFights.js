@@ -2064,6 +2064,9 @@ export const FIGHTS = {
  * layer does not make the floor faster or wider, it makes clearing it a
  * decision about whether you can afford to.
  */
+/** Bosses that stay burned longer than anyone else: Thorn Man, twice as long (his arena furniture field). */
+export const BOSS_BURN_SCALE = { thorn: 2 };
+
 const THORN_HAZ = {
   // "Player damage sources that travel within 1 standing player height" — the
   // player is 24px tall, so that is the number, measured from the top of the

@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FIGHTS, fightFor, hasFight } from '../src/systems/bossFights.js';
+import { FIGHTS, fightFor, hasFight, BOSS_BURN_SCALE } from '../src/systems/bossFights.js';
 import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag } from '../src/data/bosses.js';
 import { hasLadder } from '../src/data/weapons.js';
 import * as Attr from '../src/systems/attributes.js';
@@ -899,4 +899,12 @@ test('every boss a shipped run can reach drops a weapon with a real ladder', () 
   for (const b of PLAYABLE_BOSSES()) {
     assert.ok(hasLadder(b.dropWeapon), `${b.id} drops ${b.dropWeapon}, which has no ladder`);
   }
+});
+
+test('Thorn Man holds a burn twice as long, and only he does', () => {
+  const plain = Attr.applyStatus({}, 'burn', 60);
+  const thorn = Attr.applyStatus({ [Attr.BURN_SCALE]: BOSS_BURN_SCALE.thorn }, 'burn', 60);
+  assert.equal(thorn.burn.t, plain.burn.t * 2);
+  assert.deepEqual(Object.keys(thorn), ['burn'], 'the scale is not a status');
+  assert.equal(Object.keys(BOSS_BURN_SCALE).join(), 'thorn');
 });

@@ -27,7 +27,7 @@ import {
 import { UPGRADES, applyUpgrades, chipsBreakdown } from '../data/upgrades.js';
 import { save, persist, recordBossKill } from '../systems/save.js';
 import { ELITE_OUTLINE } from '../data/minions.js';
-import { fightFor } from '../systems/bossFights.js';
+import { fightFor, BOSS_BURN_SCALE } from '../systems/bossFights.js';
 import * as Terrain from '../systems/terrain.js';
 import * as Phys from '../systems/physics.js';
 import * as Minions from '../systems/minions.js';
@@ -2088,7 +2088,7 @@ export default class GameScene extends Phaser.Scene {
       anim: 0, state: 'enter',
       fight,
       isBoss: true,      // weapons that treat a boss differently check this
-      status: {},        // elemental attributes, same bag shape as the player's
+      status: { [Attr.BURN_SCALE]: BOSS_BURN_SCALE[def.id] },  // elemental attributes, same bag shape as the player's
       fs: null, // attack-loop state, owned by systems/bossFights.js
       hs: null, // hazard-loop state
     };
@@ -2098,6 +2098,13 @@ export default class GameScene extends Phaser.Scene {
     const b = this.boss;
     if (!b) return;
     b.anim++;
+    // Thorn Man is burned by the player's Hot ground too ("contact with Hot
+    // surfaces", his arena furniture field). Re-applied each step he stands in
+    // it; a burn only ever stretches to the longer of the two, so it cannot pile up.
+    if (BOSS_BURN_SCALE[b.id] && this.arena) {
+      const hot = Attr.patchAt(this.arena.patches, b, 'boss');
+      if (hot) Attr.applyStatus(b.status, 'burn', Math.round(FEEL.burnFrames * Attr.patchFrac(hot)));
+    }
     // Elemental attributes tick on the boss exactly as they do on a minion.
     // Burn routed through hitEnemy so a boss finished off by a status still
     // runs the full death path — drops, wrap door, the weapon unlock.

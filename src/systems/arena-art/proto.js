@@ -3,6 +3,8 @@
  *
  * Drawn by Claude at the owner's request, 4 Oct 2026 (Claude Design, "Boss
  * Arenas 16-bit v2", room 2a), and approved by the owner the same day.
+ * The bomb rack and the three Nullfire Drones were drawn by Claude at the
+ * owner's request, 23 Oct 2026, to match the tracker's arena line.
  *
  * The turrets are the only FURNITURE, exactly as the tracker's furniture line
  * has it; everything else — sandbags, the bomb rack and the shell rack, the
