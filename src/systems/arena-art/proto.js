@@ -5,8 +5,9 @@
  * Arenas 16-bit v2", room 2a), and approved by the owner the same day.
  *
  * The turrets are the only FURNITURE, exactly as the tracker's furniture line
- * has it; everything else — sandbags, racks, the firing chart, the blast door,
- * the searchlights, the alarm light — is background, and the alarm light is a
+ * has it; everything else — sandbags, the bomb rack and the shell rack, the
+ * firing chart, three dead Nullfire Drones on the floor, the blast door, the
+ * searchlights, the alarm light — is background, and the alarm light is a
  * picture only, not a new hazard.
  *
  * "3 seconds before turrets fire, two searchlights sweep the arena, tracking
@@ -94,12 +95,36 @@ export default function proto(S, a, viewW) {
     '....000000....',
   ], { 0: OL, 1: '#2E3338', 2: '#414852', 3: '#56606C', 4: '#687380', 5: '#7F8A97', 6: '#98A2AE', 7: '#B3BBC5', 8: '#CDD3DB', 9: '#E4E8ED' });
 
-  // ── the set: blast door, gun rack, sandbag positions, ammo cans, shells,
+  // ── the set: blast door, bomb rack, sandbag positions, ammo cans, shells,
   // firing chart, armour test plate, pockmarks, wall lamps
   const BP = { 0: OL, 1: '#1E2228', 2: '#2E3338', 3: '#414852', 4: '#56606C', 5: '#687380', 6: '#7F8A97', 7: '#98A2AE', 8: '#B3BBC5', 9: '#E4E8ED' };
   const bagS = sprite(['..00000000..', '.0677777760.', '065666666540', '054555555430', '.0433333320.', '..00000000..'], { 0: OL, 2: '#3E3220', 3: '#5A4A30', 4: '#7A6844', 5: '#9A8658', 6: '#B8A472', 7: '#D2C090' });
   const canS = sprite(['0000000000000000', '0666666666666660', '0444444444444440', '0000000000000000', '0555555555555550', '0559955555555550', '0555555555555550', '0444444444444440', '0333333333333330', '0000000000000000'], { 0: OL, 3: '#2C3018', 4: '#3E4424', 5: '#525A32', 6: '#6A7448', 9: '#E0C070' });
-  const gunS = sprite(['.0000.', '.0890.', '.0000.', '.0760.', '.0650.', '.0650.', '.0650.', '000000', '077760', '076550', '065540', '065440', '054430', '000000'], BP);
+  // An aerial bomb lying on its side: tail fins, an olive body, a yellow band by the nose.
+  const OLV = ramp(['#22260F', '#343A1C', '#4A522A', '#626C3A', '#7E8A50']);
+  const bomb = new Raster(26, 9);
+  for (let x = 0; x < 26; x++) {
+    const body = x >= 5 && x <= 23, hw = x < 5 ? 0 : x < 8 ? 2 + (x - 5) * 0.4 : x > 20 ? 3.2 - (x - 20) * 0.9 : 3.2;
+    for (let y = 0; y < 9; y++) {
+      const dy = y - 4;
+      if (body && Math.abs(dy) <= hw) bomb.set(x + 1, y, x === 19 || x === 20 ? hex('#C8A450') : pick(OLV, 0.45 - dy * 0.12, x, y));
+      else if (!body && x >= 1 && (Math.abs(dy) === 3 - Math.floor(x / 2) || (dy === 0 && x > 1))) bomb.set(x + 1, y, S9[x < 3 ? 3 : 4]);
+    }
+  }
+  bomb.outline(OLc);
+  const bombCv = bomb.flush();
+  // A Nullfire Drone, powered down: the grey box the player's drone is, its lens dark,
+  // with stubby rotor arms. Three lie about the floor, one upside down.
+  const droneCv = sprite([
+    '00000....00000',
+    '06660000006660',
+    '.006777777600.',
+    '..0671111760..',
+    '..0655115540..',
+    '..0655555540..',
+    '..0044444400..',
+    '...00000000...',
+  ], { 0: OL, 1: '#22262E', 4: '#56606C', 5: '#7F8A97', 6: '#98A2AE', 7: '#B3BBC5' });
   const setCv = canvas(viewW, FLOOR), sx = setCv.getContext('2d');
   const dX = viewW - 46, dY = 112, dW = 42, dH = FLOOR - 112;
   R(sx, dX, dY, dW, dH, OL); R(sx, dX + 1, dY + 1, dW - 2, dH - 1, Sc[2]);
@@ -115,12 +140,15 @@ export default function proto(S, a, viewW) {
   [['0', dX + 9], ['1', dX + 26]].forEach(([g, gx]) => DG[g].forEach((row, j) => [...row].forEach((b, i) => { if (b === '1') R(sx, gx + i * 2, dY + 24 + j * 2, 2, 2, Sc[8]); })));
   const rX = Math.round(viewW * 0.5) - 40;
   for (const ux of [rX - 2, rX + 80]) R(sx, ux, 140, 2, 22, OL);
-  for (let k = 0; k < 6; k++) sx.drawImage(gunS, rX + 4 + k * 13, 144);
+  for (let k = 0; k < 3; k++) { sx.drawImage(bombCv, rX + 1 + k * 27, 140); sx.drawImage(bombCv, rX + 1 + k * 27, 149); }
   R(sx, rX - 2, 149, 84, 2, OL); R(sx, rX - 1, 149, 82, 1, Sc[6]);
   R(sx, rX - 2, 158, 84, 3, OL); R(sx, rX - 1, 158, 82, 1, Sc[6]); R(sx, rX - 1, 159, 82, 1, Sc[3]);
   const bagRow = (x0, x1, y, off) => { for (let x = x0 + off; x < x1; x += 11) sx.drawImage(bagS, x, y); };
   for (const [a0, a1] of [[-4, 96], [dX - 124, dX - 40]]) { bagRow(a0, a1, FLOOR - 6, 0); bagRow(a0 + 2, a1 - 4, FLOOR - 11, 5); bagRow(a0 + 6, a1 - 12, FLOOR - 16, 0); }
   for (const [cx0, cy0] of [[dX - 36, FLOOR - 10], [dX - 20, FLOOR - 10], [dX - 28, FLOOR - 20]]) sx.drawImage(canS, cx0, cy0);
+  sx.drawImage(droneCv, 98, FLOOR - 8);
+  sx.save(); sx.translate(0, FLOOR * 2 - 8); sx.scale(1, -1); sx.drawImage(droneCv, 116, FLOOR - 8); sx.restore();   // on its back
+  sx.drawImage(droneCv, 30, FLOOR - 23);
   const BRASS = ramp(['#3A2A0C', '#6A4E1A', '#9A7A30', '#C8A450', '#F0D890']), COP = ramp(['#4A1E10', '#8A3E20', '#C86A3A']), TIP = S9.slice(2, 9);
   const shell = new Raster(8, 18);
   for (let y = 0; y < 16; y++) {

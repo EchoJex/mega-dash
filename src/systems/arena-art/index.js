@@ -25,8 +25,9 @@ import tempest from './tempest.js';
 import volt from './volt.js';
 import thorn from './thorn.js';
 import strike from './strike.js';
+import wraith from './wraith.js';
 
-const ROOMS = { proto, blaze, tempest, volt, thorn, strike };
+const ROOMS = { proto, blaze, tempest, volt, thorn, strike, wraith };
 
 /** Does this boss's room have 16-bit art? */
 export const hasArenaArt = (id) => Object.prototype.hasOwnProperty.call(ROOMS, id);

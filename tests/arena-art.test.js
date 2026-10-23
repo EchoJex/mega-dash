@@ -135,8 +135,8 @@ function stir(a, room, steps) {
 
 const ARTFUL = BOSSES.filter((b) => hasArenaArt(b.id));
 
-test('the six approved rooms have art, and a room without art is left alone', () => {
-  assert.deepEqual(ARTFUL.map((b) => b.id).sort(), ['blaze', 'proto', 'strike', 'tempest', 'thorn', 'volt']);
+test('the drawn rooms have art, and a room without art is left alone', () => {
+  assert.deepEqual(ARTFUL.map((b) => b.id).sort(), ['blaze', 'proto', 'strike', 'tempest', 'thorn', 'volt', 'wraith']);
   assert.equal(hasArenaArt('frost'), false);
 });
 
