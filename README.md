@@ -165,6 +165,17 @@ The bindings live in one place: **[CLAUDE.md → Controls — as bound](CLAUDE.m
 The slide is **meta progression** — locked at Slide Mastery rank 0, unlocked by
 buying rank 1 in the Hub.
 
+## Credits
+
+Music from [OpenGameArt.org](https://opengameart.org), also named on the game's CREDITS
+screen (the button beside AUDIO on the title screen):
+
+- **"8Bit Title Screen"** by Joth, [CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+  ([page](https://opengameart.org/content/8bit-title-screen)) — the title and menu music.
+- **"Hero Immortal"** by Trevor Lentz, [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+  ([page](https://opengameart.org/content/hero-immortal)) — the credits music, and the game over
+  music (its first 36 seconds, looped from 0:20). Those cuts are shared under the same licence.
+
 ## Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** — architecture, terminology, the element-slice plan. Read first.

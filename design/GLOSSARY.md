@@ -119,7 +119,7 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **live / aimed** | Two different things. Several weapons can be *live* (running); exactly one offensive weapon is *aimed* (on the fire button). |
 | **ladder / rung** | A weapon's list of upgrades by level. Each **rung** — levels 1, 3, 6 and 10 — adds a real feature; the levels between just add damage. |
 | **tier** | Another name for those four rungs: Lv 1, 3, 6 and 10. Beating a boss whose weapon you already carry pushes it up a tier. |
-| **jab / chain / window** | A jab is a quick attack. A chain is attacks in a row: on the Quake Hammer, a swing charged less than half, then jab two, then the finisher (there is no jab one). The window is the stretch of steps in which another press carries on into the next jab; press after it closes and the chain is over. |
+| **jab / chain / window** | A jab is a quick attack. A chain is attacks in a row: on the Quake Hammer, a swing charged less than half, then jab two (a press during that swing, or up to 10 steps after it), then the finisher (there is no jab one). The window is the stretch of steps in which another press carries on into the next jab; press after it closes and the chain is over. |
 | **charge** | Holding the fire button to wind up a stronger attack, which goes off when you let go. The Quake Hammer's is modelled on King Dedede's Jet Hammer. A **full charge** is one held long enough to reach its strongest. |
 | **rooted** | Unable to walk or turn round while a weapon is busy. Jumping still works. `moveScale` 0 in the code. |
 | **planted** | Rooted and unable to jump as well: the Quake Hammer's swing once a charge is let go. `planted` in the code. |
@@ -158,6 +158,9 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **pack.json** | The music pack's list: every track's name, size and fingerprint. `npm run music` writes it after a track is handed off. |
 | **fingerprint** | A short code worked out from a file's exact bytes. Change one byte and it changes, which is how the phone knows a track was re-exported and needs downloading again. |
 | **BGM / SFX** | Background music / sound effects. SFX are built into the game; BGM is the music pack. |
+| **loop point** | Where a track goes back to when it reaches its end. Most tracks start again from the top; the game over track jumps back to 0:20.29, so its opening plays once as an intro, and the credits track plays once and stops. `LOOP_FROM` in the code. |
+| **Ogg (Vorbis)** | The kind of audio file every track is. Unlike an MP3, it records its exact length, so a loop joins with no hiccup. |
+| **CC0 / CC-BY-SA** | Licences that let anyone use a piece of work. CC0 asks for nothing. CC-BY-SA asks you to name the author, the work, where it came from and the licence, and to share anything you change from it under the same licence. The game does this on its CREDITS screen. |
 | **design brief** | `design/DESIGN-BRIEF.md`: the game's look and its limits on one page, for Claude Design to read before it draws anything for this game. |
 | **design system** | Claude Design's reusable reference — a rules page, named colours, preview cards and images — read before every new design. MEGA DASH's is built from the design brief. |
 | **handoff** | The zip Claude Design exports for Claude Code: the drawings, the chat, a README, and a note saying what is approved and what to build. |
