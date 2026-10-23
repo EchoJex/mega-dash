@@ -17,8 +17,8 @@ If this page and `CLAUDE.md` disagree, `CLAUDE.md` is right and this page is the
    shapes there are. They are in the game now, playing exactly as your art will.
 2. **You redraw the pictures, in the same files.** You read them from this repository and
    hand back the same files with your drawing in them.
-3. **The owner approves your work in Claude Design**, and you hand it off (Export → Hand
-   off to Claude Code). Claude Code runs `npm run design:import` on the bundle. **If every
+3. **The owner approves your work in Claude Design**, and you hand it off as one zip file
+   the owner downloads and gives to Claude Code. Claude Code runs `npm run design:import` on the bundle. **If every
    check passes, your files go into the game as they are** — pictures, timing and hit
    areas — and the owner reads a plain list of what changed. If a check fails, nothing
    goes in, and the reason comes back in words.
@@ -158,7 +158,9 @@ only each other.
 
 ## 7. Handing it off
 
-- **Export → Hand off to Claude Code** (or download the project as a zip).
+- **Give the owner one zip file to download** — Export → Hand off to Claude Code makes it
+  where the menu has it; otherwise put the files in a zip yourself. The owner gives it to
+  Claude Code.
 - In it: **the `.sprite` files you drew** (anywhere in the bundle — each is matched by its
   first line) and **`HANDOFF.md`**, saying:
   - what the owner approved, and when;

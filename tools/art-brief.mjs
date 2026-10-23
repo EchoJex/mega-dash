@@ -82,13 +82,31 @@ export async function contractSection(weapon) {
   return out.join('\n').trimEnd();
 }
 
+/** A sheet still in the plain shapes `npm run art:placeholders` paints (its note says so). */
+function isPlaceholder(id) {
+  const path = join(REPO, 'design/sprites', `${id}.sprite`);
+  if (!existsSync(path)) return true;
+  const note = readFileSync(path, 'utf8').split('\n').find((l) => l.startsWith('note')) || '';
+  return note.replace(/^note\s+/, '').startsWith('PLACEHOLDER');
+}
+
 /** The prompt to paste into Claude Design, naming this weapon's exact files. */
 export function promptSection(weapon) {
   const sheets = weaponSheets().filter((w) => w.weapon === weapon);
   const name = weapon.replace(/_/g, ' ').toUpperCase();
-  const files = sheets.map((w) => `   - ${GITHUB}/design/sprites/${w.id}.sprite`).join('\n');
+  // Only sheets still in placeholder shapes are asked for: a finished sheet the owner
+  // approved must not be redrawn because a prompt listed it (the hammer's effects, 22 Oct).
+  const todo = sheets.filter((w) => isPlaceholder(w.id)), done = sheets.filter((w) => !isPlaceholder(w.id));
+  const link = (w) => `   - ${GITHUB}/design/sprites/${w.id}.sprite`;
+  if (!todo.length) return `Every sheet of the ${name} is finished art, so there is no prompt to paste.`;
+  const files = todo.map(link).join('\n')
+    + (done.length ? `\n   These ${done.length === 1 ? 'one is' : `${done.length} are`} finished art the owner approved: `
+      + `read ${done.length === 1 ? 'it' : 'them'} for the look, and leave ${done.length === 1 ? 'it' : 'them'} exactly as `
+      + `${done.length === 1 ? 'it is' : 'they are'}:\n${done.map(link).join('\n')}` : '');
+  const what = todo.length === sheets.length ? `its ${sheets.length} sprite sheet${sheets.length === 1 ? '' : 's'}`
+    : `${todo.length} of its ${sheets.length} sprite sheets`;
   return ['Paste this into Claude Design, with the repository linked:', '', '```text',
-    `Draw the art for MEGA DASH's ${name}, replacing the placeholder pictures in its ${sheets.length} sprite sheets.`,
+    `Draw the art for MEGA DASH's ${name}, replacing the placeholder pictures in ${what}.`,
     '',
     'Everything you need is in the GitHub repository EchoJex/mega-dash, branch main. Link the repository (the '
     + 'design/ and docs/ folders are enough) and read, in this order:',
@@ -96,12 +114,12 @@ export function promptSection(weapon) {
     + 'may change, how it is checked, and what to hand back.',
     `2. ${GITHUB}/design/weapon-art/${weapon}.md — this weapon: what it is, what each level shows, every clip `
     + 'with its timing and hit areas, and the rules the code holds the drawing to.',
-    '3. Its sheets, already in the game and playing exactly as your art will:',
+    `3. ${todo.length === 1 ? 'The sheet' : 'The sheets'} to draw, already in the game and playing exactly as your art will:`,
     files,
     `4. ${GITHUB}/design/DESIGN-BRIEF.md (the game's look and limits) and ${GITHUB}/design/sprites/player.sprite `
     + '(the 16-bit player: the reference for style and for scale).',
     '',
-    'Redraw every frame in the same files: same file names, same sheet sizes, same clip names, drawn facing right '
+    'Redraw every frame of those sheets in the same files: same file names, same sheet sizes, same clip names, drawn facing right '
     + '(the game mirrors it). You may change the colours (up to 15 per sheet), any hold, which frame a move hits '
     + 'on, the hit areas, the spawn points and the pivot when the drawing needs it. Those changes go into the game '
     + 'as soon as they pass the checks, so say what you changed and why.',
@@ -109,9 +127,10 @@ export function promptSection(weapon) {
     'Before handing off, show the owner every clip playing at game speed (60 steps a second, each frame for its '
     + 'hold), facing both ways, beside the player, with the hit areas drawn on.',
     '',
-    'When the owner approves: Export, then Hand off to Claude Code. Include the .sprite files and a HANDOFF.md '
-    + 'note saying what was approved and when, what changed in timing or hit areas and why, and anything you '
-    + 'would like the code to change.',
+    'When the owner approves, give the owner ONE zip file to download, holding the .sprite files you drew and a '
+    + 'HANDOFF.md note saying what was approved and when, what changed in timing or hit areas and why, and '
+    + 'anything you would like the code to change. (If your menu has Export, then Hand off to Claude Code, that '
+    + 'makes the same bundle.) The owner gives that zip to Claude Code.',
     '```'].join('\n');
 }
 

@@ -173,7 +173,8 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 - **Show the worst moments before asking for approval**: layer 3, every hazard at once, a
   blackout or flood, and the player and the boss's own shots across the room — at 320 and
   480 wide.
-- **Export → Hand off to Claude Code**, with a short **handoff note** alongside (the arena
+- **Hand off as one zip file the owner downloads** (Export → Hand off to Claude Code where
+  the menu has it), with a short **handoff note** alongside (the arena
   one, `HANDOFF-arenas.md`, is the model):
   - what was approved, by whom, and when;
   - what must be kept exactly as drawn;

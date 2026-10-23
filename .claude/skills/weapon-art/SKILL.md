@@ -68,7 +68,8 @@ The prompt is already written: the brief's *Handing this weapon to Claude Design
 generated with every file's link. Give the owner that block verbatim and the brief's
 link — do not write a new prompt. Tell them: link the repository in Claude Design (the
 `design/` and `docs/` folders are enough), paste the prompt, approve the art in Design,
-then **Export → Hand off to Claude Code**.
+then download the **one zip** Design makes (Export → Hand off to Claude Code where the menu
+has it) and give it to Claude Code.
 
 ## Phase 3 — bring the handoff back
 
