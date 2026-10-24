@@ -61,6 +61,10 @@
     appearance:none;cursor:pointer;padding-left:14px}
   select.txt option{background:var(--bg);color:var(--fg)}
   .txt:focus{box-shadow:inset 0 0 0 1px var(--ui)}
+  /* A palette colour is shown as the colour itself: the swatch sits in the
+     row's usual padding, and tapping it opens the phone's own colour picker. */
+  .swatch{display:flex;align-items:center;padding:6px 10px}
+  .swatch input{width:96px;height:28px;padding:0;border:1px solid var(--grid);border-radius:2px;background:none;cursor:pointer}
   /* A CHECK FIELD WEARS THE SAME .txt SKIN so the marker stripe down the left
      edge still reads across every row. The boxes are 16px and the label is the
      tap target, because this app is used on a phone in one hand. */
@@ -212,6 +216,17 @@ const CHOICE_FIELDS = {
  * so the reader splits on `·` and compares whole segments instead of searching
  * for a substring that would report `boss` ticked whenever `boss atk` was.
  */
+/**
+ * A PALETTE COLOUR IS SHOWN, NOT SPELLED (owner, bug of build 1195). The three
+ * palette fields hold one `#RRGGBB` each; the row shows that colour as a
+ * swatch, and tapping it opens the device's own colour picker. The field still
+ * saves as the same hex text, upper case, so the tracker file, `npm run sync`
+ * and the tests read it exactly as before. A value that is not a plain hex
+ * stays a text box rather than being forced into a colour it is not.
+ */
+const COLOUR_FIELD = /^palette (primary|secondary|outline)$/;
+const HEX = /^#[0-9a-f]{6}$/i;
+
 const CHECK_FIELDS = {
   'sprite sheet': ['furniture', 'arena background', 'boss', 'boss atk'],
 };
@@ -458,8 +473,9 @@ function fieldRow(f, head) {
   // Everything else stays prose, because everything else IS prose.
   const choices = CHOICE_FIELDS[f.label];
   const boxes = CHECK_FIELDS[f.label];
+  const colour = COLOUR_FIELD.test(f.label) && HEX.test(f.text.trim());
   const txt = document.createElement(choices ? 'select' : 'div');
-  txt.className = boxes ? 'txt checks' : 'txt';
+  txt.className = boxes ? 'txt checks' : colour ? 'txt swatch' : 'txt';
   /**
    * THE ASSERTION RULE lives in marks.js.
    *
@@ -480,7 +496,15 @@ function fieldRow(f, head) {
     touch();
   };
 
-  if (boxes) {
+  if (colour) {
+    const pick = document.createElement('input');
+    pick.type = 'color';
+    pick.value = f.text.trim().toLowerCase();
+    const name = () => { pick.title = f.text.trim(); pick.setAttribute('aria-label', `${f.label} ${f.text.trim()}`); };
+    name();
+    pick.oninput = () => { f.text = pick.value.toUpperCase(); name(); dirty(); };
+    txt.appendChild(pick);
+  } else if (boxes) {
     // The value is rewritten WHOLE on every tick rather than patched, so the
     // line's order and spacing can never drift from what writeChecks emits.
     const on = readChecks(f.text, boxes);

@@ -620,8 +620,8 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   // A direction during the slam makes the boulder; it rolls that way on landing.
   air.h.run.moveInput = -1; air.step();
   assert.ok(air.st().boulder);
-  air.step();
-  assert.ok(air.h.player.vy < FEEL.maxFallSpeed / 2, 'the boulder winds up falling slowly');
+  // ...and the winding-up boulder falls slower than the statue's slam.
+  assert.ok(air.h.run.glideFall < FEEL.maxFallSpeed && air.h.player.vy <= air.h.run.glideFall);
   air.h.run.moveInput = 0; air.h.player.onGround = true;
   air.step();
   assert.equal(air.st().mode, 'roll');
@@ -633,8 +633,8 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   // extra for each step past a full jump + midair jump.
   const L3 = ladderAt('granite_form', 3);
   const d = (n) => Wpn.spinUp(n, 1, L3).d;
-  assert.ok(d(0) < d(6) && d(6) < d(13) && d(13) < d(26), 'more fall, more roll');
-  assert.ok(d(26) - d(13) < d(13) - d(0), 'diminishing past a full jump + midair jump');
+  assert.ok(d(0) < d(30) && d(30) < d(89) && d(89) < d(178), 'more fall, more roll');
+  assert.ok(d(178) - d(89) < d(89) - d(0), 'diminishing past a full jump + midair jump');
   assert.equal(Math.sign(Wpn.spinUp(10, -1, L3).v), -1);
 
   // Lv6: a jump breaks the form (the scene lets the jump through); Lv3 does not offer it.
