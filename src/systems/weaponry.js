@@ -1363,6 +1363,214 @@ const quake = {
   },
 };
 
+// ── DRAKE BREATH — Dragon, offensive ─────────────────────────────────
+/**
+ * "Offensive; a dragon head cannon. ... use colors like indigo, violet and
+ *  teal when the animation might otherwise resemble fire. Holding fire rears
+ *  the dragon head cannon back for a short wind-up — you cannot move."
+ *  Lv1  Bowser's neutral B on hold; the breath shrinks the longer it is held,
+ *       then recovers.
+ *  Lv3  a wide energy wave like Guile's Flash Kick on release — high and
+ *       overhead, limited range.
+ *  Lv6  Corrin's neutral B: also charges a medium blast that releases on
+ *       release; the wave keeps its end point, the blast carries on.
+ *  Lv10 the Gaster Blaster: a quick narrow beam telegraphing a massive laminar
+ *       beam, as tall as the wave reaches, nearly full screen, 2 s, dissipating.
+ *
+ * Dragon is not Fire, so nothing here lays Hot or applies Burn.
+ *
+ * Everything the weapon puts in the world lives on its own state (`st.fx`),
+ * drawn by drawWeaponry. Benching it mid-beam ends the beam; that is fine.
+ */
+const DRAKE = { core: 0xF2EEFF, violet: 0x8B5CF6, indigo: 0x3B2A8C, teal: 0x2DD4BF };
+
+/** Where the breath leaves the cannon, and his middle. */
+const drakeMouth = (p) => ({ x: p.x + 12 + 12 * p.facing, y: p.y + 10 });
+
+function drakeHits(ctx, st, box, dmg, opts, set) {
+  for (const e of enemiesIn(ctx, box)) {
+    if (set.has(e)) continue;
+    set.add(e);
+    ctx.hitEnemy(e, dmg, opts);
+  }
+}
+
+const drake = {
+  chargeRelease: true,
+  holdFrames: (lv) => {
+    const L = ladderAt('drake_breath', lv);
+    return L.beam?.charge ?? L.blast?.charge ?? L.windup;
+  },
+  reach: () => ladderAt('drake_breath', 1).breathLen,
+
+  init(st, lv) {
+    st.fuel = ladderAt('drake_breath', lv).fuel;
+    st.down = false; st.holdSeen = false; st.heldF = 0; st.fx = [];
+  },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('drake_breath', lv), p = ctx.player;
+    if (!st.holdSeen) { st.down = false; st.heldF = 0; }   // dropped, not released
+    st.holdSeen = false;
+    st.breathing = st.down && st.heldF > L.windup && st.fuel > 0;
+    if (st.breathing) {
+      st.fuel--;
+      if (st.heldF % L.tick === 0) {
+        const m = drakeMouth(p), len = drake.breathNow(st, L);
+        const box = { x: p.facing > 0 ? m.x : m.x - len, y: m.y - L.breathH / 2, w: len, h: L.breathH };
+        drakeHits(ctx, st, box, dmgOf('drake_breath', lv, ctx) * words(L.breathDmg), { from: p.x + 12 }, new Set());
+      }
+    } else if (!st.down) st.fuel = Math.min(L.fuel, st.fuel + L.refill);
+    if (st.down) {                                  // rooted while rearing back and breathing
+      ctx.run.moveScale = 0;
+      ctx.run.planted = true;
+      p.jumpBuffer = 0;
+    }
+    for (const f of st.fx) drake.stepFx(f, lv, ctx);
+    st.fx = st.fx.filter((f) => !f.done);
+  },
+
+  /** The breath's length now: full on a full tank, down to `breathMin` on empty. */
+  breathNow: (st, L) => L.breathMin + (L.breathLen - L.breathMin) * (st.fuel / L.fuel),
+
+  stepFx(f, lv, ctx) {
+    f.t++;
+    const base = dmgOf('drake_breath', lv, ctx);
+    if (f.kind === 'wave') {
+      const r = f.r * Math.min(1, f.t / f.grow);
+      // The arc: in front and up over his head, never below his middle.
+      for (const e of ctx.enemies) {
+        if (e.hp <= 0 || f.set.has(e)) continue;
+        const c = centreOf(e), dx = (c.x - f.x) * f.dir, dy = c.y - f.y;
+        if (dy > 8 || dx < -r * 0.4 || dx * dx + dy * dy > (r + 6) ** 2) continue;
+        f.set.add(e);
+        ctx.hitEnemy(e, base * words(f.dmg), { knockback: f.knock * f.dir, from: f.x });
+      }
+      if (f.t >= f.grow + 8) f.done = true;
+    } else if (f.kind === 'blast') {
+      f.x += f.speed * f.dir;
+      drakeHits(ctx, null, { x: f.x - f.r, y: f.y - f.r, w: f.r * 2, h: f.r * 2 },
+        base * words(f.dmg), { knockback: f.knock * f.dir, from: f.x - f.dir * 10 }, f.set);
+      if (f.t >= f.life) f.done = true;
+    } else if (f.kind === 'beam') {
+      const live = f.t > f.tele && f.t <= f.tele + f.life;
+      if (live && (f.t - f.tele) % f.tick === 1) {
+        drakeHits(ctx, null, drake.beamBox(f), base * words(f.dmg), { from: f.x }, new Set());
+      }
+      if (f.t > f.tele + f.life) f.done = true;
+    }
+  },
+
+  /** The beam's box this step, thinning away over its last `fade` steps. */
+  beamBox(f) {
+    const left = f.tele + f.life - f.t;
+    const k = left < f.fade ? Math.max(0, left / f.fade) : 1;
+    const h = (f.bot - f.top) * k, mid = (f.top + f.bot) / 2;
+    return { x: f.dir > 0 ? f.x : f.x - f.len, y: mid - h / 2, w: f.len, h };
+  },
+
+  hold(st, lv, ctx) {
+    st.holdSeen = true;
+    if (!st.down) { st.down = true; st.heldF = 0; ctx.sfx('select', { pitch: 0.5 }); }
+    st.heldF++;
+    ctx.run.moveScale = 0; ctx.run.planted = true; ctx.player.jumpBuffer = 0;
+    const L = ladderAt('drake_breath', lv);
+    if (L.blast && st.heldF === L.blast.charge) ctx.sfx('select', { pitch: 0.8 });
+    if (L.beam && st.heldF === L.beam.charge) ctx.sfx('select', { pitch: 1.1 });
+  },
+
+  fire(st, lv, ctx, held) {
+    const L = ladderAt('drake_breath', lv), p = ctx.player;
+    const heldF = st.down ? st.heldF : held;
+    st.down = false; st.heldF = 0;
+    if (!L.wave) return true;
+    const m = drakeMouth(p), cy = p.y + 10, dir = p.facing;
+    st.fx.push({ kind: 'wave', x: p.x + 12, y: cy, dir, t: 0, set: new Set(), ...L.wave });
+    const endX = p.x + 12 + L.wave.r * dir;
+    if (L.beam && heldF >= L.beam.charge) {
+      st.fx.push({
+        kind: 'beam', x: m.x, y: cy, dir, t: 0, top: cy - L.wave.r, bot: p.y + 24, ...L.beam,
+      });
+      ctx.shake?.(2, 20);
+      ctx.sfx('shootBig', { pitch: 0.5 });
+    } else if (L.blast && heldF >= L.blast.charge) {
+      st.fx.push({ kind: 'blast', x: endX, y: cy, dir, t: 0, set: new Set(), ...L.blast });
+      ctx.sfx('shootBig', { pitch: 0.8 });
+    } else ctx.sfx('shoot', { pitch: 0.7 });
+    return true;
+  },
+};
+
+/** Drake Breath's shapes: the cannon, the breath, the wave, the blast, the beam. */
+function drawDrake(g, sx, ctx) {
+  const st = ctx.run.wstate.drake_breath;
+  if (!st || !ctx.equipped.includes('drake_breath')) return;
+  const p = ctx.player, lv = ctx.levelOf('drake_breath'), L = ladderAt('drake_breath', lv);
+  const m = drakeMouth(p), f = p.facing;
+  const rear = st.down && st.heldF <= L.windup ? Math.round(3 * st.heldF / L.windup) : 0;
+  // The dragon head cannon: a snout, reared back and up during the wind-up,
+  // jaw dropping open while it breathes.
+  const hx = sx(p.x + 12 + (8 - rear) * f), hy = p.y + 7 - rear;
+  g.fillStyle(DRAKE.indigo, 1);
+  g.fillRect(hx - (f > 0 ? 0 : 8), hy, 8, 4);
+  g.fillStyle(DRAKE.violet, 1);
+  g.fillRect(hx - (f > 0 ? 0 : 8), hy + (st.breathing ? 5 : 4), 7, 2);
+  g.fillStyle(DRAKE.teal, 1);
+  g.fillRect(hx + (f > 0 ? 2 : -4), hy + 1, 2, 1);           // eye
+  // Charge glow at the mouth: violet at the blast, white at the beam.
+  if (st.down && (L.blast || L.beam)) {
+    const full = L.beam && st.heldF >= L.beam.charge;
+    const mid = L.blast && st.heldF >= L.blast.charge;
+    if (mid || full) {
+      g.fillStyle(full ? DRAKE.core : DRAKE.violet, 0.5 + 0.5 * Math.sin(ctx.run.frame / 3));
+      g.fillCircle(sx(m.x), m.y, full ? 4 : 3);
+    }
+  }
+  if (st.breathing) {
+    const len = drake.breathNow(st, L), x0 = sx(m.x);
+    const x = f > 0 ? x0 : x0 - len;
+    g.fillStyle(DRAKE.indigo, 0.55);
+    g.fillRect(x, m.y - L.breathH / 2, len, L.breathH);
+    g.fillStyle(DRAKE.teal, 0.8);
+    g.fillRect(x, m.y - 2, len, 4);
+    g.fillStyle(DRAKE.core, 0.9);
+    g.fillRect(x, m.y - 1, len, 1);
+  }
+  for (const e of st.fx) {
+    if (e.kind === 'wave') {
+      const r = e.r * Math.min(1, e.t / e.grow), a = 1 - Math.max(0, e.t - e.grow) / 8;
+      // A crescent from ahead, up and over his head.
+      // Phaser angles run clockwise from "right"; the upper half is PI to 2PI.
+      const start = e.dir > 0 ? Math.PI + 0.4 : Math.PI, end = e.dir > 0 ? Math.PI * 2 : Math.PI * 2 - 0.4;
+      for (const [w, c, k] of [[4, DRAKE.violet, 0.6], [1, DRAKE.core, 1]]) {
+        g.lineStyle(w, c, k * a);
+        g.beginPath(); g.arc(sx(e.x), e.y, r, start, end); g.strokePath();
+      }
+    } else if (e.kind === 'blast') {
+      g.fillStyle(DRAKE.violet, 0.7);
+      g.fillCircle(sx(e.x), e.y, e.r);
+      g.fillStyle(DRAKE.core, 1);
+      g.fillCircle(sx(e.x), e.y, e.r - 3);
+    } else if (e.kind === 'beam') {
+      const x = sx(e.dir > 0 ? e.x : e.x - e.len);
+      if (e.t <= e.tele) {
+        // The telegraph: one ultra-quick hairline across the room.
+        g.fillStyle(DRAKE.core, e.t % 4 < 2 ? 1 : 0.5);
+        g.fillRect(x, e.y, e.len, 1);
+        continue;
+      }
+      const b = drake.beamBox(e);
+      const pulse = Math.round(Math.sin(e.t / 2) * 2);
+      g.fillStyle(DRAKE.indigo, 0.5);
+      g.fillRect(x, b.y - 2 - pulse, e.len, b.h + 4 + pulse * 2);
+      g.fillStyle(DRAKE.teal, 0.85);
+      g.fillRect(x, b.y, e.len, b.h);
+      g.fillStyle(DRAKE.core, 1);
+      g.fillRect(x, b.y + b.h * 0.2, e.len, b.h * 0.6);
+    }
+  }
+}
+
 // ── SWARM CALLER — Bug, defensive ────────────────────────────────────
 /**
  * "Summons temporary bug allies that attack nearby enemies."
@@ -2376,6 +2584,7 @@ export const RUNTIME = {
   granite_form: granite,
   astral_cloak: eclipse,
   alloy_blade: alloy,
+  drake_breath: drake,
 };
 
 export const hasRuntime = (id) => Object.prototype.hasOwnProperty.call(RUNTIME, id);
@@ -2861,6 +3070,7 @@ export function drawSandShape(g, x, y, shade) {
 
 export function drawWeaponry(g, sx, ctx) {
   const { run, player: p, fx } = ctx;
+  drawDrake(g, sx, ctx);
 
   // NULLFIRE DRONE — grey while live, DARK grey during the emergency reload,
   // which is the tracker's own readout for "the clip is gone". The clip bar

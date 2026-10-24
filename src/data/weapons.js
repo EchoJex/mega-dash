@@ -682,6 +682,26 @@ export const WEAPON_LADDERS = {
     },
     3: { bounces: 2, pierce: 2, dmgMult: 1.25, cornerSafe: true },
   },
+  // DRAKE BREATH — the owner's ladder of 23 Oct 2026, in Smash and Undertale
+  // terms. Steps are 1/60s. Damage is in words; every number is a placeholder.
+  drake_breath: {
+    // Lv1 Bowser's neutral B: rear back, then breathe while held. The breath
+    // runs on `fuel` steps; its length shrinks with it and recovers at
+    // `refill` per step while not breathing.
+    1: {
+      windup: 12, breathLen: 60, breathMin: 14, breathH: 10,
+      fuel: 150, refill: 2, tick: 6, breathDmg: 'low',
+    },
+    // Lv3 Guile's Flash Kick on release: an arc up and over his head.
+    3: { wave: { r: 42, grow: 10, dmg: 'medium', knock: 3 } },
+    // Lv6 Corrin's neutral B: hold to charge a blast that carries on past the
+    // wave's end on release.
+    6: { blast: { charge: 60, speed: 4, r: 7, life: 80, dmg: 'mediumHeavy', knock: 3 } },
+    // Lv10 the Gaster Blaster: a full charge fires a thin telegraph line, then
+    // the great beam — as tall as the wave reaches, nearly a screen long, for
+    // 2 seconds, thinning away at the end.
+    10: { beam: { charge: 120, tele: 16, life: 120, fade: 24, len: 300, tick: 8, dmg: 'medium' } },
+  },
 };
 
 /** True once a weapon has real per-level behaviour rather than a damage step. */

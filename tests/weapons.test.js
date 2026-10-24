@@ -118,7 +118,10 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
           Wpn.stepAllies(h.ctx);
           // Long enough to trip every long press. (The Quake Hammer charges
           // through `holdActive` instead, which its own test file drives.)
-          if (beh.fire) Wpn.fireActive(h.ctx, id, i % 120);
+          // A charge weapon is held, then let go, as GameScene feeds it.
+          if (beh.chargeRelease && i % 120 < 100) Wpn.holdActive(h.ctx, id, (i % 120) + 1);
+          else if (beh.chargeRelease && i % 120 === 100) Wpn.fireActive(h.ctx, id, 100);
+          else if (beh.fire && !beh.chargeRelease) Wpn.fireActive(h.ctx, id, i % 120);
           if (i % 90 === 0) Wpn.notify(h.ctx, [id], 'land');
           if (i % 70 === 0) Wpn.notify(h.ctx, [id], 'jump');
           Wpn.stepFx(h.fx);

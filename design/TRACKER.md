@@ -543,12 +543,12 @@ where each one stands.
 - **attack L1** `[wip]` Sweeping fire/ice beam + fireball projectiles.
 - **attack L2** `[wip]` The beam now sweeps in both directions across a single pass, and fireballs are released along its path rather than before it.
 - **attack L3** `[wip]` The boss takes flight for the beam, sweeping from above so there is no crouching under it, and lands with a fireball burst.
-- **weapon class** `[wip]` Offensive
-- **weapon** `[wip]` Short-range powerful flame/arc beam that can be angled. Per-level scaling: beam length + secondary projectiles.
-- **weapon Lv1** `[wip]` Short fixed-angle beam, high damage, held while the attack button is down.
-- **weapon Lv3** `[wip]` The beam can be angled with directional input and reaches noticeably further.
-- **weapon Lv6** `[wip]` The beam splits into a narrow cone at its far end, and secondary fireballs drop from the beam on contact with terrain.
-- **weapon Lv10** `[wip]` Lv8+: charge for a massive dragon-head projectile.
+- **weapon class** `[ready]` Offensive
+- **weapon** `[ready]` Offensive; a dragon head cannon. Dragon is going to be pretty busy: use colors like indigo, violet and teal when the animation might otherwise resemble fire. Holding fire rears the dragon head cannon back for a short wind-up — you cannot move, and the player conveys the rear-back with a slightly broad stance. (From the owner's messages of 23 Oct 2026.)
+- **weapon Lv1** `[ready]` Something like Bowser's neutral B on hold. 23 Oct 2026: like Bowser's, the breath shrinks the longer it is held, then recovers.
+- **weapon Lv3** `[ready]` Add a wide energy wave like Guile's Flash Kick on attack release, giving this weapon the high and overhead functionality, but somewhat limited range for this wave.
+- **weapon Lv6** `[ready]` Add Corrin's neutral B: the Lv1 and Lv3 effect, plus it also charges up a medium size blast that releases on attack release. A cone like hybrid, where the wave retains its termination point but the blast continues.
+- **weapon Lv10** `[ready]` Basically the Gaster Blaster beam: an ultra quick narrow beam telegraphing a magnificent massive laminar beam with the same overhead reach as the Lv3 wave, traveling nearly full screen, lasting 2s before dissipating just like Gaster Blaster does.
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[ready]` `bgm-drake-stage.ogg` — plays on the overworld approach to Drake Man's door.
 - **bgm arena** `[wip]`
