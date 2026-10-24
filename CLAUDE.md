@@ -1044,7 +1044,8 @@ carries. Making something editable is writing the line in field shape:
 **`# SYSTEMS` is the home for everything that is not one boss's slice** — the player, the
 loadout, the wheel, minions, HUD and controls, meta progression and run structure. A
 slice's palette, scale, display names (a weapon rename is the `weapon name` field),
-weaknesses (two dropdowns, B optional) and arena furniture are fields too. The `sprite
+weaknesses (two dropdowns, B optional) and arena furniture are fields too. **A palette colour shows as
+the colour itself** (a swatch that opens the device's colour picker), still saved as `#RRGGBB`. The `sprite
 sheet` line is four tick boxes: furniture, arena background, boss, boss attack.
 
 Each slice also carries a raw `` `id` `` stamp, the join key `boss-data.json`, the board and
