@@ -2419,19 +2419,22 @@ const boulderBox = (p, L) => ({ x: p.x + 12 - L.boulderSize / 2, y: p.y + 24 - L
 const morphPuff = (ctx, L) => ctx.puff({ x: ctx.player.x + 12, y: ctx.player.y + 12, w: 34, life: L.morphFrames + 4, fade: 4, color: 0xC8C2B6, cloud: true });
 
 /**
- * THE SPIN-UP (owner, 22 Oct 2026): the further the boulder falls after the
- * direction is pressed, the further and faster it rolls. `spin` is the height
- * fallen, in pixels. Up to the height of a perfect jump + midair jump the roll
+ * THE SPIN-UP (owner, 22 Oct 2026): the longer the boulder falls after the
+ * direction is pressed, the further and faster it rolls. `spin` is TIME spent
+ * falling, in steps, not height (owner, 24 Oct 2026: "Time spent falling"), so
+ * the boulder's slow fall winds up a bigger roll from the same drop. Up to the
+ * steps the statue's slam takes to fall a perfect jump + midair jump the roll
  * grows evenly from `rollMin` to `rollRef` pixels; past it, by the square root, so
- * a taller drop still adds but less and less. Speed and length both scale
+ * a longer fall still adds but less and less. Speed and length both scale
  * by the square root of the distance against the plain roll (`rollSpeed`
  * slowing to a stop over `rollFrames`), so a big roll is both quicker and
  * longer.
  */
 export function spinUp(spin, dir, L) {
-  // The height of a full jump plus a full midair jump: about 89 pixels with
-  // the NES numbers.
-  const H = FEEL.jumpVelocity ** 2 / (2 * FEEL.gravity) * (1 + FEEL.doubleJumpHeightMult);
+  // Steps it takes the statue's slam to fall the height of a full jump plus a
+  // full midair jump: about 13 with the NES numbers.
+  const peak = FEEL.jumpVelocity ** 2 / (2 * FEEL.gravity) * (1 + FEEL.doubleJumpHeightMult);
+  const H = peak / FEEL.maxFallSpeed;
   const eff = spin <= H ? spin : H * Math.sqrt(spin / H);
   const d = L.rollMin + (L.rollRef - L.rollMin) * (eff / H);
   const k = Math.sqrt(d / (L.rollSpeed * L.rollFrames / 2));
@@ -2603,7 +2606,7 @@ const granite = {
       if (L.roll && !st.boulder && r.moveInput) {
         st.boulder = true; st.dir = Math.sign(r.moveInput); st.spin = 0; st.spinT = 0;
         granite.picture(st, L, ctx);
-      } else if (st.boulder && !p.onGround) st.spin += Math.max(0, p.vy);
+      } else if (st.boulder && !p.onGround) st.spin++;
       // THE WINDING-UP BOULDER FALLS SLOWLY, like Rollout charging in the air
       // (owner, bug of build 1195): its own fall cap, never the world's gravity.
       // The statue's slam still drops at full speed.
