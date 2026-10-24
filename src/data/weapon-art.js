@@ -134,6 +134,61 @@ export const WEAPON_ART = {
       },
     },
   },
+
+  /**
+   * DRAKE BREATH, the dragon head cannon (owner, 23 Oct 2026). Indigo, violet
+   * and teal wherever it might otherwise look like fire; Lucario's soul-fire
+   * colours and his final-smash beam are the owner's references for the look.
+   *
+   * Nothing here hits by frame: the breath, the wave, the blast and the beam
+   * hurt by their own shapes, which the ladder sets (the wave runs from just
+   * below his feet to two head-heights above him, and the beam matches it).
+   * Where a thing lasts a time the ladder sets — the wind-up, a puff's life,
+   * the beam's fade — its frames are spread evenly over that time.
+   */
+  drake_breath: {
+    sheets: {
+      // The cannon in his hand, held at its back end; the mouth is the far end.
+      held: {
+        grid: { w: 24, h: 16 }, layer: 'held', heldBy: 'his hand, at the back of the cannon',
+        clips: {
+          rest: 'still',
+          rear: 'once',          // the wind-up: rears back and up
+          breathe: 'loop',       // Lv1, jaw open, breathing
+          charge: 'loop',        // Lv6, held: the blast is ready (violet glow)
+          chargeFull: 'loop',    // Lv10, held: the beam is ready (white glow)
+        },
+      },
+      // One Lv1 breath puff, teal at the mouth, violet in flight, indigo as it dies.
+      puff: {
+        grid: { w: 16, h: 16 }, layer: 'effects', heldBy: 'its middle',
+        clips: { burn: 'once' },
+      },
+      // The Lv3 wave: a crescent wall from just below his feet to two
+      // head-heights above him, travelling forward.
+      wave: {
+        grid: { w: 16, h: 48 }, layer: 'effects', heldBy: 'its foot, just below the floor',
+        clips: { travel: 'loop' },
+      },
+      // The Lv6 blast, flying on past where the wave stops.
+      blast: {
+        grid: { w: 16, h: 16 }, layer: 'effects', heldBy: 'its middle',
+        clips: { fly: 'loop' },
+      },
+      // The Lv10 beam, drawn as tiles 32 wide from the mouth outward, the
+      // wave's height: the hairline telegraph, the flared first tile, the body
+      // tiles, and the thinning fade at its end.
+      beam: {
+        grid: { w: 32, h: 48 }, layer: 'effects', heldBy: 'the tile\'s bottom corner nearest the mouth',
+        clips: { tele: 'loop', start: 'loop', body: 'loop', fade: 'once' },
+      },
+      // One streak of an enemy shot the beam erased, blowing away down it.
+      streak: {
+        grid: { w: 16, h: 4 }, layer: 'effects', heldBy: 'the end nearest the mouth',
+        clips: { blow: 'once' },
+      },
+    },
+  },
 };
 
 /** `weapon-quake_hammer-held` — the `.sprite` file's name, and the editor's id. */

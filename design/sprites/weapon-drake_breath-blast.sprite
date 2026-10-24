@@ -1,0 +1,46 @@
+# weapon-drake_breath-blast
+grid      16x16
+fudge     0.70 x 1.00
+pivot     8 8
+palette   0 #0A0A12 outline
+palette   1 #3B2A8C indigo
+palette   2 #8B5CF6 violet
+palette   3 #2DD4BF teal
+palette   4 #F2EEFF white core
+note      PLACEHOLDER — plain shapes painted by npm run art:placeholders. Redraw any frame; the clips, holds, hit areas and pivot are what the game plays.
+
+[fly 1] status=ready hold=4
+.....222222.....
+...2222222222...
+..222222222222..
+.22222222222222.
+.22222444422222.
+2222244444422222
+2222444444442222
+2222444444442222
+2222444444442222
+2222444444442222
+2222244444422222
+.22222444422222.
+.22222222222222.
+..222222222222..
+...2222222222...
+.....222222.....
+
+[fly 2] status=ready hold=4
+................
+.....222222.....
+....22222222....
+...2222222222...
+..222244442222..
+.22224444442222.
+.22244444444222.
+.22244444444222.
+.22244444444222.
+.22244444444222.
+.22224444442222.
+..222244442222..
+...2222222222...
+....22222222....
+.....222222.....
+................

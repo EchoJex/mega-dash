@@ -3540,6 +3540,140 @@
       "frames": [
         "loose"
       ]
+    },
+    "weapon-drake_breath-held": {
+      "label": "DRAKE BREATH · HELD",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:held",
+      "weapon": "drake_breath",
+      "sheet": "held",
+      "boss": "drake",
+      "layer": "held",
+      "grid": {
+        "w": 24,
+        "h": 16
+      },
+      "box": null,
+      "clips": {
+        "rest": "still",
+        "rear": "once",
+        "breathe": "loop",
+        "charge": "loop",
+        "chargeFull": "loop"
+      },
+      "frames": [
+        "rest",
+        "rear",
+        "breathe",
+        "charge",
+        "chargeFull"
+      ]
+    },
+    "weapon-drake_breath-puff": {
+      "label": "DRAKE BREATH · PUFF",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:puff",
+      "weapon": "drake_breath",
+      "sheet": "puff",
+      "boss": "drake",
+      "layer": "effects",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "clips": {
+        "burn": "once"
+      },
+      "frames": [
+        "burn"
+      ]
+    },
+    "weapon-drake_breath-wave": {
+      "label": "DRAKE BREATH · WAVE",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:wave",
+      "weapon": "drake_breath",
+      "sheet": "wave",
+      "boss": "drake",
+      "layer": "effects",
+      "grid": {
+        "w": 16,
+        "h": 48
+      },
+      "box": null,
+      "clips": {
+        "travel": "loop"
+      },
+      "frames": [
+        "travel"
+      ]
+    },
+    "weapon-drake_breath-blast": {
+      "label": "DRAKE BREATH · BLAST",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:blast",
+      "weapon": "drake_breath",
+      "sheet": "blast",
+      "boss": "drake",
+      "layer": "effects",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": null,
+      "clips": {
+        "fly": "loop"
+      },
+      "frames": [
+        "fly"
+      ]
+    },
+    "weapon-drake_breath-beam": {
+      "label": "DRAKE BREATH · BEAM",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:beam",
+      "weapon": "drake_breath",
+      "sheet": "beam",
+      "boss": "drake",
+      "layer": "effects",
+      "grid": {
+        "w": 32,
+        "h": 48
+      },
+      "box": null,
+      "clips": {
+        "tele": "loop",
+        "start": "loop",
+        "body": "loop",
+        "fade": "once"
+      },
+      "frames": [
+        "tele",
+        "start",
+        "body",
+        "fade"
+      ]
+    },
+    "weapon-drake_breath-streak": {
+      "label": "DRAKE BREATH · STREAK",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:streak",
+      "weapon": "drake_breath",
+      "sheet": "streak",
+      "boss": "drake",
+      "layer": "effects",
+      "grid": {
+        "w": 16,
+        "h": 4
+      },
+      "box": null,
+      "clips": {
+        "blow": "once"
+      },
+      "frames": [
+        "blow"
+      ]
     }
   },
   "avgBoss": {

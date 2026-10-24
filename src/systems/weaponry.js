@@ -1385,7 +1385,7 @@ const quake = {
 const DRAKE = { core: 0xF2EEFF, violet: 0x8B5CF6, indigo: 0x3B2A8C, teal: 0x2DD4BF };
 
 /** Where the breath leaves the cannon, and his middle. */
-const drakeMouth = (p) => ({ x: p.x + 12 + 12 * p.facing, y: p.y + 10 });
+const drakeMouth = (p) => ({ x: p.x + 12 + 17 * p.facing, y: p.y + 12 });
 
 function drakeHits(ctx, st, box, dmg, opts, set) {
   for (const e of enemiesIn(ctx, box)) {
@@ -1525,83 +1525,161 @@ const drake = {
   },
 };
 
-/** Drake Breath's shapes: the cannon, the breath, the wave, the blast, the beam. */
-function drawDrake(g, sx, ctx) {
+/**
+ * DRAKE BREATH ON SCREEN. Every piece is one cell of its sheet
+ * (`weapon:drake_breath:*`), and each sheet falls back to the plain shapes
+ * below — which are also what its placeholder is painted from.
+ *
+ * Durations here are the LADDER'S (the wind-up, a puff's life, the beam's
+ * telegraph and fade): a clip's frames are spread evenly over the time the
+ * game gives, so the drawing never changes how long anything lasts.
+ */
+const D_HELD = 'weapon:drake_breath:held', D_PUFF = 'weapon:drake_breath:puff';
+const D_WAVE = 'weapon:drake_breath:wave', D_BLAST = 'weapon:drake_breath:blast';
+const D_BEAM = 'weapon:drake_breath:beam', D_STREAK = 'weapon:drake_breath:streak';
+/** The beam is drawn as tiles this wide, from the mouth outward. */
+export const BEAM_TILE = 32;
+
+/** A clip's cell `frac` of the way through it (0..1), for frames spread over a set time. */
+const cellByFrac = (c, frac) => cellAt(c, Math.min(c.total - 1, Math.floor(Math.max(0, frac) * c.total)));
+
+/**
+ * The dragon head cannon, held at its back end (x, y) — his hand.
+ * `rear` 0..3 px back and up; `open` jaw dropped; `glow` 0 none, 1 violet
+ * (the blast is ready), 2 white (the beam is ready); `blink` alternates it.
+ */
+export function drawDrakeHead(g, x, y, facing, { rear = 0, open = false, glow = 0, blink = 0 } = {}) {
+  const f = facing, X = (dx, w) => (f > 0 ? x + dx - rear : x - dx - w + rear);
+  const yy = y - rear;
+  g.fillStyle(DRAKE.indigo, 1);
+  g.fillRect(X(0, 12), yy - 3, 12, 4);                     // skull and snout
+  g.fillRect(X(2, 4), yy - 5, 4, 2);                        // brow ridge / horn
+  g.fillStyle(DRAKE.violet, 1);
+  g.fillRect(X(1, 11), yy + (open ? 3 : 1), 11, 2);         // jaw
+  g.fillStyle(DRAKE.teal, 1);
+  g.fillRect(X(6, 2), yy - 2, 2, 1);                        // eye
+  if (glow) {
+    g.fillStyle(glow === 2 ? DRAKE.core : DRAKE.violet, 1);
+    g.fillCircle(f > 0 ? x + 13 - rear : x - 13 + rear, yy + 1, blink ? 2 : 3);
+  }
+}
+
+/** One breath puff, centre (x, y). `phase` 0 teal at the mouth, 1 violet, 2 indigo. */
+export function drawDrakePuff(g, x, y, r, phase, a = 1) {
+  g.fillStyle([DRAKE.teal, DRAKE.violet, DRAKE.indigo][phase], a);
+  g.fillCircle(x, y, r);
+  if (phase === 0) { g.fillStyle(DRAKE.core, a); g.fillCircle(x, y, Math.max(1, r * 0.4)); }
+}
+
+/** The Lv3 wave: a crescent `h` tall standing on (x, y), bowed forward. */
+export function drawDrakeWave(g, x, y, dir, h, frame = 0, a = 1) {
+  const half = h / 2, mid = y - half, bow = frame ? 5 : 6;
+  const pt = (i) => { const v = i / 4 - 1; return [x - dir * bow * v * v, mid + v * half]; };
+  for (const [w, c] of [[3, DRAKE.violet], [1, DRAKE.core]]) {
+    g.lineStyle(w, c, a);
+    for (let i = 0; i < 8; i++) { const [x0, y0] = pt(i), [x1, y1] = pt(i + 1); g.lineBetween(x0, y0, x1, y1); }
+  }
+}
+
+/** The Lv6 blast, centre (x, y). */
+export function drawDrakeBlast(g, x, y, r, frame = 0) {
+  g.fillStyle(DRAKE.violet, 1);
+  g.fillCircle(x, y, r + (frame ? 0 : 1));
+  g.fillStyle(DRAKE.core, 1);
+  g.fillCircle(x, y, Math.max(1, r - 3));
+}
+
+/**
+ * One tile of the Lv10 beam, `w` long and `h` tall, standing on (x, y) and
+ * running away from the mouth in `dir`. `part`: 'tele' the hairline,
+ * 'start' the flared end at the mouth, 'body', or 'fade' (`k` 1..0, thinning).
+ */
+export function drawDrakeBeam(g, x, y, dir, w, h, part, frame = 0, k = 1) {
+  const x0 = dir > 0 ? x : x - w, mid = y - h / 2;
+  if (part === 'tele') {
+    g.fillStyle(DRAKE.core, 1);
+    g.fillRect(x0, Math.round(mid) - (frame ? 0 : 1), w, 1);
+    return;
+  }
+  const hh = h * k, top = mid - hh / 2, pulse = frame ? 1 : 0;
+  g.fillStyle(DRAKE.indigo, 1);
+  g.fillRect(x0, top - pulse, w, hh + pulse * 2);
+  g.fillStyle(DRAKE.teal, 1);
+  g.fillRect(x0, top + 2, w, Math.max(1, hh - 4));
+  g.fillStyle(DRAKE.core, 1);
+  g.fillRect(x0, top + hh * 0.25, w, Math.max(1, hh * 0.5));
+  if (part === 'start') {                                  // flare at the mouth
+    g.fillStyle(DRAKE.core, 1);
+    g.fillRect(dir > 0 ? x : x - 4, top - 2 - pulse, 4, hh + 4 + pulse * 2);
+  }
+}
+
+/** One streak of an erased shot, `len` long from (x, y), blowing away in `dir`. */
+export function drawDrakeStreak(g, x, y, dir, len, phase, a = 1) {
+  g.fillStyle(phase ? DRAKE.indigo : DRAKE.violet, a);
+  g.fillRect(dir > 0 ? x : x - len, y, len, 1);
+}
+
+/** Where his hand holds the cannon. */
+const drakeHand = (p) => ({ x: p.x + 12 + 4 * p.facing, y: p.y + 11 });
+
+/** Which held clip, and how far into it. */
+function drakePose(st, L, frame) {
+  if (st.down && st.heldF <= L.windup) return { clip: 'rear', frac: st.heldF / L.windup };
+  if (st.breathing) return { clip: 'breathe', t: frame };
+  if (st.down && L.beam && st.heldF >= L.beam.charge) return { clip: 'chargeFull', t: frame };
+  if (st.down && L.blast && st.heldF >= L.blast.charge) return { clip: 'charge', t: frame };
+  return { clip: 'rest', t: 0 };
+}
+
+function drawDrakeArt(layers, sx, sy, ctx) {
   const st = ctx.run.wstate.drake_breath;
   if (!st || !ctx.equipped.includes('drake_breath')) return;
-  const p = ctx.player, lv = ctx.levelOf('drake_breath'), L = ladderAt('drake_breath', lv);
-  const m = drakeMouth(p), f = p.facing;
-  const rear = st.down && st.heldF <= L.windup ? Math.round(3 * st.heldF / L.windup) : 0;
-  // The dragon head cannon: a snout, reared back and up during the wind-up,
-  // jaw dropping open while it breathes.
-  const hx = sx(p.x + 12 + (8 - rear) * f), hy = p.y + 7 - rear;
-  g.fillStyle(DRAKE.indigo, 1);
-  g.fillRect(hx - (f > 0 ? 0 : 8), hy, 8, 4);
-  g.fillStyle(DRAKE.violet, 1);
-  g.fillRect(hx - (f > 0 ? 0 : 8), hy + (st.breathing ? 5 : 4), 7, 2);
-  g.fillStyle(DRAKE.teal, 1);
-  g.fillRect(hx + (f > 0 ? 2 : -4), hy + 1, 2, 1);           // eye
-  // Charge glow at the mouth: violet at the blast, white at the beam.
-  if (st.down && (L.blast || L.beam)) {
-    const full = L.beam && st.heldF >= L.beam.charge;
-    const mid = L.blast && st.heldF >= L.blast.charge;
-    if (mid || full) {
-      g.fillStyle(full ? DRAKE.core : DRAKE.violet, 0.5 + 0.5 * Math.sin(ctx.run.frame / 3));
-      g.fillCircle(sx(m.x), m.y, full ? 4 : 3);
-    }
-  }
+  const p = ctx.player, L = ladderAt('drake_breath', ctx.levelOf('drake_breath')), fr = ctx.run.frame;
+  const back = layers.effects;
   for (const e of st.fx) {
     if (e.kind === 'puff') {
-      // Teal at the mouth, violet in flight, indigo as it dies.
-      const age = e.t / Math.max(1, e.life);
-      const c = age < 0.3 ? DRAKE.teal : age < 0.7 ? DRAKE.violet : DRAKE.indigo;
-      g.fillStyle(c, 0.85 * (1 - age * 0.6));
-      g.fillCircle(sx(e.x), e.y, e.r);
-      if (age < 0.3) { g.fillStyle(DRAKE.core, 0.8); g.fillCircle(sx(e.x), e.y, e.r * 0.4); }
-      continue;
-    }
-    if (e.kind === 'wave') {
-      // A crescent wall bowed forward, from below his feet to over his head.
+      const frac = e.t / Math.max(1, e.life), phase = frac < 0.3 ? 0 : frac < 0.7 ? 1 : 2;
+      const a = 1 - frac * 0.5;
+      back.drawCell({ id: D_PUFF, x: sx(e.x), y: sy(e.y), facing: e.dir, alpha: a, cell: cellByFrac(clipOf(D_PUFF, 'burn'), frac) },
+        (g) => drawDrakePuff(g, sx(e.x), sy(e.y), e.r, phase, a));
+    } else if (e.kind === 'wave') {
       const a = 1 - Math.max(0, Math.abs(e.x - e.x0) / e.range - 0.7) / 0.3;
-      const mid = (e.top + e.bot) / 2, half = (e.bot - e.top) / 2;
-      for (const [w, c, k] of [[4, DRAKE.violet, 0.6], [1, DRAKE.core, 1]]) {
-        g.lineStyle(w, c, k * a);
-        g.beginPath();
-        for (let i = 0; i <= 8; i++) {
-          const v = i / 4 - 1;                         // -1 top .. 1 bottom
-          const x = sx(e.x - e.dir * 6 * v * v), y = mid + v * half;
-          if (i) g.lineTo(x, y); else g.moveTo(x, y);
-        }
-        g.strokePath();
-      }
+      back.drawCell({ id: D_WAVE, x: sx(e.x), y: sy(e.bot), facing: e.dir, alpha: a, cell: cellAt(clipOf(D_WAVE, 'travel'), e.t, true) },
+        (g) => drawDrakeWave(g, sx(e.x), sy(e.bot), e.dir, e.bot - e.top, (e.t >> 2) & 1, a));
     } else if (e.kind === 'blast') {
-      g.fillStyle(DRAKE.violet, 0.7);
-      g.fillCircle(sx(e.x), e.y, e.r);
-      g.fillStyle(DRAKE.core, 1);
-      g.fillCircle(sx(e.x), e.y, e.r - 3);
+      back.drawCell({ id: D_BLAST, x: sx(e.x), y: sy(e.y), facing: e.dir, cell: cellAt(clipOf(D_BLAST, 'fly'), e.t, true) },
+        (g) => drawDrakeBlast(g, sx(e.x), sy(e.y), e.r, (e.t >> 2) & 1));
     } else if (e.kind === 'beam') {
-      const x = sx(e.dir > 0 ? e.x : e.x - e.len);
-      if (e.t <= e.tele) {
-        // The telegraph: one ultra-quick hairline across the room.
-        g.fillStyle(DRAKE.core, e.t % 4 < 2 ? 1 : 0.5);
-        g.fillRect(x, e.y, e.len, 1);
-        continue;
+      const left = e.tele + e.life - e.t, tele = e.t <= e.tele;
+      const fading = !tele && left < e.fade, k = fading ? Math.max(0, left / e.fade) : 1;
+      for (let i = 0; i * BEAM_TILE < e.len; i++) {
+        const tx = e.x + e.dir * i * BEAM_TILE;
+        const part = tele ? 'tele' : fading ? 'fade' : i === 0 ? 'start' : 'body';
+        const c = clipOf(D_BEAM, part);
+        const cell = part === 'fade' ? cellByFrac(c, 1 - k) : cellAt(c, e.t, true);
+        back.drawCell({ id: D_BEAM, x: sx(tx), y: sy(e.bot), facing: e.dir, cell },
+          (g) => drawDrakeBeam(g, sx(tx), sy(e.bot), e.dir, BEAM_TILE, e.bot - e.top, part, (e.t >> 1) & 1, k));
       }
-      const b = drake.beamBox(e);
-      const pulse = Math.round(Math.sin(e.t / 2) * 2);
-      g.fillStyle(DRAKE.indigo, 0.5);
-      g.fillRect(x, b.y - 2 - pulse, e.len, b.h + 4 + pulse * 2);
-      g.fillStyle(DRAKE.teal, 0.85);
-      g.fillRect(x, b.y, e.len, b.h);
-      g.fillStyle(DRAKE.core, 1);
-      g.fillRect(x, b.y + b.h * 0.2, e.len, b.h * 0.6);
-      // Erased shots: streaks blowing away down the beam.
-      for (const k of e.streaks) {
-        g.fillStyle(k.t < 4 ? DRAKE.violet : DRAKE.indigo, 1 - k.t / k.life);
-        g.fillRect(sx(e.dir > 0 ? k.x : k.x - k.len), k.y, k.len, 1);
+      for (const q of e.streaks) {
+        const frac = q.t / q.life;
+        back.drawCell({ id: D_STREAK, x: sx(q.x), y: sy(q.y), facing: e.dir, alpha: 1 - frac, cell: cellByFrac(clipOf(D_STREAK, 'blow'), frac) },
+          (g) => drawDrakeStreak(g, sx(q.x), sy(q.y), e.dir, q.len, frac < 0.3 ? 0 : 1, 1 - frac));
       }
     }
   }
+  const hand = handOf(ctx, 'drake_breath', layers);
+  if (!hand) return;
+  const pose = drakePose(st, L, fr), c = clipOf(D_HELD, pose.clip), h = drakeHand(p);
+  const cell = pose.frac !== undefined ? cellByFrac(c, pose.frac) : cellAt(c, pose.t, true);
+  const opts = {
+    rear: pose.clip === 'rear' ? Math.round(3 * pose.frac) : 0,
+    open: pose.clip === 'breathe',
+    glow: pose.clip === 'chargeFull' ? 2 : pose.clip === 'charge' ? 1 : 0,
+    blink: (fr >> 2) & 1,
+  };
+  hand.layer.drawCell({ id: D_HELD, x: sx(h.x), y: sy(h.y), facing: p.facing, cell, tint: hand.tint },
+    (g) => drawDrakeHead(g, sx(h.x), sy(h.y), p.facing, opts));
 }
 
 // ── SWARM CALLER — Bug, defensive ────────────────────────────────────
@@ -2835,6 +2913,7 @@ export function drawPuff(g, q, cx) {
  */
 export function drawWeaponArt(layers, sx, sy, ctx) {
   const { run, player: p, fx } = ctx;
+  drawDrakeArt(layers, sx, sy, ctx);
   const back = layers.effects;
   const gr = ctx.equipped.includes('granite_form') && run.wstate.granite_form;
   const sn = gr ? ladderAt('granite_form', ctx.levelOf('granite_form')).stoneSize : 0;
@@ -3103,7 +3182,6 @@ export function drawSandShape(g, x, y, shade) {
 
 export function drawWeaponry(g, sx, ctx) {
   const { run, player: p, fx } = ctx;
-  drawDrake(g, sx, ctx);
 
   // NULLFIRE DRONE — grey while live, DARK grey during the emergency reload,
   // which is the tracker's own readout for "the clip is gone". The clip bar

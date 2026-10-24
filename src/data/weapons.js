@@ -704,7 +704,7 @@ export const WEAPON_LADDERS = {
     // Lv10 the Gaster Blaster: a full charge fires a thin telegraph line, then
     // the great beam — exactly the wave's height, nearly a screen long, for
     // 2 seconds, thinning away at the end, erasing enemy shots it touches.
-    10: { beam: { charge: 120, tele: 16, life: 120, fade: 24, len: 300, tick: 8, dmg: 'medium' } },
+    10: { beam: { charge: 120, tele: 16, life: 120, fade: 24, len: 288, tick: 8, dmg: 'medium' } },
   },
 };
 

@@ -145,6 +145,208 @@
       ]
     }
   },
+  "weapon:drake_breath:beam": {
+    "file": "weapon-drake_breath-beam.png",
+    "frameW": 32,
+    "frameH": 48,
+    "anchor": "pivot",
+    "pivot": [
+      0,
+      46
+    ],
+    "tintable": false,
+    "anims": {
+      "tele": [
+        0,
+        1
+      ],
+      "start": [
+        2,
+        3
+      ],
+      "body": [
+        4,
+        5
+      ],
+      "fade": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    "holds": {
+      "tele": [
+        2,
+        2
+      ],
+      "start": [
+        4,
+        4
+      ],
+      "body": [
+        4,
+        4
+      ],
+      "fade": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "weapon:drake_breath:blast": {
+    "file": "weapon-drake_breath-blast.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "pivot",
+    "pivot": [
+      8,
+      8
+    ],
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4
+      ]
+    }
+  },
+  "weapon:drake_breath:held": {
+    "file": "weapon-drake_breath-held.png",
+    "frameW": 24,
+    "frameH": 16,
+    "anchor": "pivot",
+    "pivot": [
+      4,
+      9
+    ],
+    "tintable": false,
+    "anims": {
+      "rest": [
+        0
+      ],
+      "rear": [
+        1,
+        2,
+        3
+      ],
+      "breathe": [
+        4,
+        5
+      ],
+      "charge": [
+        6,
+        7
+      ],
+      "chargeFull": [
+        8,
+        9
+      ]
+    },
+    "holds": {
+      "rest": [
+        5
+      ],
+      "rear": [
+        4,
+        4,
+        4
+      ],
+      "breathe": [
+        4,
+        4
+      ],
+      "charge": [
+        6,
+        6
+      ],
+      "chargeFull": [
+        4,
+        4
+      ]
+    }
+  },
+  "weapon:drake_breath:puff": {
+    "file": "weapon-drake_breath-puff.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "pivot",
+    "pivot": [
+      8,
+      8
+    ],
+    "tintable": false,
+    "anims": {
+      "burn": [
+        0,
+        1,
+        2
+      ]
+    },
+    "holds": {
+      "burn": [
+        10,
+        10,
+        10
+      ]
+    }
+  },
+  "weapon:drake_breath:streak": {
+    "file": "weapon-drake_breath-streak.png",
+    "frameW": 16,
+    "frameH": 4,
+    "anchor": "pivot",
+    "pivot": [
+      0,
+      2
+    ],
+    "tintable": false,
+    "anims": {
+      "blow": [
+        0,
+        1,
+        2
+      ]
+    },
+    "holds": {
+      "blow": [
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "weapon:drake_breath:wave": {
+    "file": "weapon-drake_breath-wave.png",
+    "frameW": 16,
+    "frameH": 48,
+    "anchor": "pivot",
+    "pivot": [
+      8,
+      46
+    ],
+    "tintable": false,
+    "anims": {
+      "travel": [
+        0,
+        1
+      ]
+    },
+    "holds": {
+      "travel": [
+        3,
+        3
+      ]
+    }
+  },
   "weapon:granite_form:boulder": {
     "file": "weapon-granite_form-boulder.png",
     "frameW": 40,
