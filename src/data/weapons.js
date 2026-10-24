@@ -646,7 +646,8 @@ export const WEAPON_LADDERS = {
       stoneBounce: 0.45, stoneRoll: 0.94,
       roll: false, stoneExplode: false,
     },
-    3: { roll: true, rollSpeed: 2.4, rollFrames: 60, rollMin: 12, rollRef: 120, boulderSize: 29 },
+    // `boulderFall`: the winding-up boulder falls at this share of the top fall speed.
+    3: { roll: true, rollSpeed: 2.4, rollFrames: 60, rollMin: 12, rollRef: 120, boulderSize: 29, boulderFall: 0.25 },
     6: { jumpCancel: true },
     10: {
       stoneExplode: true, blastR: 20, blastDmg: 'heavy',

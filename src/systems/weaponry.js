@@ -2421,9 +2421,11 @@ const morphPuff = (ctx, L) => ctx.puff({ x: ctx.player.x + 12, y: ctx.player.y +
 /**
  * THE SPIN-UP (owner, 22 Oct 2026): the longer the boulder falls after the
  * direction is pressed, the further and faster it rolls. Counted in steps of
- * falling. Up to the fall from a perfect jump + midair jump the roll grows
- * evenly from `rollMin` to `rollRef` pixels; past it, by the square root, so
- * a taller drop still adds but less and less. Speed and length both scale
+ * falling — TIME, not height (owner, 24 Oct 2026), so the boulder's slow fall
+ * winds it up from a lower drop. Up to the steps the plain slam takes to fall
+ * a perfect jump + midair jump the roll grows evenly from `rollMin` to
+ * `rollRef` pixels; past it, by the square root, so a longer fall still adds
+ * but less and less. Speed and length both scale
  * by the square root of the distance against the plain roll (`rollSpeed`
  * slowing to a stop over `rollFrames`), so a big roll is both quicker and
  * longer.
@@ -2601,7 +2603,10 @@ const granite = {
     r.moveScale = 0;
     if (L.jumpCancel) r.jumpBreaks = true;
     if (st.mode === 'slam') {
-      p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
+      // THE BOULDER WINDS UP FALLING SLOWLY, like Jigglypuff's Rollout (owner's
+      // bug, build 1195), so a fall gives it time to charge. Only this form's
+      // fall: gravity itself is untouched.
+      p.vy = st.boulder ? FEEL.maxFallSpeed * L.boulderFall : Math.max(p.vy, FEEL.maxFallSpeed);
       if (L.roll && !st.boulder && r.moveInput) {
         st.boulder = true; st.dir = Math.sign(r.moveInput); st.spin = 0; st.spinT = 0;
         granite.picture(st, L, ctx);

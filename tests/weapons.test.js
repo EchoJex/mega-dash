@@ -18,6 +18,7 @@ import {
   SIDEARM_ID, OFFENSIVE, DEFENSIVE, SLOTS_PER_CLASS, specialsOfClass, classOf,
 } from '../src/data/weapons.js';
 import * as Loadout from '../src/systems/loadout.js';
+import { FEEL } from '../src/config/feel.js';
 import * as Wpn from '../src/systems/weaponry.js';
 import * as Attr from '../src/systems/attributes.js';
 
@@ -615,9 +616,12 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   air.h.run.inputActive = false; air.step();
   assert.equal(air.st().mode, 'slam');
   assert.equal(air.st().pic, null, 'the picture waits under the puff');
+  assert.equal(air.h.player.vy, FEEL.maxFallSpeed, 'the statue slams at full speed');
   // A direction during the slam makes the boulder; it rolls that way on landing.
   air.h.run.moveInput = -1; air.step();
   assert.ok(air.st().boulder);
+  air.step();
+  assert.ok(air.h.player.vy < FEEL.maxFallSpeed / 2, 'the boulder winds up falling slowly');
   air.h.run.moveInput = 0; air.h.player.onGround = true;
   air.step();
   assert.equal(air.st().mode, 'roll');
