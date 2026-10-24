@@ -33,21 +33,28 @@ test('Lv1: rooted from the press, breathes after the wind-up, the breath shrinks
   assert.ok(!h.st().breathing, 'no breath during the wind-up');
   h.hold(2);
   assert.ok(h.st().breathing);
-  const long = Wpn.RUNTIME[ID].breathNow(h.st(), L);
+  const long = Wpn.RUNTIME[ID].breathK(h.st(), L);
   h.hold(60);
-  assert.ok(Wpn.RUNTIME[ID].breathNow(h.st(), L) < long, 'the breath shrinks the longer it is held');
+  assert.ok(Wpn.RUNTIME[ID].breathK(h.st(), L) < long, 'the breath shrinks the longer it is held');
   h.release(80);
-  const short = Wpn.RUNTIME[ID].breathNow(h.st(), L);
+  const short = Wpn.RUNTIME[ID].breathK(h.st(), L);
   for (let i = 0; i < 60; i++) h.step();
-  assert.ok(Wpn.RUNTIME[ID].breathNow(h.st(), L) > short, 'and recovers when let go');
+  assert.ok(Wpn.RUNTIME[ID].breathK(h.st(), L) > short, 'and recovers when let go');
   assert.equal(h.run.moveScale, 1, 'free again after release');
 });
 
-test('Lv1: the breath hurts what is in front of the mouth', () => {
-  const h = rig(1), e = h.mk(130, FLOOR - 20);
+test('Lv1: puffs go diagonally down, then roll along the ground and hurt what they reach', () => {
+  const h = rig(1), e = h.mk(150, FLOOR - 12);                   // standing on the floor, ahead
   h.ctx.enemies.push(e);
-  h.hold(ladderAt(ID, 1).windup + 20);
-  assert.ok(h.hits.some((x) => x.e === e));
+  h.hold(ladderAt(ID, 1).windup + 6);
+  const puff = h.st().fx.find((f) => f.kind === 'puff');
+  const y0 = puff.y;
+  for (let i = 0; i < 4; i++) h.step();
+  assert.ok(puff.y > y0, 'travels downward');
+  for (let i = 0; i < 20; i++) h.step();
+  assert.ok(puff.y + puff.r <= FLOOR + 0.01, 'never sinks through the floor');
+  h.hold(30);
+  assert.ok(h.hits.some((x) => x.e === e), 'reaches a grounded enemy ahead');
 });
 
 test('Lv3: release sends a wall forward from below his feet to over his head; nothing behind', () => {

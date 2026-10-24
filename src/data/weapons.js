@@ -685,12 +685,14 @@ export const WEAPON_LADDERS = {
   // DRAKE BREATH — the owner's ladder of 23 Oct 2026, in Smash and Undertale
   // terms. Steps are 1/60s. Damage is in words; every number is a placeholder.
   drake_breath: {
-    // Lv1 Bowser's neutral B: rear back, then breathe while held. The breath
-    // runs on `fuel` steps; its length shrinks with it and recovers at
-    // `refill` per step while not breathing.
+    // Lv1 Bowser's neutral B: rear back, then breathe while held — a puff
+    // every `every` steps, angled `deg` downward, that rolls along the ground
+    // when it lands. The breath runs on `fuel` steps; a puff's speed and life
+    // shrink with it (down to `minK` of full) and it recovers at `refill` per
+    // step while not breathing.
     1: {
-      windup: 12, breathLen: 60, breathMin: 14, breathH: 10,
-      fuel: 150, refill: 2, tick: 6, breathDmg: 'low',
+      windup: 12, fuel: 150, refill: 2, minK: 0.25,
+      every: 4, deg: 30, speed: 3.2, life: 30, roll: 0.94, r: 4, breathDmg: 'low',
     },
     // Lv3 Guile's Flash Kick on release: a crescent wall from just below his
     // feet (`below`) to two head-heights over his head (`above`), travelling

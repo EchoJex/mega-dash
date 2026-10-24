@@ -1401,7 +1401,7 @@ const drake = {
     const L = ladderAt('drake_breath', lv);
     return L.beam?.charge ?? L.blast?.charge ?? L.windup;
   },
-  reach: () => ladderAt('drake_breath', 1).breathLen,
+  reach: () => { const L = ladderAt('drake_breath', 1); return L.speed * L.life; },
 
   init(st, lv) {
     st.fuel = ladderAt('drake_breath', lv).fuel;
@@ -1415,10 +1415,14 @@ const drake = {
     st.breathing = st.down && st.heldF > L.windup && st.fuel > 0;
     if (st.breathing) {
       st.fuel--;
-      if (st.heldF % L.tick === 0) {
-        const m = drakeMouth(p), len = drake.breathNow(st, L);
-        const box = { x: p.facing > 0 ? m.x : m.x - len, y: m.y - L.breathH / 2, w: len, h: L.breathH };
-        drakeHits(ctx, st, box, dmgOf('drake_breath', lv, ctx) * words(L.breathDmg), { from: p.x + 12 }, new Set());
+      if (st.heldF % L.every === 0) {
+        // A puff, diagonally down. Speed and life shrink with the fuel.
+        const m = drakeMouth(p), k = drake.breathK(st, L), a = L.deg * Math.PI / 180;
+        st.fx.push({
+          kind: 'puff', x: m.x, y: m.y, dir: p.facing, t: 0, life: Math.round(L.life * k),
+          vx: L.speed * k * Math.cos(a), vy: L.speed * k * Math.sin(a),
+          ground: p.y + 24, r: L.r, roll: L.roll, dmg: L.breathDmg, set: new Set(),
+        });
       }
     } else if (!st.down) st.fuel = Math.min(L.fuel, st.fuel + L.refill);
     if (st.down) {                                  // rooted while rearing back and breathing
@@ -1430,13 +1434,22 @@ const drake = {
     st.fx = st.fx.filter((f) => !f.done);
   },
 
-  /** The breath's length now: full on a full tank, down to `breathMin` on empty. */
-  breathNow: (st, L) => L.breathMin + (L.breathLen - L.breathMin) * (st.fuel / L.fuel),
+  /** How strong the breath is now: 1 on a full tank, down to `minK` on empty. */
+  breathK: (st, L) => L.minK + (1 - L.minK) * (st.fuel / L.fuel),
 
   stepFx(f, lv, ctx) {
     f.t++;
     const base = dmgOf('drake_breath', lv, ctx);
-    if (f.kind === 'wave') {
+    if (f.kind === 'puff') {
+      // Down the diagonal until it reaches the floor he stood on, then rolls
+      // along it, slowing and spreading.
+      f.x += f.vx * f.dir;
+      if (f.y + f.r < f.ground) f.y = Math.min(f.ground - f.r, f.y + f.vy);
+      else { f.vx *= f.roll; f.r = Math.min(f.r + 0.15, 8); f.y = f.ground - f.r; }
+      drakeHits(ctx, null, { x: f.x - f.r, y: f.y - f.r, w: f.r * 2, h: f.r * 2 },
+        base * words(f.dmg), { from: f.x - f.dir * 10 }, f.set);
+      if (f.t >= f.life) f.done = true;
+    } else if (f.kind === 'wave') {
       f.x += f.speed * f.dir;
       drakeHits(ctx, null, drake.waveBox(f), base * words(f.dmg),
         { knockback: f.knock * f.dir, from: f.x - f.dir * 10 }, f.set);
@@ -1537,17 +1550,16 @@ function drawDrake(g, sx, ctx) {
       g.fillCircle(sx(m.x), m.y, full ? 4 : 3);
     }
   }
-  if (st.breathing) {
-    const len = drake.breathNow(st, L), x0 = sx(m.x);
-    const x = f > 0 ? x0 : x0 - len;
-    g.fillStyle(DRAKE.indigo, 0.55);
-    g.fillRect(x, m.y - L.breathH / 2, len, L.breathH);
-    g.fillStyle(DRAKE.teal, 0.8);
-    g.fillRect(x, m.y - 2, len, 4);
-    g.fillStyle(DRAKE.core, 0.9);
-    g.fillRect(x, m.y - 1, len, 1);
-  }
   for (const e of st.fx) {
+    if (e.kind === 'puff') {
+      // Teal at the mouth, violet in flight, indigo as it dies.
+      const age = e.t / Math.max(1, e.life);
+      const c = age < 0.3 ? DRAKE.teal : age < 0.7 ? DRAKE.violet : DRAKE.indigo;
+      g.fillStyle(c, 0.85 * (1 - age * 0.6));
+      g.fillCircle(sx(e.x), e.y, e.r);
+      if (age < 0.3) { g.fillStyle(DRAKE.core, 0.8); g.fillCircle(sx(e.x), e.y, e.r * 0.4); }
+      continue;
+    }
     if (e.kind === 'wave') {
       // A crescent wall bowed forward, from below his feet to over his head.
       const a = 1 - Math.max(0, Math.abs(e.x - e.x0) / e.range - 0.7) / 0.3;
