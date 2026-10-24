@@ -127,6 +127,12 @@ export const WEAPON_ART = {
         grid: { w: 40, h: 40 }, layer: 'player', heldBy: 'the floor under the middle of it',
         clips: { roll: 'loop' },
       },
+      // Lv10's walking form, Rocky from Project Hail Mary (owner, 22 Oct
+      // 2026): standing, and walking at half his speed.
+      rocky: {
+        grid: { w: 40, h: 40 }, layer: 'player', heldBy: 'his feet — the floor under the middle of him',
+        clips: { stand: 'still', walk: 'loop' },
+      },
       // A small stone a hit knocks loose, waiting to be shot at a foe.
       stone: {
         grid: { w: 10, h: 10 }, layer: 'effects', heldBy: 'the floor under its middle',

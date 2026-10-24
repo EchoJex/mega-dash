@@ -633,6 +633,35 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   assert.ok(d(26) - d(13) < d(13) - d(0), 'diminishing past a full jump + midair jump');
   assert.equal(Math.sign(Wpn.spinUp(10, -1, L3).v), -1);
 
+  // Lv6: a jump breaks the form (the scene lets the jump through); Lv3 does not offer it.
+  assert.ok(!h.run.jumpBreaks, 'no jump cancel at Lv3');
+  const six = run(6);
+  six.h.player.onGround = false; six.step();
+  assert.equal(six.st().mode, 'slam');
+  assert.ok(six.h.run.jumpBreaks);
+  six.h.run.jumpBreak = true; six.step();
+  assert.equal(six.st().mode, null, 'the jump broke the form');
+  assert.equal(six.h.bullets.length, 0, 'no shards before Lv10');
+
+  // Lv10: a direction wakes the statue as Rocky, who walks at half speed and
+  // stays Rocky; the jump that breaks the form throws shards all round.
+  const ten = run(10);
+  ten.h.run.inputActive = false;
+  for (let i = 0; i < 100; i++) ten.step();
+  assert.equal(ten.st().mode, 'stone');
+  ten.h.run.moveInput = 1; ten.step();
+  assert.equal(ten.st().mode, 'walk');
+  assert.equal(ten.h.run.moveScale, 0.5);
+  ten.h.run.moveInput = 0;
+  for (let i = 0; i < 20; i++) ten.step();
+  assert.equal(ten.st().mode, 'walk', 'still Rocky after letting go');
+  assert.equal(ten.st().pic, 'rocky');
+  ten.h.run.jumpBreak = true; ten.step();
+  assert.equal(ten.st().mode, null);
+  const shards = ten.h.bullets.filter((b) => b.stone);
+  assert.ok(shards.length >= 5, 'shards all round');
+  assert.ok(shards.some((b) => b.vx > 0) && shards.some((b) => b.vx < 0) && shards.some((b) => b.vy < 0) && shards.some((b) => b.vy > 0));
+
   // Lv1: a direction during the slam does nothing.
   const one = run(1);
   one.h.player.onGround = false; one.step();

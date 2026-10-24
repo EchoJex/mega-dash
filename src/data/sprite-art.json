@@ -374,6 +374,35 @@
       ]
     }
   },
+  "weapon:granite_form:rocky": {
+    "file": "weapon-granite_form-rocky.png",
+    "frameW": 40,
+    "frameH": 40,
+    "anchor": "pivot",
+    "pivot": [
+      20,
+      38
+    ],
+    "tintable": false,
+    "anims": {
+      "stand": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ]
+    },
+    "holds": {
+      "stand": [
+        5
+      ],
+      "walk": [
+        6,
+        6
+      ]
+    }
+  },
   "weapon:granite_form:statue": {
     "file": "weapon-granite_form-statue.png",
     "frameW": 40,

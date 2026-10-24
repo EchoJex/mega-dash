@@ -1039,6 +1039,7 @@ export default class GameScene extends Phaser.Scene {
     r.planted = false;
     r.glideFall = null;
     r.stoneArmor = 0;
+    r.jumpBreaks = false;
     r.airControl = 1;
     r.aggroFire = 1;
     r.aggroPause = null;
@@ -2650,7 +2651,10 @@ export default class GameScene extends Phaser.Scene {
     // A weapon may plant the player outright — the Quake Hammer's swing, by
     // the owner's call: once the charge is let go he cannot move at all. The
     // slide is a move too, so this comes before the double-tap check.
-    if (r?.planted) return;
+    // ...unless the weapon that planted him lets a jump break free (the
+    // Granite Form from Lv6): the weapon is told on its next step.
+    if (r?.planted && !r.jumpBreaks) return;
+    if (r?.jumpBreaks) r.jumpBreak = true;
     if (this.tryCancelIntoSlide()) return;
     this.intent.jumpHeld = true;
     if (p.onGround) { p.jumpFromY = p.y; this.jumpTapFrame = r.frame; }

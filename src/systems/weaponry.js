@@ -2367,6 +2367,7 @@ export const STATUE_SHAPES = ['chest', 'megaman', 'monolith'];
 const STATUE = 'weapon:granite_form:statue';
 const BOULDER = 'weapon:granite_form:boulder';
 const STONE = 'weapon:granite_form:stone';
+const ROCKY = 'weapon:granite_form:rocky';
 
 function crush(st, L, lv, ctx, box, word) {
   for (const e of enemiesIn(ctx, box)) {
@@ -2539,10 +2540,32 @@ const granite = {
       }
     }
 
+    // JUMP BREAKS THE FORM from Lv6 (owner, 24 Oct 2026); the jump itself
+    // goes ahead in the same press. At Lv10 the stone flies apart as it
+    // breaks: shards all the way round, the shape of Frost Guard's Lv10.
+    if (r.jumpBreak) {
+      r.jumpBreak = false;
+      if (L.shards) {
+        for (let i = 0; i < L.shards; i++) {
+          const a = -Math.PI / 2 + (i * 2 * Math.PI) / L.shards;
+          ctx.spawn({
+            x: p.x + 12, y: p.y + 12, vx: Math.cos(a) * L.shardSpeed, vy: Math.sin(a) * L.shardSpeed,
+            radius: 3, damage: dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.shardDmg],
+            color: '#A8A296', shape: 'rock', weapon: 'granite_form', stone: true, life: 40,
+          });
+        }
+        ctx.sfx('shootBig', { pitch: 0.7 });
+      }
+      st.mode = null; st.idle = 0;
+      granite.picture(st, L, ctx);
+      return;
+    }
+
     // The stats are his from the first step; only the picture waits.
     r.stoneArmor = L.armor;
     r.planted = true;
     r.moveScale = 0;
+    if (L.jumpCancel) r.jumpBreaks = true;
     if (st.mode === 'slam') {
       p.vy = Math.max(p.vy, FEEL.maxFallSpeed);
       if (L.roll && !st.boulder && r.moveInput) {
@@ -2562,6 +2585,10 @@ const granite = {
       return;
     }
     if (st.mode === 'roll') stepRoll(st, L, lv, ctx);
+    // LV10: A DIRECTION WAKES THE STATUE UP AS ROCKY, who walks at
+    // `walkScale` and stays Rocky until a jump breaks the form or it wears off.
+    if (L.walk && st.mode === 'stone' && r.moveInput) { st.mode = 'walk'; granite.picture(st, L, ctx); }
+    if (st.mode === 'walk') r.moveScale = L.walkScale;
     if (--st.t <= 0) st.mode = null;
     if (!st.mode) granite.picture(st, L, ctx);
   },
@@ -2572,9 +2599,15 @@ const granite = {
    * countdown runs out.
    */
   picture(st, L, ctx) {
-    const want = !st.mode ? null : (st.mode === 'roll' || st.boulder) ? 'boulder' : 'statue';
-    if (want !== st.want) { st.want = want; st.picT = L.morphFrames; morphPuff(ctx, L); }
-    else if (st.picT > 0 && --st.picT === 0) st.pic = st.want;
+    const want = !st.mode ? null : st.mode === 'walk' ? 'rocky'
+      : (st.mode === 'roll' || st.boulder) ? 'boulder' : 'statue';
+    if (want !== st.want) {
+      st.want = want; st.picT = L.morphFrames; morphPuff(ctx, L);
+      st.cloud = ctx.fx.puffs[ctx.fx.puffs.length - 1];
+    } else if (st.picT > 0 && --st.picT === 0) st.pic = st.want;
+    // The puff goes where he goes until the picture has changed, so a jump
+    // out of the form cannot leave the old picture showing above it.
+    if (st.picT > 0 && st.cloud) { st.cloud.x = ctx.player.x + 12; st.cloud.y = ctx.player.y + 12; }
   },
 };
 
@@ -3019,7 +3052,16 @@ export function bodyArt(ctx) {
   // Held by his feet, the middle of the floor under him.
   const gr = ctx.equipped.includes('granite_form') && ctx.run.wstate.granite_form;
   if (gr?.pic) {
-    const p = ctx.player, rolling = gr.pic === 'boulder';
+    const p = ctx.player;
+    if (gr.pic === 'rocky') {
+      const moving = Math.abs(p.vx) > 0.05, t = moving ? ctx.run.frame : 0, form = moving ? 'walk' : 'stand';
+      return {
+        id: ROCKY, x: p.x + 12, y: p.y + 24, facing: p.facing,
+        cell: cellAt(clipOf(ROCKY, form), t, moving),
+        shape: (g, x, y) => drawRockyShape(g, x, y, p.facing, t),
+      };
+    }
+    const rolling = gr.pic === 'boulder';
     const t = rolling ? gr.spinT || 0 : 0;
     const form = rolling ? 'roll' : gr.shape;
     return {
@@ -3070,6 +3112,23 @@ export function drawGraniteShape(g, x, y, facing, form, t = 0) {
   box(-5, -16, 10, 11, K); box(-4, -15, 8, 9, L);
   box(-4, -23, 9, 8, K); box(-3, -22, 7, 6, L);
   box(4, -15, 9, 5, K); box(5, -14, 7, 3, L);
+}
+
+/**
+ * ROCKY, the Lv10 walking form — the Eridian from Project Hail Mary: a rocky
+ * carapace on five legs. Standing on (x, y); `t` steps the legs.
+ */
+export function drawRockyShape(g, x, y, facing, t = 0) {
+  const D = 0x5F443A, L = 0xA8A296, K = 0x0A0A12, f = facing < 0 ? -1 : 1;
+  const box = (bx, by, w, h, c) => { g.fillStyle(c, 1); g.fillRect(f > 0 ? x + bx : x - bx - w, y + by, w, h); };
+  const lift = Math.floor(t / 6) % 2;
+  [-10, -5, 0, 5, 10].forEach((lx, i) => {
+    const up = (i % 2) === lift ? 2 : 0;
+    box(lx - 1, -9, 3, 9 - up, K); box(lx, -8, 1, 7 - up, D);
+  });
+  box(-9, -17, 18, 9, K); box(-8, -16, 16, 7, L);
+  box(-5, -20, 10, 4, K); box(-4, -19, 8, 3, L);
+  box(-6, -12, 12, 1, D); box(2, -15, 3, 2, D);
 }
 
 /** One loose stone, standing on (x, y). */

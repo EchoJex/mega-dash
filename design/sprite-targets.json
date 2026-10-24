@@ -3521,6 +3521,28 @@
         "roll"
       ]
     },
+    "weapon-granite_form-rocky": {
+      "label": "GRANITE FORM · ROCKY",
+      "cls": "weapon",
+      "key": "weapon:granite_form:rocky",
+      "weapon": "granite_form",
+      "sheet": "rocky",
+      "boss": "granite",
+      "layer": "player",
+      "grid": {
+        "w": 40,
+        "h": 40
+      },
+      "box": null,
+      "clips": {
+        "stand": "still",
+        "walk": "loop"
+      },
+      "frames": [
+        "stand",
+        "walk"
+      ]
+    },
     "weapon-granite_form-stone": {
       "label": "GRANITE FORM · STONE",
       "cls": "weapon",

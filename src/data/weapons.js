@@ -623,7 +623,12 @@ export const WEAPON_LADDERS = {
    * rolls that way on landing. How far is the spin-up (`spinUp` in
    * weaponry.js): `rollMin` pixels for a press just before landing, `rollRef`
    * for one at the top of a full jump + midair jump, less and less extra
-   * beyond that. Lv10: a struck stone explodes on the enemy it hits.
+   * beyond that.
+   *
+   * Lv6: jump breaks the form, and he jumps (`jumpCancel`). Lv10: a struck
+   * stone explodes on the enemy it hits; a direction wakes the statue up as
+   * Rocky, who walks at `walkScale`; and the jump that breaks the form
+   * throws `shards` stones all the way round.
    */
   granite_form: {
     1: {
@@ -634,7 +639,11 @@ export const WEAPON_LADDERS = {
       roll: false, stoneExplode: false,
     },
     3: { roll: true, rollSpeed: 2.4, rollFrames: 60, rollMin: 12, rollRef: 120, boulderSize: 29 },
-    10: { stoneExplode: true, blastR: 20, blastDmg: 'heavy' },
+    6: { jumpCancel: true },
+    10: {
+      stoneExplode: true, blastR: 20, blastDmg: 'heavy',
+      walk: true, walkScale: 0.5, shards: 7, shardSpeed: 3.4, shardDmg: 'medium',
+    },
   },
 
   gale_vortex: {
