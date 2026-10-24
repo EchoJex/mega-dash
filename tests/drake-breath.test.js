@@ -50,34 +50,45 @@ test('Lv1: the breath hurts what is in front of the mouth', () => {
   assert.ok(h.hits.some((x) => x.e === e));
 });
 
-test('Lv3: release throws an arc that reaches overhead but not far ahead', () => {
-  const W = ladderAt(ID, 3).wave, h = rig(3);
-  const above = h.mk(106, h.player.y + 10 - W.r + 4), far = h.mk(100 + 12 + W.r * 2, FLOOR - 20);
-  h.ctx.enemies.push(above, far);
+test('Lv3: release sends a wall forward from below his feet to over his head; nothing behind', () => {
+  const W = ladderAt(ID, 3).wave, h = rig(3), p = h.player;
+  const diag = h.mk(130, p.y - W.above);                          // overhead, a little ahead
+  const behind = h.mk(70, FLOOR - 20);
+  const far = h.mk(p.x + 24 + W.range + 40, FLOOR - 20);
+  h.ctx.enemies.push(diag, behind, far);
   h.hold(2); h.release(2);
-  for (let i = 0; i < W.grow + 10; i++) h.step();
-  assert.ok(h.hits.some((x) => x.e === above), 'overhead');
+  for (let i = 0; i < 60; i++) h.step();
+  assert.ok(h.hits.some((x) => x.e === diag), 'diagonally overhead');
+  assert.ok(!h.hits.some((x) => x.e === behind), 'no cover behind');
   assert.ok(!h.hits.some((x) => x.e === far), 'limited range');
+  assert.ok(!h.st().fx.length, 'and gone');
 });
 
 test('Lv6: a charged release sends a blast on past where the wave ends', () => {
   const L = ladderAt(ID, 6), h = rig(6);
-  const far = h.mk(100 + 12 + L.wave.r * 3, h.player.y + 4);
+  const far = h.mk(100 + 24 + L.wave.range + 40, h.player.y + 4);
   h.ctx.enemies.push(far);
   h.hold(L.blast.charge); h.release(L.blast.charge);
   for (let i = 0; i < L.blast.life; i++) h.step();
   assert.ok(h.hits.some((x) => x.e === far));
 });
 
-test('Lv10: a full charge telegraphs, then a long beam hurts for its life and is gone', () => {
-  const B = ladderAt(ID, 10).beam, h = rig(10);
+test("Lv10: telegraph, then a beam the wave's height that hurts, erases enemy shots, and is gone", () => {
+  const L = ladderAt(ID, 10), B = L.beam, h = rig(10), p = h.player;
   const far = h.mk(100 + 12 + B.len - 30, FLOOR - 14);
-  h.ctx.enemies.push(far);
+  const over = h.mk(160, p.y - L.wave.above - 14);                // just above the wave's reach
+  h.ctx.enemies.push(far, over);
   h.hold(B.charge); h.release(B.charge);
   for (let i = 0; i < B.tele; i++) h.step();
   assert.ok(!h.hits.some((x) => x.e === far), 'the telegraph line does no harm');
+  const beam = h.st().fx.find((f) => f.kind === 'beam');
+  assert.equal(beam.bot - beam.top, 24 + L.wave.above + L.wave.below, 'beam matches the wave');
+  const shot = { enemy: true, x: 200, y: p.y + 10, life: 99 };
+  h.ctx.bullets.push(shot);
   for (let i = 0; i < B.life; i++) h.step();
-  assert.ok(h.hits.filter((x) => x.e === far).length > 3, 'the beam reaches nearly a screen and keeps hurting');
+  assert.ok(shot.life <= 0, 'enemy shot erased');
+  assert.ok(h.hits.filter((x) => x.e === far).length > 3, 'reaches nearly a screen and keeps hurting');
+  assert.ok(!h.hits.some((x) => x.e === over), 'no taller than the wave');
   h.step(); h.step();
   assert.ok(!h.st().fx.some((f) => f.kind === 'beam'), 'and dissipates');
 });

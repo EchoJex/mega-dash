@@ -692,14 +692,16 @@ export const WEAPON_LADDERS = {
       windup: 12, breathLen: 60, breathMin: 14, breathH: 10,
       fuel: 150, refill: 2, tick: 6, breathDmg: 'low',
     },
-    // Lv3 Guile's Flash Kick on release: an arc up and over his head.
-    3: { wave: { r: 42, grow: 10, dmg: 'medium', knock: 3 } },
+    // Lv3 Guile's Flash Kick on release: a crescent wall from just below his
+    // feet (`below`) to two head-heights over his head (`above`), travelling
+    // straight forward `range` px. Nothing behind him.
+    3: { wave: { below: 3, above: 16, speed: 3.5, range: 60, dmg: 'medium', knock: 3 } },
     // Lv6 Corrin's neutral B: hold to charge a blast that carries on past the
     // wave's end on release.
     6: { blast: { charge: 60, speed: 4, r: 7, life: 80, dmg: 'mediumHeavy', knock: 3 } },
     // Lv10 the Gaster Blaster: a full charge fires a thin telegraph line, then
-    // the great beam — as tall as the wave reaches, nearly a screen long, for
-    // 2 seconds, thinning away at the end.
+    // the great beam — exactly the wave's height, nearly a screen long, for
+    // 2 seconds, thinning away at the end, erasing enemy shots it touches.
     10: { beam: { charge: 120, tele: 16, life: 120, fade: 24, len: 300, tick: 8, dmg: 'medium' } },
   },
 };

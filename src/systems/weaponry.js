@@ -1437,16 +1437,10 @@ const drake = {
     f.t++;
     const base = dmgOf('drake_breath', lv, ctx);
     if (f.kind === 'wave') {
-      const r = f.r * Math.min(1, f.t / f.grow);
-      // The arc: in front and up over his head, never below his middle.
-      for (const e of ctx.enemies) {
-        if (e.hp <= 0 || f.set.has(e)) continue;
-        const c = centreOf(e), dx = (c.x - f.x) * f.dir, dy = c.y - f.y;
-        if (dy > 8 || dx < -r * 0.4 || dx * dx + dy * dy > (r + 6) ** 2) continue;
-        f.set.add(e);
-        ctx.hitEnemy(e, base * words(f.dmg), { knockback: f.knock * f.dir, from: f.x });
-      }
-      if (f.t >= f.grow + 8) f.done = true;
+      f.x += f.speed * f.dir;
+      drakeHits(ctx, null, drake.waveBox(f), base * words(f.dmg),
+        { knockback: f.knock * f.dir, from: f.x - f.dir * 10 }, f.set);
+      if (Math.abs(f.x - f.x0) >= f.range) f.done = true;
     } else if (f.kind === 'blast') {
       f.x += f.speed * f.dir;
       drakeHits(ctx, null, { x: f.x - f.r, y: f.y - f.r, w: f.r * 2, h: f.r * 2 },
@@ -1457,9 +1451,27 @@ const drake = {
       if (live && (f.t - f.tele) % f.tick === 1) {
         drakeHits(ctx, null, drake.beamBox(f), base * words(f.dmg), { from: f.x }, new Set());
       }
+      // Enemy shots that touch the live beam are erased, DBZ-style: each
+      // leaves a few streaks that blow away down the beam and fade.
+      if (live) {
+        const bx = drake.beamBox(f);
+        for (const b of ctx.bullets) {
+          if (!b.enemy || b.life <= 0) continue;
+          if (b.x < bx.x || b.x > bx.x + bx.w || b.y < bx.y || b.y > bx.y + bx.h) continue;
+          b.life = -1;
+          for (let i = 0; i < 4; i++) {
+            f.streaks.push({ x: b.x, y: b.y + (i - 1.5) * 2, len: 4 + i * 3, t: 0, life: 14 + i * 3 });
+          }
+        }
+      }
+      for (const k of f.streaks) { k.t++; k.x += f.dir * 2.5; }
+      f.streaks = f.streaks.filter((k) => k.t < k.life);
       if (f.t > f.tele + f.life) f.done = true;
     }
   },
+
+  /** The wave's box: a band its own height, a few px thick, at its front. */
+  waveBox: (f) => ({ x: f.x - 4, y: f.top, w: 8, h: f.bot - f.top }),
 
   /** The beam's box this step, thinning away over its last `fade` steps. */
   beamBox(f) {
@@ -1485,16 +1497,15 @@ const drake = {
     st.down = false; st.heldF = 0;
     if (!L.wave) return true;
     const m = drakeMouth(p), cy = p.y + 10, dir = p.facing;
-    st.fx.push({ kind: 'wave', x: p.x + 12, y: cy, dir, t: 0, set: new Set(), ...L.wave });
-    const endX = p.x + 12 + L.wave.r * dir;
+    // The wave's height — and the beam's, which matches it.
+    const top = p.y - L.wave.above, bot = p.y + 24 + L.wave.below;
+    st.fx.push({ kind: 'wave', x: m.x, x0: m.x, dir, t: 0, top, bot, set: new Set(), ...L.wave });
     if (L.beam && heldF >= L.beam.charge) {
-      st.fx.push({
-        kind: 'beam', x: m.x, y: cy, dir, t: 0, top: cy - L.wave.r, bot: p.y + 24, ...L.beam,
-      });
+      st.fx.push({ kind: 'beam', x: m.x, y: cy, dir, t: 0, top, bot, streaks: [], ...L.beam });
       ctx.shake?.(2, 20);
       ctx.sfx('shootBig', { pitch: 0.5 });
     } else if (L.blast && heldF >= L.blast.charge) {
-      st.fx.push({ kind: 'blast', x: endX, y: cy, dir, t: 0, set: new Set(), ...L.blast });
+      st.fx.push({ kind: 'blast', x: m.x, y: cy, dir, t: 0, set: new Set(), ...L.blast });
       ctx.sfx('shootBig', { pitch: 0.8 });
     } else ctx.sfx('shoot', { pitch: 0.7 });
     return true;
@@ -1538,13 +1549,18 @@ function drawDrake(g, sx, ctx) {
   }
   for (const e of st.fx) {
     if (e.kind === 'wave') {
-      const r = e.r * Math.min(1, e.t / e.grow), a = 1 - Math.max(0, e.t - e.grow) / 8;
-      // A crescent from ahead, up and over his head.
-      // Phaser angles run clockwise from "right"; the upper half is PI to 2PI.
-      const start = e.dir > 0 ? Math.PI + 0.4 : Math.PI, end = e.dir > 0 ? Math.PI * 2 : Math.PI * 2 - 0.4;
+      // A crescent wall bowed forward, from below his feet to over his head.
+      const a = 1 - Math.max(0, Math.abs(e.x - e.x0) / e.range - 0.7) / 0.3;
+      const mid = (e.top + e.bot) / 2, half = (e.bot - e.top) / 2;
       for (const [w, c, k] of [[4, DRAKE.violet, 0.6], [1, DRAKE.core, 1]]) {
         g.lineStyle(w, c, k * a);
-        g.beginPath(); g.arc(sx(e.x), e.y, r, start, end); g.strokePath();
+        g.beginPath();
+        for (let i = 0; i <= 8; i++) {
+          const v = i / 4 - 1;                         // -1 top .. 1 bottom
+          const x = sx(e.x - e.dir * 6 * v * v), y = mid + v * half;
+          if (i) g.lineTo(x, y); else g.moveTo(x, y);
+        }
+        g.strokePath();
       }
     } else if (e.kind === 'blast') {
       g.fillStyle(DRAKE.violet, 0.7);
@@ -1567,6 +1583,11 @@ function drawDrake(g, sx, ctx) {
       g.fillRect(x, b.y, e.len, b.h);
       g.fillStyle(DRAKE.core, 1);
       g.fillRect(x, b.y + b.h * 0.2, e.len, b.h * 0.6);
+      // Erased shots: streaks blowing away down the beam.
+      for (const k of e.streaks) {
+        g.fillStyle(k.t < 4 ? DRAKE.violet : DRAKE.indigo, 1 - k.t / k.life);
+        g.fillRect(sx(e.dir > 0 ? k.x : k.x - k.len), k.y, k.len, 1);
+      }
     }
   }
 }
