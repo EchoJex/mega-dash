@@ -941,6 +941,11 @@ remember relative position. A clear gap separates the offensive top half from th
 bottom half. The sidearm keeps a **fixed dot above the ring**, its bench, which appears only
 once rank 3 lets it be traded away.
 
+**A weapon with an idle picture shows it** (its held sheet's `rest` frame, at true size) on the
+ring and in its slot; the rest keep their coloured disc until their art lands. **An equipped
+weapon leaves its silhouette on the ring** — black, traced with a dotted white line — so its
+place still reads (owner, bug of build 1195).
+
 **A playtester never sees locked content until it is unlocked** — no padlocks for weapons
 not yet earned, no modules past your mastery rank. Dev mode is the exception.
 

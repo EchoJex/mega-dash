@@ -129,7 +129,8 @@ import {
 import * as Loadout from '../systems/loadout.js';
 import { dev, DEV } from '../config/dev.js';
 import { save, persist } from '../systems/save.js';
-import { hexNum } from '../systems/assets.js';
+import { hexNum, MANIFEST } from '../systems/assets.js';
+import { clipOf, cellAt } from '../systems/frame-data.js';
 import { sfx, unlockAudio } from '../systems/sfx.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
@@ -246,6 +247,38 @@ const ARC_END = 0.34;
  */
 const READ_Y = 172;
 const SWIPE_CY = 74;               // between the sidearm and the offensive row
+
+/**
+ * A weapon's idle picture, worked out once from its texture: which sheet and
+ * cell, the box round its opaque pixels, every opaque pixel (for the black
+ * silhouette) and the ones on its edge (for the dotted trace), all measured
+ * from the box's corner. Null for a weapon with no `rest` picture drawn.
+ */
+const IDLE_ART = new Map();
+function idleArt(scene, id) {
+  if (IDLE_ART.has(id)) return IDLE_ART.get(id);
+  let art = null;
+  const key = `weapon:${id}:held`, def = MANIFEST[key];
+  try {
+    const cell = def && cellAt(clipOf(key, 'rest'), 0);
+    if (cell >= 0 && scene.textures.exists(key)) {
+      const on = (x, y) => x >= 0 && y >= 0 && x < def.frameW && y < def.frameH
+        && scene.textures.getPixelAlpha(x, y, key, cell) > 0;
+      const solid = [];
+      for (let y = 0; y < def.frameH; y++) for (let x = 0; x < def.frameW; x++) if (on(x, y)) solid.push([x, y]);
+      if (solid.length) {
+        const xs = solid.map((p) => p[0]), ys = solid.map((p) => p[1]);
+        const box = { x: Math.min(...xs), y: Math.min(...ys) };
+        box.w = Math.max(...xs) - box.x + 1; box.h = Math.max(...ys) - box.y + 1;
+        const edge = solid.filter(([x, y]) => !on(x - 1, y) || !on(x + 1, y) || !on(x, y - 1) || !on(x, y + 1));
+        const rel = (list) => list.map(([x, y]) => [x - box.x, y - box.y]);
+        art = { key, cell, def, box, solid: rel(solid), edge: rel(edge) };
+      }
+    }
+  } catch { art = null; }
+  IDLE_ART.set(id, art);
+  return art;
+}
 
 /** Is a virtual point inside one of the control zones? */
 const inZone = (v, z) => !!z && v.x >= z.x && v.x < z.x + z.w && v.y >= z.y && v.y < z.y + z.h;
@@ -840,6 +873,9 @@ export default class UIScene extends Phaser.Scene {
     // Padlocks and the off-switch cross sit ON TOP of everything else.
     this.lockG = this.add.graphics();
     this.wheel.add(this.lockG);
+    // The dotted white trace round a weapon's silhouette — see paintGhost.
+    this.ghostG = this.add.graphics();
+    this.wheel.add(this.ghostG);
 
     this.readName = label(this, cx, READ_Y, '', { color: '#E0F0FF', origin: 0.5 });
     this.readLv = label(this, cx, READ_Y + 9, '', { color: '#5CADD5', origin: 0.5 });
@@ -1364,6 +1400,8 @@ export default class UIScene extends Phaser.Scene {
   refreshWheel() {
     const r = this.game_.run, lo = r.loadout;
     this.lockG.clear();
+    this.ghostG.clear();
+    for (const s of [...this.active, ...this.arc]) s.pic?.setVisible(false);
     this.moduleG.clear();
     this.haloG.clear();
     /**
@@ -1378,6 +1416,7 @@ export default class UIScene extends Phaser.Scene {
      */
     const scenery = this.mode === 'midFight';
     this.lockG.setAlpha(scenery ? 0.2 : 1);
+    this.ghostG.setAlpha(scenery ? 0.2 : 1);
     this.frameG.setAlpha(scenery ? 0.25 : 1);
     for (const t of this.clsLabels) t.setAlpha(scenery ? 0.3 : 1);
 
@@ -1432,6 +1471,9 @@ export default class UIScene extends Phaser.Scene {
       // because there is nothing you could do with it there.
       s.vacant = (s.kind === 'arc' || s.kind === 'sidearm')
         && Loadout.isEquipped(lo, s.id);
+      // AN EQUIPPED WEAPON LEAVES ITS SILHOUETTE BEHIND on the ring (owner,
+      // bug of build 1195): its place is still there, and still its shape.
+      if (s.kind === 'arc' && s.vacant && unlocked) this.paintGhost(s);
 
       /**
        * WHAT YOU HAVE NOT EARNED IS NOT DRAWN.
@@ -1477,6 +1519,17 @@ export default class UIScene extends Phaser.Scene {
           fresh: s.id === r.freshWeapon,
         });
       }
+      // A WEAPON WITH AN IDLE PICTURE SHOWS IT instead of its colour, on the
+      // ring and in its module (owner, bug of build 1195). The rest keep
+      // their coloured disc until their art arrives.
+      const pic = unlocked && this.idlePic(s);
+      if (pic) {
+        const inModule = s.kind === 'slot';
+        pic.setPosition(inModule ? s.cxm : s.x, inModule ? s.y + 10 : s.y)
+          .setAlpha(inModule ? (off ? 0.4 : 1) : s.disc.alpha)
+          .setVisible(true);
+        if (!inModule) s.disc.setFillStyle(0, 0.001).setStrokeStyle();
+      }
 
       // ONLY MODULES CARRY TEXT. Eleven benched offensive weapons on a
       // half-circle land about 15px apart, and a three-glyph label is 17px
@@ -1485,16 +1538,18 @@ export default class UIScene extends Phaser.Scene {
       // which is what the perceptually-spaced 17 primaries are for, and the
       // readout names whatever you touch. Locked ones show a padlock only.
       const show = s.kind === 'slot' && !!s.id && unlocked;
+      const pictured = s.kind === 'slot' && !!s.pic?.visible;
       const ink = s.kind === 'slot'
         ? (wd.palette.primary || '#E0F0FF')
         : inkFor(wd.palette.primary);
-      s.abbr.setVisible(show)
+      s.abbr.setVisible(show && !pictured)
         .setText(show ? wd.short.slice(0, s.chars) : '')
         .setTint(hexNum(ink))
         .setAlpha(off ? 0.4 : 1);
       s.lvl.setVisible(show)
         .setText(show ? `L${r.wpLevels[s.id] || 1}` : '')
         .setAlpha(off ? 0.4 : 1);
+      if (s.kind === 'slot') s.lvl.setY(pictured ? s.y + MOD - 6 : s.y + 15);
       if (s.kind !== 'slot') s.lvl.setTint(hexNum(ink));
 
       const mx = s.kind === 'slot' ? s.cxm : s.x;
@@ -1593,6 +1648,53 @@ export default class UIScene extends Phaser.Scene {
       g.lineStyle(1, GOLD, 0.85);
       g.strokeRect(s.x - 2.5, s.y - 2.5, MOD + 4, MOD + 4);
     }
+  }
+
+  /**
+   * A weapon's IDLE PICTURE — the `rest` frame of its held sheet — for slot
+   * `s`, made once per weapon per slot and reused. Null when the weapon has no
+   * such picture yet. It is shown at its true size, centred on the opaque part
+   * of the drawing rather than on the sheet's pivot, so a picture drawn off to
+   * one side of its paper still sits on its disc.
+   */
+  idlePic(s) {
+    const art = s.id && idleArt(this, s.id);
+    if (!art) return null;
+    if (s.pic?.weapon !== s.id) {
+      s.pic?.destroy();
+      const { box, def } = art;
+      s.pic = this.add.image(0, 0, art.key, art.cell)
+        .setOrigin((box.x + box.w / 2) / def.frameW, (box.y + box.h / 2) / def.frameH);
+      s.pic.weapon = s.id;
+      this.wheel.add(s.pic);
+      // Under the module text and the padlocks, over the discs.
+      this.wheel.moveBelow?.(s.pic, this.moduleG);
+    }
+    return s.pic;
+  }
+
+  /**
+   * THE SILHOUETTE an equipped weapon leaves on the ring: black, traced with a
+   * dotted white line. Its idle picture's own shape where it has one, else
+   * its disc.
+   */
+  paintGhost(s) {
+    const g = this.ghostG, art = idleArt(this, s.id);
+    if (!art) {
+      g.fillStyle(0x000000, 1).fillCircle(s.x, s.y, s.r);
+      g.fillStyle(0xFFFFFF, 0.9);
+      const n = Math.round(Math.PI * s.r);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        g.fillRect(Math.round(s.x + Math.cos(a) * s.r) - 0.5, Math.round(s.y + Math.sin(a) * s.r) - 0.5, 1, 1);
+      }
+      return;
+    }
+    const ox = Math.round(s.x - art.box.w / 2), oy = Math.round(s.y - art.box.h / 2);
+    g.fillStyle(0x000000, 1);
+    for (const [x, y] of art.solid) g.fillRect(ox + x, oy + y, 1, 1);
+    g.fillStyle(0xFFFFFF, 0.9);
+    for (const [x, y] of art.edge) if ((x + y) % 2 === 0) g.fillRect(ox + x, oy + y, 1, 1);
   }
 
   /**
