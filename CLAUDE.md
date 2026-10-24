@@ -652,7 +652,8 @@ Claude or a generator made:
 | Blaze Man's arena track (his boss room) | music | openmusic.ai, from the skill's fire prompt | 2026-10-21 | `design/music/bgm-blaze-arena.ogg` |
 | Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
-| the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains (not the hammer itself) | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
+| the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
+| the Quake Hammer itself — the rope-bound mallet in his gripping fist, every clip it plays | sprite | Claude (Claude Design) | 2026-10-23 | `design/sprites/weapon-quake_hammer-held.sprite` |
 | Simon's Whip — the vine (every crack) and his three Simon poses; not the coiled whip at rest, which the owner drew pixel by pixel | sprite | Claude (Claude Design) | 2026-10-22 | `design/sprites/weapon-simons_whip-{held,body}.sprite` |
 | Wraith Man's room in 16-bit — a derelict chapel, with a possessed painting | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/wraith.js` |
 | Proto Mk0's room, redrawn in part — the bomb rack and three dead Nullfire Drones | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/proto.js` |
