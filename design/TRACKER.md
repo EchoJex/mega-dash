@@ -776,7 +776,7 @@ struck through, tells you what it fixed, then strikes them through
 |---|---|---|
 | 1195 (main) | `[draft]` | update the dev tracker so that pallatte colors are not in hex but shown |
 | 1195 (main) | `[draft]` | charging the rollout is too hard. once the rollout inputs are performed, have the falling, winding up form fall significantly slowerlike jigglypuffs rollout fall slowdown. this does not affect global gravity, just this forms fall speed |
-| 1195 (main) | `[wip]` | weapon toggling still feels rudimentary. i think in use weapons should be  |
+| 1195 (main) | `[wip]` | weapon toggling still feels rudimentary. i think in use weapons should leave behind a silhouette (black with white dotted line trace) and that every   |
 
 # BRAINSTORM — context only, never implemented
 
