@@ -812,12 +812,21 @@ function stepLunge(st, lv, ctx) {
  *
  * A PRESS DURING A WEAK SWING IS JAB 2. Charged less than `afterSwing.below`,
  * a swing remembers a press made during it, and jab 2 starts the moment the
- * swing lets go; a press up to `afterSwing.grace` steps after it ends starts
- * jab 2 at once. A press inside jab 2's window (`open`..`close`) is the
- * finisher, starting no earlier than the window opens. Jabs are decided on the
- * PRESS, not the release, and a press that became a jab never charges however
- * long it is held. Any other press made while the hammer is busy charges once
- * it is free, so time spent swinging never counts toward a charge.
+ * swing lets go; a press up to `grace` steps after it ends starts jab 2 at
+ * once. THE FINISHER FOLLOWS JAB 2 THE SAME WAY (owner, 23 Oct 2026): a press
+ * during jab 2 starts it no earlier than jab 2's step `open`, and a press up
+ * to `grace` steps after jab 2 ends starts it at once. Through that window the
+ * hammer stays in his hand on the frame the move let go on, rather than
+ * dropping to rest. Jabs are decided on the PRESS, not the release, and a
+ * press that became a jab never charges however long it is held. Any other
+ * press made while the hammer is busy charges once it is free, so time spent
+ * swinging never counts toward a charge.
+ *
+ * A COOLDOWN AFTER EVERY MOVE (owner, 23 Oct 2026): `cool.big` steps after the
+ * finisher or a full charge, `cool.small` after anything else, counted from
+ * the step the move lets go. It stops only a NEW press — the combo carries on
+ * inside its windows regardless — and a press held through it charges once it
+ * is over, like a press made while the hammer is busy.
  *
  * MOVEMENT is the rung's to decide (`jabMove`, `chargeMove`, `swingMove`) and
  * is asserted every step as `run.moveScale`: 0 roots the player, 0.5 is
@@ -931,7 +940,8 @@ function quakePose(st, L) {
       deg: HAMMER_SHAPE.overhead + (tell ? Math.sin(st.t * 0.9) * 4 : 0),
     };
   }
-  return null;
+  // Still in his hand while the next move of the combo may follow.
+  return st.linger && st.t <= st.linger.until ? st.linger : null;
 }
 
 /**
@@ -991,32 +1001,44 @@ function settle(st, L, lv, ctx) {
     st.act = null;
     st.freeAt = st.t;
     st.queued = null;
-    st.weakUntil = weakSwing(a, L) ? st.t + L.afterSwing.grace : -Infinity;
+    // What may follow for `grace` steps: jab 2 after a weak swing, the
+    // finisher after jab 2. The hammer holds the frame it let go on till then.
+    const next = a.move === 'swing' ? (weakSwing(a, L) ? 0 : -1) : a.n + 1;
+    st.chain = !q && next >= 0 && next < L.jab.length ? { n: next, until: st.t + L.grace } : null;
+    const t = a.total - 1;
+    st.linger = st.chain && {
+      move: a.move, clip: a.move === 'swing' ? 'swing' : JAB_CLIPS[a.n], t, hit: a.hit, total: a.total,
+      deg: hammerDeg(a.move, t, a.hit), until: st.chain.until,
+    };
+    const big = a.full || a.n === L.jab.length - 1;
+    st.coolUntil = st.t + (big ? L.cool.big : L.cool.small);
     if (q) startJab(st, L, ctx, 0, a.t - a.total);
   }
 }
 
 /**
  * A NEW PRESS, whether it arrived as the first `hold` or as a release with no
- * hold before it. During a weak swing, or within `afterSwing.grace` steps of
- * one ending, it is jab 2; inside jab 2's window it is the finisher. A free
- * hammer starts charging on it. Anything else waits for `hold` to charge it
- * once the hammer is free.
+ * hold before it. During a weak swing, or within `grace` steps of one ending,
+ * it is jab 2; during jab 2, or within `grace` steps of it ending, it is the
+ * finisher. A free, rested hammer starts charging on it. Anything else waits
+ * for `hold` to charge it once the hammer is free and rested.
  */
 function press(st, L, lv, ctx) {
   const a = st.act;
   if (a) {
-    const chains = weakSwing(a, L) || (a.move !== 'swing' && a.n < L.jab.length - 1 && a.t <= L.jab[a.n].close);
+    const chains = weakSwing(a, L) || (a.move !== 'swing' && a.n < L.jab.length - 1);
     if (chains && !st.queued) { st.queued = { at: a.t }; st.jabPress = true; }
     return;
   }
   if (st.diving) return;
-  if (st.t <= st.weakUntil) {
+  if (st.chain && st.t <= st.chain.until) {
     st.jabPress = true;
-    startJab(st, L, ctx, 0, 0);
+    startJab(st, L, ctx, st.chain.n, 0);
+    st.chain = null; st.linger = null;
     settle(st, L, lv, ctx);
     return;
   }
+  if (st.t < st.coolUntil) return;
   st.charging = true; st.chargeF = 0; st.full = false;
 }
 
@@ -1037,12 +1059,47 @@ function swingAct(L, c, full) {
 
 /** A jab lands: everything in its hit frame's hit area, measured from his hand. */
 function jabHit(L, lv, ctx, a) {
-  const j = L.jab[a.n], p = ctx.player, g = gripOf(p);
-  const box = areaAt(clipOf(HAMMER, JAB_CLIPS[a.n]).hits[0], g.x, g.y, p.facing);
-  const dmg = dmgOf('quake_hammer', lv, ctx) * words(j.dmg);
-  for (const e of enemiesIn(ctx, box)) {
-    ctx.hitEnemy(e, dmg, { knockback: j.knock, launch: j.launch || 0, from: p.x + 12 });
+  const j = L.jab[a.n], p = ctx.player, g = gripOf(p), clip = clipOf(HAMMER, JAB_CLIPS[a.n]);
+  const base = dmgOf('quake_hammer', lv, ctx);
+  const struck = enemiesIn(ctx, areaAt(clip.hits[0], g.x, g.y, p.facing));
+  for (const e of struck) {
+    ctx.hitEnemy(e, base * words(j.dmg), { knockback: j.knock, launch: j.launch || 0, from: p.x + 12 });
   }
+  // From Lv3 the finisher always throws up the medium cloud (owner, 23 Oct 2026).
+  const at = L.cloud && a.n === L.jab.length - 1 && landing(clip, ctx, struck);
+  if (at) throwDust(L, ctx, 'medium', at, struck, base);
+}
+
+/**
+ * Where a blow landed: the ground under the hammer head if there is ground
+ * there, otherwise the first thing it hit, otherwise nowhere (a blow at the
+ * air). The head is the clip's spawn point on its hit frame — wherever the
+ * drawing puts it — or the bottom of its hit area if it has none.
+ */
+function landing(clip, ctx, struck) {
+  const p = ctx.player, g = gripOf(p), h = clip.hits[0];
+  const sp = clip.spawns.find((s) => s.frame === h.frame) ?? { x: h.x + h.w / 2, y: h.y + h.h };
+  const head = pointAt(sp, g.x, g.y, p.facing);
+  const ground = !!p.onGround && ctx.overGround(head.x);
+  if (ground) return { x: head.x, y: p.y + 24, ground };
+  if (!struck.length) return null;
+  // The cloud billows up from under whatever it hit.
+  const e = struck[0];
+  return { x: e.x + e.w / 2, y: e.y + e.h, ground };
+}
+
+/**
+ * Lv3's dust cloud. How long it lasts and where it hurts are its clip's; a
+ * cloud whose hit is its first frame hurts now.
+ */
+function throwDust(L, ctx, size, at, struck, base) {
+  const d = {
+    sheet: 'dust', clip: size, x: at.x, y: at.y, dir: ctx.player.facing, t: 0,
+    life: clipOf(DUST, size).total, seed: Math.random(),
+    struck, dmg: base * words(L.cloud.dmg), knock: L.cloud.knock, done: false,
+  };
+  ctx.fx.dust.push(d);
+  cloudHit(d, ctx);
 }
 
 /**
@@ -1051,7 +1108,7 @@ function jabHit(L, lv, ctx, a) {
  * how far up the climb a nearly full charge gets before that jump.
  */
 function swingHit(L, lv, ctx, a) {
-  const p = ctx.player, f = p.facing, fx = ctx.fx, g = gripOf(p);
+  const p = ctx.player, f = p.facing, g = gripOf(p);
   const base = dmgOf('quake_hammer', lv, ctx);
   const lo = words(L.swingDmg), hi = words(L.swingDmgFull);
   const dmg = base * (a.full ? hi : lo + (hi - lo) * a.c * L.partialShare);
@@ -1065,39 +1122,16 @@ function swingHit(L, lv, ctx, a) {
     });
   }
 
-  // Where it landed: the ground under the hammer head if there is ground
-  // there, otherwise the first thing it hit, otherwise nowhere (a swing at the
-  // air). The head is the swing's spawn point on its hit frame — wherever the
-  // drawing puts it — or the bottom of its hit area if it has none.
-  const sp = clip.spawns.find((s) => s.frame === h.frame) ?? { x: h.x + h.w / 2, y: h.y + h.h };
-  const head = pointAt(sp, g.x, g.y, f);
-  const gy = p.y + 24;
-  const ground = !!p.onGround && ctx.overGround(head.x);
-  let ix = null, iy = null;
-  if (ground) { ix = head.x; iy = gy; } else if (struck.length) {
-    // The cloud billows up from under whatever it hit.
-    const e = struck[0];
-    ix = e.x + e.w / 2; iy = e.y + e.h;
-  }
-  if (ix === null) return;
+  const at = landing(clip, ctx, struck);
+  if (!at) return;
   ctx.shake(a.full ? 2 : 1, a.full ? 16 : 8);
   ctx.sfx('rumble', { dur: 0.2 + 0.2 * a.c, pitch: 1 - 0.2 * a.c });
 
-  // Lv3: the dust cloud, sized by the charge. How long it lasts and where it
-  // hurts are its clip's; a cloud whose hit is its first frame hurts now.
-  if (L.cloud) {
-    const clipName = DUST_CLIPS[cloudSize(a.c, a.full)];
-    const d = {
-      sheet: 'dust', clip: clipName, x: ix, y: iy, dir: f, t: 0,
-      life: clipOf(DUST, clipName).total, seed: Math.random(),
-      struck, dmg: base * words(L.cloud.dmg), knock: L.cloud.knock, done: false,
-    };
-    fx.dust.push(d);
-    cloudHit(d, ctx);
-  }
+  // Lv3: the dust cloud, sized by the charge.
+  if (L.cloud) throwDust(L, ctx, DUST_CLIPS[cloudSize(a.c, a.full)], at, struck, base);
 
   // Lv10: the spikes. A FULL charge, and only where it met the GROUND.
-  if (L.spikes && a.full && ground) raiseSpikes(L.spikes, ix, gy, f, base, ctx);
+  if (L.spikes && a.full && at.ground) raiseSpikes(L.spikes, at.x, at.y, f, base, ctx);
 }
 
 /**
@@ -1292,7 +1326,7 @@ const quake = {
   init(st) {
     st.t = 0; st.act = null; st.queued = null; st.freeAt = -Infinity; st.diving = null;
     st.holdSeen = false; st.charging = false; st.chargeF = 0; st.full = false;
-    st.down = false; st.jabPress = false; st.weakUntil = -Infinity;
+    st.down = false; st.jabPress = false; st.chain = null; st.linger = null; st.coolUntil = -Infinity;
   },
 
   step(st, lv, ctx) {
@@ -1322,7 +1356,7 @@ const quake = {
     if (!st.down) { st.down = true; press(st, L, lv, ctx); }
     // A press made while the hammer was busy only starts charging once it is
     // free, so time spent swinging never counts toward a charge.
-    if (!st.act && !st.diving && !st.jabPress) {
+    if (!st.act && !st.diving && !st.jabPress && st.t >= st.coolUntil) {
       if (!st.charging) { st.charging = true; st.chargeF = 0; st.full = false; }
       st.chargeF++;
       if (!st.full && st.chargeF >= L.holdFrames) {

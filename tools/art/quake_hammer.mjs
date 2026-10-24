@@ -219,8 +219,8 @@ export function constraints() {
   const out = [];
   L.jab.forEach((j, i) => {
     if (j.open === undefined) return;
-    out.push(`**${names[i]}**: a press from step ${j.open} to step ${j.close} carries on into ${names[i + 1]}, `
-      + `so ${names[i]} has to hit before step ${j.open} and last at least ${j.close} steps.`);
+    out.push(`**${names[i]}**: a press during it carries on into ${names[i + 1]}, which starts no earlier than `
+      + `step ${j.open}, so ${names[i]} has to hit before step ${j.open} and last longer than ${j.open} steps.`);
   });
   out.push(`**swing**: a full charge starts it ${L.swing.fullSooner} step in, and an uncharged one lets go `
     + `${L.swing.weakShorter} steps before its end — so it has to hit after step ${L.swing.fullSooner} and `

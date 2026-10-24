@@ -128,7 +128,7 @@ Clip kinds: **hit** plays once; exactly one frame carries hit=x,y,w,h — the st
 
 Worked out from the weapon's ladder; `npm test` checks every one, and a handoff that breaks one is refused with the reason.
 
-- **jabTwo**: a press from step 18 to step 27 carries on into jabThree, so jabTwo has to hit before step 18 and last at least 27 steps.
+- **jabTwo**: a press during it carries on into jabThree, which starts no earlier than step 18, so jabTwo has to hit before step 18 and last longer than 18 steps.
 - **swing**: a full charge starts it 1 step in, and an uncharged one lets go 10 steps before its end — so it has to hit after step 1 and more than 10 steps before it ends.
 - **every jab and the swing** must reach a minion standing against his front: the hit area has to overlap the square from (29, 28) to (41, 40) on the held sheet — just right of his hand, down to the floor. Facing left is the same, mirrored.
 - **the swing's spawn point** is where the hammer head meets the floor: the dust and the spikes start there. The floor is 12 pixels below his hand (row 40 on the held sheet).

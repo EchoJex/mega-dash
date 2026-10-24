@@ -451,11 +451,17 @@ export const WEAPON_LADDERS = {
   // values, regenerated from the files.
   //
   // What stays here is what is not animation:
-  //   open..close  the steps of jab 2 in which a press carries on into the
-  //                finisher — SmashWiki's 18-27
-  //   afterSwing   a swing charged less than `below` can be followed by jab 2:
-  //                a press during it, or up to `grace` steps after it ends
-  //                (the owner's pick, 22 Oct 2026)
+  //   open         a press during jab 2 carries on into the finisher, which
+  //                starts no earlier than this step of jab 2 — SmashWiki's 18
+  //   afterSwing   a swing charged less than `below` can be followed by jab 2
+  //   grace        the steps after a weak swing (for jab 2) or after jab 2
+  //                (for the finisher) in which a press still carries the
+  //                combo on. "the same combo detect window as jab2" (owner,
+  //                23 Oct 2026), so it is one number for both
+  //   cool         steps after a move lets go before a NEW press can charge:
+  //                `big` after the finisher or a full charge, `small` after
+  //                anything else (owner, 23 Oct 2026). The combo itself is
+  //                never held up by it
   //   holdFrames   press to full charge (Jet Hammer's 2 seconds at Lv1); the
   //                rungs above shorten it ("faster", then "significantly")
   //   fullSooner   a full charge's swing starts this many steps in, so it
@@ -468,10 +474,12 @@ export const WEAPON_LADDERS = {
   quake_hammer: {
     1: {
       jab: [
-        { open: 18, close: 27, dmg: 'lowMedium', knock: 1.4 },
+        { open: 18, dmg: 'lowMedium', knock: 1.4 },
         { dmg: 'medium', knock: 3.4, launch: 2 },
       ],
-      afterSwing: { below: 0.5, grace: 10 },
+      afterSwing: { below: 0.5 },
+      grace: 10,
+      cool: { big: 90, small: 30 },
       holdFrames: 120,
       swing: { fullSooner: 1, weakShorter: 10 },
       // Jet Hammer climbs from its uncharged damage toward full and then jumps

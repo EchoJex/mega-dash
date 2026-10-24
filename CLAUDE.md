@@ -1206,7 +1206,10 @@ one already released, because a double TAP is press, release, press, and
 with how many steps it was held), so the weapon itself decides what a press is. **The
 Hammer charges on every press, with no minimum** (a tap is a swing with no charge), and has
 no jab 1, by the owner's bug of build 1185. A press during a swing charged under half, or
-up to 10 steps after it, is jab 2; a press in jab 2's window is the finisher. Jabs are
+up to 10 steps after it, is jab 2; a press during jab 2, or up to 10 steps after it, is the
+finisher — and the hammer stays in his hand through each of those windows. After every
+move it rests: 90 steps after the finisher or a full charge, 30 after anything else, which
+stops only a new charge, never the combo (owner, 23 Oct 2026). Jabs are
 decided on the press and a press that became a jab never charges. A hold that stops without
 a release simply drops the charge. Dust, spikes and sand live in the shared `fx`, so they carry on when the
 weapon is benched mid-effect.

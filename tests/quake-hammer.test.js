@@ -3,7 +3,8 @@
  *
  * These pin the SHAPE of the weapon, not its numbers: every press is a
  * charge from its first step, the swing lands after release, a swing charged
- * under half chains into jab 2 and the finisher inside Smash's window, what each rung lets the player do
+ * under half chains into jab 2 and the finisher, a cooldown after every move,
+ * what each rung lets the player do
  * while swinging, the Lv3 dust cloud, the Lv10 spikes that hurt only while
  * growing and then block, and the sand they turn into. Frame counts, hit
  * areas and damage are read OUT of the hammer's frame data and ladder rather
@@ -18,7 +19,7 @@ import {
   ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS,
 } from '../src/data/weapons.js';
 import * as Wpn from '../src/systems/weaponry.js';
-import { clipOf, growStepsOf, areaAt, pointAt } from '../src/systems/frame-data.js';
+import { clipOf, cellAt, growStepsOf, areaAt, pointAt } from '../src/systems/frame-data.js';
 
 const ID = 'quake_hammer';
 const FLOOR = 184;
@@ -147,8 +148,8 @@ test('after a swing charged under half, a press during it is jab 2, and the fini
   assert.ok(r.hits[2].opts.launch > 0 && !r.hits[1].opts.launch, 'and it is the one that launches');
 });
 
-test('a press up to the grace after a weak swing is still jab 2; one later is a charge', () => {
-  const { grace } = L1.afterSwing;
+test('a press up to the grace after a weak swing is still jab 2; one later is not', () => {
+  const { grace } = L1;
   for (const late of [0, grace, grace + 1]) {
     const r = rig();
     r.press(1);
@@ -156,7 +157,7 @@ test('a press up to the grace after a weak swing is still jab 2; one later is a 
     r.step();
     Wpn.holdActive(r.ctx, ID, 1);
     if (late <= grace) assert.equal(r.st().act?.move, 'jab2', `${late} steps after`);
-    else assert.equal(r.st().charging, true, `${late} steps after: a new charge`);
+    else assert.equal(r.st().act, null, `${late} steps after: no jab`);
   }
 });
 
@@ -169,9 +170,10 @@ test('a swing charged half or more is never followed by a jab', () => {
   r.steps(80);
   assert.equal(r.st().act, null, 'no jab came out of it');
   assert.equal(r.hits.length, 1);
+  r.steps(L1.cool.small);
   r.step();
   Wpn.holdActive(r.ctx, ID, 1);
-  assert.equal(r.st().charging, true, 'a press just after it is a fresh charge');
+  assert.equal(r.st().charging, true, 'a press once it has rested is a fresh charge');
 });
 
 test('the chain ends at the finisher: a press during it does not jab again', () => {
@@ -187,15 +189,79 @@ test('the chain ends at the finisher: a press during it does not jab again', () 
   assert.equal(r.st().act, null);
 });
 
-test('a press after jab 2\'s window closes is not the finisher', () => {
+test('a press up to the grace after jab 2 ends is the finisher; one later is not', () => {
+  const { grace } = L1;
+  for (const late of [1, grace, grace + 1]) {
+    const r = rig();
+    r.press(1); r.press(1);
+    r.steps(SWING.total - 2);
+    assert.equal(r.st().act.move, 'jab2');
+    while (r.st().act) r.step();             // jab 2 lets go on this step
+    r.steps(late - 1);
+    r.step();
+    Wpn.holdActive(r.ctx, ID, 1);
+    if (late <= grace) assert.equal(r.st().act?.move, 'jab3', `${late} steps after`);
+    else assert.equal(r.st().act, null, `${late} steps after: no finisher`);
+  }
+});
+
+test('the hammer stays in his hand, on the frame it let go on, until the combo window closes', () => {
   const r = rig();
-  r.press(1); r.press(1);
-  r.steps(SWING.total - 2);
-  r.steps(JAB[0].close);                     // the next press is just past the window
-  r.press(1);
-  assert.notEqual(r.st().act?.move, 'jab3');
-  r.steps(60);
-  assert.ok(!r.hits.some((h) => h.opts.launch === JAB[1].launch), 'no finisher');
+  const drawn = () => {
+    let cell = null;
+    const layer = { drawCell: (s) => { if (s.id === HELD) cell = s.cell; } };
+    Wpn.drawWeaponArt({ held: layer, heldBack: layer, effects: { drawCell() {} } }, (x) => x, (y) => y, r.ctx);
+    return cell;
+  };
+  const rest = cellAt(held('rest'), 0);
+  for (const chain of ['after a weak swing', 'after jab 2']) {
+    r.press(1);
+    if (chain === 'after jab 2') { r.press(1); r.steps(SWING.total - 2); }
+    while (r.st().act) r.step();
+    const last = drawn();
+    assert.notEqual(last, rest, `${chain}: not put away the moment it lets go`);
+    r.steps(L1.grace);
+    assert.equal(drawn(), last, `${chain}: held there through the window`);
+    r.step();
+    assert.equal(drawn(), rest, `${chain}: put away once the window closes`);
+    r.steps(L1.cool.big);
+  }
+});
+
+test('a cooldown follows every move, long after the finisher or a full charge, short after the rest', () => {
+  const finisher = (r) => { r.press(1); r.press(1); r.steps(SWING.total - 2); r.press(1); };
+  const cases = [
+    ['a full charge', (r) => r.press(L1.holdFrames), L1.cool.big],
+    ['the finisher', finisher, L1.cool.big],
+    ['a weak swing', (r) => r.press(1), L1.cool.small],
+    ['a half charge', (r) => r.press(Math.ceil(L1.holdFrames * L1.afterSwing.below)), L1.cool.small],
+    ['jab 2', (r) => { r.press(1); r.press(1); r.steps(SWING.total - 2); }, L1.cool.small],
+  ];
+  assert.ok(L1.cool.small > L1.grace, 'the combo window closes before the cooldown ends');
+  for (const [name, move, cool] of cases) {
+    for (const late of [cool - 1, cool]) {
+      const r = rig();
+      move(r);
+      while (r.st().act) r.step();           // the move lets go on this step
+      r.steps(late - 1);
+      r.step();
+      Wpn.holdActive(r.ctx, ID, 1);
+      assert.equal(r.st().charging, late >= cool, `${name}: a press ${late} steps after it lets go`);
+    }
+  }
+});
+
+test('from Lv3 the finisher always throws up the medium cloud where the hammer meets the floor', () => {
+  for (const lv of [1, 3]) {
+    const r = rig({ level: lv });
+    r.press(1); r.press(1); r.steps(SWING.total - 2); r.press(1);
+    while (!(r.st().act?.move === 'jab3' && r.st().act.done)) r.step();
+    const medium = r.fx.dust.filter((d) => isCloud(d) && d.clip === 'medium');
+    if (lv < 3) { assert.equal(medium.length, 0, 'Lv1: no dust'); continue; }
+    assert.equal(medium.length, 1, 'Lv3: one medium cloud');
+    assert.equal(medium[0].y, FLOOR, 'on the floor');
+    assert.ok(medium[0].x > r.player.x + 12, 'in front of him');
+  }
 });
 
 /**
@@ -207,9 +273,8 @@ test('a press after jab 2\'s window closes is not the finisher', () => {
 test('each jab still fits its chain window, and the swing its charge rules', () => {
   JAB.forEach((j, i) => {
     if (j.open === undefined) return;
-    assert.ok(j.hit < j.open, `jab ${i + 1} hits on ${j.hit}, after its window opens (${j.open})`);
-    assert.ok(j.open <= j.close && j.close <= j.total,
-      `jab ${i + 1} lasts ${j.total} steps but its window runs to ${j.close}`);
+    assert.ok(j.hit < j.open, `jab ${i + 1} hits on ${j.hit}, after the next move may start (${j.open})`);
+    assert.ok(j.open < j.total, `jab ${i + 1} lets go on ${j.total}, before the next move may start (${j.open})`);
   });
   const c = held('swing');
   assert.ok(L1.swing.fullSooner < c.hits[0].step, 'a full charge cannot start past the swing\'s hit');
@@ -292,12 +357,12 @@ test('letting go any way but a release drops the charge', () => {
   assert.equal(Wpn.fireActive(r.ctx, ID, 500), false, 'a late release swings nothing');
 });
 
-test('a press made during a strong swing charges only once the hammer is free', () => {
+test('a press made during a strong swing charges only once the hammer is free and rested', () => {
   const r = rig();
   r.press(L1.holdFrames);                    // a full charge: nothing chains after it
-  r.holdFor(SWING.totalFull + 5);            // held from inside the swing
+  r.holdFor(SWING.totalFull + L1.cool.big + 5);   // held from inside the swing
   assert.equal(r.st().charging, true);
-  assert.ok(r.st().chargeF < SWING.totalFull, 'the charge began only once the hammer was free');
+  assert.ok(r.st().chargeF <= 6, 'the charge began only once the hammer was free and rested');
 });
 
 test('a press that became a jab never charges, however long it is held', () => {
