@@ -775,7 +775,7 @@ struck through, tells you what it fixed, then strikes them through
 | build | status | bug |
 |---|---|---|
 | 1195 (main) | `[draft]` | update the dev tracker so that pallatte colors are not in hex but shown |
-| 1195 (main) | `[wip]` |  |
+| 1195 (main) | `[wip]` | charging the rollout is too hard. once the  |
 
 # BRAINSTORM — context only, never implemented
 
