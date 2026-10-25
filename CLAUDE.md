@@ -657,6 +657,7 @@ Claude or a generator made:
 | Simon's Whip — the vine (every crack) and his three Simon poses; not the coiled whip at rest, which the owner drew pixel by pixel | sprite | Claude (Claude Design) | 2026-10-22 | `design/sprites/weapon-simons_whip-{held,body}.sprite` |
 | Wraith Man's room in 16-bit — a derelict chapel, with a possessed painting | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/wraith.js` |
 | Proto Mk0's room, redrawn in part — the bomb rack and three dead Nullfire Drones | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/proto.js` |
+| Drake Breath — the dragon-head cannon (every clip), the breath puffs, the wave, the blast, the beam and its streaks | sprite | Claude (Claude Design) | 2026-10-24 | `design/sprites/weapon-drake_breath-{held,puff,wave,blast,beam,streak}.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero

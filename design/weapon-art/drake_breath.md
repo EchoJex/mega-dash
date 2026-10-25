@@ -108,8 +108,8 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | tele | loop | 2 · 2 | 4 | — | — | — |
-| start | loop | 4 · 4 | 8 | — | — | — |
-| body | loop | 4 · 4 | 8 | — | — | — |
+| start | loop | 2 · 2 · 2 · 2 | 8 | — | — | — |
+| body | loop | 2 · 2 · 2 · 2 | 8 | — | — | — |
 | fade | once | 6 · 6 · 6 · 6 | 24 | — | — | — |
 
 **weapon-drake_breath-streak**
@@ -135,27 +135,5 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 ## Handing this weapon to Claude Design
 
 <!-- generated:prompt -->
-Paste this into Claude Design, with the repository linked:
-
-```text
-Draw the art for MEGA DASH's DRAKE BREATH, replacing the placeholder pictures in its 6 sprite sheets.
-
-Everything you need is in the GitHub repository EchoJex/mega-dash, branch main. Link the repository (the design/ and docs/ folders are enough) and read, in this order:
-1. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/README.md — how weapon art works in this game: the .sprite format, what you may change, how it is checked, and what to hand back.
-2. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/drake_breath.md — this weapon: what it is, what each level shows, every clip with its timing and hit areas, and the rules the code holds the drawing to.
-3. The sheets to draw, already in the game and playing exactly as your art will:
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-held.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-puff.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-wave.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-blast.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-beam.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-streak.sprite
-4. https://github.com/EchoJex/mega-dash/blob/main/design/DESIGN-BRIEF.md (the game's look and limits) and https://github.com/EchoJex/mega-dash/blob/main/design/sprites/player.sprite (the 16-bit player: the reference for style and for scale).
-
-Redraw every frame of those sheets in the same files: same file names, same sheet sizes, same clip names, drawn facing right (the game mirrors it). You may change the colours (up to 15 per sheet), any hold, which frame a move hits on, the hit areas, the spawn points and the pivot when the drawing needs it. Those changes go into the game as soon as they pass the checks, so say what you changed and why.
-
-Before handing off, show the owner every clip playing at game speed (60 steps a second, each frame for its hold), facing both ways, beside the player, with the hit areas drawn on.
-
-When the owner approves, give the owner ONE zip file to download, holding the .sprite files you drew and a HANDOFF.md note saying what was approved and when, what changed in timing or hit areas and why, and anything you would like the code to change. (If your menu has Export, then Hand off to Claude Code, that makes the same bundle.) The owner gives that zip to Claude Code.
-```
+Every sheet of the DRAKE BREATH is finished art, so there is no prompt to paste.
 <!-- /generated:prompt -->
