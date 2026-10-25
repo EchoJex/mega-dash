@@ -792,9 +792,6 @@ it is ready to be real.
 
 
 ## Play feel
-Some minions are passive or good until damaged, engaging them into an aggressive mode
-
-
-Defeating bosses rewards you with greetings and thanks from elementally appropriate critters who gift you the new power-up 
+Defeating bosses rewards you with greetings and thanks from elementally appropriate critters who gift you the new power-up
 ## Cosmetics
 
