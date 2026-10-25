@@ -470,7 +470,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
-- **weapon name** `[wip]` Granite Form
+- **weapon name** `[draft]` Granite Form
 - **boss weakness A** `[draft]` Grass
 - **boss weakness B** `[draft]` Steel
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
