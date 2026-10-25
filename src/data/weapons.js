@@ -642,7 +642,7 @@ export const WEAPON_LADDERS = {
     1: {
       groundIdle: 90, stoneFrames: 300, morphFrames: 10,
       armor: 0.8, slamDmg: 'heavy', slamKnock: 3.4,
-      stoneMax: 3, stoneSize: 8, stoneLife: 900, stoneSpeed: 3.4, stoneDmg: 'medium',
+      stoneMax: 3, stoneSize: 8, stoneLife: 900, stoneSpeed: 3.4, stoneDmg: 'low', stoneFly: false,
       stoneBounce: 0.45, stoneRoll: 0.94,
       roll: false, stoneExplode: false,
     },
@@ -650,9 +650,8 @@ export const WEAPON_LADDERS = {
       // How fast the winding-up boulder may fall, in pixels a step (the slam
       // drops at 7). Rollout's slow fall: more time to wind it up.
       boulderFall: 1.5 },
-    6: { jumpCancel: true },
+    6: { jumpCancel: true, stoneFly: true, stoneDmg: 'medium', stoneExplode: true, blastR: 20, blastDmg: 'heavy' },
     10: {
-      stoneExplode: true, blastR: 20, blastDmg: 'heavy',
       walk: true, walkScale: 0.5, shards: 7, shardSpeed: 3.4, shardDmg: 'medium',
     },
   },

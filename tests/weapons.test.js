@@ -681,14 +681,27 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   for (let i = 0; i < 120; i++) step();
   const s = st().stones[0];
   assert.equal(s.y + 8, FLOOR, 'it came to rest on the floor');
-  // Struck from its left, it flies right, and is used up on the enemy it meets.
-  h.bullets.push({ x: s.x - 1, y: s.y + 4, vx: 3, vy: 0, radius: 2, life: 60, enemy: false });
-  h.enemies.length = 0;
-  const target = { x: s.x + 40, y: s.y - 2, w: 12, h: 12, hp: 999, vy: 0, kbVx: 0, status: {} };
-  h.enemies.push(target);
-  step();
-  assert.ok(st().stones[0].flying && st().stones[0].vx > 0, 'it flies away from the side it was struck');
+  // Struck from its left, it goes right and is used up on the enemy it meets:
+  // along the ground before Lv6, flying from Lv6.
+  const strike = (r, s) => {
+    r.h.bullets.push({ x: s.x - 1, y: s.y + 4, vx: 3, vy: 0, radius: 2, life: 60, enemy: false });
+    r.h.enemies.length = 0;
+    const target = { x: s.x + 40, y: s.y - 2, w: 12, h: 12, hp: 999, vy: 0, kbVx: 0, status: {} };
+    r.h.enemies.push(target);
+    r.step();
+    return target;
+  };
+  const target = strike({ h, step }, s);
+  assert.ok(!st().stones[0].flying && st().stones[0].vx > 0, 'below Lv6 it is knocked along the ground');
   for (let i = 0; i < 30; i++) step();
   assert.ok(h.hits.some((x) => x.e === target), 'the stone hit the enemy');
-  assert.equal(st().stones.length, 0);
+  assert.equal(st().stones.length, 0, 'and crumbled');
+
+  const lv6 = run(6);
+  lv6.h.run.stoneHit = true; lv6.step();
+  for (let i = 0; i < 120; i++) lv6.step();
+  const t6 = strike(lv6, lv6.st().stones[0]);
+  assert.ok(lv6.st().stones[0].flying && lv6.st().stones[0].vx > 0, 'from Lv6 it flies away from the side it was struck');
+  for (let i = 0; i < 30; i++) lv6.step();
+  assert.ok(lv6.h.hits.some((x) => x.e === t6), 'the flying stone hit the enemy');
 });

@@ -2403,10 +2403,12 @@ const gale = {
  *  - EVERY CHANGE OF FORM is covered by a quickly fading puff. The armour
  *    starts on the first step; the picture changes `morphFrames` later.
  *  - STONES knocked loose by hits fall, bounce and roll to a stop like round
- *    pebbles. A shot (or a flying stone) striking one sends it away from the
+ *    pebbles. A shot striking one knocks it a medium distance along the
+ *    ground, and it crumbles like a clod of dirt on whatever it meets, for
+ *    low damage. Lv6 (owner, 25 Oct 2026): a struck stone flies away from the
  *    point it was struck, like a billiard ball: straight, with no gravity,
- *    bouncing off floors and walls and slowing, until it hits an enemy or
- *    stops. Lv10: a struck stone explodes on the enemy it hits.
+ *    bouncing off floors and walls and slowing, and explodes on the enemy it
+ *    hits.
  *
  * Its grants — `stoneArmor`, `moveScale`, `planted` — are per-step, like every
  * other weapon's, so benching it mid-form frees the player at once.
@@ -2482,6 +2484,8 @@ function stepRoll(st, L, lv, ctx) {
 /** Send a stone away from the point (hx, hy) that struck it. */
 function launchStone(s, L, hx, hy) {
   const r = L.stoneSize / 2, dx = s.x + r - hx, dy = s.y + r - hy, d = Math.hypot(dx, dy) || 1;
+  // Before Lv6 it is knocked along the ground, not into the air.
+  if (!L.stoneFly) { s.kicked = true; s.life = 240; s.vx = (dx >= 0 ? 1 : -1) * L.stoneSpeed; return; }
   s.flying = true; s.bounces = 0; s.life = 240;
   s.vx = (dx / d) * L.stoneSpeed; s.vy = (dy / d) * L.stoneSpeed;
 }
@@ -2520,6 +2524,18 @@ function stepStones(st, L, lv, ctx) {
         if (Math.abs(s.vx) < 0.05) s.vx = 0;
       } else s.y = y1;
       if (s.y > ctx.floorY + 80) s.life = 0;
+      // Knocked along the ground (before Lv6): it crumbles like a clod of dirt
+      // on the first enemy or wall it meets, or where it stops.
+      if (s.kicked) {
+        const hit = enemiesIn(ctx, { x: s.x, y: s.y, w: n, h: n })[0];
+        if (hit) ctx.hitEnemy(hit, dmgOf('granite_form', lv, ctx) * DAMAGE_WORDS[L.stoneDmg], { knockback: L.slamKnock, from: s.x + n / 2 });
+        if (hit || s.vx === 0 || (a && (s.x < a.x0 || s.x + n > a.x1))) {
+          ctx.puff({ x: s.x + n / 2, y: s.y + n / 2, w: 14, life: 12, color: 0x8A6A50, cloud: true });
+          ctx.sfx('shoot', { pitch: 0.5 });
+          s.life = 0;
+          continue;
+        }
+      }
       // Struck by one of his shots: off it goes, away from where it was hit.
       const b = ctx.bullets.find((q) => !q.enemy && q.life > 0
         && q.x + (q.radius || 2) > s.x && q.x - (q.radius || 2) < s.x + n

@@ -42,9 +42,10 @@ with far less height to wind up in: the longer it falls after the press, the fas
 turns, and it rolls on at that speed and slows to a stop.
 
 Hits taken while hardened knock **small round stones** loose (up to three). They fall,
-bounce and roll to a stop. Shooting one sends it flying away from where it was hit, like a
-billiard ball, bouncing off floors and walls until it hits an enemy; at Lv10 it explodes
-there.
+bounce and roll to a stop. Shooting one knocks it a medium distance along the ground, and
+it crumbles like a clod of dirt on whatever it meets. From Lv6 shooting one sends it flying
+away from where it was hit, like a billiard ball, bouncing off floors and walls until it
+hits an enemy, and it explodes there.
 
 ## The look
 
