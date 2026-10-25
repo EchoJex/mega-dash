@@ -705,7 +705,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## Minions
 
-- **roster** `[wip]` the dev tracker needs a bestiary broken down first by slice, then by minions, Mini-bosses, and Other. put spiglet and 2 placeholder Mini-bosses per slice in deferred state. Copy spiglet and to each slice as [Slice] Spiglet, and Drifter into every slice as [Slice] Drifter. 
+- **roster** `[wip]` the dev tracker needs a bestiary broken down first by slice, then by minions, Mini-bosses, and Other. assign the current spiglet and Drifter to Normal, renaming them to [Normal Spiglet2 placeholder Mini-bosses per slice in deferred state. Copy spiglet and to each slice as [Slice] Spiglet, and Drifter into every slice as [Slice] Drifter. 
   Some passive and good minions become enraged when damaged by the player. 
   SPIGLET walks its span and turns at pit edges; 
   DRIFTER drifts left while tracking the player's altitude.
