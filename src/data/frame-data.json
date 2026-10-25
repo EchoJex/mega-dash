@@ -127,6 +127,89 @@
       }
     }
   },
+  "weapon:drake_breath:body": {
+    "grid": {
+      "w": 24,
+      "h": 24
+    },
+    "pivot": {
+      "x": 12,
+      "y": 24
+    },
+    "clips": {
+      "rear": {
+        "holds": [
+          4,
+          4,
+          4
+        ],
+        "cells": [
+          0,
+          1,
+          2
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 12,
+        "hits": [],
+        "spawns": []
+      },
+      "breathe": {
+        "holds": [
+          4,
+          4
+        ],
+        "cells": [
+          3,
+          4
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 8,
+        "hits": [],
+        "spawns": []
+      },
+      "charge": {
+        "holds": [
+          6,
+          6
+        ],
+        "cells": [
+          5,
+          6
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 12,
+        "hits": [],
+        "spawns": []
+      },
+      "chargeFull": {
+        "holds": [
+          4,
+          4
+        ],
+        "cells": [
+          7,
+          8
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 8,
+        "hits": [],
+        "spawns": []
+      }
+    }
+  },
   "weapon:drake_breath:held": {
     "grid": {
       "w": 24,

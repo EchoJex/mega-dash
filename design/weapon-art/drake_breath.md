@@ -65,6 +65,7 @@ the game really plays.
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
 | [`weapon-drake_breath-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-held.sprite) | 24×16 | 4, 9 — his hand, at the back of the cannon | in front of the player | rest, rear, breathe, charge, chargeFull |
+| [`weapon-drake_breath-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-body.sprite) | 24×24 | 12, 24 — his feet — the floor under the middle of him | in place of the player | rear, breathe, charge, chargeFull |
 | [`weapon-drake_breath-puff.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-puff.sprite) | 16×16 | 8, 8 — its middle | behind the player | burn |
 | [`weapon-drake_breath-wave.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-wave.sprite) | 16×48 | 8, 46 — its foot, just below the floor | behind the player | travel |
 | [`weapon-drake_breath-blast.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-blast.sprite) | 16×16 | 8, 8 — its middle | behind the player | fly |
@@ -80,6 +81,15 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | rest | still | 5 | 5 | — | — | — |
+| rear | once | 4 · 4 · 4 | 12 | — | — | — |
+| breathe | loop | 4 · 4 | 8 | — | — | — |
+| charge | loop | 6 · 6 | 12 | — | — | — |
+| chargeFull | loop | 4 · 4 | 8 | — | — | — |
+
+**weapon-drake_breath-body**
+
+| clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
+|---|---|---|---|---|---|---|
 | rear | once | 4 · 4 · 4 | 12 | — | — | — |
 | breathe | loop | 4 · 4 | 8 | — | — | — |
 | charge | loop | 6 · 6 | 12 | — | — | — |

@@ -6,6 +6,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ladderAt } from '../src/data/weapons.js';
 import * as Wpn from '../src/systems/weaponry.js';
+import { readFileSync } from 'node:fs';
+import { parse } from '../docs/sprite-fmt.js';
 
 const ID = 'drake_breath', FLOOR = 184;
 
@@ -98,4 +100,27 @@ test("Lv10: telegraph, then a beam the wave's height that hurts, erases enemy sh
   assert.ok(!h.hits.some((x) => x.e === over), 'no taller than the wave');
   h.step(); h.step();
   assert.ok(!h.st().fx.some((f) => f.kind === 'beam'), 'and dissipates');
+});
+
+test('his stance shows while the cannon is busy, never at rest', () => {
+  const h = rig(1), BODY = 'weapon:drake_breath:body';
+  h.step();
+  assert.equal(Wpn.bodyArt(h.ctx), null, 'at rest he is himself');
+  h.hold(3);
+  assert.equal(Wpn.bodyArt(h.ctx)?.id, BODY, 'winding up');
+  h.hold(30);
+  assert.equal(Wpn.bodyArt(h.ctx)?.id, BODY, 'breathing');
+  h.release(33); h.step();   // the cannon keeps its pose for the step it is released on
+  assert.equal(Wpn.bodyArt(h.ctx), null, 'himself again once released');
+});
+
+test('the cannon rides his hand: each drop is where the drawings put it', () => {
+  const sheet = (n) => parse(readFileSync(new URL(`../design/sprites/${n}.sprite`, import.meta.url), 'utf8'));
+  // His hand's row: the first from row 10 down with his accent colour in it.
+  const hand = (f) => f.rows.findIndex((r, y) => y >= 10 && r.includes('9'));
+  const idle = sheet('player').frames.filter((f) => f.action === 'idle'), base = hand(idle[0]);
+  assert.deepEqual(idle.map((f) => hand(f) - base), Wpn.DRAKE_HAND_DROP.idle, 'his idle bob');
+  for (const f of sheet('weapon-drake_breath-body').frames) {
+    assert.equal(hand(f) - base, Wpn.DRAKE_HAND_DROP.stance, `the stance, ${f.action} ${f.index}`);
+  }
 });

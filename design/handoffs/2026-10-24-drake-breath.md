@@ -38,7 +38,7 @@ Design's preview page asks the code for two things the sheets cannot carry:
 - every clip but idle puts him in a wide, slightly crouched stance (drawn only
   as rows inside `IdleCannon.dc.html`, not as a `.sprite`).
 
-Neither is in the game. They wait on the owner's word.
+Both were built on 25 Oct 2026 at the owner's word — see `2026-10-25-drake-breath-stance.md`.
 
 ## Also in the bundle, not used
 

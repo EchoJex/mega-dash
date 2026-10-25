@@ -1571,6 +1571,7 @@ const drake = {
 const D_HELD = 'weapon:drake_breath:held', D_PUFF = 'weapon:drake_breath:puff';
 const D_WAVE = 'weapon:drake_breath:wave', D_BLAST = 'weapon:drake_breath:blast';
 const D_BEAM = 'weapon:drake_breath:beam', D_STREAK = 'weapon:drake_breath:streak';
+const D_BODY = 'weapon:drake_breath:body';
 /** The beam is drawn as tiles this wide, from the mouth outward. */
 export const BEAM_TILE = 32;
 
@@ -1654,8 +1655,25 @@ export function drawDrakeStreak(g, x, y, dir, len, phase, a = 1) {
   g.fillRect(dir > 0 ? x : x - len, y, len, 1);
 }
 
-/** Where his hand holds the cannon. */
-const drakeHand = (p) => ({ x: p.x + 12 + 4 * p.facing, y: p.y + 11 });
+/**
+ * HOW FAR HIS HAND SITS BELOW WHERE IT IS IN IDLE 1, so the cannon rides his
+ * idle bob and his stance (Claude Design's proposal, the owner's yes, 25 Oct
+ * 2026): one per idle picture, and the stance. tests/drake-breath.test.js
+ * measures both from the drawings, so a redraw that moves his hand fails there.
+ */
+export const DRAKE_HAND_DROP = { idle: [0, 0, 1, 0, 0, 0], stance: 1 };
+
+/** Where his hand holds the cannon. `ctx.idlePic` is the idle picture he shows (-1 for none). */
+function drakeHand(p, pose, ctx) {
+  const drop = pose.clip !== 'rest' ? DRAKE_HAND_DROP.stance : DRAKE_HAND_DROP.idle[ctx.idlePic] ?? 0;
+  return { x: p.x + 12 + 4 * p.facing, y: p.y + 11 + drop };
+}
+
+/** A pose's cell in `key` — the cannon and his stance share the clock. */
+function drakeCell(key, pose) {
+  const c = clipOf(key, pose.clip);
+  return pose.frac !== undefined ? cellByFrac(c, pose.frac) : cellAt(c, pose.t, true);
+}
 
 /** Which held clip, and how far into it. */
 function drakePose(st, L, frame) {
@@ -1704,8 +1722,7 @@ function drawDrakeArt(layers, sx, sy, ctx) {
   }
   const hand = handOf(ctx, 'drake_breath', layers);
   if (!hand) return;
-  const pose = drakePose(st, L, fr), c = clipOf(D_HELD, pose.clip), h = drakeHand(p);
-  const cell = pose.frac !== undefined ? cellByFrac(c, pose.frac) : cellAt(c, pose.t, true);
+  const pose = drakePose(st, L, fr), h = drakeHand(p, pose, ctx), cell = drakeCell(D_HELD, pose);
   const opts = {
     rear: pose.clip === 'rear' ? Math.round(3 * pose.frac) : 0,
     open: pose.clip === 'breathe',
@@ -3085,7 +3102,8 @@ function whipCracking(ctx) {
 /**
  * HIS BODY WHILE A WEAPON WITH A BODY SHEET IS MID-MOVE, or null for his own
  * picture. Drawn IN PLACE of him, on his layer, held by the same hand and
- * clock as the weapon so hand and handle line up (Simon's Whip so far).
+ * clock as the weapon so hand and handle line up (Simon's Whip, and
+ * Drake Breath's stance).
  */
 export function bodyArt(ctx) {
   // THE GRANITE FORM takes his place while it holds: a statue, or the boulder.
@@ -3109,6 +3127,12 @@ export function bodyArt(ctx) {
       cell: cellAt(clipOf(rolling ? BOULDER : STATUE, form), t, rolling),
       shape: (g, x, y) => drawGraniteShape(g, x, y, p.facing, form, t),
     };
+  }
+  // DRAKE BREATH's stance, while the cannon is anything but at rest.
+  const dk = ctx.equipped.includes('drake_breath') && ctx.run.wstate.drake_breath;
+  if (dk) {
+    const p = ctx.player, pose = drakePose(dk, ladderAt('drake_breath', ctx.levelOf('drake_breath')), ctx.run.frame);
+    if (pose.clip !== 'rest') return { id: D_BODY, x: p.x + 12, y: p.y + 24, facing: p.facing, cell: drakeCell(D_BODY, pose) };
   }
   const la = whipCracking(ctx);
   if (!la) return null;

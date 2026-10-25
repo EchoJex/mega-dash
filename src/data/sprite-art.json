@@ -227,6 +227,55 @@
       ]
     }
   },
+  "weapon:drake_breath:body": {
+    "file": "weapon-drake_breath-body.png",
+    "frameW": 24,
+    "frameH": 24,
+    "anchor": "pivot",
+    "pivot": [
+      12,
+      24
+    ],
+    "tintable": false,
+    "anims": {
+      "rear": [
+        0,
+        1,
+        2
+      ],
+      "breathe": [
+        3,
+        4
+      ],
+      "charge": [
+        5,
+        6
+      ],
+      "chargeFull": [
+        7,
+        8
+      ]
+    },
+    "holds": {
+      "rear": [
+        4,
+        4,
+        4
+      ],
+      "breathe": [
+        4,
+        4
+      ],
+      "charge": [
+        6,
+        6
+      ],
+      "chargeFull": [
+        4,
+        4
+      ]
+    }
+  },
   "weapon:drake_breath:held": {
     "file": "weapon-drake_breath-held.png",
     "frameW": 24,

@@ -165,6 +165,14 @@ export const WEAPON_ART = {
           chargeFull: 'loop',    // Lv10, held: the beam is ready (white glow)
         },
       },
+      // HIS BODY while the cannon is busy: a wide, slightly crouched stance
+      // (Claude Design's proposal, the owner's yes, 25 Oct 2026). Drawn in
+      // place of him on the cannon's clock, so the clips are the cannon's
+      // minus `rest`; it carries no hits.
+      body: {
+        grid: { w: 24, h: 24 }, layer: 'player', heldBy: 'his feet — the floor under the middle of him',
+        clips: { rear: 'once', breathe: 'loop', charge: 'loop', chargeFull: 'loop' },
+      },
       // One Lv1 breath puff, teal at the mouth, violet in flight, indigo as it dies.
       puff: {
         grid: { w: 16, h: 16 }, layer: 'effects', heldBy: 'its middle',

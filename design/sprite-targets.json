@@ -3591,6 +3591,32 @@
         "chargeFull"
       ]
     },
+    "weapon-drake_breath-body": {
+      "label": "DRAKE BREATH · BODY",
+      "cls": "weapon",
+      "key": "weapon:drake_breath:body",
+      "weapon": "drake_breath",
+      "sheet": "body",
+      "boss": "drake",
+      "layer": "player",
+      "grid": {
+        "w": 24,
+        "h": 24
+      },
+      "box": null,
+      "clips": {
+        "rear": "once",
+        "breathe": "loop",
+        "charge": "loop",
+        "chargeFull": "loop"
+      },
+      "frames": [
+        "rear",
+        "breathe",
+        "charge",
+        "chargeFull"
+      ]
+    },
     "weapon-drake_breath-puff": {
       "label": "DRAKE BREATH · PUFF",
       "cls": "weapon",

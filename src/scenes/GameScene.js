@@ -43,7 +43,7 @@ import { areaRng, seedFromLocation } from '../systems/rng.js';
 import { setCrashContext } from '../systems/crash.js';
 import {
   ActorLayer, drawProjectile, drawPickup, projectileHalfHeight, drawBossRig,
-  playerClip, hexNum,
+  playerClip, hexNum, MANIFEST,
 } from '../systems/assets.js';
 import { makeArenaArt } from '../systems/arena-art/index.js';
 
@@ -3084,7 +3084,7 @@ export default class GameScene extends Phaser.Scene {
       // before it is drawn; the whip's body falls back to him.
       const posed = body && (L.player.drawCell({ ...body, x: sx(body.x), y: sy(body.y) },
         body.shape && ((g) => body.shape(g, sx(body.x), sy(body.y)))) || body.shape);
-      if (!posed) L.player.draw({
+      const ps = !posed && L.player.draw({
         id: 'player',
         x: sx(p.x), y: sy(p.y + (p.sliding ? 12 : 0)),
         w: 24, h: p.sliding ? 12 : 24,
@@ -3096,6 +3096,9 @@ export default class GameScene extends Phaser.Scene {
         // carrying reads from the hardware drawn on him below.
         palette: PLAYER_PALETTE,
       });
+      // Which idle picture he shows, for the Drake Breath cannon riding his
+      // idle bob. Kept through the invulnerability flicker, when he is not drawn.
+      this.idlePic = ps ? (MANIFEST.player?.anims?.idle ?? []).indexOf(Number(ps.frame.name)) : -1;
       // An active attribute flashes its colour over the suit. Flashing rather
       // than tinting leaves the suit readable underneath, so a status never
       // makes the player harder to find on a busy screen.
@@ -3127,6 +3130,7 @@ export default class GameScene extends Phaser.Scene {
     // A weapon drawn from its own sheets — the hammer in his hand, its dust
     // behind him — with the frame picked from frame data, so the picture
     // changes on the step the hit lands. Shaken like everything in the world.
+    wctx.idlePic = this.idlePic ?? -1;
     Wpn.drawWeaponArt({ effects: L.effects, held: L.held, heldBack: L.heldBack }, sx, sy, wctx);
 
     /**
