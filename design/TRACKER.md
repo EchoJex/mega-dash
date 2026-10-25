@@ -705,7 +705,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## Minions
 
-- **roster** `[draft]` Ongoing list of minions, some passive, Some good, some hostile. Some passive and good minions become enraged when damaged by the player. 
+- **roster** `[wip]` the dev tracker needs a bestiary broken down first by slice, then by minions, Mini-bosses, and Other. put 2 placeholder Mini-bosses per slice in deferred state. Copy spiglet and to each slice as [Slice] Spiglet, and Drifter into every slice as [Slice] Drifter. Some passive and good minions become enraged when damaged by the player. 
   SPIGLET walks its span and turns at pit edges; 
   DRIFTER drifts left while tracking the player's altitude.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
