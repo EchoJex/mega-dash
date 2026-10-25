@@ -51,9 +51,11 @@ const game = new Phaser.Game({
   pixelArt: true,
   roundPixels: true,
   antialias: false,
+  // NO autoCenter: index.html's #app already centres the canvas. Phaser's own
+  // centring adds a margin on top of that, and the two together push a
+  // shrunken game into the bottom-right corner (bug of build 1195).
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   // MULTI-TOUCH. Phaser tracks ONE active pointer by default, which silently
   // makes this game unplayable on a phone: you cannot hold left and jump, or
@@ -67,6 +69,17 @@ const game = new Phaser.Game({
   // either of them, so a shipped build never constructs one.
   scene: [BootScene, LaunchScene, TitleScene, DevMenuScene, GameScene, HubScene, UIScene, AudioScene, CreditsScene],
 });
+
+/**
+ * RE-FIT AFTER THE SCREEN TURNS OR COMES BACK. When a phone's screen times out,
+ * the lock screen turns it portrait; on waking it turns back. Phaser re-fits on
+ * each turn using the screen size from BEFORE the turn, then never looks again,
+ * so the game wakes up shrunk to a portrait-sized box (build 1195). 300ms later
+ * the real size has settled, so measure and fit once more.
+ */
+const refit = () => setTimeout(() => { game.scale.getParentBounds(); game.scale.refresh(); }, 300);
+screen.orientation?.addEventListener?.('change', refit);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refit(); });
 
 /**
  * DEV-ONLY handle, so an automated playtest can drive a real build: reach into
