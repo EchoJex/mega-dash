@@ -546,7 +546,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Dragon Breath
-- **weapon name** `[wip]` Draco
+- **weapon name** `[draft]` Draco-Blaster
 - **boss weakness A** `[wip]` Ice
 - **boss weakness B** `[wip]` Dragon
 - **arena** `[wip]` Volcanic caldera rim: basalt columns, a glowing fissure crossing the floor, and a background of ash cloud lit from below.
