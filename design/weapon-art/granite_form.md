@@ -32,7 +32,7 @@ jump and midair jump.
 **Every change of form happens under a puff** that hides it and fades fast; the picture
 changes 10 steps after the form does.
 
-From Lv6, **jump breaks the form** and he jumps. At Lv10, pressing a direction while he is
+From Lv6, **jump breaks the form** and he jumps; he must land before it can harden again. Every form has a 5-second cooldown after it ends. At Lv10, pressing a direction while he is
 a statue **wakes it up as Rocky**, the rock creature from Project Hail Mary (a rocky
 carapace on five legs), who walks at half his speed and stays Rocky until a jump breaks the
 form or it wears off; and the jump that breaks it throws stone shards out all the way round.

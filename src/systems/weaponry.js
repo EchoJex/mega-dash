@@ -2586,11 +2586,18 @@ const granite = {
     if (p.beam) { st.mode = null; st.idle = 0; return; }
 
     if (!st.mode) {
+      // EVERY FORM HAS A COOLDOWN once it ends, however it ends, and a jump
+      // out of it must land first (owner, 26 Oct 2026).
+      if (st.formed) { st.formed = false; st.cool = L.cooldown; }
+      if (p.onGround) st.mustLand = false;
+      if (st.cool > 0) st.cool--;
+      if (st.cool > 0 || st.mustLand) { st.idle = 0; return; }
       st.idle = r.inputActive ? 0 : st.idle + 1;
       if (!st.idle || (p.onGround && st.idle < L.groundIdle)) return;
       st.idle = 0;
       st.crushed = new Set();
       st.mode = p.onGround ? 'stone' : 'slam';
+      st.formed = true;
       st.t = L.stoneFrames;
       st.shape = STATUE_SHAPES[Math.floor(Math.random() * STATUE_SHAPES.length)];
       st.boulder = false;
@@ -2625,7 +2632,7 @@ const granite = {
         }
         ctx.sfx('shootBig', { pitch: 0.7 });
       }
-      st.mode = null; st.idle = 0;
+      st.mode = null; st.idle = 0; st.mustLand = true;
       granite.picture(st, L, ctx);
       return;
     }

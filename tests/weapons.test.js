@@ -649,6 +649,23 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   six.h.run.jumpBreak = true; six.step();
   assert.equal(six.st().mode, null, 'the jump broke the form');
   assert.equal(six.h.bullets.length, 0, 'no shards before Lv10');
+  // After a jump out of it he must land, then wait out the cooldown.
+  const cd = ladderAt('granite_form', 6).cooldown;
+  assert.ok(cd > ladderAt('granite_form', 6).groundIdle, 'a cooldown longer than the wait to harden');
+  const sixAgain = run(6);
+  sixAgain.h.player.onGround = false; sixAgain.step();
+  sixAgain.h.run.jumpBreak = true; sixAgain.step();
+  for (let i = 0; i < cd + 5; i++) sixAgain.step();
+  assert.equal(sixAgain.st().mode, null, 'no statue again in the air before landing, even after the cooldown');
+  sixAgain.h.player.onGround = true;
+  for (let i = 0; i < ladderAt('granite_form', 6).groundIdle + 5; i++) sixAgain.step();
+  assert.equal(sixAgain.st().mode, 'stone', 'once landed it hardens again');
+  // The cooldown: any form's end holds off the next one for `cooldown` steps.
+  six.h.player.onGround = true;
+  for (let i = 0; i < cd - 5; i++) six.step();
+  assert.equal(six.st().mode, null, 'no statue during the cooldown');
+  for (let i = 0; i < 10 + ladderAt('granite_form', 6).groundIdle; i++) six.step();
+  assert.equal(six.st().mode, 'stone', 'after the cooldown it hardens again');
 
   // Lv10: a direction wakes the statue as Rocky, who walks at half speed and
   // stays Rocky; the jump that breaks the form throws shards all round.

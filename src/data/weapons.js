@@ -640,7 +640,7 @@ export const WEAPON_LADDERS = {
    */
   granite_form: {
     1: {
-      groundIdle: 90, stoneFrames: 300, morphFrames: 10,
+      groundIdle: 90, stoneFrames: 300, morphFrames: 10, cooldown: 300,
       armor: 0.8, slamDmg: 'heavy', slamKnock: 3.4,
       stoneMax: 3, stoneSize: 8, stoneLife: 900, stoneSpeed: 3.4, stoneDmg: 'low', stoneFly: false,
       stoneBounce: 0.45, stoneRoll: 0.94,
