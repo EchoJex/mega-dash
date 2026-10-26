@@ -554,6 +554,11 @@ read every step and area from frame data, and a redrawn sheet that moves a hit t
 still passes. A weapon's real rules are tests (a jab still fits its chain window; **every
 blow reaches a minion standing against him**) and appear in words in its brief.
 
+**Each slice's `weapon art` line shows how far its weapon has got** (owner, 26 Oct 2026):
+three tick boxes — `ready for design` (placeholders and brief done), `back from design`
+(the handoff has come back), `in game` (imported and pushed). Claude ticks them as the
+skill's phases finish, so the owner can run several weapons at once without losing track.
+
 **Hit areas follow the drawing, a pixel generous**, like the player's shots.
 
 **Played on the game's clock, not Phaser's.** `ActorLayer.drawCell` takes the cell the

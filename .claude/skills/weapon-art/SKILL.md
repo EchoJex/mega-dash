@@ -60,6 +60,7 @@ Start only when its mechanics are built from `[draft]` fields and tested.
 - [ ] **Look at it**: `npm test`, `npm run build && npm run smoke`, then a probe that
   pauses the game (`gs.paused = true`), steps it (`gs.step(); gs.draw()`) and screenshots
   each clip's hit frame both ways round.
+- [ ] **Tick `ready for design`** on the slice's `weapon art` line in `design/TRACKER.md`.
 - [ ] **Commit to `main` and push.**
 
 ## Phase 2 — hand it to Design
@@ -92,7 +93,8 @@ Then:
    change. Do not repair Design's art yourself unless the owner asks.
 4. **In:** `npm run build && npm run smoke`, look at every clip in the game, add the row to
    *AI-made sprites and music* in `CLAUDE.md` (the import already labelled each sheet's
-   `note`), delete the uploaded bundle from `design/inbox/` if there is one, and commit to
+   `note`), tick `back from design` and `in game` on the slice's `weapon art` line (and
+   mark it `[ready]` once all three are ticked), delete the uploaded bundle from `design/inbox/` if there is one, and commit to
    `main` with the change list from `design/handoffs/<date>-<name>.md` in the message.
 5. **Report**: what changed in the game, in plain words; that it went in because the
    checks passed; where the record is; what to try on the phone (UPDATE, then the weapon
