@@ -635,7 +635,7 @@ export const WEAPON_LADDERS = {
    *
    * Lv6: jump breaks the form, and he jumps (`jumpCancel`). Lv10: a struck
    * stone explodes on the enemy it hits; a direction wakes the statue up as
-   * Rocky, who walks at `walkScale`; and the jump that breaks the form
+   * Rocker, who walks at `walkScale`; and the jump that breaks the form
    * throws `shards` stones all the way round.
    */
   granite_form: {

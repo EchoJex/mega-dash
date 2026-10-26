@@ -33,7 +33,7 @@ jump and midair jump.
 changes 10 steps after the form does.
 
 From Lv6, **jump breaks the form** and he jumps; he must land before it can harden again. Every form has a 5-second cooldown after it ends. At Lv10, pressing a direction while he is
-a statue **wakes it up as the walker (the owner asked for Rocky from Project Hail Mary; Claude Design would not draw that character, and on 26 Oct 2026 the owner chose an original instead: the cut-stone boulder on three stubby, kneeless, eyeless legs)**, which walks at half his speed and stays until a jump breaks the
+a statue **wakes it up as the Rocker**, a rock walker: the cut-stone boulder on three stubby, kneeless, eyeless legs (the owner's pick, 26 Oct 2026), which walks at half his speed and stays until a jump breaks the
 form or it wears off; and the jump that breaks it throws stone shards out all the way round.
 
 **The boulder's spin is Jigglypuff's Rollout** from Smash Ultimate (owner, 22 Oct 2026),
@@ -72,7 +72,7 @@ the game really plays.
 |---|---|---|---|---|
 | [`weapon-granite_form-statue.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-statue.sprite) | 40×40 | 20, 38 — his feet — the floor under the middle of him | in place of the player | chest, megaman, monolith |
 | [`weapon-granite_form-boulder.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-boulder.sprite) | 40×40 | 20, 38 — the floor under the middle of it | in place of the player | roll |
-| [`weapon-granite_form-rocky.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-rocky.sprite) | 40×40 | 20, 38 — his feet — the floor under the middle of him | in place of the player | stand, walk |
+| [`weapon-granite_form-rocker.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-rocker.sprite) | 40×40 | 20, 38 — his feet — the floor under the middle of him | in place of the player | stand, walk |
 | [`weapon-granite_form-stone.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-stone.sprite) | 10×10 | 5, 9 — the floor under its middle | behind the player | loose |
 
 ### Every clip, frame by frame
@@ -93,7 +93,7 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 |---|---|---|---|---|---|---|
 | roll | loop | 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 | 36 | — | — | — |
 
-**weapon-granite_form-rocky**
+**weapon-granite_form-rocker**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
@@ -114,7 +114,7 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 
 - **every picture stands on its pivot**, the floor under the middle of him: the statue, the boulder and the stone all sit on the floor, never float above it or sink into it.
 - **the statue sheet has three still pictures**, one per shape: `chest`, `megaman`, `monolith`. The game picks one at random each time he hardens. They replace him, so each should read as roughly his size (he is 24x24); a little taller or wider is fine.
-- **the rocky sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.
+- **the rocker sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.
 - **the boulder** is about 29 pixels across (1.2 times his size), and its `roll` clip loops while it rolls.
 - **nothing on these sheets hits by frame**: what the statue lands on and what the boulder rolls through is worked out from his body, so no frame carries a hit area.
 - **colours**: Granite Man's brown `#5F443A` and stone grey `#A8A296` with shades built from them, and the near-black outline.

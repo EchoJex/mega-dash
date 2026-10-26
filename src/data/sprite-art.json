@@ -447,8 +447,8 @@
       ]
     }
   },
-  "weapon:granite_form:rocky": {
-    "file": "weapon-granite_form-rocky.png",
+  "weapon:granite_form:rocker": {
+    "file": "weapon-granite_form-rocker.png",
     "frameW": 40,
     "frameH": 40,
     "anchor": "pivot",

@@ -129,7 +129,7 @@ export const WEAPON_ART = {
       },
       // Lv10's walking form: the cut-stone boulder on three stubby legs
       // (the owner's pick, 26 Oct 2026), standing, and walking at half his speed.
-      rocky: {
+      rocker: {
         grid: { w: 40, h: 40 }, layer: 'player', heldBy: 'his feet — the floor under the middle of him',
         clips: { stand: 'still', walk: 'loop' },
       },

@@ -3521,12 +3521,12 @@
         "roll"
       ]
     },
-    "weapon-granite_form-rocky": {
-      "label": "GRANITE FORM · ROCKY",
+    "weapon-granite_form-rocker": {
+      "label": "GRANITE FORM · ROCKER",
       "cls": "weapon",
-      "key": "weapon:granite_form:rocky",
+      "key": "weapon:granite_form:rocker",
       "weapon": "granite_form",
-      "sheet": "rocky",
+      "sheet": "rocker",
       "boss": "granite",
       "layer": "player",
       "grid": {

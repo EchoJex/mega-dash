@@ -7,7 +7,7 @@
  * THE PICTURES are the game's own fallback shapes (`drawGraniteShape`,
  * `drawStoneShape`), standing on the pivot, facing right.
  */
-import { drawGraniteShape, drawRockyShape, drawStoneShape, STATUE_SHAPES } from '../../src/systems/weaponry.js';
+import { drawGraniteShape, drawRockerShape, drawStoneShape, STATUE_SHAPES } from '../../src/systems/weaponry.js';
 
 const FEET = { x: 20, y: 38 };
 const PALETTE = [
@@ -31,10 +31,10 @@ export function rig() {
     },
     {
       // Two leg steps, six steps each: the plain shape walks at that pace.
-      sheet: 'rocky', pivot: FEET, palette: PALETTE,
+      sheet: 'rocker', pivot: FEET, palette: PALETTE,
       clips: {
-        stand: [{ hold: 5, paint: (g) => drawRockyShape(g, FEET.x, FEET.y, 1, 0) }],
-        walk: [0, 1].map((q) => ({ hold: 6, paint: (g) => drawRockyShape(g, FEET.x, FEET.y, 1, q * 6) })),
+        stand: [{ hold: 5, paint: (g) => drawRockerShape(g, FEET.x, FEET.y, 1, 0) }],
+        walk: [0, 1].map((q) => ({ hold: 6, paint: (g) => drawRockerShape(g, FEET.x, FEET.y, 1, q * 6) })),
       },
     },
     {
@@ -52,7 +52,7 @@ export function constraints() {
     '**the statue sheet has three still pictures**, one per shape: `chest`, `megaman`, `monolith`. The game '
       + 'picks one at random each time he hardens. They replace him, so each should read as roughly his size '
       + '(he is 24x24); a little taller or wider is fine.',
-    '**the rocky sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still '
+    '**the rocker sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still '
       + 'picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.',
     '**the boulder** is about 29 pixels across (1.2 times his size), and its `roll` clip loops while it rolls.',
     '**nothing on these sheets hits by frame**: what the statue lands on and what the boulder rolls through is '

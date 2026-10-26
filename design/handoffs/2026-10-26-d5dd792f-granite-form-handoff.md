@@ -9,7 +9,7 @@ the build, `npm test`), so by the owner's call it went straight in.
   - 12 frames redrawn
   - colours: 15 in all (12 added)
   - roll: 12 frames (was 4); lasts 36 steps (was 16)
-- **weapon-granite_form-rocky**
+- **weapon-granite_form-rocker**
   - 7 frames redrawn
   - colours: 15 in all (12 added)
   - walk: 6 frames (was 2); same length, frames re-timed
@@ -36,7 +36,7 @@ the build, `npm test`), so by the owner's call it went straight in.
 > |---|---|
 > | `weapon-granite_form-statue` | `chest`: a treasure chest carved from grey granite, with brown stone straps, a stone lock and a crack. It was narrowed to 22 px wide, at the owner's request, to sit closer to his 12 × 22 body box. `monolith`: a plain upright slab of dark polished brown granite with a diagonal shine. **`megaman`: NOT drawn**. It is the placeholder exactly as it was, character for character, left for the owner to draw himself. |
 > | `weapon-granite_form-boulder` | `roll`: the owner's pick from six options (option 3). A chunky cut rock with flat faces, each face a grey, taupe or brown tone of Granite Man's stone, with warm and dark flecks. It is about 29 px across and turns one full turn per loop. |
-> | `weapon-granite_form-rocky` | The Lv10 walker, the owner's pick from 24 + 12 options ("stubby 7"). The same cut-stone boulder on three stubby, kneeless stone legs, in a wide stance, with no eyes. `stand` is one picture. `walk` is the three legs stepping in turn. |
+> | `weapon-granite_form-rocker` | The Lv10 walker, the owner's pick from 24 + 12 options ("stubby 7"). The same cut-stone boulder on three stubby, kneeless stone legs, in a wide stance, with no eyes. `stand` is one picture. `walk` is the three legs stepping in turn. |
 > | `weapon-granite_form-stone` | `loose`: a small shaded pebble, 8 × 7, sitting on the floor. |
 > 
 > ## Changes to timing, hit areas, spawn points and pivots, and why
@@ -72,15 +72,15 @@ the build, `npm test`), so by the owner's call it went straight in.
 > 
 > ## Requests for the code (requests, not changes; the import cannot make them)
 > 
-> 1. **The Lv10 walker is no longer "Rocky from Project Hail Mary".** Claude Design would not draw that
+> 1. **The Lv10 walker is no longer the character first asked for.** Claude Design would not draw that
 >    character, and the owner chose an original design instead: the cut-stone boulder on three stubby, kneeless,
->    eyeless legs. Please update the words that still say Rocky or Eridian:
+>    eyeless legs. Please update the words that still name that character:
 >    - `design/weapon-art/granite_form.md` ("What it is", "The look")
->    - the comment above `rocky` in `src/data/weapon-art.js`
+>    - the comment above `rocker` in `src/data/weapon-art.js`
 >    - `constraints()` in `tools/art/granite_form.mjs`
->    - the comment on `drawRockyShape` in `src/systems/weaponry.js`
+>    - the comment on `drawRockerShape` in `src/systems/weaponry.js`
 > 
->    The sheet and clip names (`rocky`, `stand`, `walk`) can stay as they are. **The tracker field is the owner's
+>    The sheet and clip names (`rocker`, `stand`, `walk`) can stay as they are. **The tracker field is the owner's
 >    own words, so ask him before changing it.**
 > 2. **The walker is smaller than the boulder.** Its rock body is about 23 px across, against the boulder's 29, so
 >    the picture changes size when the form changes. The puff (with the picture swapping 10 steps in) hides this,

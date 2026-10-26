@@ -667,8 +667,8 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   for (let i = 0; i < 10 + ladderAt('granite_form', 6).groundIdle; i++) six.step();
   assert.equal(six.st().mode, 'stone', 'after the cooldown it hardens again');
 
-  // Lv10: a direction wakes the statue as Rocky, who walks at half speed and
-  // stays Rocky; the jump that breaks the form throws shards all round.
+  // Lv10: a direction wakes the statue as Rocker, who walks at half speed and
+  // stays Rocker; the jump that breaks the form throws shards all round.
   const ten = run(10);
   ten.h.run.inputActive = false;
   for (let i = 0; i < 100; i++) ten.step();
@@ -678,8 +678,8 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   assert.equal(ten.h.run.moveScale, 0.5);
   ten.h.run.moveInput = 0;
   for (let i = 0; i < 20; i++) ten.step();
-  assert.equal(ten.st().mode, 'walk', 'still Rocky after letting go');
-  assert.equal(ten.st().pic, 'rocky');
+  assert.equal(ten.st().mode, 'walk', 'still Rocker after letting go');
+  assert.equal(ten.st().pic, 'rocker');
   ten.h.run.jumpBreak = true; ten.step();
   assert.equal(ten.st().mode, null);
   const shards = ten.h.bullets.filter((b) => b.stone);

@@ -2420,7 +2420,7 @@ export const STATUE_SHAPES = ['chest', 'megaman', 'monolith'];
 const STATUE = 'weapon:granite_form:statue';
 const BOULDER = 'weapon:granite_form:boulder';
 const STONE = 'weapon:granite_form:stone';
-const ROCKY = 'weapon:granite_form:rocky';
+const ROCKER = 'weapon:granite_form:rocker';
 
 function crush(st, L, lv, ctx, box, word) {
   for (const e of enemiesIn(ctx, box)) {
@@ -2665,8 +2665,8 @@ const granite = {
       return;
     }
     if (st.mode === 'roll') stepRoll(st, L, lv, ctx);
-    // LV10: A DIRECTION WAKES THE STATUE UP AS ROCKY, who walks at
-    // `walkScale` and stays Rocky until a jump breaks the form or it wears off.
+    // LV10: A DIRECTION WAKES THE STATUE UP AS ROCKER, who walks at
+    // `walkScale` and stays Rocker until a jump breaks the form or it wears off.
     if (L.walk && st.mode === 'stone' && r.moveInput) { st.mode = 'walk'; granite.picture(st, L, ctx); }
     if (st.mode === 'walk') r.moveScale = L.walkScale;
     if (--st.t <= 0) st.mode = null;
@@ -2679,7 +2679,7 @@ const granite = {
    * countdown runs out.
    */
   picture(st, L, ctx) {
-    const want = !st.mode ? null : st.mode === 'walk' ? 'rocky'
+    const want = !st.mode ? null : st.mode === 'walk' ? 'rocker'
       : (st.mode === 'roll' || st.boulder) ? 'boulder' : 'statue';
     if (want !== st.want) {
       st.want = want; st.picT = L.morphFrames; morphPuff(ctx, L);
@@ -3134,12 +3134,12 @@ export function bodyArt(ctx) {
   const gr = ctx.equipped.includes('granite_form') && ctx.run.wstate.granite_form;
   if (gr?.pic) {
     const p = ctx.player;
-    if (gr.pic === 'rocky') {
+    if (gr.pic === 'rocker') {
       const moving = Math.abs(p.vx) > 0.05, t = moving ? ctx.run.frame : 0, form = moving ? 'walk' : 'stand';
       return {
-        id: ROCKY, x: p.x + 12, y: p.y + 24, facing: p.facing,
-        cell: cellAt(clipOf(ROCKY, form), t, moving),
-        shape: (g, x, y) => drawRockyShape(g, x, y, p.facing, t),
+        id: ROCKER, x: p.x + 12, y: p.y + 24, facing: p.facing,
+        cell: cellAt(clipOf(ROCKER, form), t, moving),
+        shape: (g, x, y) => drawRockerShape(g, x, y, p.facing, t),
       };
     }
     const rolling = gr.pic === 'boulder';
@@ -3202,11 +3202,11 @@ export function drawGraniteShape(g, x, y, facing, form, t = 0) {
 }
 
 /**
- * ROCKY, the Lv10 walking form — the cut-stone boulder on three stubby,
+ * ROCKER, the Lv10 walking form — the cut-stone boulder on three stubby,
  * kneeless legs (the owner's pick, 26 Oct 2026). These plain shapes are only
  * the fallback. Standing on (x, y); `t` steps the legs.
  */
-export function drawRockyShape(g, x, y, facing, t = 0) {
+export function drawRockerShape(g, x, y, facing, t = 0) {
   const D = 0x5F443A, L = 0xA8A296, K = 0x0A0A12, f = facing < 0 ? -1 : 1;
   const box = (bx, by, w, h, c) => { g.fillStyle(c, 1); g.fillRect(f > 0 ? x + bx : x - bx - w, y + by, w, h); };
   const lift = Math.floor(t / 6) % 2;
