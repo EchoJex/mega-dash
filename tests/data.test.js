@@ -6,7 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MINIONS, ELITE_OUTLINE } from '../src/data/minions.js';
+import { MINIONS, ELITE_OUTLINE, minionFor } from '../src/data/minions.js';
 import {
   BOSSES, bossLayer, allBossesMastered, MASTERY_CLEARS,
 } from '../src/data/bosses.js';
@@ -58,6 +58,16 @@ test('minions carry the three identity colours: primary, secondary, shared outli
     assert.equal(m.outline, '#0A0A12', `${m.id} must use the shared outline`);
     assert.equal(new Set([m.primary, m.secondary, m.outline]).size, 3,
       `${m.id} must have three distinct colours`);
+  }
+});
+
+test('every slice but Typeless has its own copy of each minion, in its boss\'s colour', () => {
+  for (const b of BOSSES) for (const m of MINIONS) {
+    const v = minionFor(m, b);
+    if (b.element === 'Typeless') { assert.equal(v, m); continue; }
+    assert.equal(v.id, `${m.id}_${b.id}`);
+    assert.equal(v[m.swap], b.primary, `${v.id} must wear ${b.id}'s primary`);
+    assert.equal(v.kind, m.kind);
   }
 });
 

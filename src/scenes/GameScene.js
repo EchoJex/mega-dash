@@ -1992,7 +1992,7 @@ export default class GameScene extends Phaser.Scene {
       // elapsed time — camping does not slow this down.
       this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
       if (this.minions.length < FEEL.maxMinions) {
-        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y);
+        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y, this.upcoming);
         if (m) this.minions.push(m);
       }
     }
@@ -2215,7 +2215,7 @@ export default class GameScene extends Phaser.Scene {
        */
       summon: (kind, x, y, cap = 99) => {
         if (this.minions.filter((m) => m.hp > 0 && m.def.kind === kind).length >= cap) return null;
-        const m = Minions.spawnAt(kind, x, y, this.run.frame);
+        const m = Minions.spawnAt(kind, x, y, this.run.frame, false, this.boss);
         if (m) this.minions.push(m);
         return m;
       },

@@ -22,6 +22,7 @@ export const MINIONS = [
   {
     id: 'spiglet', name: 'SPIGLET', kind: 'ground',
     primary: '#788850', secondary: '#2E3520', outline: '#0A0A12',
+    swap: 'secondary',    // its most common colour; see minionFor
     w: 14, h: 14,
     hp: 3,
     speed: 0.45,
@@ -32,6 +33,7 @@ export const MINIONS = [
   {
     id: 'drifter', name: 'DRIFTER', kind: 'air',
     primary: '#309888', secondary: '#10332E', outline: '#0A0A12',
+    swap: 'primary',      // the placeholder's body fill is most of it
     w: 12, h: 12,
     hp: 2,
     speed: 0.72,          // drifts leftward faster than the player walks right
@@ -41,6 +43,29 @@ export const MINIONS = [
     bobRate: 0.08,
   },
 ];
+
+/**
+ * EVERY SLICE HAS ITS OWN COPY OF EACH MINION — the Fire Spiglet, the Water
+ * Drifter — by the owner's roster field (26 Oct 2026). A copy is the same
+ * creature with its most common colour (`swap`) turned into that boss's
+ * primary. Typeless keeps the originals as they are.
+ *
+ * The id is `<minion>_<boss>`, which is also the name of its sheet:
+ * `npm run sprites:build` bakes one per boss from the original's drawing.
+ */
+const copies = new Map();
+export function minionFor(def, boss) {
+  if (!boss || boss.element === 'Typeless') return def;
+  const id = `${def.id}_${boss.id}`;
+  if (!copies.has(id)) {
+    copies.set(id, {
+      ...def, id, slice: boss.id,
+      name: `${boss.element.toUpperCase()} ${def.name}`,
+      [def.swap]: boss.primary,
+    });
+  }
+  return copies.get(id);
+}
 
 /**
  * Elites reuse their base palette but swap the outline for UI gold. The

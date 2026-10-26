@@ -635,6 +635,184 @@ where each one stands.
 
 ---
 
+# BESTIARY
+
+Every creature, by slice: minions (bad, good, neutral), mini-bosses, and Other.
+Each slice's Spiglet and Drifter is the original with its most common colour
+turned to that boss's primary. Typeless keeps the originals unchanged.
+
+## Proto Mk0 — Typeless
+
+- **bad minion · Typeless Spiglet** `[ready]` The original Spiglet, unchanged. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Typeless Drifter** `[ready]` The original Drifter, unchanged. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Blaze Man — Fire
+
+- **bad minion · Fire Spiglet** `[ready]` The Spiglet with its most common colour turned to Blaze Man's primary, #E11416. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Fire Drifter** `[ready]` The Drifter with its most common colour turned to Blaze Man's primary, #E11416. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Tempest Man — Water
+
+- **bad minion · Water Spiglet** `[ready]` The Spiglet with its most common colour turned to Tempest Man's primary, #145DBD. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Water Drifter** `[ready]` The Drifter with its most common colour turned to Tempest Man's primary, #145DBD. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Volt Man — Electric
+
+- **bad minion · Electric Spiglet** `[ready]` The Spiglet with its most common colour turned to Volt Man's primary, #F5D328. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Electric Drifter** `[ready]` The Drifter with its most common colour turned to Volt Man's primary, #F5D328. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Thorn Man — Grass
+
+- **bad minion · Grass Spiglet** `[ready]` The Spiglet with its most common colour turned to Thorn Man's primary, #2AAB1C. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Grass Drifter** `[ready]` The Drifter with its most common colour turned to Thorn Man's primary, #2AAB1C. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Frost Man — Ice
+
+- **bad minion · Ice Spiglet** `[ready]` The Spiglet with its most common colour turned to Frost Man's primary, #A0EFE7. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Ice Drifter** `[ready]` The Drifter with its most common colour turned to Frost Man's primary, #A0EFE7. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Strike Man — Fighting
+
+- **bad minion · Fighting Spiglet** `[ready]` The Spiglet with its most common colour turned to Strike Man's primary, #EA6A34. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Fighting Drifter** `[ready]` The Drifter with its most common colour turned to Strike Man's primary, #EA6A34. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Venom Man — Poison
+
+- **bad minion · Poison Spiglet** `[ready]` The Spiglet with its most common colour turned to Venom Man's primary, #A926D9. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Poison Drifter** `[ready]` The Drifter with its most common colour turned to Venom Man's primary, #A926D9. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Quake Man — Ground
+
+- **bad minion · Ground Spiglet** `[ready]` The Spiglet with its most common colour turned to Quake Man's primary, #A76625. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Ground Drifter** `[ready]` The Drifter with its most common colour turned to Quake Man's primary, #A76625. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Gale Man — Flying
+
+- **bad minion · Flying Spiglet** `[ready]` The Spiglet with its most common colour turned to Gale Man's primary, #5CADD5. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Flying Drifter** `[ready]` The Drifter with its most common colour turned to Gale Man's primary, #5CADD5. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Psi Man — Psychic
+
+- **bad minion · Psychic Spiglet** `[ready]` The Spiglet with its most common colour turned to Psi Man's primary, #EA43BD. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Psychic Drifter** `[ready]` The Drifter with its most common colour turned to Psi Man's primary, #EA43BD. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Swarm Man — Bug
+
+- **bad minion · Bug Spiglet** `[ready]` The Spiglet with its most common colour turned to Swarm Man's primary, #B8DC28. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Bug Drifter** `[ready]` The Drifter with its most common colour turned to Swarm Man's primary, #B8DC28. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Granite Man — Rock
+
+- **bad minion · Rock Spiglet** `[ready]` The Spiglet with its most common colour turned to Granite Man's primary, #5F443A. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Rock Drifter** `[ready]` The Drifter with its most common colour turned to Granite Man's primary, #5F443A. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Wraith Man — Ghost
+
+- **bad minion · Ghost Spiglet** `[ready]` The Spiglet with its most common colour turned to Wraith Man's primary, #A68DD8. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Ghost Drifter** `[ready]` The Drifter with its most common colour turned to Wraith Man's primary, #A68DD8. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Drake Man — Dragon
+
+- **bad minion · Dragon Spiglet** `[ready]` The Spiglet with its most common colour turned to Drake Man's primary, #C3225D. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Dragon Drifter** `[ready]` The Drifter with its most common colour turned to Drake Man's primary, #C3225D. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Eclipse Man — Dark
+
+- **bad minion · Dark Spiglet** `[ready]` The Spiglet with its most common colour turned to Eclipse Man's primary, #2A273F. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Dark Drifter** `[ready]` The Drifter with its most common colour turned to Eclipse Man's primary, #2A273F. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+## Alloy Man — Steel
+
+- **bad minion · Steel Spiglet** `[ready]` The Spiglet with its most common colour turned to Alloy Man's primary, #B2BABD. SPIGLET walks its span and turns at pit edges.
+- **bad minion · Steel Drifter** `[ready]` The Drifter with its most common colour turned to Alloy Man's primary, #B2BABD. DRIFTER drifts left while tracking the player's altitude.
+- **good minion** `[deferred]`
+- **neutral minion** `[deferred]`
+- **mini-boss 1** `[deferred]`
+- **mini-boss 2** `[deferred]`
+- **other** `[deferred]`
+
+---
+
 # ELEMENTAL ATTRIBUTES
 
 Terrain form / character form pairs, shared across bosses and weapons.
@@ -722,11 +900,11 @@ other field, and it becomes a thing to build rather than a thing to read.
 
 ## Minions
 
-- **roster** `[draft]` The dev tracker needs a bestiary broken down first by slice, then by minions (bad, good, neutral), mini-bosses, and Other. Assign the current spigot and drifter to Normal, renaming them Normal Spiglet and Normal Drifter and label them [Ready]. Add 2 placeholder mini-bosses per slice in the deferred state. Copy spiglet to each slice as [Slice] Spiglet, and [Slice] Drifter pallete swapping the most common color used on each to the Boss's primary color, then labeled as [Ready]. 
+- **roster** `[ready]` ~~The dev tracker needs a bestiary broken down first by slice, then by minions (bad, good, neutral), mini-bosses, and Other. Assign the current spigot and drifter to Normal, renaming them Normal Spiglet and Normal Drifter and label them [Ready]. Add 2 placeholder mini-bosses per slice in the deferred state. Copy spiglet to each slice as [Slice] Spiglet, and [Slice] Drifter pallete swapping the most common color used on each to the Boss's primary color, then labeled as [Ready].~~ Done 26 Oct 2026: see the BESTIARY section. 
   SPIGLET walks its span and turns at pit edges. 
   DRIFTER drifts left while tracking the player's altitude.
   
-  Leave the following note in the Dev Tracker>Systems>Minions>Roster: Some passive and good become enraged when damaged by the player.
+  ~~Leave the following note in the Dev Tracker>Systems>Minions>Roster:~~ Some passive and good become enraged when damaged by the player.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
 - **spawn ramp** `[draft]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may summon based on description within boss attack layer.
 

@@ -851,7 +851,12 @@ its span and turns at pit edges) and **DRIFTER** (air, drifts left while trackin
 altitude). The roster will grow. Bosses are events; minions are weather.
 
 The minion palette is **unrelated to the boss palette** and carries no spacing constraint
-against it.
+against it. **Each slice has its own copy of each minion** (the Fire Spiglet, the Water
+Drifter), by the owner's roster field (26 Oct 2026): `minionFor` in `data/minions.js` turns
+the minion's most common colour (`swap`) into that boss's primary, and Typeless keeps the
+originals. An area spawns the copies of the boss whose door is coming; a boss summons his own.
+`npm run sprites:build` bakes a `<minion>_<boss>.png` per copy from the original's drawing.
+The tracker's `# BESTIARY` section lists every creature by slice.
 
 **Elites are the same size as their base minion** — same sprite grid, same silhouette,
 told apart by a gold outline (`ELITE_OUTLINE`). One piece of art covers both forms.

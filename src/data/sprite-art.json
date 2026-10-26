@@ -145,6 +145,374 @@
       ]
     }
   },
+  "spiglet_blaze": {
+    "file": "spiglet_blaze.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_tempest": {
+    "file": "spiglet_tempest.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_volt": {
+    "file": "spiglet_volt.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_thorn": {
+    "file": "spiglet_thorn.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_frost": {
+    "file": "spiglet_frost.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_strike": {
+    "file": "spiglet_strike.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_venom": {
+    "file": "spiglet_venom.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_quake": {
+    "file": "spiglet_quake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_gale": {
+    "file": "spiglet_gale.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_psi": {
+    "file": "spiglet_psi.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_swarm": {
+    "file": "spiglet_swarm.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_granite": {
+    "file": "spiglet_granite.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_wraith": {
+    "file": "spiglet_wraith.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_drake": {
+    "file": "spiglet_drake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_eclipse": {
+    "file": "spiglet_eclipse.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
+  "spiglet_alloy": {
+    "file": "spiglet_alloy.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "walk": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "walk": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
   "weapon:drake_breath:beam": {
     "file": "weapon-drake_breath-beam.png",
     "frameW": 32,

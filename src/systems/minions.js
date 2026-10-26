@@ -18,7 +18,7 @@
  */
 
 import { FEEL } from '../config/feel.js';
-import { MINIONS } from '../data/minions.js';
+import { MINIONS, minionFor } from '../data/minions.js';
 import { isOverGround } from './physics.js';
 import * as Attr from './attributes.js';
 
@@ -42,10 +42,10 @@ const hpFor = (base, step) => Math.max(1, Math.round(base * (1 + step * FEEL.ram
  * a ground spawn needs actual ground, and refusing to spawn is better than
  * dropping a walker into a pit for the player to never see.
  */
-export function trySpawn(world, camX, viewW, frames, groundY) {
+export function trySpawn(world, camX, viewW, frames, groundY, boss = null) {
   const step = difficultyStep(frames);
   const ground = Math.random() < 0.6;
-  const def = MINIONS.find((m) => (ground ? m.kind === 'ground' : m.kind === 'air'));
+  const def = minionFor(MINIONS.find((m) => (ground ? m.kind === 'ground' : m.kind === 'air')), boss);
   // An elite is the same silhouette at the same size, wearing a gold rim — not
   // a bigger minion. It shares one piece of art with its base form.
   const elite = Math.random() < eliteChance(step);
@@ -101,10 +101,10 @@ function makeMinion(def, x, y, step = 0, elite = false) {
  * Returns null for an unknown kind rather than throwing, so a fight that names
  * a plane that does not exist degrades to summoning nothing.
  */
-export function spawnAt(kind, x, y, frames = 0, elite = false) {
+export function spawnAt(kind, x, y, frames = 0, elite = false, boss = null) {
   const def = MINIONS.find((m) => m.kind === kind);
   if (!def) return null;
-  return makeMinion(def, x, y, difficultyStep(frames), elite);
+  return makeMinion(minionFor(def, boss), x, y, difficultyStep(frames), elite);
 }
 
 /**
