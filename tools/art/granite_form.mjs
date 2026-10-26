@@ -52,7 +52,7 @@ export function constraints() {
     '**the statue sheet has three still pictures**, one per shape: `chest`, `megaman`, `monolith`. The game '
       + 'picks one at random each time he hardens. They replace him, so each should read as roughly his size '
       + '(he is 24x24); a little taller or wider is fine.',
-    '**the rocky sheet** is the Lv10 walking form, Rocky from Project Hail Mary: `stand` is one still '
+    '**the rocky sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still '
       + 'picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.',
     '**the boulder** is about 29 pixels across (1.2 times his size), and its `roll` clip loops while it rolls.',
     '**nothing on these sheets hits by frame**: what the statue lands on and what the boulder rolls through is '

@@ -3202,8 +3202,9 @@ export function drawGraniteShape(g, x, y, facing, form, t = 0) {
 }
 
 /**
- * ROCKY, the Lv10 walking form — the Eridian from Project Hail Mary: a rocky
- * carapace on five legs. Standing on (x, y); `t` steps the legs.
+ * ROCKY, the Lv10 walking form — the cut-stone boulder on three stubby,
+ * kneeless legs (the owner's pick, 26 Oct 2026). These plain shapes are only
+ * the fallback. Standing on (x, y); `t` steps the legs.
  */
 export function drawRockyShape(g, x, y, facing, t = 0) {
   const D = 0x5F443A, L = 0xA8A296, K = 0x0A0A12, f = facing < 0 ? -1 : 1;

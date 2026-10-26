@@ -663,6 +663,7 @@ Claude or a generator made:
 | Wraith Man's room in 16-bit — a derelict chapel, with a possessed painting | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/wraith.js` |
 | Proto Mk0's room, redrawn in part — the bomb rack and three dead Nullfire Drones | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/proto.js` |
 | Drake Breath — the dragon-head cannon (every clip), the breath puffs, the wave, the blast, the beam and its streaks, and his wide stance while it is busy | sprite | Claude (Claude Design) | 2026-10-24 | `design/sprites/weapon-drake_breath-{held,puff,wave,blast,beam,streak,body}.sprite` |
+| the Granite Form — the chest and monolith statues, the boulder, the three-legged walker and the loose stone; not the megaman statue, still the placeholder for the owner to draw | sprite | Claude (Claude Design) | 2026-10-26 | `design/sprites/weapon-granite_form-{statue,boulder,rocky,stone}.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero

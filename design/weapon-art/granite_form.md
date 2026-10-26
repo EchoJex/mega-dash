@@ -33,8 +33,7 @@ jump and midair jump.
 changes 10 steps after the form does.
 
 From Lv6, **jump breaks the form** and he jumps; he must land before it can harden again. Every form has a 5-second cooldown after it ends. At Lv10, pressing a direction while he is
-a statue **wakes it up as Rocky**, the rock creature from Project Hail Mary (a rocky
-carapace on five legs), who walks at half his speed and stays Rocky until a jump breaks the
+a statue **wakes it up as the walker (the owner asked for Rocky from Project Hail Mary; Claude Design would not draw that character, and on 26 Oct 2026 the owner chose an original instead: the cut-stone boulder on three stubby, kneeless, eyeless legs)**, which walks at half his speed and stays until a jump breaks the
 form or it wears off; and the jump that breaks it throws stone shards out all the way round.
 
 **The boulder's spin is Jigglypuff's Rollout** from Smash Ultimate (owner, 22 Oct 2026),
@@ -58,8 +57,8 @@ hits an enemy, and it explodes there.
   player is 24x24; a statue may be a little larger, the boulder about 29 pixels across.
 - The boulder's `roll` clip should visibly turn; it loops for as long as it rolls, and the
   game plays it faster or slower with the boulder's speed, so draw one even turn.
-- **Rocky** stands and walks in place of him at Lv10: `stand` is one picture, `walk` a
-  loop of his five legs stepping. Rock, in Granite Man's colours, not the player's.
+- **The walker** stands and walks in place of him at Lv10: `stand` is one picture, `walk` a
+  loop of its three legs stepping in turn. Rock, in Granite Man's colours, not the player's.
 
 ## The contract
 
@@ -92,14 +91,14 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
-| roll | loop | 4 · 4 · 4 · 4 | 16 | — | — | — |
+| roll | loop | 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 · 3 | 36 | — | — | — |
 
 **weapon-granite_form-rocky**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | stand | still | 5 | 5 | — | — | — |
-| walk | loop | 6 · 6 | 12 | — | — | — |
+| walk | loop | 2 · 2 · 2 · 2 · 2 · 2 | 12 | — | — | — |
 
 **weapon-granite_form-stone**
 
@@ -115,7 +114,7 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 
 - **every picture stands on its pivot**, the floor under the middle of him: the statue, the boulder and the stone all sit on the floor, never float above it or sink into it.
 - **the statue sheet has three still pictures**, one per shape: `chest`, `megaman`, `monolith`. The game picks one at random each time he hardens. They replace him, so each should read as roughly his size (he is 24x24); a little taller or wider is fine.
-- **the rocky sheet** is the Lv10 walking form, Rocky from Project Hail Mary: `stand` is one still picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.
+- **the rocky sheet** is the Lv10 walking form, the cut-stone boulder on three stubby, kneeless legs: `stand` is one still picture, `walk` loops while he walks at half his speed. It replaces him like the statue does.
 - **the boulder** is about 29 pixels across (1.2 times his size), and its `roll` clip loops while it rolls.
 - **nothing on these sheets hits by frame**: what the statue lands on and what the boulder rolls through is worked out from his body, so no frame carries a hit area.
 - **colours**: Granite Man's brown `#5F443A` and stone grey `#A8A296` with shades built from them, and the near-black outline.
@@ -124,25 +123,5 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 ## Handing this weapon to Claude Design
 
 <!-- generated:prompt -->
-Paste this into Claude Design, with the repository linked:
-
-```text
-Draw the art for MEGA DASH's GRANITE FORM, replacing the placeholder pictures in its 4 sprite sheets.
-
-Everything you need is in the GitHub repository EchoJex/mega-dash, branch main. Link the repository (the design/ and docs/ folders are enough) and read, in this order:
-1. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/README.md — how weapon art works in this game: the .sprite format, what you may change, how it is checked, and what to hand back.
-2. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/granite_form.md — this weapon: what it is, what each level shows, every clip with its timing and hit areas, and the rules the code holds the drawing to.
-3. The sheets to draw, already in the game and playing exactly as your art will:
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-statue.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-boulder.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-rocky.sprite
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-granite_form-stone.sprite
-4. https://github.com/EchoJex/mega-dash/blob/main/design/DESIGN-BRIEF.md (the game's look and limits) and https://github.com/EchoJex/mega-dash/blob/main/design/sprites/player.sprite (the 16-bit player: the reference for style and for scale).
-
-Redraw every frame of those sheets in the same files: same file names, same sheet sizes, same clip names, drawn facing right (the game mirrors it). You may change the colours (up to 15 per sheet), any hold, which frame a move hits on, the hit areas, the spawn points and the pivot when the drawing needs it. Those changes go into the game as soon as they pass the checks, so say what you changed and why.
-
-Before handing off, show the owner every clip playing at game speed (60 steps a second, each frame for its hold), facing both ways, beside the player, with the hit areas drawn on.
-
-When the owner approves, give the owner ONE zip file to download, holding the .sprite files you drew and a HANDOFF.md note saying what was approved and when, what changed in timing or hit areas and why, and anything you would like the code to change. (If your menu has Export, then Hand off to Claude Code, that makes the same bundle.) The owner gives that zip to Claude Code.
-```
+Every sheet of the GRANITE FORM is finished art, so there is no prompt to paste.
 <!-- /generated:prompt -->
