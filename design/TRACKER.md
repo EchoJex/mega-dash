@@ -107,7 +107,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
-- **sprite sheet** `[draft]` [x] furniture · [ ] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[wip]` [x] furniture · [x] arena background · [ ] boss · [x] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
 - **bgm arena** `[wip]`
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-proto-arena.ogg`.
