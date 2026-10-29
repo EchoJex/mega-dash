@@ -357,7 +357,7 @@ where each one stands.
 - **weapon name** `[ready]` Quake Hammer
 - **boss weakness A** `[wip]` Water
 - **boss weakness B** `[draft]` Ice
-- **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
+- **arena** `[draft]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
