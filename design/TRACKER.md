@@ -399,7 +399,7 @@ where each one stands.
 - **attack L3** `[wip]` A single large vortex parks in the centre of the room and pulls continuously while the boss fires wind blades from the edge, so the fight becomes about holding position.
 - **weapon class** `[ready]` Defensive
 - **weapon** `[draft]` Defensive; Mario cape/leaf raccoon tail. white puffs of smoke emerge when falling, significantly reducing fall speed and significantly increasing midair horizontal movement
-- **weapon Lv1** `[ready]` Up to 3 puffs while falling, each one cancelling vertical velocity and separated by a very brief time
+- **weapon Lv1** `[wip]` Up to 1 puffs while falling, each one cancelling vertical velocity and separated by a very brief time
 - **weapon Lv3** `[wip]` Larger and longer; the tornado now carries enemy projectiles that enter it.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
