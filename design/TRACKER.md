@@ -400,7 +400,7 @@ where each one stands.
 - **weapon class** `[ready]` Defensive
 - **weapon** `[draft]` Defensive; Mario cape/leaf raccoon tail. white puffs of smoke emerge when falling, significantly reducing fall speed and significantly increasing midair horizontal movement
 - **weapon Lv1** `[draft]` Up to 1 puffs while falling, each one cancelling vertical velocity and separated by a very brief time
-- **weapon Lv3** `[wip]` Up to 3 puffs. Puffs pull in nearby enemies underneath player with a small radius
+- **weapon Lv3** `[wip]` Up to 3 puffs. Puffs pull in nearby enemies underneath player with a small radius during initial frames. Then
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
