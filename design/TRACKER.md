@@ -290,7 +290,7 @@ where each one stands.
 - **scale** `[ready]` 1.95x player height (sumo bulk build)
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
-- **boss weakness A** `[wip]` Psychic
+- **boss weakness A** `[draft]` Psychic
 - **boss weakness B** `[wip]` Flying
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **arena furniture** `[ready]` Two training bags swing along from above. They can be stood on by the player, and if damaged by psychic type gain a purple outline, slowly rise in the air, then slam the boss for 1/4 boss hp total damage
