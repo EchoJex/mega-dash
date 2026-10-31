@@ -722,3 +722,36 @@ test('Granite Form: slow on the ground, instant in the air, boulder by direction
   for (let i = 0; i < 30; i++) lv6.step();
   assert.ok(lv6.h.hits.some((x) => x.e === t6), 'the flying stone hit the enemy');
 });
+
+/**
+ * THE PSI ORB (owner, 31 Oct 2026): it locks an incoming shot or a minion, and
+ * at ANY level it lifts the nearest training bag in Strike Man's room.
+ */
+test('the Psi Orb catches shots, locks minions, and lifts a training bag at Lv1', () => {
+  let h = harness('psi_orb', 1);
+  h.enemies.length = 0;
+  const shot = { x: 140, y: FLOOR - 14, vx: -1, vy: 0, life: 200, enemy: true, radius: 3 };
+  h.bullets.push(shot);
+  for (let i = 0; i < 60; i++) { h.run.frame++; Wpn.stepWeapons(h.ctx, ['psi_orb']); shot.x += shot.vx; }
+  assert.ok(shot.life <= 0, 'the orb never caught the shot');
+
+  h = harness('psi_orb', 1);
+  const minion = h.enemies[0];
+  for (let i = 0; i < 60; i++) { h.run.frame++; Wpn.stepWeapons(h.ctx, ['psi_orb']); }
+  assert.ok(h.enemies.some((e) => Attr.isHeld(e.status)), 'no minion was locked');
+  void minion;
+
+  h = harness('psi_orb', 1);
+  h.enemies.length = 0;
+  h.enemies.push({ x: 300, y: FLOOR - 44, w: 38, h: 44, hp: 50, isBoss: true, status: {}, fs: null });
+  const bag = { kind: 'bag', mode: 'swing', psiTarget: true, x: 250, y: 60, w: 14, h: 40 };
+  h.ctx.arena.hazards = [bag];
+  for (let i = 0; i < 200 && bag.mode === 'swing'; i++) { h.run.frame++; Wpn.stepWeapons(h.ctx, ['psi_orb']); }
+  assert.equal(bag.mode, 'psi', 'the orb never lifted the bag');
+});
+
+test('the Psi Orb throws what it holds back only from Lv6 and Lv10', () => {
+  assert.ok(!ladderAt('psi_orb', 3).throwShots && !ladderAt('psi_orb', 6).throwEnemies);
+  assert.ok(ladderAt('psi_orb', 6).throwShots && ladderAt('psi_orb', 10).throwEnemies);
+  assert.ok(ladderAt('psi_orb', 6).orbs > ladderAt('psi_orb', 1).orbs);
+});

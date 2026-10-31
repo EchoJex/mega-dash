@@ -34,6 +34,7 @@ import { FEEL } from '../config/feel.js';
 import { BACK_SHADE } from '../config/display.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
 import * as Attr from './attributes.js';
+import { hexNum } from './assets.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
 
 /** Frames of held fire that count as a long press. The tracker says 0.4s. */
@@ -2017,6 +2018,145 @@ function nearestEnemyShot(ctx, x, y, maxDist = 90) {
   return best;
 }
 
+// ── PSI ORB — Psychic, defensive ─────────────────────────────────────
+/**
+ * "Psychic orb defensive weapon conceptually will auto target and lock
+ *  incoming bullets/enemies and at high levels throw bullets/enemies back. The
+ *  punching bags need to be targetable by psychic orb, regardless of orb level,
+ *  targeting the nearest punching bag." (owner, 31 Oct 2026)
+ *
+ * Each orb circles the player until it has a job, flies to it, and comes back:
+ *   1. an enemy shot in range — caught and held where it was, then let go
+ *      (or, from Lv6, thrown at the nearest enemy);
+ *   2. a training bag in Strike Man's room — touched, and the room takes over
+ *      (it rises slowly and is thrown at him: strikeHazard in bossFights.js).
+ *      Only one bag at a time, and never while he is already down or dizzy;
+ *   3. a minion in range — held in place (from Lv10, thrown).
+ * Shots first, because a shot is about to hurt you; the boss is never locked.
+ */
+const PSI_RADIUS = 16;
+
+const psiOrb = {
+  init(st) { st.orbs = []; },
+
+  step(st, lv, ctx) {
+    const L = ladderAt('psi_orb', lv);
+    const p = ctx.player, pcx = p.x + 12, pcy = p.y + 10;
+    while (st.orbs.length < L.orbs) st.orbs.push({ mode: 'orbit', x: pcx, y: pcy, cool: 0 });
+    const t = ctx.run.frame || 0;
+    const taken = new Set(st.orbs.map((o) => o.job?.it).filter(Boolean));
+
+    st.orbs.forEach((o, i) => {
+      const ang = t * 0.06 + (i * Math.PI * 2) / st.orbs.length;
+      const hx = pcx + Math.cos(ang) * PSI_RADIUS, hy = pcy + Math.sin(ang) * PSI_RADIUS * 0.6;
+      const fly = (tx, ty) => {
+        const dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy);
+        if (d <= L.speed) { o.x = tx; o.y = ty; return true; }
+        o.x += (dx / d) * L.speed; o.y += (dy / d) * L.speed;
+        return false;
+      };
+
+      if (o.mode === 'orbit') {
+        o.x = hx; o.y = hy;
+        if (o.cool > 0) { o.cool--; return; }
+        o.job = psiJob(ctx, pcx, pcy, L.range, taken);
+        if (o.job) { taken.add(o.job.it); o.mode = 'go'; }
+        return;
+      }
+
+      if (o.mode === 'go') {
+        const j = o.job, it = j.it;
+        const gone = j.kind === 'shot' ? it.life <= 0
+          : j.kind === 'bag' ? it.mode !== 'swing' : it.hp <= 0;
+        if (gone) { o.mode = 'back'; return; }
+        const c = j.kind === 'shot' ? { x: it.x, y: it.y } : centreOf(it);
+        if (!fly(c.x, c.y)) return;
+        if (j.kind === 'bag') {
+          it.mode = 'psi';
+          it.outline = 0x9B4DFF;
+          ctx.sfx('charge', { pitch: 1.1 });
+          o.mode = 'back';
+          return;
+        }
+        if (j.kind === 'shot') {
+          // Caught: the real shot is gone, and the orb carries a picture of it.
+          o.held = { r: it.radius || 3, color: it.color };
+          it.life = -1;
+        } else {
+          Attr.applyStatus(it.status, 'psiLock', L.holdFrames);
+        }
+        ctx.sfx('charge', { pitch: 1.8 });
+        o.mode = 'hold';
+        o.t = L.holdFrames;
+        return;
+      }
+
+      if (o.mode === 'hold') {
+        if (o.job.kind === 'enemy' && o.job.it.hp > 0) {
+          const c = centreOf(o.job.it);
+          o.x = c.x; o.y = c.y;
+        }
+        if (--o.t > 0) return;
+        const target = nearestEnemy(ctx, o.x, o.y, new Set([o.job.it]));
+        if (o.job.kind === 'shot' && L.throwShots && target) {
+          const c = centreOf(target), d = Math.hypot(c.x - o.x, c.y - o.y) || 1;
+          ctx.spawn({
+            x: o.x, y: o.y, vx: ((c.x - o.x) / d) * L.throwSpeed, vy: ((c.y - o.y) / d) * L.throwSpeed,
+            radius: Math.max(3, o.held.r), damage: dmgOf('psi_orb', lv, ctx) * L.throwMult,
+            color: '#9B4DFF', shape: 'orb', weapon: 'psi_orb', life: 120,
+          });
+          ctx.sfx('shoot', { pitch: 1.3 });
+        }
+        if (o.job.kind === 'enemy' && L.throwEnemies && target && o.job.it.hp > 0) {
+          const e = o.job.it, c = centreOf(target), ec = centreOf(e);
+          const d = Math.hypot(c.x - ec.x, c.y - ec.y) || 1;
+          ctx.spawn({
+            x: ec.x, y: ec.y, vx: ((c.x - ec.x) / d) * L.throwSpeed, vy: ((c.y - ec.y) / d) * L.throwSpeed,
+            radius: 4, damage: 0, color: '#9B4DFF', shape: 'rock', weapon: 'psi_orb',
+            life: 120, pierce: 99,
+          });
+          // The live bullet is the last one in the list — the ram to follow,
+          // exactly as the whip throws a minion (stepTossed).
+          (st.tossed || (st.tossed = [])).push({
+            e, ram: ctx.bullets[ctx.bullets.length - 1], dmg: dmgOf('psi_orb', lv, ctx) * L.throwMult,
+          });
+          ctx.sfx('shootBig', { pitch: 1.2 });
+        }
+        o.held = null;
+        o.mode = 'back';
+        return;
+      }
+
+      // 'back'
+      if (fly(hx, hy)) { o.mode = 'orbit'; o.job = null; o.cool = L.coolFrames; }
+    });
+    stepTossed(st, ctx);
+  },
+};
+
+/** The orb's next job, in priority order: a shot, a training bag, a minion. */
+function psiJob(ctx, x, y, range, taken) {
+  const shot = nearestEnemyShot(ctx, x, y, range);
+  if (shot && !taken.has(shot)) return { kind: 'shot', it: shot };
+  const a = ctx.arena, boss = ctx.enemies.find((e) => e.isBoss && e.hp > 0);
+  const hz = a?.hazards || [];
+  const busy = hz.some((h) => h.mode === 'psi' || h.mode === 'psiSlam')
+    || boss?.fs?.mode === 'down' || boss?.fs?.mode === 'dizzy';
+  if (boss && !busy) {
+    let best = null, bestD = Infinity;
+    for (const h of hz) {
+      if (!h.psiTarget || h.mode !== 'swing' || taken.has(h)) continue;
+      const d = dist2(x, y, h.x + h.w / 2, h.y + h.h / 2);
+      if (d < bestD) { bestD = d; best = h; }
+    }
+    // A bag is found anywhere in the room — "regardless of orb level".
+    if (best) return { kind: 'bag', it: best };
+  }
+  const e = nearestEnemy(ctx, x, y, null, range);
+  if (e && !e.isBoss && !taken.has(e) && !Attr.isHeld(e.status)) return { kind: 'enemy', it: e };
+  return null;
+}
+
 // ── SIMON'S WHIP — Grass, offensive ────────────────────────────────────
 /**
  * "Stand still while shooting a directional-input whip-like vine that reels in
@@ -2809,6 +2949,7 @@ export const RUNTIME = {
   astral_cloak: eclipse,
   alloy_blade: alloy,
   drake_breath: drake,
+  psi_orb: psiOrb,
 };
 
 export const hasRuntime = (id) => Object.prototype.hasOwnProperty.call(RUNTIME, id);
@@ -3346,6 +3487,24 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(m.x) - 5, m.y - 6, 10, 2);
     g.fillStyle(dr.reloading ? 0x8A3040 : 0x5CADD5, 1);
     g.fillRect(sx(m.x) - 5, m.y - 6, Math.round(10 * frac), 2);
+  }
+
+  // PSI ORB — each orb a purple ball, carrying the shot it caught.
+  const po = run.wstate.psi_orb;
+  if (po && ctx.equipped.includes('psi_orb')) {
+    for (const o of po.orbs || []) {
+      const x = Math.round(sx(o.x)), y = Math.round(o.y);
+      if (o.held) {
+        g.fillStyle(0x9B4DFF, 0.5);
+        g.fillCircle(x, y, o.held.r + 3);
+        g.fillStyle(o.held.color ? hexNum(o.held.color) : 0xFFFFFF, 1);
+        g.fillCircle(x, y, o.held.r);
+      }
+      g.fillStyle(0x5B1FBF, 1);
+      g.fillCircle(x, y, 3);
+      g.fillStyle(0xD9B8FF, 1);
+      g.fillRect(x - 1, y - 1, 2, 2);
+    }
   }
 
   // TORRENT CANNON — two nozzles under a blue tank layer whose height IS the

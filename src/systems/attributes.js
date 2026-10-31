@@ -65,6 +65,8 @@ export const ATTR = {
   // every elemental tint, so a paused enemy reads as shadowed rather than as
   // afflicted with something.
   cloakHold: { form: 'character', tint: 0x2A273F, label: '', held: true, flash: 0.4 },
+  // NOT ELEMENTAL EITHER: the Psi Orb's lock, a plain hold in its purple.
+  psiLock: { form: 'character', tint: 0x9B4DFF, label: '', held: true, flash: 0.6 },
 };
 
 /** How strongly an attribute washes over the actor it is on. 1 is the default. */

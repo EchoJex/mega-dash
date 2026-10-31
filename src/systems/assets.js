@@ -439,6 +439,37 @@ export function drawPlaceholder(g, actor) {
 }
 
 /**
+ * DIZZY — three things circling his head: 5-point stars after the first
+ * knockdown, little yellow birdies after any later one (owner, 31 Oct 2026).
+ * Pixel stamps rather than shapes so they stay crisp at 224px tall. The ring is
+ * a flat oval, and the ones on the far side are drawn darker so it reads as
+ * going round his head rather than across it.
+ */
+const DAZE_STAMPS = {
+  stars: { w: 5, rows: ['..#..', '#####', '.###.', '.#.#.', '#...#'], cols: { '#': 0xFFE14A } },
+  birds: { w: 5, rows: ['.##..', '####o', '.##..', '#..#.'], cols: { '#': 0xFFE14A, o: 0xF08A24 } },
+};
+
+export function drawDaze(g, kind, cx, cy, t) {
+  const st = DAZE_STAMPS[kind];
+  if (!st) return;
+  for (let i = 0; i < 3; i++) {
+    const ang = t * 0.08 + (i * Math.PI * 2) / 3;
+    const x = Math.round(cx + Math.cos(ang) * 12 - st.w / 2);
+    const y = Math.round(cy + Math.sin(ang) * 3 - st.rows.length / 2);
+    const back = Math.sin(ang) < 0;
+    st.rows.forEach((row, ry) => {
+      for (let rx = 0; rx < row.length; rx++) {
+        const c = st.cols[row[rx]];
+        if (c === undefined) continue;
+        g.fillStyle(c, back ? 0.55 : 1);
+        g.fillRect(x + rx, y + ry, 1, 1);
+      }
+    });
+  }
+}
+
+/**
  * BOSS RIGS — hardware bolted onto a boss's placeholder rectangle.
  *
  * This is NOT a silhouette and it is not a step toward one. Bosses stay honest
@@ -453,6 +484,17 @@ export function drawPlaceholder(g, actor) {
  * lands via MANIFEST this goes away with it.
  */
 export function drawBossRig(g, boss, screenX, screenY = boss.y) {
+  // Strike Man's glove, wherever his punch is this step — the fist IS the
+  // hitbox, so it is drawn at exactly the box that hurts.
+  if (boss.fist) {
+    const f = boss.fist;
+    const fx = Math.round(screenX + f.x - boss.x), fy = Math.round(screenY + f.y - boss.y);
+    g.fillStyle(0x0A0A12, 1);
+    g.fillRect(fx, fy, f.w, f.h);
+    g.fillStyle(0xC81E1E, 1);
+    g.fillRect(fx + 1, fy + 1, f.w - 2, f.h - 2);
+  }
+  if (boss.daze) drawDaze(g, boss.daze, screenX + boss.w / 2, screenY - 4, boss.anim || 0);
   if (boss.rig !== 'jetpack') return;
   /**
    * THE PACK IS ALWAYS ON; THE PLUME IS NOT.

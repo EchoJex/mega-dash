@@ -16,11 +16,11 @@ out of the live source, so re-running this after a `scale` change updates it.
 |---|---|---|---|
 | PLAYER | 24x24 | 12x22 | x 6..17, y 2..23 |
 | MINION | 16x16 | 14x14 | x 1..14, y 2..15 |
-| BOSS (AVERAGE) | 48x48 | 31x41 | x 9..39, y 7..47 | **odd/even mismatch**
+| BOSS (AVERAGE) | 48x48 | 30x40 | x 9..38, y 8..47 |
 | BOSS (LARGEST) | 48x48 | 36x48 | x 6..41, y 0..47 |
 
 The largest boss is **GRANITE MAN** at 2x player height. The
-average across all seventeen is 1.6912x, which rounds to the box
+average across all seventeen is 1.6841x, which rounds to the box
 above; no single boss sits exactly on it.
 
 ## How the game places your art

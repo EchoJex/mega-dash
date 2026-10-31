@@ -908,3 +908,59 @@ test('Thorn Man holds a burn twice as long, and only he does', () => {
   assert.deepEqual(Object.keys(thorn), ['burn'], 'the scale is not a status');
   assert.equal(Object.keys(BOSS_BURN_SCALE).join(), 'thorn');
 });
+
+/**
+ * STRIKE MAN, THE BOXER (owner, 31 Oct 2026): the lean-back lunge travels a
+ * long way and lands; a shot closing in makes him back-dash; and a psychic bag
+ * knocks him down into stars, then any later bag into birdies.
+ */
+test('Strike Man lunges across the room, back-dashes from shots, and is dazed by bags', () => {
+  const FIGHT = FIGHTS.strike;
+  // The lunge: the player well out of jab range.
+  let h = harness('strike', 1);
+  h.boss.x = 220; h.boss.w = 38; h.boss.h = 44; h.boss.y = FLOOR - 44;
+  h.player.x = 90; h.ctx.playerBox = { x: 96, y: FLOOR - 22, w: 12, h: 22 };
+  const x0 = h.boss.x;
+  let lunged = false;
+  for (let i = 0; i < 400 && !h.hurts.length; i++) {
+    h.boss.anim++;
+    FIGHT.attack[1].step(h.ctx);
+    if (h.boss.fs.mode === 'lunge') lunged = true;
+  }
+  assert.ok(lunged, 'he never lunged at a player out of jab range');
+  assert.ok(x0 - h.boss.x > 60, 'the lunge must cover a great distance');
+  assert.ok(h.hurts.length > 0, 'the lunge never landed');
+
+  // The dodge: a player shot heading at him while he walks.
+  let dodged = false;
+  for (let k = 0; k < 40 && !dodged; k++) {
+    h = harness('strike', 1);
+    h.boss.x = 220; h.boss.y = FLOOR - 42;
+    FIGHT.attack[1].step(h.ctx);
+    h.bullets.push({ x: 200, y: FLOOR - 20, vx: 3, vy: 0, life: 60 });
+    FIGHT.attack[1].step(h.ctx);
+    dodged = h.boss.fs.mode === 'back';
+  }
+  assert.ok(dodged, 'he never back-dashed from an incoming shot');
+
+  // The daze: drop a lifted bag straight onto him, twice.
+  h = harness('strike', 1);
+  const step = () => { h.boss.anim++; FIGHT.attack[1].step(h.ctx); FIGHT.hazard[1].step(h.ctx); };
+  const dazes = [];
+  for (let n = 0; n < 2; n++) {
+    step();
+    const bag = h.arena.hazards.find((z) => z.kind === 'bag' && z.mode === 'swing');
+    bag.x = h.boss.x; bag.mode = 'psi';
+    const hits = h.bossHits.length;
+    for (let i = 0; i < 400 && h.bossHits.length === hits; i++) step();
+    assert.equal(h.bossHits.length, hits + 1, 'the lifted bag never hit him');
+    assert.equal(h.boss.fs.mode, 'down');
+    while (h.boss.fs.mode === 'down') step();
+    let t = 0;
+    dazes.push(h.boss.daze);
+    while (h.boss.fs.mode === 'dizzy') { step(); t++; }
+    assert.ok(t >= 290, `dizzy for ${t} steps`);
+    assert.equal(h.boss.daze, null);
+  }
+  assert.deepEqual(dazes, ['stars', 'birds']);
+});

@@ -134,8 +134,8 @@ const minionBoxes = [...minions.matchAll(/w: (\d+), h: (\d+),/g)].map((m) => ({
   w: +m[1], h: +m[2],
 }));
 
-const bossRows = [...bosses.matchAll(/id: '(\w+)', name: '([^']+)'[\s\S]*?scale: ([0-9.]+)/g)]
-  .map((m) => ({ id: m[1], name: m[2], scale: +m[3] }));
+const bossRows = [...bosses.matchAll(/id: '(\w+)', name: '([^']+)'[\s\S]*?scale: ([0-9.]+)(?:, wide: ([0-9.]+))?/g)]
+  .map((m) => ({ id: m[1], name: m[2], scale: +m[3], wide: +(m[4] || 0.75) }));
 if (bossRows.length !== 17) throw new Error(`read ${bossRows.length} bosses, expected 17`);
 
 const SHOT_GRID = num(display, /^\s*shot:\s*\{ w: (\d+)/m, 'shot grid');
@@ -177,16 +177,16 @@ const SIDEARM_PAL = { primary: sideP[1], secondary: sideP[2], outline: '#0A0A12'
 /**
  * THE EXACT ARITHMETIC `spawnBoss` USES, and it has to stay exact.
  *
- *     h = round(24 * scale)      w = round(h * 0.75)
+ *     h = round(24 * scale)      w = round(h * wide)   (wide defaults to 0.75)
  *
  * Deriving the width from the ROUNDED height rather than from the scale is not
  * incidental — round(round(24s) * 0.75) and round(24s * 0.75) disagree for
  * several of the seventeen, and the collision box the artist is drawing to is
  * whichever one the game actually computes.
  */
-const bossBox = (scale) => {
+const bossBox = (scale, wide = 0.75) => {
   const h = Math.round(24 * scale);
-  return { w: Math.round(h * 0.75), h };
+  return { w: Math.round(h * wide), h };
 };
 
 const biggest = bossRows.reduce((a, b) => (b.scale > a.scale ? b : a));
@@ -536,7 +536,7 @@ const targets = {
   bosses: Object.fromEntries(bossRows.map((b) => [b.id, {
     label: b.name, cls: 'boss', scale: b.scale,
     grid: { w: BOSS_GRID, h: BOSS_GRID },
-    box: bossBox(b.scale),
+    box: bossBox(b.scale, b.wide),
     frames: ['idle0', 'idle1'],
   }])),
   /**

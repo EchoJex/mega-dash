@@ -1399,7 +1399,7 @@ on a target**, with no refresh while it lasts. Nothing elemental holds anyone in
 
 `cloakHold` is in the ATTR table but is **not** an elemental attribute — it was the Astral
 Cloak's aggro pause. That weapon is being redesigned as the **Evil Energy** (its tracker
-field is `[wip]`), so treat `cloakHold` as the old behaviour until the new ladder lands.
+field is `[wip]`), so treat `cloakHold` as the old behaviour until the new ladder lands. `psiLock` is the same kind of plain hold, in purple: the Psi Orb's lock.
 
 ---
 

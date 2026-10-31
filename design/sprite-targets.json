@@ -173,14 +173,14 @@
     "strike": {
       "label": "STRIKE MAN",
       "cls": "boss",
-      "scale": 1.95,
+      "scale": 1.83,
       "grid": {
         "w": 48,
         "h": 48
       },
       "box": {
-        "w": 35,
-        "h": 47
+        "w": 38,
+        "h": 44
       },
       "frames": [
         "idle0",
@@ -3725,10 +3725,10 @@
     }
   },
   "avgBoss": {
-    "scale": 1.69,
+    "scale": 1.68,
     "box": {
-      "w": 31,
-      "h": 41
+      "w": 30,
+      "h": 40
     }
   },
   "moveSpeed": 1.375,

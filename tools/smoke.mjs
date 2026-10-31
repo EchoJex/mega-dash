@@ -353,6 +353,7 @@ const PAIRS = [
   ['alloy_blade', 'astral_cloak'],
   ['blaze_wheel', 'granite_form'],
   ['drake_breath', 'swarm_caller'],
+  ['volt_spark', 'psi_orb'],
 ];
 
 for (const level of [1, 3, 6, 10]) {

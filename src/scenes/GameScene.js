@@ -2076,7 +2076,7 @@ export default class GameScene extends Phaser.Scene {
   // ── Bosses ──────────────────────────────────────────────────────────
   spawnBoss(def, layer) {
     const h = Math.round(24 * def.scale);
-    const w = Math.round(h * 0.75);
+    const w = Math.round(h * (def.wide || 0.75));
     const hp = Math.round(def.baseHp * (1 + (layer - 1) * FEEL.bossLayerHpMult));
     // The arena floor is solid wall to wall — no pits in a boss room.
     this.world.groundSpans = [{ x1: -40, x2: this.viewW + 40 }];
@@ -3050,8 +3050,11 @@ export default class GameScene extends Phaser.Scene {
       // He materialises out of the last quarter of the beam rather than
       // appearing when it is already gone.
       if (beam >= 0.75) {
+        // Knocked flat: drawn lying on the mat. Only the picture lies down;
+        // the collision box stays his standing one.
+        const lieH = b.down ? Math.round(b.h * 0.4) : b.h;
         const body = L.boss.draw({
-          id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
+          id: b.id, x: sx(b.x), y: sy(b.y + b.h - lieH), w: b.w, h: lieH,
           facing: -1, clip: b.state,
           palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
         });

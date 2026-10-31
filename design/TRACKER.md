@@ -287,18 +287,18 @@ where each one stands.
 - **palette primary** `[ready]` #EA6A34
 - **palette secondary** `[ready]` #7C2D12
 - **palette outline** `[ready]` #0A0A12
-- **scale** `[ready]` 1.95x player height (sumo bulk build)
+- **scale** `[ready]` 1.83x player height, a little shorter and a bit wider: 44 tall by 38 wide (heavyweight boxer build)
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
 - **boss weakness A** `[draft]` Psychic
 - **boss weakness B** `[wip]` Flying
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
-- **arena furniture** `[ready]` Two training bags swing along from above. They can be stood on by the player, and if damaged by psychic type gain a purple outline, slowly rise in the air, then slam the boss for 1/4 boss hp total damage
+- **arena furniture** `[ready]` Two training bags swing along from above. They can be stood on by the player, and if damaged by psychic type gain a purple outline, slowly rise in the air, then slam the boss for 1/4 boss hp total damage. The punching bags need to be targetable by psychic orb, regardless of orb level, targeting the nearest punching bag, raising slowly, then throwing at the boss, dealing heavy damage. Hit from the first bag knocks the boss down, causes 3 5-point stars to orbit around the bosses head when they get up, and remain in an idle animation for 5 seconds. Subsequent bag thrown by psi orb does the same thing but this time little yellow birdies orbit and the stun lasts 7 seconds.
 - **hazard L1** `[ready]` Weighted training bags travel across the room on ceiling rails at a very slow but steady pace, dealing knockback and light damage. Their path is fixed and learnable. Tops of bags can be stood on. Bags can be punched by boss to knock you off them if player stands on them too long
 - **hazard L2** `[ready]` Two bags on crossing paths, boss has a moderate chance of pulling one down as a shield whenever taking ranged damage
 - **hazard L3** `[ready]` Same as hazard l2 only now the boss will throw the bag at player for gravy damage after using as a shield.
-- **attack L1** `[ready]` Dashes in on foot and throws a Vulcan Jab — a rapid flurry of short-range punches off a clear wind-up — finishing on a Rising Break uppercut that launches. He has nothing at range on this layer, so the whole fight is spacing: stay outside his reach and he simply keeps closing.
-- **attack L2** `[ready]` Adds a guard stance between combos that reflects the first shot it takes. The Rising Break now chases upward once before he lands, and he will throw it on its own as an anti-air the moment the player is above him — jumping over him stops being free.
+- **attack L1** `[ready]` Attacks are inspired by street fighter 2 balrog, typical American heavyweight boxer type. Short straight jabs, a quick back dash for dodge, and a lunging strike where the boss leans back, readies their punch, then thrusts forward with the gloved fist, traveling a great distance in the process.
+- **attack L2** `[ready]` Adds a guard stance between combos that reflects the first shot it takes, and a Rising Break uppercut he throws as an anti-air the moment the player is above him, chasing upward once before he lands — jumping over him stops being free.
 - **attack L3** `[ready]` Adds a thrown Force Blast when the player keeps their distance, and a spinning kick that crosses the room and cannot be cleanly jumped. The combo can also be cancelled into a dash mid-string, so he finishes it from the side he did not start on. Near gets jabbed, above gets the uppercut, far gets the blast, and the spin closes whatever gap is left.
 - **weapon class** `[ready]` Offensive
 - **weapon** `[ready]` Offensive; Close-range powerful punching gloves with knockback and damage reduction during attack animations. Tap attack for a quick low-damage lunging combo-starter jab; long-press attack 0.4s for a combo finisher.
@@ -429,12 +429,12 @@ where each one stands.
 - **attack L1** `[wip]` Levitates the player and drops them from height while firing homing psychic orbs.
 - **attack L2** `[wip]` Levitation now sweeps the player sideways before dropping them, and the homing orbs fire in a ring rather than a stream.
 - **attack L3** `[wip]` The boss holds the player suspended while orbs converge, releasing only when an orb connects or the hold times out.
-- **weapon class** `[wip]` Defensive
-- **weapon** `[wip]` Fires slow but powerful homing psychic balls that can be remotely steered. Per-level scaling: homing strength + orb speed.
-- **weapon Lv1** `[wip]` One slow homing orb at a time; steerable while the attack button is held.
-- **weapon Lv3** `[wip]` Stronger homing and faster travel; the orb survives one terrain contact instead of dispersing.
-- **weapon Lv6** `[wip]` Lv6+: can control multiple orbs.
-- **weapon Lv10** `[wip]` Ultimate: brief mind control on weak enemies.
+- **weapon class** `[ready]` Defensive
+- **weapon** `[ready]` Psychic orb defensive weapon conceptually will auto target and lock incoming bullets/enemies and at high levels throw bullets/enemies back. The punching bags need to be targetable by psychic orb, regardless of orb level, targeting the nearest punching bag.
+- **weapon Lv1** `[ready]` One orb circles the player. It flies to the nearest incoming bullet or minion and locks it in place for a moment; a locked bullet then fades and a locked minion is let go. In Strike Man's room it also lifts the nearest training bag.
+- **weapon Lv3** `[ready]` Longer reach, a faster orb and a longer lock.
+- **weapon Lv6** `[ready]` A second orb. Locked bullets are thrown back at the nearest enemy.
+- **weapon Lv10** `[ready]` Locked minions are thrown too, hurled at the nearest enemy as heavy projectiles.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-psi-stage.ogg` — plays on the overworld approach to Psi Man's door.

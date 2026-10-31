@@ -111,11 +111,10 @@ export const BOSSES = [
   {
     id: 'strike', name: 'STRIKE MAN', element: 'Fighting',
     primary: '#EA6A34', secondary: '#7C2D12', outline: '#0A0A12',
-    // "1.95x player height (sumo bulk build)" — the largest in the roster, and
-    // the one boss whose whole kit is closing distance on foot. Size is the
-    // read: a fighter you can outrun has to LOOK like something you cannot
-    // stand in front of.
-    scale: 1.95, baseHp: 72,
+    // "a little shorter and a bit wider" (owner, 31 Oct 2026): a heavyweight
+    // boxer rather than a sumo. 44 tall by 38 wide. `wide` is width over
+    // height; every other boss uses the default 0.75.
+    scale: 1.83, wide: 0.86, baseHp: 72,
     attackName: 'Rush Combo', dropWeapon: 'strike_gauntlet',
     silhouette: null,
   },

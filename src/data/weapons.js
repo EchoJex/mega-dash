@@ -389,6 +389,24 @@ export const WEAPON_LADDERS = {
     6: { shards: [-22.5, 0, 22.5, 45], shardPierce: 99 },
   },
 
+  // ── PSI ORB — defensive, Psychic ──────────────────────────────────
+  // "Auto target and lock incoming bullets/enemies and at high levels throw
+  // bullets/enemies back" (owner, 31 Oct 2026). Every level also lifts the
+  // nearest training bag in Strike Man's room — see psiOrb in weaponry.js.
+  //  Lv1  one orb; locks a shot or a minion in place, then lets it go.
+  //  Lv3  further reach, a faster orb, a longer lock.
+  //  Lv6  a second orb, and locked shots are thrown back.
+  //  Lv10 locked minions are thrown too.
+  psi_orb: {
+    1: {
+      orbs: 1, range: 70, speed: 3, holdFrames: 50, coolFrames: 45,
+      throwShots: false, throwEnemies: false, throwSpeed: 4, throwMult: 1.5,
+    },
+    3: { range: 90, speed: 3.8, holdFrames: 75 },
+    6: { orbs: 2, throwShots: true },
+    10: { throwEnemies: true, throwMult: 2 },
+  },
+
   // ── STRIKE GAUNTLET — offensive, Fighting ─────────────────────────
   // Tap for a jab in the chain, hold 0.4s for the finisher. What the ladder
   // buys is the finisher's lunge: how far it goes and how many bodies it
@@ -883,13 +901,10 @@ const DEFS = [
   { id: 'gale_vortex', name: 'GALE VORTEX', short: 'GALE', cls: DEFENSIVE, boss: 'gale',
     cooldown: 45, projectiles: 1, shape: 'tornado', speed: 1.8,
     desc: 'Smoke puffs that cancel a fall and widen air control.' },
-  // RECLASSIFIED, confirmed by the owner. A steerable orb wants a held thumb,
-  // which is the one thing a defensive weapon may not ask for; orbs that circle
-  // the player on their own keep the psychic read and cost no input. The ladder
-  // itself is still `[wip]` and unbuilt.
+  // Defensive: orbs that circle the player and act on their own, no input.
   { id: 'psi_orb', name: 'PSI ORB', short: 'PSI', cls: DEFENSIVE, boss: 'psi',
     cooldown: 30, projectiles: 1, shape: 'orb', speed: 1.6,
-    desc: 'Psychic orbs that orbit the player and eat incoming shots.' },
+    desc: 'Psychic orbs that lock incoming shots and enemies in place.' },
   { id: 'swarm_caller', name: 'SWARM CALLER', short: 'SWARM', cls: DEFENSIVE, boss: 'swarm',
     cooldown: 24, projectiles: 3, shape: 'swarm', speed: 2.6,
     desc: 'Summons temporary bug allies that fight for you.' },

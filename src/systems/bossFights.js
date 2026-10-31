@@ -1502,8 +1502,16 @@ const STRIKE_HAZ = {
    * winnable with anything, and this is what knowing the room is worth.
    */
   psiRise: 0.55,
-  psiSlamSpeed: 6.5,
+  psiThrowSpeed: 5,
   psiBossDamage: 0.25,
+  /**
+   * "Hit from the first bag knocks the boss down, causes 3 5-point stars to
+   *  orbit around the boss's head when they get up, and remain in an idle
+   *  animation for 5 seconds. Subsequent bag ... little yellow birdies orbit
+   *  and the stun lasts 7 seconds." (owner, 31 Oct 2026)
+   */
+  downFrames: 50,
+  dazeFrames: { stars: 300, birds: 420 },
   /**
    * The chance he yanks a bag down to block, rolled on each RANGED hit.
    *
@@ -1521,6 +1529,20 @@ const STRIKE_HAZ = {
   throwDamage: 3,     // heavy, against the swinging bag's 1
   returnFrames: 150,  // before a thrown bag is winched back onto its rail
 };
+
+/** Down on the mat or seeing stars: he does nothing else until it passes. */
+export const strikeDazed = (b) => b.fs?.mode === 'down' || b.fs?.mode === 'dizzy';
+
+/**
+ * A psychic bag landing on him. The FIRST one gives stars for 5 seconds, every
+ * later one birdies for 7 — counted per fight on the boss himself.
+ */
+function knockDown(b) {
+  b.dazes = (b.dazes || 0) + 1;
+  b.fs = { ...(b.fs || {}), mode: 'down', t: STRIKE_HAZ.downFrames, guard: 0 };
+  b.guard = 0;
+  b.fist = null;
+}
 
 /**
  * STRIKE MAN'S ARENA HAZARD — the bags, and from layer 2 what he does with them.
@@ -1612,7 +1634,7 @@ function strikeHazard(layer) {
      */
     const took = b.rangedHits || 0;
     b.rangedHits = 0;
-    if (took && !hs.held && hs.cool === 0 && Math.random() < (STRIKE_HAZ.grabChance[layer] || 0)) {
+    if (took && !hs.held && hs.cool === 0 && !strikeDazed(b) && Math.random() < (STRIKE_HAZ.grabChance[layer] || 0)) {
       // The nearest swinging bag — he reaches for the one he can actually
       // reach, not for whichever happens to be first in the list.
       const bags = a.hazards.filter((h) => h.kind === 'bag' && h.mode === 'swing');
@@ -1638,7 +1660,7 @@ function strikeHazard(layer) {
         const face = ctx.player.x < b.x ? -1 : 1;
         h.x = face < 0 ? b.x - h.w - 2 : b.x + b.w + 2;
         h.y = b.y + b.h - h.h;
-        b.guard = Math.max(b.guard || 0, hs.hold);
+        if (!strikeDazed(b)) b.guard = Math.max(b.guard || 0, hs.hold);
         if (--hs.hold <= 0) {
           hs.held = null;
           hs.cool = STRIKE_HAZ.grabCooldown;
@@ -1678,27 +1700,32 @@ function strikeHazard(layer) {
       }
 
       /**
-       * LIFTED — the psychic branch. It rises out of the fight, drifts over
-       * him, and comes down.
+       * LIFTED — the psychic branch. "Raising slowly, then throwing at the
+       * boss" (owner, 31 Oct 2026). It rises in place, then is hurled in a
+       * straight line at where he stood when it reached the top.
        *
-       * IT TRACKS HIM ON THE WAY UP, NOT ON THE WAY DOWN. A bag that steered
-       * mid-drop would be a homing missile the player fired by accident and the
-       * boss could never answer; one that commits at the top is a thing he can
-       * still walk out from under, which is what makes the quarter-bar fair.
+       * AIMED ONCE, AT THE TOP. A bag that steered in flight would be a homing
+       * missile the boss could never answer; one that commits is a thing he
+       * can still step away from, which is what makes the quarter-bar fair.
        */
       if (h.mode === 'psi') {
         h.y -= STRIKE_HAZ.psiRise;
-        const bx = b.x + b.w / 2 - h.w / 2;
-        h.x += Math.sign(bx - h.x) * Math.min(1.1, Math.abs(bx - h.x));
-        if (h.y <= h.railY + 6) { h.mode = 'psiSlam'; h.vy = 0; ctx.sfx('charge', { pitch: 1.4 }); }
+        if (h.y <= h.railY + 6) {
+          const dx = (b.x + b.w / 2) - (h.x + h.w / 2), dy = (b.y + b.h / 2) - (h.y + h.h / 2);
+          const d = Math.max(1, Math.hypot(dx, dy));
+          h.mode = 'psiSlam';
+          h.vx = (dx / d) * STRIKE_HAZ.psiThrowSpeed;
+          h.vy = (dy / d) * STRIKE_HAZ.psiThrowSpeed;
+          ctx.sfx('charge', { pitch: 1.4 });
+        }
         continue;
       }
       if (h.mode === 'psiSlam') {
-        h.vy = Math.min(STRIKE_HAZ.psiSlamSpeed, (h.vy || 0) + 0.9);
+        h.x += h.vx;
         h.y += h.vy;
         const onHim = h.x + h.w > b.x && h.x < b.x + b.w
           && h.y + h.h >= b.y && h.y <= b.y + b.h;
-        if (onHim || h.y + h.h >= a.floorY) {
+        if (onHim || h.y + h.h >= a.floorY || h.x <= a.x0 || h.x + h.w >= a.x1) {
           if (onHim) {
             // "1/4 boss hp TOTAL damage" — of the bar he started with, so the
             // move is worth the same whenever it lands rather than tapering
@@ -1706,6 +1733,7 @@ function strikeHazard(layer) {
             ctx.hitBoss(Math.max(1, Math.round((b.maxHp || b.hp) * STRIKE_HAZ.psiBossDamage)),
               h.x + h.w / 2);
             ctx.flash(8);
+            knockDown(b);
           }
           ctx.shake(2, 12);
           ctx.sfx('shootBig', { pitch: 0.4 });
@@ -1731,7 +1759,7 @@ function strikeHazard(layer) {
       if (!onTop) { h.stood = 0; h.warn = 0; continue; }
       h.stood++;
       h.warn = h.stood >= STRIKE_HAZ.standLimit - STRIKE_HAZ.standWarn ? 1 : 0;
-      if (h.stood < STRIKE_HAZ.standLimit) continue;
+      if (h.stood < STRIKE_HAZ.standLimit || strikeDazed(b)) continue;
       // Marked, and now it needs him. See standLimit for why the wait is the
       // point rather than a compromise.
       if (Math.abs((b.x + b.w / 2) - (h.x + h.w / 2)) > b.w / 2 + STRIKE_HAZ.punchReach) continue;
@@ -1761,50 +1789,56 @@ function strikeHazard(layer) {
 }
 
 /**
- * STRIKE MAN'S ATTACK — a fighting-game kit, built to the owner's brief of
- * "Fighter Joe from Kirby / Ryu from Street Fighter".
+ * STRIKE MAN'S ATTACK — a heavyweight boxer.
  *
- * L1 "Dashes in on foot and throws a Vulcan Jab — a rapid flurry of
- *     short-range punches off a clear wind-up — finishing on a Rising Break
- *     uppercut that launches. He has nothing at range on this layer, so the
- *     whole fight is spacing."
- * L2 "Adds a guard stance between combos that reflects the first shot it takes.
- *     The Rising Break now chases upward once before he lands, and he will
- *     throw it on its own as an anti-air the moment the player is above him."
- * L3 "Adds a thrown Force Blast when the player keeps their distance, and a
- *     spinning kick that crosses the room. The combo can be cancelled into a
- *     dash mid-string, so he finishes it from the side he did not start on."
+ * L1 "Attacks are inspired by street fighter 2 balrog, typical American
+ *     heavyweight boxer type. Short straight jabs, a quick back dash for dodge,
+ *     and a lunging strike where the boss leans back, readies their punch, then
+ *     thrusts forward with the gloved fist, traveling a great distance in the
+ *     process." (owner, 31 Oct 2026)
+ * L2 Adds the guard stance that reflects the first shot it takes, and the
+ *    Rising Break uppercut as an anti-air the moment the player is above him.
+ * L3 Adds the Force Blast at range, the spinning kick, and a jab string that
+ *    can cancel into a dash so he finishes from the other side.
  *
- * THE LAYERS CLOSE OFF ESCAPES, THEY DO NOT ADD DAMAGE. Layer 1 has exactly one
- * answer and one counter: stay out of his reach. Layer 2 takes away jumping
- * over him and takes away free chip damage while he is walking. Layer 3 takes
- * away standing at range. Each rung removes a place to be rather than making
- * the same attack hurt more, which is what makes a boss feel like it learned
- * something instead of like it gained a stat.
+ * Layers 2 and 3 are the old kit sitting on top of the boxer, by the owner's
+ * pick: the layers close off escapes, they do not add damage.
  *
- * HE MOVES ON FOOT. The `[wip]` text these replaced said "teleports close", and
- * the two characters the owner named do not teleport — they walk you down. A
- * dash you can see coming is also the only version of this that is fair at
- * melee range, because a teleport into a jab flurry cannot be spaced against.
+ * THE LEAN IS THE FAIRNESS. The lunge crosses most of the room, so it is only
+ * fair because he plainly rocks back first, glove cocked behind him. That half
+ * second is the window to jump it or slide out of its line.
  */
 const STRIKE_ATK = {
   walk: { 1: 0.5, 2: 0.6, 3: 0.7 },
   dash: { 1: 1.6, 2: 1.9, 3: 2.2 },
-  rest: { 1: [80, 130], 2: [65, 105], 3: [50, 90] },
-  reach: 34,               // how close he wants to be before committing
-  // VULCAN JAB
-  jabWindup: 24,
-  jabs: { 1: 4, 2: 5, 3: 6 },
-  jabGap: 8,
-  jabReach: 26,
+  rest: { 1: [70, 120], 2: [60, 100], 3: [50, 90] },
+  reach: 34,               // close enough to jab rather than lunge
+  // STRAIGHT JABS — short and quick, off a short wind-up.
+  jabWindup: 12,
+  jabs: { 1: 3, 2: 3, 3: 4 },
+  jabGap: 10,
+  jabReach: 22,
   jabDamage: 1,
-  // RISING BREAK — the launcher, and from L2 an anti-air in its own right.
+  // BACK DASH — the dodge. Fired at a player shot closing on him, and after
+  // every jab string, Balrog-style: hit, then get out.
+  backSpeed: 3.2,
+  backFrames: 14,
+  backSense: 56,           // how close a shot gets before he reacts
+  backChance: { 1: 0.5, 2: 0.6, 3: 0.7 },
+  backCool: 90,
+  // LUNGE — lean back, then the gloved fist crosses the room.
+  lungeLean: 30,
+  lungeSpeed: 4.4,
+  lungeDist: 150,
+  lungeDamage: 3,
+  lungeRecover: 18,
+  // RISING BREAK — L2+, an anti-air.
   riseWindup: 20,
   riseVy: -4.6,
   riseGrav: 0.3,
   riseDamage: 2,
   riseW: 24,
-  riseChase: { 1: 0, 2: 1, 3: 1 },   // extra upward beats before he falls
+  riseChase: 1,            // extra upward beats before he falls
   // GUARD — L2+. Reflects the first shot it eats, then drops.
   guardFrames: { 1: 0, 2: 70, 3: 55 },
   // FORCE BLAST — L3, thrown when the player will not come close.
@@ -1824,52 +1858,110 @@ const boxHitsPlayer = (ctx, x, y, w, h) => {
   return p.x < x + w && p.x + p.w > x && p.y < y + h && p.y + p.h > y;
 };
 
+/** A player shot closing on him at body height — the thing he back-dashes from. */
+function shotIncoming(ctx, b) {
+  const cx = b.x + b.w / 2;
+  for (const s of ctx.bullets || []) {
+    if (s.enemy || s.life <= 0) continue;
+    const dx = cx - s.x;
+    if (Math.abs(dx) > STRIKE_ATK.backSense || Math.sign(s.vx) !== Math.sign(dx)) continue;
+    if (s.y >= b.y && s.y <= b.y + b.h) return Math.sign(dx);
+  }
+  return 0;
+}
+
 function strikeAttack(layer) {
   return (ctx) => {
     const b = ctx.boss, p = ctx.player, a = ctx.arena;
     const groundY = (a ? a.floorY : ctx.floorY) - b.h;
     const fs = b.fs || (b.fs = {
-      mode: 'stalk', t: rnd(...STRIKE_ATK.rest[layer]), hits: 0, vy: 0, chase: 0,
+      mode: 'stalk', t: rnd(...STRIKE_ATK.rest[layer]), hits: 0, vy: 0, chase: 0, cool: 0,
     });
     const pcx = p.x + 12, bcx = b.x + b.w / 2;
     const toward = Math.sign(pcx - bcx) || 1;
     const gap = Math.abs(pcx - bcx);
     // Above him and close in x — the state that layer 2's anti-air punishes.
     const overhead = (p.y + 24) < b.y + b.h * 0.4 && gap < STRIKE_ATK.reach * 1.4;
+    const atWall = () => b.x <= ctx.bounds.x0 || b.x + b.w >= ctx.bounds.x1;
+    const clamp = () => { b.x = Math.max(ctx.bounds.x0, Math.min(ctx.bounds.x1 - b.w, b.x)); };
+    const backOff = (dir) => { fs.mode = 'back'; fs.dir = dir; fs.t = STRIKE_ATK.backFrames; };
+    const toStalk = () => {
+      fs.mode = 'stalk';
+      fs.t = rnd(...STRIKE_ATK.rest[layer]);
+      fs.guard = STRIKE_ATK.guardFrames[layer];
+    };
+    b.fist = null;
+    if (fs.cool > 0) fs.cool--;
 
     switch (fs.mode) {
+      // KNOCKED DOWN by a psychic bag (see knockDown), then up and dizzy.
+      case 'down': {
+        b.y = groundY;
+        b.down = true;
+        if (--fs.t > 0) break;
+        b.down = false;
+        b.daze = b.dazes > 1 ? 'birds' : 'stars';
+        fs.mode = 'dizzy';
+        fs.t = STRIKE_HAZ.dazeFrames[b.daze];
+        break;
+      }
+
+      case 'dizzy': {
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        b.daze = null;
+        toStalk();
+        break;
+      }
+
       case 'stalk': {
         b.x += toward * STRIKE_ATK.walk[layer];
         b.y = groundY;
         // L2+: he covers himself while walking, so chipping him down from
         // across the room stops being free.
         if (STRIKE_ATK.guardFrames[layer] && fs.guard > 0) fs.guard--;
+        // THE DODGE. A shot closing in, and he skips back out of its way.
+        const from = fs.cool ? 0 : shotIncoming(ctx, b);
+        if (from) {
+          fs.cool = STRIKE_ATK.backCool;
+          if (Math.random() < STRIKE_ATK.backChance[layer]) { backOff(from); break; }
+        }
         if (--fs.t > 0) break;
 
         if (layer >= 2 && overhead) { fs.mode = 'rise'; fs.t = STRIKE_ATK.riseWindup; break; }
-        if (layer >= 3 && gap > STRIKE_ATK.blastFar) {
+        if (layer >= 3 && gap > STRIKE_ATK.blastFar && Math.random() < 0.5) {
           fs.mode = Math.random() < 0.5 ? 'blast' : 'spin';
           fs.t = fs.mode === 'blast' ? STRIKE_ATK.blastWindup : STRIKE_ATK.spinWindup;
           fs.dir = toward;
           break;
         }
-        fs.mode = 'dash';
         fs.dir = toward;
+        if (gap <= STRIKE_ATK.reach) { fs.mode = 'jabWind'; fs.t = STRIKE_ATK.jabWindup; break; }
+        fs.mode = 'lean';
+        fs.t = STRIKE_ATK.lungeLean;
         break;
       }
 
+      case 'back': {
+        b.x += fs.dir * STRIKE_ATK.backSpeed;
+        b.y = groundY;
+        clamp();
+        if (--fs.t <= 0 || atWall()) toStalk();
+        break;
+      }
+
+      // L3's mid-string dash to the other side; it ends in a fresh jab string.
       case 'dash': {
         b.x += fs.dir * STRIKE_ATK.dash[layer];
         b.y = groundY;
-        if (gap <= STRIKE_ATK.reach || b.x <= ctx.bounds.x0 || b.x + b.w >= ctx.bounds.x1) {
+        if (gap <= STRIKE_ATK.reach || atWall()) {
+          clamp();
           fs.mode = 'jabWind';
           fs.t = STRIKE_ATK.jabWindup;
         }
         break;
       }
 
-      // THE WIND-UP IS THE FAIRNESS. He plants and telegraphs before the
-      // flurry, which is the window to slide out of reach or hit him first.
       case 'jabWind': {
         b.y = groundY;
         if (--fs.t > 0) break;
@@ -1882,10 +1974,15 @@ function strikeAttack(layer) {
 
       case 'jab': {
         b.y = groundY;
+        const hx = fs.dir > 0 ? b.x + b.w : b.x - STRIKE_ATK.jabReach;
+        const hy = b.y + b.h * 0.3, hh = 8;
+        // The glove stays out for the first few steps of each jab, so the
+        // straight punch is seen, not just felt.
+        if (fs.t > STRIKE_ATK.jabGap - 4) b.fist = { x: hx, y: hy, w: STRIKE_ATK.jabReach, h: hh };
         if (--fs.t > 0) break;
         fs.t = STRIKE_ATK.jabGap;
-        const hx = fs.dir > 0 ? b.x + b.w : b.x - STRIKE_ATK.jabReach;
-        if (boxHitsPlayer(ctx, hx, b.y + b.h * 0.3, STRIKE_ATK.jabReach, b.h * 0.5)) {
+        b.fist = { x: hx, y: hy, w: STRIKE_ATK.jabReach, h: hh };
+        if (boxHitsPlayer(ctx, hx, hy, STRIKE_ATK.jabReach, hh)) {
           ctx.hurt(bcx, STRIKE_ATK.jabDamage);
         }
         if (--fs.hits > 0) break;
@@ -1893,11 +1990,47 @@ function strikeAttack(layer) {
         if (layer >= 3 && Math.random() < 0.4) {
           fs.mode = 'dash';
           fs.dir = -fs.dir;
-          fs.t = 0;
           break;
         }
-        fs.mode = 'rise';
-        fs.t = STRIKE_ATK.riseWindup;
+        backOff(-fs.dir);
+        break;
+      }
+
+      // Rocks back, glove cocked behind him. Drifts a few pixels back too, so
+      // the lean reads on a plain rectangle.
+      case 'lean': {
+        b.y = groundY;
+        b.x -= fs.dir * 0.2;
+        clamp();
+        b.fist = { x: fs.dir > 0 ? b.x - 6 : b.x + b.w - 4, y: b.y + b.h * 0.25, w: 10, h: 10 };
+        if (--fs.t > 0) break;
+        fs.mode = 'lunge';
+        fs.left = STRIKE_ATK.lungeDist;
+        fs.hit = false;
+        ctx.sfx('shootBig', { pitch: 0.7 });
+        break;
+      }
+
+      case 'lunge': {
+        b.x += fs.dir * STRIKE_ATK.lungeSpeed;
+        b.y = groundY;
+        clamp();
+        fs.left -= STRIKE_ATK.lungeSpeed;
+        const fw = 12, fh = 10;
+        const fx = fs.dir > 0 ? b.x + b.w : b.x - fw;
+        const fy = b.y + b.h * 0.3;
+        b.fist = { x: fx, y: fy, w: fw, h: fh };
+        if (!fs.hit && boxHitsPlayer(ctx, fx, fy, fw, fh)) {
+          fs.hit = true;
+          ctx.hurt(bcx, STRIKE_ATK.lungeDamage);
+        }
+        if (fs.left <= 0 || atWall()) { fs.mode = 'recover'; fs.t = STRIKE_ATK.lungeRecover; }
+        break;
+      }
+
+      case 'recover': {
+        b.y = groundY;
+        if (--fs.t <= 0) toStalk();
         break;
       }
 
@@ -1905,7 +2038,7 @@ function strikeAttack(layer) {
         if (--fs.t > 0) break;
         fs.mode = 'rising';
         fs.vy = STRIKE_ATK.riseVy;
-        fs.chase = STRIKE_ATK.riseChase[layer];
+        fs.chase = STRIKE_ATK.riseChase;
         break;
       }
 
@@ -1924,9 +2057,7 @@ function strikeAttack(layer) {
         }
         if (b.y >= groundY) {
           b.y = groundY;
-          fs.mode = 'stalk';
-          fs.t = rnd(...STRIKE_ATK.rest[layer]);
-          fs.guard = STRIKE_ATK.guardFrames[layer];
+          toStalk();
         }
         break;
       }
@@ -1940,9 +2071,7 @@ function strikeAttack(layer) {
           vx: v.x * STRIKE_ATK.blastSpeed, vy: v.y * STRIKE_ATK.blastSpeed,
           radius: 4, damage: 2, color: b.primary, shape: 'spark', life: 240,
         });
-        fs.mode = 'stalk';
-        fs.t = rnd(...STRIKE_ATK.rest[layer]);
-        fs.guard = STRIKE_ATK.guardFrames[layer];
+        toStalk();
         break;
       }
 
@@ -1966,9 +2095,7 @@ function strikeAttack(layer) {
         }
         if (--fs.t > 0) break;
         b.y = groundY;
-        fs.mode = 'stalk';
-        fs.t = rnd(...STRIKE_ATK.rest[layer]);
-        fs.guard = STRIKE_ATK.guardFrames[layer];
+        toStalk();
         break;
       }
     }
