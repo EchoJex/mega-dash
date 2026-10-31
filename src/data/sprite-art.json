@@ -1,4 +1,145 @@
 {
+  "boss:strike:body": {
+    "file": "boss-strike-body.png",
+    "frameW": 96,
+    "frameH": 64,
+    "anchor": "pivot",
+    "pivot": [
+      48,
+      60
+    ],
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0,
+        1
+      ],
+      "walk": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "guard": [
+        6
+      ],
+      "jabReady": [
+        7
+      ],
+      "jab": [
+        8,
+        9
+      ],
+      "back": [
+        10,
+        11
+      ],
+      "lean": [
+        12,
+        13
+      ],
+      "lunge": [
+        14,
+        15
+      ],
+      "recover": [
+        16
+      ],
+      "down": [
+        17,
+        18
+      ],
+      "dizzy": [
+        19,
+        20
+      ],
+      "riseReady": [
+        21
+      ],
+      "rise": [
+        22,
+        23
+      ],
+      "blast": [
+        24,
+        25
+      ],
+      "spinReady": [
+        26
+      ],
+      "spin": [
+        27,
+        28,
+        29,
+        30
+      ]
+    },
+    "holds": {
+      "idle": [
+        30,
+        30
+      ],
+      "walk": [
+        8,
+        8,
+        8,
+        8
+      ],
+      "guard": [
+        10
+      ],
+      "jabReady": [
+        12
+      ],
+      "jab": [
+        4,
+        6
+      ],
+      "back": [
+        7,
+        7
+      ],
+      "lean": [
+        15,
+        15
+      ],
+      "lunge": [
+        4,
+        4
+      ],
+      "recover": [
+        18
+      ],
+      "down": [
+        10,
+        40
+      ],
+      "dizzy": [
+        20,
+        20
+      ],
+      "riseReady": [
+        20
+      ],
+      "rise": [
+        6,
+        6
+      ],
+      "blast": [
+        20,
+        8
+      ],
+      "spinReady": [
+        22
+      ],
+      "spin": [
+        5,
+        5,
+        5,
+        5
+      ]
+    }
+  },
   "player": {
     "file": "player.png",
     "frameW": 24,

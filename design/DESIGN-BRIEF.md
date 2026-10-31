@@ -90,7 +90,8 @@ the code wins if they ever differ.
 - Characters stand with their **feet on the floor line**; bullets are drawn from their
   middle.
 - **Bosses stay plain rectangles at their true footprint** until the owner asks for that
-  boss's sprite by name. Do not invent silhouettes.
+  boss's sprite by name. Do not invent silhouettes. Strike Man (Fighting) was asked for on
+  31 Oct 2026: his brief is `design/weapon-art/strike.md`.
 
 ## 5. Draw order, back to front
 

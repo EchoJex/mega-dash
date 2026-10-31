@@ -46,6 +46,8 @@ import {
   playerClip, hexNum, MANIFEST,
 } from '../systems/assets.js';
 import { makeArenaArt } from '../systems/arena-art/index.js';
+import { bossSheet } from '../data/weapon-art.js';
+import { clipOf, cellAt } from '../systems/frame-data.js';
 
 /**
  * How far into the arena track the room's clock starts: the boss door's whole
@@ -3050,11 +3052,16 @@ export default class GameScene extends Phaser.Scene {
       // He materialises out of the last quarter of the beam rather than
       // appearing when it is already gone.
       if (beam >= 0.75) {
-        // Knocked flat: drawn lying on the mat. Only the picture lies down;
-        // the collision box stays his standing one.
-        const lieH = b.down ? Math.round(b.h * 0.4) : b.h;
-        const body = L.boss.draw({
-          id: b.id, x: sx(b.x), y: sy(b.y + b.h - lieH), w: b.w, h: lieH,
+        // A boss with a drawn sheet (Strike Man) plays the clip his fight
+        // names, on the fight's own clock, held by the floor under his
+        // middle and mirrored to face the player. The rest stay rectangles.
+        const sheet = bossSheet(b.id);
+        const cell = sheet ? cellAt(clipOf(sheet, b.clip || 'idle'), b.clip ? Math.max(0, b.clipT - 1) : b.anim, true) : -1;
+        const drawn = cell >= 0 && L.boss.drawCell({
+          id: sheet, x: sx(b.x + b.w / 2), y: sy(b.y + b.h), cell, facing: b.facing ?? -1,
+        });
+        const body = drawn || L.boss.draw({
+          id: b.id, x: sx(b.x), y: sy(b.y), w: b.w, h: b.h,
           facing: -1, clip: b.state,
           palette: { primary: b.primary, secondary: b.secondary, outline: b.outline },
         });

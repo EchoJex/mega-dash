@@ -554,6 +554,15 @@ read every step and area from frame data, and a redrawn sheet that moves a hit t
 still passes. A weapon's real rules are tests (a jab still fits its chain window; **every
 blow reaches a minion standing against him**) and appear in words in its brief.
 
+**A BOSS GOES THROUGH THE SAME LOOP** (owner, 31 Oct 2026; Strike Man first). His whole
+body is one sheet, `design/sprites/boss-<id>-body.sprite`, registered in `weapon-art.js`
+with `boss: true`, with a rig in `tools/art/<id>.mjs` and a brief in `design/weapon-art/`.
+His drawing sets his moves' timing and hit areas; his fight reads them with `clipOf`, and
+publishes `b.clip`, `b.clipT` and `b.facing` for `GameScene.draw`, which mirrors him to face
+the player. A `travel` clip loops while a move carries him and hurts from its hit frame on.
+**His punches must reach a 24-tall player**: a fist at a big boss's own chest height
+sails over the player's head, which is how the boxer's first jabs could never land.
+
 **Each slice's `weapon art` line shows how far its weapon has got** (owner, 26 Oct 2026):
 three tick boxes — `ready for design` (placeholders and brief done), `back from design`
 (the handoff has come back), `in game` (imported and pushed). Claude ticks them as the

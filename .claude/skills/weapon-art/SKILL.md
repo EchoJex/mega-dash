@@ -1,9 +1,13 @@
 ---
 name: weapon-art
-description: The MEGA DASH weapon-art loop — Claude Code builds a weapon's placeholder sprite sheets with its real frame data (timing, hit areas, pivots), hands them to Claude Design through the repo, and brings Design's handoff zip back with npm run design:import. Use when a weapon's mechanics are done and it needs its art contract or a Claude Design prompt; when the owner gives you a Claude Design handoff (a zip, a folder, a bundle link, or a "fetch this design" prompt) for weapon or sprite art; or when asked to change a weapon's frame timing, hit areas or hitboxes.
+description: The MEGA DASH weapon-art loop — Claude Code builds a weapon's placeholder sprite sheets with its real frame data (timing, hit areas, pivots), hands them to Claude Design through the repo, and brings Design's handoff zip back with npm run design:import. Bosses use the same loop (boss-<id>-body.sprite, Strike Man first). Use when a weapon's or a boss's mechanics are done and it needs its art contract or a Claude Design prompt; when the owner gives you a Claude Design handoff (a zip, a folder, a bundle link, or a "fetch this design" prompt) for weapon or sprite art; or when asked to change a weapon's frame timing, hit areas or hitboxes.
 ---
 
 # Weapon art: Code → Design → Code
+
+**A boss is drawn the same way** (owner, 31 Oct 2026): one `body` sheet, registered with
+`boss: true` in `src/data/weapon-art.js`, its rig in `tools/art/<boss id>.mjs`, its brief in
+`design/weapon-art/<boss id>.md`. Strike Man is the worked example; read "weapon" as "boss".
 
 The owner's process for every weapon, set on 12 Oct 2026:
 

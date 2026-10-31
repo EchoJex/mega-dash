@@ -964,3 +964,33 @@ test('Strike Man lunges across the room, back-dashes from shots, and is dazed by
   }
   assert.deepEqual(dazes, ['stars', 'birds']);
 });
+
+/**
+ * STRIKE MAN'S DRAWING SETS HIS TIMING — these are the rules a redrawn sheet
+ * must still keep (tools/art/strike.mjs says them in words for the brief).
+ * Every number is read from frame data, so a redraw that moves a hit passes.
+ */
+test("Strike Man's drawn hit areas still reach the player", async () => {
+  const { clipOf, areaAt } = await import('../src/systems/frame-data.js');
+  const K = 'boss:strike:body';
+  const W = 38, H = 44;                         // his collision box, centred on the pivot
+  const px = 200, py = FLOOR;
+  const body = { x: px - W / 2, y: py - H, w: W, h: H };
+  const against = { x: body.x + W, y: FLOOR - 22, w: 12, h: 22 };   // a player touching his front
+  const hits = (r, o) => r.x < o.x + o.w && r.x + r.w > o.x && r.y < o.y + o.h && r.y + r.h > o.y;
+  for (const name of ['jab', 'lunge']) {
+    const r = areaAt(clipOf(K, name).hits[0], px, py, 1);
+    assert.ok(hits(r, against), `${name} must reach a player standing against him`);
+    assert.ok(hits(areaAt(clipOf(K, name).hits[0], px, py, -1),
+      { ...against, x: body.x - 12 }), `${name} must reach him facing left too`);
+  }
+  const rise = areaAt(clipOf(K, 'rise').hits[0], px, py, 1);
+  assert.ok(rise.y < body.y && hits(rise, { x: px - 6, y: body.y - 10, w: 12, h: 8 }),
+    'the uppercut must cover the space above his head');
+  const spin = areaAt(clipOf(K, 'spin').hits[0], px, py, 1);
+  assert.ok(spin.x <= body.x && spin.x + spin.w >= body.x + W, 'the spinning kick must cover his body');
+  assert.equal(clipOf(K, 'blast').spawns.length, 1, 'the blast needs exactly one spawn point');
+  for (const name of ['jabReady', 'jab', 'back', 'lean', 'recover', 'down', 'riseReady', 'spinReady', 'blast']) {
+    assert.ok(clipOf(K, name).total > 0, `${name} must last at least one step`);
+  }
+});

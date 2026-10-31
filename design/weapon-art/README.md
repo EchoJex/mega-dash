@@ -7,6 +7,12 @@ named after it (`quake_hammer.md`), with every number for its sheets.
 
 If this page and `CLAUDE.md` disagree, `CLAUDE.md` is right and this page is the bug.
 
+**Bosses go through the same loop** (owner, 31 Oct 2026). A boss's whole body is one sheet,
+`design/sprites/boss-<boss>-body.sprite`, with its brief beside the weapons' in this folder
+(`strike.md`). Everything here applies to it: the drawing sets how long each of his moves
+takes, the step each blow lands and what it hits. Read "weapon" as "boss" throughout, and
+read section 5's *A boss sheet* for what differs.
+
 ---
 
 ## 1. The loop, and where you come in
@@ -31,6 +37,7 @@ in your files ARE the game**. Change them on purpose, and say why in your note.
 | what | where |
 |---|---|
 | the weapon's sheets — what you redraw | `design/sprites/weapon-<weapon>-<sheet>.sprite` |
+| a boss's sheet — what you redraw | `design/sprites/boss-<boss>-body.sprite` |
 | the weapon's brief — what it is, every clip's numbers, the rules | `design/weapon-art/<weapon>.md` |
 | the game's look and limits | `design/DESIGN-BRIEF.md` |
 | the reference for 16-bit style and for scale | `design/sprites/player.sprite` (the player, 24×24) |
@@ -128,6 +135,11 @@ that breaks one is refused with the reason.
 - **The Granite Form replaces him outright** while it holds: its `statue` and `boulder`
   sheets are drawn in place of his picture, standing on his feet. They are rock, in Granite
   Man's colours, not the player's twelve.
+- **A boss sheet replaces his plain block outright**, standing on its pivot, the floor
+  under the middle of his collision box. That box is what the player's shots hit and what
+  hurts to touch; draw his body to fill about that size (the brief gives it). He is drawn
+  in his own colours, and the game mirrors him to face the player. Anything the game draws
+  over him itself — the stars and birdies when he is dizzy — stays the game's.
 - **The placeholder's sizes are the owner's.** The Quake Hammer was made a quarter shorter
   after a playtest; draw to the size the placeholder shows, not bigger.
 

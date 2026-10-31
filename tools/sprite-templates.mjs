@@ -596,11 +596,11 @@ const targets = {
    * real frame lists, holds and hit areas are the files' own.
    */
   weapons: Object.fromEntries(weaponSheets().map((w) => {
-    const owner = weaponRows.find((r) => r.id === w.weapon);
-    if (!owner) throw new Error(`weapon art for '${w.weapon}', which is not in data/weapons.js`);
+    const owner = w.boss ? bossRows.find((r) => r.id === w.weapon) : weaponRows.find((r) => r.id === w.weapon);
+    if (!owner) throw new Error(`art for '${w.weapon}', which is not in data/weapons.js or data/bosses.js`);
     return [w.id, {
       label: `${owner.name} · ${w.sheet.toUpperCase()}`, cls: 'weapon', key: w.key,
-      weapon: w.weapon, sheet: w.sheet, boss: owner.boss, layer: w.layer,
+      weapon: w.weapon, sheet: w.sheet, boss: w.boss ? w.weapon : owner.boss, layer: w.layer,
       grid: { ...w.grid }, box: null,
       clips: { ...w.clips },
       frames: Object.keys(w.clips),

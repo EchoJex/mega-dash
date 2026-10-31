@@ -347,6 +347,7 @@ export const CLIP_KINDS = {
   grow: 'plays once; starts with frames marked with a bare hit (they hurt), then frames without (they stand)',
   lash: 'plays once; exactly two frames carry hit=x,y,w,h — the first hurts lightly while it shows, the second is the main hit and its area is the tip',
   still: 'a single frame; no hit',
+  travel: 'loops while the move carries him; exactly one frame carries hit=x,y,w,h — from the step that frame first shows, that area hurts until the move ends',
 };
 
 /**
@@ -388,7 +389,7 @@ export function checkFrameData(doc, spec) {
         out.push(`${name} ${f.index}: its spawn point ${f.spawn.x},${f.spawn.y} is off the sheet`);
       }
     }
-    if (kind === 'hit') {
+    if (kind === 'hit' || kind === 'travel') {
       if (rects.length !== 1) out.push(`${name} needs exactly one frame with a hit area (hit=x,y,w,h); it has ${rects.length}`);
       if (bares.length) out.push(`${name}: a bare 'hit' means nothing here — give it a hit area`);
     } else if (kind === 'lash') {

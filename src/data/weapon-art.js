@@ -31,6 +31,10 @@
  * as a frame index (`jab2` would become action `jab`, frame 3), so the jabs are
  * `jabTwo` and `jabThree`.
  *
+ * A BOSS GOES THROUGH THE SAME LOOP (owner, 31 Oct 2026): an entry with
+ * `boss: true`, keyed by the boss's id, whose files are `boss-<id>-<sheet>`.
+ * His drawing sets his moves' timing and hit areas exactly as a weapon's does.
+ *
  * ADDING A WEAPON'S ART is one entry here, a placeholder rig in `tools/art/`,
  * and `npm run art:placeholders -- <weapon>` — see the `weapon-art` skill.
  */
@@ -203,20 +207,54 @@ export const WEAPON_ART = {
       },
     },
   },
+
+  /**
+   * STRIKE MAN, the Fighting boss — a heavyweight boxer (owner, 31 Oct 2026).
+   * One sheet, his whole body, held by the floor under the middle of his
+   * collision box and drawn facing right; the game mirrors it when he faces
+   * left, which is whenever the player is to his left.
+   *
+   * `travel` clips loop for as long as the move carries him (the lunge, the
+   * uppercut, the spinning kick), and their hit area hurts from the step its
+   * frame first shows until the move ends. Every other clip's length is how
+   * long that part of the fight lasts: the jab's is the gap between two jabs.
+   * The blast's spawn point is where, and on which step, the shot leaves.
+   */
+  strike: {
+    boss: true,
+    sheets: {
+      body: {
+        grid: { w: 96, h: 64 }, layer: 'boss', heldBy: 'the floor under the middle of him',
+        clips: {
+          idle: 'loop', walk: 'loop', guard: 'loop',
+          jabReady: 'once', jab: 'hit', back: 'once',
+          lean: 'once', lunge: 'travel', recover: 'once',
+          down: 'once', dizzy: 'loop',
+          riseReady: 'once', rise: 'travel',
+          blast: 'once', spinReady: 'once', spin: 'travel',
+        },
+      },
+    },
+  },
 };
 
-/** `weapon-quake_hammer-held` — the `.sprite` file's name, and the editor's id. */
-export const sheetId = (weapon, sheet) => `weapon-${weapon}-${sheet}`;
+const kindOf = (owner) => (WEAPON_ART[owner]?.boss ? 'boss' : 'weapon');
 
-/** `weapon:quake_hammer:held` — the MANIFEST key, and the frame data's. */
-export const sheetKey = (weapon, sheet) => `weapon:${weapon}:${sheet}`;
+/** `weapon-quake_hammer-held` (or `boss-strike-body`) — the `.sprite` file's name. */
+export const sheetId = (owner, sheet) => `${kindOf(owner)}-${owner}-${sheet}`;
+
+/** `weapon:quake_hammer:held` (or `boss:strike:body`) — the MANIFEST key, and the frame data's. */
+export const sheetKey = (owner, sheet) => `${kindOf(owner)}:${owner}:${sheet}`;
+
+/** A boss's body sheet key, or null for a boss still drawn as a rectangle. */
+export const bossSheet = (id) => (WEAPON_ART[id]?.boss ? sheetKey(id, 'body') : null);
 
 /** Every registered sheet, flat, with its id and key worked out. */
 export function weaponSheets() {
   const out = [];
   for (const [weapon, def] of Object.entries(WEAPON_ART)) {
     for (const [sheet, s] of Object.entries(def.sheets)) {
-      out.push({ weapon, sheet, id: sheetId(weapon, sheet), key: sheetKey(weapon, sheet), ...s });
+      out.push({ weapon, sheet, id: sheetId(weapon, sheet), key: sheetKey(weapon, sheet), boss: !!def.boss, ...s });
     }
   }
   return out;

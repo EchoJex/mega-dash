@@ -3722,6 +3722,56 @@
       "frames": [
         "blow"
       ]
+    },
+    "boss-strike-body": {
+      "label": "STRIKE MAN · BODY",
+      "cls": "weapon",
+      "key": "boss:strike:body",
+      "weapon": "strike",
+      "sheet": "body",
+      "boss": "strike",
+      "layer": "boss",
+      "grid": {
+        "w": 96,
+        "h": 64
+      },
+      "box": null,
+      "clips": {
+        "idle": "loop",
+        "walk": "loop",
+        "guard": "loop",
+        "jabReady": "once",
+        "jab": "hit",
+        "back": "once",
+        "lean": "once",
+        "lunge": "travel",
+        "recover": "once",
+        "down": "once",
+        "dizzy": "loop",
+        "riseReady": "once",
+        "rise": "travel",
+        "blast": "once",
+        "spinReady": "once",
+        "spin": "travel"
+      },
+      "frames": [
+        "idle",
+        "walk",
+        "guard",
+        "jabReady",
+        "jab",
+        "back",
+        "lean",
+        "lunge",
+        "recover",
+        "down",
+        "dizzy",
+        "riseReady",
+        "rise",
+        "blast",
+        "spinReady",
+        "spin"
+      ]
     }
   },
   "avgBoss": {

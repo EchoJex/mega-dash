@@ -40,6 +40,7 @@ import { FEEL } from '../config/feel.js';
  * arena.js must never import THIS file.
  */
 import { BEAT_LEN as BEAT } from './arena.js';
+import { clipOf, areaAt, pointAt } from './frame-data.js';
 /** One second, for durations that are real seconds rather than beats. */
 const SEC = 60;
 
@@ -1510,7 +1511,7 @@ const STRIKE_HAZ = {
    *  animation for 5 seconds. Subsequent bag ... little yellow birdies orbit
    *  and the stun lasts 7 seconds." (owner, 31 Oct 2026)
    */
-  downFrames: 50,
+  // How long he lies on the mat is his `down` clip's length; the daze is the owner's.
   dazeFrames: { stars: 300, birds: 420 },
   /**
    * The chance he yanks a bag down to block, rolled on each RANGED hit.
@@ -1539,9 +1540,9 @@ export const strikeDazed = (b) => b.fs?.mode === 'down' || b.fs?.mode === 'dizzy
  */
 function knockDown(b) {
   b.dazes = (b.dazes || 0) + 1;
-  b.fs = { ...(b.fs || {}), mode: 'down', t: STRIKE_HAZ.downFrames, guard: 0 };
+  b.fs = { ...(b.fs || {}), mode: 'down', guard: 0 };
   b.guard = 0;
-  b.fist = null;
+  strikePlay(b, 'down', true);
 }
 
 /**
@@ -1813,49 +1814,56 @@ const STRIKE_ATK = {
   dash: { 1: 1.6, 2: 1.9, 3: 2.2 },
   rest: { 1: [70, 120], 2: [60, 100], 3: [50, 90] },
   reach: 34,               // close enough to jab rather than lunge
-  // STRAIGHT JABS — short and quick, off a short wind-up.
-  jabWindup: 12,
   jabs: { 1: 3, 2: 3, 3: 4 },
-  jabGap: 10,
-  jabReach: 22,
   jabDamage: 1,
   // BACK DASH — the dodge. Fired at a player shot closing on him, and after
-  // every jab string, Balrog-style: hit, then get out.
+  // every jab string, Balrog-style: hit, then get out. It lasts as long as
+  // its drawing.
   backSpeed: 3.2,
-  backFrames: 14,
   backSense: 56,           // how close a shot gets before he reacts
   backChance: { 1: 0.5, 2: 0.6, 3: 0.7 },
   backCool: 90,
-  // LUNGE — lean back, then the gloved fist crosses the room.
-  lungeLean: 30,
   lungeSpeed: 4.4,
   lungeDist: 150,
   lungeDamage: 3,
-  lungeRecover: 18,
-  // RISING BREAK — L2+, an anti-air.
-  riseWindup: 20,
   riseVy: -4.6,
   riseGrav: 0.3,
   riseDamage: 2,
-  riseW: 24,
   riseChase: 1,            // extra upward beats before he falls
-  // GUARD — L2+. Reflects the first shot it eats, then drops.
   guardFrames: { 1: 0, 2: 70, 3: 55 },
-  // FORCE BLAST — L3, thrown when the player will not come close.
-  blastWindup: 28,
   blastSpeed: 2.5,
   blastFar: 70,
-  // SPINNING KICK — L3. Crosses the room at head height.
-  spinWindup: 22,
   spinSpeed: 2.4,
   spinFrames: 80,
   spinDamage: 2,
 };
 
+/**
+ * HIS DRAWING SETS HIS TIMING (owner, 31 Oct 2026). How long each wind-up,
+ * jab, back-dash and recovery lasts, the step each punch lands on, and what
+ * it hits are read from `design/sprites/boss-strike-body.sprite` — the same
+ * contract as weapon art (src/data/weapon-art.js). What stays above is what
+ * is not animation: speeds, distances, damage, and how often he chooses what.
+ */
+const STRIKE_SHEET = 'boss:strike:body';
+const strikeClip = (name) => clipOf(STRIKE_SHEET, name);
+
+/** Show `name` from its first frame — or carry on, if it is already showing. */
+function strikePlay(b, name, restart = false) {
+  if (!restart && b.clip === name) return;
+  b.clip = name;
+  b.clipT = 0;
+}
+
+/** The world box a clip's hit frame covers, from where he stands and faces. */
+function strikeArea(b, name) {
+  return areaAt(strikeClip(name).hits[0], b.x + b.w / 2, b.y + b.h, b.facing || 1);
+}
+
 /** Does a box overlap the player's? Local, because a fight sees only its ctx. */
-const boxHitsPlayer = (ctx, x, y, w, h) => {
+const boxHitsPlayer = (ctx, r) => {
   const p = ctx.playerBox;
-  return p.x < x + w && p.x + p.w > x && p.y < y + h && p.y + p.h > y;
+  return p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y;
 };
 
 /** A player shot closing on him at body height — the thing he back-dashes from. */
@@ -1884,25 +1892,29 @@ function strikeAttack(layer) {
     const overhead = (p.y + 24) < b.y + b.h * 0.4 && gap < STRIKE_ATK.reach * 1.4;
     const atWall = () => b.x <= ctx.bounds.x0 || b.x + b.w >= ctx.bounds.x1;
     const clamp = () => { b.x = Math.max(ctx.bounds.x0, Math.min(ctx.bounds.x1 - b.w, b.x)); };
-    const backOff = (dir) => { fs.mode = 'back'; fs.dir = dir; fs.t = STRIKE_ATK.backFrames; };
+    const go = (mode, clip, dir = fs.dir) => { fs.mode = mode; fs.dir = dir; strikePlay(b, clip, true); };
     const toStalk = () => {
       fs.mode = 'stalk';
       fs.t = rnd(...STRIKE_ATK.rest[layer]);
       fs.guard = STRIKE_ATK.guardFrames[layer];
+      strikePlay(b, 'walk');
     };
-    b.fist = null;
+    if (!b.clip) strikePlay(b, 'idle');
+    const t = b.clipT;                 // this step's place in the clip showing
+    const c = strikeClip(b.clip);
+    const ended = t + 1 >= c.total;    // this is the clip's last step
     if (fs.cool > 0) fs.cool--;
+    let face = b.facing || toward;
 
     switch (fs.mode) {
       // KNOCKED DOWN by a psychic bag (see knockDown), then up and dizzy.
       case 'down': {
         b.y = groundY;
-        b.down = true;
-        if (--fs.t > 0) break;
-        b.down = false;
+        if (!ended) break;
         b.daze = b.dazes > 1 ? 'birds' : 'stars';
         fs.mode = 'dizzy';
         fs.t = STRIKE_HAZ.dazeFrames[b.daze];
+        strikePlay(b, 'dizzy', true);
         break;
       }
 
@@ -1915,134 +1927,122 @@ function strikeAttack(layer) {
       }
 
       case 'stalk': {
+        face = toward;
         b.x += toward * STRIKE_ATK.walk[layer];
         b.y = groundY;
         // L2+: he covers himself while walking, so chipping him down from
         // across the room stops being free.
         if (STRIKE_ATK.guardFrames[layer] && fs.guard > 0) fs.guard--;
+        strikePlay(b, b.guard > 0 ? 'guard' : 'walk');
         // THE DODGE. A shot closing in, and he skips back out of its way.
         const from = fs.cool ? 0 : shotIncoming(ctx, b);
         if (from) {
           fs.cool = STRIKE_ATK.backCool;
-          if (Math.random() < STRIKE_ATK.backChance[layer]) { backOff(from); break; }
+          if (Math.random() < STRIKE_ATK.backChance[layer]) { go('back', 'back', from); break; }
         }
         if (--fs.t > 0) break;
 
-        if (layer >= 2 && overhead) { fs.mode = 'rise'; fs.t = STRIKE_ATK.riseWindup; break; }
+        if (layer >= 2 && overhead) { go('riseReady', 'riseReady', toward); break; }
         if (layer >= 3 && gap > STRIKE_ATK.blastFar && Math.random() < 0.5) {
-          fs.mode = Math.random() < 0.5 ? 'blast' : 'spin';
-          fs.t = fs.mode === 'blast' ? STRIKE_ATK.blastWindup : STRIKE_ATK.spinWindup;
-          fs.dir = toward;
+          if (Math.random() < 0.5) go('blast', 'blast', toward);
+          else go('spinReady', 'spinReady', toward);
           break;
         }
-        fs.dir = toward;
-        if (gap <= STRIKE_ATK.reach) { fs.mode = 'jabWind'; fs.t = STRIKE_ATK.jabWindup; break; }
-        fs.mode = 'lean';
-        fs.t = STRIKE_ATK.lungeLean;
+        if (gap <= STRIKE_ATK.reach) go('jabReady', 'jabReady', toward);
+        else go('lean', 'lean', toward);
         break;
       }
 
+      // He faces the player while he skips back away from them.
       case 'back': {
+        face = -fs.dir;
         b.x += fs.dir * STRIKE_ATK.backSpeed;
         b.y = groundY;
         clamp();
-        if (--fs.t <= 0 || atWall()) toStalk();
+        if (ended || atWall()) toStalk();
         break;
       }
 
       // L3's mid-string dash to the other side; it ends in a fresh jab string.
       case 'dash': {
+        face = fs.dir;
         b.x += fs.dir * STRIKE_ATK.dash[layer];
         b.y = groundY;
         if (gap <= STRIKE_ATK.reach || atWall()) {
           clamp();
-          fs.mode = 'jabWind';
-          fs.t = STRIKE_ATK.jabWindup;
+          go('jabReady', 'jabReady', toward);
         }
         break;
       }
 
-      case 'jabWind': {
+      case 'jabReady': {
+        face = fs.dir;
         b.y = groundY;
-        if (--fs.t > 0) break;
-        fs.mode = 'jab';
+        if (!ended) break;
         fs.hits = STRIKE_ATK.jabs[layer];
-        fs.t = 0;
-        fs.dir = toward;
+        go('jab', 'jab');
         break;
       }
 
+      // One straight jab is one play of the clip: it lands on its hit step,
+      // and the next starts when it ends.
       case 'jab': {
+        face = fs.dir;
         b.y = groundY;
-        const hx = fs.dir > 0 ? b.x + b.w : b.x - STRIKE_ATK.jabReach;
-        const hy = b.y + b.h * 0.3, hh = 8;
-        // The glove stays out for the first few steps of each jab, so the
-        // straight punch is seen, not just felt.
-        if (fs.t > STRIKE_ATK.jabGap - 4) b.fist = { x: hx, y: hy, w: STRIKE_ATK.jabReach, h: hh };
-        if (--fs.t > 0) break;
-        fs.t = STRIKE_ATK.jabGap;
-        b.fist = { x: hx, y: hy, w: STRIKE_ATK.jabReach, h: hh };
-        if (boxHitsPlayer(ctx, hx, hy, STRIKE_ATK.jabReach, hh)) {
+        if (t === c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'jab'))) {
           ctx.hurt(bcx, STRIKE_ATK.jabDamage);
         }
-        if (--fs.hits > 0) break;
+        if (!ended) break;
+        if (--fs.hits > 0) { strikePlay(b, 'jab', true); break; }
         // L3 can cancel the string into a dash and finish from the other side.
-        if (layer >= 3 && Math.random() < 0.4) {
-          fs.mode = 'dash';
-          fs.dir = -fs.dir;
-          break;
-        }
-        backOff(-fs.dir);
+        if (layer >= 3 && Math.random() < 0.4) { go('dash', 'walk', -fs.dir); break; }
+        go('back', 'back', -fs.dir);
         break;
       }
 
-      // Rocks back, glove cocked behind him. Drifts a few pixels back too, so
-      // the lean reads on a plain rectangle.
+      // Rocks back, glove cocked behind him — the lunge's warning.
       case 'lean': {
+        face = fs.dir;
         b.y = groundY;
-        b.x -= fs.dir * 0.2;
-        clamp();
-        b.fist = { x: fs.dir > 0 ? b.x - 6 : b.x + b.w - 4, y: b.y + b.h * 0.25, w: 10, h: 10 };
-        if (--fs.t > 0) break;
-        fs.mode = 'lunge';
+        if (!ended) break;
         fs.left = STRIKE_ATK.lungeDist;
         fs.hit = false;
+        go('lunge', 'lunge');
         ctx.sfx('shootBig', { pitch: 0.7 });
         break;
       }
 
       case 'lunge': {
+        face = fs.dir;
         b.x += fs.dir * STRIKE_ATK.lungeSpeed;
         b.y = groundY;
         clamp();
         fs.left -= STRIKE_ATK.lungeSpeed;
-        const fw = 12, fh = 10;
-        const fx = fs.dir > 0 ? b.x + b.w : b.x - fw;
-        const fy = b.y + b.h * 0.3;
-        b.fist = { x: fx, y: fy, w: fw, h: fh };
-        if (!fs.hit && boxHitsPlayer(ctx, fx, fy, fw, fh)) {
+        if (!fs.hit && t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'lunge'))) {
           fs.hit = true;
           ctx.hurt(bcx, STRIKE_ATK.lungeDamage);
         }
-        if (fs.left <= 0 || atWall()) { fs.mode = 'recover'; fs.t = STRIKE_ATK.lungeRecover; }
+        if (fs.left <= 0 || atWall()) go('recover', 'recover');
         break;
       }
 
       case 'recover': {
         b.y = groundY;
-        if (--fs.t <= 0) toStalk();
+        if (ended) toStalk();
+        break;
+      }
+
+      case 'riseReady': {
+        face = fs.dir;
+        b.y = groundY;
+        if (!ended) break;
+        fs.vy = STRIKE_ATK.riseVy;
+        fs.chase = STRIKE_ATK.riseChase;
+        go('rise', 'rise');
         break;
       }
 
       case 'rise': {
-        if (--fs.t > 0) break;
-        fs.mode = 'rising';
-        fs.vy = STRIKE_ATK.riseVy;
-        fs.chase = STRIKE_ATK.riseChase;
-        break;
-      }
-
-      case 'rising': {
         b.y += fs.vy;
         fs.vy += STRIKE_ATK.riseGrav;
         // "Chases upward once before he lands" — a second beat of lift if the
@@ -2051,8 +2051,7 @@ function strikeAttack(layer) {
           fs.chase--;
           fs.vy = STRIKE_ATK.riseVy * 0.8;
         }
-        if (boxHitsPlayer(ctx, b.x - (STRIKE_ATK.riseW - b.w) / 2, b.y - 6,
-          STRIKE_ATK.riseW, b.h + 6)) {
+        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'rise'))) {
           ctx.hurt(bcx, STRIKE_ATK.riseDamage);
         }
         if (b.y >= groundY) {
@@ -2062,35 +2061,42 @@ function strikeAttack(layer) {
         break;
       }
 
+      // The shot leaves from the drawn spawn point, on that frame's step.
       case 'blast': {
+        face = fs.dir;
         b.y = groundY;
-        if (--fs.t > 0) break;
-        const v = aimAt(bcx, b.y + b.h * 0.45, p.x + 12, p.y + 12);
-        ctx.shoot({
-          x: bcx, y: b.y + b.h * 0.45,
-          vx: v.x * STRIKE_ATK.blastSpeed, vy: v.y * STRIKE_ATK.blastSpeed,
-          radius: 4, damage: 2, color: b.primary, shape: 'spark', life: 240,
-        });
-        toStalk();
+        const sp = c.spawns[0];
+        if (sp && t === sp.step) {
+          const o = pointAt(sp, bcx, b.y + b.h, face);
+          const v = aimAt(o.x, o.y, p.x + 12, p.y + 12);
+          ctx.shoot({
+            x: o.x, y: o.y,
+            vx: v.x * STRIKE_ATK.blastSpeed, vy: v.y * STRIKE_ATK.blastSpeed,
+            radius: 4, damage: 2, color: b.primary, shape: 'spark', life: 240,
+          });
+        }
+        if (ended) toStalk();
+        break;
+      }
+
+      case 'spinReady': {
+        face = fs.dir;
+        b.y = groundY;
+        if (!ended) break;
+        fs.t = STRIKE_ATK.spinFrames;
+        go('spin', 'spin');
         break;
       }
 
       case 'spin': {
-        b.y = groundY;
-        if (--fs.t > 0) break;
-        fs.mode = 'spinning';
-        fs.t = STRIKE_ATK.spinFrames;
-        break;
-      }
-
-      case 'spinning': {
         b.x += fs.dir * STRIKE_ATK.spinSpeed;
         // Head height, so it cannot simply be jumped — it has to be slid under
         // or stepped around at a wall.
         b.y = groundY - 6;
         if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
-        if (boxHitsPlayer(ctx, b.x - 3, b.y, b.w + 6, b.h)) {
+        face = fs.dir;
+        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'spin'))) {
           ctx.hurt(bcx, STRIKE_ATK.spinDamage);
         }
         if (--fs.t > 0) break;
@@ -2099,6 +2105,9 @@ function strikeAttack(layer) {
         break;
       }
     }
+
+    b.facing = face;
+    b.clipT++;
 
     // THE GUARD IS READ BY THE BULLET LOOP, not applied here. `b.guard` above
     // zero is what makes the next player shot reflect instead of land — see

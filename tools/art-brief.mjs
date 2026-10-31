@@ -24,6 +24,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { WEAPON_ART, weaponSheets } from '../src/data/weapon-art.js';
 import { CLIP_KINDS } from '../docs/sprite-fmt.js';
+import { BOSS_BY_ID } from '../src/data/bosses.js';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
 const GITHUB = 'https://github.com/EchoJex/mega-dash/blob/main';
@@ -42,7 +43,7 @@ export async function contractSection(weapon) {
     const d = FD[w.key];
     const pv = d?.pivot ? `${d.pivot.x}, ${d.pivot.y} — ${w.heldBy}` : `none yet — ${w.heldBy}`;
     out.push(`| [\`${w.id}.sprite\`](${GITHUB}/design/sprites/${w.id}.sprite) | ${w.grid.w}×${w.grid.h} | ${pv} `
-      + `| ${{ held: 'in front of the player', player: 'in place of the player' }[w.layer] ?? 'behind the player'} | ${Object.keys(w.clips).join(', ')} |`);
+      + `| ${{ held: 'in front of the player', player: 'in place of the player', boss: 'in place of the boss' }[w.layer] ?? 'behind the player'} | ${Object.keys(w.clips).join(', ')} |`);
   }
   out.push('', '### Every clip, frame by frame', '',
     'Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bold** is the frame a move '
@@ -93,7 +94,9 @@ function isPlaceholder(id) {
 /** The prompt to paste into Claude Design, naming this weapon's exact files. */
 export function promptSection(weapon) {
   const sheets = weaponSheets().filter((w) => w.weapon === weapon);
-  const name = weapon.replace(/_/g, ' ').toUpperCase();
+  const boss = WEAPON_ART[weapon].boss;
+  const name = boss ? BOSS_BY_ID[weapon].name : weapon.replace(/_/g, ' ').toUpperCase();
+  const thing = boss ? 'boss' : 'weapon';
   // Only sheets still in placeholder shapes are asked for: a finished sheet the owner
   // approved must not be redrawn because a prompt listed it (the hammer's effects, 22 Oct).
   const todo = sheets.filter((w) => isPlaceholder(w.id)), done = sheets.filter((w) => !isPlaceholder(w.id));
@@ -110,9 +113,9 @@ export function promptSection(weapon) {
     '',
     'Everything you need is in the GitHub repository EchoJex/mega-dash, branch main. Link the repository (the '
     + 'design/ and docs/ folders are enough) and read, in this order:',
-    `1. ${GITHUB}/design/weapon-art/README.md — how weapon art works in this game: the .sprite format, what you `
-    + 'may change, how it is checked, and what to hand back.',
-    `2. ${GITHUB}/design/weapon-art/${weapon}.md — this weapon: what it is, what each level shows, every clip `
+    `1. ${GITHUB}/design/weapon-art/README.md — how drawn art with its own timing works in this game (weapons `
+    + 'and bosses alike): the .sprite format, what you may change, how it is checked, and what to hand back.',
+    `2. ${GITHUB}/design/weapon-art/${weapon}.md — this ${thing}: what it is, ${boss ? 'every move he makes' : 'what each level shows'}, every clip `
     + 'with its timing and hit areas, and the rules the code holds the drawing to.',
     `3. ${todo.length === 1 ? 'The sheet' : 'The sheets'} to draw, already in the game and playing exactly as your art will:`,
     files,

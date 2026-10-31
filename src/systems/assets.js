@@ -484,16 +484,6 @@ export function drawDaze(g, kind, cx, cy, t) {
  * lands via MANIFEST this goes away with it.
  */
 export function drawBossRig(g, boss, screenX, screenY = boss.y) {
-  // Strike Man's glove, wherever his punch is this step — the fist IS the
-  // hitbox, so it is drawn at exactly the box that hurts.
-  if (boss.fist) {
-    const f = boss.fist;
-    const fx = Math.round(screenX + f.x - boss.x), fy = Math.round(screenY + f.y - boss.y);
-    g.fillStyle(0x0A0A12, 1);
-    g.fillRect(fx, fy, f.w, f.h);
-    g.fillStyle(0xC81E1E, 1);
-    g.fillRect(fx + 1, fy + 1, f.w - 2, f.h - 2);
-  }
   if (boss.daze) drawDaze(g, boss.daze, screenX + boss.w / 2, screenY - 4, boss.anim || 0);
   if (boss.rig !== 'jetpack') return;
   /**
