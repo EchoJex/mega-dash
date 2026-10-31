@@ -7,7 +7,8 @@ description: The MEGA DASH weapon-art loop — Claude Code builds a weapon's pla
 
 **A boss is drawn the same way** (owner, 31 Oct 2026): one `body` sheet, registered with
 `boss: true` in `src/data/weapon-art.js`, its rig in `tools/art/<boss id>.mjs`, its brief in
-`design/weapon-art/<boss id>.md`. Strike Man is the worked example; read "weapon" as "boss".
+`design/weapon-art/<boss id>.md`. Strike Man is the worked example; read "weapon" as "boss", and tick the slice's
+`boss art` line rather than its `weapon art` line.
 
 The owner's process for every weapon, set on 12 Oct 2026:
 

@@ -107,6 +107,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` 3 bullet burst; bullet does not auto-aim; bullet splits into 3 fragments after a brief time; fragments have moderate auto-aim and rapid acceleration. Fragments can not change target mid flight
 - **weapon Lv10** `[ready]` Weapon now fires straight up instead of Auto aiming; each bullet targets a different enemy, traveling in a wide arc with high strong auto aim and rapidly acceleration bullet speed. 5 shots per second;  does not split into fragments; 30 bullet clip
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[wip]` [x] furniture · [x] arena background · [ ] boss · [x] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
 - **bgm arena** `[wip]`
@@ -140,6 +141,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Adds a second fireball launched simultaneously on a slightly taller, much wider arc, contacting the ground shortly after the first, approximately where the first is projected to terminate, then continuing its own equal roll distance. Up to 2 on screen;
 - **weapon Lv10** `[ready]` Combined effective roll distance shall be full screen (half for each fireball); fireballs explode on contact with enemies, dealing damage with a one fireball radius in all directions and applying 2s Burn to each event damaged. fireballs rapidly accelerate while on the ground
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.42 s) at the bar line, starting on the first sound.
 - **bgm arena** `[wip]`
@@ -175,6 +177,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
 - **bgm arena** `[wip]`
@@ -208,6 +211,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` 2s stun on first enemy contact; chain damage to a total of 3 additional enemies, stunned for 1 sec. ~~No enemy can be hit more than twice in one complete hit+chain hit attack~~
 - **weapon Lv10** `[ready]` Chain damage hits up to 3 nearby enemies near the first enemy contacted; which then continue to chain up to 2 additional nearby enemies, which turn continue to chain to up to 1 additional enemy. ~~No enemy can be hit more than twice in one complete hit+chain hit attack~~
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
 - **bgm arena** `[wip]`
@@ -243,6 +247,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
 - **bgm arena** `[wip]`
@@ -275,6 +280,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Shield now breaks into 4 small ice shards, equally spaced but now the bottom one is 22.5deg below the horizon, and all shards pierce
 - **weapon Lv10** `[wip]` Standing still briefly forms ice armour around the player: incoming damage and knockback are nulled and projectiles reflect back at whoever fired them. The armour FADES as it nulls damage, the same way the shield does at the lower rungs, rather than running on a timer. When it finally breaks it throws a 7-way spread of ice outward in all directions.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-frost-stage.ogg` — plays on the overworld approach to Frost Man's door.
 - **bgm arena** `[wip]`
@@ -307,6 +313,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[wip]` [x] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
 - **bgm arena** `[wip]`
@@ -340,6 +347,7 @@ where each one stands.
 - **weapon Lv6** `[wip]` Lv6+: clouds can be detonated for burst damage.
 - **weapon Lv10** `[wip]` Poisoned enemies drop health pickups when killed.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-venom-stage.ogg` — plays on the overworld approach to Venom Man's door.
 - **bgm arena** `[wip]`
@@ -372,6 +380,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Jabs at full running speed. Much faster charge (0.75 seconds). Still slowed to walking speed while charging.
 - **weapon Lv10** `[ready]` A full charge that lands on the GROUND throws long slender sand spikes diagonally forward from where the hammer hit. They hurt only while growing; then they stand for half a second, hurting nothing but blocking enemy shots and minions; then they fall as a free-falling shower of sand, each grain vanishing at its own random moment between 0.1 and 3 seconds. A boss walks straight through them: a spike he touches turns to sand at once instead of standing its half second.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-quake-stage.ogg` — plays on the overworld approach to Quake Man's door.
 - **bgm arena** `[wip]`
@@ -404,6 +413,7 @@ where each one stands.
 - **weapon Lv6** `[wip]` Lv7+: can ride your own tornado for limited flight.
 - **weapon Lv10** `[wip]` The tornado becomes steerable in flight and returns carried projectiles at whoever fired them.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-gale-stage.ogg` — plays on the overworld approach to Gale Man's door.
 - **bgm arena** `[wip]`
@@ -436,6 +446,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` A second orb. Locked bullets are thrown back at the nearest enemy.
 - **weapon Lv10** `[ready]` Locked minions are thrown too, hurled at the nearest enemy as heavy projectiles.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-psi-stage.ogg` — plays on the overworld approach to Psi Man's door.
 - **bgm arena** `[wip]`
@@ -468,6 +479,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Lv6: 3 bugs; every other bug spawned will prioritize intercepting projectiles as a meat shield
 - **weapon Lv10** `[ready]` Lv10: 5 bugs continuously swarm all over the player forming a shield and slowly respawn after tanking enough damage. Additionally, 3 bugs simultaneously converge on an enemy and kamikaze with an explosive blast.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-swarm-stage.ogg` — plays on the overworld approach to Swarm Man's door.
 - **bgm arena** `[wip]`
@@ -500,6 +512,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Stones can be kicked with ballistic properties like billiards, and explode on contact with enemy instead of just crumble. Jump button cancels granite form. if you jump cancel granite form you need to land
 - **weapon Lv10** `[ready]` The player can now walk while hardened. Pressing jump while hardened cancels the form early and throws stone shards out in all directions. This 360 finish is deliberately the same shape as Frost Guard Lv10's — overlap between two weapons is accepted, especially at the deep rungs; no more than two may share a function. once walking is possible, the walking form will be rocker. at level 10 stones explode on contact with enemy after struck and launched. pressing jump cancels out of walking statue or wears off whichever comes first. Rocker walks at half walking speed. Jump while hardened: shards, then he jumps.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-granite-stage.ogg` — plays on the overworld approach to Granite Man's door.
 - **bgm arena** `[wip]`
@@ -532,6 +545,7 @@ where each one stands.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-wraith-stage.ogg` — plays on the overworld approach to Wraith Man's door.
 - **bgm arena** `[wip]`
@@ -564,6 +578,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Add Corrin's neutral B: the Lv1 and Lv3 effect, plus it also charges up a medium size blast that releases on attack release. A cone like hybrid, where the wave retains its termination point but the blast continues.
 - **weapon Lv10** `[ready]` Basically the Gaster Blaster beam: an ultra quick narrow beam telegraphing a magnificent massive laminar beam with the same overhead reach as the Lv3 wave, traveling nearly full screen, lasting 2s before dissipating just like Gaster Blaster does. 23 Oct 2026: beam max width is too wide. Beam shall match that wave width and destroy incoming projectiles as long as the beam is active, erasing them is the streaky way that DBZ foes get erased.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[ready]` `bgm-drake-stage.ogg` — plays on the overworld approach to Drake Man's door.
 - **bgm arena** `[wip]`
@@ -596,6 +611,7 @@ where each one stands.
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
 - **weapon Lv10** `[wip]` Ultimate: temporary “Dark Mode” with increased damage and lifesteal.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-eclipse-stage.ogg` — plays on the overworld approach to Eclipse Man's door.
 - **bgm arena** `[wip]`
@@ -628,6 +644,7 @@ where each one stands.
 - **weapon Lv6** `[wip]` Lv5+: blades can be recalled early.
 - **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-alloy-stage.ogg` — plays on the overworld approach to Alloy Man's door.
 - **bgm arena** `[wip]`
