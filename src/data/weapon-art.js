@@ -229,7 +229,7 @@ export const WEAPON_ART = {
           idle: 'loop', walk: 'loop', guard: 'loop',
           jabReady: 'once', jab: 'hit', back: 'once',
           lean: 'once', lunge: 'travel', recover: 'once',
-          down: 'once', dizzy: 'loop',
+          down: 'once', dizzy: 'loop', dizzyHard: 'loop',
           riseReady: 'once', rise: 'travel',
           blast: 'once', spinReady: 'once', spin: 'travel',
         },

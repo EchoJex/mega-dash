@@ -97,13 +97,14 @@ export function constraints() {
     '**the lunge\'s fist is in front of him at the player\'s head height**, and must reach a player standing '
       + 'against him.',
     '**the uppercut (`rise`) covers the space above his head**, so a player jumping over him is caught.',
-    '**the spinning kick covers his own body**, at least the width of his collision box.',
+    '**the spin is a spinning lariat**: the band both gloves sweep through covers at least the width of his collision box.',
     '**`blast` has exactly one spawn point**, the fist the energy blast leaves from; the shot leaves on that '
       + 'frame\'s first step.',
     '**`lean` is the lunge\'s warning**: he plainly rocks back with the glove cocked behind him. It is what '
       + 'makes a punch that crosses most of the room fair, so it has to read at a glance.',
-    '**`down` ends lying on the mat**, and `dizzy` is a standing, swaying idle: the game draws the stars or the '
-      + 'birdies circling his head itself, just above the top of his collision box.',
+    '**`down` ends in the limp 45° lean, treads planted**, and `dizzy` and `dizzyHard` (stage 2) loop in that lean. '
+      + 'The stars (`dizzy`) and the birdies (`dizzyHard`) are drawn in the art, so they follow his head as he leans; '
+      + 'the game draws none of its own.',
     '**colours**: Strike Man\'s orange `#EA6A34` and brown `#7C2D12` with shades built from them, the near-black '
       + 'outline, and red boxing gloves.',
   ];

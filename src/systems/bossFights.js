@@ -1506,13 +1506,13 @@ const STRIKE_HAZ = {
   psiThrowSpeed: 5,
   psiBossDamage: 0.25,
   /**
-   * "Hit from the first bag knocks the boss down, causes 3 5-point stars to
-   *  orbit around the boss's head when they get up, and remain in an idle
-   *  animation for 5 seconds. Subsequent bag ... little yellow birdies orbit
-   *  and the stun lasts 7 seconds." (owner, 31 Oct 2026)
+   * The stagger, in two stages (owner, 2 Nov 2026): stars for 5 seconds, then
+   * birdies for 7. A bag that lands while he is staggered, or less than
+   * `calmFrames` (30 s) after a stagger ended, gives stage 2; otherwise stage 1.
+   * His `down` clip is the jolt; the stars and birdies are drawn in his sheet.
    */
-  // How long he lies on the mat is his `down` clip's length; the daze is the owner's.
-  dazeFrames: { stars: 300, birds: 420 },
+  dazeFrames: { 1: 300, 2: 420 },
+  calmFrames: 1800,
   /**
    * The chance he yanks a bag down to block, rolled on each RANGED hit.
    *
@@ -1535,12 +1535,16 @@ const STRIKE_HAZ = {
 export const strikeDazed = (b) => b.fs?.mode === 'down' || b.fs?.mode === 'dizzy';
 
 /**
- * A psychic bag landing on him. The FIRST one gives stars for 5 seconds, every
- * later one birdies for 7 — counted per fight on the boss himself.
+ * A psychic bag landing on him. Stage 2 if he is staggered now or the last
+ * stagger ended under 30 s ago (`b.anim` is the fight's step clock), else
+ * stage 1. He turns to face the side the bag came from (`side`, -1 or 1), so
+ * his leaned-back art falls away from it, and keeps that facing until he recovers.
  */
-function knockDown(b) {
-  b.dazes = (b.dazes || 0) + 1;
-  b.fs = { ...(b.fs || {}), mode: 'down', guard: 0 };
+function knockDown(b, side) {
+  const staggered = b.fs?.mode === 'down' || b.fs?.mode === 'dizzy';
+  const recent = b.staggerEnd !== undefined && b.anim - b.staggerEnd < STRIKE_HAZ.calmFrames;
+  b.fs = { ...(b.fs || {}), mode: 'down', guard: 0, stage: staggered || recent ? 2 : 1, dir: side };
+  b.facing = side;
   b.guard = 0;
   strikePlay(b, 'down', true);
 }
@@ -1734,7 +1738,8 @@ function strikeHazard(layer) {
             ctx.hitBoss(Math.max(1, Math.round((b.maxHp || b.hp) * STRIKE_HAZ.psiBossDamage)),
               h.x + h.w / 2);
             ctx.flash(8);
-            knockDown(b);
+            const hx = h.x + h.w / 2, px = ctx.playerBox.x + ctx.playerBox.w / 2, bcx = b.x + b.w / 2;
+            knockDown(b, Math.sign(hx - bcx) || (px > bcx ? 1 : -1));
           }
           ctx.shake(2, 12);
           ctx.sfx('shootBig', { pitch: 0.4 });
@@ -1910,18 +1915,19 @@ function strikeAttack(layer) {
       // KNOCKED DOWN by a psychic bag (see knockDown), then up and dizzy.
       case 'down': {
         b.y = groundY;
+        face = fs.dir;
         if (!ended) break;
-        b.daze = b.dazes > 1 ? 'birds' : 'stars';
         fs.mode = 'dizzy';
-        fs.t = STRIKE_HAZ.dazeFrames[b.daze];
-        strikePlay(b, 'dizzy', true);
+        fs.t = STRIKE_HAZ.dazeFrames[fs.stage];
+        strikePlay(b, fs.stage === 2 ? 'dizzyHard' : 'dizzy', true);
         break;
       }
 
       case 'dizzy': {
         b.y = groundY;
+        face = fs.dir;
         if (--fs.t > 0) break;
-        b.daze = null;
+        b.staggerEnd = b.anim;
         toStalk();
         break;
       }
@@ -2092,7 +2098,7 @@ function strikeAttack(layer) {
         b.x += fs.dir * STRIKE_ATK.spinSpeed;
         // Head height, so it cannot simply be jumped — it has to be slid under
         // or stepped around at a wall.
-        b.y = groundY - 6;
+        b.y = groundY - 12;
         if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
         face = fs.dir;

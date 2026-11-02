@@ -313,7 +313,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Finisher launches the target upward, opening a juggle. Damage reduction during the animation increases. Finisher lunge travels through the current target, stopping on contact with a third enemy or the edge of a platform or the edge of a pit or a medium distance.
 - **weapon Lv10** `[ready]` Finisher becomes a full dash-through that passes through all enemies, hitting every one it crosses and that travels through the current target, stopping on contact with the edge of a platform or the edge of a pit or a very large distance.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
-- **boss art** `[wip]` [x] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[wip]` [x] ready for design · [x] back from design · [x] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
 - **bgm arena** `[wip]`

@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import {
   parse, actionsOf, framesOf, declaredPalette, frameDataOf, checkFrameData,
+  sheetLayout,
 } from '../docs/sprite-fmt.js';
 import { weaponSheets } from '../src/data/weapon-art.js';
 import { MAX_COLOURS } from '../docs/nes-palette.js';
@@ -249,7 +250,7 @@ for (const file of files) {
   }
   const allowed = declared ? declared.map((p) => p.key).join(' ') : '0 1 or 2';
 
-  const w = doc.w * doc.frames.length, h = doc.h;
+  const { cols, w, h } = sheetLayout(doc);
   const paint = (colour) => {
   const px = new Uint8Array(w * h * 4);
   doc.frames.forEach((f, fi) => {
@@ -264,7 +265,7 @@ for (const file of files) {
             + `which is not in its palette — expected . or ${allowed}`);
           return;
         }
-        const o = (y * w + fi * doc.w + x) * 4;
+        const o = ((Math.floor(fi / cols) * doc.h + y) * w + (fi % cols) * doc.w + x) * 4;
         px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
       }
     }

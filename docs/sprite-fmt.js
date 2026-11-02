@@ -287,6 +287,20 @@ export function renumber(doc) {
 }
 
 /** Every action on this sheet, in the order they first appear. */
+/**
+ * HOW A SHEET'S PICTURES ARE LAID OUT IN ITS PNG: left to right, wrapping to a
+ * new row once a row would pass 4096 pixels. A graphics card refuses a texture
+ * wider than its own limit (8192 here, 4096 on some older phones) and draws a
+ * black box instead; Strike Man's 90 frames in one row were 8640 wide.
+ * Phaser cuts a sheet row by row, so wrapping changes no frame number.
+ */
+export const SHEET_MAX_W = 4096;
+export function sheetLayout(doc, count = doc.frames.length) {
+  const cols = Math.max(1, Math.min(count, Math.floor(SHEET_MAX_W / doc.w)));
+  const rows = Math.max(1, Math.ceil(count / cols));
+  return { cols, rows, w: cols * doc.w, h: rows * doc.h };
+}
+
 export const actionsOf = (doc) => [...new Set(doc.frames.map((f) => f.action))];
 
 /** A sprite's declared palette ([{ key, hex, name }]), or null for a 3-role file. */

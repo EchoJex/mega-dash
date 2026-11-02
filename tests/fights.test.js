@@ -943,26 +943,36 @@ test('Strike Man lunges across the room, back-dashes from shots, and is dazed by
   }
   assert.ok(dodged, 'he never back-dashed from an incoming shot');
 
-  // The daze: drop a lifted bag straight onto him, twice.
+  // The stagger: drop a lifted bag straight onto him. Stage 1 unless he is
+  // staggered or the last stagger ended under 30 s (1800 steps) ago.
   h = harness('strike', 1);
   const step = () => { h.boss.anim++; FIGHT.attack[1].step(h.ctx); FIGHT.hazard[1].step(h.ctx); };
-  const dazes = [];
-  for (let n = 0; n < 2; n++) {
+  const bagHits = (side) => {
     step();
     const bag = h.arena.hazards.find((z) => z.kind === 'bag' && z.mode === 'swing');
-    bag.x = h.boss.x; bag.mode = 'psi';
+    bag.x = h.boss.x + (side < 0 ? -10 : 10); bag.mode = 'psi';
     const hits = h.bossHits.length;
     for (let i = 0; i < 400 && h.bossHits.length === hits; i++) step();
     assert.equal(h.bossHits.length, hits + 1, 'the lifted bag never hit him');
     assert.equal(h.boss.fs.mode, 'down');
+    const stage = h.boss.fs.stage;
     while (h.boss.fs.mode === 'down') step();
+    assert.equal(h.boss.clip, stage === 2 ? 'dizzyHard' : 'dizzy');
+    assert.equal(h.boss.facing, h.boss.fs.dir, 'he must hold facing the bag through the daze');
     let t = 0;
-    dazes.push(h.boss.daze);
     while (h.boss.fs.mode === 'dizzy') { step(); t++; }
     assert.ok(t >= 290, `dizzy for ${t} steps`);
-    assert.equal(h.boss.daze, null);
-  }
-  assert.deepEqual(dazes, ['stars', 'birds']);
+    return stage;
+  };
+  const quiet = (n) => { for (let i = 0; i < n; i++) h.boss.anim++; };
+  const stages = [bagHits(1)];
+  quiet(1900);                       // more than 30 s: calm again
+  stages.push(bagHits(-1));
+  assert.equal(h.boss.fs.dir, -1, 'he faces the side the bag came from');
+  stages.push(bagHits(1));           // straight after: stage 2
+  quiet(1900);
+  stages.push(bagHits(1));
+  assert.deepEqual(stages, [1, 1, 2, 1]);
 });
 
 /**

@@ -34,7 +34,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { parse, serialize, framesOf } from '../docs/sprite-fmt.js';
+import { parse, serialize, framesOf, sheetLayout } from '../docs/sprite-fmt.js';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
 const SRC = join(REPO, 'design/sprites');
@@ -121,8 +121,8 @@ for (const file of readdirSync(SRC).filter((f) => f.endsWith('.sprite'))) {
     const label = `${id}  ${f.action} ${f.index}`;
     const why = !a ? 'its sheet is not in the manifest — nothing built it'
       : !size ? `public/sprites/${a.file} is not on disk`
-        : size.w !== doc.w * doc.frames.length || size.h !== doc.h
-          ? `${a.file} is ${size.w}x${size.h}, expected ${doc.w * doc.frames.length}x${doc.h}`
+        : size.w !== sheetLayout(doc).w || size.h !== sheetLayout(doc).h
+          ? `${a.file} is ${size.w}x${size.h}, expected ${sheetLayout(doc).w}x${sheetLayout(doc).h}`
           : !a.anims[f.action]?.includes(at)
             ? `not in the '${f.action}' animation the build emitted`
             : !(sole || named(key, f.action))
