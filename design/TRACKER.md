@@ -229,8 +229,8 @@ where each one stands.
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
 - **boss weakness B** `[draft]` Poison
-- **arena** `[ready]` Overgrown greenhouse with a shattered glass roof;
-- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one layer above the player, dense, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrowth tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. Small square Phillips head shaped tiles are present in the background that will occasionally fade into the foreground for the boss to interact with
+- **arena** `[draft]` Overgrown greenhouse with a shattered glass roof; Small square Phillips head shaped tiles are present in the background that will occasionally fade into the foreground for the boss to interact with
+- **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one layer above the player, dense, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrowth tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later.
   
   
   DEFERRED FUNCTION: For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal.
