@@ -1,5 +1,5 @@
 /**
- * DRAKE BREATH'S RULES, from the owner's messages of 23 Oct 2026. Shapes, not
+ * DRACO-BLASTER'S RULES, from the owner's messages of 23 Oct 2026. Shapes, not
  * numbers: every length and time is read out of the ladder.
  */
 import { test } from 'node:test';
@@ -9,7 +9,7 @@ import * as Wpn from '../src/systems/weaponry.js';
 import { readFileSync } from 'node:fs';
 import { parse } from '../docs/sprite-fmt.js';
 
-const ID = 'drake_breath', FLOOR = 184;
+const ID = 'draco_blaster', FLOOR = 184;
 
 function rig(level) {
   const run = { frame: 0, dmgMult: 1, wstate: {}, allies: [], moveScale: 1, planted: false, wpLevels: { [ID]: level } };
@@ -103,7 +103,7 @@ test("Lv10: telegraph, then a beam the wave's height that hurts, erases enemy sh
 });
 
 test('his stance shows while the cannon is busy, never at rest', () => {
-  const h = rig(1), BODY = 'weapon:drake_breath:body';
+  const h = rig(1), BODY = 'weapon:draco_blaster:body';
   h.step();
   assert.equal(Wpn.bodyArt(h.ctx), null, 'at rest he is himself');
   h.hold(3);
@@ -120,7 +120,7 @@ test('the cannon rides his hand: each drop is where the drawings put it', () => 
   const hand = (f) => f.rows.findIndex((r, y) => y >= 10 && r.includes('9'));
   const idle = sheet('player').frames.filter((f) => f.action === 'idle'), base = hand(idle[0]);
   assert.deepEqual(idle.map((f) => hand(f) - base), Wpn.DRAKE_HAND_DROP.idle, 'his idle bob');
-  for (const f of sheet('weapon-drake_breath-body').frames) {
+  for (const f of sheet('weapon-draco_blaster-body').frames) {
     assert.equal(hand(f) - base, Wpn.DRAKE_HAND_DROP.stance, `the stance, ${f.action} ${f.index}`);
   }
 });

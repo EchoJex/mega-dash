@@ -722,9 +722,9 @@ export const WEAPON_LADDERS = {
     },
     3: { bounces: 2, pierce: 2, dmgMult: 1.25, cornerSafe: true },
   },
-  // DRAKE BREATH — the owner's ladder of 23 Oct 2026, in Smash and Undertale
+  // DRACO-BLASTER — the owner's ladder of 23 Oct 2026, in Smash and Undertale
   // terms. Steps are 1/60s. Damage is in words; every number is a placeholder.
-  drake_breath: {
+  draco_blaster: {
     // Lv1 Bowser's neutral B: rear back, then breathe while held — a puff
     // every `every` steps, angled `deg` downward, that rolls along the ground
     // when it lands. The breath runs on `fuel` steps; a puff's speed and life
@@ -936,7 +936,7 @@ const DEFS = [
   // for, kept mild because a stronger number would make it the default pick
   // rather than a fair trade for having no matchup. It is a multiplier on base
   // damage, so it carries through every level.
-  { id: 'drake_breath', name: 'DRAKE BREATH', short: 'DRAKE', cls: OFFENSIVE, boss: 'drake',
+  { id: 'draco_blaster', name: 'DRACO-BLASTER', short: 'DRACO', cls: OFFENSIVE, boss: 'drake',
     damageBonus: 0.30,
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },

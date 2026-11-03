@@ -1,12 +1,12 @@
-# Drake Breath — art brief
+# Draco-Blaster — art brief
 
 Read `design/weapon-art/README.md` first: it says how weapon art works in this game, what
-you may change and what to hand back. This page is the Drake Breath itself.
+you may change and what to hand back. This page is the Draco-Blaster itself.
 
 **Today every picture is a placeholder**: flat indigo, violet, teal and white shapes. The
 sheets, their sizes and their pivots are real: the game plays them now exactly as it will
 play the finished art. To see them, play a dev build (dev menu → WEAPONS: ALL, then equip
-DRAKE BREATH), and use START LV 1, 3, 6 and 10 to see each rung.
+DRACO-BLASTER), and use START LV 1, 3, 6 and 10 to see each rung.
 
 ## What it is, in the owner's words
 
@@ -64,19 +64,19 @@ the game really plays.
 
 | file | size | pivot (the pixel the game holds it by) | drawn | clips |
 |---|---|---|---|---|
-| [`weapon-drake_breath-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-held.sprite) | 24×16 | 4, 9 — his hand, at the back of the cannon | in front of the player | rest, rear, breathe, charge, chargeFull |
-| [`weapon-drake_breath-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-body.sprite) | 24×24 | 12, 24 — his feet — the floor under the middle of him | in place of the player | rear, breathe, charge, chargeFull |
-| [`weapon-drake_breath-puff.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-puff.sprite) | 16×16 | 8, 8 — its middle | behind the player | burn |
-| [`weapon-drake_breath-wave.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-wave.sprite) | 16×48 | 8, 46 — its foot, just below the floor | behind the player | travel |
-| [`weapon-drake_breath-blast.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-blast.sprite) | 16×16 | 8, 8 — its middle | behind the player | fly |
-| [`weapon-drake_breath-beam.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-beam.sprite) | 32×48 | 0, 46 — the tile's bottom corner nearest the mouth | behind the player | tele, start, body, fade |
-| [`weapon-drake_breath-streak.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-drake_breath-streak.sprite) | 16×4 | 0, 2 — the end nearest the mouth | behind the player | blow |
+| [`weapon-draco_blaster-held.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-held.sprite) | 24×16 | 4, 9 — his hand, at the back of the cannon | in front of the player | rest, rear, breathe, charge, chargeFull |
+| [`weapon-draco_blaster-body.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-body.sprite) | 24×24 | 12, 24 — his feet — the floor under the middle of him | in place of the player | rear, breathe, charge, chargeFull |
+| [`weapon-draco_blaster-puff.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-puff.sprite) | 16×16 | 8, 8 — its middle | behind the player | burn |
+| [`weapon-draco_blaster-wave.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-wave.sprite) | 16×48 | 8, 46 — its foot, just below the floor | behind the player | travel |
+| [`weapon-draco_blaster-blast.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-blast.sprite) | 16×16 | 8, 8 — its middle | behind the player | fly |
+| [`weapon-draco_blaster-beam.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-beam.sprite) | 32×48 | 0, 46 — the tile's bottom corner nearest the mouth | behind the player | tele, start, body, fade |
+| [`weapon-draco_blaster-streak.sprite`](https://github.com/EchoJex/mega-dash/blob/main/design/sprites/weapon-draco_blaster-streak.sprite) | 16×4 | 0, 2 — the end nearest the mouth | behind the player | blow |
 
 ### Every clip, frame by frame
 
 Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bold** is the frame a move connects on (its first step). Hit areas are in the sheet's own pixels, `x, y, width×height`, drawn facing right.
 
-**weapon-drake_breath-held**
+**weapon-draco_blaster-held**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
@@ -86,7 +86,7 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | charge | loop | 6 · 6 | 12 | — | — | — |
 | chargeFull | loop | 4 · 4 | 8 | — | — | — |
 
-**weapon-drake_breath-body**
+**weapon-draco_blaster-body**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
@@ -95,25 +95,25 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | charge | loop | 6 · 6 | 12 | — | — | — |
 | chargeFull | loop | 4 · 4 | 8 | — | — | — |
 
-**weapon-drake_breath-puff**
+**weapon-draco_blaster-puff**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | burn | once | 10 · 10 · 10 | 30 | — | — | — |
 
-**weapon-drake_breath-wave**
+**weapon-draco_blaster-wave**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | travel | loop | 3 · 3 | 6 | — | — | — |
 
-**weapon-drake_breath-blast**
+**weapon-draco_blaster-blast**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
 | fly | loop | 4 · 4 | 8 | — | — | — |
 
-**weapon-drake_breath-beam**
+**weapon-draco_blaster-beam**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
@@ -122,7 +122,7 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 | body | loop | 2 · 2 · 2 · 2 | 8 | — | — | — |
 | fade | once | 6 · 6 · 6 · 6 | 24 | — | — | — |
 
-**weapon-drake_breath-streak**
+**weapon-draco_blaster-streak**
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
@@ -145,5 +145,5 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 ## Handing this weapon to Claude Design
 
 <!-- generated:prompt -->
-Every sheet of the DRAKE BREATH is finished art, so there is no prompt to paste.
+Every sheet of the DRACO BLASTER is finished art, so there is no prompt to paste.
 <!-- /generated:prompt -->

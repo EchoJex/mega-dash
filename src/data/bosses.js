@@ -171,7 +171,7 @@ export const BOSSES = [
     id: 'drake', name: 'DRAKE MAN', element: 'Dragon',
     primary: '#C3225D', secondary: '#6B1220', outline: '#0A0A12',
     scale: 1.9, baseHp: 76,
-    attackName: 'Dragon Breath', dropWeapon: 'drake_breath',
+    attackName: 'Dragon Breath', dropWeapon: 'draco_blaster',
     silhouette: null,
   },
   {

@@ -1399,7 +1399,7 @@ const quake = {
   },
 };
 
-// ── DRAKE BREATH — Dragon, offensive ─────────────────────────────────
+// ── DRACO-BLASTER — Dragon, offensive ─────────────────────────────────
 /**
  * "Offensive; a dragon head cannon. ... use colors like indigo, violet and
  *  teal when the animation might otherwise resemble fire. Holding fire rears
@@ -1434,18 +1434,18 @@ function drakeHits(ctx, st, box, dmg, opts, set) {
 const drake = {
   chargeRelease: true,
   holdFrames: (lv) => {
-    const L = ladderAt('drake_breath', lv);
+    const L = ladderAt('draco_blaster', lv);
     return L.beam?.charge ?? L.blast?.charge ?? L.windup;
   },
-  reach: () => { const L = ladderAt('drake_breath', 1); return L.speed * L.life; },
+  reach: () => { const L = ladderAt('draco_blaster', 1); return L.speed * L.life; },
 
   init(st, lv) {
-    st.fuel = ladderAt('drake_breath', lv).fuel;
+    st.fuel = ladderAt('draco_blaster', lv).fuel;
     st.down = false; st.holdSeen = false; st.heldF = 0; st.fx = [];
   },
 
   step(st, lv, ctx) {
-    const L = ladderAt('drake_breath', lv), p = ctx.player;
+    const L = ladderAt('draco_blaster', lv), p = ctx.player;
     if (!st.holdSeen) { st.down = false; st.heldF = 0; }   // dropped, not released
     st.holdSeen = false;
     st.breathing = st.down && st.heldF > L.windup && st.fuel > 0;
@@ -1475,7 +1475,7 @@ const drake = {
 
   stepFx(f, lv, ctx) {
     f.t++;
-    const base = dmgOf('drake_breath', lv, ctx);
+    const base = dmgOf('draco_blaster', lv, ctx);
     if (f.kind === 'puff') {
       // Down the diagonal until it reaches the floor he stood on, then rolls
       // along it, slowing and spreading.
@@ -1535,13 +1535,13 @@ const drake = {
     if (!st.down) { st.down = true; st.heldF = 0; ctx.sfx('select', { pitch: 0.5 }); }
     st.heldF++;
     ctx.run.moveScale = 0; ctx.run.planted = true; ctx.player.jumpBuffer = 0;
-    const L = ladderAt('drake_breath', lv);
+    const L = ladderAt('draco_blaster', lv);
     if (L.blast && st.heldF === L.blast.charge) ctx.sfx('select', { pitch: 0.8 });
     if (L.beam && st.heldF === L.beam.charge) ctx.sfx('select', { pitch: 1.1 });
   },
 
   fire(st, lv, ctx, held) {
-    const L = ladderAt('drake_breath', lv), p = ctx.player;
+    const L = ladderAt('draco_blaster', lv), p = ctx.player;
     const heldF = st.down ? st.heldF : held;
     st.down = false; st.heldF = 0;
     if (!L.wave) return true;
@@ -1562,18 +1562,18 @@ const drake = {
 };
 
 /**
- * DRAKE BREATH ON SCREEN. Every piece is one cell of its sheet
- * (`weapon:drake_breath:*`), and each sheet falls back to the plain shapes
+ * DRACO-BLASTER ON SCREEN. Every piece is one cell of its sheet
+ * (`weapon:draco_blaster:*`), and each sheet falls back to the plain shapes
  * below — which are also what its placeholder is painted from.
  *
  * Durations here are the LADDER'S (the wind-up, a puff's life, the beam's
  * telegraph and fade): a clip's frames are spread evenly over the time the
  * game gives, so the drawing never changes how long anything lasts.
  */
-const D_HELD = 'weapon:drake_breath:held', D_PUFF = 'weapon:drake_breath:puff';
-const D_WAVE = 'weapon:drake_breath:wave', D_BLAST = 'weapon:drake_breath:blast';
-const D_BEAM = 'weapon:drake_breath:beam', D_STREAK = 'weapon:drake_breath:streak';
-const D_BODY = 'weapon:drake_breath:body';
+const D_HELD = 'weapon:draco_blaster:held', D_PUFF = 'weapon:draco_blaster:puff';
+const D_WAVE = 'weapon:draco_blaster:wave', D_BLAST = 'weapon:draco_blaster:blast';
+const D_BEAM = 'weapon:draco_blaster:beam', D_STREAK = 'weapon:draco_blaster:streak';
+const D_BODY = 'weapon:draco_blaster:body';
 /** The beam is drawn as tiles this wide, from the mouth outward. */
 export const BEAM_TILE = 32;
 
@@ -1660,7 +1660,7 @@ export function drawDrakeStreak(g, x, y, dir, len, phase, a = 1) {
 /**
  * HOW FAR HIS HAND SITS BELOW WHERE IT IS IN IDLE 1, so the cannon rides his
  * idle bob and his stance (Claude Design's proposal, the owner's yes, 25 Oct
- * 2026): one per idle picture, and the stance. tests/drake-breath.test.js
+ * 2026): one per idle picture, and the stance. tests/draco-blaster.test.js
  * measures both from the drawings, so a redraw that moves his hand fails there.
  */
 export const DRAKE_HAND_DROP = { idle: [0, 0, 1, 0, 0, 0], stance: 1 };
@@ -1687,9 +1687,9 @@ function drakePose(st, L, frame) {
 }
 
 function drawDrakeArt(layers, sx, sy, ctx) {
-  const st = ctx.run.wstate.drake_breath;
-  if (!st || !ctx.equipped.includes('drake_breath')) return;
-  const p = ctx.player, L = ladderAt('drake_breath', ctx.levelOf('drake_breath')), fr = ctx.run.frame;
+  const st = ctx.run.wstate.draco_blaster;
+  if (!st || !ctx.equipped.includes('draco_blaster')) return;
+  const p = ctx.player, L = ladderAt('draco_blaster', ctx.levelOf('draco_blaster')), fr = ctx.run.frame;
   const back = layers.effects;
   for (const e of st.fx) {
     if (e.kind === 'puff') {
@@ -1722,7 +1722,7 @@ function drawDrakeArt(layers, sx, sy, ctx) {
       }
     }
   }
-  const hand = handOf(ctx, 'drake_breath', layers);
+  const hand = handOf(ctx, 'draco_blaster', layers);
   if (!hand) return;
   const pose = drakePose(st, L, fr), h = drakeHand(p, pose, ctx), cell = drakeCell(D_HELD, pose);
   const opts = {
@@ -2948,7 +2948,7 @@ export const RUNTIME = {
   granite_form: granite,
   astral_cloak: eclipse,
   alloy_blade: alloy,
-  drake_breath: drake,
+  draco_blaster: drake,
   psi_orb: psiOrb,
 };
 
@@ -3267,7 +3267,7 @@ function whipCracking(ctx) {
  * HIS BODY WHILE A WEAPON WITH A BODY SHEET IS MID-MOVE, or null for his own
  * picture. Drawn IN PLACE of him, on his layer, held by the same hand and
  * clock as the weapon so hand and handle line up (Simon's Whip, and
- * Drake Breath's stance).
+ * Draco-Blaster's stance).
  */
 export function bodyArt(ctx) {
   // THE GRANITE FORM takes his place while it holds: a statue, or the boulder.
@@ -3292,10 +3292,10 @@ export function bodyArt(ctx) {
       shape: (g, x, y) => drawGraniteShape(g, x, y, p.facing, form, t),
     };
   }
-  // DRAKE BREATH's stance, while the cannon is anything but at rest.
-  const dk = ctx.equipped.includes('drake_breath') && ctx.run.wstate.drake_breath;
+  // DRACO-BLASTER's stance, while the cannon is anything but at rest.
+  const dk = ctx.equipped.includes('draco_blaster') && ctx.run.wstate.draco_blaster;
   if (dk) {
-    const p = ctx.player, pose = drakePose(dk, ladderAt('drake_breath', ctx.levelOf('drake_breath')), ctx.run.frame);
+    const p = ctx.player, pose = drakePose(dk, ladderAt('draco_blaster', ctx.levelOf('draco_blaster')), ctx.run.frame);
     if (pose.clip !== 'rest') return { id: D_BODY, x: p.x + 12, y: p.y + 24, facing: p.facing, cell: drakeCell(D_BODY, pose) };
   }
   const la = whipCracking(ctx);

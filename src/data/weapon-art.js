@@ -146,7 +146,7 @@ export const WEAPON_ART = {
   },
 
   /**
-   * DRAKE BREATH, the dragon head cannon (owner, 23 Oct 2026). Indigo, violet
+   * DRACO-BLASTER, the dragon head cannon (owner, 23 Oct 2026). Indigo, violet
    * and teal wherever it might otherwise look like fire; Lucario's soul-fire
    * colours and his final-smash beam are the owner's references for the look.
    *
@@ -156,7 +156,7 @@ export const WEAPON_ART = {
    * Where a thing lasts a time the ladder sets — the wind-up, a puff's life,
    * the beam's fade — its frames are spread evenly over that time.
    */
-  drake_breath: {
+  draco_blaster: {
     sheets: {
       // The cannon in his hand, held at its back end; the mouth is the far end.
       held: {

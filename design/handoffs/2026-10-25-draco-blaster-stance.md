@@ -1,11 +1,11 @@
-# Design handoff, 2026-10-25: Drake Breath stance
+# Design handoff, 2026-10-25: Draco-Blaster stance
 
 Brought in by `npm run design:import`. Every check passed (the sheets' contracts,
 the build, `npm test`), so by the owner's call it went straight in.
 
 ## What changed
 
-- **weapon-drake_breath-body**
+- **weapon-draco_blaster-body**
   - a new sheet: 9 frames
 
 ## The design's own note

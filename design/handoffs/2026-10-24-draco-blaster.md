@@ -1,28 +1,28 @@
-# Design handoff, 2026-10-24: Drake Breath
+# Design handoff, 2026-10-24: Draco-Blaster
 
 Brought in by `npm run design:import`. Every check passed (the sheets' contracts,
 the build, `npm test`), so by the owner's call it went straight in.
 
 ## What changed
 
-- **weapon-drake_breath-beam**
+- **weapon-draco_blaster-beam**
   - 14 frames redrawn
   - colours: 9 in all (5 added, 1 removed, 4 changed)
   - start: 4 frames (was 2); same length, frames re-timed
   - body: 4 frames (was 2); same length, frames re-timed
-- **weapon-drake_breath-blast**
+- **weapon-draco_blaster-blast**
   - 2 frames redrawn
   - colours: 8 in all (5 added, 2 removed, 3 changed)
-- **weapon-drake_breath-held**
+- **weapon-draco_blaster-held**
   - 10 frames redrawn
   - colours: 13 in all (8 added, 4 changed)
-- **weapon-drake_breath-puff**
+- **weapon-draco_blaster-puff**
   - 3 frames redrawn
   - colours: 10 in all (6 added, 1 removed, 4 changed)
-- **weapon-drake_breath-streak**
+- **weapon-draco_blaster-streak**
   - 3 frames redrawn
   - colours: 4 in all (1 removed, 3 changed)
-- **weapon-drake_breath-wave**
+- **weapon-draco_blaster-wave**
   - 2 frames redrawn
   - colours: 7 in all (4 added, 2 removed, 3 changed)
 
@@ -38,7 +38,7 @@ Design's preview page asks the code for two things the sheets cannot carry:
 - every clip but idle puts him in a wide, slightly crouched stance (drawn only
   as rows inside `IdleCannon.dc.html`, not as a `.sprite`).
 
-Both were built on 25 Oct 2026 at the owner's word — see `2026-10-25-drake-breath-stance.md`.
+Both were built on 25 Oct 2026 at the owner's word — see `2026-10-25-draco-blaster-stance.md`.
 
 ## Also in the bundle, not used
 

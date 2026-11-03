@@ -352,7 +352,7 @@ const PAIRS = [
   ['simons_whip', 'gale_vortex'],
   ['alloy_blade', 'astral_cloak'],
   ['blaze_wheel', 'granite_form'],
-  ['drake_breath', 'swarm_caller'],
+  ['draco_blaster', 'swarm_caller'],
   ['volt_spark', 'psi_orb'],
 ];
 

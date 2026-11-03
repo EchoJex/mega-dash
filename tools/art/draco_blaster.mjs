@@ -1,6 +1,6 @@
 /**
- * DRAKE BREATH'S PLACEHOLDER RIG — what `npm run art:placeholders --
- * drake_breath` paints into its six sheets, with the game's own fallback
+ * DRACO-BLASTER'S PLACEHOLDER RIG — what `npm run art:placeholders --
+ * draco_blaster` paints into its six sheets, with the game's own fallback
  * shapes. Nothing hits by frame (see src/data/weapon-art.js).
  */
 import {
@@ -15,7 +15,7 @@ const PALETTE = [
   { key: '3', hex: '#2DD4BF', name: 'teal' },
   { key: '4', hex: '#F2EEFF', name: 'white core' },
 ];
-const W = ladderAt('drake_breath', 3).wave;
+const W = ladderAt('draco_blaster', 3).wave;
 const WAVE_H = 24 + W.above + W.below;             // the wave's height, and the beam's
 const HAND = { x: 4, y: 9 }, FOOT = { x: 8, y: 46 }, MID = { x: 8, y: 8 }, TILE = { x: 0, y: 46 };
 

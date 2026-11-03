@@ -681,7 +681,7 @@ Claude or a generator made:
 | Simon's Whip — the vine (every crack) and his three Simon poses; not the coiled whip at rest, which the owner drew pixel by pixel | sprite | Claude (Claude Design) | 2026-10-22 | `design/sprites/weapon-simons_whip-{held,body}.sprite` |
 | Wraith Man's room in 16-bit — a derelict chapel, with a possessed painting | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/wraith.js` |
 | Proto Mk0's room, redrawn in part — the bomb rack and three dead Nullfire Drones | room art, drawn in code | Claude | 2026-10-23 | `src/systems/arena-art/proto.js` |
-| Drake Breath — the dragon-head cannon (every clip), the breath puffs, the wave, the blast, the beam and its streaks, and his wide stance while it is busy | sprite | Claude (Claude Design) | 2026-10-24 | `design/sprites/weapon-drake_breath-{held,puff,wave,blast,beam,streak,body}.sprite` |
+| Draco-Blaster — the dragon-head cannon (every clip), the breath puffs, the wave, the blast, the beam and its streaks, and his wide stance while it is busy | sprite | Claude (Claude Design) | 2026-10-24 | `design/sprites/weapon-draco_blaster-{held,puff,wave,blast,beam,streak,body}.sprite` |
 | the Granite Form — the chest and monolith statues, the boulder, the three-legged walker and the loose stone; not the megaman statue, still the placeholder for the owner to draw | sprite | Claude (Claude Design) | 2026-10-26 | `design/sprites/weapon-granite_form-{statue,boulder,rocker,stone}.sprite` |
 | Strike Man's body — a rusty robot boxer on a tank-tread base, every clip including both stagger stages (asked for 31 Oct 2026, restyled on treads 2 Nov 2026) | sprite | Claude (Claude Design) | 2026-10-31 | `design/sprites/boss-strike-body.sprite` |
 
@@ -1000,7 +1000,7 @@ named. Closing without picking benches it — it keeps its level and stays one t
 
 **Every weapon deals identical DPS at level 1, measured over its whole attack cycle**, by
 the owner's call (17 Oct 2026). Charge or hold attacks are compared only with other charge
-or hold attacks. One exception: Drake Breath carries `damageBonus: 0.30`, because Dragon
+or hold attacks. One exception: Draco-Blaster carries `damageBonus: 0.30`, because Dragon
 has no boss it can be strong against. `damage = dpsTarget × cooldown/60 ÷ projectiles`. The
 test is in `tests/dps.test.js`, skipped until real tuning begins — these numbers are
 placeholders. Weapon choice is about *utility*, not power: if you add projectiles or pierce,

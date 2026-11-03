@@ -633,10 +633,10 @@
         "fly3"
       ]
     },
-    "shot-drake_breath": {
-      "label": "DRAKE BREATH",
+    "shot-draco_blaster": {
+      "label": "DRACO-BLASTER",
       "cls": "shot",
-      "key": "shot:drake_breath",
+      "key": "shot:draco_blaster",
       "boss": "drake",
       "palette": null,
       "grid": {
@@ -3563,11 +3563,11 @@
         "loose"
       ]
     },
-    "weapon-drake_breath-held": {
-      "label": "DRAKE BREATH · HELD",
+    "weapon-draco_blaster-held": {
+      "label": "DRACO-BLASTER · HELD",
       "cls": "weapon",
-      "key": "weapon:drake_breath:held",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:held",
+      "weapon": "draco_blaster",
       "sheet": "held",
       "boss": "drake",
       "layer": "held",
@@ -3591,11 +3591,11 @@
         "chargeFull"
       ]
     },
-    "weapon-drake_breath-body": {
-      "label": "DRAKE BREATH · BODY",
+    "weapon-draco_blaster-body": {
+      "label": "DRACO-BLASTER · BODY",
       "cls": "weapon",
-      "key": "weapon:drake_breath:body",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:body",
+      "weapon": "draco_blaster",
       "sheet": "body",
       "boss": "drake",
       "layer": "player",
@@ -3617,11 +3617,11 @@
         "chargeFull"
       ]
     },
-    "weapon-drake_breath-puff": {
-      "label": "DRAKE BREATH · PUFF",
+    "weapon-draco_blaster-puff": {
+      "label": "DRACO-BLASTER · PUFF",
       "cls": "weapon",
-      "key": "weapon:drake_breath:puff",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:puff",
+      "weapon": "draco_blaster",
       "sheet": "puff",
       "boss": "drake",
       "layer": "effects",
@@ -3637,11 +3637,11 @@
         "burn"
       ]
     },
-    "weapon-drake_breath-wave": {
-      "label": "DRAKE BREATH · WAVE",
+    "weapon-draco_blaster-wave": {
+      "label": "DRACO-BLASTER · WAVE",
       "cls": "weapon",
-      "key": "weapon:drake_breath:wave",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:wave",
+      "weapon": "draco_blaster",
       "sheet": "wave",
       "boss": "drake",
       "layer": "effects",
@@ -3657,11 +3657,11 @@
         "travel"
       ]
     },
-    "weapon-drake_breath-blast": {
-      "label": "DRAKE BREATH · BLAST",
+    "weapon-draco_blaster-blast": {
+      "label": "DRACO-BLASTER · BLAST",
       "cls": "weapon",
-      "key": "weapon:drake_breath:blast",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:blast",
+      "weapon": "draco_blaster",
       "sheet": "blast",
       "boss": "drake",
       "layer": "effects",
@@ -3677,11 +3677,11 @@
         "fly"
       ]
     },
-    "weapon-drake_breath-beam": {
-      "label": "DRAKE BREATH · BEAM",
+    "weapon-draco_blaster-beam": {
+      "label": "DRACO-BLASTER · BEAM",
       "cls": "weapon",
-      "key": "weapon:drake_breath:beam",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:beam",
+      "weapon": "draco_blaster",
       "sheet": "beam",
       "boss": "drake",
       "layer": "effects",
@@ -3703,11 +3703,11 @@
         "fade"
       ]
     },
-    "weapon-drake_breath-streak": {
-      "label": "DRAKE BREATH · STREAK",
+    "weapon-draco_blaster-streak": {
+      "label": "DRACO-BLASTER · STREAK",
       "cls": "weapon",
-      "key": "weapon:drake_breath:streak",
-      "weapon": "drake_breath",
+      "key": "weapon:draco_blaster:streak",
+      "weapon": "draco_blaster",
       "sheet": "streak",
       "boss": "drake",
       "layer": "effects",

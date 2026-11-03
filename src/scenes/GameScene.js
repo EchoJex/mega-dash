@@ -3121,7 +3121,7 @@ export default class GameScene extends Phaser.Scene {
         // carrying reads from the hardware drawn on him below.
         palette: PLAYER_PALETTE,
       });
-      // Which idle picture he shows, for the Drake Breath cannon riding his
+      // Which idle picture he shows, for the Draco-Blaster cannon riding his
       // idle bob. Kept through the invulnerability flicker, when he is not drawn.
       this.idlePic = ps ? (MANIFEST.player?.anims?.idle ?? []).indexOf(Number(ps.frame.name)) : -1;
       // An active attribute flashes its colour over the suit. Flashing rather

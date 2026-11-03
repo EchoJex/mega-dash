@@ -776,8 +776,8 @@
       ]
     }
   },
-  "weapon:drake_breath:beam": {
-    "file": "weapon-drake_breath-beam.png",
+  "weapon:draco_blaster:beam": {
+    "file": "weapon-draco_blaster-beam.png",
     "frameW": 32,
     "frameH": 48,
     "anchor": "pivot",
@@ -835,8 +835,8 @@
       ]
     }
   },
-  "weapon:drake_breath:blast": {
-    "file": "weapon-drake_breath-blast.png",
+  "weapon:draco_blaster:blast": {
+    "file": "weapon-draco_blaster-blast.png",
     "frameW": 16,
     "frameH": 16,
     "anchor": "pivot",
@@ -858,8 +858,8 @@
       ]
     }
   },
-  "weapon:drake_breath:body": {
-    "file": "weapon-drake_breath-body.png",
+  "weapon:draco_blaster:body": {
+    "file": "weapon-draco_blaster-body.png",
     "frameW": 24,
     "frameH": 24,
     "anchor": "pivot",
@@ -907,8 +907,8 @@
       ]
     }
   },
-  "weapon:drake_breath:held": {
-    "file": "weapon-drake_breath-held.png",
+  "weapon:draco_blaster:held": {
+    "file": "weapon-draco_blaster-held.png",
     "frameW": 24,
     "frameH": 16,
     "anchor": "pivot",
@@ -962,8 +962,8 @@
       ]
     }
   },
-  "weapon:drake_breath:puff": {
-    "file": "weapon-drake_breath-puff.png",
+  "weapon:draco_blaster:puff": {
+    "file": "weapon-draco_blaster-puff.png",
     "frameW": 16,
     "frameH": 16,
     "anchor": "pivot",
@@ -987,8 +987,8 @@
       ]
     }
   },
-  "weapon:drake_breath:streak": {
-    "file": "weapon-drake_breath-streak.png",
+  "weapon:draco_blaster:streak": {
+    "file": "weapon-draco_blaster-streak.png",
     "frameW": 16,
     "frameH": 4,
     "anchor": "pivot",
@@ -1012,8 +1012,8 @@
       ]
     }
   },
-  "weapon:drake_breath:wave": {
-    "file": "weapon-drake_breath-wave.png",
+  "weapon:draco_blaster:wave": {
+    "file": "weapon-draco_blaster-wave.png",
     "frameW": 16,
     "frameH": 48,
     "anchor": "pivot",

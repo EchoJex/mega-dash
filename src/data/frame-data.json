@@ -516,7 +516,7 @@
       }
     }
   },
-  "weapon:drake_breath:beam": {
+  "weapon:draco_blaster:beam": {
     "grid": {
       "w": 32,
       "h": 48
@@ -614,7 +614,7 @@
       }
     }
   },
-  "weapon:drake_breath:blast": {
+  "weapon:draco_blaster:blast": {
     "grid": {
       "w": 16,
       "h": 16
@@ -643,7 +643,7 @@
       }
     }
   },
-  "weapon:drake_breath:body": {
+  "weapon:draco_blaster:body": {
     "grid": {
       "w": 24,
       "h": 24
@@ -726,7 +726,7 @@
       }
     }
   },
-  "weapon:drake_breath:held": {
+  "weapon:draco_blaster:held": {
     "grid": {
       "w": 24,
       "h": 16
@@ -823,7 +823,7 @@
       }
     }
   },
-  "weapon:drake_breath:puff": {
+  "weapon:draco_blaster:puff": {
     "grid": {
       "w": 16,
       "h": 16
@@ -855,7 +855,7 @@
       }
     }
   },
-  "weapon:drake_breath:streak": {
+  "weapon:draco_blaster:streak": {
     "grid": {
       "w": 16,
       "h": 4
@@ -887,7 +887,7 @@
       }
     }
   },
-  "weapon:drake_breath:wave": {
+  "weapon:draco_blaster:wave": {
     "grid": {
       "w": 16,
       "h": 48
