@@ -224,7 +224,7 @@ where each one stands.
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
 - **palette outline** `[ready]` #0A0A12
-- **scale** `[ready]` 1.8x player height (average build)
+- **scale** `[draft]` 1.8x player height (tall skinny build)
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
