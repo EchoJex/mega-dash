@@ -61,6 +61,7 @@ function harness(id, level) {
     spawn: (spec) => bullets.push({ life: 180, enemy: false, ...spec }),
     hitEnemy: (e, dmg, opts) => { hits.push({ e, dmg, opts }); e.hp -= dmg; },
     overGround: () => true,
+    safeGround: () => true,
     shake: (mag, dur) => shakes.push({ mag, dur }),
     // COUNTED, NOT SAMPLED. A puff lives a few frames and stepFx clears it, so
     // reading fx.puffs at the end of a 2000-frame run scores a weapon whose
@@ -754,4 +755,19 @@ test('the Psi Orb throws what it holds back only from Lv6 and Lv10', () => {
   assert.ok(!ladderAt('psi_orb', 3).throwShots && !ladderAt('psi_orb', 6).throwEnemies);
   assert.ok(ladderAt('psi_orb', 6).throwShots && ladderAt('psi_orb', 10).throwEnemies);
   assert.ok(ladderAt('psi_orb', 6).orbs > ladderAt('psi_orb', 1).orbs);
+});
+
+test('the Lv10 gauntlet lunge stops short of a spike bed or a pit (bug, build 1210)', () => {
+  // The real check in GameScene: floor under x, and no spike within 2px.
+  const spike = { x: 150, w: 16 };
+  for (const hazard of ['spike', 'pit']) {
+    const h = harness('strike_gauntlet', 10);
+    h.enemies.length = 0;
+    h.ctx.safeGround = (x) => (hazard === 'pit' ? x < 150 : !(x >= spike.x - 2 && x <= spike.x + spike.w + 2));
+    Wpn.fireActive(h.ctx, 'strike_gauntlet', 999);   // a long press: the finisher
+    for (let i = 0; i < 120; i++) Wpn.stepWeapons(h.ctx, ['strike_gauntlet']);
+    const front = h.player.x + 18;                   // his hitbox's leading edge
+    assert.ok(front > 120, `${hazard}: the lunge never moved (front ${front})`);
+    assert.ok(front < 150, `${hazard}: the lunge reached it (front ${front})`);
+  }
 });

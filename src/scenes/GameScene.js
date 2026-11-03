@@ -1111,6 +1111,11 @@ export default class GameScene extends Phaser.Scene {
       spawn: (spec) => this.spawnPlayerShot(spec),
       hitEnemy: (e, dmg, opts) => this.hitEnemy(e, dmg, opts),
       overGround: (x) => Phys.isOverGround(this.world, x),
+      // Floor under x and no spike bed within 2px of it at the height of
+      // `feet` — where a lunge or a roll has to stop short (bug, build 1210).
+      safeGround: (x, feet) => Phys.isOverGround(this.world, x)
+        && !this.world.spikes.some((s) => x >= s.x - 2 && x <= s.x + s.w + 2
+          && feet >= s.y - 2 && feet <= s.y + s.h + 2),
       shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; },
       puff: (spec) => Wpn.puff(this.fx, spec),
       arc: (a, b) => Wpn.arcFx(this.fx, a, b),

@@ -777,9 +777,10 @@ function stepLunge(st, lv, ctx) {
   const step = Math.min(L.lungeSpeed, lunge.left);
   const nx = p.x + step * p.facing;
 
-  // Stop at the lip: a pit edge or the end of the platform being stood on.
+  // Stop short of the lip: a pit edge, the end of the platform being stood on,
+  // or a spike bed. Only on the ground — an air lunge is the player's risk.
   const probe = nx + (p.facing > 0 ? 20 : 4);
-  if (p.onGround && !ctx.overGround(probe)) { st.lunge = null; return; }
+  if (p.onGround && !ctx.safeGround(probe, p.y + 24)) { st.lunge = null; return; }
 
   p.x = nx;
   lunge.left -= step;
@@ -2608,8 +2609,8 @@ function stepRoll(st, L, lv, ctx) {
   st.spinT += Math.abs(v) / L.rollSpeed;
   rl.t--;
   const nx = p.x + v;
-  // Stop, and drop the form, at the lip — the same probe the Strike lunge uses.
-  if (!ctx.overGround(nx + (v > 0 ? 20 : 4))) { st.mode = null; return; }
+  // Stop, and drop the form, short of a lip or spikes — the Strike lunge's probe.
+  if (!ctx.safeGround(nx + (v > 0 ? 20 : 4), p.y + 24)) { st.mode = null; return; }
   // A wall, an arena edge or a raised block ends the roll; the boulder stays.
   const box = { x: nx + 4, y: p.y, w: 16, h: 23 };
   const a = ctx.arena;

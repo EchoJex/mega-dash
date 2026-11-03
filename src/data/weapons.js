@@ -421,7 +421,7 @@ export const WEAPON_LADDERS = {
     },
     3: { jabChain: 3, lungeDist: 28, lungeStopAfter: 2 },
     6: { lungeDist: 52, lungeStopAfter: 3, finLaunch: 3.2, armor: 0.5 },
-    10: { lungeDist: 160, lungeStopAfter: 999 },
+    10: { lungeDist: 120, lungeStopAfter: 999 },
   },
 
   // ── QUAKE HAMMER — offensive, Ground ──────────────────────────────
