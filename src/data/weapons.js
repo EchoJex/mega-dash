@@ -625,9 +625,11 @@ export const WEAPON_LADDERS = {
   // ── GALE VORTEX — defensive, Flying ───────────────────────────────
   // "White puffs of smoke energy when falling, significantly reducing fall
   //  speed and significantly increasing horizontal movement."
-  //  Lv1  up to 3 puffs while falling, each cancelling vertical velocity,
-  //       separated by a very brief time.
-  // PARTIAL LADDER: Lv3/6/10 still describe the OLD tornado weapon and are
+  //  Lv1  up to 1 puff while falling, cancelling vertical velocity.
+  //  Lv3  up to 3 puffs, separated by a very brief time — ONLY the count, by
+  //       the owner's word (3 Nov 2026); the rest of that rung (pulling
+  //       enemies in, pushing them down) is still `[wip]` and not built.
+  // PARTIAL LADDER: Lv6/10 still describe the OLD tornado weapon and are
   // `[wip]`. Do not build them — this weapon was redesigned and those rungs
   // have not caught up.
   //
@@ -676,9 +678,10 @@ export const WEAPON_LADDERS = {
 
   gale_vortex: {
     1: {
-      puffs: 3, puffGap: 14, fallCut: 0.18, glideFall: 1.1,
+      puffs: 1, puffGap: 14, fallCut: 0.18, glideFall: 1.1,
       airControl: 1.75, glideFrames: 40,
     },
+    3: { puffs: 3 },
   },
 
   // ── ASTRAL CLOAK — defensive, Dark ────────────────────────────────

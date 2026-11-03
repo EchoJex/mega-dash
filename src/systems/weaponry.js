@@ -2478,12 +2478,11 @@ function thornProbe(st, lv, ctx, L, box) {
 /**
  * "White puffs of smoke energy when falling, significantly reducing fall speed
  *  and significantly increasing horizontal movement."
- *  Lv1 "up to 3 puffs while falling, each one cancelling vertical velocity and
+ *  Lv1 "up to 1 puffs while falling, each one cancelling vertical velocity and
  *       separated by a very brief time."
  *
- * Lv3, Lv6 and Lv10 in the tracker still describe the OLD tornado weapon this
- * replaced and are `[wip]`, so the ladder stops at Lv1 and higher levels are
- * damage-only. Do not build them from the stale text.
+ * Lv3 adds only its puff count (3), by the owner's word of 3 Nov 2026; the rest
+ * of Lv3, and Lv6 and Lv10, are `[wip]` and not built.
  *
  * IT SPENDS ITSELF AND REFILLS ON THE GROUND, which is what makes it a
  * defensive weapon and not flight. Three cancelled falls is a large safety net

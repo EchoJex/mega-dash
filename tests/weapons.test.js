@@ -771,3 +771,10 @@ test('the Lv10 gauntlet lunge stops short of a spike bed or a pit (bug, build 12
     assert.ok(front < 150, `${hazard}: the lunge reached it (front ${front})`);
   }
 });
+
+test('the Gale Vortex gives one puff a fall at Lv1 and three from Lv3', () => {
+  assert.equal(ladderAt('gale_vortex', 1).puffs, 1);
+  assert.equal(ladderAt('gale_vortex', 2).puffs, 1);
+  assert.equal(ladderAt('gale_vortex', 3).puffs, 3);
+  assert.equal(ladderAt('gale_vortex', 10).puffs, 3);
+});
