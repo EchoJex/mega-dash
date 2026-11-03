@@ -229,7 +229,7 @@ where each one stands.
 
 `id` thorn
 
-- **boss notes** `[wip]` Looks: a tall, skinny ninja with coiled grassy vines for arms, which end in 2 very large shuriken. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: while poisoned kunai fall with a much steeper angle. Death: Generic: he flashes white and his primary colour. Fire: if of the ground return to ground level, then fall to his knees, fade all colors on the boss to an grey, then blow away like cherry blossom petals
+- **boss notes** `[wip]` Looks: a tall, skinny ninja with coiled grassy vines for arms, which end in 2 very large shuriken. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: while poisoned kunai fall with a much steeper angle. Death: Generic: he flashes white and his primary colour. Fire: if of the ground return to ground level, then fall to his knees, fade all colors on the boss to ash grey, then blow away like cherry blossom petals
 
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
