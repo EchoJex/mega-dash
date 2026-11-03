@@ -216,7 +216,7 @@ export function clearStatus(bag) {
  * until it crosses a whole point. Doing it as a periodic 1-damage tick instead
  * would make it lumpy and would not diminish smoothly.
  */
-export function stepStatus(bag) {
+export function stepStatus(bag, out) {
   let damage = 0;
   for (const id of Object.keys(bag)) {
     const s = bag[id];
@@ -234,6 +234,7 @@ export function stepStatus(bag) {
     const frac = s.t / s.tMax;
     if (id === 'burn') {
       s.accum += (FEEL.burnDps / 60) * frac;
+      if (s.accum >= 1 && out) out.element = 'Fire';
     } else if (id === 'poisoned') {
       /**
        * DISCRETE TICKS, not a rate. "Small damage in discrete 3 second
@@ -246,6 +247,9 @@ export function stepStatus(bag) {
       if (s.tick >= FEEL.poisonTickFrames) {
         s.tick = 0;
         damage += FEEL.poisonTickDamage;
+        // `out.element` says which status dealt this step's damage, for a
+        // weakness death. Burn is Fire, Poisoned is Poison.
+        if (out) out.element = 'Poison';
       }
     }
     if (s.accum >= 1) { const n = Math.floor(s.accum); s.accum -= n; damage += n; }

@@ -32,7 +32,7 @@
 
 import { FEEL } from '../config/feel.js';
 import { BACK_SHADE } from '../config/display.js';
-import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS } from '../data/weapons.js';
+import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS, elementOf } from '../data/weapons.js';
 import * as Attr from './attributes.js';
 import { hexNum } from './assets.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
@@ -75,12 +75,23 @@ export function enemiesByRange(ctx, x, y, seen = null, maxDist = Infinity) {
     .map((r) => r.e);
 }
 
-/** Every enemy overlapping a box. */
-const enemiesIn = (ctx, box) => ctx.enemies.filter(
-  (e) => e.hp > 0
-    && box.x < e.x + e.w && box.x + box.w > e.x
-    && box.y < e.y + e.h && box.y + box.h > e.y,
-);
+/**
+ * Every enemy overlapping a box. Every melee weapon asks this, so it is also
+ * where a swing is RECORDED (`run.meleeBoxes`, cleared each step in
+ * GameScene.stepEquipped): the Grass boss's ground cover recedes from a
+ * player damage source passing near it, and a swing is one even when it hits
+ * nothing. ponytail: a box asked about only to aim (the whip's grapple probe)
+ * counts too; split the helper if that ever scares cover it should not.
+ */
+const enemiesIn = (ctx, box) => {
+  (ctx.run.meleeBoxes || (ctx.run.meleeBoxes = [])).push(
+    { x: box.x, y: box.y, w: box.w, h: box.h, element: ctx.weaponId ? elementOf(ctx.weaponId) : null });
+  return ctx.enemies.filter(
+    (e) => e.hp > 0
+      && box.x < e.x + e.w && box.x + box.w > e.x
+      && box.y < e.y + e.h && box.y + box.h > e.y,
+  );
+};
 
 /** This weapon's damage at its current level, after the run's damage upgrades. */
 const dmgOf = (id, lv, ctx) => damageAtLevel(weaponOf(id), lv) * ctx.run.dmgMult;
@@ -2974,8 +2985,10 @@ export function stepWeapons(ctx, ids) {
     const beh = RUNTIME[id];
     if (!beh) continue;
     const lv = ctx.levelOf(id);
+    ctx.weaponId = id;   // so a hit says what element it was (GameScene)
     beh.step(stateFor(ctx.run.wstate, id, lv, ctx), lv, ctx);
   }
+  ctx.weaponId = null;
   stepAllies(ctx);
 }
 
@@ -2985,6 +2998,7 @@ export function notify(ctx, ids, event) {
     const beh = RUNTIME[id];
     if (!beh?.[event]) continue;
     const lv = ctx.levelOf(id);
+    ctx.weaponId = id;
     beh[event](stateFor(ctx.run.wstate, id, lv, ctx), lv, ctx);
   }
 }
@@ -3002,6 +3016,7 @@ export function fireActive(ctx, id, held) {
   if (!beh?.fire) return false;
   const lv = ctx.levelOf(id);
   const st = stateFor(ctx.run.wstate, id, lv, ctx);
+  ctx.weaponId = id;
   return beh.fire(st, lv, ctx, held) !== false;
 }
 
@@ -3014,6 +3029,7 @@ export function holdActive(ctx, id, held) {
   const beh = RUNTIME[id];
   if (!beh?.hold) return;
   const lv = ctx.levelOf(id);
+  ctx.weaponId = id;
   beh.hold(stateFor(ctx.run.wstate, id, lv, ctx), lv, ctx, held);
 }
 

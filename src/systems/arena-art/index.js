@@ -81,10 +81,12 @@ function stage(scene, key, viewW) {
 
   const S = {
     viewW,
-    layer({ far = false, furn = false } = {}) {
+    // `front` draws in front of the player — the Grass boss's ground cover,
+    // which the owner put "one layer above the player".
+    layer({ far = false, furn = false, front = false } = {}) {
       cur = scene.add.container(0, 0);
-      root.add(cur);
-      layers.push({ c: cur, far, furn });
+      if (front) cur.setDepth(DEPTH.cover); else root.add(cur);
+      layers.push({ c: cur, far, furn, front });
     },
 
     /** Hand a canvas, or a `frames` sheet, to Phaser once. Returns its key. */
@@ -186,6 +188,7 @@ function stage(scene, key, viewW) {
     },
 
     destroy() {
+      for (const L of layers) if (L.front) L.c.destroy();
       root.destroy();
       for (const k of keys) scene.textures.remove(k);
     },

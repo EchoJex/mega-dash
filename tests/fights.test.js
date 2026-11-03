@@ -61,6 +61,7 @@ function harness(bossId, layer) {
       // shots and reads the Swarm Caller's allies off the run.
       bullets,
       run: { allies: [], coverSlow: 1 },
+      elementOf: (id) => (id === 'poison_test' ? 'Poison' : 'Typeless'),
       shoot: (s) => shots.push(s),
       // EVERY KEY THE REAL CONTEXT HAS. A fake that is missing one does not
       // fail loudly, it fails as a TypeError deep inside a state machine that
@@ -1052,4 +1053,50 @@ test('every boss dies the generic death: a white and primary flash, then a fade'
     assert.deepEqual([...fills].sort(), [0xFFFFFF, parseInt(def.primary.slice(1), 16)].sort(), def.id);
     assert.ok(Death.look(d).alpha < 0.05, `${def.id} never faded out`);
   }
+});
+
+/**
+ * THE GRASS BOSS'S GROUND COVER (owner, 3 Nov 2026): chest high at L1 and
+ * taller than the player from L2; the drag scales with how tall the tile is;
+ * a melee swing scares it like a shot does; Poison makes it grow back slower.
+ */
+test('Grass cover: height by layer, a drag that follows its height, melee and Poison', () => {
+  const hz = (layer) => FIGHTS.thorn.hazard[layer];
+  const l1 = harness('thorn', 1), l2 = harness('thorn', 2);
+  assert.ok(l1.arena.cover[0].h < 22, 'L1 cover should stop below his head');
+  assert.ok(l2.arena.cover[0].h > 24, 'L2 cover should stand taller than the player');
+
+  // The drag: standing in a full tile, then a half-grown one.
+  const h = harness('thorn', 1), c = h.arena.cover[2];
+  h.ctx.playerBox = { x: c.x + 2, y: FLOOR - 22, w: 12, h: 22 };
+  const dragAt = (grow) => {
+    for (const t of h.arena.cover) t.grow = grow;
+    h.ctx.run.coverSlow = 1;
+    hz(1).step(h.ctx);
+    return h.ctx.run.coverSlow;
+  };
+  const full = dragAt(1), half = dragAt(0.5), bare = dragAt(0);
+  assert.ok(full < half && half < bare, `drag should follow height: ${full}, ${half}, ${bare}`);
+  assert.equal(bare, 1, 'bare floor drags nothing');
+
+  // A melee swing near a tile scares it, once per swing.
+  const m = harness('thorn', 1), mc = m.arena.cover[4];
+  m.ctx.run.meleeBoxes = [{ x: mc.x + 4, y: FLOOR - 20, w: 16, h: 18, element: 'Fighting' }];
+  hz(1).step(m.ctx);
+  assert.ok(mc.down > 0, 'a melee swing beside the cover never scared it');
+
+  // Poison: the tile it scared grows back slower than one a plain shot scared.
+  const p = harness('thorn', 1), [a, b] = [p.arena.cover[1], p.arena.cover[5]];
+  p.bullets.push({ x: a.x + 4, y: a.y - 4, vx: 0, vy: 0, life: 99, weapon: 'poison_test' });
+  p.bullets.push({ x: b.x + 4, y: b.y - 4, vx: 0, vy: 0, life: 99, weapon: 'sidearm' });
+  hz(1).step(p.ctx);
+  p.bullets.length = 0;
+  let ta = null, tb = null;
+  for (let i = 1; i < 4000 && (ta === null || tb === null); i++) {
+    hz(1).step(p.ctx);
+    Arena.stepArena(p.arena);
+    if (ta === null && a.grow >= 1) ta = i;
+    if (tb === null && b.grow >= 1) tb = i;
+  }
+  assert.ok(tb !== null && (ta === null || ta > tb * 1.5), `Poisoned cover regrew in ${ta}, plain in ${tb}`);
 });

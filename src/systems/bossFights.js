@@ -2246,8 +2246,16 @@ const THORN_HAZ = {
   // and still visibly there.
   partial: 0.45,
   combo: SEC,              // "2nd damage source within 1s"
-  slow: 0.72,              // "a slightly noticeable movement speed drop"
-  constrict: 90,           // layer 2 only
+  // "A moderate movement speed drop at full height ... with the slowdown
+  // scaled to the height of that tile's ground cover": the speed left at full
+  // height, rising to normal on bare floor.
+  slowFull: 0.6,
+  // Poison: "start growing back like normal but grow significantly slower".
+  poisonRegrow: 0.35,
+  // A melee swing is tested every step it is out, so one swing would scare a
+  // tile on several steps in a row and finish layer 2's two-hit combo alone.
+  // A tile takes one melee scare per this many steps.
+  meleeGap: 12,
   // "Ground cover receded by bugs has a regrowth rate of 0.5x normal." Applied
   // per tile rather than to COVER.regrowRate, because the same room regrows
   // player-receded cover at the normal rate in the same frame.
@@ -2331,7 +2339,8 @@ function thornHazard(layer) {
         c.counted = true;
         a.bugRecedes = (a.bugRecedes || 0) + 1;
       }
-      if (c.grow > 0.5) { c.byBug = false; c.counted = false; c.regrowMult = 1; }
+      if (c.grow > 0.5) { c.byBug = false; c.counted = false; }
+      if (c.meleeCool > 0) c.meleeCool--;
 
       /**
        * HOT BURNS IT BACK. "Applying Hot attribute to an overgrown tile causes
@@ -2373,24 +2382,31 @@ function thornHazard(layer) {
         (b.scaredCover || (b.scaredCover = new Set()));
         if (b.scaredCover.has(c)) break;
         b.scaredCover.add(c);
-        scare(c, layer, ctx, false);
+        scare(c, layer, ctx, false, ctx.elementOf(b.weapon));
         break;
       }
 
-      // STANDING IN IT. Layer 1 is a drag on your feet and nothing more; layer
-      // 2 adds the constrict, which is the same stacking slow the rest of the
-      // game uses and therefore compounds with the drag rather than replacing it.
-      if (c.grow < 0.2) continue;
-      const box = ctx.playerBox;
-      if (!(box.x + box.w > c.x && box.x < c.x + c.w && box.y + box.h >= c.y - 1)) continue;
-      ctx.run.coverSlow = THORN_HAZ.slow;
-      if (layer >= 2) {
-        // Per cover tile. This applied every frame the player stood in
-        // overgrowth, so the constrict could never begin expiring until they
-        // walked out of it.
-        ctx.status('constrict', THORN_HAZ.constrict,
-          { step: FEEL.stunPlayerStep, src: `cover:${c.x}` });
+      // MELEE COUNTS TOO — a swing is a player damage source whether or not it
+      // hits anything. Every melee weapon's hit test records its box
+      // (weaponry.js `enemiesIn`); one scare per tile per `meleeGap` steps.
+      if (!c.meleeCool) {
+        for (const m of ctx.run.meleeBoxes || []) {
+          if (m.x > c.x + c.w + 6 || m.x + m.w < c.x - 6) continue;
+          if (m.y + m.h < c.y - THORN_HAZ.scareDist || m.y > c.y + c.h + 4) continue;
+          c.meleeCool = THORN_HAZ.meleeGap;
+          scare(c, layer, ctx, false, m.element);
+          break;
+        }
       }
+
+      // STANDING IN IT: a drag on your feet, scaled to how tall the tile is
+      // right now. The tallest tile under you wins. (Layer 2's constrict for
+      // standing in it went with the owner's rewrite of that field.)
+      if (c.grow <= 0.02) continue;
+      const box = ctx.playerBox, top = c.y + c.h * (1 - c.grow);
+      if (!(box.x + box.w > c.x && box.x < c.x + c.w && box.y + box.h >= top - 1)) continue;
+      const slow = 1 - (1 - THORN_HAZ.slowFull) * c.grow;
+      ctx.run.coverSlow = Math.min(ctx.run.coverSlow ?? 1, slow);
     }
   };
 }
@@ -2409,8 +2425,9 @@ function coverUnder(a, x) {
  * do would mean the answer to layer 2 was to bring more bugs rather than to
  * bring bugs — which is a difference the player cannot see and would not enjoy.
  */
-function scare(c, layer, ctx, byBug) {
+function scare(c, layer, ctx, byBug, element) {
   const full = byBug || layer < 2 || c.since <= THORN_HAZ.combo;
+  if (element === 'Poison') c.regrowMult = THORN_HAZ.poisonRegrow;
   c.floor = full ? 0 : THORN_HAZ.partial;
   c.down = Math.max(c.down, THORN_HAZ.hold);
   if (c.since > 6) ctx.sfx('slide', { pitch: 1.5 });

@@ -397,12 +397,15 @@ const FURNITURE = {
    */
   thorn(a, layer, viewW, floorY) {
     const n = 8;
+    // Fully grown: chest height at layer 1, slightly taller than the 24px
+    // player at layers 2 and 3 (owner, 3 Nov 2026).
+    const ch = layer >= 2 ? 26 : 16;
     const tw = Math.floor((a.x1 - a.x0) / n);
     a.cover = Array.from({ length: n }, (_, i) => ({
       x: a.x0 + i * tw,
       // The last tile takes the rounding, so the cover reaches the far wall.
       w: i === n - 1 ? a.x1 - (a.x0 + i * tw) : tw,
-      y: floorY - 6, h: 6,
+      y: floorY - ch, h: ch,
       // "Arena starts with 8 ground cover tiles FULLY GROWN."
       grow: 1,
       // Frames of being held down. Zero means it is growing back.
@@ -589,7 +592,11 @@ export function stepArena(arena) {
     // `regrowMult` is the hazard's, not the room's: cover a BUG put down comes
     // back at half rate, cover the player shot comes back at full, and both
     // happen in the same frame on neighbouring tiles.
-    if (c.grow < 1) c.grow = Math.min(1, c.grow + COVER.regrowRate * (c.regrowMult || 1));
+    if (c.grow < 1) {
+      c.grow = Math.min(1, c.grow + COVER.regrowRate * (c.regrowMult || 1));
+      // A slow regrowth (bugs, Poison) lasts until the tile is fully back.
+      if (c.grow >= 1) c.regrowMult = 1;
+    }
   }
   for (const c of arena.conductors) {
     if (c.tell > 0) c.tell--;
@@ -799,7 +806,7 @@ export function drawArena(g, arena, viewW, shake, reveal = 1, art = null) {
       }
     }
     if (c.grow <= 0.02) continue;
-    const h = Math.max(1, Math.round(c.grow * 12));
+    const h = Math.max(1, Math.round(c.grow * c.h));
     // The mat, then blades standing out of it. Two greens so the cover has a
     // top edge — a flat block of one colour reads as a wall, not as growth.
     g.fillStyle(0x14401C, (1) * rv);

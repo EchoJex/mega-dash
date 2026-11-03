@@ -220,4 +220,6 @@ export const DEPTH = {
   // The weapon IN HIS HAND (weapon art, `held` layer). It is part of him, so
   // it sits just in front of his body rather than behind it.
   held: 101,
+  // The Grass boss's ground cover: "one layer above the player".
+  cover: 102,
 };

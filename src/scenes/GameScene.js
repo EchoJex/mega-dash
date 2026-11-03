@@ -1036,6 +1036,7 @@ export default class GameScene extends Phaser.Scene {
     // slowdown and the Astral Cloak's aggro tax. A weapon that is not running
     // grants nothing, and this is the one line that guarantees it.
     r.meleeArmor = 0;
+    r.meleeBoxes = [];   // this step's melee swings, for the Grass boss's cover
     r.rootFrames = 0;
     r.moveScale = 1;
     r.planted = false;
@@ -1087,6 +1088,7 @@ export default class GameScene extends Phaser.Scene {
    */
   weaponCtx(ids = null) {
     const r = this.run;
+    const scene = this;
     const equipped = ids || Loadout.equippedIds(r.loadout);
     return {
       run: r,
@@ -1109,7 +1111,13 @@ export default class GameScene extends Phaser.Scene {
       fx: this.fx,
       levelOf: (id) => r.wpLevels[id] || 1,
       spawn: (spec) => this.spawnPlayerShot(spec),
-      hitEnemy: (e, dmg, opts) => this.hitEnemy(e, dmg, opts),
+      // `weaponId` is set by weaponry.js before each weapon runs, so every
+      // hit a weapon lands says what element it was — a boss's weakness death
+      // reads the last one (bossDeath.js).
+      hitEnemy(e, dmg, opts) {
+        return scene.hitEnemy(e, dmg,
+          { element: this.weaponId ? elementOf(this.weaponId) : undefined, ...opts });
+      },
       overGround: (x) => Phys.isOverGround(this.world, x),
       // Floor under x and no spike bed within 2px of it at the height of
       // `feet` — where a lunge or a roll has to stop short (bug, build 1210).
@@ -1146,6 +1154,9 @@ export default class GameScene extends Phaser.Scene {
   hitEnemy(e, dmg, opts = {}) {
     if (!e || e.hp <= 0) return;
     e.hp -= dmg;
+    // What the hit was made of, for a weakness death (bossDeath.js). A hit
+    // with no element leaves the last one alone.
+    if (opts.element) e.lastHitElement = opts.element;
     this.run.lastDamaged = e;
     // A BOSS IS NEVER MOVED BY A HIT. Its position is driven by a state machine
     // that patrols to arena bounds and perches on platforms; shoving it would
@@ -1935,7 +1946,7 @@ export default class GameScene extends Phaser.Scene {
             if (b.explodeBurn) {
               Attr.applyStatus(o.status || (o.status = {}), 'burn', b.explodeBurn);
             }
-            this.hitEnemy(o, b.damage, { from: bx });
+            this.hitEnemy(o, b.damage, { from: bx, element: elementOf(b.weapon) });
           }
           Wpn.puff(this.fx, { x: bx, y: by, w: b.explodeR * 4, life: 10, color: 0xE8541A });
         }
@@ -1943,7 +1954,7 @@ export default class GameScene extends Phaser.Scene {
         // shows the element that killed it rather than dying clean.
         if (b.burn) Attr.applyStatus(e.status || (e.status = {}), 'burn', b.burn);
         this.hitEnemy(e, b.damage, {
-          knockback: b.knockback, from: b.x, stun: b.stun,
+          knockback: b.knockback, from: b.x, stun: b.stun, element: elementOf(b.weapon),
         });
         if (b.explodeR) { b.life = -1; break; }   // a burst is spent on one hit
         /**
@@ -2116,8 +2127,9 @@ export default class GameScene extends Phaser.Scene {
     // Elemental attributes tick on the boss exactly as they do on a minion.
     // Burn routed through hitEnemy so a boss finished off by a status still
     // runs the full death path — drops, wrap door, the weapon unlock.
-    const dot = Attr.stepStatus(b.status);
-    if (dot > 0) { this.hitEnemy(b, dot); if (!this.boss) return; }
+    const tick = {};
+    const dot = Attr.stepStatus(b.status, tick);
+    if (dot > 0) { this.hitEnemy(b, dot, { element: tick.element }); if (!this.boss) return; }
     if (b.state === 'enter') {
       const tx = this.cam.x + this.viewW * 0.6 - b.w / 2;
       b.x += (tx - b.x) * 0.055;
@@ -2169,6 +2181,9 @@ export default class GameScene extends Phaser.Scene {
        */
       bullets: this.bullets,
       run: this.run,
+      // A shot's element from its weapon id (data/weapons.js), handed in
+      // because bossFights.js cannot import that file without a loop.
+      elementOf,
       shoot: (spec) => this.spawnEnemyShot(spec),
       // A fight makes its own noises. `shake` already plays the rumble that
       // goes with it, but a hazard with a moment of its own — Strike Man
@@ -2297,7 +2312,7 @@ export default class GameScene extends Phaser.Scene {
     // NOT gated on anything below: the unlock, the drops and the wrap door all
     // land on this frame, so a death sequence can never strand a run. The
     // player may walk into the door while he is still falling.
-    this.deaths.push(Death.makeDeath(b));
+    this.deaths.push(Death.makeDeath(b, b.lastHitElement));
     this.shake = { mag: 2, dur: 24, t: 24 };
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);

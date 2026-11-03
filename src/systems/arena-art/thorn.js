@@ -142,19 +142,22 @@ export default function thorn(S, a, viewW) {
 
   // ── the ground cover: a bramble per tile (it rises out of the soil, so the
   // top rows show first), and the burnt tile's charred soil
-  function bramble(w, seed) {
-    const r = new Raster(w, 14), rn = rng(seed);
+  // `H` is the picture's height: the tile's full height plus two, so the
+  // brambles' tips stand just proud of what they hurt (the cover was 6 tall
+  // with a 14-tall picture before the owner raised it, 3 Nov 2026).
+  function bramble(w, seed, H) {
+    const r = new Raster(w, H), rn = rng(seed);
     for (let k = 0; k < Math.ceil(w / 5); k++) {
-      let x = rn() * w; const dir = rn() < 0.5 ? -1 : 1, hgt = 7 + rn() * 6;
+      let x = rn() * w; const dir = rn() < 0.5 ? -1 : 1, hgt = H * 0.5 + rn() * H * 0.43;
       for (let s = 0; s < hgt; s++) {
         x += dir * (0.2 + rn() * 0.4);
-        const y = 13 - s, xi = Math.max(0, Math.min(w - 1, Math.round(x)));
+        const y = H - 1 - s, xi = Math.max(0, Math.min(w - 1, Math.round(x)));
         r.set(xi, y, WOOD[s < 3 ? 1 : 2]);
         if (s > 2 && rn() < 0.3) r.set(xi + (rn() < 0.5 ? -1 : 1), y, hex('#D8C8A0'));
         if (s > 3 && rn() < 0.45) { const lx = xi + (rn() < 0.5 ? -1 : 1); r.set(lx, y, LEAF[y < 7 ? 6 : 4]); r.set(lx, y + 1, LEAF[3]); }
       }
     }
-    for (let x = 0; x < w; x++) r.set(x, 13, WOOD[0]);
+    for (let x = 0; x < w; x++) r.set(x, H - 1, WOOD[0]);
     r.outline(OLc);
     return r.flush();
   }
@@ -186,7 +189,9 @@ export default function thorn(S, a, viewW) {
   S.layer({ furn: true });
   const char = a.cover.map((c) => S.image(burnt(c), c.x, c.y + c.h - 3).setVisible(false));
   const embers = S.pool(bits);
-  const brambles = a.cover.map((c, i) => S.image(bramble(c.w, 101 + i), c.x, 0).setVisible(false));
+  S.layer({ furn: true, front: true });
+  const BH = a.cover[0].h + 2;
+  const brambles = a.cover.map((c, i) => S.image(bramble(c.w, 101 + i, BH), c.x, 0).setVisible(false));
 
   const VN = vines.map((_, vi) => Array.from({ length: SWAY }, (__, f) => `v${vi}:${f}`));
 
@@ -238,7 +243,7 @@ export default function thorn(S, a, viewW) {
         const show = c.grow > 0.02;
         brambles[i].setVisible(show);
         if (show) {
-          const h = Math.min(14, Math.round(c.grow * 13) + 1);
+          const h = Math.min(BH, Math.round(c.grow * (BH - 1)) + 1);
           brambles[i].setCrop(0, 0, c.w, h).setPosition(c.x, base - h);
         }
       });
