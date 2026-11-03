@@ -3086,7 +3086,17 @@ export default class GameScene extends Phaser.Scene {
     // and scrolls with everything else and sits exactly where the body was.
     // Over the sprites for the same reason the player's flash is: a death that
     // drew behind the body would be invisible the day bosses have art.
-    for (const d of this.deaths) Death.drawDeath(L.boss.gAboveSprites, sx, d, sy);
+    // A boss with a drawn sheet flashes his own idle picture (see bossDeath.js);
+    // a rectangle boss is flashed by the death itself.
+    for (const d of this.deaths) {
+      const sheet = bossSheet(d.id);
+      const cell = sheet ? cellAt(clipOf(sheet, 'idle'), d.t, true) : -1;
+      const { fill, alpha } = Death.look(d);
+      const drawn = cell >= 0 && L.boss.drawCell({
+        id: sheet, x: sx(d.x + d.w / 2), y: sy(d.y + d.h), cell, facing: d.facing, alpha, fill,
+      });
+      if (!drawn) Death.drawDeath(L.boss.gAboveSprites, sx, d, sy);
+    }
 
     // player — flashes while invulnerable
     const wctx = this.weaponCtx();

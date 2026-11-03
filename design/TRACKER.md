@@ -83,7 +83,7 @@ where each one stands.
 
 `id` proto
 
-- **boss notes** `[ready]` Looks: placeholder only, a plain grey rectangle in his palette. Weakness reaction: none, he has no weakness. Death: the generic one, placeholder: he flashes white and his primary colour, and a ring of small pieces flies off him.
+- **boss notes** `[ready]` Looks: placeholder only, a plain grey rectangle in his palette. Weakness reaction: none, he has no weakness. Death: the generic one (owner, bug of build 1210): he flashes white and his primary colour, then fades out.
 
 - **palette primary** `[ready]` #687380
 - **palette secondary** `[ready]` #2E3338
@@ -119,7 +119,7 @@ where each one stands.
 
 `id` blaze
 
-- **boss notes** `[ready]` Looks: placeholder only, a plain red rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): he burns down, turning black from the bottom up while embers drift upward.
+- **boss notes** `[ready]` Looks: placeholder only, a plain red rectangle in his palette. Weakness reaction: not built yet. Death: the generic one (owner, bug of build 1210): he flashes white and his primary colour, then fades out. A weakness death is added when his notes describe one.
 
 - **palette primary** `[ready]` #E11416
 - **palette secondary** `[ready]` #141414
@@ -155,7 +155,7 @@ where each one stands.
 
 `id` tempest
 
-- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): he drains away from the top down and falls as water.
+- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death: the generic one (owner, bug of build 1210): he flashes white and his primary colour, then fades out. A weakness death is added when his notes describe one.
 
 - **palette primary** `[ready]` #145DBD
 - **palette secondary** `[ready]` #F5C518
@@ -193,7 +193,7 @@ where each one stands.
 
 `id` volt
 
-- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): an overload. A white strobe speeds up while jagged arcs whip out of his body.
+- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death: the generic one (owner, bug of build 1210): he flashes white and his primary colour, then fades out. A weakness death is added when his notes describe one.
 
 - **palette primary** `[ready]` #F5D328
 - **palette secondary** `[ready]` #5B21B6
@@ -299,7 +299,7 @@ where each one stands.
 
 `id` strike
 
-- **boss notes** `[ready]` Looks: a rusty robot boxer on a tank-tread base, one large red eye, round red gloves. Weakness reaction: Psychic: a psychic hit gives a training bag a purple outline, lifts it and throws it at him. He jolts and falls limp, leaned back about 45 degrees with treads planted. Stage 1: eye flickering, yellow stars circling his head, for 5 seconds. Stage 2, if the bag lands while he is staggered or under 30 seconds after a stagger ended: smoke, sparks and yellow birdies. Flying: not built yet. Death (the same whatever kills him): a knockout. He topples to the mat and dust spreads when he lands. It is still drawn with plain shapes, not his sprite.
+- **boss notes** `[ready]` Looks: a rusty robot boxer on a tank-tread base, one large red eye, round red gloves. Weakness reaction: Psychic: a psychic hit gives a training bag a purple outline, lifts it and throws it at him. He jolts and falls limp, leaned back about 45 degrees with treads planted. Stage 1: eye flickering, yellow stars circling his head, for 5 seconds. Stage 2, if the bag lands while he is staggered or under 30 seconds after a stagger ended: smoke, sparks and yellow birdies. Flying: not built yet. Death: the generic one (owner, bug of build 1210): his idle sprite flashes white and his primary colour, then fades out. A weakness death is added when his notes describe one.
 
 - **palette primary** `[ready]` #EA6A34
 - **palette secondary** `[ready]` #7C2D12
@@ -1024,7 +1024,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1195 (main) | `[ready]` | ~~weapon toggling still feels rudimentary. i think in use weapons should leave behind a silhouette (black with white dotted line trace) and that every weapon the player has currently unlocked should use their idle sprite instead of the primary color~~ |
 | 1210 (main) | `[ready]` | ~~Long press of lv 10 gauntlet travels a bit too far, and should always stop short of touching spikes or pits~~ |
 | 1210 (main) | `[ready]` | ~~Playtest the fighting boss later 1. Stand still with Dev perks on and the boss will get stuck inside the player. All enemies should wait until the player has past their rear vertical edge of their spirit box before determining to turn around.~~ |
-| 1210 (main) | `[draft]` | All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness |
+| 1210 (main) | `[ready]` | ~~All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness~~ |
 
 # BRAINSTORM — context only, never implemented
 

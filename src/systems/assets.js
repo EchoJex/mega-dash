@@ -337,7 +337,9 @@ export class ActorLayer {
     s.setOrigin((flip ? def.frameW - px : px) / def.frameW, py / def.frameH);
     s.setPosition(Math.round(actor.x), Math.round(actor.y));
     s.setAlpha(actor.alpha ?? 1);
-    s.setTint(actor.tint ?? 0xFFFFFF);
+    // `fill` paints the whole picture one colour — a boss's death flash.
+    if (actor.fill != null) s.setTintFill(actor.fill);
+    else s.setTint(actor.tint ?? 0xFFFFFF);
     return s;
   }
 

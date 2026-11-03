@@ -1031,3 +1031,25 @@ test('Strike Man does not get stuck inside a player who stands still', () => {
   }
   assert.ok(flips < 20, `turned ${flips} times in 600 steps`);
 });
+
+/**
+ * THE GENERIC DEATH (owner, bug of build 1210): white and his primary colour,
+ * then a fade — and every boss gets it, whatever his element, until his notes
+ * give him a weakness death.
+ */
+test('every boss dies the generic death: a white and primary flash, then a fade', async () => {
+  const Death = await import('../src/systems/bossDeath.js');
+  for (const def of BOSSES) {
+    const d = Death.makeDeath({ ...def, x: 0, y: 0, w: 30, h: 40 });
+    const fills = new Set();
+    let last = 1;
+    while (Death.stepDeath(d)) {
+      const { fill, alpha } = Death.look(d);
+      fills.add(fill);
+      assert.ok(alpha <= last, `${def.id} grew more solid as he faded`);
+      last = alpha;
+    }
+    assert.deepEqual([...fills].sort(), [0xFFFFFF, parseInt(def.primary.slice(1), 16)].sort(), def.id);
+    assert.ok(Death.look(d).alpha < 0.05, `${def.id} never faded out`);
+  }
+});
