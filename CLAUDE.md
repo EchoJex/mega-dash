@@ -1086,6 +1086,8 @@ weaknesses (two dropdowns, B optional) and arena furniture are fields too. **A p
 the colour itself** (a swatch that opens the device's colour picker), still saved as `#RRGGBB`. The `sprite
 sheet` line is four tick boxes: furniture, arena background, boss, boss attack.
 
+**`boss notes`**, the first field of every slice, holds his looks, his reaction to his weakness, his custom death and anything else that is not arena furniture, arena hazards or boss attacks.
+
 Each slice also carries a raw `` `id` `` stamp, the join key `boss-data.json`, the board and
 saves use. `design/boss-data.json` holds the mechanical values (palette hexes, scale, names)
 that `npm run sync` copies out of the tracker; `tests/data.test.js` checks `bosses.js`

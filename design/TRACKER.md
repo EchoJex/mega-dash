@@ -83,6 +83,8 @@ where each one stands.
 
 `id` proto
 
+- **boss notes** `[ready]` Looks: placeholder only, a plain grey rectangle in his palette. Weakness reaction: none, he has no weakness. Death: the generic one, placeholder: he flashes white and his primary colour, and a ring of small pieces flies off him.
+
 - **palette primary** `[ready]` #687380
 - **palette secondary** `[ready]` #2E3338
 - **palette outline** `[ready]` #0A0A12
@@ -117,6 +119,8 @@ where each one stands.
 
 `id` blaze
 
+- **boss notes** `[ready]` Looks: placeholder only, a plain red rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): he burns down, turning black from the bottom up while embers drift upward.
+
 - **palette primary** `[ready]` #E11416
 - **palette secondary** `[ready]` #141414
 - **palette outline** `[ready]` #0A0A12
@@ -150,6 +154,8 @@ where each one stands.
 ## Tempest Man — Water
 
 `id` tempest
+
+- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): he drains away from the top down and falls as water.
 
 - **palette primary** `[ready]` #145DBD
 - **palette secondary** `[ready]` #F5C518
@@ -187,6 +193,8 @@ where each one stands.
 
 `id` volt
 
+- **boss notes** `[ready]` Looks: placeholder only, a plain rectangle in his palette. Weakness reaction: not built yet. Death (the same whatever kills him): an overload. A white strobe speeds up while jagged arcs whip out of his body.
+
 - **palette primary** `[ready]` #F5D328
 - **palette secondary** `[ready]` #5B21B6
 - **palette outline** `[ready]` #0A0A12
@@ -221,6 +229,8 @@ where each one stands.
 
 `id` thorn
 
+- **boss notes** `[ready]` Looks: placeholder only, a plain green rectangle in his palette. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: not built yet. Death: the generic one, placeholder: he flashes white and his primary colour, and a ring of small pieces flies off him.
+
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
 - **palette outline** `[ready]` #0A0A12
@@ -231,8 +241,6 @@ where each one stands.
 - **boss weakness B** `[draft]` Poison
 - **arena** `[draft]` Overgrown greenhouse with a shattered glass roof; Small square Phillips head shaped tiles are present in the background that will occasionally fade into the foreground for the boss to interact with
 - **arena furniture** `[draft]` Thorny overgrowth tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one layer above the player, dense, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrowth tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later.
-  
-  
   DEFERRED FUNCTION: For this arena only the Initial Bug from bug swarm prioritizes keeping all overgrowth receded, has unlimited duration, and every 10-2(bug swarm weapon level)th ground cover fully receded by this bug causes an additional unlimited duration bug to spawn (up to a max of 1 bug per 3 receded ground covers). Ground cover receded by bugs has a regrowth rate of 0.5x normal.
 - **hazard L1** `[draft]` Arena starts with all Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. Hazard level 1 ground cover will only cause a moderate movement speed drop at full height, which will be to about chest level, with the slowdown scaled to the height of that tiles ground cover.
 - **hazard L2** `[wip]` First instance of player damage source nearby causes the ground cover to mostly recede instead of fully recede. 2nd damage source within 1s caused it to fully recede for the full duration.
@@ -256,6 +264,8 @@ where each one stands.
 ## Frost Man — Ice
 
 `id` frost
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #A0EFE7
 - **palette secondary** `[ready]` #FFFFFF
@@ -290,6 +300,8 @@ where each one stands.
 
 `id` strike
 
+- **boss notes** `[ready]` Looks: a rusty robot boxer on a tank-tread base, one large red eye, round red gloves. Weakness reaction: Psychic: a psychic hit gives a training bag a purple outline, lifts it and throws it at him. He jolts and falls limp, leaned back about 45 degrees with treads planted. Stage 1: eye flickering, yellow stars circling his head, for 5 seconds. Stage 2, if the bag lands while he is staggered or under 30 seconds after a stagger ended: smoke, sparks and yellow birdies. Flying: not built yet. Death (the same whatever kills him): a knockout. He topples to the mat and dust spreads when he lands. It is still drawn with plain shapes, not his sprite.
+
 - **palette primary** `[ready]` #EA6A34
 - **palette secondary** `[ready]` #7C2D12
 - **palette outline** `[ready]` #0A0A12
@@ -322,6 +334,8 @@ where each one stands.
 ## Venom Man — Poison
 
 `id` venom
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #A926D9
 - **palette secondary** `[ready]` #84CC16
@@ -357,6 +371,8 @@ where each one stands.
 
 `id` quake
 
+- **boss notes** `[deferred]`
+
 - **palette primary** `[ready]` #A76625
 - **palette secondary** `[ready]` #D9B56A
 - **palette outline** `[ready]` #0A0A12
@@ -389,6 +405,8 @@ where each one stands.
 ## Gale Man — Flying
 
 `id` gale
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #5CADD5
 - **palette secondary** `[ready]` #F8FAFC
@@ -423,6 +441,8 @@ where each one stands.
 
 `id` psi
 
+- **boss notes** `[deferred]`
+
 - **palette primary** `[ready]` #EA43BD
 - **palette secondary** `[ready]` #F9A8D4
 - **palette outline** `[ready]` #0A0A12
@@ -455,6 +475,8 @@ where each one stands.
 ## Swarm Man — Bug
 
 `id` swarm
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #B8DC28
 - **palette secondary** `[ready]` #4D5C1A
@@ -489,6 +511,8 @@ where each one stands.
 
 `id` granite
 
+- **boss notes** `[deferred]`
+
 - **palette primary** `[ready]` #5F443A
 - **palette secondary** `[ready]` #A8A296
 - **palette outline** `[ready]` #0A0A12
@@ -521,6 +545,8 @@ where each one stands.
 ## Wraith Man — Ghost
 
 `id` wraith
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #A68DD8
 - **palette secondary** `[ready]` #2A1F4A
@@ -555,6 +581,8 @@ where each one stands.
 
 `id` drake
 
+- **boss notes** `[deferred]`
+
 - **palette primary** `[ready]` #C3225D
 - **palette secondary** `[ready]` #6B1220
 - **palette outline** `[ready]` #0A0A12
@@ -588,6 +616,8 @@ where each one stands.
 
 `id` eclipse
 
+- **boss notes** `[deferred]`
+
 - **palette primary** `[ready]` #2A273F
 - **palette secondary** `[ready]` #DC2626
 - **palette outline** `[ready]` #0A0A12
@@ -620,6 +650,8 @@ where each one stands.
 ## Alloy Man — Steel
 
 `id` alloy
+
+- **boss notes** `[deferred]`
 
 - **palette primary** `[ready]` #B2BABD
 - **palette secondary** `[ready]` #4B5563
