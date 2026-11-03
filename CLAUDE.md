@@ -563,11 +563,20 @@ the player. A `travel` clip loops while a move carries him and hurts from its hi
 **His punches must reach a 24-tall player**: a fist at a big boss's own chest height
 sails over the player's head, which is how the boxer's first jabs could never land.
 
-**Each slice's `weapon art` line shows how far its weapon has got** (owner, 26 Oct 2026):
-three tick boxes — `ready for design` (placeholders and brief done), `back from design`
-(the handoff has come back), `in game` (imported and pushed). **Its `boss art` line, right
-under it, is the same three boxes for the boss himself** (owner, 31 Oct 2026). Claude ticks them as the
-skill's phases finish, so the owner can run several weapons at once without losing track.
+**THE THREE ART PHASES, FOR BOSSES AND WEAPONS ALIKE** (owner, 3 Nov 2026). Each slice's
+`weapon art` line shows how far its weapon has got, and its `boss art` line, right under it,
+shows the same for the boss himself (owner, 26 and 31 Oct 2026). Each is three tick boxes in
+the dev tracker (`design/TRACKER.md`), one per phase:
+
+| box | phase | tick it when |
+|---|---|---|
+| `ready for design` | Claude Code hands off to Claude Design | the placeholders and the brief are built and pushed |
+| `back from design` | Claude Design hands off to Claude Code | the handoff zip has come back |
+| `in game` | Claude Code's build is fully implemented | the art is imported, built, tested and pushed to `main` |
+
+**Claude ticks each box in the same commit that finishes its phase**, never later and never
+ahead, so the owner can run several weapons and bosses at once without losing track. A
+handoff that comes back and goes in the same session ticks the last two together.
 
 **Hit areas follow the drawing, a pixel generous**, like the player's shots.
 
