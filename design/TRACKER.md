@@ -255,7 +255,7 @@ where each one stands.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
-- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
+- **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
 - **bgm arena** `[wip]`
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room.
