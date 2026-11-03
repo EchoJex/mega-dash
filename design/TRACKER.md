@@ -229,7 +229,7 @@ where each one stands.
 
 `id` thorn
 
-- **boss notes** `[ready]` Looks: placeholder only, a plain green rectangle in his palette. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: not built yet. Death: the generic one, placeholder: he flashes white and his primary colour, and a ring of small pieces flies off him.
+- **boss notes** `[wip]` Looks: a ninja with grassy vines for arms, which end in 2 very large shurican.. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: not built yet. Death: the generic one, placeholder: he flashes white and his primary colour, and a ring of small pieces flies off him.
 
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
