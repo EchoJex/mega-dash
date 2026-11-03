@@ -993,7 +993,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1195 (main) | `[ready]` | ~~weapon toggling still feels rudimentary. i think in use weapons should leave behind a silhouette (black with white dotted line trace) and that every weapon the player has currently unlocked should use their idle sprite instead of the primary color~~ |
 | 1210 (main) | `[draft]` | Long press of lv 10 gauntlet travels a bit too far, and should always stop short of touching spikes or pits  |
 | 1210 (main) | `[wip]` | Playtest the fighting boss later 1. Stand still with Dev perks on and the boss will get stuck inside the player. All enemies should wait until the player has past their rear vertical edge of their spirit box before determining to turn around.  |
-| 1210 (main) | `[wip]` | All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before |
+| 1210 (main) | `[wip]` | All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness |
 
 # BRAINSTORM — context only, never implemented
 
