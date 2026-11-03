@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FIGHTS, fightFor, hasFight, BOSS_BURN_SCALE } from '../src/systems/bossFights.js';
+import { FIGHTS, fightFor, hasFight, BOSS_BURN_SCALE, faceAfterRear } from '../src/systems/bossFights.js';
 import { BOSSES, BOSS_BY_ID, PLAYABLE_BOSSES, makeBossBag } from '../src/data/bosses.js';
 import { hasLadder } from '../src/data/weapons.js';
 import * as Attr from '../src/systems/attributes.js';
@@ -1003,4 +1003,31 @@ test("Strike Man's drawn hit areas still reach the player", async () => {
   for (const name of ['jabReady', 'jab', 'back', 'lean', 'recover', 'down', 'riseReady', 'spinReady', 'blast']) {
     assert.ok(clipOf(K, name).total > 0, `${name} must last at least one step`);
   }
+});
+
+/**
+ * THE BACK-EDGE RULE (owner, bug of build 1210): with the player standing
+ * still inside him, Strike Man used to flip every step and stay stuck there.
+ * He now keeps his facing until the player is past his back edge, gets out of
+ * them, and never turns while they are still under him.
+ */
+test('Strike Man does not get stuck inside a player who stands still', () => {
+  assert.equal(faceAfterRear({ x: 100, w: 38, facing: 1 }, { x: 110, w: 12 }), 1, 'inside him: no turn');
+  assert.equal(faceAfterRear({ x: 100, w: 38, facing: 1 }, { x: 87, w: 12 }), -1, 'past his back: turn');
+  assert.equal(faceAfterRear({ x: 100, w: 38, facing: -1 }, { x: 140, w: 12 }), 1, 'past his back: turn');
+
+  const FIGHT = FIGHTS.strike;
+  const h = harness('strike', 1);
+  h.boss.x = 100; h.boss.w = 38; h.boss.h = 44; h.boss.y = FLOOR - 44; h.boss.facing = 1;
+  h.ctx.playerBox = { x: 113, y: FLOOR - 22, w: 12, h: 22 };   // dead centre of him
+  const overlap = () => h.ctx.playerBox.x < h.boss.x + h.boss.w && h.ctx.playerBox.x + 12 > h.boss.x;
+  let flips = 0, last = 1, stuck = 0;
+  for (let i = 0; i < 600; i++) {
+    h.boss.anim++;
+    FIGHT.attack[1].step(h.ctx);
+    if (h.boss.facing !== last) { flips++; last = h.boss.facing; }
+    stuck = overlap() && h.boss.fs.mode === 'stalk' ? stuck + 1 : 0;
+    assert.ok(stuck < 60, `stood inside the player for ${stuck} steps`);
+  }
+  assert.ok(flips < 20, `turned ${flips} times in 600 steps`);
 });

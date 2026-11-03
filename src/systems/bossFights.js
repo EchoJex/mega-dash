@@ -1865,6 +1865,20 @@ function strikeArea(b, name) {
   return areaAt(strikeClip(name).hits[0], b.x + b.w / 2, b.y + b.h, b.facing || 1);
 }
 
+/**
+ * WHICH WAY AN ENEMY FACES (owner, bug of build 1210): it keeps facing the way
+ * it faces until the player's whole box is past its BACK edge, and only then
+ * turns. Turning the moment the two centres crossed made Strike Man flip every
+ * step with the player standing inside him, and he stayed stuck there.
+ * Any enemy that turns toward the player should ask this.
+ */
+export function faceAfterRear(b, pb) {
+  const f = b.facing || 1;
+  if (f > 0 && pb.x + pb.w < b.x) return -1;
+  if (f < 0 && pb.x > b.x + b.w) return 1;
+  return f;
+}
+
 /** Does a box overlap the player's? Local, because a fight sees only its ctx. */
 const boxHitsPlayer = (ctx, r) => {
   const p = ctx.playerBox;
@@ -1890,7 +1904,7 @@ function strikeAttack(layer) {
     const fs = b.fs || (b.fs = {
       mode: 'stalk', t: rnd(...STRIKE_ATK.rest[layer]), hits: 0, vy: 0, chase: 0, cool: 0,
     });
-    const pcx = p.x + 12, bcx = b.x + b.w / 2;
+    const pcx = p.x + 12, bcx = b.x + b.w / 2, pb = ctx.playerBox;
     const toward = Math.sign(pcx - bcx) || 1;
     const gap = Math.abs(pcx - bcx);
     // Above him and close in x — the state that layer 2's anti-air punishes.
@@ -1933,9 +1947,20 @@ function strikeAttack(layer) {
       }
 
       case 'stalk': {
-        face = toward;
-        b.x += toward * STRIKE_ATK.walk[layer];
+        face = faceAfterRear(b, pb);
         b.y = groundY;
+        // The player standing INSIDE him: he hops back out, still facing the
+        // same way — unless his back is to a wall, when he walks on through.
+        // Otherwise he walks in and stops at punching distance.
+        const inside = pb.x < b.x + b.w && pb.x + pb.w > b.x && pb.y + pb.h > b.y;
+        const wallBehind = face > 0 ? b.x <= ctx.bounds.x0 + 1 : b.x + b.w >= ctx.bounds.x1 - 1;
+        if (inside && !wallBehind && !fs.cool) {
+          fs.cool = STRIKE_ATK.backCool;
+          go('back', 'back', -face);
+          break;
+        }
+        if (inside || gap > STRIKE_ATK.reach) b.x += face * STRIKE_ATK.walk[layer];
+        clamp();
         // L2+: he covers himself while walking, so chipping him down from
         // across the room stops being free.
         if (STRIKE_ATK.guardFrames[layer] && fs.guard > 0) fs.guard--;
@@ -1948,14 +1973,14 @@ function strikeAttack(layer) {
         }
         if (--fs.t > 0) break;
 
-        if (layer >= 2 && overhead) { go('riseReady', 'riseReady', toward); break; }
+        if (layer >= 2 && overhead) { go('riseReady', 'riseReady', face); break; }
         if (layer >= 3 && gap > STRIKE_ATK.blastFar && Math.random() < 0.5) {
-          if (Math.random() < 0.5) go('blast', 'blast', toward);
-          else go('spinReady', 'spinReady', toward);
+          if (Math.random() < 0.5) go('blast', 'blast', face);
+          else go('spinReady', 'spinReady', face);
           break;
         }
-        if (gap <= STRIKE_ATK.reach) go('jabReady', 'jabReady', toward);
-        else go('lean', 'lean', toward);
+        if (gap <= STRIKE_ATK.reach) go('jabReady', 'jabReady', face);
+        else go('lean', 'lean', face);
         break;
       }
 
