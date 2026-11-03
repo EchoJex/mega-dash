@@ -129,7 +129,7 @@ where each one stands.
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[deferred]`
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[draft]` Rock
+- **boss weakness B** `[ready]` Rock
 - **arena** `[wip]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot. Wet cancels out Hot, sand from the quake hammer cancels out Hot. Dealing damage to the boss with the granite form or the granite form stones applies flinch
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -234,7 +234,7 @@ where each one stands.
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
 - **palette outline** `[ready]` #0A0A12
-- **scale** `[draft]` 1.8x player height (tall skinny build)
+- **scale** `[ready]` 1.8x player height (tall skinny build)
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
@@ -273,7 +273,7 @@ where each one stands.
 - **attack name** `[ready]` Glacier Spike
 - **weapon name** `[ready]` Frost Guard
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[draft]` Steel
+- **boss weakness B** `[ready]` Steel
 - **arena** `[wip]` Collapsed refrigeration hall. Frost-rimed pipes overhead, a floor of cracked ice over dark water, and a background of frozen machinery.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Icicles form on the ceiling pipes and fall after a visible growth tell. They shatter on impact and leave a slick patch that reduces contact friction for a few seconds.
@@ -307,7 +307,7 @@ where each one stands.
 - **scale** `[ready]` 1.83x player height, a little shorter and a bit wider: 44 tall by 38 wide (heavyweight boxer build)
 - **attack name** `[ready]` Rush Combo
 - **weapon name** `[ready]` Strike Gauntlet
-- **boss weakness A** `[draft]` Psychic
+- **boss weakness A** `[ready]` Psychic
 - **boss weakness B** `[wip]` Flying
 - **arena** `[ready]` Underground fight pit: chain-link cage walls, a stained mat floor, and a background of hanging lamps.
 - **arena furniture** `[ready]` Two training bags swing along from above. They can be stood on by the player, and if damaged by psychic type gain a purple outline, slowly rise in the air, then slam the boss for 1/4 boss hp total damage. The punching bags need to be targetable by psychic orb, regardless of orb level, targeting the nearest punching bag, raising slowly, then throwing at the boss, dealing heavy damage. Hit from the first bag knocks the boss down, causes 3 5-point stars to orbit around the bosses head when they get up, and remain in an idle animation for 5 seconds. Subsequent bag thrown by psi orb does the same thing but this time little yellow birdies orbit and the stun lasts 7 seconds.
@@ -379,8 +379,8 @@ where each one stands.
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[draft]` Ice
-- **arena** `[draft]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
+- **boss weakness B** `[ready]` Ice
+- **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
 - **hazard L2** `[wip]` Pillars rise in pairs, and some now rise from the ceiling downward so the safe lane is a gap rather than a floor position.
@@ -448,8 +448,8 @@ where each one stands.
 - **scale** `[ready]` 1.55x player height (petite build)
 - **attack name** `[ready]` Mind Lift
 - **weapon name** `[ready]` Psi Orb
-- **boss weakness A** `[draft]` Bug
-- **boss weakness B** `[draft]` Ghost
+- **boss weakness A** `[ready]` Bug
+- **boss weakness B** `[ready]` Ghost
 - **arena** `[wip]` Sterile observation chamber: white panelled walls, one-way glass, and slowly rotating geometric shapes suspended in the background.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Sections of floor lose gravity on a slow cycle, telegraphed by the panel dimming; standing in one lifts the player and drops them when it ends.
@@ -484,7 +484,7 @@ where each one stands.
 - **attack name** `[ready]` Infestation
 - **weapon name** `[ready]` Swarm Caller
 - **boss weakness A** `[wip]` Fire
-- **boss weakness B** `[draft]` Flying
+- **boss weakness B** `[ready]` Flying
 - **arena** `[wip]` Hollowed hive interior: chambered comb walls, resin-slick floor, and a background of drifting larvae sacs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Comb cells on the walls hatch on a slow cycle, releasing a single drone that tracks lazily and expires after a few seconds.
@@ -518,8 +518,8 @@ where each one stands.
 - **scale** `[ready]` 2.0x player height (bulky build)
 - **attack name** `[ready]` Boulder Roll
 - **weapon name** `[ready]` Granite Form
-- **boss weakness A** `[draft]` Grass
-- **boss weakness B** `[draft]` Steel
+- **boss weakness A** `[ready]` Grass
+- **boss weakness B** `[ready]` Steel
 - **arena** `[wip]` Quarry face: stepped stone benches, loose scree, and a background of cut rock walls with old blast scars.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` Loose rock sheds from the upper wall at telegraphed points, bouncing once off the floor before settling as a small obstacle that erodes away.
@@ -557,15 +557,15 @@ where each one stands.
 - **boss weakness B** `[wip]` Ghost
 - **arena** `[ready]` Derelict chapel: broken pews, a collapsed rose window, and shafts of pale light through dust with partially lit candelabra in the background. No secular imagery
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
-- **hazard L1** `[draft]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
-- **hazard L2** `[draft]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
-- **hazard L3** `[draft]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
+- **hazard L1** `[wip]` Cold spots drift slowly through the room, invisible except for a faint distortion; entering one drains a little energy and slows movement briefly.
+- **hazard L2** `[wip]` More cold spots, moving faster, and they now leave a short trail that is also unsafe.
+- **hazard L3** `[wip]` Cold spots actively track the player at a slow, unhurried pace so they can be outrun but never lost.
 - **attack L1** `[wip]` Phases through attacks and counters with intangibility + surprise teleports.
 - **attack L2** `[wip]` The boss now leaves an afterimage on each teleport that attacks once before fading, so the real body has to be identified.
 - **attack L3** `[wip]` Two afterimages per teleport, and the boss is intangible for longer than it is solid — the fight becomes about recognising the tell for solidity.
-- **weapon class** `[draft]` Defensive
+- **weapon class** `[wip]` Defensive
 - **weapon** `[wip]` Defensive; Vampiric Touch, themed around life steal. (Before: A set of 3 very small bats circle overhead. Temporary invisibility with a damaging burst upon reappearing. Per-level scaling: duration + burst damage.)
-- **weapon Lv1** `[draft]` Brief invisibility (depicted as a white dashed line silhouette) on activation; reappearing deals a small burst around the player.
+- **weapon Lv1** `[wip]` Brief invisibility (depicted as a white dashed line silhouette) on activation; reappearing deals a small burst around the player.
 - **weapon Lv3** `[wip]` Longer duration and a larger reappear burst; movement speed is increased while cloaked.
 - **weapon Lv6** `[wip]` Lv6+: can phase through walls for short distances.
 - **weapon Lv10** `[wip]` Max: leaves damaging ghost copies that mimic your movement.
@@ -658,7 +658,7 @@ where each one stands.
 - **scale** `[ready]` 1.9x player height (bulky build)
 - **attack name** `[ready]` Metal Barrage
 - **weapon name** `[ready]` Alloy Blade
-- **boss weakness A** `[draft]` Fighting
+- **boss weakness A** `[ready]` Fighting
 - **boss weakness B** `[wip]` Ground
 - **arena** `[wip]` Rolling mill floor: steel plate walls, an overhead crane gantry, and a background of glowing billets on a stalled conveyor.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
@@ -954,7 +954,7 @@ other field, and it becomes a thing to build rather than a thing to read.
   
   ~~Leave the following note in the Dev Tracker>Systems>Minions>Roster:~~ Some passive and good become enraged when damaged by the player.
 - **elites** `[ready]` The same size as their base minion — same grid, same silhouette — told apart by a gold outline. Size would be a weak tell once the ramp has been running, and sharing the grid means one piece of art covers both forms.
-- **spawn ramp** `[draft]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may summon based on description within boss attack layer.
+- **spawn ramp** `[ready]` Cadence and HP scale off elapsed SIM time, not distance. Slow motion slows the ramp too, which is intended. No ambient minions inside a boss arena. Boss may summon based on description within boss attack layer.
 
 ## HUD and controls
 
