@@ -2191,7 +2191,7 @@ export const FIGHTS = {
   /** THORN MAN — the vine grab (attacks) and the ground cover (hazards). */
   thorn: {
     attack: { 1: { step: thornAttack(1) }, 2: { step: thornAttack(2) }, 3: { step: thornAttack(3) } },
-    hazard: { 1: { step: thornHazard(1) }, 2: { step: thornHazard(2) } },
+    hazard: { 1: { step: thornHazard(1) }, 2: { step: thornHazard(2) }, 3: { step: thornHazard(3) } },
   },
 };
 
@@ -2501,6 +2501,8 @@ function thornHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
     if (!a?.cover?.length) return;
+    // Layer 3 is layer 2's cover plus the seed pods.
+    if (a.pods) stepPods(a, ctx);
 
     /**
      * THE BUGS KEEP THE FLOOR DOWN, AND THE FLOOR PAYS THEM FOR IT.
@@ -2643,6 +2645,84 @@ function thornHazard(layer) {
       ctx.run.coverSlow = Math.min(ctx.run.coverSlow ?? 1, slow);
     }
   };
+}
+
+/**
+ * THE SEED PODS — his hazard L3 field: "2 large, high hp Seed pods slowly grow
+ * on either corner of the arena, at full size a thin vine from each starts
+ * incrementing toward the player, constricting them on contact. If pod is
+ * defeated then it burst into a 5 way burst of spores, then slowly regrows. If
+ * defeated by poison then the pod wilt to browns and tans and doesn't regrow
+ * or burst. If damaged by fire damage then vines rapidly recede and if
+ * defeated by fire damage engulf in a brief large inferno, de-spawning the pod
+ * and leaving behind fresh Hot attribute."
+ *
+ * A pod is hit like any enemy (GameScene lists the live ones after the boss),
+ * and `lastHitElement` is what killed it — the same stamp a boss's weakness
+ * death reads. Spores do light damage (owner, 3 Nov 2026).
+ */
+const THORN_POD = {
+  grow: SEC * 8,           // "slowly grow"
+  creep: 0.5,              // px a step the vine reaches toward the player
+  reach: 320,
+  recede: 40,              // px a Fire hit takes off the vine at once
+  constrict: 90,
+  spores: 5, sporeSpeed: 1.6, sporeDamage: 1,
+  regrow: SEC * 10,        // "then slowly regrows"
+  hot: SEC * 5,
+};
+
+function stepPods(a, ctx) {
+  const pb = ctx.playerBox;
+  a.pods.forEach((pd, i) => {
+    const cx = pd.x + pd.w / 2, cy = pd.y + pd.h / 2;
+    const hitByFire = pd.hp < pd.lastHp && pd.lastHitElement === 'Fire';
+    pd.lastHp = pd.hp;
+    if (pd.state === 'gone' || pd.state === 'wilted') return;
+
+    if (pd.state === 'dead') {               // waiting to regrow
+      if (--pd.wait > 0) return;
+      Object.assign(pd, { state: 'grow', grow: 0, hp: pd.maxHp, lastHp: pd.maxHp, vine: 0, lastHitElement: null });
+      return;
+    }
+
+    if (pd.hp <= 0) {
+      pd.vine = 0;
+      const el = pd.lastHitElement;
+      if (el === 'Poison') { pd.state = 'wilted'; return; }
+      if (el === 'Fire') {
+        // The inferno: a burst of flame and fresh Hot under it, and the pod is gone.
+        pd.state = 'gone';
+        ctx.patch('hot', pd.x - 12, a.floorY - 4, pd.w + 24, 4, THORN_POD.hot, { source: 'player' });
+        ctx.flash(12, cx / (a.x1 - a.x0), 0.5);
+        ctx.sfx('shootBig', { pitch: 0.6 });
+        return;
+      }
+      // The spores: five, fanned upward and out.
+      for (let k = 0; k < THORN_POD.spores; k++) {
+        const ang = -Math.PI * (0.1 + 0.8 * (k / (THORN_POD.spores - 1)));
+        ctx.shoot({
+          x: cx, y: cy, vx: Math.cos(ang) * THORN_POD.sporeSpeed, vy: Math.sin(ang) * THORN_POD.sporeSpeed,
+          radius: 3, damage: THORN_POD.sporeDamage, color: '#E8F5A0', rim: '#0A0A12', shape: 'bolt', life: 200,
+        });
+      }
+      ctx.sfx('enemyDie', { pitch: 0.8 });
+      pd.state = 'dead'; pd.wait = THORN_POD.regrow;
+      return;
+    }
+
+    if (pd.grow < 1) { pd.grow = Math.min(1, pd.grow + 1 / THORN_POD.grow); return; }
+
+    // Full size: the vine reaches for the player, a little at a time.
+    if (hitByFire) pd.vine = Math.max(0, pd.vine - THORN_POD.recede);
+    else pd.vine = Math.min(THORN_POD.reach, pd.vine + THORN_POD.creep);
+    const tx = pb.x + pb.w / 2, ty = pb.y + pb.h / 2;
+    const d = aimAt(cx, cy, tx, ty), len = Math.min(pd.vine, Math.hypot(tx - cx, ty - cy));
+    pd.tip = { x: cx + d.x * len, y: cy + d.y * len };
+    if (pd.tip.x > pb.x - 2 && pd.tip.x < pb.x + pb.w + 2 && pd.tip.y > pb.y - 2 && pd.tip.y < pb.y + pb.h + 2) {
+      ctx.status('constrict', THORN_POD.constrict, { step: FEEL.stunPlayerStep, src: `pod:${i}` });
+    }
+  });
 }
 
 /** The tile under a world x, or null. */

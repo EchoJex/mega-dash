@@ -222,8 +222,7 @@ test('no boss has more built layers than the tracker defines', () => {
     tempest: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
     strike: { attack: 3, hazard: 3 },
-    // His seed pods (hazard L3) arrive next; until then L3 falls back to L2.
-    thorn: { attack: 3, hazard: 2 },
+    thorn: { attack: 3, hazard: 3 },
   };
   assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
     'a boss gained or lost a fight entry — update the expected map with it');
@@ -1182,4 +1181,60 @@ test('Grass boss: L2 grapples a tile and throws 3 kunai, L3 throws 5, steeper wh
   assert.equal(kunaiAt(3).length, 5, 'L3 spread');
   const mean = (list) => list.reduce((n, k) => n + Math.atan2(k.vy, Math.abs(k.vx)), 0) / list.length;
   assert.ok(mean(kunaiAt(2, true)) > mean(kunaiAt(2)) + 0.3, 'Poisoned kunai should fall much steeper');
+});
+
+/**
+ * THE SEED PODS (his hazard L3). They grow, then reach a vine at you that
+ * constricts on contact. Killed: a 5-way spore burst, then regrowth. Killed by
+ * Poison: wilted for good, no burst. A Fire hit pulls the vine back; killed by
+ * Fire: gone for good, fresh Hot left where it stood.
+ */
+test('Grass boss L3: seed pods grow, reach, burst, wilt or burn', () => {
+  const ripe = () => {
+    const h = harness('thorn', 3);
+    for (const pd of h.arena.pods) pd.grow = 1;
+    return h;
+  };
+  const step = (h, n = 1) => { for (let i = 0; i < n; i++) FIGHTS.thorn.hazard[3].step(h.ctx); };
+  assert.equal(harness('thorn', 2).arena.pods, undefined, 'pods are layer 3 only');
+
+  // Growth from nothing, then the vine reaches the player and constricts.
+  const g = harness('thorn', 3);
+  assert.equal(g.arena.pods.length, 2);
+  step(g, 60 * 8 + 5);
+  assert.ok(g.arena.pods.every((pd) => pd.grow >= 1), 'the pods never finished growing');
+  const pd0 = g.arena.pods[0];
+  g.ctx.playerBox = { x: pd0.x + 40, y: FLOOR - 22, w: 12, h: 22 };
+  step(g, 200);
+  assert.ok(g.status.constrict, 'the pod vine reached the player and never constricted him');
+
+  // Killed plainly: five spores, then it regrows.
+  let h = ripe();
+  h.arena.pods[0].hp = 0;
+  step(h);
+  assert.equal(h.shots.length, 5, 'a plain kill should burst into 5 spores');
+  step(h, 60 * 10 + 2);
+  assert.equal(h.arena.pods[0].state, 'grow', 'a plain-killed pod should regrow');
+
+  // Killed by Poison: wilted, no burst, never back.
+  h = ripe();
+  Object.assign(h.arena.pods[0], { hp: 0, lastHitElement: 'Poison' });
+  step(h, 60 * 12);
+  assert.equal(h.shots.length, 0, 'a Poisoned pod must not burst');
+  assert.equal(h.arena.pods[0].state, 'wilted');
+
+  // A Fire hit pulls its vine back; killed by Fire it is gone and leaves Hot.
+  h = ripe();
+  const p = h.arena.pods[1];
+  h.ctx.playerBox = { x: 40, y: FLOOR - 22, w: 12, h: 22 };
+  step(h, 120);
+  const before = p.vine;
+  Object.assign(p, { hp: p.hp - 1, lastHitElement: 'Fire' });
+  step(h);
+  assert.ok(p.vine < before - 20, `a Fire hit should pull the vine back (${before} -> ${p.vine})`);
+  Object.assign(p, { hp: 0, lastHitElement: 'Fire' });
+  step(h, 60 * 12);
+  assert.equal(p.state, 'gone', 'a pod burnt to death must not regrow');
+  assert.equal(h.shots.length, 0, 'a burnt pod must not burst');
+  assert.ok(h.arena.patches.some((pt) => pt.id === 'hot' && pt.source === 'player'), 'no Hot left behind');
 });

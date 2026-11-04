@@ -443,6 +443,21 @@ const FURNITURE = {
     const W = a.x1 - a.x0;
     a.tiles = [[0.18, 64], [0.4, 44], [0.6, 72], [0.82, 50]]
       .map(([fx, y]) => ({ x: Math.round(a.x0 + W * fx), y: a.ceilY + y, fwd: 0 }));
+
+    /**
+     * LAYER 3: TWO SEED PODS, one in each floor corner (his hazard L3 field).
+     * Each is something the player can shoot — it joins the list of things a
+     * weapon can hit, after the boss — and the hazard grows, fires and kills
+     * them. `isBoss` keeps a weapon from knocking one about or reeling it in.
+     */
+    if (layer >= 3) {
+      const S = 16, hp = 40;
+      a.pods = [a.x0 + 18, a.x1 - 18 - S].map((x) => ({
+        x, y: floorY - S, w: S, h: S, hp, maxHp: hp, lastHp: hp,
+        grow: 0, vine: 0, state: 'grow', wait: 0,
+        isPod: true, isBoss: true, status: {},
+      }));
+    }
   },
 };
 
@@ -461,6 +476,24 @@ export function drawGrapple(g, arena, boss, sx, sy) {
     g.fillStyle(0x0A0A12, 0.3 + 0.7 * t.fwd);       // the Phillips cross
     g.fillRect(x + Math.floor(s / 2) - 1, y + 1, 2, s - 2);
     g.fillRect(x + 1, y + Math.floor(s / 2) - 1, s - 2, 2);
+  }
+  for (const pd of arena.pods || []) {
+    if (pd.state === 'gone') continue;
+    const cx = sx(pd.x + pd.w / 2), base = sy(pd.y + pd.h);
+    const r = Math.max(2, Math.round((pd.w / 2) * (pd.state === 'wilted' ? 0.7 : Math.max(0.25, pd.grow))));
+    // Wilted by Poison: browns and tans. Otherwise his green, a brown cap.
+    g.fillStyle(0x0A0A12, 1);
+    g.fillCircle(cx, base - r, r + 1);
+    g.fillStyle(pd.state === 'wilted' ? 0x8A6A3A : 0x2AAB1C, 1);
+    g.fillCircle(cx, base - r, r);
+    g.fillStyle(pd.state === 'wilted' ? 0xC8A878 : 0x5C4033, 1);
+    g.fillRect(cx - Math.round(r / 2), base - r * 2, r, Math.max(1, Math.round(r / 3)));
+    if (pd.vine > 0 && pd.tip) {
+      g.lineStyle(3, 0x0A0A12, 1);
+      g.lineBetween(cx, base - r, sx(pd.tip.x), sy(pd.tip.y));
+      g.lineStyle(1, 0x7FD05A, 1);
+      g.lineBetween(cx, base - r, sx(pd.tip.x), sy(pd.tip.y));
+    }
   }
   for (const v of boss?.vines || []) {
     g.lineStyle(3, 0x0A0A12, 1);

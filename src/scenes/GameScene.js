@@ -1104,7 +1104,7 @@ export default class GameScene extends Phaser.Scene {
       allies: r.allies,
       // Minions and the boss are one list to a weapon: nothing in the ladders
       // distinguishes them except Frost Guard, which checks `isBoss` itself.
-      enemies: this.boss ? [...this.minions, this.boss] : this.minions,
+      enemies: this.foes(),
       arena: this.arena,
       // Live solid platforms — what Simon's Whip's grapple can catch. The
       // same list physics stands the player on, so a vine can never grab a
@@ -1158,6 +1158,17 @@ export default class GameScene extends Phaser.Scene {
    * Swarm Caller's allies prioritise) has to be stamped on every path, not just
    * the projectile one.
    */
+  /**
+   * Everything a player weapon can hit: minions, the boss, then any live seed
+   * pods in the Grass boss's room. The boss comes before the pods, because a
+   * weapon that looks for "the boss" takes the first thing marked as one.
+   */
+  foes() {
+    const list = this.boss ? [...this.minions, this.boss] : [...this.minions];
+    for (const pd of this.arena?.pods || []) if (pd.hp > 0 && pd.state === 'grow') list.push(pd);
+    return list;
+  }
+
   hitEnemy(e, dmg, opts = {}) {
     if (!e || e.hp <= 0) return;
     e.hp -= dmg;
@@ -1182,7 +1193,7 @@ export default class GameScene extends Phaser.Scene {
     }
     if (e.hp <= 0) {
       if (e === this.boss) this.killBoss();
-      else this.killMinion(e);
+      else if (!e.isPod) this.killMinion(e);   // a pod's death is its hazard's
     }
   }
 
@@ -1888,7 +1899,7 @@ export default class GameScene extends Phaser.Scene {
      * shot carrying on into a corpse. What was never safe was re-reading
      * `this.boss` off the scene mid-loop, and nothing here does that.
      */
-    const targets = this.boss ? [...this.minions, this.boss] : this.minions;
+    const targets = this.foes();
 
     for (const b of this.bullets) {
       if (b.enemy || b.life <= 0) continue;
