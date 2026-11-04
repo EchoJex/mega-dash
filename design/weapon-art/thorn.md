@@ -96,6 +96,7 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 - **he stands on the pivot**, the floor under the middle of him. His collision box (what the player's shots hit, and what hurts to touch) is 32 wide and 43 tall, centred on the pivot and standing on it; draw his tall, skinny body to fill about that.
 - **`aim` has exactly one spawn point**: the shuriken the pair of vines leaves from, on its last frame. The vines fly from there straight at the player, so it can be anywhere on his front arm.
 - **`aim` is the vine grab's warning**: it has to read at a glance — the arm drawn back, then thrust out — because a catch costs the player two seconds held and a throw into the wall. Its length is how long the warning lasts, and at layer 3 the game plays it faster with each try.
+- **the vines are fast, so `aim` carries the fight**: each vine lands at the player's feet just after a player walking at base speed could have stepped clear (owner, bug of build 1217). The first vine of a set can be outrun on foot, only just; the later ones lead the player. Reacting to `aim` is the only way out, so it must be unmistakable.
 - **`throw` has exactly one spawn point**, the hand the leaf kunai leave from; they leave on that frame's first step.
 - **`cling` is how long he clings** to a wall or the ceiling before he fires again.
 - **the vines themselves are not on this sheet**: the game draws them from the spawn point to wherever they reach. Draw his arms so a vine leaving the shuriken looks like it belongs to them.
