@@ -1026,7 +1026,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1210 (main) | `[ready]` | ~~Playtest the fighting boss later 1. Stand still with Dev perks on and the boss will get stuck inside the player. All enemies should wait until the player has past their rear vertical edge of their spirit box before determining to turn around.~~ |
 | 1210 (main) | `[ready]` | ~~All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness~~ |
 | 1217 (main) | `[wip]` | After strike Man is defeated the punching bags should become inert, and fade dark to blend in with the background. |
-| 1217 (main) | `[wip]` |  |
+| 1217 (main) | `[wip]` | Strike man l1 1 needs longer cool down between attacks |
 
 # BRAINSTORM — context only, never implemented
 
