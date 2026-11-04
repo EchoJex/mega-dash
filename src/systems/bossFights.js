@@ -2249,10 +2249,21 @@ export const FIGHTS = {
  */
 const THORN_ATK = {
   tries: { 1: 3, 2: 4, 3: 4 },
-  vineSpeed: 5,            // px a step
+  vineSpeed: 5,            // px a step: the slowest a vine flies, and a tile vine's speed
+  // HOW LONG A VINE FLIES (bug, build 1217): "the player with base speed
+  // stats and no weapon enhancements should just barely be able to out run
+  // the first grapple but not subsequent grapple in the set". Every vine is
+  // aimed at the player's feet and lands there, so it never flies on past
+  // him. Its flight takes exactly as long as a player already walking at
+  // base speed needs to clear that spot, times this: just over 1 is "just
+  // barely". The first try aims where he stands; later tries aim where he
+  // will be by then, so running straight on no longer saves him.
+  escapeSlack: 1.25,
   speedUp: 0.25,           // L3: each try this much faster than the last
   pair: 5,                 // px between the two vines
-  grabPad: 3,              // the vine's tip is generous by this much
+  // The grab is a little STINGY, like every enemy shot (bug, build 1217: it
+  // reached too far): the player's hitbox, this many pixels smaller each side.
+  grabInset: 1,
   hold: 120,               // "constrict for several seconds", held
   reel: 4,                 // px a step toward his arm
   tossVx: 5,               // the throw: this fast sideways...
@@ -2283,6 +2294,18 @@ const THORN_CLIP = {
   idle: 'idle', aim: 'aim', shoot: 'shoot', zip: 'zip', cling: 'cling',
   held: 'hold', toss: 'toss', tileIn: 'idle', throw: 'throw', fall: 'fall',
 };
+
+/** Does the straight line from (x0, y0) to (x1, y1) cross the box at all? Exact, so a fast vine cannot skip over him. */
+function segmentHitsBox(x0, y0, x1, y1, r) {
+  let t0 = 0, t1 = 1;
+  const dx = x1 - x0, dy = y1 - y0;
+  for (const [p, q] of [[-dx, x0 - r.x], [dx, r.x + r.w - x0], [-dy, y0 - r.y], [dy, r.y + r.h - y0]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const t = q / p;
+    if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+  }
+  return true;
+}
 
 function thornAttack(layer) {
   return (ctx) => {
@@ -2327,20 +2350,31 @@ function thornAttack(layer) {
         if (b.y >= groundY) b.facing = faceAfterRear(b, pb);
         else b.facing = pcx < bcx ? -1 : 1;     // clinging: he can twist round
         if (--fs.t > 0) break;
-        const o = arm(), d = aimAt(o.x, o.y, pcx, pcy);
-        fs.vine = { ox: o.x, oy: o.y, x: o.x, y: o.y, dx: d.x, dy: d.y, toTile: null };
+        const o = arm();
+        // The flight: as long as a walking player needs to clear the spot.
+        const steps = Math.max(1, Math.round(
+          (pb.w / 2 - THORN_ATK.grabInset) / FEEL.moveSpeed * THORN_ATK.escapeSlack / speedK));
+        // The first try aims at his feet; later ones where his feet will be.
+        const tx = pcx + (fs.n > 0 ? (p.vx || 0) * steps : 0), ty = pb.y + pb.h;
+        const d = aimAt(o.x, o.y, tx, ty);
+        const sp = Math.max(THORN_ATK.vineSpeed, Math.hypot(tx - o.x, ty - o.y) / steps);
+        fs.vine = { ox: o.x, oy: o.y, x: o.x, y: o.y, dx: d.x, dy: d.y, sp, toTile: null };
         fs.mode = 'shoot';
         ctx.sfx('shoot', { pitch: 0.6 });
         break;
       }
 
       case 'shoot': {
-        const v = fs.vine, sp = THORN_ATK.vineSpeed * speedK;
+        const v = fs.vine, sp = v.sp || THORN_ATK.vineSpeed * speedK;
+        const x0 = v.x, y0 = v.y;
         v.x += v.dx * sp; v.y += v.dy * sp;
-        // The tip against the player, a little generous.
-        const g = THORN_ATK.grabPad;
-        if (!v.toTile && ctx.playerInvuln === 0 && v.x > pb.x - g && v.x < pb.x + pb.w + g
-          && v.y > pb.y - g && v.y < pb.y + pb.h + g) {
+        // Everything the tip passed this step, against the player's hitbox
+        // made a pixel smaller — a fast vine must not skip over him, and a
+        // near miss must look like one.
+        const g = THORN_ATK.grabInset;
+        const caught = segmentHitsBox(x0, y0, v.x, v.y,
+          { x: pb.x + g, y: pb.y + g, w: pb.w - 2 * g, h: pb.h - g });
+        if (!v.toTile && ctx.playerInvuln === 0 && caught) {
           fs.mode = 'held'; fs.t = THORN_ATK.hold;
           fs.grip = { x: pcx, y: pcy };
           ctx.status('constrict', THORN_ATK.hold, { step: FEEL.stunPlayerStep, src: 'vine' });
@@ -2352,7 +2386,8 @@ function thornAttack(layer) {
         // A surface: the floor, a wall or the ceiling — or the tile it was sent at.
         let at = null;
         if (v.toTile && Math.hypot(v.x - v.toTile.x, v.y - v.toTile.y) <= sp) at = { x: v.toTile.x, y: v.toTile.y, on: 'tile' };
-        else if (v.y >= floorY) at = { x: v.x, y: floorY, on: 'floor' };
+        // Where the tip CROSSED the floor this step, not where a fast step overshot to.
+        else if (v.y >= floorY) at = { x: x0 + (v.x - x0) * ((floorY - y0) / ((v.y - y0) || 1)), y: floorY, on: 'floor' };
         else if (v.x <= wallL) at = { x: wallL, y: v.y, on: 'wallL' };
         else if (v.x >= wallR) at = { x: wallR, y: v.y, on: 'wallR' };
         else if (v.y <= ceilY) at = { x: v.x, y: ceilY, on: 'ceil' };

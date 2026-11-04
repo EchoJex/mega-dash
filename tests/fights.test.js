@@ -1282,3 +1282,47 @@ test('Grass boss sheet: the vines and the kunai each leave from one point in fro
   assert.ok(aim.total >= 12, `a ${aim.total}-step tell is too short to read`);
   assert.ok(thr.spawns[0].step < thr.total, 'the kunai must leave before the throw ends');
 });
+
+/**
+ * BUGS OF BUILD 1217. A player walking away at base speed just escapes the
+ * first vine of a set, but not the next; a player standing still is caught at
+ * once; and a vine that passes close by without crossing his hitbox does not
+ * grab him.
+ */
+test('Grass boss L1: walking at base speed just outruns the first vine, not the second', () => {
+  const caughtOnTry = (vx) => {
+    const h = thornAt(1);
+    h.boss.x = 40; h.boss.facing = 1;
+    h.player.x = 150;
+    let tryAt = null;
+    runThorn(h, 1, 1500, () => {
+      h.player.vx = vx;
+      h.player.x = Math.min(VIEW_W - 60, h.player.x + vx);
+      h.ctx.playerBox = { x: h.player.x + 6, y: FLOOR - 22, w: 12, h: 22 };
+      if (h.held.length) { tryAt = h.boss.fs.n + 1; return false; }
+    });
+    return tryAt;
+  };
+  assert.equal(caughtOnTry(0), 1, 'standing still should be caught by the first vine');
+  assert.equal(caughtOnTry(FEEL.moveSpeed), 2, 'walking away should escape try 1 and be caught on try 2');
+});
+
+test('Grass boss: a vine passing just beside the player does not grab him', () => {
+  const h = thornAt(1);
+  h.boss.x = 40; h.boss.facing = 1;
+  h.boss.fs = { mode: 'shoot', t: 0, tries: 1, n: 0, vy: 0 };
+  // Fired along the floor-level line two pixels above his head.
+  const box = { x: 200, y: FLOOR - 22, w: 12, h: 22 };
+  h.ctx.playerBox = box;
+  h.boss.fs.vine = { ox: 60, oy: box.y - 2, x: 60, y: box.y - 2, dx: 1, dy: 0, sp: 9, toTile: null };
+  runThorn(h, 1, 60, () => (h.boss.fs.mode !== 'shoot' ? false : undefined));
+  assert.equal(h.held.length, 0, 'a near miss grabbed him');
+  // The same vine through his chest does, even moving 9 pixels a step.
+  const k = thornAt(1);
+  k.boss.x = 40; k.boss.facing = 1;
+  k.boss.fs = { mode: 'shoot', t: 0, tries: 1, n: 0, vy: 0 };
+  k.ctx.playerBox = box;
+  k.boss.fs.vine = { ox: 60, oy: box.y + 10, x: 60, y: box.y + 10, dx: 1, dy: 0, sp: 9, toTile: null };
+  runThorn(k, 1, 60, () => (k.held.length ? false : undefined));
+  assert.ok(k.held.length > 0, 'a vine through his chest never grabbed him');
+});
