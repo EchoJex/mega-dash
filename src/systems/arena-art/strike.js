@@ -211,11 +211,13 @@ export default function strike(S, a, viewW) {
           s.vx = b.vx;
           s.angV += -0.025 * s.ang - 0.03 * s.angV; s.ang += s.angV;
         }
-        const onRail = b.mode === 'swing' || b.mode === 'shield';
+        const onRail = b.mode === 'swing' || b.mode === 'shield' || b.mode === 'inert';
+        // Inert once he is beaten: it fades dark into the room (bug, build 1217).
+        const fade = b.mode === 'inert' ? Math.max(0.3, 1 - (a.t - (b.inertAt || 0)) / 60) : 1;
         const off = onRail ? Math.max(-4, Math.min(4, Math.round(s.ang))) : 0;
         const tx = Math.round(b.x) + 7, bx = Math.round(b.x) + off, by = Math.round(b.y);
         if (onRail) {
-          bags.put(tx - 3, b.railY - 3, 'trolley');
+          bags.put(tx - 3, b.railY - 3, 'trolley', fade);
           const n = by - (b.railY + 1);
           if (n === N0) bags.put(tx - 4, b.railY + 1, `chain${off}`);
           else if (n > 0) chains.put(tx, b.railY + 1, 0, 0, 0, 1, Math.min(n, CHAIN_MAX));
@@ -224,7 +226,7 @@ export default function strike(S, a, viewW) {
           // A psychic hit: purple haze round it and a purple outline.
           hazes.put(bx - 3, by - 3, (((bx - 3) & 3) << 2) | ((by - 3 + (t >> 2)) & 3), 0, 0, 22, 48);
           bags.put(bx - 1, by - 1, 'psiBag');
-        } else bags.put(bx - 1, by - 1, 'bag');
+        } else bags.put(bx - 1, by - 1, 'bag', fade);
         // The game's own warning that he is about to punch it off its rail.
         if (b.warn && Math.floor((b.stood || 0) / 5) % 2 === 0) bags.put(bx, by - 2, 'warn', 0.9);
       }

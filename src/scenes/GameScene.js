@@ -2339,6 +2339,12 @@ export default class GameScene extends Phaser.Scene {
     // land on this frame, so a death sequence can never strand a run. The
     // player may walk into the door while he is still falling.
     this.deaths.push(Death.makeDeath(b, b.lastHitElement, this.arena?.floorY ?? GROUND_Y));
+    // The Fighting boss's training bags go dead with him (bug, build 1217):
+    // they stop, hurt no one, hold no one up, can't be lifted, and fade dark.
+    for (const h of this.arena?.hazards || []) {
+      if (h.kind !== 'bag') continue;
+      Object.assign(h, { mode: 'inert', damage: 0, solid: false, warn: false, outline: false, inertAt: this.arena.t });
+    }
     this.shake = { mag: 2, dur: 24, t: 24 };
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);
