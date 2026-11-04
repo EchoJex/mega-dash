@@ -229,7 +229,7 @@ where each one stands.
 
 `id` thorn
 
-- **boss notes** `[draft]` Looks: a tall, skinny ninja with coiled grassy vines for arms, which end in 2 very large shuriken which stretch it to stack the player from afar. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: while poisoned kunai fall with a much steeper angle. Death: Generic: he flashes white and his primary colour. Fire (including burn dps): if off the ground return to ground level, then fall to his knees and otherwise limp. Frame by frame slowly fade all colors on the boss to ash grey, then blow away like grey cherry blossom petals. Poison (including poisoned dps: if off the ground return to ground level, then fall to his knees and otherwise limp. Frame by frame slowly fade all greens on the boss to dry brown, then anything that was originally green gets blown off like rustling leaves in the fall, leaving a very thin, tree trunk like silhouette that blends in well with the background
+- **boss notes** `[ready]` Looks: a tall, skinny ninja with coiled grassy vines for arms, which end in 2 very large shuriken which stretch it to stack the player from afar. Weakness reaction: Fire: Hot keeps his ground cover receded for 3x the normal duration, and he holds a burn twice as long. Poison: while poisoned kunai fall with a much steeper angle. Death: Generic: he flashes white and his primary colour. Fire (including burn dps): if off the ground return to ground level, then fall to his knees and otherwise limp. Frame by frame slowly fade all colors on the boss to ash grey, then blow away like grey cherry blossom petals. Poison (including poisoned dps: if off the ground return to ground level, then fall to his knees and otherwise limp. Frame by frame slowly fade all greens on the boss to dry brown, then anything that was originally green gets blown off like rustling leaves in the fall, leaving a very thin, tree trunk like silhouette that blends in well with the background
 
 - **palette primary** `[ready]` #2AAB1C
 - **palette secondary** `[ready]` #5C4033
@@ -254,7 +254,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Significantly increased reach.
 - **weapon Lv10** `[ready]` Now constricts mini-bosses and applies DPS for 5 seconds. Now throws minions as high-damage projectiles.
 - **weapon art** `[ready]` [x] ready for design · [x] back from design · [x] in game
-- **boss art** `[draft]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[draft]` [x] ready for design · [ ] back from design · [ ] in game
 - **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
 - **bgm arena** `[wip]`

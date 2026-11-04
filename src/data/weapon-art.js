@@ -236,6 +236,31 @@ export const WEAPON_ART = {
       },
     },
   },
+
+  /**
+   * THORN MAN, the Grass boss — "a tall, skinny ninja with coiled grassy vines
+   * for arms, which end in 2 very large shuriken" (his boss notes). One sheet,
+   * his whole body, held by the floor under the middle of his collision box,
+   * drawn facing right and mirrored when he faces left.
+   *
+   * `aim` is the vine grab's tell and its length is how long the tell lasts;
+   * its spawn point is the shuriken the two vines leave from. `throw` is the
+   * layer-2 kunai throw from a tile; its spawn point is where, and on which
+   * step, the kunai leave. `cling` is how long he clings to a wall or the
+   * ceiling between tries. The rest loop while that part of the fight lasts.
+   */
+  thorn: {
+    boss: true,
+    sheets: {
+      body: {
+        grid: { w: 64, h: 64 }, layer: 'boss', heldBy: 'the floor under the middle of him',
+        clips: {
+          idle: 'loop', aim: 'once', shoot: 'loop', zip: 'loop', cling: 'once',
+          hold: 'loop', toss: 'loop', throw: 'once', fall: 'loop',
+        },
+      },
+    },
+  },
 };
 
 const kindOf = (owner) => (WEAPON_ART[owner]?.boss ? 'boss' : 'weapon');

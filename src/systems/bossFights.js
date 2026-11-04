@@ -1546,7 +1546,7 @@ function knockDown(b, side) {
   b.fs = { ...(b.fs || {}), mode: 'down', guard: 0, stage: staggered || recent ? 2 : 1, dir: side };
   b.facing = side;
   b.guard = 0;
-  strikePlay(b, 'down', true);
+  playClip(b, 'down', true);
 }
 
 /**
@@ -1853,8 +1853,8 @@ const STRIKE_ATK = {
 const STRIKE_SHEET = 'boss:strike:body';
 const strikeClip = (name) => clipOf(STRIKE_SHEET, name);
 
-/** Show `name` from its first frame — or carry on, if it is already showing. */
-function strikePlay(b, name, restart = false) {
+/** Show `name` from its first frame — or carry on, if it is already showing. Any boss with a body sheet. */
+function playClip(b, name, restart = false) {
   if (!restart && b.clip === name) return;
   b.clip = name;
   b.clipT = 0;
@@ -1911,14 +1911,14 @@ function strikeAttack(layer) {
     const overhead = (p.y + 24) < b.y + b.h * 0.4 && gap < STRIKE_ATK.reach * 1.4;
     const atWall = () => b.x <= ctx.bounds.x0 || b.x + b.w >= ctx.bounds.x1;
     const clamp = () => { b.x = Math.max(ctx.bounds.x0, Math.min(ctx.bounds.x1 - b.w, b.x)); };
-    const go = (mode, clip, dir = fs.dir) => { fs.mode = mode; fs.dir = dir; strikePlay(b, clip, true); };
+    const go = (mode, clip, dir = fs.dir) => { fs.mode = mode; fs.dir = dir; playClip(b, clip, true); };
     const toStalk = () => {
       fs.mode = 'stalk';
       fs.t = rnd(...STRIKE_ATK.rest[layer]);
       fs.guard = STRIKE_ATK.guardFrames[layer];
-      strikePlay(b, 'walk');
+      playClip(b, 'walk');
     };
-    if (!b.clip) strikePlay(b, 'idle');
+    if (!b.clip) playClip(b, 'idle');
     const t = b.clipT;                 // this step's place in the clip showing
     const c = strikeClip(b.clip);
     const ended = t + 1 >= c.total;    // this is the clip's last step
@@ -1933,7 +1933,7 @@ function strikeAttack(layer) {
         if (!ended) break;
         fs.mode = 'dizzy';
         fs.t = STRIKE_HAZ.dazeFrames[fs.stage];
-        strikePlay(b, fs.stage === 2 ? 'dizzyHard' : 'dizzy', true);
+        playClip(b, fs.stage === 2 ? 'dizzyHard' : 'dizzy', true);
         break;
       }
 
@@ -1964,7 +1964,7 @@ function strikeAttack(layer) {
         // L2+: he covers himself while walking, so chipping him down from
         // across the room stops being free.
         if (STRIKE_ATK.guardFrames[layer] && fs.guard > 0) fs.guard--;
-        strikePlay(b, b.guard > 0 ? 'guard' : 'walk');
+        playClip(b, b.guard > 0 ? 'guard' : 'walk');
         // THE DODGE. A shot closing in, and he skips back out of its way.
         const from = fs.cool ? 0 : shotIncoming(ctx, b);
         if (from) {
@@ -2024,7 +2024,7 @@ function strikeAttack(layer) {
           ctx.hurt(bcx, STRIKE_ATK.jabDamage);
         }
         if (!ended) break;
-        if (--fs.hits > 0) { strikePlay(b, 'jab', true); break; }
+        if (--fs.hits > 0) { playClip(b, 'jab', true); break; }
         // L3 can cancel the string into a dash and finish from the other side.
         if (layer >= 3 && Math.random() < 0.4) { go('dash', 'walk', -fs.dir); break; }
         go('back', 'back', -fs.dir);
@@ -2249,7 +2249,6 @@ export const FIGHTS = {
  */
 const THORN_ATK = {
   tries: { 1: 3, 2: 4, 3: 4 },
-  aim: 30,                 // steps he points before the vines fly — the tell
   vineSpeed: 5,            // px a step
   speedUp: 0.25,           // L3: each try this much faster than the last
   pair: 5,                 // px between the two vines
@@ -2260,7 +2259,6 @@ const THORN_ATK = {
   tossRise: 0.45,          // ...and this much of it upward — a diagonal
   wallDamage: 4,           // "heavy damage on wall contact"
   zip: 6,
-  cling: 30,
   cool: { 1: 120, 2: 100, 3: 90 },
   tileChance: 0.5,         // L2+: a tile cycle instead of the vine cycle
   tileFade: 30,
@@ -2272,6 +2270,20 @@ const THORN_ATK = {
   gravity: 0.3,
 };
 
+/**
+ * HIS DRAWING SETS HIS TIMING, as the Fighting boss's does: how long the tell
+ * lasts (`aim`), where the vines leave from (its spawn point), how long he
+ * clings, and where and when the kunai leave (`throw`) are read from
+ * `design/sprites/boss-thorn-body.sprite`. What stays above is not animation.
+ */
+const THORN_SHEET = 'boss:thorn:body';
+const thornClip = (name) => clipOf(THORN_SHEET, name);
+/** The fight's mode, as the clip that shows it. */
+const THORN_CLIP = {
+  idle: 'idle', aim: 'aim', shoot: 'shoot', zip: 'zip', cling: 'cling',
+  held: 'hold', toss: 'toss', tileIn: 'idle', throw: 'throw', fall: 'fall',
+};
+
 function thornAttack(layer) {
   return (ctx) => {
     const b = ctx.boss, p = ctx.player, a = ctx.arena, pb = ctx.playerBox;
@@ -2279,7 +2291,8 @@ function thornAttack(layer) {
     const groundY = floorY - b.h;
     const fs = b.fs || (b.fs = { mode: 'idle', t: 60, tries: 0, n: 0, vy: 0 });
     const bcx = b.x + b.w / 2;
-    const arm = () => ({ x: bcx + (b.facing || 1) * b.w * 0.45, y: b.y + b.h * 0.35 });
+    // The shuriken the vines leave from: the `aim` clip's spawn point.
+    const arm = () => pointAt(thornClip('aim').spawns[0], bcx, b.y + b.h, b.facing || 1);
     const speedK = layer >= 3 ? 1 + THORN_ATK.speedUp * fs.n : 1;
     const pcx = pb.x + pb.w / 2, pcy = pb.y + pb.h / 2;
     const wallL = ctx.bounds.x0, wallR = ctx.bounds.x1;
@@ -2288,7 +2301,7 @@ function thornAttack(layer) {
       const d = aimAt(ox, oy, x, y), nx = -d.y * THORN_ATK.pair / 2, ny = d.x * THORN_ATK.pair / 2;
       return [{ x0: ox + nx, y0: oy + ny, x1: x + nx, y1: y + ny }, { x0: ox - nx, y0: oy - ny, x1: x - nx, y1: y - ny }];
     };
-    const startAim = () => { fs.mode = 'aim'; fs.t = Math.max(8, Math.round(THORN_ATK.aim / speedK)); };
+    const startAim = () => { fs.mode = 'aim'; fs.t = Math.max(8, Math.round(thornClip('aim').total / speedK)); };
     const toFall = () => { fs.mode = 'fall'; fs.vy = 0; b.vines = null; };
     b.vines = null;
 
@@ -2365,9 +2378,10 @@ function thornAttack(layer) {
         b.vines = pairOf(o.x, o.y, at.x, at.y);
         if (d > sp) break;
         fs.n++;
-        if (at.on === 'tile') { fs.mode = 'throw'; fs.t = 20; break; }
+        if (at.on === 'tile') { fs.mode = 'throw'; playClip(b, 'throw', true); break; }
         fs.tries--;
-        fs.mode = 'cling'; fs.t = at.on === 'floor' ? 10 : THORN_ATK.cling;
+        fs.mode = 'cling'; fs.t = at.on === 'floor' ? 10 : thornClip('cling').total;
+        playClip(b, 'cling', true);
         break;
       }
 
@@ -2430,9 +2444,11 @@ function thornAttack(layer) {
       // ...and throws a spread of leaf kunai at you from it.
       case 'throw': {
         b.facing = pcx < bcx ? -1 : 1;
-        const o = arm();
-        b.vines = pairOf(o.x, o.y, fs.tile.x, fs.tile.y);
-        if (--fs.t > 0) break;
+        b.vines = pairOf(arm().x, arm().y, fs.tile.x, fs.tile.y);
+        const c = thornClip('throw'), sp = c.spawns[0];
+        if (b.clipT + 1 >= c.total) { fs.tile.fwd = 0; toFall(); break; }
+        if (b.clipT !== sp.step) break;
+        const o = pointAt(sp, bcx, b.y + b.h, b.facing);
         const n = THORN_ATK.kunai[layer] || 3;
         let base = Math.atan2(pcy - o.y, pcx - o.x);
         // Poisoned: the whole spread swings most of the way to straight down.
@@ -2445,8 +2461,6 @@ function thornAttack(layer) {
           });
         }
         ctx.sfx('shoot', { pitch: 1.3 });
-        fs.tile.fwd = 0;
-        toFall();
         break;
       }
 
@@ -2462,6 +2476,10 @@ function thornAttack(layer) {
       }
     }
     b.x = Math.max(wallL, Math.min(wallR - b.w, b.x));
+    // Publish the clip for GameScene to draw. The aim plays faster at layer 3,
+    // so its picture is stretched to the steps the tell actually lasts.
+    playClip(b, THORN_CLIP[fs.mode] || 'idle');
+    b.clipT++;
   };
 }
 

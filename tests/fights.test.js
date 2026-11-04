@@ -1263,3 +1263,18 @@ test('Grass boss: Fire and Poison kills play his weakness deaths, from the floor
     assert.ok(d.bits.length > 0 && d.bits.every((b) => b.x > 0), `${el}: nothing blew away`);
   }
 });
+
+/**
+ * HIS DRAWING SETS HIS TIMING (boss-thorn-body.sprite). Whatever Claude Design
+ * redraws, the vines must still leave from one point in front of him and the
+ * kunai from one point, and his tell must still be a tell.
+ */
+test('Grass boss sheet: the vines and the kunai each leave from one point in front of him', async () => {
+  const { clipOf } = await import('../src/systems/frame-data.js');
+  const aim = clipOf('boss:thorn:body', 'aim'), thr = clipOf('boss:thorn:body', 'throw');
+  assert.equal(aim.spawns.length, 1, 'aim needs exactly one spawn point, the shuriken');
+  assert.equal(thr.spawns.length, 1, 'throw needs exactly one spawn point');
+  assert.ok(aim.spawns[0].x > 0 && thr.spawns[0].x > 0, 'the vines and kunai should leave from in front of him');
+  assert.ok(aim.total >= 12, `a ${aim.total}-step tell is too short to read`);
+  assert.ok(thr.spawns[0].step < thr.total, 'the kunai must leave before the throw ends');
+});

@@ -516,6 +516,173 @@
       }
     }
   },
+  "boss:thorn:body": {
+    "grid": {
+      "w": 64,
+      "h": 64
+    },
+    "pivot": {
+      "x": 32,
+      "y": 60
+    },
+    "clips": {
+      "idle": {
+        "holds": [
+          30,
+          30
+        ],
+        "cells": [
+          0,
+          1
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 60,
+        "hits": [],
+        "spawns": []
+      },
+      "aim": {
+        "holds": [
+          18,
+          12
+        ],
+        "cells": [
+          2,
+          3
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 30,
+        "hits": [],
+        "spawns": [
+          {
+            "frame": 1,
+            "step": 18,
+            "x": 24,
+            "y": -31
+          }
+        ]
+      },
+      "shoot": {
+        "holds": [
+          6,
+          6
+        ],
+        "cells": [
+          4,
+          5
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 12,
+        "hits": [],
+        "spawns": []
+      },
+      "zip": {
+        "holds": [
+          4
+        ],
+        "cells": [
+          6
+        ],
+        "ship": [
+          true
+        ],
+        "total": 4,
+        "hits": [],
+        "spawns": []
+      },
+      "cling": {
+        "holds": [
+          30
+        ],
+        "cells": [
+          7
+        ],
+        "ship": [
+          true
+        ],
+        "total": 30,
+        "hits": [],
+        "spawns": []
+      },
+      "hold": {
+        "holds": [
+          8,
+          8
+        ],
+        "cells": [
+          8,
+          9
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 16,
+        "hits": [],
+        "spawns": []
+      },
+      "toss": {
+        "holds": [
+          6
+        ],
+        "cells": [
+          10
+        ],
+        "ship": [
+          true
+        ],
+        "total": 6,
+        "hits": [],
+        "spawns": []
+      },
+      "throw": {
+        "holds": [
+          12,
+          8
+        ],
+        "cells": [
+          11,
+          12
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 20,
+        "hits": [],
+        "spawns": [
+          {
+            "frame": 1,
+            "step": 12,
+            "x": 22,
+            "y": -33
+          }
+        ]
+      },
+      "fall": {
+        "holds": [
+          6
+        ],
+        "cells": [
+          13
+        ],
+        "ship": [
+          true
+        ],
+        "total": 6,
+        "hits": [],
+        "spawns": []
+      }
+    }
+  },
   "weapon:draco_blaster:beam": {
     "grid": {
       "w": 32,

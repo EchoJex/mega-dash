@@ -1336,7 +1336,7 @@
       "boss": "thorn",
       "grid": {
         "w": 50,
-        "h": 12
+        "h": 32
       },
       "box": null,
       "spare": false,
@@ -3773,6 +3773,42 @@
         "blast",
         "spinReady",
         "spin"
+      ]
+    },
+    "boss-thorn-body": {
+      "label": "THORN MAN · BODY",
+      "cls": "weapon",
+      "key": "boss:thorn:body",
+      "weapon": "thorn",
+      "sheet": "body",
+      "boss": "thorn",
+      "layer": "boss",
+      "grid": {
+        "w": 64,
+        "h": 64
+      },
+      "box": null,
+      "clips": {
+        "idle": "loop",
+        "aim": "once",
+        "shoot": "loop",
+        "zip": "loop",
+        "cling": "once",
+        "hold": "loop",
+        "toss": "loop",
+        "throw": "once",
+        "fall": "loop"
+      },
+      "frames": [
+        "idle",
+        "aim",
+        "shoot",
+        "zip",
+        "cling",
+        "hold",
+        "toss",
+        "throw",
+        "fall"
       ]
     }
   },

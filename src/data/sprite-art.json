@@ -262,6 +262,85 @@
       ]
     }
   },
+  "boss:thorn:body": {
+    "file": "boss-thorn-body.png",
+    "frameW": 64,
+    "frameH": 64,
+    "anchor": "pivot",
+    "pivot": [
+      32,
+      60
+    ],
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0,
+        1
+      ],
+      "aim": [
+        2,
+        3
+      ],
+      "shoot": [
+        4,
+        5
+      ],
+      "zip": [
+        6
+      ],
+      "cling": [
+        7
+      ],
+      "hold": [
+        8,
+        9
+      ],
+      "toss": [
+        10
+      ],
+      "throw": [
+        11,
+        12
+      ],
+      "fall": [
+        13
+      ]
+    },
+    "holds": {
+      "idle": [
+        30,
+        30
+      ],
+      "aim": [
+        18,
+        12
+      ],
+      "shoot": [
+        6,
+        6
+      ],
+      "zip": [
+        4
+      ],
+      "cling": [
+        30
+      ],
+      "hold": [
+        8,
+        8
+      ],
+      "toss": [
+        6
+      ],
+      "throw": [
+        12,
+        8
+      ],
+      "fall": [
+        6
+      ]
+    }
+  },
   "player": {
     "file": "player.png",
     "frameW": 24,
