@@ -1027,7 +1027,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1210 (main) | `[ready]` | ~~All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness~~ |
 | 1217 (main) | `[wip]` | After strike Man is defeated the punching bags should become inert, and fade dark to blend in with the background. |
 | 1217 (main) | `[wip]` | Strike man l1 1 needs longer cool down between attacks |
-| 1217 (main) | `[wip]` | Thornman level 1 aims a little too well, when the overgrowth has receded the player with bass speed stats and now weapon enhancements should just barely be able to out run the first grapple but not attacks Aim spot |
+| 1217 (main) | `[wip]` | Thornman level 1 aims a little too well, when the overgrowth has receded the player with bass speed stats and now weapon enhancements should just barely be able to out run the first grapple but not subsequent grapple in the set. |
 
 # BRAINSTORM — context only, never implemented
 
