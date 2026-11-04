@@ -1025,6 +1025,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1210 (main) | `[ready]` | ~~Long press of lv 10 gauntlet travels a bit too far, and should always stop short of touching spikes or pits~~ |
 | 1210 (main) | `[ready]` | ~~Playtest the fighting boss later 1. Stand still with Dev perks on and the boss will get stuck inside the player. All enemies should wait until the player has past their rear vertical edge of their spirit box before determining to turn around.~~ |
 | 1210 (main) | `[ready]` | ~~All boss death animation will be either generic (placeholder will be their idle animation flashing white and black before fading out) or death animation caused by lethal damage from their weakness~~ |
+| 1217 (main) | `[wip]` |  |
 
 # BRAINSTORM — context only, never implemented
 
