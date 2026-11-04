@@ -432,8 +432,43 @@ const FURNITURE = {
      * one line to true. Fire against Grass (Hot) is untouched and unrelated.
      */
     a.bugsPersist = false;
+    /**
+     * THE PHILLIPS-HEAD TILES — "small square Phillips head shaped tiles are
+     * present at various places in the background that will occasionally
+     * fade into the foreground for the boss to interact with". Decoration
+     * only: nothing to stand on (owner, 3 Nov 2026). `fwd` is how far forward
+     * one has come, 0 to 1; his layer-2 attack brings one forward and
+     * grapples to it.
+     */
+    const W = a.x1 - a.x0;
+    a.tiles = [[0.18, 64], [0.4, 44], [0.6, 72], [0.82, 50]]
+      .map(([fx, y]) => ({ x: Math.round(a.x0 + W * fx), y: a.ceilY + y, fwd: 0 }));
   },
 };
+
+/**
+ * THE GRASS BOSS'S TILES AND VINES, in plain shapes. `sx`/`sy` turn a world
+ * position into a screen one, shake included. A tile sits faint in the
+ * background and comes forward (`fwd`) when he is about to grapple to it.
+ * His vines are brown with a near-black edge, so they read against his green
+ * room — a boss's shots must show against his own room.
+ */
+export function drawGrapple(g, arena, boss, sx, sy) {
+  for (const t of arena.tiles || []) {
+    const s = 6 + Math.round(2 * t.fwd), x = Math.round(sx(t.x) - s / 2), y = Math.round(sy(t.y) - s / 2);
+    g.fillStyle(0xA8A296, 0.3 + 0.7 * t.fwd);
+    g.fillRect(x, y, s, s);
+    g.fillStyle(0x0A0A12, 0.3 + 0.7 * t.fwd);       // the Phillips cross
+    g.fillRect(x + Math.floor(s / 2) - 1, y + 1, 2, s - 2);
+    g.fillRect(x + 1, y + Math.floor(s / 2) - 1, s - 2, 2);
+  }
+  for (const v of boss?.vines || []) {
+    g.lineStyle(3, 0x0A0A12, 1);
+    g.lineBetween(sx(v.x0), sy(v.y0), sx(v.x1), sy(v.y1));
+    g.lineStyle(1, 0x7A5A2E, 1);
+    g.lineBetween(sx(v.x0), sy(v.y0), sx(v.x1), sy(v.y1));
+  }
+}
 
 /** Which bosses have their arena furniture built. Read by `npm run status`. */
 export const FURNISHED = () => Object.keys(FURNITURE);

@@ -2188,18 +2188,9 @@ export const FIGHTS = {
     },
   },
 
-  /**
-   * THORN MAN — HAZARD ONLY, and deliberately so. Layers 1 and 2 of the ground
-   * cover are `[draft]`; L3 and every attack layer are still `[wip]`, so he has
-   * a room and no fight in it yet.
-   *
-   * That is a legal state and the shipped roster already understands it:
-   * `hasFight` asks about the ATTACK table, so Thorn Man stays out of a
-   * playtester's boss bag until his moveset lands. Dev mode can walk into the
-   * room and read the floor, which is the whole point of building it first.
-   */
+  /** THORN MAN — the vine grab (attacks) and the ground cover (hazards). */
   thorn: {
-    attack: {},
+    attack: { 1: { step: thornAttack(1) }, 2: { step: thornAttack(2) }, 3: { step: thornAttack(3) } },
     hazard: { 1: { step: thornHazard(1) }, 2: { step: thornHazard(2) } },
   },
 };
@@ -2214,10 +2205,9 @@ export const FIGHTS = {
  *    standing player height of a ground cover tile 'scare' the growth to
  *    recede for 5 seconds. At level 1 ground cover will only cause a slightly
  *    noticeable movement speed drop."
- * L2 "First instance of player damage source nearby a tile causes the ground
- *    cover to mostly recede instead of fully recede. 2nd damage source within
- *    1s caused it to fully recede for the full duration. Standing on a ground
- *    covered tile applied constrict status."
+ * L2 "First instance of player damage source nearby causes the ground cover
+ *    to mostly recede instead of fully recede. 2nd damage source within 1s
+ *    caused it to fully recede for the normal duration."
  *
  * THE SCARE IS PROXIMITY, NOT A HIT. "Travel within one standing player height"
  * — so a shot that sails over the floor clears it, and the player is spending
@@ -2227,10 +2217,254 @@ export const FIGHTS = {
  *
  * LAYER 2 INVERTS THE COST. At L1 one shot buys a bare tile; at L2 one shot
  * buys stubble and it takes two inside a second to bare it. The same input now
- * costs twice as much, and standing in what is left applies constrict — so the
- * layer does not make the floor faster or wider, it makes clearing it a
- * decision about whether you can afford to.
+ * costs twice as much — so the layer does not make the floor faster or wider,
+ * it makes clearing it a decision about whether you can afford to.
  */
+/**
+ * THORN MAN'S ATTACKS — the owner's fields of 3 Nov 2026.
+ *
+ * L1 "Shoots a pair of large straight vines directly at the player's current
+ *    location. On hit: constrict for several seconds, reel the player in, then
+ *    toss diagonally to the far wall — heavy damage on wall contact. On miss:
+ *    pulls the boss to that point and fires again, up to 3 times before a
+ *    cooldown."
+ * L2 "...increase the consecutive grab attempts from 3 to 4 and add an attack
+ *    cycle where the boss uses a random foreground Phillips head tile to
+ *    grapple onto, rapidly pulling himself to it, and throwing a spread of 3
+ *    leaf-like kunai toward the player."
+ * L3 "...now 5-way kunai and the 4 consecutive grab attempts steadily increase
+ *    speed until next cooldown."
+ * Poison (his boss notes): "while poisoned kunai fall with a much steeper angle".
+ *
+ * THE GRAB HOLDS YOU (owner's answer): about two seconds held and unable to
+ * act, then reeled in and thrown. It is a grab, not an attribute — the
+ * constrict tint shows while it lasts — and it only takes a player who is
+ * not flickering from a hit. `ctx.hold(x, y)` pins the player's middle there
+ * for one step; the fight asserts it every step it wants him held, so
+ * nothing can leave him stuck.
+ *
+ * A MISS ALWAYS REACHES A SURFACE (owner's answer): the vine flies on until it
+ * meets the floor, a wall or the ceiling, and he zips there, clinging briefly
+ * to a wall or the ceiling before he fires again.
+ */
+const THORN_ATK = {
+  tries: { 1: 3, 2: 4, 3: 4 },
+  aim: 30,                 // steps he points before the vines fly — the tell
+  vineSpeed: 5,            // px a step
+  speedUp: 0.25,           // L3: each try this much faster than the last
+  pair: 5,                 // px between the two vines
+  grabPad: 3,              // the vine's tip is generous by this much
+  hold: 120,               // "constrict for several seconds", held
+  reel: 4,                 // px a step toward his arm
+  tossVx: 5,               // the throw: this fast sideways...
+  tossRise: 0.45,          // ...and this much of it upward — a diagonal
+  wallDamage: 4,           // "heavy damage on wall contact"
+  zip: 6,
+  cling: 30,
+  cool: { 1: 120, 2: 100, 3: 90 },
+  tileChance: 0.5,         // L2+: a tile cycle instead of the vine cycle
+  tileFade: 30,
+  kunai: { 2: 3, 3: 5 },
+  kunaiSpeed: 2.8,
+  kunaiSpread: 0.28,       // radians between neighbours
+  kunaiSteep: 0.6,         // Poisoned: this much of the way to straight down
+  kunaiDamage: 1,
+  gravity: 0.3,
+};
+
+function thornAttack(layer) {
+  return (ctx) => {
+    const b = ctx.boss, p = ctx.player, a = ctx.arena, pb = ctx.playerBox;
+    const floorY = a ? a.floorY : ctx.floorY, ceilY = (a ? a.ceilY : 0) + 4;
+    const groundY = floorY - b.h;
+    const fs = b.fs || (b.fs = { mode: 'idle', t: 60, tries: 0, n: 0, vy: 0 });
+    const bcx = b.x + b.w / 2;
+    const arm = () => ({ x: bcx + (b.facing || 1) * b.w * 0.45, y: b.y + b.h * 0.35 });
+    const speedK = layer >= 3 ? 1 + THORN_ATK.speedUp * fs.n : 1;
+    const pcx = pb.x + pb.w / 2, pcy = pb.y + pb.h / 2;
+    const wallL = ctx.bounds.x0, wallR = ctx.bounds.x1;
+    const pairOf = (ox, oy, x, y) => {
+      // The two vines, side by side across their line of flight.
+      const d = aimAt(ox, oy, x, y), nx = -d.y * THORN_ATK.pair / 2, ny = d.x * THORN_ATK.pair / 2;
+      return [{ x0: ox + nx, y0: oy + ny, x1: x + nx, y1: y + ny }, { x0: ox - nx, y0: oy - ny, x1: x - nx, y1: y - ny }];
+    };
+    const startAim = () => { fs.mode = 'aim'; fs.t = Math.max(8, Math.round(THORN_ATK.aim / speedK)); };
+    const toFall = () => { fs.mode = 'fall'; fs.vy = 0; b.vines = null; };
+    b.vines = null;
+
+    switch (fs.mode) {
+      case 'idle': {
+        b.facing = faceAfterRear(b, pb);
+        b.y = groundY;
+        if (--fs.t > 0) break;
+        fs.n = 0;
+        const tiles = a?.tiles || [];
+        if (layer >= 2 && tiles.length && Math.random() < THORN_ATK.tileChance) {
+          fs.tile = tiles[Math.floor(Math.random() * tiles.length)];
+          fs.mode = 'tileIn'; fs.t = THORN_ATK.tileFade;
+        } else {
+          fs.tries = THORN_ATK.tries[layer];
+          startAim();
+        }
+        break;
+      }
+
+      // Pointing at you — the tell. The target is taken when the vines fly.
+      case 'aim': {
+        if (b.y >= groundY) b.facing = faceAfterRear(b, pb);
+        else b.facing = pcx < bcx ? -1 : 1;     // clinging: he can twist round
+        if (--fs.t > 0) break;
+        const o = arm(), d = aimAt(o.x, o.y, pcx, pcy);
+        fs.vine = { ox: o.x, oy: o.y, x: o.x, y: o.y, dx: d.x, dy: d.y, toTile: null };
+        fs.mode = 'shoot';
+        ctx.sfx('shoot', { pitch: 0.6 });
+        break;
+      }
+
+      case 'shoot': {
+        const v = fs.vine, sp = THORN_ATK.vineSpeed * speedK;
+        v.x += v.dx * sp; v.y += v.dy * sp;
+        // The tip against the player, a little generous.
+        const g = THORN_ATK.grabPad;
+        if (!v.toTile && ctx.playerInvuln === 0 && v.x > pb.x - g && v.x < pb.x + pb.w + g
+          && v.y > pb.y - g && v.y < pb.y + pb.h + g) {
+          fs.mode = 'held'; fs.t = THORN_ATK.hold;
+          fs.grip = { x: pcx, y: pcy };
+          ctx.status('constrict', THORN_ATK.hold, { step: FEEL.stunPlayerStep, src: 'vine' });
+          ctx.sfx('slide', { pitch: 0.7 });
+          b.vines = pairOf(v.ox, v.oy, v.x, v.y);
+          ctx.hold(fs.grip.x, fs.grip.y);
+          break;
+        }
+        // A surface: the floor, a wall or the ceiling — or the tile it was sent at.
+        let at = null;
+        if (v.toTile && Math.hypot(v.x - v.toTile.x, v.y - v.toTile.y) <= sp) at = { x: v.toTile.x, y: v.toTile.y, on: 'tile' };
+        else if (v.y >= floorY) at = { x: v.x, y: floorY, on: 'floor' };
+        else if (v.x <= wallL) at = { x: wallL, y: v.y, on: 'wallL' };
+        else if (v.x >= wallR) at = { x: wallR, y: v.y, on: 'wallR' };
+        else if (v.y <= ceilY) at = { x: v.x, y: ceilY, on: 'ceil' };
+        b.vines = pairOf(v.ox, v.oy, at ? at.x : v.x, at ? at.y : v.y);
+        if (!at) break;
+        fs.anchor = at;
+        fs.mode = 'zip';
+        break;
+      }
+
+      // Pulled along his own vine to where it struck.
+      case 'zip': {
+        const at = fs.anchor;
+        // Where his body ends up: feet on the floor, back to a wall, head to
+        // the ceiling, or hanging centred on a tile.
+        const tx = at.on === 'wallL' ? wallL : at.on === 'wallR' ? wallR - b.w : Math.max(wallL, Math.min(wallR - b.w, at.x - b.w / 2));
+        const ty = at.on === 'floor' ? groundY : at.on === 'ceil' ? ceilY
+          : Math.max(ceilY, Math.min(groundY, at.y - b.h / 2));
+        const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy), sp = THORN_ATK.zip * speedK;
+        if (d > sp) { b.x += dx / d * sp; b.y += dy / d * sp; }
+        else { b.x = tx; b.y = ty; }
+        const o = arm();
+        b.vines = pairOf(o.x, o.y, at.x, at.y);
+        if (d > sp) break;
+        fs.n++;
+        if (at.on === 'tile') { fs.mode = 'throw'; fs.t = 20; break; }
+        fs.tries--;
+        fs.mode = 'cling'; fs.t = at.on === 'floor' ? 10 : THORN_ATK.cling;
+        break;
+      }
+
+      case 'cling': {
+        if (--fs.t > 0) break;
+        if (fs.tries > 0) startAim();
+        else toFall();
+        break;
+      }
+
+      // HELD, then REELED IN, then THROWN at the far wall.
+      case 'held': {
+        const o = arm();
+        if (--fs.t > THORN_ATK.hold / 2) {
+          ctx.hold(fs.grip.x, fs.grip.y);
+        } else {
+          const d = Math.hypot(o.x - fs.grip.x, o.y - fs.grip.y);
+          if (d > 14) {
+            fs.grip.x += (o.x - fs.grip.x) / d * THORN_ATK.reel;
+            fs.grip.y += (o.y - fs.grip.y) / d * THORN_ATK.reel;
+          } else if (fs.t <= 0) {
+            // The far wall is the one he is not standing nearer.
+            fs.toss = bcx < (wallL + wallR) / 2 ? 1 : -1;
+            fs.mode = 'toss';
+          }
+          ctx.hold(fs.grip.x, fs.grip.y);
+        }
+        b.vines = pairOf(o.x, o.y, fs.grip.x, fs.grip.y);
+        break;
+      }
+
+      case 'toss': {
+        const lo = (a ? a.x0 : wallL) + 12, hi = (a ? a.x1 : wallR) - 12;
+        fs.grip.x += fs.toss * THORN_ATK.tossVx;
+        fs.grip.y = Math.max(ceilY + 12, fs.grip.y - THORN_ATK.tossVx * THORN_ATK.tossRise);
+        if (fs.grip.x <= lo || fs.grip.x >= hi) {
+          fs.grip.x = Math.max(lo, Math.min(hi, fs.grip.x));
+          ctx.hold(fs.grip.x, fs.grip.y);
+          ctx.hurt(fs.grip.x - fs.toss * 20, THORN_ATK.wallDamage);
+          ctx.shake(2, 12);
+          toFall();
+          break;
+        }
+        ctx.hold(fs.grip.x, fs.grip.y);
+        break;
+      }
+
+      // L2+: a tile in the background comes forward, he grapples to it...
+      case 'tileIn': {
+        fs.tile.fwd = Math.min(1, (fs.tile.fwd || 0) + 1 / THORN_ATK.tileFade);
+        b.facing = faceAfterRear(b, pb);
+        if (--fs.t > 0) break;
+        const o = arm(), d = aimAt(o.x, o.y, fs.tile.x, fs.tile.y);
+        fs.vine = { ox: o.x, oy: o.y, x: o.x, y: o.y, dx: d.x, dy: d.y, toTile: fs.tile };
+        fs.mode = 'shoot';
+        ctx.sfx('shoot', { pitch: 0.6 });
+        break;
+      }
+
+      // ...and throws a spread of leaf kunai at you from it.
+      case 'throw': {
+        b.facing = pcx < bcx ? -1 : 1;
+        const o = arm();
+        b.vines = pairOf(o.x, o.y, fs.tile.x, fs.tile.y);
+        if (--fs.t > 0) break;
+        const n = THORN_ATK.kunai[layer] || 3;
+        let base = Math.atan2(pcy - o.y, pcx - o.x);
+        // Poisoned: the whole spread swings most of the way to straight down.
+        if (b.status?.poisoned) base += (Math.PI / 2 - base) * THORN_ATK.kunaiSteep;
+        for (let i = 0; i < n; i++) {
+          const ang = base + (i - (n - 1) / 2) * THORN_ATK.kunaiSpread;
+          ctx.shoot({
+            x: o.x, y: o.y, vx: Math.cos(ang) * THORN_ATK.kunaiSpeed, vy: Math.sin(ang) * THORN_ATK.kunaiSpeed,
+            radius: 3, damage: THORN_ATK.kunaiDamage, color: '#B8E05A', rim: '#0A0A12', shape: 'bolt', life: 240,
+          });
+        }
+        ctx.sfx('shoot', { pitch: 1.3 });
+        fs.tile.fwd = 0;
+        toFall();
+        break;
+      }
+
+      case 'fall': {
+        fs.vy += THORN_ATK.gravity;
+        b.y += fs.vy;
+        if (b.y >= groundY) {
+          b.y = groundY;
+          fs.mode = 'idle';
+          fs.t = THORN_ATK.cool[layer];
+        }
+        break;
+      }
+    }
+    b.x = Math.max(wallL, Math.min(wallR - b.w, b.x));
+  };
+}
+
 /** Bosses that stay burned longer than anyone else: Thorn Man, twice as long (his arena furniture field). */
 export const BOSS_BURN_SCALE = { thorn: 2 };
 

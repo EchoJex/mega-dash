@@ -1418,6 +1418,10 @@ defined and tested, but nothing applies them yet.
 multiplicative slow, 15% per stack off the player and 30% off an enemy, cutting attack speed
 as well as movement. **Each stack keeps its own clock, and one source can hold only one stack
 on a target**, with no refresh while it lasts. Nothing elemental holds anyone in place.
+**The Grass boss's vine GRAB is not an attribute**: it holds the player for about two
+seconds with no moving or firing (`ctx.hold`, a per-step grant read through `run.held`, so
+nothing can leave him stuck), reels him in and throws him into the far wall. The constrict
+tint shows while it lasts.
 
 `cloakHold` is in the ATTR table but is **not** an elemental attribute — it was the Astral
 Cloak's aggro pause. That weapon is being redesigned as the **Evil Energy** (its tracker

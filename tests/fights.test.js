@@ -23,7 +23,7 @@ const VIEW_W = 400, FLOOR = 184;
 function harness(bossId, layer) {
   const def = BOSS_BY_ID[bossId];
   const arena = Arena.makeArena(def, layer, VIEW_W, FLOOR);
-  const shots = [], shakes = [], hurts = [], shoves = [], blocks = [], bossHits = [];
+  const shots = [], shakes = [], hurts = [], shoves = [], blocks = [], bossHits = [], held = [];
   const bullets = [];
   const status = Attr.makeStatus();
   // Must match what GameScene.spawnBoss actually builds. `anim` in particular
@@ -71,6 +71,9 @@ function harness(bossId, layer) {
       sfx: () => {},
       shake: (mag, dur) => shakes.push({ mag, dur }),
       hurt: (x, d) => hurts.push({ x, d }),
+      playerInvuln: 0,
+      // The Grass boss's vine grab: where the player is pinned this step.
+      hold: (x, y) => { held.push({ x, y }); },
       status: (id, f, o) => Attr.applyStatus(status, id, f, o),
       patch: (id, x, y, w, h, f, o = {}) =>
         Attr.addPatch(arena.patches, Object.assign(Attr.makePatch(id, x, y, w, h, f), o)),
@@ -83,6 +86,7 @@ function harness(bossId, layer) {
     },
     bossHits,
     bullets,
+    held,
   };
 }
 
@@ -218,11 +222,8 @@ test('no boss has more built layers than the tracker defines', () => {
     tempest: { attack: 3, hazard: 3 },
     volt: { attack: 3, hazard: 3 },
     strike: { attack: 3, hazard: 3 },
-    // A ROOM WITH NO FIGHT IN IT IS A LEGAL STATE, and Thorn Man is the first.
-    // His ground cover is `[draft]` at L1 and L2; L3 and every attack layer are
-    // still `[wip]`. `hasFight` asks about the ATTACK table, so he stays out of
-    // a playtester's boss bag until his moveset lands — see PLAYABLE_BOSSES.
-    thorn: { attack: 0, hazard: 2 },
+    // His seed pods (hazard L3) arrive next; until then L3 falls back to L2.
+    thorn: { attack: 3, hazard: 2 },
   };
   assert.deepEqual(Object.keys(FIGHTS).sort(), Object.keys(written).sort(),
     'a boss gained or lost a fight entry — update the expected map with it');
@@ -1099,4 +1100,86 @@ test('Grass cover: height by layer, a drag that follows its height, melee and Po
     if (tb === null && b.grow >= 1) tb = i;
   }
   assert.ok(tb !== null && (ta === null || ta > tb * 1.5), `Poisoned cover regrew in ${ta}, plain in ${tb}`);
+});
+
+/**
+ * THE GRASS BOSS'S VINES (owner, 3 Nov 2026). A hit holds the player, reels
+ * him in and throws him into the far wall for heavy damage, once. A miss
+ * always reaches a surface and he zips there: 3 tries at L1, 4 from L2, and
+ * at L3 each try comes faster. L2 adds the tile and its kunai spread — 3, then
+ * 5 at L3 — which fall steeper while he is Poisoned.
+ */
+function thornAt(layer) {
+  const h = harness('thorn', layer);
+  h.boss.w = 32; h.boss.h = 43; h.boss.x = 260; h.boss.y = FLOOR - 43; h.boss.facing = -1;
+  h.ctx.bounds = { x0: 16, x1: VIEW_W - 16 };
+  return h;
+}
+const runThorn = (h, layer, steps, each) => {
+  for (let i = 0; i < steps; i++) {
+    h.boss.anim++;
+    FIGHTS.thorn.attack[layer].step(h.ctx);
+    if (each && each(i) === false) break;
+  }
+};
+
+test('Grass boss: a vine hit holds, reels in and throws into the far wall once', () => {
+  const h = thornAt(1);
+  let firstHeld = null, lastHeld = null;
+  runThorn(h, 1, 900, (i) => {
+    if (h.held.length && firstHeld === null) firstHeld = i;
+    if (h.held.length) lastHeld = i;
+    if (h.hurts.length) return false;
+  });
+  assert.ok(firstHeld !== null, 'the vines never caught a player standing in front of him');
+  assert.ok(lastHeld - firstHeld > 90, `held for only ${lastHeld - firstHeld} steps`);
+  assert.equal(h.hurts.length, 1, 'the wall should hurt exactly once');
+  const end = h.held[h.held.length - 1];
+  assert.ok(end.x < 40 || end.x > VIEW_W - 40, `thrown to x ${end.x}, not into a wall`);
+  assert.ok(end.y < h.held[0].y, 'the throw should go up and across, a diagonal');
+});
+
+test('Grass boss: a miss zips him to a surface — 3 tries at L1, 4 at L2, faster each time at L3', () => {
+  for (const [layer, want] of [[1, 3], [2, 4], [3, 4]]) {
+    const h = thornAt(layer);
+    h.ctx.playerInvuln = 99;              // flickering: the vines cannot take him
+    const orig = Math.random;
+    Math.random = () => 0.99;              // never the tile cycle
+    const zips = [];
+    let last = null, moved = false;
+    try {
+      runThorn(h, layer, 2000, (i) => {
+        const m = h.boss.fs.mode;
+        if (m === 'cling' && last !== 'cling') zips.push(i);
+        if (Math.abs(h.boss.x - 260) > 20) moved = true;
+        last = m;
+        if (m === 'fall' && zips.length) return false;
+      });
+    } finally { Math.random = orig; }
+    assert.ok(moved, `L${layer}: he never zipped anywhere`);
+    assert.equal(zips.length, want, `L${layer}: ${zips.length} tries before the cooldown`);
+    assert.equal(h.held.length, 0, 'a flickering player must not be grabbed');
+    if (layer === 3) {
+      const gaps = zips.slice(1).map((z, i) => z - zips[i]);
+      assert.ok(gaps[gaps.length - 1] < gaps[0], `L3 tries should speed up: gaps ${gaps}`);
+    }
+  }
+});
+
+test('Grass boss: L2 grapples a tile and throws 3 kunai, L3 throws 5, steeper when Poisoned', () => {
+  const kunaiAt = (layer, poisoned) => {
+    const h = thornAt(layer);
+    // Far across the room from the first tile, so the throw starts shallow.
+    h.player.x = 330; h.ctx.playerBox = { x: 336, y: FLOOR - 22, w: 12, h: 22 };
+    if (poisoned) h.boss.status.poisoned = { t: 999, tMax: 999 };
+    const orig = Math.random;
+    Math.random = () => 0;                 // always the tile cycle, first tile
+    try { runThorn(h, layer, 1200, () => (h.shots.length ? false : undefined)); } finally { Math.random = orig; }
+    assert.ok(h.arena.tiles.some((t) => t.fwd >= 0) , 'no tiles in his room');
+    return h.shots;
+  };
+  assert.equal(kunaiAt(2).length, 3, 'L2 spread');
+  assert.equal(kunaiAt(3).length, 5, 'L3 spread');
+  const mean = (list) => list.reduce((n, k) => n + Math.atan2(k.vy, Math.abs(k.vx)), 0) / list.length;
+  assert.ok(mean(kunaiAt(2, true)) > mean(kunaiAt(2)) + 0.3, 'Poisoned kunai should fall much steeper');
 });

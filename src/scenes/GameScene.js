@@ -833,7 +833,14 @@ export default class GameScene extends Phaser.Scene {
 
     const wasOnGround = p.onGround;
     const fallVy = p.vy;
-    if (p.beam) {
+    // HELD by a boss (the Grass boss's vine): last step's grant pins him, the
+    // same read-a-step-late rule as `coverSlow` above.
+    r.heldActive = r.held || null;
+    r.held = null;
+    if (r.heldActive && !p.beam) {
+      p.x = r.heldActive.x - 12; p.y = r.heldActive.y - 12;
+      p.vx = 0; p.vy = 0; p.knockbackVx = 0; p.sliding = false;
+    } else if (p.beam) {
       this.stepBeam();
     } else {
       Phys.stepPlayer(p, this.world, {
@@ -1220,6 +1227,7 @@ export default class GameScene extends Phaser.Scene {
   stepFireInput(held) {
     const r = this.run;
     if (this.intent.firePressed) r.fireConsumed = false;
+    if (r.heldActive) return;   // held by a vine: "unable to act"
 
     const id = r.activeWeapon;
     const beh = Wpn.hasRuntime(id) ? Wpn.RUNTIME[id] : null;
@@ -2148,7 +2156,7 @@ export default class GameScene extends Phaser.Scene {
     // body — Tempest Man flies at you and never fires — cost more to touch
     // than one whose body is incidental.
     const box = Phys.hitboxOf(this.player);
-    if (this.run.invuln === 0 && Phys.overlaps(box, { x: b.x, y: b.y, w: b.w, h: b.h })) {
+    if (this.run.invuln === 0 && !this.run.held && Phys.overlaps(box, { x: b.x, y: b.y, w: b.w, h: b.h })) {
       this.hurt(b.x + b.w / 2, b.contactDamage || 1);
     }
   }
@@ -2201,6 +2209,13 @@ export default class GameScene extends Phaser.Scene {
         sfx('rumble', { dur: Math.max(0.7, dur / 96), pitch: mag >= 3 ? 0.72 : 0.9 });
       },
       hurt: (x, dmg) => { if (this.run.invuln === 0) this.hurt(x, dmg); },
+      playerInvuln: this.run.invuln,
+      /**
+       * HOLD THE PLAYER — the Grass boss's vine grab. Pins the middle of the
+       * player at (x, y) for one step, with no moving and no firing. A fight
+       * asserts it every step it wants him held, so it can never stick.
+       */
+      hold: (x, y) => { this.run.held = { x, y }; },
       /**
        * THE ROOM HITTING ITS OWN BOSS. Strike Man's training bag is the first
        * thing to need it: the player lifts it with a psychic shot and it comes
@@ -3043,6 +3058,7 @@ export default class GameScene extends Phaser.Scene {
       );
     }
 
+    if (this.arena) Arena.drawGrapple(L.boss.g, this.arena, this.boss, sx, sy);
     if (this.boss) {
       const b = this.boss;
       /**
