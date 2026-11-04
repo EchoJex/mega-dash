@@ -950,6 +950,10 @@ test('Strike Man lunges across the room, back-dashes from shots, and is dazed by
   const step = () => { h.boss.anim++; FIGHT.attack[1].step(h.ctx); FIGHT.hazard[1].step(h.ctx); };
   const bagHits = (side) => {
     step();
+    // The bag is thrown once at where he stood, so keep him standing: the
+    // player within punching range, and his walk long enough to outlast it.
+    h.ctx.playerBox = { x: h.boss.x + h.boss.w + 2, y: FLOOR - 22, w: 12, h: 22 };
+    if (h.boss.fs.mode === 'stalk') h.boss.fs.t = 9999;
     const bag = h.arena.hazards.find((z) => z.kind === 'bag' && z.mode === 'swing');
     bag.x = h.boss.x + (side < 0 ? -10 : 10); bag.mode = 'psi';
     const hits = h.bossHits.length;

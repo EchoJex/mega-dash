@@ -1817,7 +1817,7 @@ function strikeHazard(layer) {
 const STRIKE_ATK = {
   walk: { 1: 0.5, 2: 0.6, 3: 0.7 },
   dash: { 1: 1.6, 2: 1.9, 3: 2.2 },
-  rest: { 1: [70, 120], 2: [60, 100], 3: [50, 90] },
+  rest: { 1: [105, 180], 2: [60, 100], 3: [50, 90] },   // L1 1.5x longer (owner, bug of build 1217)
   reach: 34,               // close enough to jab rather than lunge
   jabs: { 1: 3, 2: 3, 3: 4 },
   jabDamage: 1,
