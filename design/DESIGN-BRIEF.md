@@ -46,6 +46,9 @@ page: when this page changes, update it too (link at the bottom).
 - **A boss's primary and secondary are his identity**; his 16-bit shades are built from
   them. His **shots must show against his own room**: Proto Mk0's are warning red `#FF4A32`
   with a one-pixel near-black **rim**, because grey shots vanished into his grey bunker.
+- **Every boss has a single eye** (the owner, 4 Nov 2026): "all bosses will have a common
+  theme of a single 'eye'. This theme should be interpreted with very wide creativity."
+  Strike Man's and Thorn Man's are the examples the owner liked.
 - **Elite minions** wear a gold outline `#F5D328` instead of the near-black one.
 - **Red means warning in Proto Mk0's bunker** and is kept for that.
 

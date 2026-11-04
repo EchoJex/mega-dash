@@ -56,6 +56,11 @@ dry leaves and a thin trunk for Poison. Neither is on this sheet.
 - About 1.8 times the player's height (the player is 24 pixels tall), tall and skinny.
 - **He replaces his plain block**, standing on the pivot. Draw him facing right; the game
   mirrors him to face the player.
+- **As drawn (4 Nov 2026):** the owner picked a leaf-horned ninja in leaf armour, with a
+  single glowing eye slit, square pouches strapped to his thighs, and stiff vine springs
+  for arms, "like the fighters from the ARMS Nintendo game". Their rule for the springs:
+  "Attacks (grabs) will make use of this coiled length plus artistic liberties to reach
+  across the stage as it is currently programmed to do".
 
 ## The contract
 
@@ -77,14 +82,14 @@ Steps are 1/60 of a second. Frames are listed by how many steps each shows; **bo
 
 | clip | kind | frames (steps each) | lasts | connects on step | hit area | spawn point |
 |---|---|---|---|---|---|---|
-| idle | loop | 30 · 30 | 60 | — | — | — |
-| aim | once | 18 · 12 | 30 | — | — | 56, 29 |
+| idle | loop | 15 · 15 · 15 · 15 | 60 | — | — | — |
+| aim | once | 18 · 12 | 30 | — | — | 54, 29 |
 | shoot | loop | 6 · 6 | 12 | — | — | — |
 | zip | loop | 4 | 4 | — | — | — |
 | cling | once | 30 | 30 | — | — | — |
 | hold | loop | 8 · 8 | 16 | — | — | — |
 | toss | loop | 6 | 6 | — | — | — |
-| throw | once | 12 · 8 | 20 | — | — | 54, 27 |
+| throw | once | 12 · 8 | 20 | — | — | 52, 27 |
 | fall | loop | 6 | 6 | — | — | — |
 
 Clip kinds: **hit** plays once; exactly one frame carries hit=x,y,w,h — the step it connects and its hit area; **loop** loops for as long as the move lasts; no hit; **once** plays once, and its length is how long the thing lasts; no hit; **grow** plays once; starts with frames marked with a bare hit (they hurt), then frames without (they stand); **lash** plays once; exactly two frames carry hit=x,y,w,h — the first hurts lightly while it shows, the second is the main hit and its area is the tip; **still** a single frame; no hit; **travel** loops while the move carries him; exactly one frame carries hit=x,y,w,h — from the step that frame first shows, that area hurts until the move ends.
@@ -106,22 +111,5 @@ Worked out from the weapon's ladder; `npm test` checks every one, and a handoff 
 ## Handing this boss to Claude Design
 
 <!-- generated:prompt -->
-Paste this into Claude Design, with the repository linked:
-
-```text
-Draw the art for MEGA DASH's THORN MAN, replacing the placeholder pictures in its 1 sprite sheet.
-
-Everything you need is in the GitHub repository EchoJex/mega-dash, branch main. Link the repository (the design/ and docs/ folders are enough) and read, in this order:
-1. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/README.md — how drawn art with its own timing works in this game (weapons and bosses alike): the .sprite format, what you may change, how it is checked, and what to hand back.
-2. https://github.com/EchoJex/mega-dash/blob/main/design/weapon-art/thorn.md — this boss: what it is, every move he makes, every clip with its timing and hit areas, and the rules the code holds the drawing to.
-3. The sheet to draw, already in the game and playing exactly as your art will:
-   - https://github.com/EchoJex/mega-dash/blob/main/design/sprites/boss-thorn-body.sprite
-4. https://github.com/EchoJex/mega-dash/blob/main/design/DESIGN-BRIEF.md (the game's look and limits) and https://github.com/EchoJex/mega-dash/blob/main/design/sprites/player.sprite (the 16-bit player: the reference for style and for scale).
-
-Redraw every frame of those sheets in the same files: same file names, same sheet sizes, same clip names, drawn facing right (the game mirrors it). You may change the colours (up to 15 per sheet), any hold, which frame a move hits on, the hit areas, the spawn points and the pivot when the drawing needs it. Those changes go into the game as soon as they pass the checks, so say what you changed and why.
-
-Before handing off, show the owner every clip playing at game speed (60 steps a second, each frame for its hold), facing both ways, beside the player, with the hit areas drawn on.
-
-When the owner approves, give the owner ONE zip file to download, holding the .sprite files you drew and a HANDOFF.md note saying what was approved and when, what changed in timing or hit areas and why, and anything you would like the code to change. (If your menu has Export, then Hand off to Claude Code, that makes the same bundle.) The owner gives that zip to Claude Code.
-```
+Every sheet of the THORN MAN is finished art, so there is no prompt to paste.
 <!-- /generated:prompt -->

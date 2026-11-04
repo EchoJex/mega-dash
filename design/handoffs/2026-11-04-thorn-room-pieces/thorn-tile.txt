@@ -1,0 +1,30 @@
+# thorn-tile (mossy stone, Phillips head)
+grid      16x16
+fudge     0.70 x 1.00
+palette   0 #0A0A12 outline
+palette   1 #B6F27A leaf highlight
+palette   2 #5ED04A leaf light
+palette   3 #2AAB1C green (Thorn Man primary)
+palette   4 #1C7A16 green shade
+palette   e #1A1418 mask black
+palette   i #9A9486 stone light
+palette   j #6E695E stone
+palette   k #46423A stone dark
+
+[idle 1] status=draft hold=5
+.00000000000000.
+0111111111111120
+0133233233233240
+024i24i34i24i240
+0i4ij4jeeij4ij40
+0iijjikeeijijjk0
+0ijkkkkeejkkkjk0
+0ijkeeeeeeeeeik0
+0ijkeeeeeeeeeik0
+0ijjiijeeiiiijk0
+0ijjjjkeeijjjjk0
+0ijjjjkeeijjjjk0
+0ijjjjkeeijjjjk0
+0ijjjjjiijjjjjk0
+0jkkkkkkkkkkkkk0
+.00000000000000.

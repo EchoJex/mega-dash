@@ -601,6 +601,10 @@ How it is shaded and outlined is Claude Design's job now; what this repo holds i
 - **Identity colours still rule.** The player is a fixed white suit with a `#3CBCFC`
   accent and is never tinted. A boss's primary and secondary stay his identity; his
   16-bit shades are built from them.
+- **Every boss has a single eye**, the owner's rule (4 Nov 2026), in their words: "all
+  bosses will have a common theme of a single 'eye'. This theme should be interpreted with
+  very wide creativity." Strike Man's and Thorn Man's are the examples they liked (Thorn
+  Man's is one glowing slit in his hood). Put it in every boss brief.
 - **Colours are free RGB.** `docs/nes-palette.js` keeps the NES table as a reference only.
 - **The references are the player's sheet and the six drawn rooms.**
 - **A boss's shots must show against his own room** — see *The 16-bit boss rooms*.
@@ -684,6 +688,7 @@ Claude or a generator made:
 | Draco-Blaster — the dragon-head cannon (every clip), the breath puffs, the wave, the blast, the beam and its streaks, and his wide stance while it is busy | sprite | Claude (Claude Design) | 2026-10-24 | `design/sprites/weapon-draco_blaster-{held,puff,wave,blast,beam,streak,body}.sprite` |
 | the Granite Form — the chest and monolith statues, the boulder, the three-legged walker and the loose stone; not the megaman statue, still the placeholder for the owner to draw | sprite | Claude (Claude Design) | 2026-10-26 | `design/sprites/weapon-granite_form-{statue,boulder,rocker,stone}.sprite` |
 | Strike Man's body — a rusty robot boxer on a tank-tread base, every clip including both stagger stages (asked for 31 Oct 2026, restyled on treads 2 Nov 2026) | sprite | Claude (Claude Design) | 2026-10-31 | `design/sprites/boss-strike-body.sprite` |
+| Thorn Man's body — a leaf-horned ninja in leaf armour with stiff vine-spring arms ending in shuriken, every clip; the owner picked each part from options on a design canvas. His tile, leaf kunai and seed pod were drawn too but are not in the game yet (no sheet for them) | sprite | Claude (Claude Design) | 2026-11-04 | `design/sprites/boss-thorn-body.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
