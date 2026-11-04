@@ -1389,8 +1389,10 @@ dim**, which is why `drawArenaBolts` is called from `GameScene.draw` rather than
 Every slice carries **`boss weakness A`** and **`boss weakness B` (optional)**: the types
 this boss's ARENA reacts to in a way no other type does. They change how the boss or his
 room reacts — **nothing multiplies damage**. Thorn Man (Grass) is weak to **Fire** and
-**Poison**: Hot keeps his ground cover down three times as long (the Poison half is not
-built). Bug was dropped by the owner; that code is dormant behind `bugsPersist` in
+**Poison**: Hot keeps his ground cover down three times as long, Poison makes it grow back
+slowly, wilts his seed pods and steepens his kunai, and each has its own weakness death
+(`WEAKNESS_DEATH` in `systems/bossDeath.js`). Nothing deals Poison yet, so the Poison half is
+tested with a faked Poison hit. Bug was dropped by the owner; that code is dormant behind `bugsPersist` in
 `arena.js`, not deleted. Strike Man (Fighting) is weak to **Psychic**: a psychic hit lifts a
 training bag and drops it on him.
 

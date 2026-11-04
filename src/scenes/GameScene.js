@@ -2338,7 +2338,7 @@ export default class GameScene extends Phaser.Scene {
     // NOT gated on anything below: the unlock, the drops and the wrap door all
     // land on this frame, so a death sequence can never strand a run. The
     // player may walk into the door while he is still falling.
-    this.deaths.push(Death.makeDeath(b, b.lastHitElement));
+    this.deaths.push(Death.makeDeath(b, b.lastHitElement, this.arena?.floorY ?? GROUND_Y));
     this.shake = { mag: 2, dur: 24, t: 24 };
     this.run.kills++;
     this.run.score += Math.round((500 + this.run.combo * 100) * this.run.scoreMult);
@@ -3131,7 +3131,7 @@ export default class GameScene extends Phaser.Scene {
     // A boss with a drawn sheet flashes his own idle picture (see bossDeath.js);
     // a rectangle boss is flashed by the death itself.
     for (const d of this.deaths) {
-      const sheet = bossSheet(d.id);
+      const sheet = d.kind === 'generic' ? bossSheet(d.id) : null;
       const cell = sheet ? cellAt(clipOf(sheet, 'idle'), d.t, true) : -1;
       const { fill, alpha } = Death.look(d);
       const drawn = cell >= 0 && L.boss.drawCell({

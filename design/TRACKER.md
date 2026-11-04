@@ -238,7 +238,7 @@ where each one stands.
 - **attack name** `[ready]` Vine Lash
 - **weapon name** `[ready]` Simon's whip
 - **boss weakness A** `[ready]` Fire
-- **boss weakness B** `[draft]` Poison
+- **boss weakness B** `[ready]` Poison
 - **arena** `[ready]` Overgrown greenhouse with a shattered glass roof; Small square Phillips head shaped tiles are present at various places in the background that will occasionally fade into the foreground for the boss to interact with
 - **arena furniture** `[ready]` Thorny overgrown tiles, referred below as ground cover. When fully grown are slightly taller than the player, reside one layer above the player, dense, but not so dense that the player is hard to discern. Players damage sources cause the growth to recede. Applying Hot attribute to an overgrowth tile causes the tile to STAY RECEDED for 3x the normal duration, and be visually indicated by that tile turning black with small red glowing embers. Scorched earth grows back at the same rate once it starts; it just starts much later. Poison type damage sources start growing back like normal but grow significantly slower
 - **hazard L1** `[ready]` Arena starts with all Ground cover tiles fully grown on the floor, covering the full width of the arena. Player damage sources that travel within 1 standing player height of a ground cover tile "scare" the growth to recede for 5 seconds. Hazard level 1 ground cover will only cause a moderate movement speed drop at full height, which will be to about chest level, with the slowdown scaled to the height of that tiles ground cover.

@@ -1238,3 +1238,28 @@ test('Grass boss L3: seed pods grow, reach, burst, wilt or burn', () => {
   assert.equal(h.shots.length, 0, 'a burnt pod must not burst');
   assert.ok(h.arena.patches.some((pt) => pt.id === 'hot' && pt.source === 'player'), 'no Hot left behind');
 });
+
+/**
+ * THE GRASS BOSS'S WEAKNESS DEATHS (his boss notes). Killed by Fire — a Burn
+ * tick included — he dies to ash and petals; by Poison, to dry leaves and a
+ * thin trunk; by anything else, the generic death. In the air, he comes back
+ * down to the floor first. No other boss has a weakness death yet.
+ */
+test('Grass boss: Fire and Poison kills play his weakness deaths, from the floor', async () => {
+  const Death = await import('../src/systems/bossDeath.js');
+  const thorn = { ...BOSS_BY_ID.thorn, x: 100, y: 40, w: 32, h: 43 };
+  assert.equal(Death.makeDeath(thorn, 'Fire', FLOOR).kind, 'ash');
+  assert.equal(Death.makeDeath(thorn, 'Poison', FLOOR).kind, 'leaves');
+  assert.equal(Death.makeDeath(thorn, 'Electric', FLOOR).kind, 'generic');
+  assert.equal(Death.makeDeath(thorn, undefined, FLOOR).kind, 'generic');
+  assert.equal(Death.makeDeath({ ...BOSS_BY_ID.strike, x: 0, y: 0, w: 38, h: 44 }, 'Fire', FLOOR).kind, 'generic');
+
+  for (const el of ['Fire', 'Poison']) {
+    const d = Death.makeDeath(thorn, el, FLOOR);
+    const g = { fillStyle() {}, fillRect() {} };
+    while (Death.stepDeath(d)) Death.drawDeath(g, (v) => v, d, (v) => v);
+    assert.equal(d.y + d.h, FLOOR, `${el}: he never came back down to the floor`);
+    assert.equal(d.kneel, 1, `${el}: he never fell to his knees`);
+    assert.ok(d.bits.length > 0 && d.bits.every((b) => b.x > 0), `${el}: nothing blew away`);
+  }
+});
