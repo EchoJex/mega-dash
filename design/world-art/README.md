@@ -24,6 +24,8 @@ picks in each board's comment thread; Claude then labels the board PICKED, here 
   for now i just want a default that is less ugly than the geometry placeholders." How busy: "agree
   that it shouldnt been too busy. eventually i might better balance touch UI needs vs low ground
   level height that doesnt compromise on player satisfaction."
+  When it goes in: "wait for the remainder of the world pieces", so the steel ground goes into the
+  game together with the rest of this group once every board is picked.
 
 - `variants.mjs` paints every variant with the game's own room kit
   (`src/systems/arena-art/pixels.js`), at the game's sizes, so a picked painter moves into the game
