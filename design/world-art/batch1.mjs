@@ -490,6 +490,9 @@ const ELECTRIC = {
 const thorn = B('thorn');
 const GRASS = {
   id: 'thorn', type: 'Grass',
+  // The owner, 5 Nov 2026: "2b including platform as it currently is, but the ground uses the ground
+  // from A meadow turf."
+  pick: { backdrop: 2, material: 'B', ground: 'A' },
   materials: [
     ['A', 'MEADOW TURF', 'Grass over dark soil with roots and flowers, a turf ledge, bramble thorns and a hedge arch with a lantern.',
       material('turf', { deep: '#2a1c12', dark: '#5a4028', base: '#765638', mid: '#846244', light: '#9c7a54', hi: '#c0a070', cap0: '#8ee05a', cap1: '#5cb83a', grassDark: '#3a8028', root: '#4a3020', flower: '#f0e060', leafDark: '#2a6a1c', leaf: '#3c8a28', leafLight: '#64b040', void: '#0a120a', thi: '#b8d070', tlight: '#6a8a30', tdark: '#3a5018' }, { flowers: true })],
