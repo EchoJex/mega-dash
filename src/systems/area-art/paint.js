@@ -89,9 +89,9 @@ export function ridge(r, ox, { y, amp, f = 0.02, seed = 1, col, top, sharp = 0, 
 }
 
 /** Tower blocks of the given heights, with a few lit windows. */
-export function skyline(r, ox, { y = FLOOR, minH, maxH, col, lit, seed = 3, cw = 9, gap = 0.25, rate = 0.12 }) {
+export function skyline(r, ox, { y = FLOOR, minH, maxH, col, lit, seed = 3, cw = 9, gap = 0.25, rate = 0.12, period }) {
   for (let x = 0; x < W; x++) {
-    const wx = x + ox, cell = Math.floor(wx / cw), inCell = ((wx % cw) + cw) % cw;
+    const wx = x + ox, raw = Math.floor(wx / cw), cell = period ? ((raw % (period / cw)) + period / cw) % (period / cw) : raw, inCell = ((wx % cw) + cw) % cw;
     if (hash(cell, 0, seed) < gap) continue;
     const h = minH + Math.floor(hash(cell, 1, seed) * (maxH - minH));
     const roof = hash(cell, 2, seed);
@@ -105,10 +105,11 @@ export function skyline(r, ox, { y = FLOOR, minH, maxH, col, lit, seed = 3, cw =
 }
 
 /** Trees: pines (triangles) or broadleaf (rounds), seeded along the world's x. */
-export function trees(r, ox, { y = FLOOR, minH, maxH, col, edge, seed = 5, every = 14, kind = 'pine' }) {
-  for (let slot = Math.floor((ox - 40) / every); slot <= Math.floor((ox + W + 40) / every); slot++) {
+export function trees(r, ox, { y = FLOOR, minH, maxH, col, edge, seed = 5, every = 14, kind = 'pine', period }) {
+  for (let at = Math.floor((ox - 40) / every); at <= Math.floor((ox + W + 40) / every); at++) {
+    const slot = period ? ((at % (period / every)) + period / every) % (period / every) : at;   // with a period, the trees repeat
     if (hash(slot, 0, seed) < 0.15) continue;
-    const cx = slot * every + Math.floor(hash(slot, 1, seed) * every) - ox;
+    const cx = at * every + Math.floor(hash(slot, 1, seed) * every) - ox;
     const h = minH + Math.floor(hash(slot, 2, seed) * (maxH - minH));
     if (kind === 'pine') {
       for (let j = 0; j < h; j++) {
@@ -146,9 +147,9 @@ export function rain(r, seed, n, col, len = 6, ox = 0) {
 }
 
 /** A band of cloud: noise above a threshold, with a lit top edge. */
-export function clouds(r, ox, { y, h, col, lit, seed = 7, f = 0.04, cut = 0.5 }) {
+export function clouds(r, ox, { y, h, col, lit, seed = 7, f = 0.04, cut = 0.5, period }) {
   for (let yy = y; yy < y + h; yy++) for (let x = 0; x < W; x++) {
-    const t = (yy - y) / h, v = noise2((x + ox) * f, yy * f * 2.2, seed) - Math.abs(t - 0.5) * 0.6;
+    const t = (yy - y) / h, v = seamless((w) => noise2(w * f, yy * f * 2.2, seed), x + ox, period) - Math.abs(t - 0.5) * 0.6;
     if (v > cut) r.set(x, yy, lit && v < cut + 0.05 && t < 0.5 ? lit : col);
   }
 }

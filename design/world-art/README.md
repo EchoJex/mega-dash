@@ -16,7 +16,9 @@ board (one default look for now). The first-round boards below stay as a record.
 | Dragon | **PICKED: C, castle bricks** |
 | Ground | **PICKED: B, bedrock** |
 | Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
-| Typeless, Fire, Water, Electric, Grass, Ice, Fighting, Poison, Flying, Psychic, Bug, Rock, Ghost, Dark | three variants each, still to draw, in batches |
+| Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
+| Ice, Poison, Flying, Psychic, Bug | batch 2: three variants each, **on the canvas, not picked yet** |
+| Rock, Ghost, Dark | three variants each, still to draw, in batch 3 |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
 everything. 6 wildly different backdrop variants per slice since the player has to look at it
@@ -77,17 +79,33 @@ the owner answered three questions: the bamboo grove scrolls slowly as you run (
 each boss room's exit door is that slice's picked door ("Yes, the slice's door"), and Electric's
 batteries crackle with sparks between their nubs ("Yes, add sparks").
 
+**Batch 2 is on the canvas** (its own page, "Batch 2"), 5 Nov 2026, laid out the same way: one
+board per slice, six backdrops each (two scrolling in layers, shown moving) and three materials.
+**Ground keeps the bedrock picked in the first round**, so its board offers six backdrops in front
+of it and asks only for a backdrop number. Every material clears the game's contrast floors against
+all six of its slice's backdrops.
+
+| slice | backdrops | materials | status |
+|---|---|---|---|
+| Ice | 1 aurora night (moving) · 2 glacier wall · 3 frozen lake · 4 ice cave · 5 blizzard peaks (moving) · 6 frozen works | A packed snow · B glacier ice · C frosted steel | not picked yet |
+| Poison | 1 toxic swamp (moving) · 2 chemical plant · 3 acid rain · 4 mushroom grove · 5 sewer tunnel (moving) · 6 waste dump | A toxic grate · B sewer brick · C corroded plate | not picked yet |
+| Ground | 1 desert dunes (moving) · 2 red canyon · 3 quarry · 4 mesa sunset · 5 mine shaft (moving) · 6 fossil cliff | B bedrock (picked in the first round) | backdrop not picked yet |
+| Flying | 1 above the clouds (moving) · 2 floating islands · 3 wind farm · 4 balloon festival · 5 airship docks (moving) · 6 cliff nests | A airship deck · B sky temple · C turbine walkway | not picked yet |
+| Psychic | 1 cosmic void (moving) · 2 crystal temple · 3 the watching eye · 4 mirror hall · 5 mind waves (moving) · 6 observation lab | A crystal tiles · B observation floor · C dreamstone | not picked yet |
+| Bug | 1 giant hive (moving) · 2 leaf canopy · 3 ant tunnels (moving) · 4 web forest · 5 termite mounds · 6 shell cavern | A honeycomb · B chitin plates · C rotting log | not picked yet |
+
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
 
 A picked slice carries `pick` in `batch1.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
 
-The per-slice painters: `src/systems/area-art/materials.js` (eight kinds of floor, each with its
+The per-slice painters: `src/systems/area-art/materials.js` (nine kinds of floor, each with its
 platform, spikes and doors), `src/systems/area-art/paint.js` (skies, ridges, skylines, forests, beams,
-rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs` (the six slices with every variant),
-`scenes.mjs` (how each picture is laid out). `node design/world-art/render.mjs <folder> --batch 1`
-paints batch 1's pictures and prints each material's contrast against its slice's backdrops.
+rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs` and `batch2.mjs` (each batch's six
+slices with every variant), `scenes.mjs` (how each picture is laid out).
+`node design/world-art/render.mjs <folder> --batch 2` paints batch 2's pictures (or `--batch 1`,
+batch 1's) and prints each material's contrast against its slice's backdrops.
 
 **The review canvas:** [MEGA DASH World Pieces](https://claude.ai/artifact/FKEuvSabVmDeimP3387SVG).
 One board per thing; each shows the game today and three variants, with two questions. The owner

@@ -574,7 +574,40 @@ function tiles(P, o = {}) {
   };
 }
 
-export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, tiles };
+/**
+ * HONEYCOMB, for the Bug slice: wax cells in offset rows, some full of honey, some empty and dark,
+ * under a waxy rim. A cell is 8 wide and 6 tall; every other row is shifted half a cell.
+ */
+function comb(P, o = {}) {
+  const cell = (x, y) => {
+    const row = Math.floor(y / 6), lx = mod(x + (row & 1) * 4, 8), ly = mod(y, 6), id = Math.floor((x + (row & 1) * 4) / 8);
+    const wall = ly === 0 || lx === 0 || (ly === 1 && (lx === 1 || lx === 7)) || (ly === 5 && (lx === 1 || lx === 7));
+    return { wall, lit: ly === 1 || lx === 1, full: hash(id, row, 97) > 0.55, lx, ly };
+  };
+  const fill = (x, y) => {
+    const k = cell(x, y);
+    if (k.wall) return k.lit ? P.light : P.base;
+    return k.full ? pick([P.glow, P.glow2], 0.25 + 0.5 * (k.ly < 3 ? 1 : 0.4), x, y) : (k.lx < 3 ? P.dark : P.void);
+  };
+  return {
+    ground(r, x1, x2) {
+      lip(r, x1, x2, P);
+      for (let y = FLOOR + 2; y < H; y++) for (let x = x1; x < x2; x++) r.set(x, y, y === FLOOR + 2 ? P.deep : fill(x, y - FLOOR - 3));
+      faces(r, x1, x2, P);
+    },
+    platform(r, x, y, w) {
+      for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
+        let col = j === 0 ? P.cap0 : j === 4 ? P.deep : fill(x + i, j + 2);
+        if (i === 0 || i === w - 1) col = j === 0 ? P.cap1 : P.deep;
+        r.set(x + i, y + j, col);
+      }
+    },
+    spikes: (r, x, w) => SPIKES[o.spikes || 'cones'](r, x, w, P),
+    ...doorOf(o.door || 'arch', P),
+  };
+}
+
+export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, tiles, comb };
 
 /** A material: its kind, its palette, its options; `check` names the two colours the contrast rule reads. */
 export function material(kind, palette, opts = {}) {

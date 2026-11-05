@@ -99,9 +99,12 @@ try {
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.backdropFrame(slice, bd, b, player, f * 4, f)));
         A[`bd-${slice.id}-${i + 1}`] = { h: 268, frames };
       }
-      if (slice.pick) {
+      if (slice.pick?.backdrop) {
         const { pickedMaterial } = await import(`${base}/src/systems/area-art/slices.js`);
-        const bd = slice.backdrops[slice.pick.backdrop - 1], M = pickedMaterial(slice.id);   // what the game draws, mixes included
+        const of = (k) => slice.materials.find(([key]) => key === k)[3];
+        const bd = slice.backdrops[slice.pick.backdrop - 1];
+        // What the game draws, mixes included; a slice not in the game yet takes its picked material as it is.
+        const M = pickedMaterial(slice.id) || (slice.pick.ground ? { ...of(slice.pick.material), ground: of(slice.pick.ground).ground } : of(slice.pick.material));
         P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
         const frames = [];
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));

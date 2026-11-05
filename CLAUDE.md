@@ -682,6 +682,8 @@ backdrops, consider a layered parallax effect"; Steel gets door variants for "bo
 work goes into the game "pushed in batches of ~6 slices" (the batches are in the README).
 **Batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting) was picked and is in the game**, 5 Nov 2026;
 see *The areas' world pieces* below.
+**Batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug) is on the canvas for picking**, 5 Nov 2026; Ground
+keeps its first-round bedrock and needs only a backdrop.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -726,6 +728,7 @@ Claude or a generator made:
 | World pieces, variants for review and not in the game — the area backdrop, ground, platforms, spikes, boss door and exit door, in three materials and three backdrops (group 1 of the owner's ask of 5 Nov 2026) | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/variants.mjs` |
 | World pieces for each slice, batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting), variants for review — six backdrops and three materials (floor, platform, spikes, boss door, exit door) per slice | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch1.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | World pieces in the game, batch 1 — each slice's picked backdrop and material, redrawn where the owner asked (Fire's embers, obsidian spikes and arch; Water's subsea lab; Electric's batteries and their sparks; Fighting's animated crowd; Grass's grove scrolling) | room art, drawn in code | Claude | 2026-11-05 | `src/systems/area-art/slices.js` |
+| World pieces for each slice, batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug), variants for review — six backdrops per slice and three materials (floor, platform, spikes, boss door, exit door), Ground on its first-round bedrock | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch2.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
