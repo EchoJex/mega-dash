@@ -19,8 +19,10 @@
 import { Raster, hex, pick, hash, noise1, noise2, OL } from '../../src/systems/arena-art/pixels.js';
 import { BOSSES } from '../../src/data/bosses.js';
 import { themeFor } from '../../src/systems/arena.js';
+import { W, H, FLOOR, rect, blit, inTooth, paintDoor } from '../../src/systems/area-art/kit.js';
 
-export const W = 480, H = 224, FLOOR = 184, PADS = 199;
+export { W, H, FLOOR };
+export const PADS = 199;
 const ol = hex(OL);
 const c = (h) => hex(h);
 const blend = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
@@ -29,19 +31,6 @@ const blend = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, 
 const tone = (b, k) => { const p = c(b.primary); return p.map((v) => Math.round(6 + v * k)); };
 export const backdropOf = (b) => { const f = themeFor(b).fill; return [(f >> 16) & 255, (f >> 8) & 255, f & 255]; };
 
-/** Paint `src` (a Raster) into `dst` at x, y, opaque pixels only, optionally faded. */
-function blit(dst, src, x0, y0, a = 255) {
-  for (let y = 0; y < src.h; y++) for (let x = 0; x < src.w; x++) {
-    const i = (y * src.w + x) * 4;
-    if (src.d[i + 3]) dst.set(x0 + x, y0 + y, [src.d[i], src.d[i + 1], src.d[i + 2]], Math.min(a, src.d[i + 3]));
-  }
-}
-const rect = (r, x, y, w, h, col, a = 255) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) r.set(x + i, y + j, col, a); };
-/** A spike-bed tooth: pixel-centre inside the triangle (tx, base) - (tip) - (tx + tw, base). */
-const inTooth = (px, py, tx, tw, top, h) => {
-  const t = (py + 0.5 - top) / h;            // 0 at the tip row, 1 at the base
-  return t >= 0 && t <= 1 && Math.abs(px + 0.5 - (tx + tw / 2)) <= (tw / 2) * t;
-};
 
 // ── The game's look today (GameScene.draw) ────────────────────────────
 
@@ -291,21 +280,6 @@ const Cc = {
   },
 };
 
-/** Every material draws its door the same way round: the game's gold pulse when it will open, a grey ghost when not yet. */
-function paintDoor(r, d, x, y, kind) {
-  if (kind === 'unarmed') {
-    for (let j = 0; j < d.h; j++) for (let i = 0; i < d.w; i++) {
-      const k = (j * d.w + i) * 4;
-      if (!d.d[k + 3]) continue;
-      const g = (d.d[k] * 0.3 + d.d[k + 1] * 0.59 + d.d[k + 2] * 0.11) * 0.6 + 30;
-      d.d[k] = g; d.d[k + 1] = g; d.d[k + 2] = g * 0.95;
-    }
-    blit(r, d, x, y, 140);
-    return;
-  }
-  rect(r, x - 2, y - 2, 20, 2, c('#f5d328'), 204); rect(r, x - 2, y, 2, 28, c('#f5d328'), 204); rect(r, x + 16, y, 2, 28, c('#f5d328'), 204);
-  blit(r, d, x, y);
-}
 
 export const STYLES = { TODAY, A, B, C: Cc };
 

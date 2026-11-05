@@ -12,8 +12,8 @@
  * the ground, its lit edge and every pit read as well as they do now.
  */
 
-import { hex, pick, hash, noise1, noise2, snap5 } from '../../src/systems/arena-art/pixels.js';
-import { W, H, FLOOR } from './variants.mjs';
+import { hex, pick, hash, noise1, noise2, snap5 } from '../arena-art/pixels.js';
+import { W, H, FLOOR } from './kit.js';
 
 export const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
 /** The boss's primary (or secondary) darkened by k, the way the area backdrop is today. */
@@ -170,3 +170,29 @@ export function panels(r, ox, { y0 = 0, y1 = FLOOR, pw = 32, ph = 48, base, ligh
     r.set(x, y, px === 0 || py === 0 ? dark : px === 1 || py === 1 ? light : base);
   }
 }
+
+// ── Building blocks the slices share ─────────────────────────────────
+
+export const still = (name, desc, paint) => ({ name, desc, moving: false, layers: [{ rate: 0, paint }] });
+export const moving = (name, desc, ...layers) => ({ name, desc, moving: true, layers: layers.map(([rate, paint]) => ({ rate, paint })) });
+export const line = (r, x0, y0, x1, y1, col) => {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  for (let i = 0; i <= n; i++) r.set(Math.round(x0 + ((x1 - x0) * i) / n), Math.round(y0 + ((y1 - y0) * i) / n), col);
+};
+export const vert = (r, x, y0, y1, col) => { for (let y = y0; y < y1; y++) r.set(x, y, col); };
+export const wrapX = (wx, ox, period) => ((((wx - ox) % period) + period) % period);
+
+export function pylon(r, x, base, h, col, lamp) {
+  for (let j = 0; j < h; j++) {
+    const half = Math.round(2 + (j / h) * 8);
+    r.set(x - half, base - j, col); r.set(x + half, base - j, col);
+    if (j % 8 === 0) for (let i = -half; i <= half; i++) r.set(x + i, base - j, col);
+    if (j % 8 < 4) { r.set(x - half + (j % 8), base - j, col); r.set(x + half - (j % 8), base - j, col); }
+  }
+  for (let i = -12; i <= 12; i++) { r.set(x + i, base - h, col); r.set(x + i, base - h + 6, col); }
+  if (lamp) { r.set(x - 12, base - h + 1, lamp); r.set(x + 12, base - h + 1, lamp); r.set(x - 12, base - h + 7, lamp); r.set(x + 12, base - h + 7, lamp); }
+}
+export function wire(r, x0, x1, y, sag, col) {
+  for (let x = x0; x <= x1; x++) { const t = (x - x0) / Math.max(1, x1 - x0); r.set(x, Math.round(y + sag * 4 * t * (1 - t)), col); }
+}
+export const mod = (a, n) => ((a % n) + n) % n;

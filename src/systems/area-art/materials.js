@@ -11,8 +11,8 @@
  * palette and a few options (batch1.mjs). Nothing here changes a size or a hit box.
  */
 
-import { Raster, hex, pick, hash, noise1, noise2, OL } from '../../src/systems/arena-art/pixels.js';
-import { H, FLOOR, rect, blit, inTooth, paintDoor } from './variants.mjs';
+import { Raster, hex, pick, hash, noise1, noise2, OL } from '../arena-art/pixels.js';
+import { H, FLOOR, rect, blit, inTooth, paintDoor } from './kit.js';
 
 const ol = hex(OL);
 /** A palette of '#rrggbb' strings, turned into [r, g, b] once. */
