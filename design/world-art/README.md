@@ -43,7 +43,7 @@ slice's backdrops.
 | Water | 1 stormy sea (moving) · 2 underwater lab (moving; first offered as plain underwater) · 3 harbour · 4 waterfall cliffs · 5 rainy city (moving) · 6 lighthouse | A wet slate · B ship deck · C aqueduct tiles | **PICKED: backdrop 2, changed, and material A** (owner, 5 Nov 2026), in their words below |
 | Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | **PICKED: backdrop 1, and material B, changed** (owner, 5 Nov 2026), in their words below |
 | Grass | 1 deep forest (moving) · 2 bamboo grove · 3 terraced hills · 4 firefly meadow · 5 overgrown ruins (moving) · 6 canopy | A meadow turf · B bamboo · C mossy stone | **PICKED: backdrop 2, and material B on A's ground** (owner, 5 Nov 2026: "2b including platform as it currently is, but the ground uses the ground from A meadow turf.") |
-| Fighting | 1 arena crowd · 2 dojo · 3 mountain temple (moving) · 4 boxing gym · 5 dusk rooftops (moving) · 6 torii and dummies | A dojo floor · B ring canvas · C street concrete | not picked yet |
+| Fighting | 1 arena crowd (moving; first offered still) · 2 dojo · 3 mountain temple (moving) · 4 boxing gym · 5 dusk rooftops (moving) · 6 torii and dummies | A dojo floor · B ring canvas · C street concrete | **PICKED: backdrop 1, changed, and material B** (owner, 5 Nov 2026: "1b but ensure the arena crowd is animated") |
 
 **Fire's pick, in the owner's words (5 Nov 2026):** "5c but remove the fast moving layer of embers,
 and have the embers slowly drift downward. spikes should be a shiny jet black obsidian glass. doorway
@@ -66,6 +66,13 @@ started every 8 seconds (`LAB_LOOP`), so its pictures loop with no jump. Materia
 batteries with terminal nubs instead of the usual spikes". Redrawn to match: material B's spike bed
 is a row of AA batteries standing up (`batteries` in `materials.mjs`), each with a silver cap, its
 terminal nub on top, a violet band and a yellow cell. Backdrop 1 is as offered.
+
+**Fighting's pick:** the arena crowd now jumps and cheers, each person on their own beat and some
+with their arms up, while camera flashes go off and the spotlights sweep. A haze of light behind
+the crowd and a rim of light on their heads keep them visible against the dark. The crowd scrolls
+a little faster than the back wall. Material B is as offered.
+
+**All six slices of batch 1 are picked** (5 Nov 2026). Bringing them into the game is next.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.

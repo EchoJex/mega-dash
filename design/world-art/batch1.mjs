@@ -572,8 +572,31 @@ const GRASS = {
 
 const strike = B('strike');
 const S2 = (k) => tn(strike, k, 'secondary');
+/** The arena's crowd in three rows, each person jumping on their own beat, some with their arms up; camera flashes going off. */
+function crowd(r, ox, t) {
+  const cols = [tn(strike, 0.07), tn(strike, 0.055), tn(strike, 0.04)], rims = [tn(strike, 0.3), tn(strike, 0.22), tn(strike, 0.16)];   // dark against the haze, lit on top by the spotlights
+  const base = Math.floor(ox / 8), frac = ox - base * 8;
+  for (let row = 0; row < 3; row++) for (let s = -1; s < 62; s++) {
+    const ph = hash(base + s, row, 132), bob = Math.round(Math.max(0, Math.sin(TAU * (t / 30 + ph))) * 2);
+    const x = s * 8 + (row % 2) * 4 - frac, y = 146 + row * 12 - bob, col = cols[row];
+    for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) if (i * i + j * j <= 9) r.set(x + i, y + j, j === -3 || (j === -2 && Math.abs(i) === 2) ? rims[row] : col);
+    fillRect(r, x - 4, y + 3, 9, 10 + bob, col); r.set(x - 4, y + 3, rims[row]); r.set(x + 4, y + 3, rims[row]);
+    if (ph > 0.55 && bob) for (let j = 0; j < 4; j++) { r.set(x - 5, y + 2 - j - bob, col); r.set(x + 5, y + 2 - j - bob, col); }
+  }
+  for (let i = 0; i < 10; i++) {
+    const age = mod(t - Math.floor(hash(i, 2, 133) * 240), 240);
+    if (age > 5) continue;
+    const x = mod(Math.floor(hash(i, 0, 133) * W) - ox, W), y = 140 + Math.floor(hash(i, 1, 133) * 32);
+    r.set(x, y, c('#ffffff'));
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) r.set(x + dx, y + dy, age < 3 ? c('#ffffff') : c('#c8c8c8'));
+    if (age < 2) for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) r.set(x + dx, y + dy, c('#c8c8c8'));
+  }
+  fillRect(r, 0, 178, W, 46, tn(strike, 0.04));
+}
 const FIGHTING = {
   id: 'strike', type: 'Fighting',
+  // The owner, 5 Nov 2026: "1b but ensure the arena crowd is animated"
+  pick: { backdrop: 1, material: 'B' },
   materials: [
     ['A', 'DOJO FLOOR', 'Honey-coloured floorboards, wooden stakes and a paper sliding door.',
       material('planks', { deep: '#2a1608', dark: '#6a4020', base: '#8a5a30', light: '#a87442', hi: '#e8c890', cap0: '#f0d0a0', cap1: '#c89c68', rope: '#d8c090', paper: '#ece4d0', paperLight: '#fffaf0', thi: '#f0d8a8', tlight: '#b08050', tdark: '#6a4424' }, { door: 'shoji' })],
@@ -583,18 +606,13 @@ const FIGHTING = {
       material('concrete', { deep: '#26221e', dark: '#46403a', base: '#625a52', light: '#7c746a', hi: '#b8b0a4', cap0: '#d8d0c4', cap1: '#aaa294', tape: '#e8c020', rust: '#8a4a2a', thi: '#e0d0c0', tlight: '#b07850', tdark: '#6a4028' }, { tape: true, door: 'hatch', spikes: 'spears' })],
   ],
   backdrops: [
-    still('ARENA CROWD', 'A packed arena in the dark, spotlights sweeping down, banners overhead, camera flashes.', (r) => {
-      grad(r, 0, H, [[0, tn(strike, 0.04)], [0.7, tn(strike, 0.12)], [1, tn(strike, 0.06)]]);
-      for (const [x, a] of [[100, 1.2], [240, 1.57], [380, 1.94]]) beam(r, x, -5, a, 0.09, 200, c('#f0e0c0'), 0.22);
-      for (const x of [40, 160, 280, 400]) { fillRect(r, x, 0, 30, 46, S2(0.6)); for (let y = 0; y < 46; y++) r.set(x + 14, y, tn(strike, 0.3)); fillRect(r, x, 46, 30, 2, S2(0.3)); }
-      for (let row = 0; row < 3; row++) for (let k = 0; k < 60; k++) {
-        const x = k * 8 + (row % 2) * 4, y = 146 + row * 12, col = [tn(strike, 0.09), tn(strike, 0.07), tn(strike, 0.05)][row];
-        for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) if (i * i + j * j <= 9) r.set(x + i, y + j, col);
-        fillRect(r, x - 4, y + 3, 9, 10, col);
-      }
-      for (let i = 0; i < 6; i++) { const x = Math.floor(hash(i, 0, 131) * W), y = 140 + Math.floor(hash(i, 1, 131) * 30); r.set(x, y, c('#ffffff')); r.set(x + 1, y, c('#c8c8c8')); r.set(x, y + 1, c('#c8c8c8')); }
-      fillRect(r, 0, 178, W, 46, tn(strike, 0.04));
-    }),
+    moving('ARENA CROWD', 'A packed arena in the dark: the crowd jumping and cheering, arms up, camera flashes going off, spotlights sweeping, banners overhead. Scrolls in two layers.',
+      [0.08, (r, b, ox, t) => {
+        grad(r, 0, H, [[0, tn(strike, 0.04)], [0.45, tn(strike, 0.1)], [0.62, tn(strike, 0.2)], [0.75, tn(strike, 0.12)], [1, tn(strike, 0.06)]]);   // a haze of light behind the crowd
+        for (const [i, [x, a]] of [[100, 1.2], [240, 1.57], [380, 1.94]].entries()) beam(r, x - ox, -5, a + 0.18 * Math.sin(TAU * (t / 240 + i / 3)), 0.09, 200, c('#f0e0c0'), 0.22);
+        for (const x0 of [40, 160, 280, 400]) for (const x of [mod(x0 - ox, W), mod(x0 - ox, W) - W]) { fillRect(r, x, 0, 30, 46, S2(0.6)); for (let y = 0; y < 46; y++) r.set(x + 14, y, tn(strike, 0.3)); fillRect(r, x, 46, 30, 2, S2(0.3)); }
+      }],
+      [0.2, (r, b, ox, t) => crowd(r, ox, t)]),
     still('DOJO', 'Paper screens lit from behind, dark beams, and hanging scrolls.', (r) => {
       fillRect(r, 0, 0, W, H, c('#1a0e08'));
       const paper = mix(tn(strike, 0.2), c('#c8b090'), 0.35);
