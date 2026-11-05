@@ -95,15 +95,15 @@ try {
       for (const [i, bd] of slice.backdrops.entries()) {
         P[`bd-${slice.id}-${i + 1}`] = png(S.backdropPicture(slice, bd, b, player));
         if (!bd.moving) continue;
-        const frames = [];
-        for (let f = 0; f < 60; f++) frames.push(await S.deflated(S.backdropFrame(slice, bd, b, player, f * 4, f)));
+        const frames = [];   // 15 a second, each 4 steps on; a backdrop with a `loop` plays all of it
+        for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.backdropFrame(slice, bd, b, player, f * 4, f)));
         A[`bd-${slice.id}-${i + 1}`] = { h: 268, frames };
       }
       if (slice.pick) {
         const bd = slice.backdrops[slice.pick.backdrop - 1], M = slice.materials.find(([k]) => k === slice.pick.material)[3];
         P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
         const frames = [];
-        for (let f = 0; f < 60; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));
+        for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));
         if (new Set(frames).size > 1) A[`pick-${slice.id}`] = { h: 224, frames };   // only if something in it moves by itself
       }
       const brightest = slice.backdrops.map((bd) => S.pitSample(bd, b).reduce((m, p) => (lum(p) > lum(m) ? p : m), [0, 0, 0]));

@@ -218,8 +218,143 @@ const FIRE = {
 
 const tempest = B('tempest');
 const FOAM = c('#e8f4ff'), GOLDL = c('#f5c518');
+
+// The subsea lab (the owner, 5 Nov 2026): "2a but to prevent the player from thinking the physics for
+// the level are different than normal, make the underwater appear to be behind algae covered, lightly
+// cracked thick underwater habitat glass, like a subsea laboratory. kelp and the silhouette of deep sea
+// creatures should be animated in". Everything that moves by itself comes back to where it started
+// every LAB_LOOP steps, so the picture loops without a jump.
+const LAB_LOOP = 480, TAU = Math.PI * 2;
+const mod = (a, n) => ((a % n) + n) % n;
+/** A pixel at `a` of full strength, faded by ordered dither the way an SNES game faded a sprite. */
+const put = (r, x, y, col, a) => r.set(x, y, pick([null, col], a, x, y));
+function ell(r, cx, cy, rx, ry, col, a) {
+  for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
+    if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) put(r, x, y, col, a);
+  }
+}
+function tri(r, p, q, s, col, a) {
+  const [x0, x1] = [Math.min(p[0], q[0], s[0]), Math.max(p[0], q[0], s[0])], [y0, y1] = [Math.min(p[1], q[1], s[1]), Math.max(p[1], q[1], s[1])];
+  const side = (a1, b1, x, y) => (b1[0] - a1[0]) * (y - a1[1]) - (b1[1] - a1[1]) * (x - a1[0]);
+  for (let y = Math.floor(y0); y <= y1; y++) for (let x = Math.floor(x0); x <= x1; x++) {
+    const d1 = side(p, q, x + 0.5, y + 0.5), d2 = side(q, s, x + 0.5, y + 0.5), d3 = side(s, p, x + 0.5, y + 0.5);
+    if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) put(r, x, y, col, a);
+  }
+}
+// The deep-sea creatures, as silhouettes: (r, x, y, dir, t, col, a), dir 1 facing right.
+const CREATURES = {
+  shark(r, x, y, d, t, col, a) {
+    const beat = Math.round(Math.sin((TAU * t) / 48) * 2);
+    ell(r, x, y, 17, 5, col, a); ell(r, x + d * 13, y + 1, 7, 3.5, col, a);
+    tri(r, [x - d * 13, y - 3], [x - d * 13, y + 3], [x - d * 24, y + beat], col, a);
+    tri(r, [x - d * 21, y + beat], [x - d * 28, y - 8 + beat], [x - d * 25, y + beat], col, a);
+    tri(r, [x - d * 21, y + beat], [x - d * 27, y + 5 + beat], [x - d * 25, y + beat], col, a);
+    tri(r, [x, y - 4], [x - d * 8, y - 4], [x - d * 6, y - 12], col, a);
+    tri(r, [x + d * 5, y + 3], [x - d * 2, y + 3], [x - d * 4, y + 10], col, a);
+  },
+  angler(r, x, y, d, t, col, a, glow) {
+    ell(r, x, y, 7, 6, col, a); ell(r, x + d * 4, y + 3, 5, 3, col, a);
+    const flick = Math.round(Math.sin((TAU * t) / 60) * 2);
+    tri(r, [x - d * 6, y], [x - d * 13, y - 5 + flick], [x - d * 13, y + 5 + flick], col, a);
+    for (const [i, j] of [[1, -6], [2, -7], [3, -8], [4, -9], [5, -10], [6, -10], [7, -10], [8, -9], [9, -8]]) put(r, x + d * i, y + j, col, a);
+    const pulse = 0.5 + 0.5 * Math.sin((TAU * t) / 120);
+    halo(r, x + d * 9, y - 7, 5, glow, 0.25 * pulse * a);
+    put(r, x + d * 9, y - 7, glow, a);
+  },
+  squid(r, x, y, d, t, col, a) {
+    tri(r, [x + d * 18, y], [x, y - 4], [x, y + 4], col, a);
+    tri(r, [x + d * 13, y], [x + d * 19, y - 4], [x + d * 19, y + 4], col, a);
+    ell(r, x - d * 1, y, 4, 4, col, a);
+    for (let k = 0; k < 6; k++) {
+      const len = 14 + (k % 3) * 4, j0 = -2.5 + k;
+      for (let i = 0; i < len; i++) {
+        const s = i / len, wave = Math.sin((TAU * t) / 60 + k * 0.9 + i * 0.45) * 2.2 * s;
+        put(r, x - d * (4 + i), Math.round(y + j0 * (1 + s * 0.8) + wave), col, a);
+      }
+    }
+  },
+  jelly(r, x, y, d, t, col, a, glow) {
+    const p = Math.sin((TAU * t) / 80), rx = 6 + p, ry = 4 - p * 0.6;
+    for (let yy = Math.floor(y - ry); yy <= y; yy++) for (let xx = Math.floor(x - rx); xx <= x + rx; xx++) {
+      if (((xx + 0.5 - x) / rx) ** 2 + ((yy + 0.5 - y) / ry) ** 2 <= 1) put(r, xx, yy, col, a);
+    }
+    for (let k = -2; k <= 2; k++) for (let i = 1; i < 12 + (k & 1) * 4; i++) {
+      put(r, Math.round(x + k * 2 + Math.sin((TAU * t) / 80 + k + i * 0.35) * (i / 8)), y + i, col, a);
+    }
+    for (const k of [-4, 0, 4]) put(r, Math.round(x + k * (rx / 6)), y, glow, a);   // glowing dots along the rim
+  },
+};
+const SWIMMERS = [   // kind, x, y, dir, speed (pixels a step), when in the loop it appears
+  ['shark', 60, 50, 1, 0.12, 0], ['angler', 330, 100, -1, 0.06, 0.35], ['squid', 420, 34, -1, 0.14, 0.6],
+  ['jelly', 200, 124, 0, 0, 0.15], ['shark', 520, 82, -1, 0.09, 0.78],
+];
+function swimmers(r, ox, t) {
+  const col = tn(tempest, 0.045), GLOW = { angler: c('#e0ff8a'), jelly: c('#8af0ff') };
+  for (const [kind, x0, y0, d, v, ph] of SWIMMERS) {
+    const u = (ph + t / LAB_LOOP) % 1, a = Math.min(1, Math.min(u, 1 - u) / 0.2);   // fades in from the dark and back out
+    const x = mod(x0 + d * v * u * LAB_LOOP - ox, 600) - 60, y = kind === 'jelly' ? y0 - Math.round(u * 24) : y0;
+    CREATURES[kind](r, Math.round(x), y, d || 1, t, col, a, GLOW[kind]);
+  }
+}
+function kelp(r, ox, t) {
+  const K = [c('#1a3022'), c('#28482e'), c('#3c6838')];
+  for (let k = 0; k < 12; k++) {
+    const sx = mod(k * 52 + Math.floor(hash(k, 0, 88) * 30) - ox, 624) - 60, base = 168, h = 60 + Math.floor(hash(k, 1, 88) * 64);
+    if (sx < -24 || sx > W + 24) continue;
+    for (let y = base; y > base - h; y--) {
+      const f = (base - y) / h, x = sx + Math.round(Math.sin((TAU * 2 * t) / LAB_LOOP + k * 1.7 + y * 0.05) * 5 * f + Math.sin(y * 0.15 + k) * 1.2);
+      r.set(x, y, K[0]); r.set(x + 1, y, K[1]);
+      if ((base - y) % 6 === 3) { const s = ((base - y) / 6) & 1 ? 1 : -1; for (let i = 1; i <= 3; i++) r.set(x + (s > 0 ? 1 + i : -i), y - Math.floor(i / 2), K[i === 3 ? 2 : 1]); }
+    }
+  }
+}
+/** The lab's wall: thick glass panes in a riveted frame, algae on the glass and a few light cracks. */
+function habitat(r, ox) {
+  const P = 168, SW = 16, TOP = 12, SILL = 168, R = 7, pw = P - SW, ph = SILL - TOP;
+  const M = { deep: c('#0e141c'), dark: c('#18212c'), base: c('#26323f'), light: c('#3c4c5e'), hi: c('#6a809a'), rivet: c('#8ea4b8') };
+  const AL = [c('#1c2a16'), c('#2c4220'), c('#44602c')], GL = c('#bfe6ff');
+  const corner = (px, py) => {
+    const cx = px < R ? R : px >= pw - R ? pw - 1 - R : null, cy = py < R ? R : py >= ph - R ? ph - 1 - R : null;
+    return cx === null || cy === null || (px - cx) ** 2 + (py - cy) ** 2 <= R * R;
+  };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const wx = x + ox, pos = mod(wx, P), px = pos - SW, py = y - TOP;
+    if (px >= 0 && py >= 0 && py < ph && corner(px, py)) {
+      // The glass: its thick edge, two streaks of reflection, then algae growing in from the frame.
+      if (px === 0 || py === 0 || !corner(px - 1, py) || !corner(px, py - 1)) r.set(x, y, GL, 90);
+      else if (px === pw - 1 || py === ph - 1 || !corner(px + 1, py) || !corner(px, py + 1)) r.set(x, y, M.deep, 150);
+      const dg = px + Math.floor(py * 0.7);
+      if (py < ph * 0.75 && (mod(dg - 22, P) < 5 || mod(dg - 34, P) < 2)) r.set(x, y, GL, 34);
+      const edge = Math.min(px, pw - 1 - px, py, (ph - 1 - py) * 0.45), grow = noise2(wx * 0.11, y * 0.11, 89) * 0.7 + noise2(wx * 0.37, y * 0.37, 90) * 0.3;
+      if (grow + Math.max(0, 1 - edge / 12) * 0.42 > 0.84) r.set(x, y, pick(AL, (grow - 0.35) * 1.6, x, y), 230);
+      continue;
+    }
+    let col;
+    if (y >= SILL + 8) col = (y - SILL) % 12 === 0 ? M.dark : M.deep;                  // the wall under the sill, dark so a pit reads
+    else if (y >= SILL) col = y === SILL ? M.hi : y === SILL + 1 ? M.light : y === SILL + 7 ? M.deep : M.base;
+    else if (y < TOP) col = y === TOP - 1 ? M.light : y === 5 && mod(wx, 10) === 4 ? M.rivet : M.base;
+    else if (pos < SW) col = pos === 0 ? M.light : pos === 1 ? M.hi : pos === SW - 1 ? M.deep : pos === 8 && mod(y, 12) === 6 ? M.rivet : M.base;
+    else col = M.base;                                                                  // the frame in a pane's rounded corner
+    r.set(x, y, col);
+  }
+  // A lamp on each strut, and on some panes a light crack, a few rays from where something struck it.
+  for (let pane = Math.floor(ox / P) - 1; pane * P - ox < W + P; pane++) {
+    const sx = pane * P - ox;
+    fillRect(r, sx + 7, 84, 2, 3, GOLDL); r.set(sx + 7, 84, c('#fff3b0')); halo(r, sx + 8, 85, 5, GOLDL, 0.45);
+    if (hash(pane, 0, 91) < 0.65) continue;
+    const cx = sx + SW + 24 + Math.floor(hash(pane, 1, 91) * 100), cy = TOP + 24 + Math.floor(hash(pane, 2, 91) * 80);
+    for (let k = 0; k < 5; k++) {
+      const ang = (k / 5) * TAU + hash(pane, 3 + k, 91), len = 6 + Math.floor(hash(pane, 9 + k, 91) * 14);
+      let x = cx, y = cy;
+      for (let i = 0; i < len; i++) { x += Math.cos(ang) + (hash(i, k, pane) - 0.5) * 0.9; y += Math.sin(ang) + (hash(k, i, pane) - 0.5) * 0.9; r.set(Math.round(x), Math.round(y), c('#d8f0ff'), 130); }
+    }
+    r.set(cx, cy, c('#ffffff'));
+  }
+}
+
 const WATER = {
   id: 'tempest', type: 'Water',
+  pick: { backdrop: 2, material: 'A' },
   materials: [
     ['A', 'WET SLATE', 'Blue-grey slate shining wet along its edge, pale shards and a sea-stone arch.',
       material('strata', { deep: '#141c26', dark: '#2e3a48', base: '#4a5d74', mid: '#56697f', light: '#6a7e94', hi: '#e0f4ff', cap0: '#c8dce8', cap1: '#93aec4', void: '#06101c', thi: '#d8ecf4', tlight: '#8aa2b4', tdark: '#4a5e70' }, { wet: true })],
@@ -234,16 +369,11 @@ const WATER = {
       [0.15, (r, b, ox) => ridge(r, ox, { y: 142, amp: 8, f: 0.08, seed: 72, col: tn(tempest, 0.12), top: tn(tempest, 0.22) })],
       [0.35, (r, b, ox) => ridge(r, ox, { y: 160, amp: 12, f: 0.06, seed: 73, col: tn(tempest, 0.09), top: c('#a8c8e0') })],
       [0.6, (r, b, ox) => { ridge(r, ox, { y: 180, amp: 14, f: 0.05, seed: 74, col: tn(tempest, 0.06), top: FOAM }); rain(r, 75, 150, c('#5a7a9a'), 6, ox * 2); }]),
-    still('UNDERWATER', 'Below the surface: light shafts from above, bubbles, kelp swaying from the seabed.', (r) => {
-      grad(r, 0, H, [[0, tn(tempest, 0.26)], [0.75, tn(tempest, 0.1)], [1, tn(tempest, 0.05)]]);
-      for (const [x, a] of [[80, 1.75], [200, 1.6], [330, 1.45], [440, 1.65]]) beam(r, x, -10, a, 0.05, 220, tn(tempest, 0.36), 0.32);
-      for (let k = 0; k < 12; k++) {
-        const bx = 20 + k * 40 + Math.floor(hash(k, 0, 76) * 20), top = 90 + Math.floor(hash(k, 1, 76) * 50);
-        for (let y = top; y < FLOOR; y++) { const x = bx + Math.round(Math.sin(y * 0.12 + k) * 3); r.set(x, y, tn(tempest, 0.05)); r.set(x + 1, y, tn(tempest, 0.07)); if (y % 9 === 0) r.set(x + 2, y - 1, tn(tempest, 0.07)); }
-      }
-      for (let i = 0; i < 30; i++) { const x = Math.floor(hash(i, 0, 77) * W), y = Math.floor(hash(i, 1, 77) * 160); r.set(x, y, c('#8ac8f0')); if (hash(i, 2, 77) > 0.6) { r.set(x + 1, y - 1, c('#8ac8f0')); r.set(x - 1, y - 1, c('#8ac8f0')); r.set(x, y - 2, c('#8ac8f0')); } }
-      fillRect(r, 0, 178, W, 46, tn(tempest, 0.04));
-    }),
+    { ...moving('UNDERWATER LAB', 'Looking out of a subsea laboratory through thick glass, algae on it and a few light cracks: kelp swaying, bubbles rising and deep-sea creatures gliding by outside. Scrolls in three layers behind a still sea.',
+      [0, (r) => { grad(r, 0, H, [[0, tn(tempest, 0.32)], [0.75, tn(tempest, 0.13)], [1, tn(tempest, 0.06)]]); for (const [x, a] of [[80, 1.75], [200, 1.6], [330, 1.45], [440, 1.65]]) beam(r, x, -10, a, 0.05, 220, tn(tempest, 0.42), 0.32); }],
+      [0.1, (r, b, ox, t) => swimmers(r, ox, t)],
+      [0.25, (r, b, ox, t) => { ridge(r, ox, { y: 164, amp: 10, f: 0.04, seed: 86, col: tn(tempest, 0.06), top: tn(tempest, 0.1) }); kelp(r, ox, t); embers(r, 87, 40, [c('#8ac8f0'), c('#bfe6ff')], 168, ox, t, -0.35); }],
+      [0.6, (r, b, ox) => habitat(r, ox)]), loop: LAB_LOOP },
     still('HARBOUR', 'A harbour at dusk: cranes, a moored ship with lit portholes, gold light on the water.', (r) => {
       grad(r, 0, 150, [[0, tn(tempest, 0.06)], [1, mix(tn(tempest, 0.16), GOLDL, 0.1)]]);
       grad(r, 150, H, [[0, tn(tempest, 0.1)], [1, tn(tempest, 0.05)]]);
