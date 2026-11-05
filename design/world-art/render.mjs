@@ -100,8 +100,8 @@ try {
         A[`bd-${slice.id}-${i + 1}`] = { h: 268, frames };
       }
       if (slice.pick) {
-        const of = (k) => slice.materials.find(([key]) => key === k)[3], bd = slice.backdrops[slice.pick.backdrop - 1];
-        const M = slice.pick.ground ? { ...of(slice.pick.material), ground: of(slice.pick.ground).ground } : of(slice.pick.material);   // a mix: one material's ground under another's pieces
+        const { pickedMaterial } = await import(`${base}/src/systems/area-art/slices.js`);
+        const bd = slice.backdrops[slice.pick.backdrop - 1], M = pickedMaterial(slice.id);   // what the game draws, mixes included
         P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
         const frames = [];
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));

@@ -8,7 +8,7 @@
  * painted as a moving picture: the camera runs right while the player runs on the spot.
  */
 
-import { Raster } from '../../src/systems/arena-art/pixels.js';
+import { Raster, hex } from '../../src/systems/arena-art/pixels.js';
 import { W, H, FLOOR, STYLES, LAYOUT, backdropOf, overlay } from './variants.mjs';
 
 const STRIP = 40, GAP = 4;
@@ -18,13 +18,17 @@ const DOORS = { boss: 380, exit: 428 };
 function paintBackdrop(r, bd, b, cam = 0, t = 0) {
   for (const L of bd.layers) L.paint(r, b, Math.round(cam * L.rate), t);
 }
-function pieces(r, M) {
+/** The floor with its pit, a platform and the spike bed; at step `t`, also whatever on them moves by itself (sparks). */
+function pieces(r, M, t = null) {
   M.ground(r, 0, LAYOUT.pit[0]);
   M.ground(r, LAYOUT.pit[1], W);
   const [px, py, pw] = LAYOUT.platform;
   M.platform(r, px, py, pw);
   M.spikes(r, LAYOUT.spikes[0], LAYOUT.spikes[1]);
+  if (t !== null && M.sparks) for (const [x, y, k] of M.sparks.at(LAYOUT.spikes[0], LAYOUT.spikes[1], t)) r.set(x, y, hex(M.sparks.colours[k]));
 }
+/** A moment when something on the spike bed is moving, so a still picture shows it (0 if nothing ever does). */
+const busyMoment = (M) => { for (let t = 0; M.sparks && t < 600; t++) if (M.sparks.at(LAYOUT.spikes[0], LAYOUT.spikes[1], t).length) return t; return 0; };
 function finish(r, player, frame = 0, x = 52) {
   overlay(r);
   const cv = r.flush();
@@ -69,7 +73,7 @@ export function backdropFrame(slice, bd, b, player, cam, step) {
 export function pickFrame(bd, M, b, player, step) {
   const r = new Raster(W, H);
   paintBackdrop(r, bd, b, 0, step * 4);
-  pieces(r, M);
+  pieces(r, M, step * 4);
   M.door(r, DOORS.boss, 'boss');
   M.door(r, DOORS.exit, 'exit');
   return finish(r, player);
@@ -80,7 +84,7 @@ export function materialPicture(slice, M, b, player) {
   const r = new Raster(W, H);
   const flat = backdropOf(b);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, flat);
-  pieces(r, M);
+  pieces(r, M, busyMoment(M));
   M.door(r, DOORS.boss, 'boss');
   M.door(r, DOORS.exit, 'exit');
   const strips = slice.backdrops.map((bd) => {

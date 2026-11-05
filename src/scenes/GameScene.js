@@ -46,6 +46,7 @@ import {
   playerClip, hexNum, MANIFEST,
 } from '../systems/assets.js';
 import { makeArenaArt } from '../systems/arena-art/index.js';
+import { makeAreaArt, hasAreaArt } from '../systems/area-art/index.js';
 import { bossSheet } from '../data/weapon-art.js';
 import { clipOf, cellAt } from '../systems/frame-data.js';
 
@@ -163,7 +164,11 @@ export default class GameScene extends Phaser.Scene {
      * room changes.
      */
     this.arenaArt = null;
-    this.events.once('shutdown', () => { this.arenaArt?.destroy(); this.arenaArt = null; });
+    this.areaArt = null;
+    this.events.once('shutdown', () => {
+      this.arenaArt?.destroy(); this.arenaArt = null;
+      this.areaArt?.destroy(); this.areaArt = null;
+    });
     /**
      * A PLAYTESTER ONLY MEETS CONTENT THAT HAS BEEN DEVELOPED. Dev mode draws
      * from all seventeen because testing the unbuilt is what it is for; the
@@ -2943,6 +2948,20 @@ export default class GameScene extends Phaser.Scene {
       this.arenaArt = this.arena ? makeArenaArt(this, this.arena, this.viewW) : null;
     }
     const art = this.arenaArt;
+
+    /**
+     * THE AREA'S PICKED WORLD PIECES (systems/area-art), or in a boss room just its exit door —
+     * rebuilt whenever the space is new: a fresh area, or the room the door led to (which keeps
+     * the same world object). A slice with nothing picked yet keeps the plain shapes below.
+     */
+    const space = this.arena || this.world;
+    if (this.areaArtFor !== space) {
+      this.areaArt?.destroy();
+      const id = this.arena ? this.arena.boss?.id : this.upcoming?.id;
+      this.areaArt = hasAreaArt(id) ? makeAreaArt(this, id, this.viewW, !!this.arena) : null;
+      this.areaArtFor = space;
+    }
+    this.areaArt?.update(cam, sh, r.frame, this.world);
     /**
      * HOW DARK A SELF-DARKENING ROOM IS, for the bodies standing in it. Volt
      * Man's room puts its own lights out and keeps its glowing parts lit, so a
@@ -2960,7 +2979,7 @@ export default class GameScene extends Phaser.Scene {
       Arena.drawArena(g, this.arena, this.viewW, sh, rv, art);
       // After the room, so a barrel floats ON the water rather than under it.
       Arena.drawHazards(g, this.arena, sh, art?.hazards);
-    } else {
+    } else if (!this.areaArt) {
     // ground spans; the gaps between them are the pits
     for (const s of this.world.groundSpans) {
       if (s.x2 < cam - 8 || s.x1 > cam + this.viewW + 8) continue;
@@ -2994,6 +3013,8 @@ export default class GameScene extends Phaser.Scene {
         g.fillStyle(0xf5d328, 0.6 + 0.4 * Math.sin(r.frame * 0.08));
         g.fillRect(sx(d.x) - 2, sy(d.y - d.h - 2), d.w + 4, d.h + 4);
       }
+      // The door itself, unless the area's art draws it (in front of this pulse).
+      if (this.areaArt) continue;
       g.fillStyle(live ? (d.wrap ? 0xf5d328 : 0x5cadd5) : 0x4a4a44, live ? 1 : 0.55);
       g.fillRect(sx(d.x), sy(d.y - d.h), d.w, d.h);
     }

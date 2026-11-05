@@ -1,6 +1,6 @@
 /**
- * MATERIALS FOR EACH SLICE'S WORLD PIECES — VARIANTS FOR THE OWNER TO PICK FROM.
- * NONE OF THIS IS IN THE GAME.
+ * MATERIALS FOR EACH SLICE'S WORLD PIECES — the kinds every variant on the review canvas was
+ * painted from, and that the picked ones (slices.js) are drawn with in the game (index.js).
  *
  * Drawn by Claude at the owner's request, 2026-11-05: "new plan. draw up all 17 slices world
  * pieces just like you did here(floor, platform, exit door, spikes)", with boss doors too.
@@ -20,6 +20,34 @@ export const pal = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [
 const mod = (a, n) => ((a % n) + n) % n;
 const CYAN = [hex('#5cadd5'), hex('#d8f6ff')], WHITE = [hex('#fff4c8'), hex('#ffffff')];
 const GOLD = [hex('#5c4a0a'), hex('#c9a21e'), hex('#f5d328'), hex('#fff3b0')];
+/** Where each battery's terminal nub is, for a bed at `x`, `w` wide: the same sums `SPIKES.batteries` paints with. */
+const batteryNubs = (x, w) => {
+  const n = Math.max(1, Math.round(w / 4)), tw = w / n, out = [];
+  for (let i = 0; i < n; i++) out.push(Math.floor(x) + Math.floor(i * tw + (tw - 3) / 2) + 1);
+  return out;
+};
+/**
+ * THINGS ON A SPIKE BED THAT MOVE BY THEMSELVES: `at(x, w, t)` lists them as [x, y, k] pixels at
+ * step `t`, k picking one of `colours`. The batteries crackle (the owner's answer, 5 Nov 2026, so
+ * they read as something that hurts rather than something to collect): now and then a spark
+ * zigzags between two neighbouring nubs for a few steps.
+ */
+const SPARKS = {
+  batteries: {
+    colours: ['#fffbe0', '#f5d328'],
+    at(x, w, t) {
+      const nubs = batteryNubs(x, w), out = [], y = FLOOR - 7, flick = Math.floor(t / 2) & 1;
+      for (let i = 0; i + 1 < nubs.length; i++) {
+        if ((((t + Math.floor(hash(i, Math.floor(x), 37) * 53)) % 53) + 53) % 53 >= 4) continue;
+        for (let px = nubs[i] + 1; px < nubs[i + 1]; px++) {
+          const end = px === nubs[i] + 1 || px === nubs[i + 1] - 1;
+          out.push([px, y - 1 - ((px - nubs[i] + flick) & 1), end ? 1 : 0]);
+        }
+      }
+      return out;
+    },
+  },
+};
 const BATTERY = {   // rows of [left, middle, right]
   nub: hex('#ffffff'), cap: ['#e8e8f0', '#b0b0c4', '#6c6c80'].map(hex), band: ['#9a6ae8', '#5b21b6', '#2e0f60'].map(hex),
   cell: ['#fff7b0', '#f5d328', '#a8820c'].map(hex), foot: ['#c9a21e', '#a8820c', '#6a5208'].map(hex),
@@ -130,7 +158,7 @@ const SPIKES = {
     const n = Math.max(1, Math.round(w / 4)), tw = w / n;
     blit(r, bed(w, (t) => {
       for (let i = 0; i < n; i++) {
-        const bx = Math.floor(i * tw + (tw - 3) / 2) + 1;
+        const bx = Math.floor(i * tw + (tw - 3) / 2) + 1;   // keep in step with batteryNubs
         t.set(bx + 1, 2, BATTERY.nub);
         for (let j = 1; j < 7; j++) {
           const row = j === 1 ? BATTERY.cap : j === 2 ? BATTERY.band : j === 6 ? BATTERY.foot : BATTERY.cell;
@@ -156,12 +184,21 @@ const SPIKES = {
 // ── Doors: 16 by 28, a cyan light for a boss, gold for the way out ────
 
 function door(paint) {
-  return (r, x, kind, P) => {
+  /** The door itself, 16 by 28, with nothing round it: what the game draws over its own gold pulse. */
+  const bare = (kind, P) => {
     const d = new Raster(16, 28), exit = kind === 'exit';
     paint(d, P, exit, exit ? WHITE : CYAN);
-    paintDoor(r, d, x, FLOOR - 28, kind);
+    return d;
   };
+  const f = (r, x, kind, P) => paintDoor(r, bare(kind, P), x, FLOOR - 28, kind);
+  f.bare = bare;
+  return f;
 }
+/** A kind's door, both ways round: painted into a picture as the review canvas shows it, and bare. */
+const doorOf = (name, P) => ({
+  door: (r, x, kind) => DOORS[name](r, x, kind, P),
+  doorPicture: (kind) => DOORS[name].bare(kind, P),
+});
 const lamp = (d, x, y, L) => { rect(d, x - 1, y - 1, 4, 4, ol); rect(d, x, y, 2, 2, L[0]); d.set(x, y, L[1]); };
 const DOORS = {
   shutter: door((d, P, exit, L) => {
@@ -289,7 +326,7 @@ function plates(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'cones'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'shutter'](r, x, kind, P),
+    ...doorOf(o.door || 'shutter', P),
   };
 }
 
@@ -324,7 +361,7 @@ function strata(P, o = {}) {
       for (let i = 3; i < w - 3; i++) { const k = hash(x + i, y, 21); if (k > 0.72) r.set(x + i, y + 5, P.deep); if (k > 0.9) r.set(x + i, y + 6, P.deep); }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'shards'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'arch'](r, x, kind, P),
+    ...doorOf(o.door || 'arch', P),
   };
 }
 
@@ -359,7 +396,7 @@ function bricks(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'spears'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'gate'](r, x, kind, P),
+    ...doorOf(o.door || 'gate', P),
   };
 }
 
@@ -397,7 +434,7 @@ function planks(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'stakes'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'wood'](r, x, kind, P),
+    ...doorOf(o.door || 'wood', P),
   };
 }
 
@@ -433,7 +470,7 @@ function turf(P, o = {}) {
       for (let i = 2; i < w - 2; i++) { const k = hash(x + i, y, 77); if (k > 0.7) r.set(x + i, y + 5, P.root); if (k > 0.88) r.set(x + i, y + 6, P.root); }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'thorns'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'hedge'](r, x, kind, P),
+    ...doorOf(o.door || 'hedge', P),
   };
 }
 
@@ -463,7 +500,7 @@ function concrete(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'spears'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'hatch'](r, x, kind, P),
+    ...doorOf(o.door || 'hatch', P),
   };
 }
 
@@ -495,7 +532,7 @@ function grating(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'prongs'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'shutter'](r, x, kind, P),
+    ...doorOf(o.door || 'shutter', P),
   };
 }
 
@@ -533,7 +570,7 @@ function tiles(P, o = {}) {
       }
     },
     spikes: (r, x, w) => SPIKES[o.spikes || 'prongs'](r, x, w, P),
-    door: (r, x, kind) => DOORS[o.door || 'energy'](r, x, kind, P),
+    ...doorOf(o.door || 'energy', P),
   };
 }
 
@@ -542,5 +579,5 @@ export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, 
 /** A material: its kind, its palette, its options; `check` names the two colours the contrast rule reads. */
 export function material(kind, palette, opts = {}) {
   const P = pal(palette);
-  return { ...KINDS[kind](P, opts), check: { ground: palette.base, cap: palette.cap1 } };
+  return { ...KINDS[kind](P, opts), sparks: SPARKS[opts.spikes] || null, check: { ground: palette.base, cap: palette.cap1 } };
 }

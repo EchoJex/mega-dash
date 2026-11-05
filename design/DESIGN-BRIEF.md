@@ -177,6 +177,8 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 - **Art is picked from variants** (owner, 5 Nov 2026): "Every type of thing should have a couple
   questions and/or a few variants to review before getting a label as 'Picked.'" The variants go on
   a canvas; the owner answers and picks in each thing's comment thread; only a picked variant is built.
+  The world pieces are picked one slice at a time; batch 1's six are in the game
+  (`src/systems/area-art/`), and `design/world-art/README.md` keeps what each slice picked.
 - Music is SNES-era chiptune, matching the art.
 
 ## 9. Handing work to Claude Code

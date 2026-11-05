@@ -10,6 +10,10 @@
  * the palette does — which is exactly how this broke. Tempest Man's backdrop
  * resolves within a dE of 2.4 of the ground the old constants used.
  *
+ * THE SIX SLICES WITH PICKED WORLD PIECES (systems/area-art) draw their own
+ * ground over their own backdrop; their pits are held to these same floors in
+ * tests/area-art.test.js. This file still covers every other slice.
+ *
  * WHAT IS ASSERTED IS THE RELATIONSHIP, NEVER THE HEXES. Every colour in this
  * project is provisional and a test that pinned one would just fail whenever it
  * was nudged. This fails only when a change makes a zone UNREADABLE, which is

@@ -680,6 +680,8 @@ Their answers to the follow-up: each slice also gets its own boss door and backd
 different backdrop variants per slice since the player has to look at it constantly. on a few
 backdrops, consider a layered parallax effect"; Steel gets door variants for "both" doors; and the
 work goes into the game "pushed in batches of ~6 slices" (the batches are in the README).
+**Batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting) was picked and is in the game**, 5 Nov 2026;
+see *The areas' world pieces* below.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -722,7 +724,8 @@ Claude or a generator made:
 | Strike Man's body — a rusty robot boxer on a tank-tread base, every clip including both stagger stages (asked for 31 Oct 2026, restyled on treads 2 Nov 2026) | sprite | Claude (Claude Design) | 2026-10-31 | `design/sprites/boss-strike-body.sprite` |
 | Thorn Man's body — a leaf-horned ninja in leaf armour with stiff vine-spring arms ending in shuriken, every clip; the owner picked each part from options on a design canvas. His tile, leaf kunai and seed pod were drawn too but are not in the game yet (no sheet for them) | sprite | Claude (Claude Design) | 2026-11-04 | `design/sprites/boss-thorn-body.sprite` |
 | World pieces, variants for review and not in the game — the area backdrop, ground, platforms, spikes, boss door and exit door, in three materials and three backdrops (group 1 of the owner's ask of 5 Nov 2026) | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/variants.mjs` |
-| World pieces for each slice, batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting), variants for review and not in the game — six backdrops and three materials (floor, platform, spikes, boss door, exit door) per slice | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/{materials,backdrops,batch1}.mjs` |
+| World pieces for each slice, batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting), variants for review — six backdrops and three materials (floor, platform, spikes, boss door, exit door) per slice | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch1.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
+| World pieces in the game, batch 1 — each slice's picked backdrop and material, redrawn where the owner asked (Fire's embers, obsidian spikes and arch; Water's subsea lab; Electric's batteries and their sparks; Fighting's animated crowd; Grass's grove scrolling) | room art, drawn in code | Claude | 2026-11-05 | `src/systems/area-art/slices.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
@@ -881,6 +884,33 @@ grey bunker once it was drawn; they are now the bunker's warning red with a near
 **Checked three ways:** `tests/arena-art.test.js` — every room is built and run through its
 states and must never ask for a frame or a piece that was never painted; `npm run smoke`;
 and screenshots held against the design by eye.
+
+### The areas' world pieces — `src/systems/area-art/`
+
+**The pieces the owner picked on the review canvas are what an area is drawn with**: its backdrop,
+ground and pits, platforms, spike beds and boss door, and in that boss's room the exit door (the
+owner's answer, 5 Nov 2026). A slice with nothing picked keeps the plain shapes `GameScene.draw`
+always drew. **`slices.js` holds each pick in the owner's own words**, with the materials and the
+backdrop it uses; a pick can take its ground from a second material (Grass: B on A's ground).
+`design/world-art/batch1.mjs` shows the same code beside the variants that were not picked, so
+the canvas and the game paint from one copy.
+
+**Painted once, then only placed**, like the rooms. A backdrop layer is `fixed` (painted once into
+a strip `period` pixels wide that repeats without a seam, scrolling at its `rate`) plus `parts`, the
+things that move by themselves, which name their small pictures once (`pieces()`) and say where each
+one is for a scroll and a moment (`at(ox, t)`). **Everything that moves by itself comes back to
+where it started every `loop` steps**, so a moving picture never jumps; the test checks it.
+The ground is painted in 256-pixel slices of the world as they come into view, with **touching
+ground spans joined into one run** so a pit edge shows only at a real pit; platforms, spike beds and
+doors are painted when they first appear. Everything is let go once it has scrolled away.
+
+**The game still draws a door's gold pulse; the art draws the door in front of it.** An unarmed door
+is the same picture, greyed and see-through. Nothing here changes a size, a position or a hit.
+
+**Checked three ways:** `tests/area-art.test.js` — every picked area and room door is built and
+scrolled for a run, must never ask for a picture never painted, must let go of what scrolled away,
+and must keep its pits readable (the contrast floors, measured on the picked colours); `npm run
+smoke`; and screenshots of each slice in the game.
 
 ---
 

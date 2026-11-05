@@ -72,7 +72,10 @@ with their arms up, while camera flashes go off and the spotlights sweep. A haze
 the crowd and a rim of light on their heads keep them visible against the dark. The crowd scrolls
 a little faster than the back wall. Material B is as offered.
 
-**All six slices of batch 1 are picked** (5 Nov 2026). Bringing them into the game is next.
+**All six slices of batch 1 are picked** (5 Nov 2026), **and are in the game.** Before they went in,
+the owner answered three questions: the bamboo grove scrolls slowly as you run ("Scroll slowly"),
+each boss room's exit door is that slice's picked door ("Yes, the slice's door"), and Electric's
+batteries crackle with sparks between their nubs ("Yes, add sparks").
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
@@ -80,8 +83,9 @@ ground (`ground: 'A'`), and nothing was redrawn.
 A picked slice carries `pick` in `batch1.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
 
-The per-slice painters: `materials.mjs` (eight kinds of floor, each with its platform, spikes and
-doors), `backdrops.mjs` (skies, ridges, skylines, forests, beams, rain), `batch1.mjs` (the six slices),
+The per-slice painters: `src/systems/area-art/materials.js` (eight kinds of floor, each with its
+platform, spikes and doors), `src/systems/area-art/paint.js` (skies, ridges, skylines, forests, beams,
+rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs` (the six slices with every variant),
 `scenes.mjs` (how each picture is laid out). `node design/world-art/render.mjs <folder> --batch 1`
 paints batch 1's pictures and prints each material's contrast against its slice's backdrops.
 
@@ -114,6 +118,8 @@ picks in each board's comment thread; Claude then labels the board PICKED, here 
   each, at game size) and prints each material's worst contrast against the seventeen backdrops,
   the same checks `tests/contrast.test.js` makes on today's ground. It needs Playwright, like
   `npm run smoke`.
-- **Getting a pick into the game is code work that comes after the pick**: the area's pieces are
-  drawn by `GameScene.draw` today, so a picked look needs an area version of the rooms' drawing
-  (painted once, then only placed), and `tests/contrast.test.js` moved onto the picked colours.
+- **Batch 1 is in the game** (5 Nov 2026): `src/systems/area-art/` draws each picked slice's area
+  (and its boss room's exit door), painted once and then only placed, as the rooms are. The picks
+  themselves, in the owner's words, live in `src/systems/area-art/slices.js`, which `batch1.mjs`
+  imports, so the canvas and the game paint from one copy. `tests/area-art.test.js` holds the picked
+  pits to the contrast floors that `tests/contrast.test.js` holds the plain look to.

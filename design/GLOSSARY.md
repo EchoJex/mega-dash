@@ -164,6 +164,9 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **design brief** | `design/DESIGN-BRIEF.md`: the game's look and its limits on one page, for Claude Design to read before it draws anything for this game. |
 | **design system** | Claude Design's reusable reference — a rules page, named colours, preview cards and images — read before every new design. MEGA DASH's is built from the design brief; its files are kept in `design/design-system/`, and `npm run design:system` writes its numbers from the game's code. |
 | **variant** | One of the two or three ways a thing is drawn on a canvas for the owner to choose from. |
+| **world pieces** | An area's backdrop, ground, platforms, spike beds and doors. Each slice's are picked from variants on a canvas, then drawn in the game by `src/systems/area-art/`. |
+| **strip** | One backdrop layer painted once, a few screens wide, that repeats as it scrolls without a seam showing where it starts again. |
+| **moving part** | Something in a backdrop that moves by itself (an ember, a cheering crowd, a shark). Its small pictures are painted once; the game only puts them in place each step. |
 | **PICKED** | The label a thing gets on its canvas once the owner has chosen one of its variants in its comment thread. Only a picked variant is drawn in full and brought into the game. |
 | **handoff** | The zip Claude Design exports for Claude Code: the drawings, the chat, a README, and a note saying what is approved and what to build. |
 | **contract** | What a weapon's code needs from its sheets: their sizes, and every clip it plays, each of the right kind. `npm run design:import` and the build refuse a sheet that breaks it. |

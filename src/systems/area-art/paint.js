@@ -1,5 +1,6 @@
 /**
- * BACKDROP KIT FOR EACH SLICE'S AREA — VARIANTS FOR THE OWNER TO PICK FROM. NOT IN THE GAME.
+ * BACKDROP KIT FOR EACH SLICE'S AREA — what every backdrop variant on the review canvas was painted
+ * with, and the picked ones (slices.js) in the game (index.js).
  *
  * Drawn by Claude at the owner's request, 2026-11-05: "6 wildly different backdrop variants per
  * slice since the player has to look at it constantly. on a few backdrops, consider a layered
@@ -12,8 +13,8 @@
  * the ground, its lit edge and every pit read as well as they do now.
  */
 
-import { hex, pick, hash, noise1, noise2, snap5 } from '../arena-art/pixels.js';
-import { W, H, FLOOR } from './kit.js';
+import { Raster, hex, pick, hash, noise1, noise2, snap5 } from '../arena-art/pixels.js';
+import { W, H, FLOOR, blit } from './kit.js';
 
 export const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
 /** The boss's primary (or secondary) darkened by k, the way the area backdrop is today. */
@@ -64,11 +65,23 @@ export function halo(r, cx, cy, rad, col, strength = 0.5) {
   }
 }
 
+/**
+ * A value that repeats every `period` pixels of the world without a seam: across the last `blend`
+ * pixels it eases into what the start of the next repeat will be. Without a period it is `fn(wx)`.
+ */
+export function seamless(fn, wx, period, blend = 64) {
+  if (!period) return fn(wx);
+  const m = ((wx % period) + period) % period;
+  if (m < period - blend) return fn(m);
+  const s = (m - (period - blend)) / blend;
+  return fn(m) * (1 - s) + fn(m - period) * s;
+}
+
 /** A ridge of hills or mountains: noise along the world's x, filled down to the floor. */
-export function ridge(r, ox, { y, amp, f = 0.02, seed = 1, col, top, sharp = 0, to = H }) {
+export function ridge(r, ox, { y, amp, f = 0.02, seed = 1, col, top, sharp = 0, to = H, period }) {
   for (let x = 0; x < W; x++) {
     const wx = x + ox;
-    let n = noise1(wx * f, seed) * 0.7 + noise1(wx * f * 3.1, seed + 1) * 0.3;
+    let n = seamless((w) => noise1(w * f, seed) * 0.7 + noise1(w * f * 3.1, seed + 1) * 0.3, wx, period);
     if (sharp) n = 1 - Math.abs(n * 2 - 1) * sharp - (1 - sharp) * (1 - n);
     const hy = Math.round(y - amp * n);
     for (let yy = Math.max(0, hy); yy < to; yy++) r.set(x, yy, yy === hy && top ? top : col);
@@ -140,17 +153,42 @@ export function clouds(r, ox, { y, h, col, lit, seed = 7, f = 0.04, cut = 0.5 })
   }
 }
 
+/**
+ * EMBERS, ASH OR BUBBLES — `n` specks in `cols`, scattered over the screen. Still unless they have a
+ * `speed`: then each one appears, drifts that many pixels a step (down; up if negative) swaying a
+ * pixel either way, and goes out, on its own clock, coming back to where it started every LIFE steps.
+ * A moving part (see `scrolling`), so the game places them every step instead of painting them.
+ */
+export function drift(seed, n, cols, yMax = FLOOR, speed = 0) {
+  const LIFE = 240;
+  return {
+    pieces: () => cols.flatMap((col, k) => {
+      const dot = new Raster(1, 1), two = new Raster(2, 2);
+      dot.set(0, 0, col); two.set(0, 1, col); two.set(1, 0, col);
+      return [[`d${k}`, dot], [`d${k}+`, two]];
+    }),
+    at(ox, t) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const u = (hash(i, 4, seed) + t / LIFE) % 1;
+        if (speed && (u < 0.1 || u > 0.9)) continue;
+        const f = speed * u * LIFE * (0.7 + 0.6 * hash(i, 5, seed)), sway = speed ? Math.round(Math.sin(f * 0.15 + i)) : 0;
+        const x = (((Math.floor(hash(i, 0, seed) * 1440 - ox) + sway) % W) + W) % W, y = ((Math.floor(hash(i, 1, seed) * yMax + f) % yMax) + yMax) % yMax;
+        const k = Math.floor(hash(i, 2, seed) * cols.length);
+        out.push(hash(i, 3, seed) > 0.7 ? [`d${k}+`, x, y - 1] : [`d${k}`, x, y]);
+      }
+      return out;
+    },
+  };
+}
 export function embers(r, seed, n, cols, yMax = FLOOR, ox = 0, t = 0, speed = 0) {
-  const LIFE = 240;   // steps: each moving one appears, drifts `speed` pixels a step (down; up if negative), and goes out
-  for (let i = 0; i < n; i++) {
-    const u = (hash(i, 4, seed) + t / LIFE) % 1;
-    if (speed && (u < 0.1 || u > 0.9)) continue;
-    const f = speed * u * LIFE * (0.7 + 0.6 * hash(i, 5, seed)), sway = speed ? Math.round(Math.sin(f * 0.15 + i)) : 0;
-    const x = (((Math.floor(hash(i, 0, seed) * 1440 - ox) + sway) % W) + W) % W, y = ((Math.floor(hash(i, 1, seed) * yMax + f) % yMax) + yMax) % yMax;
-    const col = cols[Math.floor(hash(i, 2, seed) * cols.length)];
-    r.set(x, y, col);
-    if (hash(i, 3, seed) > 0.7) r.set(x + 1, y - 1, col);
-  }
+  drawPart(r, drift(seed, n, cols, yMax, speed), ox, t);
+}
+
+/** Paint a moving part at one moment: each of its small pictures where `at` puts it. */
+export function drawPart(r, part, ox, t) {
+  const atlas = part.atlas ??= new Map(part.pieces());
+  for (const [name, x, y] of part.at(ox, t)) blit(r, atlas.get(name), x, y);
 }
 
 /** A lightning bolt from the sky down to a point, a frozen moment of it. */
@@ -174,6 +212,23 @@ export function panels(r, ox, { y0 = 0, y1 = FLOOR, pw = 32, ph = 48, base, ligh
 // ── Building blocks the slices share ─────────────────────────────────
 
 export const still = (name, desc, paint) => ({ name, desc, moving: false, layers: [{ rate: 0, paint }] });
+/**
+ * A BACKDROP THE GAME CAN DRAW. Each layer scrolls at its `rate` (0 stands still, 1 keeps up with
+ * the ground) and is two things: `fixed(r, ox)`, what never moves by itself, which the game paints
+ * once into a strip `period` pixels wide that repeats without a seam; and `parts`, the things that
+ * do move by themselves (embers, a crowd, a swimming shark), which name their small pictures once
+ * (`pieces()`) and say where each one is for a scroll and a moment (`at(ox, t)`), so the game only
+ * places them. `paint(r, b, ox, t)` is the same layer painted whole, for the review canvas.
+ * Everything that moves by itself comes back to where it started every `loop` steps.
+ */
+export const scrolling = (name, desc, loop, ...layers) => ({
+  name, desc, moving: true, loop,
+  layers: layers.map((L) => ({
+    ...L,
+    parts: L.parts || [],
+    paint: (r, b, ox, t = 0) => { L.fixed?.(r, ox); for (const part of L.parts || []) drawPart(r, part, ox, t); },
+  })),
+});
 export const moving = (name, desc, ...layers) => ({ name, desc, moving: true, layers: layers.map(([rate, paint]) => ({ rate, paint })) });
 export const line = (r, x0, y0, x1, y1, col) => {
   const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);

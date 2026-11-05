@@ -66,14 +66,17 @@ export function makeArenaArt(scene, arena, viewW) {
 }
 
 /**
- * THE STAGE — the few things a room builds its picture from.
+ * THE STAGE — the few things a room builds its picture from. An area's world
+ * pieces (systems/area-art) are built on the same stage.
  *
  * Layers are made in DRAW ORDER, back to front, and everything a room adds
- * goes into the latest one. A `far` layer moves at 0.3x of the screen shake,
- * the way the design's distant sky does; a `furn` layer is furniture, and
- * fades in a beat after the room on the warp in, as the tracker asks.
+ * goes into the latest one (or the one `use` picks). A `far` layer moves at
+ * 0.3x of the screen shake, the way the design's distant sky does; a `furn`
+ * layer is furniture, and fades in a beat after the room on the warp in, as
+ * the tracker asks. A layer given a `depth` sits at that depth of its own,
+ * among the game's other layers, instead of with the room's backdrop.
  */
-function stage(scene, key, viewW) {
+export function stage(scene, key, viewW) {
   const root = scene.add.container(0, 0).setDepth(DEPTH.arena);
   const layers = [], keys = [], made = new Map();
   let cur = null, n = 0;
@@ -83,11 +86,16 @@ function stage(scene, key, viewW) {
     viewW,
     // `front` draws in front of the player — the Grass boss's ground cover,
     // which the owner put "one layer above the player".
-    layer({ far = false, furn = false, front = false } = {}) {
+    layer({ far = false, furn = false, front = false, depth } = {}) {
       cur = scene.add.container(0, 0);
-      if (front) cur.setDepth(DEPTH.cover); else root.add(cur);
-      layers.push({ c: cur, far, furn, front });
+      const own = front || depth !== undefined;
+      if (own) cur.setDepth(depth ?? DEPTH.cover); else root.add(cur);
+      layers.push({ c: cur, far, furn, own });
+      return cur;
     },
+
+    /** Add to an earlier layer again: for pictures made while the place is being played. */
+    use(c) { cur = c; },
 
     /** Hand a canvas, or a `frames` sheet, to Phaser once. Returns its key. */
     tex(src) {
@@ -179,6 +187,16 @@ function stage(scene, key, viewW) {
       };
     },
 
+    /** Take a picture away for good, and give back what its picture cost. */
+    drop(o, src) {
+      o.destroy();
+      const k = made.get(src);
+      if (k === undefined) return;
+      made.delete(src);
+      keys.splice(keys.indexOf(k), 1);
+      scene.textures.remove(k);
+    },
+
     place(sh, reveal) {
       for (const L of layers) {
         const k = L.far ? 0.3 : 1;
@@ -188,7 +206,7 @@ function stage(scene, key, viewW) {
     },
 
     destroy() {
-      for (const L of layers) if (L.front) L.c.destroy();
+      for (const L of layers) if (L.own) L.c.destroy();
       root.destroy();
       for (const k of keys) scene.textures.remove(k);
     },
