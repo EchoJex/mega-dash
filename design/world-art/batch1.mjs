@@ -417,11 +417,14 @@ const P2 = (k) => tn(volt, k, 'secondary');
 const SPARK = [c('#fffbe0'), c('#f5d328')];
 const ELECTRIC = {
   id: 'volt', type: 'Electric',
+  // The owner, 5 Nov 2026: "1b but make the spikes a series of AA style batteries with terminal nubs
+  // instead of the usual spikes"
+  pick: { backdrop: 1, material: 'B' },
   materials: [
     ['A', 'INSULATOR TILES', 'Purple glazed tiles under a yellow-trimmed lip, prongs crackling at the tips, a field door.',
       material('tiles', { deep: '#1e1430', dark: '#3a2860', base: '#6a4ea0', light: '#8468b8', hi: '#e0d0ff', cap0: '#fff090', cap1: '#e0c040', void: '#0c0814', thi: '#ffffff', tlight: '#9a9aa8', tdark: '#5a5a68', glow: '#fff060', glow2: '#f5d328' })],
-    ['B', 'HAZARD GRATING', 'Grating over a live glow, a yellow-and-black hazard band, prongs and a slatted shutter.',
-      material('grating', { deep: '#20202a', dark: '#3a3a48', base: '#5a5a6a', light: '#7c7c90', hi: '#c8c8d8', cap0: '#e8e8f0', cap1: '#b0b0c4', void: '#0c0a14', glow: '#f5d328', glow2: '#fff7b0', stripeA: '#f5d328', stripeB: '#1e1a24', thi: '#ffffff', tlight: '#9a9aa8', tdark: '#5a5a68' }, { under: 'glow', stripe: true })],
+    ['B', 'HAZARD GRATING', 'Grating over a live glow, a yellow-and-black hazard band, a row of AA batteries for spikes and a slatted shutter.',
+      material('grating', { deep: '#20202a', dark: '#3a3a48', base: '#5a5a6a', light: '#7c7c90', hi: '#c8c8d8', cap0: '#e8e8f0', cap1: '#b0b0c4', void: '#0c0a14', glow: '#f5d328', glow2: '#fff7b0', stripeA: '#f5d328', stripeB: '#1e1a24' }, { under: 'glow', stripe: true, spikes: 'batteries' })],
     ['C', 'CIRCUIT BOARD', 'A purple circuit board with gold traces and pads, prongs and a field door.',
       material('tiles', { deep: '#241a40', dark: '#3a2c66', base: '#644f96', alt: '#5a4688', light: '#7a64aa', hi: '#d8ccf0', cap0: '#f0e8ff', cap1: '#b8a8e0', trace: '#f5d328', pad: '#fff0a0', void: '#0c0814', thi: '#ffffff', tlight: '#c0b0e0', tdark: '#5a4a80', glow: '#f5d328', glow2: '#fff7b0' }, { traces: true })],
   ],

@@ -41,7 +41,7 @@ slice's backdrops.
 | Typeless | 1 test range · 2 hangar (moving) · 3 blueprint · 4 searchlights · 5 radar ridges (moving) · 6 control room | A bunker concrete · B diamond plate · C steel grating | **PICKED: backdrop 2, material A** (owner, 5 Nov 2026: "2+A") |
 | Fire | 1 volcano range (moving) · 2 lava sea · 3 forge · 4 smokestacks · 5 ember storm (moving) · 6 basalt columns | A basalt and lava · B fire brick · C grate over coals | **PICKED: backdrop 5, material C, changed** (owner, 5 Nov 2026), in their words below |
 | Water | 1 stormy sea (moving) · 2 underwater lab (moving; first offered as plain underwater) · 3 harbour · 4 waterfall cliffs · 5 rainy city (moving) · 6 lighthouse | A wet slate · B ship deck · C aqueduct tiles | **PICKED: backdrop 2, changed, and material A** (owner, 5 Nov 2026), in their words below |
-| Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | not picked yet |
+| Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | **PICKED: backdrop 1, and material B, changed** (owner, 5 Nov 2026), in their words below |
 | Grass | 1 deep forest (moving) · 2 bamboo grove · 3 terraced hills · 4 firefly meadow · 5 overgrown ruins (moving) · 6 canopy | A meadow turf · B bamboo · C mossy stone | not picked yet |
 | Fighting | 1 arena crowd · 2 dojo · 3 mountain temple (moving) · 4 boxing gym · 5 dusk rooftops (moving) · 6 torii and dummies | A dojo floor · B ring canvas · C street concrete | not picked yet |
 
@@ -61,6 +61,11 @@ view out of a subsea lab, thick glass panes in a riveted frame with algae growin
 and a few light cracks. Outside, kelp sways, bubbles rise, and two sharks, an anglerfish, a squid
 and a jellyfish fade in out of the dark, glide by and fade out. All of it comes back to where it
 started every 8 seconds (`LAB_LOOP`), so its pictures loop with no jump. Material A is as offered.
+
+**Electric's pick, in the owner's words (5 Nov 2026):** "1b but make the spikes a series of AA style
+batteries with terminal nubs instead of the usual spikes". Redrawn to match: material B's spike bed
+is a row of AA batteries standing up (`batteries` in `materials.mjs`), each with a silver cap, its
+terminal nub on top, a violet band and a yellow cell. Backdrop 1 is as offered.
 
 A picked slice carries `pick` in `batch1.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.

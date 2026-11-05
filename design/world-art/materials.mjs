@@ -20,6 +20,10 @@ export const pal = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [
 const mod = (a, n) => ((a % n) + n) % n;
 const CYAN = [hex('#5cadd5'), hex('#d8f6ff')], WHITE = [hex('#fff4c8'), hex('#ffffff')];
 const GOLD = [hex('#5c4a0a'), hex('#c9a21e'), hex('#f5d328'), hex('#fff3b0')];
+const BATTERY = {   // rows of [left, middle, right]
+  nub: hex('#ffffff'), cap: ['#e8e8f0', '#b0b0c4', '#6c6c80'].map(hex), band: ['#9a6ae8', '#5b21b6', '#2e0f60'].map(hex),
+  cell: ['#fff7b0', '#f5d328', '#a8820c'].map(hex), foot: ['#c9a21e', '#a8820c', '#6a5208'].map(hex),
+};
 
 /** The lit top edge every floor shares: two rows, then whatever the kind paints below. */
 function lip(r, x1, x2, P) {
@@ -116,6 +120,21 @@ const SPIKES = {
             const d = py - (7 - h);   // rows below the tip
             t.set(px + 1, py + 2, k === 0 ? (d < 3 ? P.obs3 : P.obs2) : k === row.length - 1 || (k === 1 && d < 4) ? P.obs1 : P.obs0);
           });
+        }
+      }
+    }), Math.floor(x) - 1, FLOOR - 9);
+  },
+  batteries(r, x, w) {
+    // AA batteries standing in a row, terminal nub up (the owner's ask for Electric, 5 Nov 2026):
+    // a silver cap and nub, a violet band, a yellow cell, each lit on its left like a cylinder.
+    const n = Math.max(1, Math.round(w / 4)), tw = w / n;
+    blit(r, bed(w, (t) => {
+      for (let i = 0; i < n; i++) {
+        const bx = Math.floor(i * tw + (tw - 3) / 2) + 1;
+        t.set(bx + 1, 2, BATTERY.nub);
+        for (let j = 1; j < 7; j++) {
+          const row = j === 1 ? BATTERY.cap : j === 2 ? BATTERY.band : j === 6 ? BATTERY.foot : BATTERY.cell;
+          for (let k = 0; k < 3; k++) t.set(bx + k, j + 2, row[k]);
         }
       }
     }), Math.floor(x) - 1, FLOOR - 9);
