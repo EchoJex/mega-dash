@@ -38,7 +38,7 @@ slice's backdrops.
 
 | slice | backdrops | materials | status |
 |---|---|---|---|
-| Typeless | 1 test range · 2 hangar (moving) · 3 blueprint · 4 searchlights · 5 radar ridges (moving) · 6 control room | A bunker concrete · B diamond plate · C steel grating | not picked yet |
+| Typeless | 1 test range · 2 hangar (moving) · 3 blueprint · 4 searchlights · 5 radar ridges (moving) · 6 control room | A bunker concrete · B diamond plate · C steel grating | **PICKED: backdrop 2, material A** (owner, 5 Nov 2026: "2+A") |
 | Fire | 1 volcano range (moving) · 2 lava sea · 3 forge · 4 smokestacks · 5 ember storm (moving) · 6 basalt columns | A basalt and lava · B fire brick · C grate over coals | not picked yet |
 | Water | 1 stormy sea (moving) · 2 underwater · 3 harbour · 4 waterfall cliffs · 5 rainy city (moving) · 6 lighthouse | A wet slate · B ship deck · C aqueduct tiles | not picked yet |
 | Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | not picked yet |
