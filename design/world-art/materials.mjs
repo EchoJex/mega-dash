@@ -102,6 +102,24 @@ const SPIKES = {
       for (let px = 0; px < Math.ceil(w); px++) t.set(px + 1, 6, (px & 1) ? P.rope : P.deep);
     }), Math.floor(x) - 1, FLOOR - 9);
   },
+  glass(r, x, w, P) {
+    // Obsidian (the owner's ask for Fire, 5 Nov 2026): jagged jet-black glass, each shard lit
+    // white down its left edge and caught dark grey on its right, so it reads on a dark sky.
+    const n = Math.max(1, Math.round(w / 5)), tw = w / n;
+    blit(r, bed(w, (t) => {
+      for (let i = 0; i < n; i++) {
+        const h = 5 + Math.floor(hash(i, Math.floor(x), 31) * 3), x0 = i * tw;
+        for (let py = 7 - h; py < 7; py++) {
+          const row = [];
+          for (let px = Math.floor(x0); px < Math.ceil(x0 + tw); px++) if (inTooth(px, py, x0, tw, 7 - h, h)) row.push(px);
+          row.forEach((px, k) => {
+            const d = py - (7 - h);   // rows below the tip
+            t.set(px + 1, py + 2, k === 0 ? (d < 3 ? P.obs3 : P.obs2) : k === row.length - 1 || (k === 1 && d < 4) ? P.obs1 : P.obs0);
+          });
+        }
+      }
+    }), Math.floor(x) - 1, FLOOR - 9);
+  },
   prongs(r, x, w, P) {
     // Metal prongs with lit tips: the electric kind.
     const n = Math.max(1, Math.round(w / 4)), tw = w / n;
@@ -145,8 +163,12 @@ const DOORS = {
         const t = (j - 3) / 24;
         d.set(i, j, exit ? pick([GOLD[1], GOLD[2], GOLD[3]], 0.25 + 0.7 * t, i, j) : pick([ol, P.void || P.deep, P.deep], 0.2 + 0.6 * t, i, j));
       } else {
-        const mortar = j % 5 === 0 || ((i + (Math.floor(j / 5) % 2) * 2) % 4 === 0 && j > 8);
-        d.set(i, j, mortar ? P.deep : stones[Math.floor(hash(i >> 1, Math.floor(j / 5), 41) * 3)]);
+        const ci = (i + (Math.floor(j / 5) % 2) * 2) % 4, jr = j % 5;
+        const mortar = jr === 0 || (ci === 0 && j > 8);
+        if (mortar) d.set(i, j, P.mortar || P.deep);
+        // Obsidian blocks (P.obs0..3): black glass, a white glint at each block's top corner.
+        else if (P.obs0) d.set(i, j, jr === 1 ? (ci === 1 ? P.obs3 : P.obs1) : jr === 2 && ci === 1 ? P.obs1 : P.obs0);
+        else d.set(i, j, stones[Math.floor(hash(i >> 1, Math.floor(j / 5), 41) * 3)]);
       }
     }
     if (!exit) for (const [i, j] of [[7, 11], [8, 11], [6, 12], [9, 12], [7, 15], [8, 15], [6, 16], [9, 16], [7, 19], [8, 19], [7, 20], [8, 20]]) d.set(i, j, L[0]);

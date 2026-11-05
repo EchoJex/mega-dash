@@ -39,11 +39,22 @@ slice's backdrops.
 | slice | backdrops | materials | status |
 |---|---|---|---|
 | Typeless | 1 test range · 2 hangar (moving) · 3 blueprint · 4 searchlights · 5 radar ridges (moving) · 6 control room | A bunker concrete · B diamond plate · C steel grating | **PICKED: backdrop 2, material A** (owner, 5 Nov 2026: "2+A") |
-| Fire | 1 volcano range (moving) · 2 lava sea · 3 forge · 4 smokestacks · 5 ember storm (moving) · 6 basalt columns | A basalt and lava · B fire brick · C grate over coals | not picked yet |
+| Fire | 1 volcano range (moving) · 2 lava sea · 3 forge · 4 smokestacks · 5 ember storm (moving) · 6 basalt columns | A basalt and lava · B fire brick · C grate over coals | **PICKED: backdrop 5, material C, changed** (owner, 5 Nov 2026), in their words below |
 | Water | 1 stormy sea (moving) · 2 underwater · 3 harbour · 4 waterfall cliffs · 5 rainy city (moving) · 6 lighthouse | A wet slate · B ship deck · C aqueduct tiles | not picked yet |
 | Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | not picked yet |
 | Grass | 1 deep forest (moving) · 2 bamboo grove · 3 terraced hills · 4 firefly meadow · 5 overgrown ruins (moving) · 6 canopy | A meadow turf · B bamboo · C mossy stone | not picked yet |
 | Fighting | 1 arena crowd · 2 dojo · 3 mountain temple (moving) · 4 boxing gym · 5 dusk rooftops (moving) · 6 torii and dummies | A dojo floor · B ring canvas · C street concrete | not picked yet |
+
+**Fire's pick, in the owner's words (5 Nov 2026):** "5c but remove the fast moving layer of embers,
+and have the embers slowly drift downward. spikes should be a shiny jet black obsidian glass. doorway
+should use be a stone arch made of obsidian glass with tera cotta colored mortar". Redrawn to match:
+the ember storm lost its fast near layer of embers, and the rest drift slowly down and go out; the
+grate's spikes are jet-black obsidian glass (`glass` in `materials.mjs`); both of its doors are
+arches of obsidian glass blocks with terracotta mortar. The doorway was read as both doors, the boss
+door keeping its cyan sign and the exit door its gold light.
+
+A picked slice carries `pick` in `batch1.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
+`.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
 
 The per-slice painters: `materials.mjs` (eight kinds of floor, each with its platform, spikes and
 doors), `backdrops.mjs` (skies, ridges, skylines, forests, beams, rain), `batch1.mjs` (the six slices),

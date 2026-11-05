@@ -14,8 +14,9 @@ import { W, H, FLOOR, STYLES, LAYOUT, backdropOf, overlay } from './variants.mjs
 const STRIP = 40, GAP = 4;
 const DOORS = { boss: 380, exit: 428 };
 
-function paintBackdrop(r, bd, b, cam = 0) {
-  for (const L of bd.layers) L.paint(r, b, Math.round(cam * L.rate));
+/** `t` is the game's clock in steps (1/60 s), for anything that moves by itself, like falling embers. */
+function paintBackdrop(r, bd, b, cam = 0, t = 0) {
+  for (const L of bd.layers) L.paint(r, b, Math.round(cam * L.rate), t);
 }
 function pieces(r, M) {
   M.ground(r, 0, LAYOUT.pit[0]);
@@ -55,13 +56,23 @@ export function backdropPicture(slice, bd, b, player) {
 /** One frame of a layered backdrop scrolling: the camera at `cam`, the player running on the spot. */
 export function backdropFrame(slice, bd, b, player, cam, step) {
   const r = new Raster(W, H);
-  paintBackdrop(r, bd, b, cam);
+  paintBackdrop(r, bd, b, cam, step * 4);
   const period = 232, pit = 32;
   for (let x0 = -(cam % period); x0 < W; x0 += period) STYLES.TODAY.ground(r, Math.max(0, x0), Math.min(W, x0 + period - pit));
   const strips = slice.materials.map(([, , , M]) => {
-    const s = new Raster(W, H); paintBackdrop(s, bd, b, cam); pieces(s, M); return finish(s, null);
+    const s = new Raster(W, H); paintBackdrop(s, bd, b, cam, step * 4); pieces(s, M); return finish(s, null);
   });
   return stack(finish(r, player, 6 + (step % 8)), strips, 156, [134, 150]);
+}
+
+/** One frame of the owner's pick, backdrop and material together, the player standing still. */
+export function pickFrame(bd, M, b, player, step) {
+  const r = new Raster(W, H);
+  paintBackdrop(r, bd, b, 0, step * 4);
+  pieces(r, M);
+  M.door(r, DOORS.boss, 'boss');
+  M.door(r, DOORS.exit, 'exit');
+  return finish(r, player);
 }
 
 /** A material's five pieces in front of the slice's flat colour of today, plus its pit edge against each backdrop. */

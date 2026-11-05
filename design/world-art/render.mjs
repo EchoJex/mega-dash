@@ -10,6 +10,8 @@
  *   and three materials, and how each material does against its own slice's six backdrops. A
  *   backdrop that scrolls in layers is also written as a moving picture (.apng: an animated PNG,
  *   which every browser plays) of the camera running while the player runs on the spot.
+ *   A slice the owner has picked also gets pick-<boss>.png: the picked backdrop and material
+ *   together, the player standing still (and pick-<boss>.apng if something in it moves by itself).
  *
  * The contrast lines use the game's own floors (tests/contrast.test.js): ground 2, its lit edge
  * 4.5 and the white player on it 4.5, measured against the brightest pixel under each pit.
@@ -95,7 +97,14 @@ try {
         if (!bd.moving) continue;
         const frames = [];
         for (let f = 0; f < 60; f++) frames.push(await S.deflated(S.backdropFrame(slice, bd, b, player, f * 4, f)));
-        A[`bd-${slice.id}-${i + 1}`] = frames;
+        A[`bd-${slice.id}-${i + 1}`] = { h: 268, frames };
+      }
+      if (slice.pick) {
+        const bd = slice.backdrops[slice.pick.backdrop - 1], M = slice.materials.find(([k]) => k === slice.pick.material)[3];
+        P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
+        const frames = [];
+        for (let f = 0; f < 60; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));
+        if (new Set(frames).size > 1) A[`pick-${slice.id}`] = { h: 224, frames };   // only if something in it moves by itself
       }
       const brightest = slice.backdrops.map((bd) => S.pitSample(bd, b).reduce((m, p) => (lum(p) > lum(m) ? p : m), [0, 0, 0]));
       for (const [k, name, , M] of slice.materials) {
@@ -109,7 +118,7 @@ try {
   }, { base: url, n: batch });
 
   for (const [name, data] of Object.entries(res.P)) writeFileSync(join(out, `${name}.png`), Buffer.from(data.split(',')[1], 'base64'));
-  for (const [name, frames] of Object.entries(res.A)) writeFileSync(join(out, `${name}.apng`), apng(480, 268, frames, 15));
+  for (const [name, { h, frames }] of Object.entries(res.A)) writeFileSync(join(out, `${name}.apng`), apng(480, h, frames, 15));
   console.log(`${Object.keys(res.P).length} pictures and ${Object.keys(res.A).length} moving pictures in ${out}`);
   console.log('worst contrast (the game asks ground 2, edge 4.5, player 4.5):');
   for (const line of res.report) console.log('  ' + line);

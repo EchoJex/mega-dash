@@ -48,6 +48,7 @@ function column(r, x, top, w, cols) {
 const proto = B('proto');
 const TYPELESS = {
   id: 'proto', type: 'Typeless',
+  pick: { backdrop: 2, material: 'A' },   // the owner, 5 Nov 2026: "2+A"
   materials: [
     ['A', 'BUNKER CONCRETE', 'Poured slabs with expansion joints, a yellow-and-black hazard band under the lip, rusty rebar spikes and a blast hatch for a door.',
       material('concrete', { deep: '#2a2e33', dark: '#4a5058', base: '#5e656e', light: '#7a828c', hi: '#b8c0c8', cap0: '#d4dadf', cap1: '#a9b1b9', stripeA: '#e8c020', stripeB: '#2a2a2a', rust: '#8a4a2a', thi: '#e0d0c0', tlight: '#b07850', tdark: '#6a4028' }, { hazard: true, door: 'hatch', spikes: 'spears' })],
@@ -144,13 +145,18 @@ function volcano(r, x, base, h, col) {
 }
 const FIRE = {
   id: 'blaze', type: 'Fire',
+  // The owner, 5 Nov 2026: "5c but remove the fast moving layer of embers, and have the embers slowly
+  // drift downward. spikes should be a shiny jet black obsidian glass. doorway should use be a stone
+  // arch made of obsidian glass with tera cotta colored mortar"
+  pick: { backdrop: 5, material: 'C' },
   materials: [
     ['A', 'BASALT AND LAVA', 'Dark volcanic rock with lava glowing through its cracks, obsidian shards with hot tips, a stone arch.',
       material('strata', { deep: '#1e1416', dark: '#4a3a3a', base: '#685654', mid: '#74605d', light: '#806c68', hi: '#e8d0b8', cap0: '#d8bca8', cap1: '#b09484', glow: '#e85a1a', glow2: '#ffd040', void: '#140606', thi: '#ffb070', tlight: '#8a5a50', tdark: '#4a3030' }, { cracks: true })],
     ['B', 'FIRE BRICK', 'Kiln bricks in burnt orange under a pale lip, iron spears and a portcullis.',
       material('bricks', { deep: '#2a1410', dark: '#6a2c1c', base: '#a0482c', alt: '#8c3e26', light: '#c06040', hi: '#f0c0a0', cap0: '#e8b090', cap1: '#c88468', thi: '#ffe0a0', tlight: '#c0a080', tdark: '#6a5040' })],
-    ['C', 'GRATE OVER COALS', 'An iron grate with coals glowing underneath, prongs with burning tips, an iron shutter.',
-      material('grating', { deep: '#1a1414', dark: '#33292a', base: '#57494a', light: '#786566', hi: '#b09090', cap0: '#d8c0b8', cap1: '#a89088', void: '#120808', glow: '#e85a1a', glow2: '#ffb030', thi: '#fff0c0', tlight: '#8a7070', tdark: '#4a3838' }, { under: 'coals' })],
+    ['C', 'GRATE OVER COALS', 'An iron grate with coals glowing underneath, shiny jet-black obsidian glass for spikes, and an arch of obsidian glass blocks with terracotta mortar.',
+      material('grating', { deep: '#1a1414', dark: '#33292a', base: '#57494a', light: '#786566', hi: '#b09090', cap0: '#d8c0b8', cap1: '#a89088', void: '#120808', glow: '#e85a1a', glow2: '#ffb030',
+        obs0: '#0b0a10', obs1: '#2c2a3a', obs2: '#8a8ca8', obs3: '#f4f6ff', mortar: '#cc6a44' }, { under: 'coals', spikes: 'glass', door: 'arch' })],
   ],
   backdrops: [
     moving('VOLCANO RANGE', 'Far volcanoes with lava running down them, a ridge nearer, black spires closest. Scrolls in three layers.',
@@ -191,10 +197,10 @@ const FIRE = {
         for (let j = 0; j < 9; j++) for (let i = -4 + Math.floor(j / 2); i <= 4 - Math.floor(j / 2); i++) r.set(x + 4 + i, 184 - h - j - 1, LAVA[j < 3 ? 1 : j < 6 ? 2 : 3]);
       }
     }),
-    moving('EMBER STORM', 'A dark sky full of drifting embers, small and slow far off, big and quick up close. Scrolls in three layers.',
-      [0.08, (r, b, ox) => { grad(r, 0, H, [[0, tn(blaze, 0.04)], [0.8, tn(blaze, 0.15)], [1, tn(blaze, 0.07)]]); for (let y = 30; y < 170; y += 9) for (let x = 0; x < W; x++) if (noise1((x + ox) * 0.05 + y, 61) > 0.62) r.set(x, y, tn(blaze, 0.19)); embers(r, 62, 140, [c('#6a1808'), c('#8a2a10')], 176, ox * 3); }],
-      [0.3, (r, b, ox) => embers(r, 63, 90, [LAVA[1], LAVA[2]], 176, ox * 3)],
-      [0.6, (r, b, ox) => { embers(r, 64, 30, [LAVA[3], LAVA[2]], 176, ox * 3); ridge(r, ox, { y: 184, amp: 10, f: 0.05, seed: 65, col: c('#120606') }); }]),
+    moving('EMBER STORM', 'A dark sky with embers drifting slowly down and going out, smaller and slower far off. Scrolls in three layers.',
+      [0.08, (r, b, ox, t) => { grad(r, 0, H, [[0, tn(blaze, 0.04)], [0.8, tn(blaze, 0.15)], [1, tn(blaze, 0.07)]]); for (let y = 30; y < 170; y += 9) for (let x = 0; x < W; x++) if (noise1((x + ox) * 0.05 + y, 61) > 0.62) r.set(x, y, tn(blaze, 0.19)); embers(r, 62, 140, [c('#6a1808'), c('#8a2a10')], 176, ox, t, 0.1); }],
+      [0.3, (r, b, ox, t) => embers(r, 63, 90, [LAVA[1], LAVA[2]], 176, ox, t, 0.2)],
+      [0.6, (r, b, ox) => ridge(r, ox, { y: 184, amp: 10, f: 0.05, seed: 65, col: c('#120606') })]),
     still('BASALT COLUMNS', 'Cliffs of six-sided basalt columns, lava light in the cracks between them.', (r) => {
       grad(r, 0, H, [[0, tn(blaze, 0.05)], [0.5, tn(blaze, 0.16)], [1, tn(blaze, 0.08)]]);
       for (let x = 0; x < W; x += 10) {

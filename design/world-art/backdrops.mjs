@@ -140,9 +140,13 @@ export function clouds(r, ox, { y, h, col, lit, seed = 7, f = 0.04, cut = 0.5 })
   }
 }
 
-export function embers(r, seed, n, cols, yMax = FLOOR, ox = 0) {
+export function embers(r, seed, n, cols, yMax = FLOOR, ox = 0, t = 0, speed = 0) {
+  const LIFE = 240;   // steps: each falling ember glows, drifts down `speed` pixels a step, and goes out
   for (let i = 0; i < n; i++) {
-    const x = ((Math.floor(hash(i, 0, seed) * 1440 - ox) % W) + W) % W, y = Math.floor(hash(i, 1, seed) * yMax);
+    const u = (hash(i, 4, seed) + t / LIFE) % 1;
+    if (speed && (u < 0.1 || u > 0.9)) continue;
+    const f = speed * u * LIFE * (0.7 + 0.6 * hash(i, 5, seed)), sway = speed ? Math.round(Math.sin(f * 0.15 + i)) : 0;
+    const x = (((Math.floor(hash(i, 0, seed) * 1440 - ox) + sway) % W) + W) % W, y = Math.floor(hash(i, 1, seed) * yMax + f) % yMax;
     const col = cols[Math.floor(hash(i, 2, seed) * cols.length)];
     r.set(x, y, col);
     if (hash(i, 3, seed) > 0.7) r.set(x + 1, y - 1, col);
