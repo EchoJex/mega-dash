@@ -3047,6 +3047,8 @@ export default class GameScene extends Phaser.Scene {
           // reliable tell once the ramp has been running for a while
           outline: e.elite ? ELITE_OUTLINE : e.def.outline,
         },
+        // ...and so does an elite whose drawing has replaced the plain shapes.
+        rim: e.elite ? ELITE_OUTLINE : null,
       });
       shadeBody(L.minions, body, sx(e.x), sy(e.y), e.w, e.h, shadeA);
       // Same flashing readout the player gets. An enemy that is burning or

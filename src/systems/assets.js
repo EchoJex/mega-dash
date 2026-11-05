@@ -256,6 +256,17 @@ export class ActorLayer {
     this.g = scene.add.graphics();
     this.root.add(this.g);
     /**
+     * RIMS: an outline round a drawn picture, in one colour — an elite minion's
+     * gold. Four copies of the actor's own picture, filled with the colour and
+     * each one pixel off to a side, behind every sprite of this layer, so the
+     * rim follows the drawing frame by frame and the drawing itself is never
+     * touched: one piece of art still covers both forms.
+     */
+    this.rims = scene.add.container(0, 0);
+    this.root.add(this.rims);
+    this.rimPool = [];
+    this.rimUsed = 0;
+    /**
      * A SECOND GRAPHICS THAT STAYS ABOVE THIS LAYER'S SPRITES.
      *
      * Sprites are added to the container after `g`, so within one layer every
@@ -277,6 +288,7 @@ export class ActorLayer {
     this.g.clear();
     this.gAboveSprites.clear();
     this.cursor.clear();
+    this.rimUsed = 0;
   }
 
   /**
@@ -304,7 +316,22 @@ export class ActorLayer {
       const key = `${actor.id}:${clip}`;
       if (this.scene.anims.exists(key) && s.anims?.getName() !== key) s.play(key, true);
     }
+    // The placeholder draws `palette.outline` itself; a drawing gets it as a rim.
+    if (actor.rim) this.rim(s, actor.id, hexNum(actor.rim));
     return s;
+  }
+
+  /** A one-pixel rim of colour `col` round sprite `s` (see the note on `rims`). */
+  rim(s, id, col) {
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      let c = this.rimPool[this.rimUsed];
+      if (!c) { c = this.scene.add.sprite(0, 0, id); this.rims.add(c); this.rimPool.push(c); }
+      this.rimUsed++;
+      if (c.texture.key !== s.texture.key) c.setTexture(s.texture.key);
+      c.setFrame(s.frame.name);
+      c.setOrigin(s.originX, s.originY).setFlipX(s.flipX).setPosition(s.x + dx, s.y + dy);
+      c.setTintFill(col).setVisible(true);
+    }
   }
 
   /**
@@ -406,6 +433,7 @@ export class ActorLayer {
     for (const [id, arr] of this.pools) {
       for (let i = this.cursor.get(id) || 0; i < arr.length; i++) arr[i].setVisible(false);
     }
+    for (let i = this.rimUsed; i < this.rimPool.length; i++) if (this.rimPool[i].visible) this.rimPool[i].setVisible(false);
   }
 }
 

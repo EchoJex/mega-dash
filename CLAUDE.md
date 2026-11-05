@@ -948,7 +948,9 @@ originals. An area spawns the copies of the boss whose door is coming; a boss su
 The tracker's `# BESTIARY` section lists every creature by slice.
 
 **Elites are the same size as their base minion** — same sprite grid, same silhouette,
-told apart by a gold outline (`ELITE_OUTLINE`). One piece of art covers both forms.
+told apart by a gold outline (`ELITE_OUTLINE`). One piece of art covers both forms: the plain
+shapes draw the outline in gold, and a drawing gets a one-pixel gold rim round it (`rim` on
+`ActorLayer.draw`: four gold copies of the same picture, a pixel out each way, behind it).
 
 Spawn cadence and HP scale off `difficultyStep()` in `systems/minions.js`, which reads
 **elapsed sim time**. Slow motion slows the ramp too — that is intended.

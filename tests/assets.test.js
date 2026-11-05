@@ -17,8 +17,14 @@ function stubScene() {
   const anims = new Set();
   const mk = (kind, key) => {
     const o = {
-      kind, key, x: 0, y: 0, visible: true, origin: null, flipX: false, tint: null, played: null,
+      kind, key, x: 0, y: 0, visible: true, origin: null, flipX: false, tint: null, fill: null, played: null,
+      texture: { key }, frame: { name: 0 },
+      get originX() { return o.origin?.[0]; },
+      get originY() { return o.origin?.[1]; },
       anims: { getName: () => o.played },
+      setTexture(k) { o.texture = { key: k }; return o; },
+      setFrame(f) { o.frame = { name: f }; return o; },
+      setTintFill(c) { o.fill = c; return o; },
       setOrigin(a, b) { o.origin = [a, b]; return o; },
       setPosition(x, y) { o.x = x; o.y = y; return o; },
       setVisible(v) { o.visible = v; return o; },
@@ -210,4 +216,32 @@ test('the overlay graphics stays above sprites added after it', () => {
     'the overlay must sit above the base graphics');
   assert.equal(order[order.length - 1], layer.gAboveSprites,
     'a sprite acquired after construction must not get above the overlay');
+});
+
+test('an elite\'s drawing wears its rim: four copies in the rim colour, a pixel out each way, behind every sprite', () => {
+  MANIFEST.beetle = { file: 'beetle.png', frameW: 16, frameH: 16, anims: { walk: [0, 1] } };
+  const scene = stubScene();
+  const layer = new ActorLayer(scene);
+  layer.begin();
+  const s = layer.draw({ ...box, id: 'beetle', clip: 'walk', facing: -1, rim: '#F5D328' });
+  s.frame = { name: 1 };   // the walk moved on: the rim has to follow the picture shown
+  layer.end();
+  layer.begin();
+  layer.draw({ ...box, id: 'beetle', clip: 'walk', facing: -1, rim: '#F5D328' });
+  layer.end();
+  const rims = layer.rimPool.filter((c) => c.visible);
+  assert.equal(rims.length, 4);
+  assert.deepEqual(rims.map((c) => `${c.x - s.x},${c.y - s.y}`).sort(), ['-1,0', '0,-1', '0,1', '1,0']);
+  for (const c of rims) {
+    assert.equal(c.fill, 0xF5D328);
+    assert.equal(c.frame.name, 1, 'a rim showing an old frame would leave the drawing');
+    assert.equal(c.flipX, true);
+    assert.deepEqual([c.originX, c.originY], s.origin);
+  }
+  assert.ok(layer.root.order.indexOf(layer.rims) < layer.root.order.indexOf(s), 'the rim must sit behind the drawing');
+  // No rim asked for, none shown.
+  layer.begin();
+  layer.draw({ ...box, id: 'beetle', clip: 'walk' });
+  layer.end();
+  assert.equal(layer.rimPool.filter((c) => c.visible).length, 0);
 });
