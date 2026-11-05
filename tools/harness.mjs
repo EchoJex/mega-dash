@@ -9,6 +9,7 @@
  *
  * ONE copy, for the same reason docs/gh.js is one copy.
  */
+import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
@@ -25,6 +26,11 @@ import { extname, join, resolve } from 'node:path';
 export async function requireChromium(hint) {
   try {
     return (await import('playwright')).chromium;
+  } catch {}
+  // A copy installed for the whole machine (NODE_PATH, as container images do)
+  // is invisible to `import`, which only looks in node_modules; require sees it.
+  try {
+    return createRequire(import.meta.url)('playwright').chromium;
   } catch {
     console.log('playwright is not installed — this tool is deliberately opt-in.\n');
     console.log('  npx playwright@latest install chromium');
@@ -48,7 +54,7 @@ export async function launchChromium(hint) {
 }
 
 const TYPES = {
-  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+  '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
   '.json': 'application/json', '.png': 'image/png',
 };
 

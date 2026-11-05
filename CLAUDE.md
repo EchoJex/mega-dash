@@ -711,6 +711,7 @@ Claude or a generator made:
 | the Granite Form — the chest and monolith statues, the boulder, the three-legged walker and the loose stone; not the megaman statue, still the placeholder for the owner to draw | sprite | Claude (Claude Design) | 2026-10-26 | `design/sprites/weapon-granite_form-{statue,boulder,rocker,stone}.sprite` |
 | Strike Man's body — a rusty robot boxer on a tank-tread base, every clip including both stagger stages (asked for 31 Oct 2026, restyled on treads 2 Nov 2026) | sprite | Claude (Claude Design) | 2026-10-31 | `design/sprites/boss-strike-body.sprite` |
 | Thorn Man's body — a leaf-horned ninja in leaf armour with stiff vine-spring arms ending in shuriken, every clip; the owner picked each part from options on a design canvas. His tile, leaf kunai and seed pod were drawn too but are not in the game yet (no sheet for them) | sprite | Claude (Claude Design) | 2026-11-04 | `design/sprites/boss-thorn-body.sprite` |
+| World pieces, variants for review and not in the game — the area backdrop, ground, platforms, spikes, boss door and exit door, in three materials and three backdrops (group 1 of the owner's ask of 5 Nov 2026) | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/variants.mjs` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
