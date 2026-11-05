@@ -1,0 +1,47 @@
+<!-- @dsCard height=288 -->
+<style>
+  html, body { margin: 0; }
+  .cover { position: relative; width: 960px; height: 288px; background: var(--ui-panel); overflow: hidden; }
+  .cover svg { position: absolute; inset: 0; }
+  .white { fill: var(--player-white); }
+  .accent { fill: var(--player-accent); }
+  .red { fill: var(--boss-blaze-primary); }
+  .yellow { fill: var(--boss-volt-primary); }
+  .blue { fill: var(--boss-tempest-primary); }
+  .check { fill: var(--player-accent); }
+  .text { position: absolute; left: 48px; bottom: 40px; max-width: 440px; font-family: var(--font-pixel); }
+  .name { margin: 0; font-size: 56px; line-height: .95; font-weight: 400; color: var(--ui-text); }
+  .tag { margin: 12px 0 0; font-size: 14px; line-height: 16px; color: var(--ui-icon); }
+</style>
+<div class="cover">
+  <svg width="960" height="288" viewBox="0 0 960 288" shape-rendering="crispEdges" aria-hidden="true">
+    <!--
+      blocks: player-white 192x144, player-accent 288x96, boss-blaze-primary 144x144,
+              boss-volt-primary 144x96, boss-tempest-primary 192x144 (sides in grid-boss 48s)
+      arrangement: a flush modular grid on the grid-boss module, right half, square corners (radius-none)
+      pattern: a checker at grid-minion pitch (16) — pixel art is squares on a grid, and the rooms dither in checkers
+      steps and radii: grid-boss 48, grid-minion 16, radius-none 0
+    -->
+    <rect class="white" x="480" y="0" width="192" height="144"/>
+    <rect class="accent" x="672" y="0" width="288" height="96"/>
+    <rect class="red" x="672" y="96" width="144" height="144"/>
+    <rect class="yellow" x="816" y="96" width="144" height="96"/>
+    <rect class="blue" x="480" y="144" width="192" height="144"/>
+    <g id="checker"></g>
+  </svg>
+  <div class="text">
+    <h1 class="name">MEGA DASH</h1>
+    <p class="tag">16-BIT VISUALS ON MEGA MAN 2 FEEL</p>
+  </div>
+</div>
+<script>
+  // The checker: 16-pixel cells over the corner below the yellow block, every other cell filled.
+  const g = document.getElementById('checker');
+  for (let y = 192; y < 288; y += 16) for (let x = 816; x < 960; x += 16) {
+    if (((x - 816) / 16 + (y - 192) / 16) % 2) continue;
+    const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r.setAttribute('class', 'check'); r.setAttribute('x', x); r.setAttribute('y', y);
+    r.setAttribute('width', 16); r.setAttribute('height', 16);
+    g.append(r);
+  }
+</script>

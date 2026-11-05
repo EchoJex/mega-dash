@@ -2,7 +2,7 @@
 
 **Read this before drawing anything for this game.** It is the game's look and its limits
 on one page, written for Claude Design and for anyone else drawing for MEGA DASH. Every
-number here was read out of the game's own code on 6 Oct 2026.
+number here was read out of the game's own code on 6 Oct 2026, and checked against it again on 5 Nov 2026.
 
 If this page and `CLAUDE.md` disagree, `CLAUDE.md` is right and this page is the bug.
 What the game SHOULD contain is `design/TRACKER.md`; the words used here are explained in
@@ -33,7 +33,7 @@ page: when this page changes, update it too (link at the bottom).
 - **Rooms are richer than sprites** and have no colour cap: the approved rooms build their
   own ramps and use ordered dithering and row-by-row gradients, as SNES backgrounds did.
 - **The examples to follow** are the player's sheet (`public/sprites/player.png`, source
-  `design/sprites/player.sprite`) and the six drawn rooms (`src/systems/arena-art/`). A
+  `design/sprites/player.sprite`) and the drawn rooms (`src/systems/arena-art/`, seven so far). A
   `.sprite` file with no `palette` lines is the older three-colour kind — not an example.
 - **It is a visual upgrade, not a feel change.** Sizes, collision and movement stay as
   they are.
@@ -60,7 +60,7 @@ page: when this page changes, update it too (link at the bottom).
 | VOLT MAN | Electric | `#F5D328` | `#5B21B6` | 30×40 |
 | THORN MAN | Grass | `#2AAB1C` | `#5C4033` | 32×43 |
 | FROST MAN | Ice | `#A0EFE7` | `#FFFFFF` | 33×44 |
-| STRIKE MAN | Fighting | `#EA6A34` | `#7C2D12` | 35×47 |
+| STRIKE MAN | Fighting | `#EA6A34` | `#7C2D12` | 38×44 |
 | VENOM MAN | Poison | `#A926D9` | `#84CC16` | 31×41 |
 | QUAKE MAN | Ground | `#A76625` | `#D9B56A` | 35×47 |
 | GALE MAN | Flying | `#5CADD5` | `#F8FAFC` | 27×36 |
@@ -94,7 +94,15 @@ the code wins if they ever differ.
   middle.
 - **Bosses stay plain rectangles at their true footprint** until the owner asks for that
   boss's sprite by name. Do not invent silhouettes. Strike Man (Fighting) was asked for on
-  31 Oct 2026: his brief is `design/weapon-art/strike.md`.
+  31 Oct 2026 (his brief is `design/weapon-art/strike.md`), Thorn Man (Grass) on 4 Nov 2026
+  (`design/weapon-art/thorn.md`).
+- **Every boss has a single eye**, the owner's rule (4 Nov 2026): "all bosses will have a common
+  theme of a single 'eye'. This theme should be interpreted with very wide creativity."
+- **The area between rooms** is plain shapes today, built from fixed sizes: doors 16×28, spike beds
+  7 tall and 12 to 24 wide, platforms 5 thick and 28 to 52 wide, pits 22 to 39 wide. A pit is only
+  the gap in the ground, so the ground must stand apart from every area backdrop by brightness alone
+  (2 : 1), and its lit 2-pixel top edge, which shows every pit edge, by 4.5 : 1, in the top ten rows
+  of the ground band where no thumb pad covers it (`tests/contrast.test.js`).
 
 ## 5. Draw order, back to front
 
@@ -166,6 +174,9 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
   name**, in the conversation. Rooms likewise: the owner asks for a room by name. Each made
   asset is labelled where it lives and listed in `CLAUDE.md` (*AI-made sprites and music*).
 - Placeholder shapes, terrain, the HUD font and sound effects need no ask.
+- **Art is picked from variants** (owner, 5 Nov 2026): "Every type of thing should have a couple
+  questions and/or a few variants to review before getting a label as 'Picked.'" The variants go on
+  a canvas; the owner answers and picks in each thing's comment thread; only a picked variant is built.
 - Music is SNES-era chiptune, matching the art.
 
 ## 9. Handing work to Claude Code
@@ -200,10 +211,13 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 | the sprite format's reader and writer, and a preview kit | `docs/sprite-fmt.js`, `docs/sprite-kit.js` |
 | past handoffs: what came in and what changed | `design/handoffs/` |
 | the drawn rooms and their drawing kit | `src/systems/arena-art/` |
+| the design system's own files (its numbers written from the code) | `design/design-system/` (`npm run design:system`) |
 | room state and furniture | `src/systems/arena.js` |
 | fights and hazards | `src/systems/bossFights.js` |
 
 **Design system:** [MEGA DASH](https://claude.ai/artifact/HhsA3oC7MAiDw647SUYzsw), in Claude Design: these rules as its
-brand book, every colour and size as a named token, the game's font as a font file, the six
-rooms and the player sheet as pictures, and live cards for the screen, the player, the boss
-footprints, readable shots and the font. When this page changes, change it there too.
+brand book, every colour and size as a named token, the game's font as a font file, six of the
+rooms and the drawn sprite sheets as pictures, and live cards for the screen, the player, the boss
+footprints, readable shots, the elite minion and the font. Its files are kept in
+`design/design-system/`: `npm run design:system` rewrites its numbers from the code, and `npm test`
+fails until it has been run. When this page changes, change those files and publish them there.

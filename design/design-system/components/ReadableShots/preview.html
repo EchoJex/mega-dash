@@ -1,0 +1,36 @@
+<!-- @dsCard group="Rules" height=250 width=880 subtitle="A boss's shots must show against his own room" -->
+<style>
+  body { margin: 0; background: var(--ui-panel); color: var(--ui-text); font-family: var(--font-pixel); }
+  .wrap { display: flex; gap: 24px; padding: 16px; flex-wrap: wrap; }
+  figure { margin: 0; display: grid; gap: 8px; }
+  canvas { width: 400px; height: 160px; image-rendering: pixelated; box-shadow: 0 0 0 1px var(--ui-frame); }
+  figcaption { font-size: 14px; line-height: 16px; }
+</style>
+<div class="wrap">
+  <figure><canvas id="before" width="200" height="80"></canvas><figcaption>BEFORE · GREY ON GREY</figcaption></figure>
+  <figure><canvas id="now" width="200" height="80"></canvas><figcaption>NOW · WARNING RED, DARK RIM</figcaption></figure>
+</div>
+<script>
+  const css = getComputedStyle(document.documentElement);
+  const tok = (n) => css.getPropertyValue('--' + n).trim();
+  // Proto Mk0's bunker from the game, cropped from a 2x screenshot back to game pixels.
+  const room = new Image();
+  room.src = '/_blob/e8d74162ddafc7e7c3539d5925747ccf';
+  // A shot is drawn as the game's 'bolt': 2r wide, r tall. His turrets fire r = 2,
+  // he fires r = 2.5 (drawn here as 5 x 3).
+  const SHOTS = [[30, 22, 4, 2], [70, 40, 5, 3], [112, 18, 4, 2], [150, 52, 5, 3], [178, 30, 4, 2], [44, 62, 4, 2], [120, 66, 5, 3]];
+  function paint(id, fill, rim) {
+    const g = document.getElementById(id).getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.drawImage(room, 560, 60, 400, 160, 0, 0, 200, 80);
+    for (const [x, y, w, h] of SHOTS) {
+      if (rim) { g.fillStyle = rim; g.fillRect(x - 1, y - 1, w + 2, h + 2); }
+      g.fillStyle = fill(w); g.fillRect(x, y, w, h);
+    }
+  }
+  room.onload = () => {
+    // Before: the turrets' light grey and his own primary.
+    paint('before', (w) => (w === 4 ? '#9aa4b4' : tok('boss-proto-primary')), null);
+    paint('now', () => tok('warning-red'), tok('outline'));
+  };
+</script>

@@ -1,0 +1,47 @@
+<!-- @dsCard group="Foundations" height=390 width=880 subtitle="224 tall, 320 to 480 wide, floor at 184" -->
+<style>
+  body { margin: 0; background: var(--ui-panel); color: var(--ui-text); font-family: var(--font-pixel); }
+  .wrap { display: flex; gap: 32px; align-items: flex-start; padding: 16px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  .frame { position: relative; height: 224px; box-shadow: 0 0 0 1px var(--ui-frame); }
+  .frame img { display: block; width: 480px; height: 224px; image-rendering: pixelated; }
+  .frame svg { position: absolute; inset: 0; }
+  .floor { stroke: var(--ui-cyan); }
+  .pads { stroke: var(--ui-gold); }
+  .hud { stroke: var(--ui-text); }
+  .band { fill: none; stroke: var(--ui-gold); stroke-opacity: .7; }
+  .ground { fill: var(--ui-module); }
+  figcaption { font-size: 14px; line-height: 16px; }
+  .key { display: grid; gap: 8px; font-size: 14px; line-height: 16px; }
+  .key span { display: inline-block; width: 24px; height: 2px; margin-right: 8px; vertical-align: middle; }
+</style>
+<div class="wrap">
+  <figure>
+    <div class="frame" style="width:480px">
+      <img src="/_blob/e8d74162ddafc7e7c3539d5925747ccf" alt="Proto Mk0's bunker in the game, 480 wide">
+      <svg width="480" height="224" viewBox="0 0 480 224" shape-rendering="crispEdges">
+        <line class="hud" x1="0" x2="480" y1="33.5" y2="33.5" stroke-dasharray="4 3"/>
+        <line class="floor" x1="0" x2="480" y1="184.5" y2="184.5"/>
+        <line class="pads" x1="0" x2="480" y1="199.5" y2="199.5" stroke-dasharray="4 3"/>
+      </svg>
+    </div>
+    <figcaption>480 WIDE</figcaption>
+  </figure>
+  <figure>
+    <div class="frame" style="width:320px">
+      <svg width="320" height="224" viewBox="0 0 320 224" shape-rendering="crispEdges">
+        <rect class="ground" x="0" y="184" width="320" height="40"/>
+        <rect class="band" x="0.5" y="199.5" width="35" height="24"/><rect class="band" x="36.5" y="199.5" width="35" height="24"/><rect class="band" x="72.5" y="199.5" width="35" height="24"/><rect class="band" x="108.5" y="199.5" width="35" height="24"/><rect class="band" x="212.5" y="199.5" width="53" height="24"/><rect class="band" x="266.5" y="199.5" width="53" height="24"/>
+        <line class="hud" x1="0" x2="320" y1="33.5" y2="33.5" stroke-dasharray="4 3"/>
+        <line class="floor" x1="0" x2="320" y1="184.5" y2="184.5"/>
+        <line class="pads" x1="0" x2="320" y1="199.5" y2="199.5" stroke-dasharray="4 3"/>
+      </svg>
+    </div>
+    <figcaption>320 WIDE</figcaption>
+    <div class="key">
+      <div><span style="background:var(--ui-text)"></span>HUD BAND ENDS · 33</div>
+      <div><span style="background:var(--ui-cyan)"></span>FLOOR · 184</div>
+      <div><span style="background:var(--ui-gold)"></span>THUMB PADS · 199</div>
+    </div>
+  </figure>
+</div>

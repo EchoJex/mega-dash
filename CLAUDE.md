@@ -97,6 +97,7 @@ npm run sprites:ship    # GIVE THE WORD: verify every [draft] frame reaches the 
 npm run art:placeholders -- <weapon>   # a weapon's placeholder sheets, with its real frame data
 npm run art:brief       # regenerate the numbers + Claude Design prompt in design/weapon-art/*.md
 npm run design:import -- <zip>         # a Claude Design handoff: checked, built, tested — or put back
+npm run design:system  # rewrite design/design-system/'s numbers from the code, then publish it to Claude
 npm run music    # after handing off a track: rewrite design/music/pack.json
 npm run apk      # local APK build (needs Android SDK; CI does this for free)
 ```
@@ -614,6 +615,12 @@ and the MEGA DASH design system in Claude Design is built from it. The 16-bit gl
 owner approves are the new baseline. Change a rule here and change the brief in the same
 commit; the brief says which design system to update.
 
+**The design system's own files live in `design/design-system/`** (owner, 5 Nov 2026): its words
+by hand, its numbers (every token, the boss footprints card, the player's clips card) written from
+the code by `npm run design:system`, which `tests/design-system.test.js` holds to the code. After
+changing the folder, publish it to the design system in Claude, each file at `project/<its path>`;
+its index and its pictures (the room screenshots, the sprite sheets) live only in Claude.
+
 ### Music direction (SNES-era chiptune)
 
 **The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art.
@@ -648,6 +655,21 @@ mobile app; how a prompt is written is the skill's business, not this file's. **
 of the repo unless the owner asks.** To change it: copy it somewhere writable, edit it,
 package it with the skill-creator skill's `scripts/package_skill.py`, and hand the owner the
 `.skill` file to upload in place of the old one.
+
+### Art is picked from variants
+
+**By the owner's call (5 Nov 2026), in their words: "Every type of thing should have a couple
+questions and/or a few variants to review before getting a label as 'Picked.'"** The variants go on a
+Claude Design canvas (a Design artifact on the MEGA DASH design system), one canvas per group of
+things; the owner answers and picks in each thing's comment thread; Claude then labels it PICKED on
+the canvas, and only a picked variant is drawn in full and brought into the game.
+
+On 5 Nov 2026 the owner asked, by name, for every non-boss, non-weapon picture still drawn as plain
+shapes to go through this, in three groups: **world pieces** (the area backdrop, ground, platforms,
+spikes, the boss door and the exit door), **the air minion and the pickups** (DRIFTER, the E-Tank,
+the EXP orb), and **the HUD** (energy pips with the EXP outline, the sword and shield marks, the
+wheel ring, the level-up cards, the pause and RE-QUIP buttons; the thumb pads stay as the owner set
+them). Burn smoke was offered as a fourth group and not picked.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
