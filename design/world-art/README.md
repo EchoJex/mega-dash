@@ -5,6 +5,19 @@ should have a couple questions and/or a few variants to review before getting a 
 'Picked.'" This is group 1 of 3: the area backdrop, ground, platforms, spikes, the boss door and
 the exit door. Groups 2 (DRIFTER, the E-Tank, the EXP orb) and 3 (the HUD) follow these picks.
 
+**NEW PLAN, the owner, 5 Nov 2026: world pieces for each slice.** In their words: "new plan. draw
+up all 17 slices world pieces just like you did here(floor, platform, exit door, spikes). i really
+like the castle one for dragon, and the bedrock one for Ground , and the Steel plates for Steel (i
+want a couple variants for the steel door though)". This replaces their earlier answer on the Ground
+board (one default look for now). The first-round boards below stay as a record.
+
+| slice | world pieces |
+|---|---|
+| Dragon | **PICKED: C, castle bricks** |
+| Ground | **PICKED: B, bedrock** |
+| Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
+| Typeless, Fire, Water, Electric, Grass, Ice, Fighting, Poison, Flying, Psychic, Bug, Rock, Ghost, Dark | three variants each, still to draw, in batches |
+
 **The review canvas:** [MEGA DASH World Pieces](https://claude.ai/artifact/FKEuvSabVmDeimP3387SVG).
 One board per thing; each shows the game today and three variants, with two questions. The owner
 picks in each board's comment thread; Claude then labels the board PICKED, here and on the canvas.

@@ -671,6 +671,12 @@ the EXP orb), and **the HUD** (energy pips with the EXP outline, the sword and s
 wheel ring, the level-up cards, the pause and RE-QUIP buttons; the thumb pads stay as the owner set
 them). Burn smoke was offered as a fourth group and not picked.
 
+**Later the same day the owner changed the world pieces to one set per slice**, in their words:
+"new plan. draw up all 17 slices world pieces just like you did here(floor, platform, exit door,
+spikes). i really like the castle one for dragon, and the bedrock one for Ground , and the Steel
+plates for Steel (i want a couple variants for the steel door though)". `design/world-art/README.md`
+keeps which slice has picked what.
+
 ### AI-made sprites and music: only when the owner asks for that one
 
 **The owner decides, one asset at a time, whether Claude may make it.** **Claude may make a
