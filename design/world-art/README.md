@@ -12,7 +12,7 @@ picks in each board's comment thread; Claude then labels the board PICKED, here 
 | thing | variants | status |
 |---|---|---|
 | backdrop | 1 far skyline · 2 hills under a deep sky · 3 stars and a far moon | not picked yet |
-| ground | A steel plates · B bedrock · C castle bricks | not picked yet |
+| ground | A steel plates · B bedrock · C castle bricks | **PICKED: A, steel plates** (owner, 5 Nov 2026); its two questions still open |
 | platforms | A steel girder · B rock slab · C brick shelf | not picked yet |
 | spikes | A steel cones · B stone shards · C iron spears | not picked yet |
 | boss door | A steel shutter · B stone arch · C castle gate | not picked yet |
