@@ -31,6 +31,25 @@ door: "both". Into the game: "pushed in batches of ~6 slices."
 
 Each slice: six backdrops, and three variants of the floor, platform, spikes, boss door and exit door.
 
+**Batch 1 is on the canvas** (its own page, "Batch 1"), one board per slice: six backdrops, two of
+them scrolling in layers and shown moving, and three materials, each a floor, platform, spike bed,
+boss door and exit door. Every material clears the game's contrast floors against all six of its
+slice's backdrops.
+
+| slice | backdrops | materials | status |
+|---|---|---|---|
+| Typeless | 1 test range · 2 hangar (moving) · 3 blueprint · 4 searchlights · 5 radar ridges (moving) · 6 control room | A bunker concrete · B diamond plate · C steel grating | not picked yet |
+| Fire | 1 volcano range (moving) · 2 lava sea · 3 forge · 4 smokestacks · 5 ember storm (moving) · 6 basalt columns | A basalt and lava · B fire brick · C grate over coals | not picked yet |
+| Water | 1 stormy sea (moving) · 2 underwater · 3 harbour · 4 waterfall cliffs · 5 rainy city (moving) · 6 lighthouse | A wet slate · B ship deck · C aqueduct tiles | not picked yet |
+| Electric | 1 pylon lines (moving) · 2 thunderhead · 3 circuit sky · 4 tesla lab · 5 neon city (moving) · 6 static sky | A insulator tiles · B hazard grating · C circuit board | not picked yet |
+| Grass | 1 deep forest (moving) · 2 bamboo grove · 3 terraced hills · 4 firefly meadow · 5 overgrown ruins (moving) · 6 canopy | A meadow turf · B bamboo · C mossy stone | not picked yet |
+| Fighting | 1 arena crowd · 2 dojo · 3 mountain temple (moving) · 4 boxing gym · 5 dusk rooftops (moving) · 6 torii and dummies | A dojo floor · B ring canvas · C street concrete | not picked yet |
+
+The per-slice painters: `materials.mjs` (eight kinds of floor, each with its platform, spikes and
+doors), `backdrops.mjs` (skies, ridges, skylines, forests, beams, rain), `batch1.mjs` (the six slices),
+`scenes.mjs` (how each picture is laid out). `node design/world-art/render.mjs <folder> --batch 1`
+paints batch 1's pictures and prints each material's contrast against its slice's backdrops.
+
 **The review canvas:** [MEGA DASH World Pieces](https://claude.ai/artifact/FKEuvSabVmDeimP3387SVG).
 One board per thing; each shows the game today and three variants, with two questions. The owner
 picks in each board's comment thread; Claude then labels the board PICKED, here and on the canvas.

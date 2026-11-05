@@ -405,16 +405,20 @@ export function scene({ bg = 'TODAY', ground = 'TODAY', platform = 'TODAY', spik
     STYLES[door].door(r, LAYOUT.door, 'boss');
     if (unarmed) STYLES[door].door(r, LAYOUT.unarmed, 'unarmed');
   }
-  // The pads: see-through, a thin gold border at 70% (UIScene), laid out as on a 320 screen's corners.
+  overlay(r);
+  const cv = r.flush();
+  if (player) cv.getContext('2d').drawImage(player, 0, 0, 24, 24, 52, FLOOR - 24, 24, 24);
+  return cv;
+}
+
+/** The see-through thumb pads (a thin gold border at 70%, as UIScene draws them) and a dotted line where a 320 screen ends. */
+export function overlay(r) {
   const pads = [[0, 35], [36, 35], [72, 35], [108, 35], [W - 108, 53], [W - 54, 53]];
   for (const [x, w] of pads) {
     rect(r, x, PADS, w, 1, c('#f5d328'), 178); rect(r, x, H - 1, w, 1, c('#f5d328'), 178);
     rect(r, x, PADS, 1, H - PADS, c('#f5d328'), 178); rect(r, x + w - 1, PADS, 1, H - PADS, c('#f5d328'), 178);
   }
   for (let y = 0; y < H; y += 2) r.set(320, y, [255, 255, 255], 90);
-  const cv = r.flush();
-  if (player) cv.getContext('2d').drawImage(player, 0, 0, 24, 24, 52, FLOOR - 24, 24, 24);
-  return cv;
 }
 
 /** The part of a scene a strip shows for each piece: x, y of a 28 x 40 window. */
@@ -450,3 +454,6 @@ export function contrast(style) {
     player: cr([255, 255, 255], c(ground)),
   };
 }
+
+// Shared with the per-slice kits (materials.mjs, backdrops.mjs).
+export { c, rect, blit, inTooth, paintDoor, tone, A_, B_, C_ };
