@@ -18,6 +18,19 @@ board (one default look for now). The first-round boards below stay as a record.
 | Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
 | Typeless, Fire, Water, Electric, Grass, Ice, Fighting, Poison, Flying, Psychic, Bug, Rock, Ghost, Dark | three variants each, still to draw, in batches |
 
+The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
+everything. 6 wildly different backdrop variants per slice since the player has to look at it
+constantly. on a few backdrops, consider a layered parallax effect." Steel's door variants, for which
+door: "both". Into the game: "pushed in batches of ~6 slices."
+
+| batch | slices |
+|---|---|
+| 1 | Typeless, Fire, Water, Electric, Grass, Fighting (the six in the playable game) |
+| 2 | Ice, Poison, Ground, Flying, Psychic, Bug |
+| 3 | Rock, Ghost, Dragon, Dark, Steel (with Steel's door variants, both doors) |
+
+Each slice: six backdrops, and three variants of the floor, platform, spikes, boss door and exit door.
+
 **The review canvas:** [MEGA DASH World Pieces](https://claude.ai/artifact/FKEuvSabVmDeimP3387SVG).
 One board per thing; each shows the game today and three variants, with two questions. The owner
 picks in each board's comment thread; Claude then labels the board PICKED, here and on the canvas.

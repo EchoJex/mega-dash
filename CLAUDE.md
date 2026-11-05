@@ -676,6 +676,10 @@ them). Burn smoke was offered as a fourth group and not picked.
 spikes). i really like the castle one for dragon, and the bedrock one for Ground , and the Steel
 plates for Steel (i want a couple variants for the steel door though)". `design/world-art/README.md`
 keeps which slice has picked what.
+Their answers to the follow-up: each slice also gets its own boss door and backdrop, "6 wildly
+different backdrop variants per slice since the player has to look at it constantly. on a few
+backdrops, consider a layered parallax effect"; Steel gets door variants for "both" doors; and the
+work goes into the game "pushed in batches of ~6 slices" (the batches are in the README).
 
 ### AI-made sprites and music: only when the owner asks for that one
 
