@@ -103,8 +103,10 @@ try {
         const { pickedMaterial } = await import(`${base}/src/systems/area-art/slices.js`);
         const of = (k) => slice.materials.find(([key]) => key === k)[3];
         const bd = slice.backdrops[slice.pick.backdrop - 1];
-        // What the game draws, mixes included; a slice not in the game yet takes its picked material as it is.
-        const M = pickedMaterial(slice.id) || (slice.pick.ground ? { ...of(slice.pick.material), ground: of(slice.pick.ground).ground } : of(slice.pick.material));
+        // What the game draws, mixes included; a slice not in the game yet is mixed here the same way:
+        // its ground (`ground`) or its doors (`doors`) taken from a second material.
+        const p = slice.pick, mixed = { ...of(p.material), ...(p.ground && { ground: of(p.ground).ground, check: of(p.ground).check }), ...(p.doors && { door: of(p.doors).door, doorPicture: of(p.doors).doorPicture }) };
+        const M = pickedMaterial(slice.id) || mixed;
         P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
         const frames = [];
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));

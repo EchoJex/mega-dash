@@ -689,7 +689,8 @@ settles each one's direction.
 **Batch 3 (Rock, Ghost, Dragon, Dark, Steel) is on the canvas for picking**, 6 Nov 2026; Dragon keeps its
 first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
 **Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
-neither is in the game yet.
+neither is in the game yet. Rock (material B with A's arched doors) and Dragon each have six variants
+of a backdrop they liked to pick from, and Ghost six redrawn backdrops.
 
 ### AI-made sprites and music: only when the owner asks for that one
 

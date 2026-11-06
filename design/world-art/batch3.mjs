@@ -55,16 +55,23 @@ function flame(r, x, base, h, cols) {
 // ── ROCK: Granite Man's caves ────────────────────────────────────────
 //
 // The owner, 6 Nov 2026, on the Rock board: "B, but redo Rock backdrops using caves and crystals as
-// the focus, and make the spikes glisteny violet crystals". So material B is picked, its spikes are
-// violet crystals that glisten (SPIKES.crystals in materials.js), and all six backdrops are new:
-// caves, with crystals at the heart of each.
+// the focus, and make the spikes glisteny violet crystals". So material B is picked and its spikes are
+// violet crystals that glisten (SPIKES.crystals in materials.js). Then, the same day: "i like 5b but
+// with the arched doorways from a. improve backdrop 5 with 6 new variants inspired by the aesthetics
+// found in Waterfall level in Undertale, other than the actual waterfalls as that would be a water
+// type feaature". So the doors are material A's stone arches, and the six backdrops are now variants
+// of the glowworm grotto: a dark cave lit by living light, each with one more thing that glows. There
+// are no waterfalls and no water at all, since water belongs to the Water slice. They take the mood
+// (blue dark, glowing plants, a roof that glitters like stars) and copy nothing from that game.
 
 const granite = B('granite');
 const R = (k) => tn(granite, k), RS = (k) => tn(granite, k, 'secondary');
 const AMETHYST = [c('#2e1458'), c('#6a34b8'), c('#a878f0'), c('#f4ecff')];   // dark, mid, lit, glint
 const AMETHYST_FAR = AMETHYST.map((col) => mix(col, R(0.08), 0.5));
-const MILKY = [c('#5a4a7a'), c('#9a8abc'), c('#dcd2f0'), c('#ffffff')];
 const VIOLET_GLOW = c('#8a4ae0');
+const NIGHT = [c('#070a1c'), c('#0b1230'), c('#111b42'), c('#1a2856'), c('#26386a')];   // the blue dark of a glowing cave, deepest first
+const LUMEN = [c('#1c5e7e'), c('#38b0d8'), c('#90e8ff'), c('#effdff')];   // living light: dim, body, bright, heart
+const CYAN_GLOW = c('#2a9ac8');
 /** One crystal: a prism from (x0, y0) pointing along `ang` (0 is straight up), `len` long and `w` wide, lit down its left face. */
 function crystal(r, x0, y0, len, w, ang, C) {
   const ax = Math.sin(ang), ay = -Math.cos(ang), nx = Math.cos(ang), ny = Math.sin(ang);
@@ -115,39 +122,169 @@ const glints = (seed, n, spot, period = 960) => ({
     return out;
   },
 });
-/** Glowworms on the grotto's ceiling, each twinkling on its own beat. */
-const GLOWWORMS = {
-  pieces: () => pics([['d', 1, 1, (p) => p.set(0, 0, c('#2a7a78'))], ['b', 1, 1, (p) => p.set(0, 0, c('#a8fff0'))], ['s', 3, 3, (p) => { p.set(1, 0, c('#5ae0d0')); p.set(0, 1, c('#5ae0d0')); p.set(1, 1, WHITE); p.set(2, 1, c('#5ae0d0')); p.set(1, 2, c('#5ae0d0')); }]]),
+/** Where each glowworm hangs in a layer `period` wide: [world x, y, thread length]. */
+const wormSpots = (seed, n, period, y0, dy) => Array.from({ length: n }, (_, i) => [Math.floor(hash(i, 0, seed) * period), y0 + Math.floor(hash(i, 1, seed) * dy), 6 + Math.floor(hash(i, 3, seed) * 24)]);
+/** Lights twinkling, each on its own beat of 120 steps: dim, lit, and now and then a flare. `cols` are dim, lit and the flare's arms. */
+function glowworms(spots, period, cols, seed = 380) {
+  return {
+    pieces: () => pics([['d', 1, 1, (p) => p.set(0, 0, cols[0])], ['b', 1, 1, (p) => p.set(0, 0, cols[1])], ['s', 3, 3, (p) => { p.set(1, 0, cols[2]); p.set(0, 1, cols[2]); p.set(1, 1, WHITE); p.set(2, 1, cols[2]); p.set(1, 2, cols[2]); }]]),
+    at(ox, t) {
+      const out = [];
+      spots.forEach(([wx, y], i) => {
+        const x = mod(wx - ox, period) - 20;
+        if (x < -3 || x > W + 3) return;
+        const ph = mod(t + Math.floor(hash(i, 2, seed) * 120), 120);
+        out.push(ph < 8 ? ['s', x - 1, y - 1] : ph < 70 ? ['b', x, y] : ['d', x, y]);
+      });
+      return out;
+    },
+  };
+}
+/** The silk thread hanging under each glowworm, every other pixel. */
+function threads(r, ox, spots, period, col, a = 150) {
+  for (const [wx, y, len] of spots) { const x = mod(wx - ox, period) - 20; if (x < 0 || x >= W) continue; for (let j = 1; j < len; j += 2) r.set(x, y + j, col, a); }
+}
+/** The grotto's roof: lumpy rock 8 to 26 pixels deep with a lit lip, stalactites hanging from it. */
+function ceiling(r, ox, cols, seed, period) {
+  for (let x = 0; x < W; x++) { const bottom = 8 + Math.floor(seamless((w) => noise1(w * 0.03, seed), x + ox, period) * 18); for (let y = 0; y < bottom; y++) r.set(x, y, y === bottom - 1 ? cols[1] : cols[0]); }
+  dripstones(r, ox, { every: 22, maxLen: 30, cols, seed: seed + 1, period });
+}
+/** Violet crystals along the floor of a 960 world, one cluster in each slot `every` wide, in its own glow; and the glints that twinkle on them. */
+function crystalRow(seed, every, size, y = 182) {
+  const off = (k) => 20 + Math.floor(hash(k, 0, seed) * (every - 40));   // where in its slot the cluster stands
+  return {
+    paint(r, ox) {
+      for (let wx = Math.floor(ox / every) * every - every; wx < ox + W + every; wx += every) {
+        const k = mod(wx, 960), x = wx - ox + off(k), sz = size + Math.floor(hash(k, 1, seed) * 16);
+        glow(r, x, y - 22, 46, VIOLET_GLOW, 0.4);
+        cluster(r, x, y, sz, k + seed, AMETHYST);
+      }
+    },
+    glints: glints(seed + 1, (960 / every) * 4, (i) => { const k = (i % (960 / every)) * every; return [k + off(k) + 20 + Math.floor((hash(i, 1, seed) - 0.5) * size * 0.7), y - 12 - Math.floor(hash(i, 2, seed) * size * 0.8)]; }),
+  };
+}
+/** Specks of light rising from the floor and fading. */
+const motes = (seed, n, cols) => drift(seed, n, cols, 172, -0.14);
+
+/** Tall grass swaying in a slow wave: a blade every 2 pixels, each one of three pictures (leaning left, upright, leaning right), a few with a glowing seed head. */
+function grass(seed, period, base) {
+  const HTS = [18, 27, 36], COLS = [NIGHT[2], NIGHT[3], c('#2e5a84')], blades = [];
+  for (let wx = 0; wx < period; wx += 2) blades.push([wx + Math.floor(hash(wx, 0, seed) * 3), Math.floor(hash(wx, 1, seed) * 3), hash(wx, 2, seed) > 0.88]);
+  const name = (h, pose, head) => `g${h}${pose}${head ? 'h' : ''}`;
+  return {
+    pieces: () => pics(HTS.flatMap((ht, h) => [0, 1, 2].flatMap((pose) => [false, true].map((head) => [name(h, pose, head), 11, ht + 3, (p) => {
+      for (let j = 0; j < ht; j++) {
+        const f = j / ht, x = Math.round(5 + (pose - 1) * 4 * f * f), y = ht + 2 - j;
+        p.set(x, y, f > 0.7 ? COLS[2] : f > 0.35 ? COLS[1] : COLS[0]);
+        if (f < 0.4) p.set(x + 1, y, COLS[0]);   // thicker at the root
+      }
+      if (head) { const x = 5 + (pose - 1) * 4; p.set(x, 0, LUMEN[2]); p.set(x - 1, 1, LUMEN[1]); p.set(x, 1, LUMEN[3]); p.set(x + 1, 1, LUMEN[1]); p.set(x, 2, LUMEN[1]); }
+    }])))),
+    at(ox, t) {
+      const out = [], ph = (TAU * mod(t, 240)) / 240;
+      for (const [wx, h, head] of blades) {
+        const x = mod(wx - ox, period) - 20;
+        if (x < -11 || x > W) continue;
+        const sw = Math.sin(ph - wx * 0.035);
+        out.push([name(h, sw < -0.45 ? 0 : sw > 0.45 ? 2 : 1, head), x - 5, base - HTS[h] - 2]);
+      }
+      return out;
+    },
+  };
+}
+/** Where each glowing bell flower stands in a 960 world: [world x, stem height, which way its stem arches (-1 or 1)]. */
+const BLOOMS = [];
+for (let wx = 0; wx < 960; wx += 13) if (hash(wx, 9, 430) > 0.15) BLOOMS.push([wx + Math.floor(hash(wx, 0, 430) * 6), 10 + Math.floor(hash(wx, 1, 430) * 22), hash(wx, 2, 430) > 0.5 ? 1 : -1]);
+/** Where a flower's bell hangs: the top left of its picture, from the stem's foot at x. */
+const bellAt = (x, h, lean) => [x + lean * 5 - 3, 184 - h + 2];
+/** A flower's stem, rising from the floor and arching over at the top so its bell hangs down. */
+function stem(r, x, h, lean, col) {
+  for (let j = 0; j < h; j++) { const f = j / h; r.set(x + Math.round(lean * 2 * f * f), 183 - j, col); }
+  const tx = x + lean * 2, ty = 184 - h;
+  for (const [dx, dy] of [[1, -1], [2, -1], [3, 0], [3, 1]]) r.set(tx + lean * dx, ty + dy, col);
+}
+/** The flowers' bells, their light rippling across the meadow in slow waves: dim, waking, full. */
+const BLOOM_CUPS = {
+  pieces: () => pics([0, 1, 2].map((lv) => [`c${lv}`, 7, 6, (p) => {
+    const dim = [NIGHT[4], LUMEN[0], LUMEN[1]][lv], body = [LUMEN[0], LUMEN[1], LUMEN[2]][lv], heart = [LUMEN[1], LUMEN[2], LUMEN[3]][lv];
+    ['..ddd..', '.dbbbd.', '.bbhbb.', 'bbhhhbb', 'b.b.b.b', '...h...'].forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') p.set(x, y, ch === 'd' ? dim : ch === 'b' ? body : heart); }));
+  }])),
   at(ox, t) {
     const out = [];
-    for (let i = 0; i < 180; i++) {
-      const x = mod(Math.floor(hash(i, 0, 380) * 960) - ox, 960) - 20, y = 6 + Math.floor(hash(i, 1, 380) * 70);
-      if (x < -3 || x > W + 3) continue;
-      const ph = mod(t + Math.floor(hash(i, 2, 380) * 120), 120);
-      out.push(ph < 8 ? ['s', x - 1, y - 1] : ph < 70 ? ['b', x, y] : ['d', x, y]);
+    for (const [wx, h, lean] of BLOOMS) {
+      const x = mod(wx - ox, 960) - 20;
+      if (x < -12 || x > W + 6) continue;
+      const k = mod(t + Math.floor(wx / 4), 240), [bx, by] = bellAt(x, h, lean);
+      out.push([`c${k < 40 ? 2 : k < 90 ? 1 : 0}`, bx, by]);
     }
     return out;
   },
 };
-/** The scene `paint` draws, mirrored below `line` as a still lake reflects it: darker, rippling. */
-function reflected(r, paint, line, depth, tint) {
-  const scene = new Raster(W, H);
-  paint(scene);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; if (scene.d[i + 3] && y < line) r.set(x, y, [scene.d[i], scene.d[i + 1], scene.d[i + 2]]); }
-  for (let y = line; y < line + depth; y++) {
-    const sy = 2 * line - y - 1, off = Math.round(Math.sin(y * 0.9) * (1 + (y - line) / 14));
-    for (let x = 0; x < W; x++) {
-      const sx = Math.min(W - 1, Math.max(0, x + off)), i = (sy * W + sx) * 4;
-      const col = scene.d[i + 3] ? mix([scene.d[i], scene.d[i + 1], scene.d[i + 2]], tint, 0.45 + (y - line) / (depth * 2.5)) : tint;
-      r.set(x, y, (y - line) % 5 === 2 && hash(x >> 3, y, 390) > 0.6 ? lit(col, 0.12) : col);
-    }
+/** A giant mushroom: a pale stem `h` tall from `base`, a domed cap `w` wide in colours C (dark, body, lit, spot), its gills glowing. */
+function mushroom(r, x, base, h, w, C, seed) {
+  const STEM = [c('#2a3460'), c('#4a5a90'), c('#7a8ac0')], top = base - h, capH = Math.round(w * 0.38);
+  glow(r, x, top - 4, Math.round(w * 0.9), C[1], 0.3);
+  for (let j = 0; j < h; j++) {
+    const cx = x + Math.round(Math.sin((j / h) * 2 + seed) * 2), half = Math.max(2, Math.round(w * 0.07 + (j < 6 ? (6 - j) * 0.5 : 0)));
+    for (let i = -half; i <= half; i++) r.set(cx + i, base - j, i < -half / 3 ? STEM[2] : i > half / 3 ? STEM[0] : STEM[1]);
+  }
+  for (let i = -w / 2 + 2; i < w / 2 - 2; i++) for (let g = 0; g < 3; g++) r.set(Math.round(x + i), top + g, g === 0 ? C[2] : mod(i, 3) === 0 ? C[1] : C[0]);   // the gills, lit from within
+  for (let j = 0; j < capH; j++) {
+    const half = Math.round((w / 2) * Math.sqrt(1 - (j / capH) ** 2));
+    for (let i = -half; i <= half; i++) { const f = (i + half) / Math.max(1, 2 * half); r.set(x + i, top - 1 - j, j === 0 ? C[1] : f < 0.3 && j > capH * 0.3 ? C[2] : f > 0.8 ? C[0] : C[1]); }
+  }
+  for (let k = 0; k < Math.round(w / 6); k++) {   // its spots
+    const a = (hash(k, 0, seed) - 0.5) * 2.6, rr = 0.35 + 0.5 * hash(k, 1, seed), sx = Math.round(x + Math.sin(a) * (w / 2) * rr), sy = Math.round(top - 1 - Math.cos(a) * capH * rr);
+    r.set(sx, sy, C[3]); r.set(sx + 1, sy, C[3]); if (hash(k, 2, seed) > 0.5) { r.set(sx, sy - 1, C[3]); r.set(sx + 1, sy - 1, WHITE); }
   }
 }
+const CAP_CYAN = [c('#1a5a7a'), c('#2e98c0'), c('#7ae0f8'), c('#e8fdff')], CAP_VIOLET = [c('#3a1a6a'), c('#6a34b8'), c('#a878f0'), c('#f4ecff')];
+/** Lanterns on the boardwalk's posts, one every 160 pixels of a 960 world: a violet crystal in an iron cage that flickers. */
+const LANTERNS = {
+  pieces: () => pics([0, 1].map((lit) => [`l${lit}`, 7, 10, (p) => {
+    for (let j = 0; j < 10; j++) { p.set(0, j, c('#1a1420')); p.set(6, j, c('#1a1420')); }
+    for (let i = 0; i < 7; i++) { p.set(i, 0, c('#2a2030')); p.set(i, 9, c('#2a2030')); }
+    for (let j = 2; j < 8; j++) for (let i = 2; i < 5; i++) p.set(i, j, lit ? (i === 2 ? AMETHYST[3] : AMETHYST[2]) : (i === 2 ? AMETHYST[2] : AMETHYST[1]));
+    p.set(3, 1, lit ? WHITE : AMETHYST[2]);
+  }])),
+  at(ox, t) {
+    const out = [];
+    for (let k = 0; k < 6; k++) {
+      const x = mod(k * 160 + 70 - ox, 960) - 20;
+      if (x < -8 || x > W) continue;
+      out.push([hash(Math.floor(mod(t, 240) / 6), k, 440) > 0.22 ? 'l1' : 'l0', x - 3, 113]);
+    }
+    return out;
+  },
+};
+/** Mist drifting along under the boardwalk, a pixel a step, its banks every 240 pixels so it comes back exactly. */
+const MIST = {
+  pieces: () => pics([0, 1].map((v) => [`m${v}`, 64, 12, (p) => {
+    for (let j = 0; j < 12; j++) for (let i = 0; i < 64; i++) {
+      const d = Math.hypot((i - 32) / 32, (j - 6) / 6);
+      if (d < 1 && BAYER4[j % 4][i % 4] < (1 - d) * (v ? 9 : 6)) p.set(i, j, v ? c('#3a4a7c') : c('#2a3866'));
+    }
+  }])),
+  at(ox, t) {
+    const out = [];
+    for (const [base, y, v] of [[0, 150, 0], [90, 162, 1], [170, 146, 0]]) for (let n = 0; n < 3; n++) out.push([`m${v}`, mod(base + mod(t, 240) - Math.floor(ox), 240) + n * 240 - 64, y]);
+    return out;
+  },
+};
+
+const WORMS = [wormSpots(380, 200, 960, 6, 74), wormSpots(420, 170, 960, 6, 64), wormSpots(430, 170, 960, 6, 64), wormSpots(440, 150, 960, 6, 56), wormSpots(450, 160, 960, 6, 60)];
+const ROWS = [crystalRow(403, 160, 30), crystalRow(415, 240, 26), crystalRow(423, 320, 24), crystalRow(433, 480, 22), crystalRow(457, 480, 20)];
+const VAULT = Array.from({ length: 420 }, (_, i) => [Math.floor(hash(i, 0, 410) * 960), 2 + Math.floor(hash(i, 1, 410) ** 1.3 * 126)]);
+const BLUE = [NIGHT[0], NIGHT[1], NIGHT[2]], ROOF = [NIGHT[1], NIGHT[3], NIGHT[2]], WORM_COLS = [LUMEN[0], LUMEN[2], LUMEN[1]];
+const WARM = [R(0.05), R(0.08), R(0.11)].map((col) => mix(col, NIGHT[2], 0.25));
+const WOOD = [c('#24180f'), c('#3e2a1a'), c('#5a3e28'), c('#76583a')];
+/** The grotto's roof with its glowworms and their threads, in a layer 960 wide. */
+const roofLayer = (n, seed, extra = () => {}, cols = ROOF) => ({ rate: 0.15, period: 960, fixed: (r, ox) => { extra(r, ox); ceiling(r, ox, cols, seed, 960); threads(r, ox, WORMS[n], 960, LUMEN[0]); }, parts: [glowworms(WORMS[n], 960, WORM_COLS, seed + 3)] });
 const ROCK = {
   id: 'granite', type: 'Rock',
-  // The owner, 6 Nov 2026: "B, but redo Rock backdrops using caves and crystals as the focus, and
-  // make the spikes glisteny violet crystals". The backdrop is still to pick, from the six below.
-  pick: { material: 'B' },
+  // The owner, 6 Nov 2026: material B, with material A's arched doors; the backdrop is still to pick,
+  // from the six variants of the glowworm grotto below.
+  pick: { material: 'B', doors: 'A' },
   materials: [
     ['A', 'GRANITE BLOCKS', 'Rough-cut granite blocks under a pale stone lip, stone shards and an arch of fitted stones.',
       material('bricks', { deep: '#1e1814', dark: '#3a302a', base: '#5c5048', alt: '#544840', light: '#786a60', hi: '#c8c0b4', cap0: '#d8d0c4', cap1: '#a8a096', thi: '#e8e4dc', tlight: '#a8a296', tdark: '#5a544c' }, { spikes: 'shards', door: 'arch' })],
@@ -157,84 +294,82 @@ const ROCK = {
       material('concrete', { deep: '#24201c', dark: '#423a34', base: '#605850', light: '#7c7268', hi: '#b8aea2', cap0: '#d8d0c4', cap1: '#aaa094', tape: '#3a342e', rust: '#6a4a2a', thi: '#e0d8cc', tlight: '#a89e92', tdark: '#5e554c' }, { tape: true, joint: 40, spikes: 'spears', door: 'hatch' })],
   ],
   backdrops: [
-    scrolling('CRYSTAL CAVERN', 'Deep in a cavern: clusters of violet crystal glowing on its ledges, stalactites overhead, glints twinkling. Scrolls in three layers.', 240,
+    scrolling('BLUE GROTTO', 'The grotto by blue light: glowworms strung under a roof of stalactites, far spires of rock in a blue haze, violet crystals glowing on the floor, specks of light drifting up. Scrolls in three layers.', 240,
       { rate: 0.05, period: 480, fixed: (r, ox) => {
-        caveWall(r, ox, [R(0.05), R(0.08), R(0.11)], 0.03, 340, 480);
-        for (let wx = Math.floor(ox / 96) * 96; wx < ox + W + 96; wx += 96) glow(r, wx - ox + 48, 70 + Math.floor(hash(mod(wx, 480), 0, 341) * 70), 34, VIOLET_GLOW, 0.22);
+        caveWall(r, ox, BLUE, 0.03, 400, 480);
+        for (let y = 90; y < 178; y++) for (let x = 0; x < W; x++) if (BAYER4[mod(y, 4)][mod(x + ox, 4)] < ((y - 90) / 88) * 6) r.set(x, y, NIGHT[3]);   // a blue haze, thicker near the floor
       } },
-      { rate: 0.15, period: 960, fixed: (r, ox) => {
-        dripstones(r, ox, { every: 16, maxLen: 46, cols: [R(0.12), R(0.18), RS(0.3)], seed: 342, period: 960 });
-        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) { const k = mod(wx, 960), x = wx - ox + 60; glow(r, x, 132, 48, VIOLET_GLOW, 0.4); cluster(r, x, 160, 28 + Math.floor(hash(k, 0, 343) * 18), k, AMETHYST); }
-        ridge(r, ox, { y: 156, amp: 6, f: 0.03, seed: 344, col: R(0.13), top: RS(0.38), period: 960 });
-      }, parts: [glints(345, 32, (i) => [Math.floor(i % 8) * 120 + 60 + Math.floor((hash(i, 1, 345) - 0.5) * 34), 118 + Math.floor(hash(i, 2, 345) * 34)])] },
+      roofLayer(0, 402, (r, ox) => ridge(r, ox, { y: 152, amp: 30, f: 0.03, seed: 401, col: NIGHT[0], top: LUMEN[0], period: 960, sharp: 0.7 })),
+      { rate: 0.35, period: 960, fixed: (r, ox) => { ROWS[0].paint(r, ox); dark(r, 178, NIGHT[0]); }, parts: [ROWS[0].glints, motes(405, 36, [LUMEN[1], LUMEN[2]])] }),
+    scrolling('STAR VAULT', 'A cave so tall its roof is lost in the dark, glittering with crystals like a night sky, cyan and violet, crystals hanging from it; spires far off, crystals glowing close by. Scrolls in three layers.', 240,
+      { rate: 0.03, period: 960, fixed: (r, ox) => {
+        grad(r, 0, H, [[0, NIGHT[0]], [0.42, NIGHT[1]], [0.66, NIGHT[3]], [0.78, NIGHT[2]], [1, NIGHT[1]]]);
+        for (let y = 0; y < 140; y++) for (let x = 0; x < W; x++) {   // a band of faint crystal light across the vault, like a galaxy
+          const wx = mod(x + ox, 960), d = Math.abs(y - (30 + 60 * Math.sin((TAU * wx) / 960))) / 26;
+          if (d < 1 && BAYER4[mod(y, 4)][mod(wx, 4)] < (1 - d) ** 2 * 7 * (0.6 + 0.4 * seamless((w) => noise1(w * 0.04, 416), wx, 960))) r.set(x, y, d < 0.35 ? LUMEN[0] : NIGHT[3]);
+        }
+        for (const [wx, sz, sd] of [[60, 34, 1], [300, 44, 2], [540, 30, 3], [770, 40, 4]]) { const x = mod(wx - ox, 960) - 20; if (x < -60 || x > W + 60) continue; glow(r, x, 14, 50, VIOLET_GLOW, 0.3); cluster(r, x, -2, sz, sd, AMETHYST, Math.PI); }
+      }, parts: [glowworms(VAULT.filter((_, i) => hash(i, 2, 410) > 0.25), 960, [NIGHT[4], LUMEN[2], LUMEN[1]], 411), glowworms(VAULT.filter((_, i) => hash(i, 2, 410) <= 0.25), 960, [AMETHYST[0], AMETHYST[2], AMETHYST[1]], 412)] },
+      { rate: 0.12, period: 960, fixed: (r, ox) => {
+        ridge(r, ox, { y: 146, amp: 30, f: 0.02, seed: 413, col: NIGHT[1], top: LUMEN[0], period: 960, sharp: 0.7 });
+        ridge(r, ox, { y: 164, amp: 14, f: 0.035, seed: 414, col: NIGHT[0], top: NIGHT[3], period: 960, sharp: 0.4 });
+      } },
+      { rate: 0.35, period: 960, fixed: (r, ox) => { ROWS[1].paint(r, ox); dark(r, 178, NIGHT[0]); }, parts: [ROWS[1].glints] }),
+    scrolling('TALL GRASS', 'The grotto floor grown over with tall dark-blue grass that sways in slow waves, a few blades tipped with glowing seed heads; glowworms above. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, BLUE, 0.03, 420, 480) },
+      roofLayer(1, 421, (r, ox) => {
+        for (let x = 0; x < W; x++) {   // far grass, a dark bank
+          const wx = mod(x + ox, 960), top = 150 + Math.floor(seamless((w) => noise1(w * 0.05, 422), x + ox, 960) * 14) - Math.floor(hash(wx, 0, 427) * 5);
+          for (let y = Math.max(0, top); y < H; y++) r.set(x, y, y === top ? NIGHT[3] : NIGHT[0]);
+        }
+      }),
+      { rate: 0.35, period: 960, fixed: (r, ox) => { ROWS[2].paint(r, ox); dark(r, 178, NIGHT[0]); }, parts: [ROWS[2].glints, grass(425, 960, 180), motes(426, 24, [LUMEN[2], LUMEN[1]])] }),
+    scrolling('GLOWING BLOOMS', 'A meadow of bell flowers on arching stems, their bells glowing cyan, the light rippling across them in slow waves, pollen drifting up; glowworms above. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, BLUE, 0.03, 431, 480) },
+      roofLayer(2, 432, (r, ox) => {
+        ridge(r, ox, { y: 162, amp: 10, f: 0.03, seed: 434, col: NIGHT[1], top: NIGHT[3], period: 960 });
+        for (let wx = Math.floor(ox / 9) * 9; wx < ox + W + 9; wx += 9) { const k = mod(wx, 960), x = wx - ox + Math.floor(hash(k, 0, 435) * 5), y = 160 + Math.floor(hash(k, 1, 435) * 14); if (hash(k, 2, 435) > 0.4) { r.set(x, y, LUMEN[1]); r.set(x, y + 1, NIGHT[3]); } }   // far flowers, dots of light
+      }),
       { rate: 0.35, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) { const k = mod(wx, 960), x = wx - ox + 40 + Math.floor(hash(k, 0, 346) * 120); glow(r, x, 160, 44, VIOLET_GLOW, 0.35); cluster(r, x, 182, 44 + Math.floor(hash(k, 1, 346) * 20), k + 7, AMETHYST); }
-        dripstones(r, ox, { every: 30, maxLen: 26, cols: [R(0.1), R(0.16), RS(0.28)], seed: 347, period: 960, base: 180 });
-        dark(r, 178, R(0.05));
-      } }),
-    still('GEODE CAVERN', 'A cave hung with stalactites, a giant geode split open in its wall and full of glittering violet crystals.', (r) => {
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, pick([R(0.06), R(0.1), R(0.15)], noise2(x * 0.04, y * 0.05, 308) * 0.9 + 0.1 * (noise2(x * 0.3, y * 0.3, 309) - 0.5), x, y));
-      glow(r, 300, 96, 90, VIOLET_GLOW, 0.28);
-      const gx = 300, gy = 96, rx = 56, ry = 46;
-      for (let j = -ry - 8; j <= ry + 8; j++) for (let i = -rx - 8; i <= rx + 8; i++) {
-        const d = (i / rx) ** 2 + (j / ry) ** 2;
-        if (d > 1.3) continue;
-        if (d > 1) { r.set(gx + i, gy + j, hash(i, j, 316) > 0.7 ? RS(0.3) : RS(0.42)); continue; }   // the rough rind
-        if (d > 0.84) { r.set(gx + i, gy + j, Math.floor(d * 40) % 2 ? RS(0.75) : c('#b8b0c8')); continue; }   // the banded agate
-        const a = Math.atan2(j, i) + Math.PI, n = 34, seg = Math.floor(a / (TAU / n)), f = (a / (TAU / n)) % 1;
-        const tip = 0.1 + 0.36 * hash(seg, 0, 310), along = (0.84 - d) / (0.84 - tip);   // 0 at the rim, 1 at the crystal's point
-        if (d < tip || Math.abs(f - 0.5) > (1 - along) * 0.5) { r.set(gx + i, gy + j, d < tip ? c('#140e1e') : c('#2e2244')); continue; }
-        const col = f < 0.5 ? (along > 0.75 ? AMETHYST[3] : AMETHYST[2]) : along > 0.75 ? c('#a890d0') : AMETHYST[1];
-        r.set(gx + i, gy + j, hash(seg, Math.floor(along * 6), 316) > 0.95 ? WHITE : col);
-      }
-      for (let x = 0; x < W; x += 9) { const len = 6 + Math.floor(noise1(x * 0.07, 311) * 40); for (let j = 0; j < len; j++) { const half = Math.round((1 - j / len) * 4); for (let i = -half; i <= half; i++) r.set(x + i, j, i < 0 ? RS(0.4) : i === 0 ? RS(0.3) : R(0.3)); } }
-      for (const [x, s, seed] of [[60, 22, 1], [150, 16, 2], [440, 20, 3]]) cluster(r, x, 182, s, seed, AMETHYST_FAR);
-      dark(r, 176, R(0.05));
-    }),
-    still('UNDERGROUND LAKE', 'A still lake deep underground, glowing violet crystals along its far shore mirrored in the dark water.', (r) => {
-      reflected(r, (s) => {
-        caveWall(s, 0, [R(0.05), R(0.08), R(0.12)], 0.035, 350);
-        for (const [x, y] of [[60, 96], [150, 90], [250, 96], [336, 88], [424, 98]]) glow(s, x, y, 56, VIOLET_GLOW, 0.36);
-        dripstones(s, 0, { every: 14, maxLen: 44, cols: [R(0.12), R(0.18), RS(0.3)], seed: 351, period: 980 });
-        for (const [x, sz] of [[60, 28], [150, 38], [250, 30], [336, 44], [424, 26]]) cluster(s, x, 118, sz, x, AMETHYST);
-        for (let x = 0; x < W; x++) { const top = 112 + Math.round(noise1(x * 0.04, 352) * 6); for (let y = top; y < 120; y++) s.set(x, y, y === top ? RS(0.42) : R(0.14)); }
-      }, 120, 58, c('#0c0a1a'));
-      dark(r, 178, R(0.05));
-    }),
-    still('CAVE MOUTH', 'Looking out of a cave mouth at a green valley under a bright sky, violet crystals growing round the opening.', (r) => {
-      grad(r, 0, H, [[0, c('#4a88cc')], [0.55, c('#c4dcee')], [1, c('#a8c890')]]);
-      ridge(r, 0, { y: 120, amp: 30, f: 0.01, seed: 360, col: c('#8a9cb8'), top: c('#eef2f8'), sharp: 0.6 });
-      ridge(r, 0, { y: 152, amp: 14, f: 0.02, seed: 361, col: c('#5a8a4a'), top: c('#8ac070') });
-      const cx = 244, cy = 104, rx = 150, ry = 92, rim = (a) => 0.84 + 0.16 * noise1(a * 2.2 + 10, 362);
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const a = Math.atan2(y - cy, x - cx) + Math.PI, d = Math.hypot((x - cx) / rx, (y - cy) / ry), n = rim(a);
-        if (d > n) r.set(x, y, d < n + 0.035 ? RS(0.55) : pick([R(0.06), R(0.1), R(0.15)], noise2(x * 0.05, y * 0.05, 363), x, y));
-      }
-      for (let k = 0; k < 16; k++) {
-        const a = (k / 16) * TAU + 0.2, n = rim(a + Math.PI), x = Math.round(cx + Math.cos(a) * rx * (n + 0.02)), y = Math.round(cy + Math.sin(a) * ry * (n + 0.02));
-        if (y > 168) continue;
-        cluster(r, x, y, 12 + Math.floor(hash(k, 0, 364) * 12), k + 40, AMETHYST, a - Math.PI / 2 + Math.PI);   // pointing in towards the light
-      }
-      dark(r, 176, R(0.05));
-    }),
-    scrolling('GLOWWORM GROTTO', 'A grotto ceiling strung with glowworms twinkling like stars, their silk threads hanging, violet crystals glowing on the floor. Scrolls in three layers.', 240,
-      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, [R(0.03), R(0.05), R(0.07)], 0.03, 370, 480) },
-      { rate: 0.15, period: 960, fixed: (r, ox) => {
-        for (let x = 0; x < W; x++) { const wx = x + ox, bottom = 8 + Math.floor(seamless((w) => noise1(w * 0.03, 371), wx, 960) * 18); for (let y = 0; y < bottom; y++) r.set(x, y, R(0.09)); }   // the ceiling
-        for (let i = 0; i < 180; i++) { const x = mod(Math.floor(hash(i, 0, 380) * 960) - ox, 960) - 20, y = 6 + Math.floor(hash(i, 1, 380) * 70), len = 6 + Math.floor(hash(i, 3, 380) * 24); if (x < 0 || x >= W) continue; for (let j = 1; j < len; j++) if (j % 2) r.set(x, y + j, c('#2a5a58'), 160); }   // silk threads under each glowworm
-      }, parts: [GLOWWORMS] },
+        ROWS[3].paint(r, ox);
+        for (const [wx, h, lean] of BLOOMS) {   // each flower's glow and its stem; the bell is a moving part
+          const x = mod(wx - ox, 960) - 20;
+          if (x < -30 || x > W + 30) continue;
+          const [bx, by] = bellAt(x, h, lean);
+          glow(r, bx + 3, by + 4, 14, CYAN_GLOW, 0.3);
+          stem(r, x, h, lean, NIGHT[4]);
+        }
+        dark(r, 178, NIGHT[0]);
+      }, parts: [ROWS[3].glints, BLOOM_CUPS, motes(437, 30, [LUMEN[2], LUMEN[3]])] }),
+    scrolling('MUSHROOM HOLLOW', 'A hollow of giant mushrooms, cyan and violet, their spotted caps and gills glowing and lighting the rock, spores drifting up; glowworms above. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, BLUE, 0.03, 441, 480) },
+      roofLayer(3, 442, (r, ox) => {
+        ridge(r, ox, { y: 168, amp: 8, f: 0.03, seed: 443, col: NIGHT[1], top: NIGHT[3], period: 960 });
+        for (let wx = Math.floor(ox / 120) * 120 - 120; wx < ox + W + 120; wx += 120) { const k = mod(wx, 960), x = wx - ox + 30 + Math.floor(hash(k, 0, 444) * 60); mushroom(r, x, 172, 18 + Math.floor(hash(k, 1, 444) * 16), 16 + Math.floor(hash(k, 2, 444) * 10), ((k / 120) % 2 ? CAP_VIOLET : CAP_CYAN).map((col) => shade(col, 0.35)), k); }
+      }),
       { rate: 0.35, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) { const k = mod(wx, 960), x = wx - ox + 40 + Math.floor(hash(k, 0, 372) * 80); glow(r, x, 160, 46, VIOLET_GLOW, 0.4); cluster(r, x, 182, 30 + Math.floor(hash(k, 1, 372) * 18), k + 3, AMETHYST); }
+        for (let wx = Math.floor(ox / 240) * 240 - 240; wx < ox + W + 240; wx += 240) { const k = mod(wx, 960), x = wx - ox + 60 + Math.floor(hash(k, 0, 446) * 120); mushroom(r, x, 184, 44 + Math.floor(hash(k, 1, 446) * 34), 44 + Math.floor(hash(k, 2, 446) * 22), (k / 240) % 2 ? CAP_VIOLET : CAP_CYAN, k + 1); cluster(r, x + 24, 184, 16, k + 7, AMETHYST); }
+        dark(r, 178, NIGHT[0]);
+      }, parts: [motes(447, 40, [LUMEN[2], AMETHYST[2], LUMEN[1]])] }),
+    scrolling('LANTERN WALK', 'An old boardwalk on stilts through the grotto, crystal lanterns on its posts flickering violet, mist drifting beneath it, glowworms above, the warm brown rock in their blue light. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, WARM, 0.03, 451, 480) },
+      roofLayer(4, 453, (r, ox) => dripstones(r, ox, { every: 26, maxLen: 40, cols: [R(0.1), R(0.16), RS(0.26)], seed: 452, period: 960, base: 178 }), [R(0.07), RS(0.22), R(0.12)]),
+      { rate: 0.35, period: 960, fixed: (r, ox) => {
+        ROWS[4].paint(r, ox);
+        for (let k = 0; k < 24; k++) { const x = mod(k * 40 + 50 - ox, 960) - 20; if (x < -2 || x > W) continue; for (let y = 143; y < 184; y++) { r.set(x, y, WOOD[1]); r.set(x + 1, y, WOOD[0]); } }   // stilts
+        for (let x = 0; x < W; x++) {   // the deck, planks 12 wide
+          const wx = mod(x + 20 + ox, 960), gap = mod(wx, 12) === 0;
+          for (let y = 138; y < 143; y++) r.set(x, y, gap || y === 142 ? WOOD[0] : y === 138 ? WOOD[3] : WOOD[hash(Math.floor(wx / 12), y, 455) > 0.5 ? 2 : 1]);
+        }
+        for (let k = 0; k < 12; k++) {   // posts, every other one carrying a lantern, and the rope rail sagging between them
+          const x = mod(k * 80 + 70 - ox, 960) - 20;
+          if (x < -90 || x > W + 10) continue;
+          if (k % 2 === 0) glow(r, x, 117, 30, VIOLET_GLOW, 0.35);
+          for (let y = k % 2 ? 126 : 123; y < 138; y++) { r.set(x, y, WOOD[2]); r.set(x + 1, y, WOOD[0]); }
+          for (let i = 2; i < 80; i++) r.set(x + i, 127 + Math.round(4 * Math.sin((Math.PI * i) / 80)), c('#8a7050'));
+        }
         dark(r, 178, R(0.04));
-      }, parts: [glints(373, 24, (i) => [Math.floor(i % 6) * 160 + 70 + Math.floor((hash(i, 1, 373) - 0.5) * 30), 146 + Math.floor(hash(i, 2, 373) * 26)])] }),
-    still('GIANT CRYSTALS', 'A cavern crossed by crystal beams as thick as tree trunks, milky violet and white, a rope ladder hanging for scale.', (r) => {
-      caveWall(r, 0, [R(0.07), R(0.1), R(0.14)], 0.03, 375);
-      glow(r, 240, 90, 170, VIOLET_GLOW, 0.2);
-      for (const [x0, y0, len, w, ang] of [[30, 196, 270, 24, 0.95], [470, 206, 300, 30, -1.02], [190, 214, 190, 18, 0.32], [340, -6, 230, 22, 2.55], [90, -6, 160, 16, 2.25], [420, 120, 120, 12, -0.6]]) crystal(r, x0, y0, len, w, ang, MILKY);
-      for (const x of [296, 306]) vert(r, x, 0, 150, c('#8a7050'));
-      for (let y = 6; y < 150; y += 8) line(r, 296, y, 306, y + 1, c('#a88a60'));   // a rope ladder, for scale
-      dark(r, 176, R(0.05));
-    }),
+      }, parts: [ROWS[4].glints, LANTERNS, MIST] }),
   ],
 };
 

@@ -129,7 +129,7 @@ brick, at 2.06 against a floor of 2.
 
 | slice | backdrops | materials | status |
 |---|---|---|---|
-| Rock | 1 crystal cavern (moving) · 2 geode cavern · 3 underground lake · 4 cave mouth · 5 glowworm grotto (moving) · 6 giant crystals (all six redrawn; first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed**; backdrop not picked yet (owner, 6 Nov 2026), in their words below |
+| Rock | 1 blue grotto · 2 star vault · 3 tall grass · 4 glowing blooms · 5 mushroom hollow · 6 lantern walk, all moving (six variants of the glowworm grotto the owner picked; before that crystal cavern, geode cavern, underground lake, cave mouth, glowworm grotto and giant crystals, and first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed, with A's arched doors**; the glowworm grotto picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
 | Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
 | Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | **PICKED: 1 total eclipse, with A on C's ground** (owner, 6 Nov 2026), in their words below |
@@ -142,6 +142,19 @@ sharp amethyst points, each catching the light for a moment now and then. All si
 each a cave with crystals at its heart: a crystal cavern and a glowworm grotto (both moving), a giant
 geode, an underground lake mirroring its crystals, a cave mouth looking out at a green valley, and a
 cavern crossed by giant crystal beams. The backdrop is still to pick.
+
+**Rock's second answer, in the owner's words (6 Nov 2026):** "i like 5b but with the arched doorways
+from a. improve backdrop 5 with 6 new variants inspired by the aesthetics found in Waterfall level in
+Undertale, other than the actual waterfalls as that would be a water type feaature". So material B
+keeps its violet crystal spikes and takes material A's arched stone doors (`doors: 'A'` in its
+`pick`), and the six backdrops are now variants of the glowworm grotto, all of them moving: the
+grotto by blue light, with far spires and specks of light drifting up; a vault glittering like a
+night sky, a band of crystal light across it; tall blue grass swaying, a few blades with glowing seed
+heads; a meadow of hanging bell flowers whose light ripples across them; giant cyan and violet
+mushrooms with spores drifting up; and an old boardwalk with crystal lanterns and mist beneath it.
+They take that game's mood (the blue dark, glowing plants, a roof like a starry sky) and copy none of
+its pictures, and there is no water in any of them, as asked. The board shows the grotto they picked
+first, with B and A's doors.
 
 **Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider
 interpretation of 'Ghost' using what other video games have established as precedent". The six new
@@ -185,9 +198,11 @@ backdrop like Steel's line does not simply repeat: each stage of its story takes
 area's progress, measured by something still to be chosen. Nothing is built for it yet.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
-ground (`ground: 'A'`), and nothing was redrawn.
+ground (`ground: 'A'`), and nothing was redrawn. Rock's takes its doors from a second material
+instead (`doors: 'A'`). `render.mjs` paints both kinds; the game's `pickedMaterial` in
+`src/systems/area-art/slices.js` knows only `ground` so far, and needs `doors` too when Rock goes in.
 
-A picked slice carries `pick` in `batch1.mjs` or `batch2.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
+A picked slice carries `pick` in `batch1.mjs`, `batch2.mjs` or `batch3.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
 
 The per-slice painters: `src/systems/area-art/materials.js` (nine kinds of floor, each with its
