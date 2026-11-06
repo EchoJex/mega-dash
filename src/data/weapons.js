@@ -855,7 +855,10 @@ const DEFS = [
   // make. `sidearm: true` only keeps it off the ring arc: it has its own fixed
   // bench position above the wheel, so it never moves and is always findable.
   { id: 'sidearm', name: 'SIDE ARM', short: 'SIDEARM', cls: OFFENSIVE, sidearm: true, boss: null,
-    cooldown: 8, projectiles: 1, shape: 'bolt', speed: 3.2,
+    // Slowed five-fold by the owner's bug (6 Nov 2026), keeping the same hit:
+    // `damageBonus` -0.8 cancels the formula raising each shot to match the
+    // slower rate, so the sidearm now does a fifth of the level-1 DPS.
+    cooldown: 40, damageBonus: -0.8, projectiles: 1, shape: 'bolt', speed: 3.2,
     desc: 'Standard arm cannon. Starts in your first offensive slot.' },
 
   { id: 'nullfire_drone', name: 'NULLFIRE DRONE', short: 'N-DRONE', cls: DEFENSIVE, boss: 'proto',
@@ -927,8 +930,8 @@ const DEFS = [
     desc: 'Brief invulnerability and invisibility.' },
   // Provisional class — its tracker field is still `[wip]`.
   //
-  // `damageBonus: 0.30` — THE ONE WEAPON THAT BREAKS THE LEVEL-1 DPS RULE, on
-  // purpose. In the type chart Dragon is super effective against Dragon and
+  // `damageBonus: 0.30` — THE ONE SPECIAL THAT BREAKS THE LEVEL-1 DPS RULE, on
+  // purpose (the sidearm breaks it downward, by the owner's call). In the type chart Dragon is super effective against Dragon and
   // nothing else, and a weapon is earned from its own boss, whom a run never
   // meets again (the bag does not repeat before all 17 are seen). So this is
   // the one weapon with no boss it can ever be strong against; every other
