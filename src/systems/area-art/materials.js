@@ -26,6 +26,12 @@ const batteryNubs = (x, w) => {
   for (let i = 0; i < n; i++) out.push(Math.floor(x) + Math.floor(i * tw + (tw - 3) / 2) + 1);
   return out;
 };
+/** Where each crystal on a bed stands and how tall it is: the same sums `SPIKES.crystals` paints with. */
+const crystalTips = (x, w) => {
+  const n = Math.max(1, Math.round(w / 4)), tw = w / n, out = [];
+  for (let i = 0; i < n; i++) out.push([Math.floor(i * tw + tw / 2), 5 + Math.floor(hash(i, Math.floor(x), 41) * 3), i, (i % 3) - 1]);
+  return out;   // [column inside the bed, height, which crystal, which way its point leans]
+};
 /**
  * THINGS ON A SPIKE BED THAT MOVE BY THEMSELVES: `at(x, w, t)` lists them as [x, y, k] pixels at
  * step `t`, k picking one of `colours`. The batteries crackle (the owner's answer, 5 Nov 2026, so
@@ -43,6 +49,22 @@ const SPARKS = {
           const end = px === nubs[i] + 1 || px === nubs[i + 1] - 1;
           out.push([px, y - 1 - ((px - nubs[i] + flick) & 1), end ? 1 : 0]);
         }
+      }
+      return out;
+    },
+  },
+  // The crystals glisten (the owner's ask for Rock, 6 Nov 2026: "glisteny violet crystals"): each one
+  // catches the light for 8 steps of every 60, a glint at its tip that flares to a little star.
+  crystals: {
+    colours: ['#ffffff', '#e8d8ff'],
+    at(x, w, t) {
+      const out = [];
+      for (const [cx, h, i, lean] of crystalTips(x, w)) {
+        const ph = mod(t + Math.floor(hash(i, Math.floor(x), 43) * 60), 60), px = Math.floor(x) + cx + lean, py = FLOOR - h;
+        if (ph >= 8) continue;
+        if (ph < 2) out.push([px, py, 0]);
+        else if (ph < 6) out.push([px, py + 1, 0], [px - 1, py + 1, 1], [px + 1, py + 1, 1], [px, py, 1], [px, py + 2, 1]);
+        else out.push([px - 1, py + 2, 0]);
       }
       return out;
     },
@@ -148,6 +170,21 @@ const SPIKES = {
             const d = py - (7 - h);   // rows below the tip
             t.set(px + 1, py + 2, k === 0 ? (d < 3 ? P.obs3 : P.obs2) : k === row.length - 1 || (k === 1 && d < 4) ? P.obs1 : P.obs0);
           });
+        }
+      }
+    }), Math.floor(x) - 1, FLOOR - 9);
+  },
+  crystals(r, x, w, P) {
+    // Violet crystals (the owner's ask for Rock, 6 Nov 2026: "make the spikes glisteny violet
+    // crystals"): pointed amethyst prisms, a white point at the tip, lit down the left face and dark
+    // down the right, standing in a row the way the batteries do. SPARKS.crystals makes them glisten.
+    blit(r, bed(w, (t) => {
+      for (const [cx, h, , lean] of crystalTips(x, w)) {
+        for (let d = 0; d < h; d++) {
+          const py = 7 - h + d + 2;
+          if (d < 2) { t.set(cx + 1 + lean, py, d === 0 ? P.cry3 : P.cry2); continue; }   // the sharp point, leaning a little
+          if (d === 2) { t.set(cx + (lean > 0 ? 1 : 0), py, P.cry2); t.set(cx + 1 + (lean > 0 ? 1 : 0), py, P.cry1); continue; }
+          t.set(cx, py, P.cry2); t.set(cx + 1, py, P.cry1); t.set(cx + 2, py, P.cry0);
         }
       }
     }), Math.floor(x) - 1, FLOOR - 9);

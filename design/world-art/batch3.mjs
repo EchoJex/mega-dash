@@ -52,77 +52,129 @@ function flame(r, x, base, h, cols) {
   }
 }
 
-// ── ROCK: Granite Man's quarry country ───────────────────────────────
+// ── ROCK: Granite Man's caves ────────────────────────────────────────
+//
+// The owner, 6 Nov 2026, on the Rock board: "B, but redo Rock backdrops using caves and crystals as
+// the focus, and make the spikes glisteny violet crystals". So material B is picked, its spikes are
+// violet crystals that glisten (SPIKES.crystals in materials.js), and all six backdrops are new:
+// caves, with crystals at the heart of each.
 
 const granite = B('granite');
 const R = (k) => tn(granite, k), RS = (k) => tn(granite, k, 'secondary');
-function hoodoo(r, x, base, w, h, seed) {
-  for (let j = 0; j < h; j++) {
-    const t = j / h, half = Math.max(2, Math.round((w / 2) * (0.6 + 0.5 * noise1(j * 0.08, seed) - 0.25 * t)));
-    const band = Math.floor((j + 3 * noise1(j * 0.1, seed)) / 7) % 3, col = [R(0.9), RS(0.6), mix(R(1), c('#c87850'), 0.35)][band];
-    for (let i = -half; i <= half; i++) r.set(x + i, base - j, i <= -half + 1 ? lit(col, 0.28) : i >= half - 2 ? shade(col, 0.35) : col);
+const AMETHYST = [c('#2e1458'), c('#6a34b8'), c('#a878f0'), c('#f4ecff')];   // dark, mid, lit, glint
+const AMETHYST_FAR = AMETHYST.map((col) => mix(col, R(0.08), 0.5));
+const MILKY = [c('#5a4a7a'), c('#9a8abc'), c('#dcd2f0'), c('#ffffff')];
+const VIOLET_GLOW = c('#8a4ae0');
+/** One crystal: a prism from (x0, y0) pointing along `ang` (0 is straight up), `len` long and `w` wide, lit down its left face. */
+function crystal(r, x0, y0, len, w, ang, C) {
+  const ax = Math.sin(ang), ay = -Math.cos(ang), nx = Math.cos(ang), ny = Math.sin(ang);
+  for (let s = 0; s < len; s += 0.5) {
+    const t = s / len, half = t > 0.72 ? (w / 2) * (1 - (t - 0.72) / 0.28) : w / 2;
+    for (let q = -half; q <= half; q += 0.5) {
+      const f = (q + half) / Math.max(1, 2 * half);
+      r.set(Math.round(x0 + ax * s + nx * q), Math.round(y0 + ay * s + ny * q), t > 0.92 ? C[3] : f < 0.34 ? C[2] : f < 0.68 ? C[1] : C[0]);
+    }
   }
-  const cw = Math.round(w * 0.85);
-  for (let j = 0; j < 9; j++) for (let i = -cw; i <= cw; i++) if ((i / cw) ** 2 + ((j - 4) / 4.5) ** 2 <= 1) r.set(x + i, base - h - 6 + j, j < 2 ? RS(0.85) : i > cw * 0.4 ? RS(0.36) : RS(0.56));
 }
-/** Rocks bouncing down the far scree, each kicking up dust where it lands. */
-const TUMBLE = {
+/** A cluster of crystals fanning out from one point, around the direction `dir` (0 is up). */
+function cluster(r, x, y, size, seed, C, dir = 0) {
+  const n = 3 + Math.floor(hash(seed, 0, 330) * 4), list = [];
+  for (let k = 0; k < n; k++) list.push([dir + (hash(seed, k + 1, 331) - 0.5) * 1.5, size * (0.45 + 0.55 * hash(seed, k + 9, 332)), (hash(seed, k + 20, 333) - 0.5) * size * 0.5]);
+  list.sort((a, b) => b[1] - a[1]);   // the long ones behind
+  for (const [ang, len, dx] of list) crystal(r, x + Math.round(dx), y, len, Math.max(3, Math.round(size * 0.26)), ang, C);
+}
+/** Cave rock filling the layer: lumpy noise in three shades. */
+function caveWall(r, ox, cols, f, seed, period) {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, pick(cols, seamless((w) => noise2(w * f, y * f * 1.3, seed), x + ox, period) + 0.08 * (noise2((x + ox) * 0.4, y * 0.4, seed + 1) - 0.5), x, y));
+}
+/** Stalactites hanging from the top of the layer, or stalagmites rising from `base`, every `every` pixels of the world. */
+function dripstones(r, ox, { every, maxLen, cols, seed, period, base = null }) {
+  for (let wx = Math.floor(ox / every) * every; wx < ox + W + every; wx += every) {
+    const k = mod(wx, period), len = Math.floor(maxLen * (0.25 + 0.75 * hash(k, 0, seed))), half = 2 + Math.floor(hash(k, 1, seed) * 4), x = wx - ox + Math.floor(hash(k, 2, seed) * (every - half));
+    for (let j = 0; j < len; j++) {
+      const hw = Math.round(half * (1 - j / len));
+      for (let i = -hw; i <= hw; i++) r.set(x + i, base === null ? j : base - j, i < 0 ? cols[2] : i === 0 ? cols[1] : cols[0]);
+    }
+  }
+}
+/** Glints twinkling on crystals: each spot flares for 8 steps of every 60. `spot(i)` gives its place in the layer's world. */
+const glints = (seed, n, spot, period = 960) => ({
   pieces: () => pics([
-    ...[[8, 7], [6, 5], [4, 4]].map(([w, h], k) => [`r${k}`, w, h, (p) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const d = ((i + 0.5 - w / 2) / (w / 2)) ** 2 + ((j + 0.5 - h / 2) / (h / 2)) ** 2; if (d > 1.05) continue; p.set(i, j, d > 0.7 ? R(0.25) : i + j < (w + h) / 3 ? RS(0.9) : RS(0.6)); } }]),
-    ['dust', 7, 3, (p) => { for (let j = 0; j < 3; j++) for (let i = 0; i < 7; i++) if (hash(i, j, 1) > 0.45 && (j > 0 || (i > 1 && i < 5))) p.set(i, j, RS(0.7), 170); }],
+    ['g', 1, 1, (p) => p.set(0, 0, WHITE)],
+    ['star', 3, 3, (p) => { p.set(1, 0, AMETHYST[3]); p.set(0, 1, AMETHYST[3]); p.set(1, 1, WHITE); p.set(2, 1, AMETHYST[3]); p.set(1, 2, AMETHYST[3]); }],
   ]),
   at(ox, t) {
     const out = [];
-    for (let i = 0; i < 12; i++) {
-      const u = (hash(i, 0, 312) + t / 240) % 1, x0 = Math.floor(hash(i, 1, 312) * 960);
-      const sx = mod(x0 + Math.round(u * 70) - ox, 960) - 40;
-      if (sx < -10 || sx > W + 10) continue;
-      out.push([`r${i % 3}`, sx, Math.round(78 + u * 88 - Math.abs(Math.sin(u * 15 + i)) * 7)]);
-      if (u > 0.9) out.push(['dust', sx - 2, 166]);
+    for (let i = 0; i < n; i++) {
+      const ph = mod(t + Math.floor(hash(i, 0, seed) * 240), 60);
+      if (ph >= 8) continue;
+      const [wx, y] = spot(i), x = mod(wx - ox, period) - 20;
+      if (x < -4 || x > W + 4) continue;
+      out.push(ph >= 2 && ph < 6 ? ['star', x - 1, y - 1] : ['g', x, y]);
+    }
+    return out;
+  },
+});
+/** Glowworms on the grotto's ceiling, each twinkling on its own beat. */
+const GLOWWORMS = {
+  pieces: () => pics([['d', 1, 1, (p) => p.set(0, 0, c('#2a7a78'))], ['b', 1, 1, (p) => p.set(0, 0, c('#a8fff0'))], ['s', 3, 3, (p) => { p.set(1, 0, c('#5ae0d0')); p.set(0, 1, c('#5ae0d0')); p.set(1, 1, WHITE); p.set(2, 1, c('#5ae0d0')); p.set(1, 2, c('#5ae0d0')); }]]),
+  at(ox, t) {
+    const out = [];
+    for (let i = 0; i < 180; i++) {
+      const x = mod(Math.floor(hash(i, 0, 380) * 960) - ox, 960) - 20, y = 6 + Math.floor(hash(i, 1, 380) * 70);
+      if (x < -3 || x > W + 3) continue;
+      const ph = mod(t + Math.floor(hash(i, 2, 380) * 120), 120);
+      out.push(ph < 8 ? ['s', x - 1, y - 1] : ph < 70 ? ['b', x, y] : ['d', x, y]);
     }
     return out;
   },
 };
+/** The scene `paint` draws, mirrored below `line` as a still lake reflects it: darker, rippling. */
+function reflected(r, paint, line, depth, tint) {
+  const scene = new Raster(W, H);
+  paint(scene);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; if (scene.d[i + 3] && y < line) r.set(x, y, [scene.d[i], scene.d[i + 1], scene.d[i + 2]]); }
+  for (let y = line; y < line + depth; y++) {
+    const sy = 2 * line - y - 1, off = Math.round(Math.sin(y * 0.9) * (1 + (y - line) / 14));
+    for (let x = 0; x < W; x++) {
+      const sx = Math.min(W - 1, Math.max(0, x + off)), i = (sy * W + sx) * 4;
+      const col = scene.d[i + 3] ? mix([scene.d[i], scene.d[i + 1], scene.d[i + 2]], tint, 0.45 + (y - line) / (depth * 2.5)) : tint;
+      r.set(x, y, (y - line) % 5 === 2 && hash(x >> 3, y, 390) > 0.6 ? lit(col, 0.12) : col);
+    }
+  }
+}
 const ROCK = {
   id: 'granite', type: 'Rock',
+  // The owner, 6 Nov 2026: "B, but redo Rock backdrops using caves and crystals as the focus, and
+  // make the spikes glisteny violet crystals". The backdrop is still to pick, from the six below.
+  pick: { material: 'B' },
   materials: [
     ['A', 'GRANITE BLOCKS', 'Rough-cut granite blocks under a pale stone lip, stone shards and an arch of fitted stones.',
       material('bricks', { deep: '#1e1814', dark: '#3a302a', base: '#5c5048', alt: '#544840', light: '#786a60', hi: '#c8c0b4', cap0: '#d8d0c4', cap1: '#a8a096', thi: '#e8e4dc', tlight: '#a8a296', tdark: '#5a544c' }, { spikes: 'shards', door: 'arch' })],
-    ['B', 'QUARRY STRATA', 'Layered quarry rock in browns and greys, stone cones and an iron quarry gate.',
-      material('strata', { deep: '#1e1410', dark: '#46342a', base: '#664e40', mid: '#705848', light: '#7c6252', hi: '#e0c8b0', cap0: '#d8c0a8', cap1: '#b09480', void: '#100a08', thi: '#f0e0d0', tlight: '#a08070', tdark: '#5a4030' }, { spikes: 'cones', door: 'gate' })],
+    ['B', 'QUARRY STRATA', 'Layered quarry rock in browns and greys, glistening violet crystals for spikes and an iron quarry gate.',
+      material('strata', { deep: '#1e1410', dark: '#46342a', base: '#664e40', mid: '#705848', light: '#7c6252', hi: '#e0c8b0', cap0: '#d8c0a8', cap1: '#b09480', void: '#100a08', thi: '#f0e0d0', tlight: '#a08070', tdark: '#5a4030', cry0: '#2e1458', cry1: '#6a34b8', cry2: '#a878f0', cry3: '#f4ecff' }, { spikes: 'crystals', door: 'gate' })],
     ['C', 'CUT SLABS', 'Smooth quarry slabs with saw-cut joints and a band of drill holes, iron rods and a steel hatch.',
       material('concrete', { deep: '#24201c', dark: '#423a34', base: '#605850', light: '#7c7268', hi: '#b8aea2', cap0: '#d8d0c4', cap1: '#aaa094', tape: '#3a342e', rust: '#6a4a2a', thi: '#e0d8cc', tlight: '#a89e92', tdark: '#5e554c' }, { tape: true, joint: 40, spikes: 'spears', door: 'hatch' })],
   ],
   backdrops: [
-    scrolling('CRAG PEAKS', 'Jagged grey crags rising in ranks under a high sky, the far ones blue with distance, dust blowing. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => { grad(r, 0, H, [[0, c('#4a6a8c')], [0.55, c('#b8c0c4')], [1, RS(0.5)]]); clouds(r, 0, { y: 14, h: 34, col: c('#d0d4d4'), lit: c('#f4f4f0'), seed: 301, cut: 0.56 }); } },
-      { rate: 0.08, period: 960, fixed: (r, ox) => ridge(r, ox, { y: 118, amp: 56, f: 0.014, seed: 302, col: mix(RS(0.62), c('#7890a8'), 0.5), top: c('#e4e8ec'), sharp: 0.95, period: 960 }) },
-      { rate: 0.2, period: 960, fixed: (r, ox) => ridge(r, ox, { y: 150, amp: 44, f: 0.02, seed: 303, col: RS(0.42), top: RS(0.82), sharp: 0.85, period: 960 }) },
-      { rate: 0.45, period: 960, fixed: (r, ox) => { ridge(r, ox, { y: 186, amp: 24, f: 0.035, seed: 304, col: R(0.45), top: RS(0.62), sharp: 0.4, period: 960 }); dark(r, 178, R(0.12)); },
-        parts: [drift(305, 50, [RS(0.85), RS(0.6)], 176, 0.1)] }),
-    still('STONE CIRCLE', 'Standing stones on a moor at dusk, the low sun glowing between them.', (r) => {
-      grad(r, 0, H, [[0, c('#241e3a')], [0.45, c('#7a4a5a')], [0.7, c('#e09060')], [1, R(0.2)]]);
-      glow(r, 250, 150, 70, c('#ffb070'), 0.35);
-      disc(r, 250, 152, 22, [c('#fff0c0'), c('#ffc070'), c('#f09050')]);
-      ridge(r, 0, { y: 160, amp: 6, f: 0.02, seed: 306, col: R(0.16), top: R(0.3) });
-      for (const [x, w, h] of [[52, 12, 40], [112, 10, 30], [170, 12, 46], [214, 12, 46], [290, 10, 38], [334, 12, 46], [386, 10, 32], [436, 12, 42]]) {
-        for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-          if (j < Math.round(2 + 2 * Math.sin(i * 0.9 + x)) && j < 4) continue;
-          const sunSide = x + w < 250 ? i === w - 1 : x > 250 ? i === 0 : false;
-          r.set(x + i, 164 - h + j, sunSide ? RS(0.6) : hash(i, j, x) > 0.92 ? R(0.22) : R(0.12));
-        }
-      }
-      fillRect(r, 166, 112, 64, 7, R(0.12)); for (let i = 166; i < 230; i++) r.set(i, 112, RS(0.6));   // the lintel: a trilithon
-      dark(r, 176, R(0.07));
-    }),
-    still('HOODOO VALLEY', 'Rock spires banded in red and grey stand in a valley under a deep blue sky, balanced stones on their tops.', (r) => {
-      grad(r, 0, H, [[0, c('#2a5a9a')], [0.6, c('#9ac0e0')], [1, R(0.3)]]);
-      ridge(r, 0, { y: 142, amp: 12, f: 0.015, seed: 307, col: mix(R(0.9), c('#8aa0c0'), 0.5), top: lit(RS(0.9), 0.2) });
-      for (const [x, w, h] of [[30, 16, 70], [96, 22, 96], [160, 14, 60], [236, 26, 112], [318, 16, 74], [384, 20, 92], [446, 14, 64]]) hoodoo(r, x, 178, w, h, x);
-      dark(r, 176, R(0.08));
-    }),
-    still('GEODE CAVERN', 'A cave hung with stalactites, a giant geode split open in its wall and full of glittering crystals.', (r) => {
+    scrolling('CRYSTAL CAVERN', 'Deep in a cavern: clusters of violet crystal glowing on its ledges, stalactites overhead, glints twinkling. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => {
+        caveWall(r, ox, [R(0.05), R(0.08), R(0.11)], 0.03, 340, 480);
+        for (let wx = Math.floor(ox / 96) * 96; wx < ox + W + 96; wx += 96) glow(r, wx - ox + 48, 70 + Math.floor(hash(mod(wx, 480), 0, 341) * 70), 34, VIOLET_GLOW, 0.22);
+      } },
+      { rate: 0.15, period: 960, fixed: (r, ox) => {
+        dripstones(r, ox, { every: 16, maxLen: 46, cols: [R(0.12), R(0.18), RS(0.3)], seed: 342, period: 960 });
+        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) { const k = mod(wx, 960), x = wx - ox + 60; glow(r, x, 132, 48, VIOLET_GLOW, 0.4); cluster(r, x, 160, 28 + Math.floor(hash(k, 0, 343) * 18), k, AMETHYST); }
+        ridge(r, ox, { y: 156, amp: 6, f: 0.03, seed: 344, col: R(0.13), top: RS(0.38), period: 960 });
+      }, parts: [glints(345, 32, (i) => [Math.floor(i % 8) * 120 + 60 + Math.floor((hash(i, 1, 345) - 0.5) * 34), 118 + Math.floor(hash(i, 2, 345) * 34)])] },
+      { rate: 0.35, period: 960, fixed: (r, ox) => {
+        for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) { const k = mod(wx, 960), x = wx - ox + 40 + Math.floor(hash(k, 0, 346) * 120); glow(r, x, 160, 44, VIOLET_GLOW, 0.35); cluster(r, x, 182, 44 + Math.floor(hash(k, 1, 346) * 20), k + 7, AMETHYST); }
+        dripstones(r, ox, { every: 30, maxLen: 26, cols: [R(0.1), R(0.16), RS(0.28)], seed: 347, period: 960, base: 180 });
+        dark(r, 178, R(0.05));
+      } }),
+    still('GEODE CAVERN', 'A cave hung with stalactites, a giant geode split open in its wall and full of glittering violet crystals.', (r) => {
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, pick([R(0.06), R(0.1), R(0.15)], noise2(x * 0.04, y * 0.05, 308) * 0.9 + 0.1 * (noise2(x * 0.3, y * 0.3, 309) - 0.5), x, y));
+      glow(r, 300, 96, 90, VIOLET_GLOW, 0.28);
       const gx = 300, gy = 96, rx = 56, ry = 46;
       for (let j = -ry - 8; j <= ry + 8; j++) for (let i = -rx - 8; i <= rx + 8; i++) {
         const d = (i / rx) ** 2 + (j / ry) ** 2;
@@ -132,39 +184,56 @@ const ROCK = {
         const a = Math.atan2(j, i) + Math.PI, n = 34, seg = Math.floor(a / (TAU / n)), f = (a / (TAU / n)) % 1;
         const tip = 0.1 + 0.36 * hash(seg, 0, 310), along = (0.84 - d) / (0.84 - tip);   // 0 at the rim, 1 at the crystal's point
         if (d < tip || Math.abs(f - 0.5) > (1 - along) * 0.5) { r.set(gx + i, gy + j, d < tip ? c('#140e1e') : c('#2e2244')); continue; }
-        const col = f < 0.5 ? (along > 0.75 ? c('#f4ecff') : c('#c8b0f0')) : along > 0.75 ? c('#a890d0') : c('#6a4e98');
+        const col = f < 0.5 ? (along > 0.75 ? AMETHYST[3] : AMETHYST[2]) : along > 0.75 ? c('#a890d0') : AMETHYST[1];
         r.set(gx + i, gy + j, hash(seg, Math.floor(along * 6), 316) > 0.95 ? WHITE : col);
       }
       for (let x = 0; x < W; x += 9) { const len = 6 + Math.floor(noise1(x * 0.07, 311) * 40); for (let j = 0; j < len; j++) { const half = Math.round((1 - j / len) * 4); for (let i = -half; i <= half; i++) r.set(x + i, j, i < 0 ? RS(0.4) : i === 0 ? RS(0.3) : R(0.3)); } }
-      for (const [x, h] of [[40, 30], [70, 18], [140, 40], [200, 22], [420, 34], [452, 20]]) for (let j = 0; j < h; j++) { const half = Math.round((1 - j / h) * 6); for (let i = -half; i <= half; i++) r.set(x + i, 178 - j, i < 0 ? RS(0.4) : R(0.3)); }
+      for (const [x, s, seed] of [[60, 22, 1], [150, 16, 2], [440, 20, 3]]) cluster(r, x, 182, s, seed, AMETHYST_FAR);
       dark(r, 176, R(0.05));
     }),
-    scrolling('ROCKSLIDE', 'A cliff shedding rocks that bounce down its scree slope in the distance, dust puffing where they land. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => grad(r, 0, H, [[0, c('#6a7a8a')], [0.6, c('#c0b6a8')], [1, R(0.25)]]) },
-      { rate: 0.15, period: 960, fixed: (r, ox) => {
-        ridge(r, ox, { y: 92, amp: 34, f: 0.012, seed: 313, col: RS(0.5), top: RS(0.88), sharp: 0.7, period: 960 });
-        for (let wx = Math.floor(ox / 40) * 40; wx < ox + W + 40; wx += 40) { const k = mod(wx, 960); let x = wx - ox + Math.floor(hash(k, 0, 319) * 30); for (let y = 128 + Math.floor(hash(k, 1, 319) * 10); y < 168; y++) { if (hash(k, y, 320) > 0.6) x += hash(k, y, 322) > 0.5 ? 1 : -1; r.set(x, y, RS(0.3)); r.set(x + 1, y, RS(0.7)); } }   // cracks down the cliff
-        for (let y = 132; y < 168; y += 8) for (let x = 0; x < W; x++) if (seamless((w) => noise1(w * 0.05, 314 + y), x + ox, 960) > 0.5) { r.set(x, y, RS(0.36)); r.set(x, y + 1, RS(0.66)); }   // ledges
-        ridge(r, ox, { y: 172, amp: 8, f: 0.02, seed: 315, col: RS(0.68), top: RS(0.86), period: 960 });   // the scree at the cliff's foot
-        for (let y = 164; y < 180; y++) for (let x = 0; x < W; x++) if (hash(mod(x + ox, 960), y, 321) > 0.9) r.set(x, y, RS(0.5));
-      }, parts: [TUMBLE] },
-      { rate: 0.35, period: 960, fixed: (r, ox) => { ridge(r, ox, { y: 188, amp: 18, f: 0.04, seed: 316, col: R(0.4), top: RS(0.55), sharp: 0.3, period: 960 }); dark(r, 178, R(0.1)); } }),
-    still('STONE GUARDIAN', 'A giant face carved into the cliff long ago, moss in its cracks, its single eye staring out.', (r) => {
-      grad(r, 0, H, [[0, c('#7aa0c0')], [1, c('#d8d0c0')]]);
-      for (let x = 0; x < W; x++) { const top = 8 + Math.floor(noise1(x * 0.02, 317) * 30); for (let y = top; y < H; y++) r.set(x, y, pick([RS(0.34), RS(0.44), RS(0.54)], noise2(x * 0.05, y * 0.08, 318) + 0.1 * (noise2(x * 0.4, y * 0.4, 319) - 0.5), x, y)); }
-      for (let x = 176; x < 304; x++) { const y = 66 + Math.round(3 * Math.sin((x - 176) / 128 * Math.PI)); r.set(x, y - 6, RS(0.8)); for (let j = -5; j < 4; j++) r.set(x, y + j, j < 0 ? RS(0.66) : R(0.18)); }   // the brow
-      for (let j = -13; j <= 13; j++) for (let i = -20; i <= 20; i++) {
-        const d = (i / 20) ** 2 + (j / 13) ** 2;
-        if (d > 1) continue;
-        r.set(240 + i, 90 + j, d > 0.8 ? (j > 0 ? RS(0.7) : R(0.1)) : R(0.08));
+    still('UNDERGROUND LAKE', 'A still lake deep underground, glowing violet crystals along its far shore mirrored in the dark water.', (r) => {
+      reflected(r, (s) => {
+        caveWall(s, 0, [R(0.05), R(0.08), R(0.12)], 0.035, 350);
+        for (const [x, y] of [[60, 96], [150, 90], [250, 96], [336, 88], [424, 98]]) glow(s, x, y, 56, VIOLET_GLOW, 0.36);
+        dripstones(s, 0, { every: 14, maxLen: 44, cols: [R(0.12), R(0.18), RS(0.3)], seed: 351, period: 980 });
+        for (const [x, sz] of [[60, 28], [150, 38], [250, 30], [336, 44], [424, 26]]) cluster(s, x, 118, sz, x, AMETHYST);
+        for (let x = 0; x < W; x++) { const top = 112 + Math.round(noise1(x * 0.04, 352) * 6); for (let y = top; y < 120; y++) s.set(x, y, y === top ? RS(0.42) : R(0.14)); }
+      }, 120, 58, c('#0c0a1a'));
+      dark(r, 178, R(0.05));
+    }),
+    still('CAVE MOUTH', 'Looking out of a cave mouth at a green valley under a bright sky, violet crystals growing round the opening.', (r) => {
+      grad(r, 0, H, [[0, c('#4a88cc')], [0.55, c('#c4dcee')], [1, c('#a8c890')]]);
+      ridge(r, 0, { y: 120, amp: 30, f: 0.01, seed: 360, col: c('#8a9cb8'), top: c('#eef2f8'), sharp: 0.6 });
+      ridge(r, 0, { y: 152, amp: 14, f: 0.02, seed: 361, col: c('#5a8a4a'), top: c('#8ac070') });
+      const cx = 244, cy = 104, rx = 150, ry = 92, rim = (a) => 0.84 + 0.16 * noise1(a * 2.2 + 10, 362);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const a = Math.atan2(y - cy, x - cx) + Math.PI, d = Math.hypot((x - cx) / rx, (y - cy) / ry), n = rim(a);
+        if (d > n) r.set(x, y, d < n + 0.035 ? RS(0.55) : pick([R(0.06), R(0.1), R(0.15)], noise2(x * 0.05, y * 0.05, 363), x, y));
       }
-      ellipse(r, 240, 91, 7, 6, RS(0.5)); ellipse(r, 239, 89, 4, 3, RS(0.7)); r.set(237, 87, RS(0.9));   // the eye's stone ball
-      for (let j = 0; j < 30; j++) { const half = 3 + Math.floor(j / 5); for (let i = -half; i <= half; i++) r.set(240 + i, 104 + j, i > 0 ? R(0.22) : i < -half + 2 ? RS(0.8) : RS(0.64)); }   // the nose, lit from the left
-      for (let i = -9; i <= 9; i++) { r.set(240 + i, 134, R(0.1)); r.set(240 + i, 135, R(0.16)); }
-      for (let x = 200; x < 282; x++) { const y = 148 + Math.round(3 * Math.sin(((x - 200) / 82) * Math.PI)); r.set(x, y - 1, R(0.2)); r.set(x, y, R(0.06)); r.set(x, y + 1, R(0.06)); r.set(x, y + 2, R(0.12)); r.set(x, y + 3, RS(0.74)); }   // the mouth
-      for (const sx of [-1, 1]) for (let j = 0; j < 26; j++) for (let k = 0; k < 3; k++) r.set(240 + sx * (34 + Math.floor(j * 0.3)) + k, 104 + j, sx > 0 ? R(0.2) : RS(0.7));   // the cheeks' edges
-      for (const [x0, y0, len] of [[150, 30, 60], [320, 60, 80], [210, 150, 26], [380, 20, 40]]) { let x = x0; for (let y = y0; y < y0 + len; y++) { x += hash(y, x0, 320) > 0.5 ? 1 : -1; r.set(x, y, R(0.1)); if (hash(y, x0, 321) > 0.6) r.set(x + 1, y, c('#4a6a30')); } }   // cracks with moss
-      dark(r, 176, R(0.06));
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * TAU + 0.2, n = rim(a + Math.PI), x = Math.round(cx + Math.cos(a) * rx * (n + 0.02)), y = Math.round(cy + Math.sin(a) * ry * (n + 0.02));
+        if (y > 168) continue;
+        cluster(r, x, y, 12 + Math.floor(hash(k, 0, 364) * 12), k + 40, AMETHYST, a - Math.PI / 2 + Math.PI);   // pointing in towards the light
+      }
+      dark(r, 176, R(0.05));
+    }),
+    scrolling('GLOWWORM GROTTO', 'A grotto ceiling strung with glowworms twinkling like stars, their silk threads hanging, violet crystals glowing on the floor. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => caveWall(r, ox, [R(0.03), R(0.05), R(0.07)], 0.03, 370, 480) },
+      { rate: 0.15, period: 960, fixed: (r, ox) => {
+        for (let x = 0; x < W; x++) { const wx = x + ox, bottom = 8 + Math.floor(seamless((w) => noise1(w * 0.03, 371), wx, 960) * 18); for (let y = 0; y < bottom; y++) r.set(x, y, R(0.09)); }   // the ceiling
+        for (let i = 0; i < 180; i++) { const x = mod(Math.floor(hash(i, 0, 380) * 960) - ox, 960) - 20, y = 6 + Math.floor(hash(i, 1, 380) * 70), len = 6 + Math.floor(hash(i, 3, 380) * 24); if (x < 0 || x >= W) continue; for (let j = 1; j < len; j++) if (j % 2) r.set(x, y + j, c('#2a5a58'), 160); }   // silk threads under each glowworm
+      }, parts: [GLOWWORMS] },
+      { rate: 0.35, period: 960, fixed: (r, ox) => {
+        for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) { const k = mod(wx, 960), x = wx - ox + 40 + Math.floor(hash(k, 0, 372) * 80); glow(r, x, 160, 46, VIOLET_GLOW, 0.4); cluster(r, x, 182, 30 + Math.floor(hash(k, 1, 372) * 18), k + 3, AMETHYST); }
+        dark(r, 178, R(0.04));
+      }, parts: [glints(373, 24, (i) => [Math.floor(i % 6) * 160 + 70 + Math.floor((hash(i, 1, 373) - 0.5) * 30), 146 + Math.floor(hash(i, 2, 373) * 26)])] }),
+    still('GIANT CRYSTALS', 'A cavern crossed by crystal beams as thick as tree trunks, milky violet and white, a rope ladder hanging for scale.', (r) => {
+      caveWall(r, 0, [R(0.07), R(0.1), R(0.14)], 0.03, 375);
+      glow(r, 240, 90, 170, VIOLET_GLOW, 0.2);
+      for (const [x0, y0, len, w, ang] of [[30, 196, 270, 24, 0.95], [470, 206, 300, 30, -1.02], [190, 214, 190, 18, 0.32], [340, -6, 230, 22, 2.55], [90, -6, 160, 16, 2.25], [420, 120, 120, 12, -0.6]]) crystal(r, x0, y0, len, w, ang, MILKY);
+      for (const x of [296, 306]) vert(r, x, 0, 150, c('#8a7050'));
+      for (let y = 6; y < 150; y += 8) line(r, 296, y, 306, y + 1, c('#a88a60'));   // a rope ladder, for scale
+      dark(r, 176, R(0.05));
     }),
   ],
 };
