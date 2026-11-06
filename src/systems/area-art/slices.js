@@ -1,15 +1,17 @@
 /**
  * THE PICKED WORLD PIECES — what the game draws each slice's area with, one copy shared with the
- * review canvas (design/world-art/batch1.mjs shows these beside the variants that were not picked).
+ * review canvas (design/world-art/batch1.mjs and batch2.mjs show these beside the variants that were
+ * not picked).
  *
  * Drawn by Claude at the owner's request, 2026-11-05, and picked by the owner on the review canvas
- * the same day, slice by slice, in the words kept beside each pick below. A pick names a backdrop
+ * slice by slice, in the words kept beside each pick below: batch 1 the same day, Ice and Ground
+ * (batch 2) on 2026-11-06. A pick names a backdrop
  * (1 to 6) and a material (A, B or C: a floor, platform, spikes, boss door and exit door), and may
  * take its ground from a second material (`ground`).
  */
 import { BOSSES } from '../../data/bosses.js';
-import { material } from './materials.js';
-import { grad, fillRect, halo, ridge, beam, panels, tn, mix, c, scrolling, drift, seamless, vert, pylon, wire, mod } from './paint.js';
+import { material, BEDROCK } from './materials.js';
+import { grad, fillRect, halo, ridge, beam, panels, tn, mix, c, scrolling, drift, seamless, vert, pylon, wire, mod, stars, trees, disc } from './paint.js';
 import { Raster, hash, noise1, noise2, pick } from '../arena-art/pixels.js';
 import { W, H, FLOOR } from './kit.js';
 
@@ -350,6 +352,275 @@ const ARENA_CROWD = scrolling('ARENA CROWD', 'A packed arena in the dark: the cr
   { rate: 0.2, parts: [CROWD, FLASHES] },
   { rate: 0.2, period: 480, fixed: (r) => fillRect(r, 0, 178, W, 46, tn(strike, 0.04)) });
 
+// ── ICE: Frost Man's frozen approach ─────────────────────────────────
+
+const frost = B('frost');
+const I = (k) => tn(frost, k), SNOW = c('#ffffff'), PALE = c('#d8f8fa');
+const dark = (r, y, col) => fillRect(r, 0, y, W, H - y, col);   // the band under the floor line: what a pit shows
+const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+/*
+ * THE AURORA, redrawn at the owner's ask when they picked it (6 Nov 2026: "1a, but make the aurora
+ * even prettier"). Two curtains of light, each with a bright lower edge and rays rising from it,
+ * green turning teal and violet as they rise, the near one flaring white and pink where it is
+ * brightest. They ripple, and brightness runs along them. Around them the air glows, a few stars
+ * twinkle behind, and the far peaks catch their light.
+ *
+ * Painted once, then only placed: each curtain is a set of rays, one pixel wide, in thirteen lengths,
+ * three brightnesses and four dither patterns, and every step puts one ray in each column. Everything
+ * comes back to where it started every AURORA_LOOP steps.
+ */
+const AURORA_LOOP = 480;
+const RAY_LENS = Array.from({ length: 13 }, (_, i) => 12 + i * 4);   // 12 to 60 pixels
+const CURTAINS = [
+  // The far curtain: high, violet and fainter.
+  { y0: 62, seed: 901, folds: [[7, 330, 1.3], [3, 97, 4.1]], ripple: [2, 140, 1], run: [210, 1], len: [14, 34],
+    edge: [[], ['#a07ae8'], ['#f4c8ff', '#d8a8ff']],
+    body: [['#46368a', '#3a2e7c', '#30286c', '#28225e'], ['#7c5ad0', '#6648b8', '#523c9e', '#423284', '#362a70'], ['#b088f4', '#9068dc', '#7450c2', '#5a3ea4', '#463288']] },
+  // The near curtain: lower, green, the big one.
+  { y0: 94, seed: 902, folds: [[11, 410, 0.4], [4, 123, 2.2]], ripple: [2.5, 160, 1], run: [180, 2], len: [18, 60],
+    edge: [['#4ee0a0'], ['#e0fff0', '#9affcc'], ['#ff9ad8', '#f6fff9', '#f6fff9']],
+    body: [['#26bc8c', '#1a9884', '#16787c', '#1a5c7c', '#224474', '#283668'], ['#58ecae', '#2ed09a', '#1aac8c', '#158886', '#186888', '#244e88', '#303c7e', '#3a3276'], ['#a0ffd0', '#5cf4b4', '#2ad69e', '#1ab292', '#178c8e', '#226a94', '#38509a', '#4a3e96', '#5a3290']] },
+  // A fold of the near curtain swinging out in front of it over part of the sky, brighter and bluer.
+  { y0: 108, seed: 904, span: [210, 470], folds: [[6, 260, 2.6], [2, 71, 0.9]], ripple: [1.5, 110, 2], run: [150, 3], len: [12, 30],
+    edge: [['#6af0c0'], ['#f0fffa', '#b0fff0'], ['#ffb0e8', '#ffffff', '#e8fffa']],
+    body: [['#2cc8a8', '#1ea0a0', '#1a7c98', '#205a8c'], ['#6cf4d4', '#36dcc0', '#20b4b0', '#1a8ca8', '#226a9c', '#2e4e8e'], ['#b8fff0', '#70f8dc', '#3ae0c8', '#22b8b8', '#1c90ac', '#286c9e', '#3a4e92']] },
+];
+/** How much of a curtain shows in column x: all of it inside its span, thinning to nothing at its ends. */
+const spanOf = (C, x) => (C.span ? Math.max(0, Math.min(1, (x - C.span[0]) / 70, (C.span[1] - x) / 70)) : 1);
+/** Where a curtain's lower edge is in column x at step t, how long its ray is there, and how bright. */
+function curtainAt(C, x, t) {
+  const w = (TAU * t) / AURORA_LOOP;
+  let y = C.y0;
+  for (const [a, per, p] of C.folds) y += a * Math.sin((TAU * x) / per + p);
+  y += C.ripple[0] * Math.sin((TAU * x) / C.ripple[1] - w * C.ripple[2]);
+  const rays = noise1(x * 0.45, C.seed), tall = 0.5 + 0.5 * Math.sin((TAU * x) / 300 + C.seed);
+  const run = 0.5 + 0.5 * Math.sin((TAU * x) / C.run[0] - w * C.run[1] + C.seed);
+  const k = spanOf(C, x), b = (0.55 * run + 0.45 * rays) * (0.4 + 0.6 * k), level = b > 0.66 ? 2 : b > 0.36 ? 1 : 0;
+  const len = (C.len[0] + (C.len[1] - C.len[0]) * (0.2 + 0.5 * tall + 0.3 * rays)) * (0.85 + 0.25 * run) * (0.3 + 0.7 * k);
+  return [Math.round(y), Math.max(0, Math.min(RAY_LENS.length - 1, Math.round((len - RAY_LENS[0]) / 4))), level];
+}
+/** One ray: its lower edge at the bottom, its upper half thinning out to nothing. */
+function auroraRay(C, li, level, v) {
+  const L = RAY_LENS[li], r = new Raster(1, L), edge = C.edge[level], body = C.body[level];
+  for (let j = 0; j < L; j++) {
+    const f = j / L, keep = f < 0.5 ? 1 : 1 - (f - 0.5) / 0.5;
+    if (BAYER4[(L - 1 - j) & 3][v] / 16 >= keep * 0.98) continue;
+    const col = j < edge.length ? edge[j] : body[Math.min(body.length - 1, Math.floor(((j - edge.length) / (L - edge.length)) * body.length))];
+    r.set(0, L - 1 - j, c(col));
+  }
+  return r;
+}
+const AURORA = CURTAINS.map((C) => ({
+  pieces() {
+    const out = [];
+    for (let li = 0; li < RAY_LENS.length; li++) for (let level = 0; level < 3; level++) for (let v = 0; v < 4; v++) out.push([`${li}:${level}:${v}`, auroraRay(C, li, level, v)]);
+    return out;
+  },
+  at(ox, t) {
+    const out = [];
+    for (let x = 0; x < W; x++) {
+      if (hash(x, 0, C.seed) >= spanOf(C, x) ** 2) continue;   // a fold's ends thin out column by column
+      const [y, li, level] = curtainAt(C, x, t);
+      out.push([`${li}:${level}:${x & 3}`, x, y - RAY_LENS[li] + 1]);
+    }
+    return out;
+  },
+}));
+/** The air glowing round each curtain, in three dithered steps, painted into the sky. */
+function auroraGlow(r) {
+  for (const [C, col, up, down] of [[CURTAINS[0], c('#3a2c7a'), 34, 8], [CURTAINS[1], c('#17866e'), 50, 10], [CURTAINS[2], c('#1a8a8a'), 30, 8]]) {
+    for (let x = 0; x < W; x++) {
+      const k = spanOf(C, x);
+      if (!k) continue;
+      let yb = C.y0;
+      for (const [a, per, p] of C.folds) yb += a * Math.sin((TAU * x) / per + p);
+      for (let y = Math.max(0, Math.floor(yb - up)); y < yb + down; y++) {
+        const d = y < yb ? (yb - y) / up : (y - yb) / down, q = Math.floor(k * (1 - d) ** 2 * 4 + BAYER4[y & 3][x & 3] / 16);
+        if (q > 0) r.set(x, y, col, 20 * q);
+      }
+    }
+  }
+}
+/** Stars that twinkle behind the curtains: mostly a dim point, now and then a flash of a cross. */
+const TWINKLE = {
+  pieces() {
+    const dim = new Raster(1, 1), lit = new Raster(1, 1), cross = new Raster(3, 3), big = new Raster(5, 5);
+    dim.set(0, 0, c('#7a8cb0')); lit.set(0, 0, SNOW);
+    for (const [x, y] of [[1, 0], [0, 1], [2, 1], [1, 2]]) cross.set(x, y, c('#9ab8ff'));
+    cross.set(1, 1, SNOW);
+    for (const [x, y, k] of [[2, 0, 1], [2, 1, 0], [0, 2, 1], [1, 2, 0], [3, 2, 0], [4, 2, 1], [2, 3, 0], [2, 4, 1]]) big.set(x, y, c(k ? '#5a70b0' : '#b8d0ff'));
+    big.set(2, 2, SNOW);
+    return [['dim', dim], ['lit', lit], ['cross', cross], ['big', big]];
+  },
+  at(ox, t) {
+    const out = [];
+    for (let i = 0; i < 18; i++) {
+      const x = Math.floor(hash(i, 0, 903) * W), y = 4 + Math.floor(hash(i, 1, 903) * 100);
+      const u = (hash(i, 2, 903) + (t / AURORA_LOOP) * (1 + (i % 3))) % 1;
+      const s = u < 0.03 ? 'big' : u < 0.08 ? 'cross' : u < 0.2 ? 'lit' : 'dim', o = s === 'big' ? 2 : s === 'cross' ? 1 : 0;
+      out.push([s, x - o, y - o]);
+    }
+    return out;
+  },
+};
+
+const FROST_A = ['A', 'PACKED SNOW', 'Snow over frozen earth with drifts along the edge, icicle spikes and an arch of ice blocks.',
+      material('turf', { deep: '#14202a', dark: '#2a3e4c', base: '#3e5868', mid: '#4a6676', light: '#5e7c8c', hi: '#a8d0dc', cap0: '#ffffff', cap1: '#c8eef4', grassDark: '#9ad0dc', root: '#2a3e4c', flower: '#ffffff', void: '#0a1218', thi: '#ffffff', tlight: '#c8f4f8', tdark: '#6ab8c8' }, { flowers: true, spikes: 'shards', door: 'arch' })];
+const AURORA_NIGHT = scrolling('AURORA NIGHT', 'Curtains of aurora rippling over snowy peaks and pines, light running along them, stars twinkling, snow drifting down. Scrolls in three layers.', AURORA_LOOP,
+      { rate: 0, fixed: (r) => {
+        grad(r, 0, H, [[0, c('#04060e')], [0.6, I(0.14)], [1, I(0.06)]]);
+        stars(r, 201, 90, 120, I(0.4), SNOW);
+        auroraGlow(r);
+      }, parts: [TWINKLE, ...AURORA] },
+      // The far peaks catch the aurora's light along their tops.
+      { rate: 0.1, period: 960, fixed: (r, ox) => ridge(r, ox, { y: 150, amp: 40, f: 0.012, seed: 202, col: I(0.26), top: c('#b8f4dc'), sharp: 0.7, period: 960 }),
+        parts: [drift(203, 70, [PALE, I(0.5)], 176, 0.15)] },
+      { rate: 0.3, period: 960, fixed: (r, ox) => { trees(r, ox, { y: 182, minH: 30, maxH: 56, col: I(0.06), edge: I(0.22), seed: 204, every: 24, period: 960 }); dark(r, 178, I(0.04)); for (let x = 0; x < W; x++) r.set(x, 178, PALE); },
+        parts: [drift(205, 40, [SNOW, PALE], 176, 0.3)] });
+
+// ── GROUND: Quake Man's desert ───────────────────────────────────────
+
+const quake = B('quake');
+const Q = (k) => tn(quake, k), S = (k) => tn(quake, k, 'secondary');
+/*
+ * THE DESERT, redrawn at the owner's ask when they picked it (6 Nov 2026: "1b add heat waves and
+ * other improvements to the desert feel"). A bleached sky and a white-hot sun with its glare; dunes
+ * with sharp crests, a sunlit windward face crossed by wind ripples and a steep slip face in shadow;
+ * heat waves making the far dunes and a mirage along the horizon shimmer; sand streaming off the
+ * near crests in the wind; two vultures circling high up.
+ *
+ * Painted once, then only placed. The heat waves are rows of the far dunes' own strip, each painted
+ * once and slid a pixel or two sideways every step, the way the Fire room's heat shimmer is.
+ * Everything comes back to where it started every DESERT_LOOP steps.
+ */
+const DESERT_LOOP = 480, CREST = 0.72;
+/** Dunes across one period: each a long windward rise to a sharp crest, then a short steep slip face. */
+function duneCells(period, n, seed) {
+  const ws = Array.from({ length: n }, (_, i) => 0.7 + 0.6 * hash(i, 0, seed)), sum = ws.reduce((a, b) => a + b, 0);
+  let x = 0;
+  return ws.map((w, i) => { const k = { x, w: (w / sum) * period, h: 0.55 + 0.45 * hash(i, 1, seed) }; x += k.w; return k; });
+}
+/** One dune's height at wx: a windward rise rounding into the crest, then the slip face, steep under the brink and easing out at its foot. */
+function duneAt(cells, period, wx) {
+  const m = mod(wx, period), k = cells.find((e) => m < e.x + e.w) || cells[cells.length - 1], u = (m - k.x) / k.w;
+  const lit = u < CREST, v = lit ? u / CREST : (u - CREST) / (1 - CREST);
+  return { s: (lit ? Math.sin((Math.PI / 2) * v) ** 1.5 : (1 - v) ** 1.7) * k.h, lit, v, h: k.h };
+}
+const DUNES_BACK = duneCells(960, 9, 915), DUNES_FAR = duneCells(960, 6, 911), DUNES_NEAR = duneCells(960, 4, 912);
+/** A range of dunes: the sunlit face crossed by wind ripples and brightest near the crest, the slip face in shadow. */
+function dunes(r, ox, cells, base, amp, P) {
+  for (let x = 0; x < W; x++) {
+    const wx = x + ox, d = duneAt(cells, 960, wx), top = Math.round(base - d.s * amp);
+    const shadow = d.lit ? 0 : d.h * amp * (1 - d.v) ** 0.9 * 0.9 + 3;   // reaches down to the dune's foot under the brink
+    for (let y = Math.max(0, top); y < H; y++) {
+      const depth = y - top, dz = BAYER4[y & 3][mod(wx, 4)] / 16;
+      let col;
+      if (!d.lit) col = depth < shadow - 3 * dz ? (depth === 0 ? P.edge : P.shade) : P.mid;
+      else if (depth === 0) col = d.v > 0.75 ? P.crest : P.lit;
+      else if (depth < 22 && mod(depth + Math.round(2 * Math.sin(wx * 0.09) + 3 * Math.sin(wx * 0.031)), 5) === 0) col = P.ripple;
+      else col = depth < (6 + 14 * d.v) + 3 * Math.sin(wx * 0.05) + 4 * dz ? P.lit : P.mid;
+      r.set(x, y, col);
+    }
+  }
+}
+const SKY_HAZE = c('#f6e4bc');
+const haze = (P, k) => Object.fromEntries(Object.entries(P).map(([n, col]) => [n, mix(col, SKY_HAZE, k)]));
+const NEAR_P = { crest: mix(S(0.95), c('#ffffff'), 0.35), lit: S(0.85), ripple: S(0.66), mid: Q(0.66), shade: Q(0.42), edge: Q(0.5) };
+const FAR_P = haze(NEAR_P, 0.3), BACK_P = haze(NEAR_P, 0.5);
+/** The mirage: the hot air along the horizon mirrors the sky, a broken pale band that looks like water. */
+function mirage(r, ox) {
+  for (let y = 162; y < 180; y++) for (let x = 0; x < W; x++) {
+    const n = seamless((w) => noise1(w * 0.05, 913 + y), x + ox, 960), f = (y - 162) / 18;
+    if (n > 0.78 - 0.4 * Math.sin(f * Math.PI)) r.set(x, y, y & 1 ? c('#ece6d0') : c('#d0dcd6'));
+  }
+}
+const farDesert = (r, ox) => { dunes(r, ox, DUNES_BACK, 156, 22, BACK_P); dunes(r, ox, DUNES_FAR, 168, 30, FAR_P); mirage(r, ox); };
+/**
+ * Heat waves over a layer: its rows from y0 to y1 are left out of its strip and drawn as their own
+ * pictures, each slid sideways by a wobble that grows towards the ground.
+ */
+function heatRows(paint, period, y0, y1, amp) {
+  return {
+    fixed: (r, ox) => paint({ set: (x, y, col, a) => { if (y < y0 || y >= y1) r.set(x, y, col, a); } }, ox),
+    part: {
+      pieces() {
+        const full = new Raster(period, H), out = [];
+        for (let ox = 0; ox < period; ox += W) paint({ set: (x, y, col, a) => { if (x >= 0 && x < W) full.set(x + ox, y, col, a); } }, ox);
+        for (let y = y0; y < y1; y++) {
+          const row = new Raster(period, 1);
+          for (let x = 0; x < period; x++) { const i = (y * period + x) * 4; if (full.d[i + 3]) row.set(x, 0, [full.d[i], full.d[i + 1], full.d[i + 2]], full.d[i + 3]); }
+          out.push([`h${y}`, row]);
+        }
+        return out;
+      },
+      at(ox, t) {
+        const out = [], w = (TAU * t) / DESERT_LOOP, x0 = -mod(ox, period);
+        for (let y = y0; y < y1; y++) {
+          const k = ((y - y0) / (y1 - y0)) ** 1.2, dx = Math.round(amp * k * (0.7 * Math.sin(y * 0.6 + w * 10) + 0.3 * Math.sin(y * 0.23 - w * 7)));
+          for (const x of [x0 + dx - period, x0 + dx, x0 + dx + period]) if (x < W && x + period > 0) out.push([`h${y}`, x, y]);
+        }
+        return out;
+      },
+    },
+  };
+}
+const FAR_HEAT = heatRows(farDesert, 960, 120, 180, 2.8);
+/** Sand streaming off each near crest in the wind, falling away down its slip face. */
+const SAND_STREAM = {
+  pieces: () => [S(0.95), S(0.8), mix(S(0.95), c('#ffffff'), 0.4)].map((col, k) => { const d = new Raster(1, 1); d.set(0, 0, col); return [`s${k}`, d]; }),
+  at(ox, t) {
+    const out = [];
+    for (const [n, k] of DUNES_NEAR.entries()) {
+      const cy = Math.round(198 - k.h * 58);
+      for (const sx of [mod(k.x + k.w * CREST - ox, 960), mod(k.x + k.w * CREST - ox, 960) - 960]) {
+        if (sx < -40 || sx > W) continue;
+        for (let i = 0; i < 22; i++) {
+          const u = (hash(i, n, 914) + t / 120) % 1;
+          if (u > 0.7 && hash(i, n + 9, 914) < (u - 0.7) * 3.3) continue;   // thinning out as it blows away
+          out.push([`s${i % 3}`, Math.round(sx + 1 + u * 40), Math.round(cy - 1 - hash(i, n + 4, 914) * 3 + u * u * 12 + Math.sin(u * 9 + i))]);
+        }
+      }
+    }
+    return out;
+  },
+};
+/** Two vultures circling high over the dunes, mostly gliding, now and then a beat of the wings. */
+const VULTURES = {
+  pieces() {
+    const glide = new Raster(9, 3), beat = new Raster(9, 3), col = Q(0.1);
+    for (const [x, y] of [[0, 0], [8, 0], [1, 1], [2, 1], [6, 1], [7, 1], [3, 2], [4, 2], [5, 2]]) glide.set(x, y, col);
+    for (const [x, y] of [[3, 0], [4, 0], [5, 0], [1, 1], [2, 1], [6, 1], [7, 1], [0, 2], [8, 2]]) beat.set(x, y, col);
+    return [['glide', glide], ['beat', beat]];
+  },
+  at(ox, t) {
+    return [[336, 52, 34, 9, 0], [372, 40, 22, 6, 2.4]].map(([cx, cy, rx, ry, p], i) => {
+      const a = (TAU * t) / DESERT_LOOP + p, flap = mod(Math.floor(t / 6) + i * 5, 16) === 0;
+      return [flap ? 'beat' : 'glide', Math.round(cx + Math.cos(a) * rx) - 4, Math.round(cy + Math.sin(a) * ry) - 1];
+    });
+  },
+};
+/** The sun's glare: rings of light, each step a little fainter, dithered between. */
+function glare(r, cx, cy, rad, col, strength) {
+  for (let y = cy - rad; y <= cy + rad; y++) for (let x = cx - rad; x <= cx + rad; x++) {
+    const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy) / rad;
+    if (d > 1) continue;
+    const q = Math.floor((1 - d) ** 2 * 4 + BAYER4[mod(y, 4)][mod(x, 4)] / 16);
+    if (q > 0) r.set(x, y, col, Math.round(strength * 255 * q / 4));
+  }
+}
+
+const QUAKE_B = ['B', 'BEDROCK', 'Picked in the first round: layered bedrock with a sandy edge, a rock-slab platform, stone shards and a stone arch.', BEDROCK];
+const DESERT_DUNES = scrolling('DESERT DUNES', 'Dunes with sharp crests under a white-hot sun, heat waves and a mirage shimmering on the horizon, sand blowing off the crests, vultures circling. Scrolls in three layers.', DESERT_LOOP,
+      { rate: 0, fixed: (r) => {
+        grad(r, 0, H, [[0, c('#9cbed2')], [0.3, c('#dcdcd0')], [0.62, SKY_HAZE], [1, SKY_HAZE]]);
+        glare(r, 116, 42, 76, c('#ffffff'), 0.5);
+        disc(r, 116, 42, 13, [c('#ffffff'), c('#ffffff'), c('#fffbea')]);
+      }, parts: [VULTURES] },
+      { rate: 0.1, period: 960, fixed: FAR_HEAT.fixed, parts: [FAR_HEAT.part] },
+      { rate: 0.3, period: 960, fixed: (r, ox) => { dunes(r, ox, DUNES_NEAR, 198, 58, NEAR_P); dark(r, 180, Q(0.08)); },
+        parts: [SAND_STREAM] });
+
 /** Each picked slice: the owner's pick, the materials it uses, and its backdrop. */
 export const PICKED = {
   proto: {
@@ -389,6 +660,19 @@ export const PICKED = {
     pick: { backdrop: 1, material: 'B' },
     materials: { B: FIGHTING_B },
     backdrop: ARENA_CROWD,
+  },
+  frost: {
+    // The owner, 6 Nov 2026: "1a, but make the aurora even prettier"
+    pick: { backdrop: 1, material: 'A' },
+    materials: { A: FROST_A },
+    backdrop: AURORA_NIGHT,
+  },
+  quake: {
+    // The owner picked the bedrock in the first round, 5 Nov 2026: "the bedrock one for Ground"; and
+    // the backdrop on 6 Nov 2026: "1b add heat waves and other improvements to the desert feel"
+    pick: { backdrop: 1, material: 'B' },
+    materials: { B: QUAKE_B },
+    backdrop: DESERT_DUNES,
   },
 };
 

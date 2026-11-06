@@ -682,9 +682,10 @@ backdrops, consider a layered parallax effect"; Steel gets door variants for "bo
 work goes into the game "pushed in batches of ~6 slices" (the batches are in the README).
 **Batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting) was picked and is in the game**, 5 Nov 2026;
 see *The areas' world pieces* below.
-**Batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug) is on the canvas for picking**, 5 Nov 2026; Ground
-keeps its first-round bedrock and needs only a backdrop. Ice and Ground were picked on 6 Nov 2026, each with its backdrop
-redrawn as asked.
+**From batch 2, Ice and Ground were picked and are in the game**, 6 Nov 2026, each with its backdrop
+redrawn as asked (Ground on its first-round bedrock). **Poison, Flying, Psychic and Bug are paused by
+the owner**, in their words: "I'll need to pause on Flying, psychic, bug and poison because artistically they could go many ways, as you see in poison: toxins, corrosion, radiation, smog, sewage... too many angles that would fundamentally change the weapon/boss/arena hazards, backdrop". Draw nothing more for those four until the owner
+settles each one's direction.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -730,6 +731,7 @@ Claude or a generator made:
 | World pieces for each slice, batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting), variants for review — six backdrops and three materials (floor, platform, spikes, boss door, exit door) per slice | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch1.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | World pieces in the game, batch 1 — each slice's picked backdrop and material, redrawn where the owner asked (Fire's embers, obsidian spikes and arch; Water's subsea lab; Electric's batteries and their sparks; Fighting's animated crowd; Grass's grove scrolling) | room art, drawn in code | Claude | 2026-11-05 | `src/systems/area-art/slices.js` |
 | World pieces for each slice, batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug), variants for review — six backdrops per slice and three materials (floor, platform, spikes, boss door, exit door), Ground on its first-round bedrock | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch2.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
+| World pieces in the game, batch 2 — Ice's and Ground's picked backdrop and material, redrawn where the owner asked (Ice's aurora; Ground's desert with heat waves, a mirage, blowing sand and vultures), and the first round's bedrock under Ground | room art, drawn in code | Claude | 2026-11-06 | `src/systems/area-art/slices.js`, bedrock in `src/systems/area-art/materials.js` (`BEDROCK`) |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
@@ -896,8 +898,8 @@ ground and pits, platforms, spike beds and boss door, and in that boss's room th
 owner's answer, 5 Nov 2026). A slice with nothing picked keeps the plain shapes `GameScene.draw`
 always drew. **`slices.js` holds each pick in the owner's own words**, with the materials and the
 backdrop it uses; a pick can take its ground from a second material (Grass: B on A's ground).
-`design/world-art/batch1.mjs` shows the same code beside the variants that were not picked, so
-the canvas and the game paint from one copy.
+`design/world-art/batch1.mjs` and `batch2.mjs` show the same code beside the variants that were not
+picked, so the canvas and the game paint from one copy.
 
 **Painted once, then only placed**, like the rooms. A backdrop layer is `fixed` (painted once into
 a strip `period` pixels wide that repeats without a seam, scrolling at its `rate`) plus `parts`, the

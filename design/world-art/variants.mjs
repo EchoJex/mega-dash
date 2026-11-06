@@ -20,6 +20,7 @@ import { Raster, hex, pick, hash, noise1, noise2, OL } from '../../src/systems/a
 import { BOSSES } from '../../src/data/bosses.js';
 import { themeFor } from '../../src/systems/arena.js';
 import { W, H, FLOOR, rect, blit, inTooth, paintDoor } from '../../src/systems/area-art/kit.js';
+import { BEDROCK as B, BEDROCK_COLOURS as B_ } from '../../src/systems/area-art/materials.js';
 
 export { W, H, FLOOR };
 export const PADS = 199;
@@ -123,87 +124,6 @@ const A = {
     // The lamp: cyan for a boss, white for the way out.
     const lamp = gold ? [c('#fffbe6'), c('#ffffff')] : [c('#5cadd5'), c('#d8f6ff')];
     rect(d, 6, 4, 4, 4, A_.deep); rect(d, 7, 5, 2, 2, lamp[0]); d.set(7, 5, lamp[1]);
-    paintDoor(r, d, x, y, kind);
-  },
-};
-
-// ── B: bedrock — sunlit stone over strata ─────────────────────────────
-
-const B_ = {
-  crack: c('#3a3026'), dark: c('#5a4a38'), base: c('#6e5c45'), mid: c('#7a6750'), light: c('#86735a'),
-  lip: c('#4a3c2c'), cap0: c('#efe3bc'), cap1: c('#c2a874'),
-  shard: [c('#f1e9da'), c('#cdbfa6'), c('#968871'), c('#6b5f4e')],
-};
-const B = {
-  name: 'B',
-  check: { ground: '#6e5c45', cap: '#c2a874' },
-  ground(r, x1, x2) {
-    const rp = [B_.dark, B_.base, B_.mid, B_.light];
-    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
-      let col;
-      if (y === FLOOR) col = hash(x, 1, 5) < 0.18 ? B_.cap1 : B_.cap0;
-      else if (y === FLOOR + 1) col = B_.cap1;
-      else if (y === FLOOR + 2 || (y === FLOOR + 3 && hash(x >> 1, 2, 9) < 0.3)) col = B_.lip;
-      else {
-        const band = Math.sin((y + 5 * noise1(x * 0.045, 3)) * 0.75);
-        const v = 0.48 + 0.22 * band + 0.25 * (noise2(x * 0.18, y * 0.35, 7) - 0.5);
-        col = pick(rp, Math.max(0.12, v), x, y);
-        if (hash(x >> 2, y >> 2, 11) > 0.94 && ((x & 3) < 2) && ((y & 3) === 1)) col = B_.light;   // pebbles
-        if (hash(x >> 2, y >> 2, 11) > 0.94 && ((x & 3) < 2) && ((y & 3) === 2)) col = B_.crack;
-      }
-      if (x === x1 && y > FLOOR + 1) col = B_.light;
-      if (x === x2 - 1 && y > FLOOR + 1) col = B_.crack;
-      r.set(x, y, col);
-    }
-  },
-  platform(r, x, y, w) {
-    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
-      if ((i === 0 || i === w - 1) && (j === 0 || j === 4)) continue;   // rounded corners
-      let col = [B_.cap0, B_.cap1, B_.mid, B_.base, B_.dark][j];
-      if (j >= 2 && j <= 3) col = pick([B_.dark, B_.base, B_.mid], 0.45 + 0.3 * (noise2((x + i) * 0.3, j, 4) - 0.5), x + i, y + j);
-      r.set(x + i, y + j, col);
-    }
-    // Crumbs of rock hanging under the slab: drawing only, below its 5-pixel box.
-    for (let i = 3; i < w - 3; i++) {
-      const k = hash(x + i, y, 21);
-      if (k > 0.72) r.set(x + i, y + 5, B_.crack);
-      if (k > 0.9) r.set(x + i, y + 6, B_.crack);
-    }
-  },
-  spikes(r, x, w) {
-    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 5)), tw = w / n;
-    for (let i = 0; i < n; i++) {
-      const hgt = 5 + Math.floor(hash(i, Math.floor(x), 31) * 3);   // shards of 5 to 7
-      for (let py = 7 - hgt; py < 7; py++) for (let px = Math.floor(i * tw); px < Math.ceil((i + 1) * tw); px++) {
-        if (!inTooth(px, py, i * tw, tw, 7 - hgt, hgt)) continue;
-        const left = px + 0.5 < i * tw + tw / 2;
-        t.set(px + 1, py + 1, py === 6 ? B_.shard[3] : left ? B_.shard[py < 7 - hgt + 2 ? 0 : 1] : B_.shard[2]);
-      }
-    }
-    t.outline(ol);
-    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
-  },
-  door(r, x, kind) {
-    const y = FLOOR - 28, d = new Raster(16, 28), gold = kind === 'exit';
-    const stones = [B_.dark, B_.base, B_.mid, B_.light];
-    for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
-      // A round-topped arch: outside the curve stays clear.
-      const dx = i + 0.5 - 8, dy = j + 0.5 - 8;
-      if (j < 8 && dx * dx + dy * dy > 64) continue;
-      const inner = j >= 3 && i >= 3 && i <= 12 && (j >= 8 || (dx * dx + dy * dy) <= 25);
-      if (inner) {
-        const t = (j - 3) / 24;
-        d.set(i, j, gold ? pick([c('#c9a21e'), c('#f5d328'), c('#fff3b0')], 0.25 + 0.7 * t, i, j)
-          : pick([c('#0a0a12'), c('#0e2236'), c('#1c4a66')], 0.15 + 0.8 * t, i, j));
-      } else {
-        const mortar = (j % 5 === 0) || ((i + (Math.floor(j / 5) % 2) * 2) % 4 === 0 && j > 8);
-        d.set(i, j, mortar ? B_.crack : stones[1 + Math.floor(hash(i >> 1, Math.floor(j / 5), 41) * 3)]);
-      }
-    }
-    if (!gold) { // a cyan rune in the dark: two chevrons over a bar
-      for (const [i, j] of [[7, 10], [8, 10], [6, 11], [9, 11], [7, 14], [8, 14], [6, 15], [9, 15], [7, 18], [8, 18], [7, 19], [8, 19], [7, 20], [8, 20]]) d.set(i, j, c('#5cadd5'));
-      d.set(7, 18, c('#d8f6ff'));
-    }
     paintDoor(r, d, x, y, kind);
   },
 };

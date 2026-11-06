@@ -607,6 +607,93 @@ function comb(P, o = {}) {
   };
 }
 
+// ── Bedrock: the first round's material B, the owner's pick for Ground ────
+// The owner, 5 Nov 2026: "the bedrock one for Ground". Moved here from design/world-art/variants.mjs,
+// which now draws the first round's boards from this copy.
+
+/** The bedrock's door, 16 by 28: a round-topped stone arch, dark with a cyan rune for a boss, gold for the way out. */
+function bedrockDoor(kind) {
+  const d = new Raster(16, 28), gold = kind === 'exit';
+  const stones = [BEDROCK_COLOURS.dark, BEDROCK_COLOURS.base, BEDROCK_COLOURS.mid, BEDROCK_COLOURS.light];
+  for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
+    // A round-topped arch: outside the curve stays clear.
+    const dx = i + 0.5 - 8, dy = j + 0.5 - 8;
+    if (j < 8 && dx * dx + dy * dy > 64) continue;
+    const inner = j >= 3 && i >= 3 && i <= 12 && (j >= 8 || (dx * dx + dy * dy) <= 25);
+    if (inner) {
+      const t = (j - 3) / 24;
+      d.set(i, j, gold ? pick([hex('#c9a21e'), hex('#f5d328'), hex('#fff3b0')], 0.25 + 0.7 * t, i, j)
+        : pick([hex('#0a0a12'), hex('#0e2236'), hex('#1c4a66')], 0.15 + 0.8 * t, i, j));
+    } else {
+      const mortar = (j % 5 === 0) || ((i + (Math.floor(j / 5) % 2) * 2) % 4 === 0 && j > 8);
+      d.set(i, j, mortar ? BEDROCK_COLOURS.crack : stones[1 + Math.floor(hash(i >> 1, Math.floor(j / 5), 41) * 3)]);
+    }
+  }
+  if (!gold) { // a cyan rune in the dark: two chevrons over a bar
+    for (const [i, j] of [[7, 10], [8, 10], [6, 11], [9, 11], [7, 14], [8, 14], [6, 15], [9, 15], [7, 18], [8, 18], [7, 19], [8, 19], [7, 20], [8, 20]]) d.set(i, j, hex('#5cadd5'));
+    d.set(7, 18, hex('#d8f6ff'));
+  }
+  return d;
+}
+
+export const BEDROCK_COLOURS = {
+  crack: hex('#3a3026'), dark: hex('#5a4a38'), base: hex('#6e5c45'), mid: hex('#7a6750'), light: hex('#86735a'),
+  lip: hex('#4a3c2c'), cap0: hex('#efe3bc'), cap1: hex('#c2a874'),
+  shard: [hex('#f1e9da'), hex('#cdbfa6'), hex('#968871'), hex('#6b5f4e')],
+};
+export const BEDROCK = {
+  name: 'B',
+  check: { ground: '#6e5c45', cap: '#c2a874' },
+  ground(r, x1, x2) {
+    const rp = [BEDROCK_COLOURS.dark, BEDROCK_COLOURS.base, BEDROCK_COLOURS.mid, BEDROCK_COLOURS.light];
+    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
+      let col;
+      if (y === FLOOR) col = hash(x, 1, 5) < 0.18 ? BEDROCK_COLOURS.cap1 : BEDROCK_COLOURS.cap0;
+      else if (y === FLOOR + 1) col = BEDROCK_COLOURS.cap1;
+      else if (y === FLOOR + 2 || (y === FLOOR + 3 && hash(x >> 1, 2, 9) < 0.3)) col = BEDROCK_COLOURS.lip;
+      else {
+        const band = Math.sin((y + 5 * noise1(x * 0.045, 3)) * 0.75);
+        const v = 0.48 + 0.22 * band + 0.25 * (noise2(x * 0.18, y * 0.35, 7) - 0.5);
+        col = pick(rp, Math.max(0.12, v), x, y);
+        if (hash(x >> 2, y >> 2, 11) > 0.94 && ((x & 3) < 2) && ((y & 3) === 1)) col = BEDROCK_COLOURS.light;   // pebbles
+        if (hash(x >> 2, y >> 2, 11) > 0.94 && ((x & 3) < 2) && ((y & 3) === 2)) col = BEDROCK_COLOURS.crack;
+      }
+      if (x === x1 && y > FLOOR + 1) col = BEDROCK_COLOURS.light;
+      if (x === x2 - 1 && y > FLOOR + 1) col = BEDROCK_COLOURS.crack;
+      r.set(x, y, col);
+    }
+  },
+  platform(r, x, y, w) {
+    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
+      if ((i === 0 || i === w - 1) && (j === 0 || j === 4)) continue;   // rounded corners
+      let col = [BEDROCK_COLOURS.cap0, BEDROCK_COLOURS.cap1, BEDROCK_COLOURS.mid, BEDROCK_COLOURS.base, BEDROCK_COLOURS.dark][j];
+      if (j >= 2 && j <= 3) col = pick([BEDROCK_COLOURS.dark, BEDROCK_COLOURS.base, BEDROCK_COLOURS.mid], 0.45 + 0.3 * (noise2((x + i) * 0.3, j, 4) - 0.5), x + i, y + j);
+      r.set(x + i, y + j, col);
+    }
+    // Crumbs of rock hanging under the slab: drawing only, below its 5-pixel box.
+    for (let i = 3; i < w - 3; i++) {
+      const k = hash(x + i, y, 21);
+      if (k > 0.72) r.set(x + i, y + 5, BEDROCK_COLOURS.crack);
+      if (k > 0.9) r.set(x + i, y + 6, BEDROCK_COLOURS.crack);
+    }
+  },
+  spikes(r, x, w) {
+    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 5)), tw = w / n;
+    for (let i = 0; i < n; i++) {
+      const hgt = 5 + Math.floor(hash(i, Math.floor(x), 31) * 3);   // shards of 5 to 7
+      for (let py = 7 - hgt; py < 7; py++) for (let px = Math.floor(i * tw); px < Math.ceil((i + 1) * tw); px++) {
+        if (!inTooth(px, py, i * tw, tw, 7 - hgt, hgt)) continue;
+        const left = px + 0.5 < i * tw + tw / 2;
+        t.set(px + 1, py + 1, py === 6 ? BEDROCK_COLOURS.shard[3] : left ? BEDROCK_COLOURS.shard[py < 7 - hgt + 2 ? 0 : 1] : BEDROCK_COLOURS.shard[2]);
+      }
+    }
+    t.outline(ol);
+    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
+  },
+  door: (r, x, kind) => paintDoor(r, bedrockDoor(kind), x, FLOOR - 28, kind),
+  doorPicture: (kind) => bedrockDoor(kind),
+};
+
 export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, tiles, comb };
 
 /** A material: its kind, its palette, its options; `check` names the two colours the contrast rule reads. */

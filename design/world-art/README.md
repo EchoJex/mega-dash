@@ -17,8 +17,8 @@ board (one default look for now). The first-round boards below stay as a record.
 | Ground | **PICKED: B, bedrock** |
 | Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
 | Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
-| Ice, Ground | batch 2: **picked**, not in the game yet |
-| Poison, Flying, Psychic, Bug | batch 2: three variants each, **on the canvas, not picked yet** |
+| Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026) |
+| Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
 | Rock, Ghost, Dark | three variants each, still to draw, in batch 3 |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
@@ -89,11 +89,11 @@ all six of its slice's backdrops.
 | slice | backdrops | materials | status |
 |---|---|---|---|
 | Ice | 1 aurora night (moving) · 2 glacier wall · 3 frozen lake · 4 ice cave · 5 blizzard peaks (moving) · 6 frozen works | A packed snow · B glacier ice · C frosted steel | **PICKED: backdrop 1, changed, and material A** (owner, 6 Nov 2026), in their words below |
-| Poison | 1 toxic swamp (moving) · 2 chemical plant · 3 acid rain · 4 mushroom grove · 5 sewer tunnel (moving) · 6 waste dump | A toxic grate · B sewer brick · C corroded plate | not picked yet |
+| Poison | 1 toxic swamp (moving) · 2 chemical plant · 3 acid rain · 4 mushroom grove · 5 sewer tunnel (moving) · 6 waste dump | A toxic grate · B sewer brick · C corroded plate | **paused** (owner, 6 Nov 2026) |
 | Ground | 1 desert dunes (moving) · 2 red canyon · 3 quarry · 4 mesa sunset · 5 mine shaft (moving) · 6 fossil cliff | B bedrock (picked in the first round) | **PICKED: backdrop 1, changed** (owner, 6 Nov 2026), in their words below |
-| Flying | 1 above the clouds (moving) · 2 floating islands · 3 wind farm · 4 balloon festival · 5 airship docks (moving) · 6 cliff nests | A airship deck · B sky temple · C turbine walkway | not picked yet |
-| Psychic | 1 cosmic void (moving) · 2 crystal temple · 3 the watching eye · 4 mirror hall · 5 mind waves (moving) · 6 observation lab | A crystal tiles · B observation floor · C dreamstone | not picked yet |
-| Bug | 1 giant hive (moving) · 2 leaf canopy · 3 ant tunnels (moving) · 4 web forest · 5 termite mounds · 6 shell cavern | A honeycomb · B chitin plates · C rotting log | not picked yet |
+| Flying | 1 above the clouds (moving) · 2 floating islands · 3 wind farm · 4 balloon festival · 5 airship docks (moving) · 6 cliff nests | A airship deck · B sky temple · C turbine walkway | **paused** (owner, 6 Nov 2026) |
+| Psychic | 1 cosmic void (moving) · 2 crystal temple · 3 the watching eye · 4 mirror hall · 5 mind waves (moving) · 6 observation lab | A crystal tiles · B observation floor · C dreamstone | **paused** (owner, 6 Nov 2026) |
+| Bug | 1 giant hive (moving) · 2 leaf canopy · 3 ant tunnels (moving) · 4 web forest · 5 termite mounds · 6 shell cavern | A honeycomb · B chitin plates · C rotting log | **paused** (owner, 6 Nov 2026) |
 
 **Ice's pick, in the owner's words (6 Nov 2026):** "1a, but make the aurora even prettier". Redrawn to
 match: the aurora is now three curtains of light (a far violet one, the big green one, and a fold of
@@ -101,7 +101,7 @@ it swinging out in front), each with a bright lower edge and rays rising from it
 and violet as they rise. They ripple, brightness runs along them, and the brightest parts flare
 white with a pink fringe. The air glows round them, stars twinkle behind, and the far peaks catch
 their light along their tops. Each curtain is a set of one-pixel rays painted once and placed every
-step (`AURORA` in `batch2.mjs`), and it all comes back to where it started every 8 seconds
+step (`AURORA` in `src/systems/area-art/slices.js`), and it all comes back to where it started every 8 seconds
 (`AURORA_LOOP`). Material A is as offered.
 
 **Ground's pick, in the owner's words (6 Nov 2026):** "1b add heat waves and other improvements to
@@ -112,14 +112,19 @@ blows off the near crests and two vultures circle. The heat waves are rows of th
 picture slid a pixel or two sideways every step (`heatRows`), the way the Fire room's heat shimmer
 works. It loops every 8 seconds (`DESERT_LOOP`). The bedrock is as picked in the first round.
 
+**Ice and Ground went into the game on 6 Nov 2026**, without waiting for the rest of batch 2, in the
+owner's words: "push what is solved in batch 2 and move on". **Poison, Flying, Psychic and Bug are
+paused**, in their words: "I'll need to pause on Flying, psychic, bug and poison because artistically they could go many ways, as you see in poison: toxins, corrosion, radiation, smog, sewage... too many angles that would fundamentally change the weapon/boss/arena hazards, backdrop". Their boards stay on the canvas, marked PAUSED;
+nothing more is drawn for them until the owner settles each slice's direction.
+
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
 
-A picked slice carries `pick` in `batch1.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
+A picked slice carries `pick` in `batch1.mjs` or `batch2.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
 
 The per-slice painters: `src/systems/area-art/materials.js` (nine kinds of floor, each with its
-platform, spikes and doors), `src/systems/area-art/paint.js` (skies, ridges, skylines, forests, beams,
+platform, spikes and doors, and the first round's bedrock, `BEDROCK`), `src/systems/area-art/paint.js` (skies, ridges, skylines, forests, beams,
 rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs` and `batch2.mjs` (each batch's six
 slices with every variant), `scenes.mjs` (how each picture is laid out).
 `node design/world-art/render.mjs <folder> --batch 2` paints batch 2's pictures (or `--batch 1`,
@@ -154,8 +159,8 @@ picks in each board's comment thread; Claude then labels the board PICKED, here 
   each, at game size) and prints each material's worst contrast against the seventeen backdrops,
   the same checks `tests/contrast.test.js` makes on today's ground. It needs Playwright, like
   `npm run smoke`.
-- **Batch 1 is in the game** (5 Nov 2026): `src/systems/area-art/` draws each picked slice's area
-  (and its boss room's exit door), painted once and then only placed, as the rooms are. The picks
-  themselves, in the owner's words, live in `src/systems/area-art/slices.js`, which `batch1.mjs`
-  imports, so the canvas and the game paint from one copy. `tests/area-art.test.js` holds the picked
+- **Batch 1 is in the game** (5 Nov 2026), **and Ice and Ground from batch 2** (6 Nov 2026):
+  `src/systems/area-art/` draws each picked slice's area (and its boss room's exit door), painted
+  once and then only placed, as the rooms are. The picks themselves, in the owner's words, live in
+  `src/systems/area-art/slices.js`, which `batch1.mjs` and `batch2.mjs` import, so the canvas and the game paint from one copy. `tests/area-art.test.js` holds the picked
   pits to the contrast floors that `tests/contrast.test.js` holds the plain look to.
