@@ -683,7 +683,8 @@ work goes into the game "pushed in batches of ~6 slices" (the batches are in the
 **Batch 1 (Typeless, Fire, Water, Electric, Grass, Fighting) was picked and is in the game**, 5 Nov 2026;
 see *The areas' world pieces* below.
 **Batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug) is on the canvas for picking**, 5 Nov 2026; Ground
-keeps its first-round bedrock and needs only a backdrop.
+keeps its first-round bedrock and needs only a backdrop. Ice and Ground were picked on 6 Nov 2026, each with its backdrop
+redrawn as asked.
 
 ### AI-made sprites and music: only when the owner asks for that one
 

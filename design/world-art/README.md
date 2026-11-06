@@ -17,7 +17,8 @@ board (one default look for now). The first-round boards below stay as a record.
 | Ground | **PICKED: B, bedrock** |
 | Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
 | Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
-| Ice, Poison, Flying, Psychic, Bug | batch 2: three variants each, **on the canvas, not picked yet** |
+| Ice, Ground | batch 2: **picked**, not in the game yet |
+| Poison, Flying, Psychic, Bug | batch 2: three variants each, **on the canvas, not picked yet** |
 | Rock, Ghost, Dark | three variants each, still to draw, in batch 3 |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
@@ -87,12 +88,29 @@ all six of its slice's backdrops.
 
 | slice | backdrops | materials | status |
 |---|---|---|---|
-| Ice | 1 aurora night (moving) · 2 glacier wall · 3 frozen lake · 4 ice cave · 5 blizzard peaks (moving) · 6 frozen works | A packed snow · B glacier ice · C frosted steel | not picked yet |
+| Ice | 1 aurora night (moving) · 2 glacier wall · 3 frozen lake · 4 ice cave · 5 blizzard peaks (moving) · 6 frozen works | A packed snow · B glacier ice · C frosted steel | **PICKED: backdrop 1, changed, and material A** (owner, 6 Nov 2026), in their words below |
 | Poison | 1 toxic swamp (moving) · 2 chemical plant · 3 acid rain · 4 mushroom grove · 5 sewer tunnel (moving) · 6 waste dump | A toxic grate · B sewer brick · C corroded plate | not picked yet |
-| Ground | 1 desert dunes (moving) · 2 red canyon · 3 quarry · 4 mesa sunset · 5 mine shaft (moving) · 6 fossil cliff | B bedrock (picked in the first round) | backdrop not picked yet |
+| Ground | 1 desert dunes (moving) · 2 red canyon · 3 quarry · 4 mesa sunset · 5 mine shaft (moving) · 6 fossil cliff | B bedrock (picked in the first round) | **PICKED: backdrop 1, changed** (owner, 6 Nov 2026), in their words below |
 | Flying | 1 above the clouds (moving) · 2 floating islands · 3 wind farm · 4 balloon festival · 5 airship docks (moving) · 6 cliff nests | A airship deck · B sky temple · C turbine walkway | not picked yet |
 | Psychic | 1 cosmic void (moving) · 2 crystal temple · 3 the watching eye · 4 mirror hall · 5 mind waves (moving) · 6 observation lab | A crystal tiles · B observation floor · C dreamstone | not picked yet |
 | Bug | 1 giant hive (moving) · 2 leaf canopy · 3 ant tunnels (moving) · 4 web forest · 5 termite mounds · 6 shell cavern | A honeycomb · B chitin plates · C rotting log | not picked yet |
+
+**Ice's pick, in the owner's words (6 Nov 2026):** "1a, but make the aurora even prettier". Redrawn to
+match: the aurora is now three curtains of light (a far violet one, the big green one, and a fold of
+it swinging out in front), each with a bright lower edge and rays rising from it, green turning teal
+and violet as they rise. They ripple, brightness runs along them, and the brightest parts flare
+white with a pink fringe. The air glows round them, stars twinkle behind, and the far peaks catch
+their light along their tops. Each curtain is a set of one-pixel rays painted once and placed every
+step (`AURORA` in `batch2.mjs`), and it all comes back to where it started every 8 seconds
+(`AURORA_LOOP`). Material A is as offered.
+
+**Ground's pick, in the owner's words (6 Nov 2026):** "1b add heat waves and other improvements to
+the desert feel". Redrawn to match: the sky is bleached pale and the sun white-hot with a wide glare;
+the dunes have sharp crests, a sunlit side crossed by wind ripples and a slip face in shadow, in three
+ranks; heat waves make the far dunes wobble, and a mirage shimmers along the horizon like water; sand
+blows off the near crests and two vultures circle. The heat waves are rows of the far dunes' own
+picture slid a pixel or two sideways every step (`heatRows`), the way the Fire room's heat shimmer
+works. It loops every 8 seconds (`DESERT_LOOP`). The bedrock is as picked in the first round.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
