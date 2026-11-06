@@ -15,11 +15,12 @@ board (one default look for now). The first-round boards below stay as a record.
 |---|---|
 | Dragon | **PICKED: C, castle bricks** |
 | Ground | **PICKED: B, bedrock** |
-| Steel | **PICKED: A, steel plates**; a couple of door variants still to draw |
+| Steel | **PICKED: A, steel plates**; three pairs of doors on the canvas in batch 3, not picked yet |
 | Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
 | Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026) |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
-| Rock, Ghost, Dark | three variants each, still to draw, in batch 3 |
+| Rock, Ghost, Dark | batch 3: three variants each, **on the canvas, not picked yet** |
+| Dragon, Steel | batch 3: six backdrops each on the canvas (and Steel's doors), not picked yet |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
 everything. 6 wildly different backdrop variants per slice since the player has to look at it
@@ -117,6 +118,23 @@ owner's words: "push what is solved in batch 2 and move on". **Poison, Flying, P
 paused**, in their words: "I'll need to pause on Flying, psychic, bug and poison because artistically they could go many ways, as you see in poison: toxins, corrosion, radiation, smog, sewage... too many angles that would fundamentally change the weapon/boss/arena hazards, backdrop". Their boards stay on the canvas, marked PAUSED;
 nothing more is drawn for them until the owner settles each slice's direction.
 
+**Batch 3 is on the canvas** (its own page, "Batch 3"), 6 Nov 2026, after the owner chose "All of
+batch 3": one board per slice, six backdrops each (two scrolling in layers, shown moving), laid out as
+before. **Dragon keeps the castle bricks** picked in the first round, so its board asks only for a
+backdrop. **Steel keeps the steel plates** picked in the first round, and its three "materials" are
+those plates with three new pairs of doors, a boss door and an exit door each, as the owner asked ("i
+want a couple variants for the steel door though", and for which door, "both"). Every floor clears
+the game's contrast floors against all six of its slice's backdrops; the closest is Dark's shadow
+brick, at 2.06 against a floor of 2.
+
+| slice | backdrops | materials | status |
+|---|---|---|---|
+| Rock | 1 crag peaks (moving) · 2 stone circle · 3 hoodoo valley · 4 geode cavern · 5 rockslide (moving) · 6 stone guardian | A granite blocks · B quarry strata · C cut slabs | not picked yet |
+| Ghost | 1 graveyard fog (moving) · 2 haunted mansion · 3 candlelit crypt · 4 ghost ship · 5 spirit forest (moving) · 6 chapel ruins | A rotten floorboards · B crypt stone · C chapel tiles | not picked yet |
+| Dragon | 1 dragon's keep (moving) · 2 castle ramparts · 3 hoard cave · 4 dragon bones · 5 volcanic ridge (moving) · 6 throne hall | C castle bricks (picked in the first round) | backdrop not picked yet |
+| Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | not picked yet |
+| Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | not picked yet |
+
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
 
@@ -125,8 +143,8 @@ A picked slice carries `pick` in `batch1.mjs` or `batch2.mjs`, and `render.mjs` 
 
 The per-slice painters: `src/systems/area-art/materials.js` (nine kinds of floor, each with its
 platform, spikes and doors, and the first round's bedrock, `BEDROCK`), `src/systems/area-art/paint.js` (skies, ridges, skylines, forests, beams,
-rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs` and `batch2.mjs` (each batch's six
-slices with every variant), `scenes.mjs` (how each picture is laid out).
+rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs`, `batch2.mjs` and `batch3.mjs`
+(each batch's slices with every variant), `scenes.mjs` (how each picture is laid out).
 `node design/world-art/render.mjs <folder> --batch 2` paints batch 2's pictures (or `--batch 1`,
 batch 1's) and prints each material's contrast against its slice's backdrops.
 

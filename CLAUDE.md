@@ -686,6 +686,8 @@ see *The areas' world pieces* below.
 redrawn as asked (Ground on its first-round bedrock). **Poison, Flying, Psychic and Bug are paused by
 the owner**, in their words: "I'll need to pause on Flying, psychic, bug and poison because artistically they could go many ways, as you see in poison: toxins, corrosion, radiation, smog, sewage... too many angles that would fundamentally change the weapon/boss/arena hazards, backdrop". Draw nothing more for those four until the owner
 settles each one's direction.
+**Batch 3 (Rock, Ghost, Dragon, Dark, Steel) is on the canvas for picking**, 6 Nov 2026; Dragon keeps its
+first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -732,6 +734,7 @@ Claude or a generator made:
 | World pieces in the game, batch 1 — each slice's picked backdrop and material, redrawn where the owner asked (Fire's embers, obsidian spikes and arch; Water's subsea lab; Electric's batteries and their sparks; Fighting's animated crowd; Grass's grove scrolling) | room art, drawn in code | Claude | 2026-11-05 | `src/systems/area-art/slices.js` |
 | World pieces for each slice, batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug), variants for review — six backdrops per slice and three materials (floor, platform, spikes, boss door, exit door), Ground on its first-round bedrock | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch2.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | World pieces in the game, batch 2 — Ice's and Ground's picked backdrop and material, redrawn where the owner asked (Ice's aurora; Ground's desert with heat waves, a mirage, blowing sand and vultures), and the first round's bedrock under Ground | room art, drawn in code | Claude | 2026-11-06 | `src/systems/area-art/slices.js`, bedrock in `src/systems/area-art/materials.js` (`BEDROCK`) |
+| World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
