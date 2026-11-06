@@ -27,7 +27,8 @@ const REPO = fileURLToPath(new URL('../..', import.meta.url));
 const out = process.argv[2];
 const bi = process.argv.indexOf('--batch');
 const batch = bi > 0 ? Number(process.argv[bi + 1]) : 0;
-if (!out || out.startsWith('--')) { console.error('usage: node design/world-art/render.mjs <out-dir> [--batch N]'); process.exit(1); }
+const oi = process.argv.indexOf('--only'), only = oi > 0 ? process.argv[oi + 1] : null;   // one slice's pictures, by its boss's id
+if (!out || out.startsWith('--')) { console.error('usage: node design/world-art/render.mjs <out-dir> [--batch N] [--only <boss id>]'); process.exit(1); }
 mkdirSync(out, { recursive: true });
 
 /** An animated PNG from frames already deflated in the browser: every frame shown 1/fps of a second, looping. */
@@ -57,7 +58,7 @@ try {
   const page = await browser.newPage();
   page.on('pageerror', (e) => { console.error(e); process.exitCode = 1; });
   await page.goto(url);
-  const res = await page.evaluate(async ({ base, n }) => {
+  const res = await page.evaluate(async ({ base, n, only }) => {
     const { BOSSES } = await import(`${base}/src/data/bosses.js`);
     const boss = (id) => BOSSES.find((b) => b.id === id);
     const player = new Image();
@@ -91,6 +92,7 @@ try {
     const S = await import(`${base}/design/world-art/scenes.mjs`);
     const SLICES = (await import(`${base}/design/world-art/batch${n}.mjs`))[`BATCH${n}`];
     for (const slice of SLICES) {
+      if (only && slice.id !== only) continue;
       const b = boss(slice.id);
       for (const [i, bd] of slice.backdrops.entries()) {
         P[`bd-${slice.id}-${i + 1}`] = png(S.backdropPicture(slice, bd, b, player));
@@ -111,6 +113,16 @@ try {
         const frames = [];
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));
         if (new Set(frames).size > 1) A[`pick-${slice.id}`] = { h: 224, frames };   // only if something in it moves by itself
+        // A slice's extra pictures (Steel's line in phases): each painted frame by frame in front of the picked floor.
+        for (const ex of slice.extras || []) {
+          const frames = [];
+          for (let f = 0; f < ex.frames; f++) {
+            const cam = ex.walk ? ex.walk(f) : null, moving = ex.walk && ex.walk(f) !== ex.walk(f + 1);
+            frames.push(await S.deflated(S.sceneFrame((r) => ex.paint(r, f), M, player, { cam, run: moving ? 6 + (f % 8) : 0 })));
+          }
+          P[ex.name] = png(S.sceneFrame((r) => ex.paint(r, 0), M, player));
+          A[ex.name] = { h: 224, frames, fps: ex.fps };
+        }
       }
       const brightest = slice.backdrops.map((bd) => S.pitSample(bd, b).reduce((m, p) => (lum(p) > lum(m) ? p : m), [0, 0, 0]));
       for (const [k, name, , M] of slice.materials) {
@@ -121,10 +133,10 @@ try {
       }
     }
     return { P, A, report };
-  }, { base: url, n: batch });
+  }, { base: url, n: batch, only });
 
   for (const [name, data] of Object.entries(res.P)) writeFileSync(join(out, `${name}.png`), Buffer.from(data.split(',')[1], 'base64'));
-  for (const [name, { h, frames }] of Object.entries(res.A)) writeFileSync(join(out, `${name}.apng`), apng(480, h, frames, 15));
+  for (const [name, { h, frames, fps }] of Object.entries(res.A)) writeFileSync(join(out, `${name}.apng`), apng(480, h, frames, fps || 15));
   console.log(`${Object.keys(res.P).length} pictures and ${Object.keys(res.A).length} moving pictures in ${out}`);
   console.log('worst contrast (the game asks ground 2, edge 4.5, player 4.5):');
   for (const line of res.report) console.log('  ' + line);

@@ -1056,11 +1056,281 @@ function steelLine(r, ox) {
   // the floor in front of the line; the pit's dark carries on down through it
   for (let x = 0; x < W; x++) for (let y = 178; y < H; y++) r.set(x, y, mod(x + mod(ox, 480), 480) >= BELT_END + 2 && mod(x + mod(ox, 480), 480) < BELT_END + 72 ? c('#020204') : As(0.1));
 }
+/** The line's far wall: plate panels, high windows, the crane gantry and a hazard band. */
+function lineWall(r, ox) {
+  panels(r, ox, { y0: 0, y1: 178, pw: 48, ph: 40, base: As(0.4), light: As(0.54), dark: As(0.26) });
+  for (let x = 0; x < W; x++) { if (mod(x + ox, 48) > 6 && mod(x + ox, 48) < 42) for (let y = 8; y < 22; y++) r.set(x, y, y < 10 ? Al(0.9) : mix(Al(0.7), c('#c8d8e0'), 0.3)); r.set(x, 28, Al(0.3)); r.set(x, 29, Al(0.3)); const z = mod(x + ox, 16); r.set(x, 30 + Math.min(z, 16 - z), Al(0.3)); r.set(x, 38, Al(0.3)); }   // high windows and the crane gantry
+  for (let x = 0; x < W; x++) for (let y = 120; y < 126; y++) r.set(x, y, mod(x + ox + y, 12) < 6 ? mix(c('#e8c020'), As(0.4), 0.4) : As(0.2));   // a hazard band along the far wall
+}
+// ── THE LINE IN THREE PHASES ─────────────────────────────────────────
+/*
+ * The owner, 6 Nov 2026, on the Steel pick: "since each phase of the assembly line will be repeating
+ * for a while as a backdrop, have Phase 1 backdrop art spawn off-screen to the right, repeating molten
+ * steel filled ladles pouring glowing hot billets that slightly cool, then at whatever the progress
+ * metric ends phase 1, dont switch the entire backdrop, just shift to spawning in phase 2 art
+ * off-screen to the right as the player walks such that phase 1 images remain on screen until the
+ * last one spawned has drifted off screen to the left due to the player progressing to the right.
+ * Phase 2 will be a more detailed press, which only forms the head and torso, briefly pauses the
+ * assembly line while the billet cools rapidly and takes on the form the press made, then a hinged
+ * table lifts the now shaped billet upright, freeing the space under the press and the conveyor belt
+ * continues, loading up a new billet under the press. Phase 3 will be 4 sets of moving arm pairs, one
+ * pair for assembly of arms, one pair for welding the arms, then one pair for assembly of the legs
+ * and one pair for welding the legs." Their answers to four questions: "1b" (the pit once only, at
+ * the very end before the boss door), "2a" (each fitting pair takes its parts from a bin hanging
+ * above the line), "3 idk. show me both options. one option is pauses (pouring, pressing, welding
+ * dumping) should all share the same cadence so the phases line up visually at the phase seams), or
+ * having the conveyor always moving, and the ladles, press, arms, follow the belt" and "4a" (each
+ * phase as its own moving picture, plus a walk through the handovers).
+ *
+ * So the line is built of units, each one station's stretch of belt: a ladle (phase 1), a furnace
+ * and a press (phase 2), a gate and four pairs of arms (phase 3), and once, at the very end, the
+ * belt's end over the pit. The game would choose each unit's phase as it first appears off the right
+ * edge. What an item on the belt looks like depends only on where it is in its unit and how far that
+ * unit's station has got, so any unit can follow any other. The furnace and the gate hide the belt
+ * where a unit meets the next of its kind, so what goes in need not be what comes out.
+ *
+ * Two ways of moving: 'step' (one beat for everything: the belt moves a slot in 24 steps, then stands
+ * for 96 while every station works, all together, so the phases line up where they meet) and 'flow'
+ * (the belt never stops, a third of a pixel a step, and each station rides along with its item for 90
+ * steps, then hurries back for the next). Either way it all comes back to where it started every 480
+ * steps. Shown on the canvas only, painted afresh each frame; nothing here is in the game yet.
+ */
+const BEAT = 120, MOVE = 24, RIDE = 30, UNIT = { p1: 120, p2: 160, p3: 360, end: 200 }, ARM_AT = [60, 140, 220, 300];
+const ease = (u) => u * u * (3 - 2 * u);
+const beltAt = (mode, t) => (mode === 'step' ? SLOT * (Math.floor(t / BEAT) + ease(Math.min(1, mod(t, BEAT) / MOVE))) : (SLOT * t) / BEAT);
+/** Where the station whose item arrives at x0 stands now, and how far its work has got (null while it waits, or hurries back). */
+function stationAt(mode, x0, t) {
+  const p = mod(t, BEAT);
+  if (mode === 'step') return [x0, p >= MOVE ? (p - MOVE) / (BEAT - MOVE) : null];
+  const q = p / BEAT;
+  return q < 0.75 ? [x0 + SLOT * q, q / 0.75] : [x0 + RIDE * (1 - (q - 0.75) / 0.25), null];
+}
+/** How far the station at x0 has got with the item at x: 0 before it reaches it, 1 once past. */
+function workOn(mode, x, x0, t) {
+  if (mode === 'step') return Math.abs(x - x0) < 0.5 ? stationAt(mode, x0, t)[1] ?? 1 : x < x0 ? 0 : 1;
+  return Math.max(0, Math.min(1, (x - x0) / RIDE));
+}
+/** A line of one kind of unit, repeating; or a sequence, its first unit repeating to the left and no line past its end. */
+const repeatOf = (kind) => (x) => [kind, Math.floor(x / UNIT[kind]) * UNIT[kind]];
+const sequenceOf = (seq) => (x) => {
+  if (x < 0) return repeatOf(seq[0])(x);
+  let s = 0;
+  for (const kind of seq) { if (x < s + UNIT[kind]) return [kind, s]; s += UNIT[kind]; }
+  return null;
+};
+/** Copy the opaque pixels of a small picture into r at (x, y). */
+function stamp(r, p, x, y) {
+  for (let j = 0; j < p.h; j++) for (let i = 0; i < p.w; i++) { const k = (j * p.w + i) * 4; if (p.d[k + 3]) r.set(x + i, y + j, [p.d[k], p.d[k + 1], p.d[k + 2]], p.d[k + 3]); }
+}
+// What rides the belt: moulds, billets, pressed slabs and the copies at each stage, all on one stand.
+const ITEMS = new Map();
+const item = (name, w, h, paint) => { if (!ITEMS.has(name)) { const p = new Raster(w, h); paint(p); ITEMS.set(name, p); } return ITEMS.get(name); };
+const mould = (T) => item(`mould${T}`, 22, 7, (p) => {
+  for (let i = 1; i < 21; i++) { p.set(i, 0, i < 3 || i > 18 ? HOTS[T][2] : HOTS[T][0]); p.set(i, 1, HOTS[T][1]); }   // the molten top, seen from a little above
+  for (let j = 0; j < 7; j++) for (const i of [0, 21]) p.set(i, j, STEEL_C[2]);
+  for (let j = 2; j < 7; j++) for (let i = 1; i < 21; i++) p.set(i, j, j === 6 ? STEEL_C[4] : j === 2 ? mix(STEEL_C[3], HOTS[T][2], 0.5) : i % 7 === 3 && j === 4 ? STEEL_C[1] : STEEL_C[3]);
+});
+const rawBillet = () => item('raw', 20, 5, (p) => { for (let j = 0; j < 5; j++) for (let i = 0; i < 20; i++) p.set(i, j, j === 0 ? HOTS[1][0] : i === 0 || i === 19 || j === 4 ? HOTS[1][2] : HOTS[1][1]); });
+const SLAB = [HOTS[1], HOTS[2], HOTS[3], [STEEL_C[1], STEEL_C[2], STEEL_C[3]]];
+const slab = (k) => item(`slab${k}`, 22, 4, (p) => {   // pressed flat: the head and torso's outline in relief, cooling from orange to grey
+  [1, 2, 3, 3, 2, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 3, 2, 1].forEach((h, i) => { for (let j = 4 - h; j < 4; j++) p.set(i, j, j === 4 - h ? SLAB[k][0] : j === 3 ? SLAB[k][2] : SLAB[k][1]); });
+});
+/** The copy at a stage: 'torso' (head and torso, no arms), 'arms', or 'whole'; on its stand, a dark post under the hips. */
+function copyAt(stage, v) {
+  return item(`${stage}${v}`, 14, 20, (p) => {
+    const full = new Raster(14, 20); paintCopy(full, v);
+    const off = v === 2 ? 0 : 1;
+    for (let y = 0; y < 20; y++) for (let x = 0; x < 14; x++) {
+      const j = y - off, k = (y * 14 + x) * 4;
+      if (!full.d[k + 3]) continue;
+      if (stage !== 'whole' && j >= 14) continue;   // no legs yet
+      if (stage === 'torso' && j >= 9 && j <= 12 && (x <= 1 || x >= 12)) continue;   // no arms yet
+      p.set(x, y, [full.d[k], full.d[k + 1], full.d[k + 2]]);
+    }
+    for (let y = 14 + off; y < 20; y++) p.set(6, y, STEEL_C[4]);   // the stand
+    if (stage !== 'whole') for (let x = 5; x < 9; x++) p.set(x, 19, STEEL_C[4]);
+  });
+}
+/** The pressed piece rising upright on its hinged table, `h` rows of its 14 showing. */
+const rising = (h) => item(`rise${h}`, 14, 20, (p) => {
+  const src = copyAt('torso', 0);
+  for (let j = 0; j < h; j++) { const sj = Math.floor((j * 14) / h) + 1; for (let x = 0; x < 14; x++) { const k = (sj * 14 + x) * 4; if (src.d[k + 3]) p.set(x, 15 - h + j, [src.d[k], src.d[k + 1], src.d[k + 2]]); } }
+  for (let y = 15; y < 20; y++) p.set(6, y, STEEL_C[4]);
+  for (let x = 5; x < 9; x++) p.set(x, 19, STEEL_C[4]);
+});
+/** A whole copy tipping forward over the belt's end, a quarter turn in four steps, turned about its front foot (at 15, 25). */
+const tipping = (v, a) => item(`tip${v}${a}`, 36, 26, (p) => {
+  const src = copyAt('whole', v), th = (a * Math.PI) / 8, cs = Math.cos(th), sn = Math.sin(th);
+  for (let dy = -25; dy < 1; dy++) for (let dx = -15; dx < 21; dx++) {
+    const sx = Math.floor(14 + dx * cs + dy * sn), sy = Math.floor(20 - dx * sn + dy * cs);
+    if (sx < 0 || sy < 0 || sx >= 14 || sy >= 20) continue;
+    const k = (sy * 14 + sx) * 4;
+    if (src.d[k + 3]) p.set(15 + dx, 25 + dy, mix([src.d[k], src.d[k + 1], src.d[k + 2]], BLACK, 0.12 * a));
+  }
+});
+/** The look of the item at line x: [picture, left, top], or null. */
+function lookOf(mode, unitOf, X, v, t) {
+  const u = unitOf(X);
+  if (!u) return null;
+  const [kind, s] = u, xl = X - s;
+  if (kind === 'p1') {
+    const w = workOn(mode, xl, 60, t), d = mod(xl - 60, 120);
+    const T = w > 0 && w < 1 ? (w < 0.3 ? 2 : 0) : d < 34 ? 0 : d < 74 ? 1 : 2;   // topped up by its ladle, then cooling a little
+    return [mould(T), X - 11, BELT_Y - 7];
+  }
+  if (kind === 'p2') {
+    const w = workOn(mode, xl, 60, t);
+    if (w < 0.12) return [rawBillet(), X - 10, BELT_Y - 5];
+    if (w < 0.62) return [slab(Math.min(3, Math.floor(((w - 0.12) / 0.38) * 4))), X - 11, BELT_Y - 4];
+    if (w < 0.92) return [rising([4, 8, 12][Math.min(2, Math.floor(((w - 0.62) / 0.3) * 3))]), X - 7, BELT_Y - 20];
+    return [copyAt('torso', v), X - 7, BELT_Y - 20];
+  }
+  if (kind === 'p3') {
+    const arms = workOn(mode, xl, ARM_AT[0], t) >= 0.7, legs = workOn(mode, xl, ARM_AT[2], t) >= 0.7;
+    return [copyAt(legs ? 'whole' : arms ? 'arms' : 'torso', v), X - 7, BELT_Y - 20];
+  }
+  // the end: ride to the roller, tip over it, fall into the pit (in 'step', on the beat)
+  if (xl < 104) return [copyAt('whole', v), X - 7, BELT_Y - 20];
+  const a = Math.min(4, 1 + Math.floor((xl - 104) / 5)), p = mod(t, BEAT);
+  const fall = mode === 'step' ? (xl < 139.5 ? 0 : p >= MOVE ? (p - MOVE) / (BEAT - MOVE) : 1) : Math.max(0, Math.min(1, (xl - 118) / 26));
+  if (fall >= 1) return null;
+  return [tipping(v, a), Math.min(X + 7, s + 121) - 15 + Math.round(fall * 6), BELT_Y - 26 + Math.round(fall * fall * 100)];
+}
+
+// The stations, painted where they stand at this moment.
+function thick(r, x0, y0, x1, y1) {   // a robot arm's segment, 3 pixels thick, lit down its left side
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0))), pts = [];
+  for (let s = 0; s <= n; s++) pts.push([Math.round(x0 + ((x1 - x0) * s) / n), Math.round(y0 + ((y1 - y0) * s) / n)]);
+  for (const [x, y] of pts) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) r.set(x + dx, y + dy, STEEL_C[3]);
+  for (const [x, y] of pts) { r.set(x - 1, y, STEEL_C[0]); r.set(x, y, STEEL_C[1]); }
+}
+function ladle(r, sx, w) {
+  const tilt = w === null ? 0 : w < 0.15 ? w / 0.15 : w < 0.8 ? 1 : 1 - (w - 0.8) / 0.2, th = tilt * 0.75, cs = Math.cos(th), sn = Math.sin(th);
+  const cx = sx - 14, cy = 92;
+  fillRect(r, cx - 12, 23, 24, 6, STEEL_C[3]); fillRect(r, cx - 12, 23, 24, 1, STEEL_C[1]); for (const wx of [cx - 9, cx + 7]) fillRect(r, wx, 21, 3, 3, STEEL_C[4]);   // its trolley on the rail
+  for (const hx of [cx - 13, cx + 13]) { vert(r, hx, 29, cy - 4, STEEL_C[4]); r.set(hx, cy - 3, STEEL_C[1]); }   // the hangers, down to its pivots
+  for (let dy = -20; dy <= 20; dy++) for (let dx = -20; dx <= 20; dx++) {
+    const u = dx * cs + dy * sn, v = -dx * sn + dy * cs, half = 11 - (v + 10) * 0.12;   // the pot's own frame: u across, v down
+    if (v < -10 || v > 11 || Math.abs(u) > half) continue;
+    const col = v < -8.5 ? (Math.abs(u) > half - 1.5 ? STEEL_C[1] : HOTS[0][1]) : Math.abs(u) > half - 1.2 ? STEEL_C[4] : u < -half * 0.4 ? STEEL_C[2] : u > half * 0.5 ? STEEL_C[4] : STEEL_C[3];
+    r.set(cx + dx, cy + dy, col);
+  }
+  if (!(w !== null && w >= 0.15 && w < 0.8)) return;
+  const lx = Math.round(cx + 11 * cs + 10 * sn), ly = Math.round(cy + 11 * sn - 10 * cs);   // the lip, and the pour down from it
+  glow(r, sx, BELT_Y - 12, 22, c('#ff8a30'), 0.35);
+  for (let y = ly; y < BELT_Y - 6; y++) { const f = (y - ly) / Math.max(1, BELT_Y - 6 - ly), x = Math.round(lx + (sx - lx) * Math.sqrt(f)); r.set(x - 1, y, HOTS[0][1]); r.set(x, y, HOTS[0][0]); r.set(x + 1, y, HOTS[0][1]); }
+}
+function press(r, sx, w) {
+  const drop = w === null ? 0 : w < 0.12 ? w / 0.12 : w < 0.5 ? 1 : w < 0.62 ? 1 - (w - 0.5) / 0.12 : 0, top = 98 + Math.round(drop * 39);
+  for (const px of [sx - 21, sx + 15]) { fillRect(r, px, 52, 6, BELT_Y + 6 - 52, STEEL_C[3]); fillRect(r, px, 52, 2, BELT_Y + 6 - 52, STEEL_C[1]); fillRect(r, px + 5, 52, 1, BELT_Y + 6 - 52, STEEL_C[4]); }
+  fillRect(r, sx - 24, 46, 48, 14, STEEL_C[3]); fillRect(r, sx - 24, 46, 48, 2, STEEL_C[1]); fillRect(r, sx - 24, 59, 48, 1, STEEL_C[4]);
+  for (let i = 0; i < 44; i += 8) fillRect(r, sx - 22 + i, 51, 4, 4, c('#e8c020'));   // hazard marks on its crown
+  fillRect(r, sx - 3, 60, 6, top - 60, STEEL_C[2]); vert(r, sx - 3, 60, top, STEEL_C[0]);   // the ram's piston, polished
+  fillRect(r, sx - 13, top, 26, 10, STEEL_C[3]); fillRect(r, sx - 13, top, 26, 1, STEEL_C[1]); fillRect(r, sx - 13, top + 9, 26, 1, STEEL_C[4]);
+  for (const [i, h] of [[-6, 3], [-3, 4], [0, 4], [3, 4], [6, 3]]) fillRect(r, sx + i - 1, top + 9 - h + 1, 3, h - 1, STEEL_C[2]);   // the die: the head and torso's shape, cut into the ram's face
+  if (drop > 0.95 && w < 0.5) for (let q = 0; q < 6; q++) r.set(sx - 12 + Math.floor(hash(q, Math.floor(w * 40), 720) * 24), BELT_Y - 6 - Math.floor(hash(q, 1, 720) * 3), c('#d8e4ec'));   // steam as the steel cools
+}
+function hingedTable(r, sx, w) {
+  const u = w === null ? 0 : w < 0.62 ? 0 : w < 0.92 ? (w - 0.62) / 0.3 : w < 0.97 ? 1 : 1 - (w - 0.97) / 0.03, h = Math.round(1 + u * 17);
+  fillRect(r, sx - 12, BELT_Y - h, 24, h, STEEL_C[2]); fillRect(r, sx - 12, BELT_Y - h, 24, 1, STEEL_C[1]); fillRect(r, sx - 12, BELT_Y - 1, 24, 1, STEEL_C[4]);
+  if (h > 4) for (const hx of [sx - 10, sx + 9]) r.set(hx, BELT_Y - 2, STEEL_C[0]);   // its hinges
+}
+function furnace(r, sx) {   // feeds the press: what goes in one side comes out a hot billet
+  fillRect(r, sx - 2, BELT_Y - 36, 44, 40, STEEL_C[4]); fillRect(r, sx - 2, BELT_Y - 36, 44, 2, STEEL_C[2]);
+  for (let j = 0; j < 30; j += 6) for (let i = 2; i < 40; i += 12) fillRect(r, sx + i, BELT_Y - 31 + j, 9, 4, STEEL_C[3]);   // brick courses
+  for (const ex of [sx - 2, sx + 37]) { fillRect(r, ex, BELT_Y - 9, 5, 9, HOTS[1][1]); fillRect(r, ex + 1, BELT_Y - 8, 3, 7, HOTS[0][0]); }   // its mouths, glowing
+  fillRect(r, sx + 14, BELT_Y - 48, 12, 12, STEEL_C[3]); fillRect(r, sx + 14, BELT_Y - 48, 12, 1, STEEL_C[1]);   // the flue
+  glow(r, sx + 20, BELT_Y - 2, 26, c('#ff8a30'), 0.25);
+}
+function gate(r, sx) {   // the gate into phase 3's arms
+  fillRect(r, sx - 2, BELT_Y - 40, 44, 6, STEEL_C[3]); fillRect(r, sx - 2, BELT_Y - 40, 44, 1, STEEL_C[1]);
+  for (const px of [sx - 2, sx + 36]) { fillRect(r, px, BELT_Y - 40, 6, 46, STEEL_C[3]); fillRect(r, px, BELT_Y - 40, 1, 46, STEEL_C[1]); }
+  for (let x = sx + 4; x < sx + 36; x += 3) for (let y = BELT_Y - 34; y < BELT_Y; y++) r.set(x, y, x % 2 ? STEEL_C[4] : c('#3a4450'));   // a curtain of strips
+  fillRect(r, sx + 17, BELT_Y - 45, 6, 5, STEEL_C[4]); fillRect(r, sx + 18, BELT_Y - 44, 4, 3, c('#5cd0ff')); glow(r, sx + 20, BELT_Y - 43, 8, c('#5cd0ff'), 0.4);
+}
+/** A pair of arms over the item at sx: 0 fits arms, 1 welds them, 2 fits legs, 3 welds them. */
+function armPair(r, sx, w, job, t) {
+  const fit = job % 2 === 0, legs = job >= 2;
+  fillRect(r, sx - 10, 22, 20, 9, STEEL_C[3]); fillRect(r, sx - 10, 22, 20, 1, STEEL_C[1]); fillRect(r, sx - 10, 30, 20, 1, STEEL_C[4]);   // the carriage on the rail
+  fillRect(r, sx - 2, 31, 4, 62, STEEL_C[3]); vert(r, sx - 2, 31, 93, STEEL_C[1]); fillRect(r, sx - 7, 90, 14, 7, STEEL_C[3]); fillRect(r, sx - 7, 90, 14, 1, STEEL_C[1]);   // its mast and the hub the arms turn on
+  if (fit) {   // the parts bin, hanging under the hub, parts sticking out of its top
+    fillRect(r, sx - 6, 100, 12, 8, STEEL_C[2]); fillRect(r, sx - 6, 100, 12, 1, STEEL_C[1]); fillRect(r, sx - 6, 107, 12, 1, STEEL_C[4]); vert(r, sx, 97, 100, STEEL_C[4]);
+    for (const px of [sx - 5, sx - 1, sx + 3]) fillRect(r, px, 98, legs ? 3 : 2, 2, STEEL_C[1]);
+  }
+  for (const side of [-1, 1]) {
+    const sh = [sx + side * 6, 95], rest = [sx + side * 16, 118], bin = [sx + side * 4, 103];
+    const target = legs ? [sx + side * 3, BELT_Y - (fit ? 4 : 7)] : [sx + side * 7, BELT_Y - (fit ? 9 : 10)];
+    const lerp = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+    let hand = rest, carry = false;
+    if (w !== null && fit) {
+      if (w < 0.3) hand = lerp(rest, bin, ease(w / 0.3)); else if (w < 0.4) hand = bin; else if (w < 0.7) { hand = lerp(bin, target, ease((w - 0.4) / 0.3)); carry = true; } else if (w < 0.85) hand = target; else hand = lerp(target, rest, ease((w - 0.85) / 0.15));
+    } else if (w !== null) hand = w < 0.2 ? lerp(rest, target, ease(w / 0.2)) : w < 0.8 ? target : lerp(target, rest, ease((w - 0.8) / 0.2));
+    const [hx, hy] = hand.map(Math.round), mx = (sh[0] + hx) / 2, my = (sh[1] + hy) / 2, len = Math.hypot(hx - sh[0], hy - sh[1]);
+    const ex = Math.round(mx + side * Math.min(12, Math.max(5, 26 - len * 0.3))), ey = Math.round(my - 2);   // the elbow, bent outwards
+    thick(r, sh[0], sh[1], ex, ey); thick(r, ex, ey, hx, hy);
+    for (const [jx, jy] of [sh, [ex, ey]]) { fillRect(r, jx - 1, jy - 1, 3, 3, c('#e8a020')); r.set(jx, jy, STEEL_C[0]); }
+    if (fit) { r.set(hx - 1, hy + 1, STEEL_C[1]); r.set(hx + 1, hy + 1, STEEL_C[1]); }   // a gripper
+    else { r.set(hx, hy + 1, STEEL_C[1]); r.set(hx, hy + 2, w !== null && w >= 0.2 && w < 0.8 ? WHITE : STEEL_C[3]); }   // a torch
+    if (carry) fillRect(r, hx - 1, hy + 1, legs ? 3 : 2, legs ? 5 : 4, STEEL_C[1]);   // the part it carries
+    if (!fit && w !== null && w >= 0.2 && w < 0.8) {   // welding: a spark at the joint, flecks flying
+      const fx = hx, fy = hy + 2, fl = Math.floor(t / 3) % 2;
+      for (const [dx, dy] of [[0, -2 - fl], [0, 2 + fl], [-2 - fl, 0], [2 + fl, 0], [0, -1], [0, 1], [-1, 0], [1, 0]]) r.set(fx + dx, fy + dy, c('#a8e8ff'));
+      r.set(fx, fy, WHITE);
+      for (let q = 0; q < 4; q++) r.set(fx + Math.round(Math.cos(q * 1.6 + (TAU * mod(t, 24)) / 24) * (3 + q)), fy + 2 + q, c('#ffd060'));
+    }
+  }
+}
+/** The line's window [L, L + W): the units it is built of in this picture, its belt, its stations and what rides on it. */
+function paintPhases(r, mode, unitOf, L, t) {
+  const units = [];
+  for (let u = unitOf(L - 400); u && u[1] < L + W + 40; u = unitOf(u[1] + UNIT[u[0]])) units.push(u);
+  for (let x = 0; x < W; x++) if (unitOf(x + L)) { r.set(x, 20, STEEL_C[2]); for (let y = 21; y < 25; y++) r.set(x, y, mod(x + L, 16) === 3 && y === 22 ? STEEL_C[1] : STEEL_C[3]); r.set(x, 25, STEEL_C[4]); }   // the overhead rail
+  for (const [kind, s] of units) {
+    const x1 = s - L, x2 = x1 + (kind === 'end' ? 121 : UNIT[kind]);
+    for (let x = Math.max(0, x1); x < Math.min(W, x2); x++) {
+      r.set(x, BELT_Y, STEEL_C[1]);
+      for (let y = BELT_Y + 1; y < BELT_Y + 6; y++) r.set(x, y, y === BELT_Y + 5 ? STEEL_C[4] : STEEL_C[3]);
+      if (mod(x + L - Math.round(beltAt(mode, t)), 10) < 5) r.set(x, BELT_Y + 2, STEEL_C[2]);   // the belt's treads, moving with it
+    }
+    for (let lx = s + 30; lx < s + (kind === 'end' ? 120 : UNIT[kind]); lx += 60) { fillRect(r, lx - L, BELT_Y + 6, 4, 178 - BELT_Y - 6, STEEL_C[4]); fillRect(r, lx - L, BELT_Y + 6, 1, 178 - BELT_Y - 6, STEEL_C[2]); }
+    if (kind === 'end') {   // the belt's end roller, then the pit: black, running on down below the floor, a hazard stripe round its lip and a red lamp
+      ellipse(r, x1 + 120, BELT_Y + 3, 3, 3, STEEL_C[2]); r.set(x1 + 120, BELT_Y + 3, STEEL_C[0]);
+      fillRect(r, x1 + 124, BELT_Y - 2, 76, H - BELT_Y + 2, c('#020204'));
+      for (let x = x1 + 122; x < x1 + 200; x++) r.set(x, BELT_Y - 3, mod(x + L, 8) < 4 ? c('#e8c020') : c('#1e1a14'));
+      for (let y = BELT_Y - 3; y < H; y++) r.set(x1 + 123, y, mod(y, 8) < 4 ? c('#e8c020') : c('#1e1a14'));
+      vert(r, x1 + 196, 118, BELT_Y - 3, STEEL_C[3]); glow(r, x1 + 196, 116, 10, c('#ff3a2a'), 0.5); fillRect(r, x1 + 195, 114, 3, 3, c('#ff3a2a'));
+    }
+  }
+  for (const [kind, s] of units) if (kind === 'p2') { const [px, w] = stationAt(mode, s + 60, t); hingedTable(r, Math.round(px - L), w); }
+  for (const [X, v] of (() => { const b = mod(beltAt(mode, t), 4 * SLOT), out = []; for (let k = Math.floor((L - 80 - b) / SLOT); 20 + b + k * SLOT < L + W + 40; k++) out.push([20 + b + k * SLOT, mod(k, 4)]); return out; })()) {
+    const look = lookOf(mode, unitOf, X, v, t);
+    if (look) stamp(r, look[0], Math.round(look[1] - L), Math.round(look[2]));
+  }
+  for (const [kind, s] of units) { if (kind === 'p2') furnace(r, s - L); if (kind === 'p3') gate(r, s - L); }
+  for (const [kind, s] of units) {
+    if (kind === 'p1') { const [px, w] = stationAt(mode, s + 60, t); ladle(r, Math.round(px - L), w); }
+    if (kind === 'p2') { const [px, w] = stationAt(mode, s + 60, t); press(r, Math.round(px - L), w); }
+    if (kind === 'p3') ARM_AT.forEach((x0, job) => { const [px, w] = stationAt(mode, s + x0, t); armPair(r, Math.round(px - L), w, job, t); });
+  }
+}
+const WALK = { hold: 20, pan: 4.5, from: -240, length: 880 };   // the walk: still inside phase 1, then the line pans 4.5 pixels a frame (the camera 9, about walking pace), then still at the end
+const walkAt = (f) => WALK.from + Math.max(0, Math.min(WALK.length, (f - WALK.hold) * WALK.pan));
+/** The pictures for the canvas: each phase on its own and the walk through all of them, in both ways of moving. 6 steps a frame, 10 frames a second. */
+const PHASE_PICTURES = ['step', 'flow'].flatMap((mode) => [
+  ...[['1', repeatOf('p1'), 0], ['2', repeatOf('p2'), 0], ['3', repeatOf('p3'), 0], ['end', sequenceOf(['p3', 'end']), 200]].map(([k, unitOf, L]) => ({
+    name: `line-${mode}-${k}`, frames: 80, fps: 10,
+    paint: (r, f) => { lineWall(r, 0); paintPhases(r, mode, unitOf, L, f * 6); },
+  })),
+  { name: `line-${mode}-walk`, frames: WALK.hold * 2 + Math.ceil(WALK.length / WALK.pan) + 1, fps: 10, walk: (f) => (walkAt(f) - WALK.from) * 2,
+    paint: (r, f) => { const L = walkAt(f); lineWall(r, mod(Math.round(L * 0.2), 480)); paintPhases(r, mode, sequenceOf(['p1', 'p1', 'p2', 'p2', 'p3', 'end']), Math.round(L), f * 6); } },
+]);
 const STEEL = {
   id: 'alloy', type: 'Steel',
   // The owner, 6 Nov 2026: "1, 2, 5 and material B" — backdrops 1, 2 and 5 merged into one line, its story
   // in their words above THE LINE; it takes backdrop 5's place.
   pick: { backdrop: 5, material: 'B' },
+  // The line in three phases, both ways of moving, for the owner to compare (above).
+  extras: PHASE_PICTURES,
   materials: [
     ['A', 'STEEL PLATES · VAULT DOORS', 'The steel plates picked in the first round, with round vault doors: bolted and wheeled for a boss, swung open on gold light for the way out.', { ...STYLES.A, ...steelDoors(vaultDoor) }],
     ['B', 'STEEL PLATES · BLAST DOORS', 'The steel plates picked in the first round, with blast doors: two thick halves under a hazard stripe, parted on gold light for the way out.', { ...STYLES.A, ...steelDoors(blastDoor) }],
@@ -1110,11 +1380,7 @@ const STEEL = {
       dark(r, 176, As(0.12));
     }),
     scrolling('ASSEMBLY LINE', 'The line, built from 1, 2 and 5: the ladle pours, billets cool on the rollers, a press stamps each into a flat cut-out of the player, welding arms raise it into a steel copy, and at the end of the belt the copies topple into a black pit. Scrolls in two layers.', LINE_LOOP,
-      { rate: 0.06, period: 480, fixed: (r, ox) => {
-        panels(r, ox, { y0: 0, y1: 178, pw: 48, ph: 40, base: As(0.4), light: As(0.54), dark: As(0.26) });
-        for (let x = 0; x < W; x++) { if (mod(x + ox, 48) > 6 && mod(x + ox, 48) < 42) for (let y = 8; y < 22; y++) r.set(x, y, y < 10 ? Al(0.9) : mix(Al(0.7), c('#c8d8e0'), 0.3)); r.set(x, 28, Al(0.3)); r.set(x, 29, Al(0.3)); const z = mod(x + ox, 16); r.set(x, 30 + Math.min(z, 16 - z), Al(0.3)); r.set(x, 38, Al(0.3)); }   // high windows and the crane gantry
-        for (let x = 0; x < W; x++) for (let y = 120; y < 126; y++) r.set(x, y, mod(x + ox + y, 12) < 6 ? mix(c('#e8c020'), As(0.4), 0.4) : As(0.2));   // a hazard band along the far wall
-      } },
+      { rate: 0.06, period: 480, fixed: lineWall },
       { rate: 0.2, period: 480, fixed: steelLine, parts: [PRESS, LINE] }),
     still('STEEL BRIDGE', 'A steel truss bridge across a dark river at night, its lamps reflected in the water, the city beyond.', (r) => {
       grad(r, 0, 120, [[0, c('#06080e')], [1, As(0.4)]]);

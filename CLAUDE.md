@@ -920,7 +920,9 @@ doors are painted when they first appear. Everything is let go once it has scrol
 (6 Nov 2026): "note that levels with sequential backdrops art will be based on the progress
 percentage, split evenly, with a yet to be determined progress metric e.g. kill count, score count,
 step count, elapsed time". Steel's assembly line is the first. The measure is not chosen yet, so ask
-the owner before building it.
+the owner before building it. On the canvas Steel's line is drawn in units that can follow one another
+in any order (`PHASE_PICTURES` in `design/world-art/batch3.mjs`, the owner's design in their words in
+`design/world-art/README.md`), in two ways of moving for the owner to choose between.
 
 **The game still draws a door's gold pulse; the art draws the door in front of it.** An unarmed door
 is the same picture, greyed and see-through. Nothing here changes a size, a position or a hit.

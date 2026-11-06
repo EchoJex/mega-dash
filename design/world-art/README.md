@@ -197,10 +197,40 @@ determined progress metric e.g. kill count, score count, step count, elapsed tim
 backdrop like Steel's line does not simply repeat: each stage of its story takes an even share of the
 area's progress, measured by something still to be chosen. Nothing is built for it yet.
 
+**Steel's line in three phases, in the owner's words (6 Nov 2026):** "since each phase of the assembly
+line will be repeating for a while as a backdrop, have Phase 1 backdrop art spawn off-screen to the
+right, repeating molten steel filled ladles pouring glowing hot billets that slightly cool, then at
+whatever the progress metric ends phase 1, dont switch the entire backdrop, just shift to spawning in
+phase 2 art off-screen to the right as the player walks such that phase 1 images remain on screen
+until the last one spawned has drifted off screen to the left due to the player progressing to the
+right. Phase 2 will be a more detailed press, which only forms the head and torso, briefly pauses the
+assembly line while the billet cools rapidly and takes on the form the press made, then a hinged table
+lifts the now shaped billet upright, freeing the space under the press and the conveyor belt
+continues, loading up a new billet under the press. Phase 3 will be 4 sets of moving arm pairs, one
+pair for assembly of arms, one pair for welding the arms, then one pair for assembly of the legs and
+one pair for welding the legs." Their answers to four questions: "1b" (the pit once only, at the very
+end before the boss door), "2a" (each fitting pair takes its parts from a bin hanging above the
+line), "3 idk. show me both options. one option is pauses (pouring, pressing, welding dumping) should
+all share the same cadence so the phases line up visually at the phase seams), or having the conveyor
+always moving, and the ladles, press, arms, follow the belt", and "4a" (each phase as its own moving
+picture, plus a walk through the handovers).
+
+So the line is drawn as units, each one station's stretch of belt, that can follow one another in any
+order: a ladle (phase 1), a furnace and a press (phase 2), a gate and four pairs of arms (phase 3),
+and once, the belt's end over the pit. What rides the belt depends only on where it is in its unit,
+and where a unit meets another of its kind the belt runs through the furnace or the gate, so the
+pieces can start over. The Steel board shows both ways of moving side by side: A, one beat (the belt
+moves a slot, then stands while everything works, all on one beat of 2 seconds) and B, always moving
+(each ladle, press and pair of arms rides along with its item, then hurries back). Each has its
+three phases, the end, and a short walk through all of them. Not picked yet, and not in the game; the
+code is `PHASE_PICTURES` in `batch3.mjs`.
+
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn. Rock's takes its doors from a second material
 instead (`doors: 'A'`). `render.mjs` paints both kinds; the game's `pickedMaterial` in
 `src/systems/area-art/slices.js` knows only `ground` so far, and needs `doors` too when Rock goes in.
+
+`node design/world-art/render.mjs <folder> --batch 3 --only alloy` paints one slice's pictures; a slice's `extras` (Steel's line in phases) are painted frame by frame in front of its picked floor.
 
 A picked slice carries `pick` in `batch1.mjs`, `batch2.mjs` or `batch3.mjs`, and `render.mjs` paints it as `pick-<boss>.png` (plus
 `.apng` when something in it moves by itself), shown as YOUR PICK at the top of its board.
