@@ -289,7 +289,7 @@ const FLOATERS = {
     ['vase', 7, 10, (p) => { for (let j = 0; j < 10; j++) { const half = j < 2 ? 1 : j < 7 ? 3 : 2; for (let i = -half; i <= half; i++) p.set(3 + i, j, i === -half ? Wv(0.8) : j % 4 === 2 ? c('#3a6aa0') : Wv(0.55)); } }],
   ]),
   at(ox, t) {
-    const out = [], a = (TAU * t) / 240;
+    const out = [], a = (TAU * mod(t, 240)) / 240;
     for (let i = 0; i < 8; i++) {
       const x = mod(Math.floor(hash(i, 0, 420) * 960) - ox, 960) - 30, y = 70 + Math.floor(hash(i, 1, 420) * 60) + Math.round(5 * Math.sin(a + i * 1.7));
       if (x > -20 && x < W) out.push([['chair', 'book', 'candles', 'vase'][i % 4], x, y]);
@@ -305,7 +305,7 @@ const SOULS = {
     for (const [y, P, offs, k] of [[156, 120, [0, 54], 0], [168, 160, [0, 70, 118], 1]]) {
       const shift = Math.floor((mod(t, 240) / 240) * P);
       for (let wx = Math.floor((ox - P) / P) * P; wx < ox + W + P; wx += P) for (const o of offs) {
-        const x = wx + o - shift - ox + Math.round(2 * Math.sin((TAU * t) / 120 + o));
+        const x = wx + o - shift - ox + Math.round(2 * Math.sin((TAU * mod(t, 120)) / 120 + o));
         if (x > -14 && x < W) out.push([`s${k}`, x, y + (o % 3)]);
       }
     }
@@ -322,7 +322,7 @@ const FERRY = {
   }]]),
   at(ox, t) {
     const x = mod(380 - ox, 960) - 100;
-    return x > -50 && x < W ? [['boat', x, 134 + Math.round(Math.sin((TAU * t) / 120))]] : [];
+    return x > -50 && x < W ? [['boat', x, 134 + Math.round(Math.sin((TAU * mod(t, 120)) / 120))]] : [];
   },
 };
 const GHOST = {
@@ -429,115 +429,215 @@ const GHOST = {
   ],
 };
 
-// ── DRAGON: Drake Man's castle country ───────────────────────────────
+// ── DRAGON: Drake Man's castle ───────────────────────────────────────
+//
+// The owner, 6 Nov 2026, on the Dragon board: "6c but do another 6 variants based on 6c, i like the
+// interior halls of a castle, and i like some stained glass windows". Backdrop 6 (the throne hall)
+// with the castle bricks was the starting point; these six are halls inside the castle, each with
+// stained glass, in Drake Man's crimson and the indigo, violet and teal his weapon's notes ask for.
 
 const drake = B('drake');
 const Dr = (k) => tn(drake, k), Dd = (k) => tn(drake, k, 'secondary'), INDIGO = c('#3a2a6a'), VIOLET = c('#6a3a9a'), TEAL = c('#2a8a8a');
-/** A dragon circling high over the keep: three wing beats, each facing both ways. */
-const DRAGON = {
-  pieces() {
-    const body = [[0, 4], [1, 4], [2, 4], [3, 3], [4, 3], [5, 4], [6, 4], [7, 4], [8, 4], [9, 4], [10, 4], [11, 5], [12, 5], [13, 5], [14, 4], [15, 3], [16, 3], [17, 3], [18, 4], [19, 5], [17, 2], [18, 2]];   // tail to head, the head at the right
-    const wings = { up: [[8, 3], [7, 2], [6, 1], [6, 0], [9, 2], [9, 1], [10, 0], [11, 3], [12, 2], [12, 1]], mid: [[7, 3], [6, 3], [5, 3], [4, 2], [9, 3], [10, 3], [11, 3], [12, 3], [13, 3]], down: [[8, 5], [7, 6], [6, 7], [10, 5], [11, 6], [12, 7], [9, 5]] };
+const GILT = [c('#8a6d10'), c('#c9a21e'), c('#f5d328')];
+const GLASS = {   // the colours of each window's panes
+  ember: [c('#c3225d'), c('#e8503a'), c('#f5b030'), c('#7a1a3a'), c('#ff8a60')],
+  dusk: [c('#6a3a9a'), c('#c3225d'), c('#2a8a8a'), c('#3a2a6a'), c('#e8a020')],
+  sea: [c('#2a8a8a'), c('#3a6ab0'), c('#6a3a9a'), c('#1a4a6a'), c('#8ad0c8')],
+  moon: [c('#3a4aa0'), c('#6a7ad0'), c('#2a2a6a'), c('#9a8ae0'), c('#c8d0f0')],
+};
+const STONE = [c('#2e2a36'), c('#3e3a48'), c('#4e4a58'), c('#6e6a76')];   // the castle bricks' stone, indoors
+/** The castle's inside wall: stone blocks, lit a little where `lit` says. */
+function stoneWall(r, ox, y0, y1, light = 0) {
+  for (let y = y0; y < y1; y++) for (let x = 0; x < W; x++) {
+    const wx = x + ox, row = Math.floor(y / 10), bx = mod(wx + (row % 2) * 12, 24);
+    r.set(x, y, y % 10 === 0 || bx === 0 ? STONE[0] : hash(Math.floor((wx + (row % 2) * 12) / 24), row, 520) > 0.8 - light * 0.2 ? STONE[2] : STONE[1]);
+  }
+}
+/** The dragon rampant, for the windows: a pixel mask, # filled. */
+const DRAGON_MASK = ['......##........', '.....####.......', '....##.###......', '....#...###.....', '........####....', '.##....######...', '####..#######...', '#####.########..', '.#############..', '..####.#######..', '...##..##..###..', '......##....##..', '.....##......#..', '....##..........', '...##...........', '..#.............'];
+/**
+ * A stained-glass window `w` wide and `h` tall: a pointed or a round top, diamond panes of `cols`
+ * brighter towards the middle, leaded in black, in a stone surround; with `motif`, a red dragon or a
+ * rose of panes at its heart.
+ */
+function stainedGlass(r, x0, y0, w, h, { cols, pointed = true, motif = null, seed = 1 }) {
+  const ys = y0 + (pointed ? Math.round(w * 0.86) : Math.round(w / 2));
+  const inside = (px, py) => {
+    if (py >= ys) return px >= x0 && px < x0 + w && py < y0 + h;
+    if (pointed) return Math.hypot(px + 0.5 - x0, py + 0.5 - ys) < w && Math.hypot(px + 0.5 - x0 - w, py + 0.5 - ys) < w && px >= x0 && px < x0 + w && py >= y0;
+    return Math.hypot(px + 0.5 - x0 - w / 2, py + 0.5 - ys) < w / 2;
+  };
+  for (let py = y0 - 3; py < y0 + h + 3; py++) for (let px = x0 - 3; px < x0 + w + 3; px++) {
+    if (inside(px, py)) {
+      const i = px - x0, j = py - y0, lead = mod(i + j, 7) === 0 || mod(i - j, 7) === 0 || i === Math.floor(w / 2) && j > w;
+      const cell = Math.floor((i + j) / 7) * 31 + Math.floor((i - j + 99) / 7), mid = 1 - Math.abs(i - w / 2) / (w / 2);
+      const col = cols[Math.floor(hash(cell, 0, seed) * cols.length)];
+      r.set(px, py, lead ? c('#120a12') : mix(col, WHITE, 0.08 + 0.22 * mid * (1 - j / h)));
+    } else if (inside(px - 2, py) || inside(px + 2, py) || inside(px, py - 2) || inside(px, py + 2)) r.set(px, py, STONE[3]);   // the stone surround
+  }
+  if (motif === 'dragon') {
+    const s = Math.max(1, Math.floor(w / 20)), mx = x0 + Math.floor((w - 16 * s) / 2), my = y0 + Math.floor(h * 0.3);
+    DRAGON_MASK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') fillRect(r, mx + i * s, my + j * s, s, s, (i + j) % 5 === 0 ? c('#ff8a60') : c('#c3225d')); }));
+  } else if (motif === 'rose') {
+    const cx = x0 + w / 2, cy = y0 + w * 0.55, rr = w * 0.3;
+    for (let a = 0; a < TAU; a += 0.01) for (let d = 0; d < rr; d += 0.5) { const petal = Math.floor((a / TAU) * 8); r.set(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), Math.abs(((a / TAU) * 8) % 1 - 0.5) > 0.44 || Math.abs(d - rr * 0.5) < 0.6 ? c('#120a12') : [cols[0], cols[2], cols[4] || WHITE][petal % 3]); }
+  }
+}
+/** Coloured light falling from a window to the floor, dithered so it stays pixel-crisp. */
+function lightShaft(r, x0, x1, y0, y1, drift, col, a) {
+  for (let y = y0; y < y1; y++) {
+    const t = (y - y0) / (y1 - y0), l = Math.round(x0 + drift * t), rr = Math.round(x1 + drift * t + t * 10);
+    for (let x = l; x < rr; x++) if (BAYER4[mod(y, 4)][mod(x, 4)] / 16 < 0.6) r.set(x, y, col, Math.round(a * (1 - t * 0.5)));
+  }
+}
+/** A stone pillar from the top of the hall to its floor, lit down the left, with a capital and a base. */
+function pillar(r, x, w, top = 0, base = 178) {
+  for (let y = top; y < base; y++) for (let i = 0; i < w; i++) r.set(x + i, y, i < 2 ? STONE[3] : i > w - 3 ? STONE[0] : (i % 5 === 2 ? STONE[1] : STONE[2]));
+  for (const y of [top + 18, base - 10]) fillRect(r, x - 3, y, w + 6, 5, STONE[2]), fillRect(r, x - 3, y, w + 6, 1, STONE[3]);
+}
+/** The dragon's crest: a gold lozenge round one slit eye, the way his banners and shields carry it. */
+function dragonEye(r, cx, cy, s) {
+  for (let j = -s; j <= s; j++) for (let i = -s; i <= s; i++) {
+    const d = Math.abs(i) + Math.abs(j);
+    if (d > s) continue;
+    r.set(cx + i, cy + j, d >= s - 1 ? GILT[1] : Math.abs(i) <= Math.max(0, Math.floor((s - Math.abs(j)) / 3)) ? c('#120a12') : d < s / 2 ? c('#f5b030') : GILT[2]);
+  }
+  r.set(cx - 1, cy - Math.floor(s / 3), WHITE);
+}
+/** A long crimson banner with the gold dragon's crest on it, hanging from a rod. */
+function banner(r, x, y, w, h) {
+  fillRect(r, x - 2, y, w + 4, 2, GILT[1]);
+  for (let j = 2; j < h; j++) for (let i = 0; i < w; i++) { const notch = j > h - w / 2 && Math.abs(i - w / 2 + 0.5) < j - (h - w / 2); if (!notch) r.set(x + i, y + j, i === 0 ? Dr(0.95) : i === w - 1 ? Dr(0.45) : Dr(0.7)); }
+  dragonEye(r, x + Math.floor(w / 2), y + 24, Math.max(4, Math.floor(w / 2) - 2));
+}
+/** Torches flickering in their sconces: the flame swaps between three shapes, never in step. */
+const torches = (spots, period) => ({
+  pieces: () => pics([0, 1, 2].map((k) => [`f${k}`, 5, 8, (p) => { const h = [7, 6, 8][k]; for (let j = 0; j < h; j++) { const half = Math.round((1 - j / h) * 2); for (let i = -half; i <= half; i++) p.set(2 + i + (k === 2 && j > 4 ? 1 : 0), 7 - j, j < h * 0.4 && i === 0 ? WHITE : Math.abs(i) === half && half ? c('#e85a1a') : c('#ffc040')); } }])),
+  at(ox, t) {
     const out = [];
-    for (const [n, pts] of Object.entries(wings)) for (const flip of [false, true]) {
-      const p = new Raster(40, 16);
-      for (const [x, y] of [...body, ...pts]) for (let k = 0; k < 4; k++) p.set((flip ? 19 - x : x) * 2 + (k & 1), y * 2 + (k >> 1), Dd(0.16));
-      out.push([`${n}${flip ? 'L' : 'R'}`, p]);
+    for (let wx = Math.floor(ox / period) * period; wx < ox + W + period; wx += period) for (const [sx, sy] of spots) {
+      const x = wx + sx - ox;
+      if (x < -6 || x > W) continue;
+      out.push([`f${mod(Math.floor(t / 4) + sx, 3)}`, x - 2, sy - 8]);
     }
     return out;
   },
+});
+/** Chandeliers swinging gently over the throne room, candles lit. */
+const CHANDELIERS = {
+  pieces: () => pics([['ch', 31, 40, (p) => {
+    vert(p, 15, 0, 26, GILT[0]);
+    for (let i = 0; i < 31; i++) { const y = 30 + Math.round(4 * Math.sin((i / 30) * Math.PI)); p.set(i, y, GILT[1]); p.set(i, y + 1, GILT[0]); }
+    for (const i of [1, 8, 15, 22, 29]) { const y = 28 + Math.round(4 * Math.sin((i / 30) * Math.PI)); fillRect(p, i, y - 4, 1, 4, c('#f0e8d8')); p.set(i, y - 6, c('#ffd070')); p.set(i, y - 5, WHITE); }
+  }]]),
   at(ox, t) {
-    const ph = mod(t, 240), a = (TAU * ph) / 240, x = 330 + Math.cos(a) * 70, y = 48 + Math.sin(a) * 12, dir = ph > 120 ? 'R' : 'L';   // heading right on the back half of the circle
-    return [[['up', 'mid', 'down', 'mid'][Math.floor(t / 10) % 4] + dir, Math.round(x) - 20, Math.round(y) - 8]];
+    const out = [];
+    for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) {
+      const k = mod(wx, 960) / 240, x = wx + 120 - ox + Math.round(3 * Math.sin((TAU * mod(t, 240)) / 240 + k));
+      if (x > -32 && x < W) out.push(['ch', x - 15, 8]);
+    }
+    return out;
   },
 };
 const CASTLE_C = ['C', 'CASTLE BRICKS', 'Picked in the first round: staggered castle blocks under a stone lip, iron spikes and a castle gate with a gold portcullis for the way out.', STYLES.C];
 const DRAGON_SLICE = {
   id: 'drake', type: 'Dragon',
-  // Dragon's material was picked in the first round: "i really like the castle one for dragon" (5 Nov 2026).
+  // Dragon's material was picked in the first round: "i really like the castle one for dragon" (5 Nov
+  // 2026). On 6 Nov 2026 the owner said "6c but do another 6 variants based on 6c", so the six
+  // backdrops below are castle halls built on the throne hall; the backdrop is still to pick.
   pick: { material: 'C' },
   materials: [CASTLE_C],
   backdrops: [
-    scrolling('DRAGON\'S KEEP', 'A castle keep on a crag at sunset, a dragon circling over its towers, forests below. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => { grad(r, 0, H, [[0, c('#1a1238')], [0.45, mix(Dr(0.7), VIOLET, 0.4)], [0.75, c('#f0905a')], [1, Dd(0.3)]]); disc(r, 130, 146, 20, [c('#fff0b0'), c('#ffc060'), c('#f08040')]); for (const [y, x0, len] of [[60, 40, 120], [76, 260, 160], [90, 120, 90], [104, 300, 110]]) for (let x = x0; x < x0 + len; x++) { const k = Math.min(x - x0, x0 + len - x); r.set(x, y, mix(Dr(0.8), c('#ffc080'), 0.4)); if (k > 12) r.set(x, y + 1, mix(Dr(0.7), VIOLET, 0.3)); } }, parts: [DRAGON] },
-      { rate: 0.06, period: 960, fixed: (r, ox) => {
-        ridge(r, ox, { y: 142, amp: 40, f: 0.012, seed: 502, col: mix(INDIGO, Dd(0.4), 0.3), top: mix(VIOLET, Dr(1), 0.4), sharp: 0.6, period: 960 });
-        const kx = mod(400 - ox, 960) - 100;   // the keep, once a strip
-        if (kx > -120 && kx < W + 20) {
-          const K = Dd(0.15);
-          for (let j = 0; j < 50; j++) { const half = 24 + Math.floor(j * 0.6); for (let i = -half; i <= half; i++) r.set(kx + 50 + i, 112 + j, K); }   // the crag
-          fillRect(r, kx + 26, 70, 48, 44, K);
-          for (const [x, w, top] of [[22, 12, 50], [66, 12, 44], [42, 16, 30]]) { fillRect(r, kx + x, top, w, 70 - top + 2, K); for (let j = 0; j < w; j++) fillRect(r, kx + x + w / 2 - Math.floor(j / 2), top - w + j, j + 1, 1, K); }
-          for (let i = 0; i < 48; i += 6) fillRect(r, kx + 26 + i, 66, 3, 4, K);
-          for (const [x, y] of [[34, 84], [54, 80], [46, 44], [70, 60]]) { fillRect(r, kx + x, y, 2, 4, c('#ffc860')); }
-          line(r, kx + 50, 14, kx + 50, 26, K); for (let j = 0; j < 4; j++) fillRect(r, kx + 51, 15 + j, 8 - j, 1, Dr(0.8));   // the banner
+    scrolling('GREAT HALL', 'A long great hall: tall stained-glass windows down the far wall throwing coloured light across it, pillars and dragon banners close by, torches flickering. Scrolls in two layers.', 240,
+      { rate: 0.1, period: 480, fixed: (r, ox) => {
+        stoneWall(r, ox, 0, 178);
+        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) {
+          const k = mod(wx, 480) / 120, x = wx - ox + 38, cols = [GLASS.ember, GLASS.dusk, GLASS.sea, GLASS.dusk][k];
+          stainedGlass(r, x, 22, 44, 96, { cols, seed: 500 + k });
+          lightShaft(r, x + 6, x + 38, 118, 178, 18, cols[k % cols.length], 70);
         }
+        for (let x = 0; x < W; x++) { r.set(x, 132, STONE[3]); r.set(x, 133, STONE[0]); }   // the gallery ledge
       } },
-      { rate: 0.25, period: 960, fixed: (r, ox) => { trees(r, ox, { y: 186, minH: 24, maxH: 46, col: Dd(0.12), edge: Dd(0.24), seed: 503, every: 20, period: 960 }); dark(r, 178, Dd(0.08)); } }),
-    still('CASTLE RAMPARTS', 'Battlements and towers stretching away under a blood-red sky and a crescent moon, torches burning along the wall.', (r) => {
-      grad(r, 0, H, [[0, c('#1a0a14')], [0.6, Dr(0.45)], [1, Dd(0.3)]]);
-      disc(r, 380, 40, 14, [c('#fff4e0'), c('#f0d8c0'), c('#c8a090')]); disc(r, 386, 36, 13, [Dr(0.18), Dr(0.18), Dr(0.18)]);   // a crescent
-      const S1 = [c('#4e4a56'), c('#6e6a76'), c('#3a3640')];   // the castle bricks' own stone
-      for (let x = 0; x < W; x++) for (let y = 118; y < 178; y++) r.set(x, y, (y - 118) % 8 === 0 || mod(x + (Math.floor((y - 118) / 8) % 2) * 8, 16) === 0 ? S1[2] : S1[0]);
-      for (let x = 0; x < W; x += 16) fillRect(r, x, 110, 9, 8, S1[0]);
-      for (const [x, w] of [[40, 34], [220, 40], [400, 34]]) { fillRect(r, x, 70, w, 48, S1[0]); for (let i = 0; i < w; i += 8) fillRect(r, x + i, 62, 5, 8, S1[0]); fillRect(r, x + w / 2 - 3, 84, 6, 10, c('#1a0a10')); fillRect(r, x + w / 2 - 2, 86, 4, 8, c('#ffb850')); }
-      for (let x = 100; x < W; x += 80) { vert(r, x, 124, 136, S1[2]); halo(r, x, 120, 14, c('#ffa040'), 0.4); flame(r, x, 124, 6, [c('#ffd060'), c('#e85a1a')]); }
-      dark(r, 178, Dd(0.1));
-    }),
-    still('HOARD CAVE', 'A cave glittering with heaped gold and jewels, a dragon\'s tail curled around the hoard in the shadows.', (r) => {
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, pick([Dd(0.08), Dd(0.14), mix(Dd(0.2), INDIGO, 0.4)], noise2(x * 0.04, y * 0.05, 504), x, y));
-      glow(r, 250, 150, 100, c('#ffc840'), 0.2);
-      for (let j = 0; j < 48; j++) { const half = Math.round(110 * Math.sqrt(1 - ((48 - j) / 48) ** 2)); for (let i = -half; i <= half; i++) { const x = 250 + i, y = 130 + j; r.set(x, y, hash(x, y, 505) > 0.96 ? WHITE : pick([c('#8a6010'), c('#c9a21e'), c('#f5d328')], 0.6 - (j / 48) * 0.4 + 0.2 * (noise2(x * 0.3, y * 0.3, 506) - 0.5), x, y)); } }
-      for (const [x, y, col] of [[220, 136, c('#e83a5a')], [280, 142, TEAL], [250, 132, VIOLET], [300, 150, c('#e83a5a')], [196, 152, TEAL]]) { r.set(x, y, col); r.set(x + 1, y, col); r.set(x, y + 1, col); r.set(x + 1, y + 1, WHITE); }
-      for (let k = 0; k < 160; k++) {   // the tail, curling round the front of the hoard
-        const t = k / 160, x = 90 + t * 280, y = 166 + Math.round(10 * Math.sin(t * Math.PI * 1.5)), w = Math.round(9 * (1 - t) + 3);
-        for (let j = -w; j <= w; j++) r.set(Math.round(x), y + j, j <= -w + 1 ? Dr(0.85) : (Math.abs(j) + k) % 7 === 0 ? Dr(0.35) : j > w - 2 ? Dr(0.3) : Dr(0.6));
+      { rate: 0.3, period: 960, fixed: (r, ox) => {
+        for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) { const x = wx - ox; pillar(r, x, 22); banner(r, x + 50, 30, 16, 70); vert(r, x + 30, 92, 104, c('#3a2a1a')); glow(r, x + 30, 88, 14, c('#ffa040'), 0.4); }
+        dark(r, 178, Dd(0.08));
+      }, parts: [torches([[30, 92]], 160)] }),
+    still('ROSE WINDOW CHAPEL', 'The castle chapel: one great round window with a dragon at its heart, its colours falling across the pews, candles on the altar.', (r) => {
+      stoneWall(r, 0, 0, 178);
+      glow(r, 240, 70, 90, c('#c3225d'), 0.2);
+      const cx = 240, cy = 70, rad = 54;
+      for (let j = -rad - 4; j <= rad + 4; j++) for (let i = -rad - 4; i <= rad + 4; i++) {
+        const d = Math.hypot(i, j);
+        if (d > rad + 4) continue;
+        if (d > rad) { r.set(cx + i, cy + j, STONE[3]); continue; }
+        const a = (Math.atan2(j, i) + Math.PI) / TAU, ring = Math.abs(d - rad * 0.42) < 1.2 || Math.abs(d - rad * 0.74) < 1.2, spoke = Math.abs(((a * 16) % 1) - 0.5) > 0.44;
+        if (ring || (spoke && d > rad * 0.42)) { r.set(cx + i, cy + j, c('#120a12')); continue; }
+        const pane = Math.floor(a * 16) + (d > rad * 0.74 ? 32 : 16);
+        r.set(cx + i, cy + j, d < rad * 0.42 ? c('#2a1030') : mix(GLASS.dusk[pane % 5], WHITE, 0.1 + 0.15 * (1 - d / rad)));
       }
-      for (let i = 0; i < 9; i++) for (let j = -Math.min(i, 8 - i); j <= Math.min(i, 8 - i); j++) r.set(370 + i, 156 + j, j === -Math.min(i, 8 - i) ? Dr(0.85) : Dr(0.6));   // its spade tip
-      dark(r, 178, Dd(0.06));
-    }),
-    still('DRAGON BONES', 'A valley under an ash-red sky, the ribs of a giant dragon arching over the path, its skull half buried.', (r) => {
-      grad(r, 0, H, [[0, c('#2a1018')], [0.6, mix(Dr(0.5), c('#a07060'), 0.3)], [1, Dd(0.3)]]);
-      ridge(r, 0, { y: 160, amp: 14, f: 0.012, seed: 507, col: Dd(0.3), top: Dr(0.45) });
-      const BONE = [c('#e8e0d0'), c('#b8ae9c'), c('#7a7060')];
-      const spineY = (x) => 96 + Math.round(10 * Math.sin(((x - 90) / 290) * Math.PI) * -1 + ((x - 90) / 290) * 14);
-      for (let k = 0; k < 9; k++) {   // ribs hanging from the spine, bowing outwards to the ground
-        const x0 = 110 + k * 30, y0 = spineY(x0), len = 170 - y0;
-        for (let s = 0; s <= 1; s += 0.004) { const x = Math.round(x0 + 18 * Math.sin(s * Math.PI * 0.85)), y = Math.round(y0 + s * len), w = s < 0.85 ? 3 : 2; for (let q = 0; q < w; q++) r.set(x + q, y, q === 0 ? BONE[0] : q === 1 ? BONE[1] : BONE[2]); }
-      }
-      for (let x = 90; x < 380; x++) { const y = spineY(x); for (let q = 0; q < 4; q++) r.set(x, y + q, q === 0 ? BONE[0] : q < 3 ? BONE[1] : BONE[2]); if (mod(x, 10) === 0) { r.set(x, y - 1, BONE[1]); r.set(x, y - 2, BONE[1]); } }   // the spine
-      for (let i = 0; i < 70; i++) { const top = 118 + Math.round(i * 0.3), bottom = 150 - Math.round(i * 0.12); for (let y = top; y < bottom; y++) r.set(380 + i, y, y === top ? BONE[0] : y > bottom - 4 ? BONE[2] : BONE[1]); }   // the skull, snout to the right
-      ellipse(r, 394, 130, 6, 5, BLACK); ellipse(r, 394, 130, 2, 2, c('#3a1010'));   // its one great eye socket
-      for (const [hx, len] of [[384, 30], [396, 22]]) for (let i = 0; i < len; i++) { const x = hx - Math.round(i * 0.9), y = 120 - Math.round(Math.sin((i / len) * 1.8) * 16); r.set(x, y, BONE[0]); r.set(x, y + 1, BONE[1]); if (i < len * 0.6) r.set(x, y + 2, BONE[2]); }   // two horns sweeping back
-      for (let i = 0; i < 60; i++) { const y = 154 + Math.round(i * 0.28); r.set(386 + i, y, BONE[1]); r.set(386 + i, y + 1, BONE[2]); if (i % 5 === 2) { r.set(386 + i, y - 1, BONE[0]); r.set(386 + i, y - 2, BONE[0]); } }   // the lower jaw, fallen open
-      for (let i = 4; i < 66; i += 5) for (let j = 0; j < 4; j++) r.set(380 + i + Math.floor(j / 2), 150 - Math.round(i * 0.12) - j, BONE[0]);   // teeth
-      for (let i = 0; i < 80; i++) r.set(Math.floor(hash(i, 0, 508) * W), Math.floor(hash(i, 1, 508) * 170), c('#c8b8b0'));
+      const s = 2, mx = cx - 16, my = cy - 16;
+      DRAGON_MASK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') fillRect(r, mx + i * s, my + j * s, s, s, (i + j) % 5 === 0 ? c('#ff8a60') : c('#c3225d')); }));   // the dragon at its heart
+      lightShaft(r, 200, 280, 124, 178, 30, c('#c3225d'), 60); lightShaft(r, 220, 260, 124, 178, -20, c('#6a3a9a'), 50);
+      for (let k = 0; k < 3; k++) for (let x = 20; x < 460; x++) if (mod(x - 20, 120) < 96 && Math.abs(x - 240) > 40) { const y = 154 + k * 8; r.set(x, y, c('#3a2418')); r.set(x, y + 1, c('#2a180e')); }   // pews
+      fillRect(r, 210, 140, 60, 12, STONE[3]); fillRect(r, 210, 140, 60, 2, c('#e8dcc8'));   // the altar
+      for (const x of [216, 228, 252, 264]) { fillRect(r, x, 132, 2, 8, c('#f0e8d8')); glow(r, x, 128, 8, c('#ffc060'), 0.4); flame(r, x, 131, 4, [c('#ffd070'), c('#e87830')]); }
       dark(r, 178, Dd(0.08));
     }),
-    scrolling('VOLCANIC RIDGE', 'The rim of a caldera: basalt columns cut by glowing fissures, ash cloud lit red from below, embers rising. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => { grad(r, 0, H, [[0, c('#120810')], [0.5, mix(Dd(0.4), INDIGO, 0.3)], [0.8, c('#e0502a')], [1, Dd(0.4)]]); clouds(r, 0, { y: 20, h: 70, col: mix(Dd(0.5), INDIGO, 0.3), lit: mix(Dd(0.7), c('#a04030'), 0.5), seed: 509, cut: 0.48 }); } },
-      { rate: 0.1, period: 960, fixed: (r, ox) => {
-        for (let x = 0; x < W; x++) {
-          const wx = x + ox, col = Math.floor(mod(wx, 960) / 8), top = 100 + Math.floor(seamless((w) => noise1(w * 0.18, 510), col, 120, 12) * 60) + (col % 2) * 2, lip = mod(wx, 8);
-          for (let y = top; y < H; y++) r.set(x, y, y < top + 2 ? (lip < 2 || lip > 5 ? Dr(0.45) : Dr(0.6)) : lip === 0 ? Dd(0.06) : lip < 2 ? Dd(0.26) : (y - top) % 22 === 0 ? Dd(0.08) : Dd(0.16));
-          if (hash(Math.floor(col / 3), 1, 510) > 0.82 && lip === 4) for (let y = top + 6; y < H; y++) r.set(x, y, y % 3 ? c('#ff7a2a') : c('#ffd060'));
+    still('ARMOURY GALLERY', 'A gallery lined with suits of armour between tall teal and violet windows, shields bearing the dragon\'s eye and crossed spears on the walls.', (r) => {
+      stoneWall(r, 0, 0, 178, 1);
+      for (let k = 0; k < 4; k++) { const x = 22 + k * 120; stainedGlass(r, x, 24, 30, 92, { cols: k % 2 ? GLASS.sea : GLASS.dusk, seed: 530 + k }); lightShaft(r, x + 4, x + 26, 116, 178, 14, k % 2 ? TEAL : VIOLET, 60); }
+      for (let k = 0; k < 4; k++) {
+        const x = 82 + k * 120;   // a suit of armour on its plinth
+        fillRect(r, x - 8, 160, 18, 18, STONE[2]); fillRect(r, x - 8, 160, 18, 1, STONE[3]);
+        const ST = [c('#e8ecf0'), c('#a8b0bc'), c('#5a6270')];
+        ellipse(r, x, 106, 5, 6, ST[1]); fillRect(r, x - 4, 105, 9, 2, ST[2]); r.set(x - 2, 105, c('#120a12')); r.set(x + 2, 105, c('#120a12'));   // the helm and its slit
+        fillRect(r, x - 7, 113, 15, 22, ST[1]); fillRect(r, x - 7, 113, 2, 22, ST[0]); fillRect(r, x + 6, 113, 2, 22, ST[2]);   // the breastplate
+        fillRect(r, x - 10, 114, 3, 20, ST[1]); fillRect(r, x + 8, 114, 3, 20, ST[2]);   // arms
+        fillRect(r, x - 6, 135, 5, 25, ST[1]); fillRect(r, x + 1, 135, 5, 25, ST[2]);   // legs
+        vert(r, x + 13, 92, 160, c('#5a3a2a')); for (let j = 0; j < 6; j++) fillRect(r, x + 13 - Math.floor(j / 2), 86 + j, j + 1, 1, ST[0]);   // a halberd
+      }
+      for (let k = 0; k < 4; k++) { const x = 140 + (k % 2) * 0 + k * 120 - 120; if (x < 20) continue; ellipse(r, x, 60, 9, 11, Dr(0.6)); ellipse(r, x - 1, 58, 6, 7, Dr(0.85)); dragonEye(r, x, 60, 5); line(r, x - 16, 40, x + 16, 80, c('#5a3a2a')); line(r, x + 16, 40, x - 16, 80, c('#5a3a2a')); }   // shields with crossed spears
+      dark(r, 178, Dd(0.08));
+    }),
+    still('DRAGON WINDOW STAIR', 'A grand stair climbing past one huge window of a crimson dragon, torches lighting the way up.', (r) => {
+      stoneWall(r, 0, 0, 178);
+      glow(r, 300, 90, 110, c('#c3225d'), 0.22);
+      stainedGlass(r, 250, 8, 100, 150, { cols: GLASS.ember, motif: 'dragon', seed: 540 });
+      lightShaft(r, 262, 338, 158, 178, -40, c('#e8503a'), 70);
+      for (let k = 0; k < 26; k++) { const x = 20 + k * 9, y = 172 - k * 5; fillRect(r, x, y, 12, 5, STONE[2]); fillRect(r, x, y, 12, 1, STONE[3]); fillRect(r, x, y + 5, 12, 178 - y - 5, STONE[1]); }   // the stair, climbing to the right
+      for (let k = 0; k < 26; k += 1) { const x = 24 + k * 9, y = 160 - k * 5; vert(r, x, y, y + 10, GILT[0]); }   // its balusters
+      line(r, 22, 158, 258, 28, GILT[1]); line(r, 22, 159, 258, 29, GILT[0]);   // the rail
+      for (const [x, y] of [[60, 110], [170, 50], [420, 80]]) { vert(r, x, y, y + 12, c('#3a2a1a')); glow(r, x, y - 4, 14, c('#ffa040'), 0.4); flame(r, x, y, 6, [c('#ffd060'), c('#e85a1a')]); }
+      dark(r, 178, Dd(0.08));
+    }),
+    scrolling('THRONE ROOM', 'The throne at the end of the hall: a gilded seat on its dais beneath two tall windows and the dragon banner, chandeliers swinging gently overhead. Scrolls in two layers.', 240,
+      { rate: 0.08, period: 960, fixed: (r, ox) => {
+        stoneWall(r, ox, 0, 178);
+        for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) {
+          const k = mod(wx, 960) / 240, x = wx - ox;
+          if (k === 1) {   // the throne itself, once a strip
+            stainedGlass(r, x + 40, 20, 50, 110, { cols: GLASS.ember, seed: 551 }); stainedGlass(r, x + 150, 20, 50, 110, { cols: GLASS.dusk, seed: 552 });
+            banner(r, x + 112, 18, 16, 80);
+            fillRect(r, x + 60, 160, 120, 18, STONE[3]); fillRect(r, x + 74, 150, 92, 10, STONE[3]); fillRect(r, x + 60, 160, 120, 1, c('#e8dcc8'));   // the dais
+            fillRect(r, x + 104, 104, 32, 46, GILT[1]); fillRect(r, x + 108, 108, 24, 38, Dr(0.6)); fillRect(r, x + 102, 124, 4, 26, GILT[2]); fillRect(r, x + 134, 124, 4, 26, GILT[0]);
+            for (let j = 0; j < 8; j++) fillRect(r, x + 112 + Math.floor(j / 2), 96 + j, 16 - j, 1, GILT[2]);   // the throne
+            fillRect(r, x + 108, 160, 24, 18, Dr(0.55));   // the carpet down the steps
+          } else { stainedGlass(r, x + 90, 30, 44, 96, { cols: k % 2 ? GLASS.sea : GLASS.dusk, seed: 553 + k }); lightShaft(r, x + 96, x + 128, 126, 178, 16, k % 2 ? TEAL : VIOLET, 60); }
         }
       } },
-      { rate: 0.3, period: 960, fixed: (r, ox) => { ridge(r, ox, { y: 186, amp: 16, f: 0.04, seed: 511, col: Dd(0.1), top: c('#e85a1a'), sharp: 0.5, period: 960 }); dark(r, 178, Dd(0.06)); },
-        parts: [drift(512, 50, [c('#ffb030'), c('#ff6a20')], 176, -0.2)] }),
-    still('THRONE HALL', 'A great hall of tall stained-glass windows in red, violet and teal, a dragon banner hanging between them.', (r) => {
-      fillRect(r, 0, 0, W, H, Dd(0.14));
-      for (const x0 of [40, 200, 360]) {
-        for (let j = 0; j < 120; j++) for (let i = 0; i < 80; i++) {
-          const dx = i - 40, dy = j - 40; if (j < 40 && dx * dx + dy * dy > 40 * 40) continue;
-          const lead = i % 10 === 0 || j % 12 === 0 || i === 79;
-          r.set(x0 + i, 20 + j, lead ? Dd(0.08) : [Dr(0.8), VIOLET, TEAL, mix(Dr(1), c('#ffc080'), 0.4)][(Math.floor(i / 10) + Math.floor(j / 12)) % 4]);
-        }
-        beam(r, x0 + 40, 140, Math.PI / 2 - 0.2, 0.2, 60, Dr(0.9), 0.18);
+      { rate: 0.25, period: 960, fixed: (r, ox) => { for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) pillar(r, wx - ox, 18); dark(r, 178, Dd(0.08)); }, parts: [CHANDELIERS] }),
+    still('MOONLIT CLOISTER', 'A cloister walk at night: pointed arches open onto the dark, their stained-glass tops lit by the moon, blue light pooling on the flagstones.', (r) => {
+      grad(r, 0, H, [[0, c('#0a0a1e')], [0.7, c('#1e2a4a')], [1, Dd(0.2)]]);
+      stars(r, 560, 50, 90, c('#4a5a8a'), c('#c8d0f0'));
+      glow(r, 380, 30, 30, c('#c8d0f0'), 0.3); disc(r, 380, 30, 12, [c('#f8f8ff'), c('#d8dcf0'), c('#a8b0d0')]);
+      for (let k = 0; k < 5; k++) {
+        const x = 8 + k * 96, w = 64;
+        stainedGlass(r, x + 16, 30, w, 40, { cols: GLASS.moon, seed: 560 + k });   // the arch's glass head
+        for (let y = 70; y < 160; y++) for (let i = 0; i < 16; i++) r.set(x + i, y, i < 2 ? STONE[3] : STONE[1]);   // the columns between
+        lightShaft(r, x + 24, x + 72, 70, 178, -30, c('#6a7ad0'), 45);
       }
-      for (const x of [140, 300]) { fillRect(r, x, 0, 20, 178, Dd(0.22)); vert(r, x, 0, 178, Dd(0.32)); }
-      fillRect(r, 146, 30, 8, 60, Dr(0.6)); for (let j = 0; j < 6; j++) fillRect(r, 146 + j, 90 + j, 8 - 2 * j, 1, Dr(0.6)); ellipse(r, 150, 52, 2, 3, c('#f5d328'));   // the dragon banner
-      fillRect(r, 306, 30, 8, 60, Dr(0.6)); for (let j = 0; j < 6; j++) fillRect(r, 306 + j, 90 + j, 8 - 2 * j, 1, Dr(0.6)); ellipse(r, 310, 52, 2, 3, c('#f5d328'));
+      fillRect(r, 0, 0, W, 26, STONE[1]); for (let x = 0; x < W; x++) r.set(x, 26, STONE[3]);
+      for (let y = 160; y < 178; y++) for (let x = 0; x < W; x++) r.set(x, y, (y - 160) % 6 === 0 || mod(x + (Math.floor((y - 160) / 6) % 2) * 10, 20) === 0 ? STONE[0] : STONE[1]);   // the flagstones
       dark(r, 178, Dd(0.08));
     }),
   ],
@@ -727,7 +827,7 @@ const WELD = {
       if (!on) continue;
       const x = wx - ox + 76, y = 140;
       out.push(['s', x - 2, y - 2]);
-      for (let i = 0; i < 5; i++) out.push(['f', x + Math.round(Math.cos(i * 1.3 + (TAU * t) / 24) * (3 + i)), y + 2 + i]);
+      for (let i = 0; i < 5; i++) out.push(['f', x + Math.round(Math.cos(i * 1.3 + (TAU * mod(t, 24)) / 24) * (3 + i)), y + 2 + i]);
     }
     return out;
   },

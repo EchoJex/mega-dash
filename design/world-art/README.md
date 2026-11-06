@@ -131,7 +131,7 @@ brick, at 2.06 against a floor of 2.
 |---|---|---|---|
 | Rock | 1 crystal cavern (moving) · 2 geode cavern · 3 underground lake · 4 cave mouth · 5 glowworm grotto (moving) · 6 giant crystals (all six redrawn; first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed**; backdrop not picked yet (owner, 6 Nov 2026), in their words below |
 | Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
-| Dragon | 1 dragon's keep (moving) · 2 castle ramparts · 3 hoard cave · 4 dragon bones · 5 volcanic ridge (moving) · 6 throne hall | C castle bricks (picked in the first round) | backdrop not picked yet |
+| Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | not picked yet |
 | Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | not picked yet |
 
@@ -150,6 +150,16 @@ one game: a manor hall where the furniture floats and the portraits' eyes follow
 shrine path of gates, paper lanterns and blue spirit flames, a tower given over to graves, a shut-down
 fairground whose ghost train has one great staring eye, a river of souls with its ferryman (moving),
 and a western ghost town with a see-through cowboy in the street. The materials are as offered.
+
+**Dragon's pick, in the owner's words (6 Nov 2026):** "6c but do another 6 variants based on 6c, i
+like the interior halls of a castle, and i like some stained glass windows". So the throne hall with
+the castle bricks is the starting point, and the six backdrops are now halls inside the castle, each
+with stained glass: a great hall of tall windows, pillars and banners (moving: torches flicker), a
+chapel with a great rose window and a dragon at its heart, an armoury gallery of suits of armour
+between windows, a grand stair past one huge window of a crimson dragon, the throne room with its
+chandeliers swinging (moving), and a cloister whose arches are glazed and lit by the moon. The
+banners and shields carry the dragon's crest, a gold lozenge round one slit eye. The board shows the
+throne hall first, for comparison; one of the six is still to pick.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.
