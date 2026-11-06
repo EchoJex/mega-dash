@@ -130,7 +130,7 @@ brick, at 2.06 against a floor of 2.
 | slice | backdrops | materials | status |
 |---|---|---|---|
 | Rock | 1 crystal cavern (moving) · 2 geode cavern · 3 underground lake · 4 cave mouth · 5 glowworm grotto (moving) · 6 giant crystals (all six redrawn; first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed**; backdrop not picked yet (owner, 6 Nov 2026), in their words below |
-| Ghost | 1 graveyard fog (moving) · 2 haunted mansion · 3 candlelit crypt · 4 ghost ship · 5 spirit forest (moving) · 6 chapel ruins | A rotten floorboards · B crypt stone · C chapel tiles | not picked yet |
+| Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
 | Dragon | 1 dragon's keep (moving) · 2 castle ramparts · 3 hoard cave · 4 dragon bones · 5 volcanic ridge (moving) · 6 throne hall | C castle bricks (picked in the first round) | backdrop not picked yet |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | not picked yet |
 | Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | not picked yet |
@@ -142,6 +142,14 @@ sharp amethyst points, each catching the light for a moment now and then. All si
 each a cave with crystals at its heart: a crystal cavern and a glowworm grotto (both moving), a giant
 geode, an underground lake mirroring its crystals, a cave mouth looking out at a green valley, and a
 cavern crossed by giant crystal beams. The backdrop is still to pick.
+
+**Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider
+interpretation of 'Ghost' using what other video games have established as precedent". The six new
+ones each take a kind of haunting games keep coming back to, drawn fresh rather than copied from any
+one game: a manor hall where the furniture floats and the portraits' eyes follow you (moving), a
+shrine path of gates, paper lanterns and blue spirit flames, a tower given over to graves, a shut-down
+fairground whose ghost train has one great staring eye, a river of souls with its ferryman (moving),
+and a western ghost town with a see-through cowboy in the street. The materials are as offered.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.

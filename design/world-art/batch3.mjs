@@ -239,45 +239,92 @@ const ROCK = {
 };
 
 // ── GHOST: Wraith Man's haunted country ──────────────────────────────
+//
+// The owner, 6 Nov 2026, on the Ghost board: "redo the 6 backdrops, with a wider interpretation of
+// 'Ghost' using what other video games have established as precedent". So the six backdrops are new,
+// each from a kind of haunting games keep coming back to (drawn fresh, copying no one game): the
+// haunted manor with its floating furniture and watching portraits, the spirit shrine of lanterns
+// and blue spirit flames, the tower full of graves, the haunted fairground and its ghost train, the
+// river of souls with its ferryman, and the ghost town of the old west. The materials are as before.
 
 const wraith = B('wraith');
 const Wv = (k) => tn(wraith, k), Wd = (k) => tn(wraith, k, 'secondary'), WISP = [c('#e4fff6'), c('#8af0d0')];
 const MOONPALE = [c('#fbf8ff'), c('#e4dcf8'), c('#b8a8e0')];
-/** Will-o'-wisps bobbing in the dark: a bright heart and a soft glow round it. */
-const wisps = (seed, n, y0, yr) => ({
-  pieces: () => pics([
-    ['w', 2, 2, (p) => { p.set(0, 0, WISP[0]); p.set(1, 0, WISP[0]); p.set(0, 1, WISP[0]); p.set(1, 1, WISP[1]); }],
-    ['g', 6, 6, (p) => { for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) { const d = Math.hypot(i - 2.5, j - 2.5); if (d < 3) p.set(i, j, WISP[1], Math.round(150 * (1 - d / 3))); } }],
-  ]),
-  at(ox, t) {
-    const out = [];
-    for (let i = 0; i < n; i++) {
-      const a = (TAU * t) / 240 + hash(i, 2, seed) * TAU;
-      const x = mod(Math.floor(hash(i, 0, seed) * 960) - ox, 960) - 40 + Math.round(12 * Math.sin(a)), y = y0 + Math.floor(hash(i, 1, seed) * yr) + Math.round(5 * Math.sin(2 * a));
-      if (x < -8 || x > W + 8) continue;
-      out.push(['g', x - 2, y - 2], ['w', x, y]);
-    }
-    return out;
-  },
-});
-/** Banks of fog swaying back and forth along the ground. */
-const FOG = {
-  pieces: () => pics([0, 1, 2].map((k) => [`f${k}`, 70, 10, (p) => { for (let j = 0; j < 10; j++) for (let i = 0; i < 70; i++) { const d = ((i - 35) / 35) ** 2 + ((j - 5) / 5) ** 2; if (d < 1 && hash(i, j, k + 40) < 0.6 - d * 0.5) p.set(i, j, lit(Wv(0.45), 0.2), 90); } }])),
-  at(ox, t) {
-    const out = [];
-    for (let i = 0; i < 14; i++) {
-      const x = mod(i * 70 + Math.round(18 * Math.sin((TAU * t) / 240 + i * 1.3)) - ox, 980) - 70;
-      if (x < -70 || x > W) continue;
-      out.push([`f${i % 3}`, x, 168 + (i % 3) * 3]);
-    }
-    return out;
-  },
-};
+const SPIRIT = [c('#e0f8ff'), c('#7ad8ff'), c('#3a7ac8')];   // blue spirit flame: heart, body, edge
+const night = (r, k = 1) => grad(r, 0, H, [[0, Wd(0.3)], [0.65, mix(Wd(1), Wv(0.45), 0.4 * k)], [1, Wd(0.4)]]);
 function headstone(r, x, base, kind, col, edge) {
   if (kind === 0) { for (let j = 0; j < 16; j++) for (let i = 0; i < 9; i++) { if (j < 3 && ((i - 4) / 4.5) ** 2 + ((j - 3) / 3) ** 2 > 1) continue; r.set(x + i, base - 16 + j, i === 0 ? edge : col); } }
   else if (kind === 1) { fillRect(r, x + 3, base - 20, 3, 20, col); fillRect(r, x, base - 15, 9, 3, col); vert(r, x + 3, base - 20, base, edge); }
   else { for (let j = 0; j < 24; j++) { const half = j < 4 ? Math.floor(j / 2) : 2; for (let i = -half; i <= half; i++) r.set(x + 4 + i, base - 24 + j, i === -half ? edge : col); } }
 }
+/** A blue spirit flame: a teardrop, its tip flicking up. */
+function spiritFlame(r, x, y, s) {
+  glow(r, x, y, s * 3, SPIRIT[1], 0.35);
+  for (let j = -s * 2; j <= s; j++) for (let i = -s; i <= s; i++) {
+    const t = j < 0 ? 1 + j / (s * 2) : 1 - (j / s) ** 2, half = s * Math.sqrt(Math.max(0, t)) * (j < 0 ? 0.8 : 1);
+    if (Math.abs(i) > half) continue;
+    r.set(x + i, y + j, Math.abs(i) < half * 0.4 && j > -s ? SPIRIT[0] : Math.abs(i) < half * 0.8 ? SPIRIT[1] : SPIRIT[2]);
+  }
+}
+/** Portraits' eyes in the haunted hall: they look left, then ahead, then right, then ahead, following you. */
+const PORTRAIT_X = [36, 196, 356];
+const EYES = {
+  pieces: () => pics([['p', 1, 1, (p) => p.set(0, 0, BLACK)]]),
+  at(ox, t) {
+    const ph = mod(t, 240), look = ph < 80 ? -1 : ph < 120 ? 0 : ph < 200 ? 1 : 0, out = [];
+    for (let wx = Math.floor(ox / 480) * 480; wx < ox + W + 480; wx += 480) for (const px of PORTRAIT_X) {
+      const x = wx + px - ox;
+      if (x < -50 || x > W + 10) continue;
+      out.push(['p', x + 15 + look, 86], ['p', x + 23 + look, 86]);
+    }
+    return out;
+  },
+};
+/** Furniture floating in the haunted hall, each piece bobbing on its own beat. */
+const FLOATERS = {
+  pieces: () => pics([
+    ['chair', 12, 18, (p) => { const C = [c('#5a3a2a'), c('#7a5238'), c('#3a2418')]; fillRect(p, 1, 0, 2, 18, C[1]); fillRect(p, 1, 0, 10, 2, C[1]); for (let y = 2; y < 9; y += 3) fillRect(p, 3, y, 6, 1, C[2]); fillRect(p, 0, 9, 12, 3, C[0]); for (let i = 0; i < 12; i++) p.set(i, 9, C[1]); fillRect(p, 9, 12, 2, 6, C[2]); fillRect(p, 1, 12, 2, 6, C[2]); }],
+    ['book', 10, 6, (p) => { for (let i = 0; i < 10; i++) { const y = Math.abs(i - 4.5) < 1 ? 2 : 0; for (let j = y; j < 6; j++) p.set(i, j, j === y ? c('#f0e8d8') : i === 0 || i === 9 ? c('#6a2a2a') : c('#d8ccb8')); } }],
+    ['candles', 11, 13, (p) => { const G = [c('#c9a21e'), c('#8a6d10')]; fillRect(p, 5, 6, 1, 7, G[0]); fillRect(p, 1, 6, 9, 1, G[0]); fillRect(p, 3, 12, 5, 1, G[1]); for (const x of [1, 5, 9]) { fillRect(p, x, 3, 1, 3, c('#f0e8d8')); p.set(x, 1, c('#ffd070')); p.set(x, 2, c('#fff4c0')); } }],
+    ['vase', 7, 10, (p) => { for (let j = 0; j < 10; j++) { const half = j < 2 ? 1 : j < 7 ? 3 : 2; for (let i = -half; i <= half; i++) p.set(3 + i, j, i === -half ? Wv(0.8) : j % 4 === 2 ? c('#3a6aa0') : Wv(0.55)); } }],
+  ]),
+  at(ox, t) {
+    const out = [], a = (TAU * t) / 240;
+    for (let i = 0; i < 8; i++) {
+      const x = mod(Math.floor(hash(i, 0, 420) * 960) - ox, 960) - 30, y = 70 + Math.floor(hash(i, 1, 420) * 60) + Math.round(5 * Math.sin(a + i * 1.7));
+      if (x > -20 && x < W) out.push([['chair', 'book', 'candles', 'vase'][i % 4], x, y]);
+    }
+    return out;
+  },
+};
+/** Souls drifting down the underworld river: pale wisps with tails, flowing in two bands. */
+const SOULS = {
+  pieces: () => pics([0, 1].map((k) => [`s${k}`, 14, 5, (p) => { for (let i = 0; i < 14; i++) { const h = Math.round((1 - i / 14) * (k ? 2 : 1.5)); for (let j = -h; j <= h; j++) p.set(i, 2 + j, i < 3 ? WISP[0] : WISP[1], Math.round(255 * (1 - i / 16))); } }])),
+  at(ox, t) {
+    const out = [];
+    for (const [y, P, offs, k] of [[156, 120, [0, 54], 0], [168, 160, [0, 70, 118], 1]]) {
+      const shift = Math.floor((mod(t, 240) / 240) * P);
+      for (let wx = Math.floor((ox - P) / P) * P; wx < ox + W + P; wx += P) for (const o of offs) {
+        const x = wx + o - shift - ox + Math.round(2 * Math.sin((TAU * t) / 120 + o));
+        if (x > -14 && x < W) out.push([`s${k}`, x, y + (o % 3)]);
+      }
+    }
+    return out;
+  },
+};
+/** The ferryman's boat on the river, rocking gently, his lantern lit. */
+const FERRY = {
+  pieces: () => pics([['boat', 44, 26, (p) => {
+    const D = Wd(0.12);
+    for (let i = 0; i < 44; i++) { const top = 20 - Math.round(3 * Math.abs(i - 22) / 22 * 2), bottom = 24 - Math.round(Math.abs(i - 22) / 11); for (let j = top; j < bottom; j++) p.set(i, j, j === top ? Wv(0.4) : D); }
+    fillRect(p, 18, 6, 6, 14, D); ellipse(p, 21, 5, 3, 3, D); line(p, 26, 2, 40, 22, D);   // the hooded ferryman and his pole
+    vert(p, 30, 2, 8, D); fillRect(p, 28, 8, 5, 5, c('#ffd070')); p.set(30, 10, WHITE);   // the lantern
+  }]]),
+  at(ox, t) {
+    const x = mod(380 - ox, 960) - 100;
+    return x > -50 && x < W ? [['boat', x, 134 + Math.round(Math.sin((TAU * t) / 120))]] : [];
+  },
+};
 const GHOST = {
   id: 'wraith', type: 'Ghost',
   materials: [
@@ -289,90 +336,95 @@ const GHOST = {
       material('tiles', { deep: '#1a1428', dark: '#2e2646', base: '#544a78', light: '#6c6094', hi: '#d8d0f0', cap0: '#e0d8f4', cap1: '#a898d0', void: '#0c0816', thi: '#f0e8ff', tlight: '#c0a8f0', tdark: '#6a4ab0', obs0: '#1a1030', obs1: '#4a3080', obs2: '#a68dd8', obs3: '#f0e8ff', iron: '#2a2236', ironLight: '#6a5a8a' }, { size: 8, spikes: 'glass', door: 'wood' })],
   ],
   backdrops: [
-    scrolling('GRAVEYARD FOG', 'Tombstones and crosses in rolling fog under a full moon, a chapel on the hill, will-o\'-wisps bobbing. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => { grad(r, 0, H, [[0, Wd(0.4)], [0.6, mix(Wd(1), Wv(0.4), 0.4)], [1, Wd(0.5)]]); stars(r, 401, 60, 110, Wv(0.4), WHITE); glow(r, 372, 46, 40, Wv(0.7), 0.3); disc(r, 372, 46, 18, MOONPALE); } },
-      { rate: 0.1, period: 960, fixed: (r, ox) => {
-        ridge(r, ox, { y: 152, amp: 10, f: 0.012, seed: 402, col: Wd(0.7), top: Wv(0.3), period: 960 });
-        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) {
-          const k = mod(wx / 120, 8), x = wx - ox + Math.floor(hash(k, 0, 403) * 60);
-          if (k === 3) { fillRect(r, x, 118, 30, 30, Wd(0.55)); for (let j = 0; j < 14; j++) fillRect(r, x + 15 - Math.floor(j * 1.1), 104 + j, Math.floor(j * 2.2) + 1, 1, Wd(0.55)); fillRect(r, x + 22, 92, 6, 26, Wd(0.55)); fillRect(r, x + 24, 86, 2, 6, Wd(0.55)); fillRect(r, x + 22, 88, 6, 2, Wd(0.55)); fillRect(r, x + 6, 128, 4, 6, c('#c8f0a0')); }
-          else bareTree(r, x, 150, 30 + Math.floor(hash(k, 1, 403) * 30), Wd(0.55), k);
+    scrolling('HAUNTED HALL', 'A manor\'s hall where the furniture floats: chairs, books and candlesticks bobbing in the air, portraits whose eyes follow you. Scrolls in two layers.', 240,
+      { rate: 0.12, period: 480, fixed: (r, ox) => {
+        for (let y = 0; y < 178; y++) for (let x = 0; x < W; x++) { const wx = x + ox, stripe = mod(wx, 16) < 2, dam = Math.abs(mod(wx, 16) - 9) + Math.abs(mod(y, 20) - 10) === 5; r.set(x, y, y < 128 ? (stripe ? Wd(0.7) : dam ? mix(Wd(1), Wv(0.35), 0.5) : mix(Wd(1), Wv(0.2), 0.3)) : y === 128 || y === 129 ? c('#7a5238') : mod(wx, 40) === 0 || y === 140 ? c('#2e1a12') : c('#4a2c1e')); }
+        for (let x = 0; x < W; x++) { r.set(x, 56, c('#7a5238')); r.set(x, 57, c('#3a2418')); }   // the picture rail
+        for (let wx = Math.floor(ox / 480) * 480; wx < ox + W + 480; wx += 480) for (const px of PORTRAIT_X) {
+          const x = wx + px - ox;
+          if (x < -50 || x > W + 10) continue;
+          for (let j = 0; j < 54; j++) for (let i = 0; i < 40; i++) r.set(x + i, 64 + j, i < 3 || i > 36 || j < 3 || j > 50 ? (i + j) % 3 ? c('#c9a21e') : c('#8a6d10') : Wd(0.5));   // the gilt frame
+          ellipse(r, x + 20, 92, 11, 15, mix(Wd(1), Wv(0.6), 0.4)); ellipse(r, x + 20, 112, 16, 8, Wd(0.3));   // a pale face over dark shoulders
+          for (const ex of [15, 23]) { r.set(x + ex - 1, 86, WHITE); r.set(x + ex, 86, WHITE); r.set(x + ex + 1, 86, WHITE); }   // the whites of its eyes
+          vert(r, x + 60, 70, 84, c('#8a6d10')); glow(r, x + 60, 66, 14, c('#ffd070'), 0.35); flame(r, x + 60, 70, 4, [c('#ffd070'), c('#e87830')]);   // a sconce
         }
+      }, parts: [EYES] },
+      { rate: 0.3, period: 960, fixed: (r) => dark(r, 178, Wd(0.2)), parts: [FLOATERS] }),
+    still('LANTERN SHRINE', 'A shrine path at night through gate after gate, paper lanterns glowing along it and blue spirit flames floating between.', (r) => {
+      night(r);
+      glow(r, 240, 60, 60, Wv(0.8), 0.25); disc(r, 240, 60, 26, MOONPALE);
+      for (const x0 of [0, 420]) for (let x = x0; x < x0 + 60; x += 7) { vert(r, x, 0, 178, Wd(0.15)); vert(r, x + 1, 0, 178, Wd(0.22)); for (let y = 10; y < 178; y += 18) r.set(x + 2, y, Wd(0.3)); }   // bamboo at each side
+      for (let y = 120; y < 178; y++) { const half = Math.round(10 + (y - 120) * 2.2); for (let x = 240 - half; x <= 240 + half; x++) r.set(x, y, (y + Math.floor(Math.abs(x - 240) / 8)) % 6 === 0 ? Wd(0.45) : Wd(0.6)); }   // the stone path
+      const RED = [c('#c83c2a'), c('#8a2418'), c('#e8704a')];
+      for (const s of [0.35, 0.5, 0.7, 1]) {   // gates receding up the path
+        const cx = 240, h = Math.round(80 * s), w = Math.round(110 * s), base = 120 + Math.round(58 * s), th = Math.max(2, Math.round(5 * s));
+        for (const side of [-1, 1]) fillRect(r, cx + side * Math.round(w / 2) - Math.floor(th / 2), base - h, th, h, mix(RED[1], Wd(0.3), 1 - s));
+        for (let i = -Math.round(w / 2) - 8 * s; i <= w / 2 + 8 * s; i++) { const lift = Math.round(Math.max(0, Math.abs(i) - w / 2 + 6 * s) * 0.4); for (let j = 0; j < th; j++) r.set(cx + Math.round(i), base - h - lift + j, j === 0 ? mix(RED[2], Wd(0.3), 1 - s) : mix(RED[0], Wd(0.3), 1 - s)); }
+        fillRect(r, cx - Math.round(w / 2), base - h + Math.round(12 * s), w, Math.max(1, th - 1), mix(RED[1], Wd(0.3), 1 - s));
+      }
+      for (const [x, y] of [[150, 128], [330, 128], [116, 150], [364, 150], [80, 166], [400, 166]]) { vert(r, x, y - 18, y - 4, Wd(0.2)); glow(r, x, y, 16, c('#ff9a50'), 0.4); ellipse(r, x, y, 4, 5, c('#f07a3a')); ellipse(r, x - 1, y - 1, 2, 3, c('#ffd090')); r.set(x - 4, y, c('#8a2418')); r.set(x + 4, y, c('#8a2418')); }   // paper lanterns
+      for (const [x, y, s] of [[190, 96, 3], [300, 84, 4], [100, 100, 3], [384, 108, 3], [262, 130, 2]]) spiritFlame(r, x, y, s);
+      dark(r, 178, Wd(0.15));
+    }),
+    still('GRAVE TOWER', 'Inside a tall tower given over to the dead: tier on tier of gravestones, mist on every floor, ghost lights drifting up the stair.', (r) => {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const row = Math.floor(y / 12), bx = mod(x + (row % 2) * 16, 32); r.set(x, y, y % 12 === 0 || bx === 0 ? Wd(0.35) : pick([Wd(0.6), mix(Wd(1), Wv(0.25), 0.3)], noise2(x * 0.08, y * 0.08, 430), x, y)); }
+      for (const x of [60, 400]) { for (let j = 0; j < 50; j++) for (let i = 0; i < 20; i++) { const dx = i - 10; if (j < 10 && dx * dx + (j - 10) ** 2 > 100) continue; r.set(x + i, 14 + j, Wd(0.15)); } beam(r, x + 10, 40, Math.PI / 2 + 0.35, 0.1, 150, Wv(0.85), 0.25); }   // arched windows, moonlight falling
+      for (const [y, x0, x1] of [[70, 120, 470], [112, 0, 360], [150, 100, 480]]) {
+        for (let x = x0; x < x1; x++) { r.set(x, y, Wv(0.45)); r.set(x, y + 1, Wd(0.25)); for (let j = 2; j < 6; j++) r.set(x, y + j, Wd(0.3)); }   // a floor of the tower
+        for (let x = x0 + 8; x < x1 - 10; x += 18) headstone(r, x, y, Math.floor(hash(x, y, 431) * 3), mix(Wd(1), Wv(0.45), 0.5), Wv(0.7));
+        for (let x = x0; x < x1; x++) for (let j = 1; j < 9; j++) if (hash(x, y - j, 432) < 0.5 - j * 0.05) r.set(x, y - j, Wv(0.7), 70);   // mist along each floor
+      }
+      for (let k = 0; k < 40; k++) { const x = 360 + k * 3, y = 150 - k; fillRect(r, x, y, 6, 2, Wv(0.4)); }   // the stair
+      for (const [x, y] of [[380, 132], [404, 116], [430, 96], [200, 54]]) { glow(r, x, y, 10, WISP[1], 0.45); r.set(x, y, WISP[0]); r.set(x + 1, y, WISP[0]); }
+      dark(r, 178, Wd(0.18));
+    }),
+    still('HAUNTED CARNIVAL', 'A fairground shut for good: a crooked wheel against the moon, a faded big top, and a ghost train whose entrance is one great staring eye.', (r) => {
+      night(r, 0.8);
+      glow(r, 120, 50, 40, Wv(0.8), 0.25); disc(r, 120, 50, 18, MOONPALE);
+      const D = Wd(0.2);
+      const wc = [110, 96], wr = 58;
+      for (let a = 0; a < TAU; a += 0.004) { r.set(Math.round(wc[0] + Math.cos(a) * wr), Math.round(wc[1] + Math.sin(a) * wr), D); r.set(Math.round(wc[0] + Math.cos(a) * (wr - 2)), Math.round(wc[1] + Math.sin(a) * (wr - 2)), D); }
+      for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU + 0.1, x = Math.round(wc[0] + Math.cos(a) * wr), y = Math.round(wc[1] + Math.sin(a) * wr); line(r, wc[0], wc[1], x, y, D); fillRect(r, x - 3, y + 1, 7, 6, D); if (k % 4 === 1) fillRect(r, x - 2, y + 2, 5, 3, c('#ffd070')); }   // the wheel, a couple of cabins still lit
+      line(r, wc[0], wc[1], wc[0] - 40, 178, D); line(r, wc[0], wc[1], wc[0] + 40, 178, D);
+      for (let j = 0; j < 70; j++) { const half = Math.round(10 + j * 1.2); for (let i = -half; i <= half; i++) r.set(270 + i, 108 + j, mod(i + 200, 16) < 8 ? mix(c('#a03a3a'), Wd(0.5), 0.45) : mix(c('#e8dcc8'), Wd(0.5), 0.45)); }   // the big top
+      vert(r, 270, 92, 108, D); for (let j = 0; j < 5; j++) fillRect(r, 271, 92 + j, 7 - j, 1, c('#a03a3a'));
+      fillRect(r, 370, 96, 100, 82, Wd(0.28)); for (let i = 370; i < 470; i++) r.set(i, 96, Wv(0.45));   // the ghost train's front
+      ellipse(r, 420, 120, 22, 14, c('#f0ece0')); ellipse(r, 420, 120, 9, 9, c('#3a8a6a')); ellipse(r, 420, 120, 4, 4, BLACK); r.set(416, 116, WHITE); r.set(417, 116, WHITE);   // its one great eye
+      for (let i = 0; i < 44; i++) { const top = 150 - Math.round(Math.sqrt(Math.max(0, 22 * 22 - (i - 22) ** 2)) * 0.6); for (let y = top; y < 178; y++) r.set(398 + i, y, BLACK); }   // the tunnel mouth
+      for (let i = 0; i < 44; i += 6) { r.set(400 + i, 146, c('#f0ece0')); r.set(401 + i, 147, c('#f0ece0')); }   // teeth
+      for (let x = 160; x < 380; x++) { const y = 70 + Math.round(10 * Math.sin(((x - 160) / 220) * Math.PI)); r.set(x, y, D); if (mod(x, 12) < 5) { const h = 5 - mod(x, 12); for (let j = 1; j <= h; j++) r.set(x, y + j, [c('#a03a3a'), c('#e8c020'), c('#4a8ab0')][Math.floor(x / 12) % 3]); } }   // bunting
+      dark(r, 178, Wd(0.16));
+    }),
+    scrolling('SOUL RIVER', 'The river of the dead: souls drifting downstream like pale fish, a ferryman poling his boat with a lantern, dead trees on the banks. Scrolls in three layers.', 240,
+      { rate: 0.05, period: 480, fixed: (r, ox) => {
+        grad(r, 0, H, [[0, c('#0c0818')], [0.6, mix(Wd(1), c('#2a5a6a'), 0.4)], [1, Wd(0.3)]]);
+        for (let x = 0; x < W; x++) { const len = Math.floor(seamless((w) => noise1(w * 0.08, 440), x + ox, 480) * 30); for (let j = 0; j < len; j++) r.set(x, j, Wd(0.18)); }   // the cavern roof
+        for (const gx of [200, 440]) { const x = mod(gx - ox, 480) - 20; glow(r, x + 12, 100, 30, WISP[1], 0.25); fillRect(r, x, 70, 6, 60, Wd(0.2)); fillRect(r, x + 18, 70, 6, 60, Wd(0.2)); fillRect(r, x - 4, 66, 32, 5, Wd(0.2)); }   // far gates
       } },
+      { rate: 0.15, period: 960, fixed: (r, ox) => {
+        ridge(r, ox, { y: 146, amp: 10, f: 0.02, seed: 441, col: Wd(0.22), top: Wv(0.35), period: 960 });
+        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) { const k = mod(wx, 960); bareTree(r, wx - ox + Math.floor(hash(k, 0, 442) * 60), 142, 30 + Math.floor(hash(k, 1, 442) * 30), Wd(0.16), k); }
+      }, parts: [FERRY] },
       { rate: 0.3, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 40) * 40; wx < ox + W + 40; wx += 40) { const h = hash(mod(wx, 960), 0, 404); if (h < 0.75) headstone(r, wx - ox + Math.floor(h * 14), 180, Math.floor(hash(mod(wx, 960), 1, 404) * 3), mix(Wd(1), Wv(0.4), 0.45), Wv(0.6)); }
-        dark(r, 180, Wd(0.22));
-      }, parts: [FOG, wisps(405, 7, 120, 40)] }),
-    still('HAUNTED MANSION', 'A crooked mansion on a hill under the moon, one window lit a sickly green, bats around its towers.', (r) => {
-      grad(r, 0, H, [[0, Wd(0.3)], [0.7, mix(Wd(1), Wv(0.5), 0.35)], [1, Wd(0.4)]]);
-      glow(r, 110, 50, 46, Wv(0.7), 0.3); disc(r, 110, 50, 22, MOONPALE);
-      clouds(r, 0, { y: 30, h: 30, col: mix(Wd(1), Wv(0.6), 0.3), lit: Wv(0.6), seed: 406, cut: 0.6 });
-      ridge(r, 0, { y: 150, amp: 18, f: 0.008, seed: 407, col: Wd(0.45), top: Wv(0.3) });
-      const M = Wd(0.25);
-      fillRect(r, 250, 82, 120, 70, M);
-      for (const [x, w, top] of [[240, 26, 46], [350, 30, 36], [290, 34, 64]]) { fillRect(r, x, top, w, 152 - top, M); for (let j = 0; j < w * 0.7; j++) fillRect(r, x + w / 2 - Math.floor(j * 0.72), top - Math.floor(w * 0.7) + j, Math.floor(j * 1.44) + 1, 1, M); }
-      for (let i = 0; i < 6; i++) fillRect(r, 262 + i * 18, 100, 6, 8, Wd(0.12));
-      glow(r, 302, 83, 16, c('#a8e080'), 0.4); fillRect(r, 298, 78, 8, 10, c('#c8f0a0'));
-      for (const x of [60, 170, 420]) bareTree(r, x, 150, 50, Wd(0.2), x);
-      for (const [x, y] of [[270, 40], [300, 30], [340, 44], [380, 30]]) { r.set(x, y, M); r.set(x - 1, y - 1, M); r.set(x - 2, y - 1, M); r.set(x + 1, y - 1, M); r.set(x + 2, y - 1, M); r.set(x - 3, y, M); r.set(x + 3, y, M); }
-      dark(r, 176, Wd(0.2));
-    }),
-    still('CANDLELIT CRYPT', 'Inside a crypt: skulls resting in stone niches, candles burning low, cobwebs in the corners.', (r) => {
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const row = Math.floor(y / 10), bx = mod(x + (row % 2) * 14, 28), mortar = y % 10 === 0 || bx === 0;
-        r.set(x, y, mortar ? Wd(0.25) : pick([Wd(0.45), mix(Wd(1), Wv(0.25), 0.3)], noise2(x * 0.1, y * 0.1, 408), x, y));
+        for (let y = 150; y < 178; y++) for (let x = 0; x < W; x++) r.set(x, y, (y + Math.round(Math.sin((x + ox) * 0.08 + y) * 2)) % 5 === 0 ? mix(Wd(1), c('#3a8a8a'), 0.4) : mix(Wd(0.6), c('#0a2a30'), 0.4));
+        dark(r, 178, Wd(0.12));
+      }, parts: [SOULS] }),
+    still('GHOST TOWN', 'An old western town left to the dead: false-fronted saloon and stores under the moon, a water tower, a tumbleweed, and a see-through cowboy in the street.', (r) => {
+      grad(r, 0, H, [[0, Wd(0.35)], [0.7, mix(Wd(1), Wv(0.5), 0.35)], [1, Wd(0.4)]]);
+      stars(r, 450, 70, 100, Wv(0.4), WHITE);
+      glow(r, 400, 40, 40, Wv(0.8), 0.25); disc(r, 400, 40, 20, MOONPALE);
+      const WOOD = [Wd(0.25), mix(c('#5a3a2a'), Wd(0.5), 0.5), mix(c('#7a5a40'), Wv(0.4), 0.4)];
+      for (const [x, w, h, front] of [[20, 70, 60, 80], [96, 60, 50, 64], [166, 90, 70, 96], [262, 64, 54, 70]]) {
+        fillRect(r, x, 178 - h, w, h, WOOD[1]); fillRect(r, x, 178 - front, w, front - h + 1, WOOD[1]);   // the building and its false front
+        for (let i = x; i < x + w; i++) { r.set(i, 178 - front, WOOD[2]); if (mod(i - x, 6) === 0) vert(r, i, 178 - front, 178, WOOD[0]); }
+        for (let k = 0; k < Math.floor(w / 22); k++) { const wx2 = x + 6 + k * 22; fillRect(r, wx2, 178 - h + 10, 10, 12, Wd(0.12)); if (hash(wx2, 0, 451) > 0.6) { line(r, wx2, 178 - h + 10, wx2 + 9, 178 - h + 21, WOOD[2]); } else if (hash(wx2, 1, 451) > 0.7) fillRect(r, wx2 + 1, 178 - h + 11, 8, 10, c('#8ad0a8')); }
+        fillRect(r, x - 2, 178 - h + 26, w + 4, 2, WOOD[0]);   // the porch roof
       }
-      for (let k = 0; k < 5; k++) {
-        const nx = 30 + k * 96, ny = 60;
-        for (let j = 0; j < 40; j++) for (let i = 0; i < 36; i++) { const dx = i - 18, dy = j - 14; if (j < 14 && dx * dx + dy * dy > 18 * 18) continue; r.set(nx + i, ny + j, j > 34 ? Wd(0.6) : Wd(0.12)); }
-        const sx = nx + 12, sy = ny + 22;   // a skull in the niche
-        ellipse(r, sx + 6, sy + 4, 6, 5, c('#d8d0c0')); fillRect(r, sx + 3, sy + 8, 7, 4, c('#c8c0b0'));
-        r.set(sx + 3, sy + 4, BLACK); r.set(sx + 4, sy + 4, BLACK); r.set(sx + 8, sy + 4, BLACK); r.set(sx + 9, sy + 4, BLACK); r.set(sx + 6, sy + 7, Wd(0.3));
-        const cx = nx + (k % 2 ? 4 : 30);
-        fillRect(r, cx, 112, 3, 8, c('#e8e0c8')); halo(r, cx + 1, 106, 14, c('#ffd080'), 0.35); flame(r, cx + 1, 111, 5, [c('#ffd070'), c('#e87830')]);
-      }
-      web(r, 0, 0, 40, Wv(0.6)); web(r, W - 1, 0, 34, Wv(0.6));
-      dark(r, 176, Wd(0.12));
-    }),
-    still('GHOST SHIP', 'A wrecked galleon drifting on a black sea under a green moon, its tattered sails glowing faintly.', (r) => {
-      grad(r, 0, 130, [[0, Wd(0.3)], [1, mix(Wd(1), c('#3a6a5a'), 0.4)]]);
-      glow(r, 360, 44, 36, c('#c8f0d0'), 0.3); disc(r, 360, 44, 16, [c('#f0fff0'), c('#c8f0d0'), c('#8ac0a0')]);
-      for (let y = 130; y < H; y++) for (let x = 0; x < W; x++) r.set(x, y, (y + Math.round(2 * Math.sin(x * 0.08 + y))) % 5 === 0 && hash(x >> 2, y, 409) > 0.5 ? mix(Wd(1), c('#8ac0a0'), 0.35) : Wd(0.35));
-      for (let x = 130; x < 330; x++) { const t = (x - 130) / 200, top = 112 + Math.round(10 * (t - 0.5) ** 2 * 4), bottom = 132 - Math.round(6 * Math.sin(t * Math.PI)); for (let y = top; y < bottom; y++) r.set(x, y, Wd(0.18)); }
-      for (const [mx, top] of [[180, 40], [232, 26], [284, 50]]) {
-        vert(r, mx, top, 114, Wd(0.18)); line(r, mx - 18, top + 14, mx + 18, top + 14, Wd(0.18));
-        for (let j = 0; j < 40; j++) for (let i = -16; i <= 16; i++) if (hash(i, j, mx) > 0.25 + j * 0.012 && !(j > 30 && hash(i >> 2, 0, mx) > 0.5)) r.set(mx + i + Math.round(Math.sin(j * 0.2) * 2), top + 16 + j, mix(Wv(0.5), c('#c8f0d0'), 0.3), 120);
-      }
-      line(r, 330, 112, 370, 90, Wd(0.18));   // the bowsprit
-      dark(r, 178, Wd(0.2));
-    }),
-    scrolling('SPIRIT FOREST', 'Pale dead trees in a deep mist, dark trunks close by, spirit lights drifting between them. Scrolls in three layers.', 240,
-      { rate: 0, fixed: (r) => grad(r, 0, H, [[0, Wd(0.35)], [0.6, mix(Wd(1), Wv(0.6), 0.45)], [1, Wd(0.4)]]) },
-      { rate: 0.12, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 48) * 48; wx < ox + W + 48; wx += 48) { const k = mod(wx, 960); bareTree(r, wx - ox + Math.floor(hash(k, 0, 410) * 30), 172, 60 + Math.floor(hash(k, 1, 410) * 60), mix(Wv(0.5), Wd(1), 0.3), k); }
-        for (let y = 140; y < 178; y++) for (let x = 0; x < W; x++) if (hash(x, y, 411) < (y - 140) / 60) r.set(x, y, mix(Wv(0.6), Wd(1), 0.3));
-      } },
-      { rate: 0.3, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 96) * 96; wx < ox + W + 96; wx += 96) { const k = mod(wx, 960), x = wx - ox + Math.floor(hash(k, 0, 412) * 50), w = 8 + Math.floor(hash(k, 1, 412) * 6); for (let y = 0; y < 180; y++) for (let i = 0; i < w; i++) r.set(x + i + Math.round(Math.sin(y * 0.05 + k) * 2), y, i === 0 ? Wd(0.4) : Wd(0.18)); }
-        dark(r, 178, Wd(0.18));
-      }, parts: [wisps(413, 10, 60, 100)] }),
-    still('CHAPEL RUINS', 'Inside the ruined chapel: its broken rose window, pale light falling through dust onto the old pews.', (r) => {
-      fillRect(r, 0, 0, W, H, Wd(0.3));
-      for (let y = 0; y < 178; y++) for (let x = 0; x < W; x++) if (hash(x, y, 414) > 0.985) r.set(x, y, Wd(0.5));
-      const cx = 240, cy = 68, rad = 46;
-      for (let j = -rad; j <= rad; j++) for (let i = -rad; i <= rad; i++) {
-        const d = Math.hypot(i, j); if (d > rad) continue;
-        const a = (Math.atan2(j, i) + Math.PI) / TAU, fa = (a * 12) % 1, petal = Math.abs(d - rad * (0.62 + 0.3 * Math.sin(fa * Math.PI))) < 1.1;
-        const spoke = Math.abs(fa - 0.5) > (d < rad * 0.62 ? 0.42 : 0.46), ring = Math.abs(d - rad * 0.28) < 1.4 || d > rad - 3 || (d < rad * 0.12);
-        const rosette = Math.abs(Math.hypot(i - Math.cos((Math.floor(a * 12) + 0.5) * TAU / 12 - Math.PI) * rad * 0.82, j - Math.sin((Math.floor(a * 12) + 0.5) * TAU / 12 - Math.PI) * rad * 0.82) - 3.5) < 0.9;
-        if (ring || spoke || petal || rosette) { r.set(cx + i, cy + j, d > rad - 3 ? Wd(0.7) : Wd(0.55)); continue; }
-        const pane = Math.floor(a * 12) + (d > rad * 0.62 ? 24 : d > rad * 0.28 ? 12 : 0), broken = hash(pane, 0, 415) > 0.72;
-        r.set(cx + i, cy + j, broken ? (hash(i, j, 416) > 0.97 ? WHITE : c('#0e0a1e')) : [Wv(0.7), mix(Wv(1), c('#ffffff'), 0.3), c('#6a4ab0'), c('#c8f0d0')][pane % 4]);
-      }
-      beam(r, cx - 10, cy + 20, Math.PI / 2 + 0.25, 0.12, 140, Wv(0.9), 0.3); beam(r, cx + 16, cy + 20, Math.PI / 2 + 0.25, 0.08, 140, Wv(0.9), 0.22);
-      for (let k = 0; k < 4; k++) for (let x = 20; x < 460; x++) if (mod(x - 20, 110) < 90) { const y = 150 + k * 7; r.set(x, y, Wd(0.12)); r.set(x, y + 1, Wd(0.12)); if (mod(x - 20, 110) === 0 || mod(x - 20, 110) === 89) vert(r, x, y - 6, y + 2, Wd(0.12)); }
-      for (const x of [60, 420]) { vert(r, x, 120, 150, Wd(0.12)); line(r, x - 10, 124, x + 10, 124, Wd(0.12)); for (const dx of [-10, 0, 10]) { halo(r, x + dx, 116, 8, c('#ffd080'), 0.3); flame(r, x + dx, 122, 4, [c('#ffd070'), c('#e87830')]); } }
-      dark(r, 178, Wd(0.14));
+      fillRect(r, 196, 150, 14, 28, Wd(0.12)); for (let j = 0; j < 12; j++) { r.set(197 + (j % 2), 154 + j, WOOD[2]); r.set(208 - (j % 2), 154 + j, WOOD[2]); }   // the saloon's swinging doors
+      for (const x of [370, 410]) line(r, x, 178, x + 10, 104, WOOD[0]); line(r, 450, 178, 440, 104, WOOD[0]); fillRect(r, 368, 74, 84, 34, WOOD[1]); for (let i = 368; i < 452; i += 8) vert(r, i, 74, 108, WOOD[0]); for (let i = 364; i < 456; i++) r.set(i, 72 - Math.floor(Math.abs(i - 410) / 12), WOOD[2]);   // the water tower
+      for (let j = 0; j < 9; j++) for (let i = 0; i < 9; i++) if (Math.abs(Math.hypot(i - 4, j - 4) - 3.5) < 1 && hash(i, j, 452) > 0.3) r.set(330 + i, 168 + j, WOOD[2]);   // a tumbleweed
+      for (let j = 0; j < 30; j++) { const half = j < 6 ? 3 : j < 8 ? 9 : j < 18 ? 4 : 3; for (let i = -half; i <= half; i++) r.set(242 + i + (j > 18 && i > 0 ? 1 : 0), 148 + j, mix(Wv(1), c('#c8f0e8'), 0.5), Math.round(150 - j * 3)); }   // the ghost of a cowboy, hat and all
+      dark(r, 178, Wd(0.15));
     }),
   ],
 };
