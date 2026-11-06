@@ -282,9 +282,9 @@ const WOOD = [c('#24180f'), c('#3e2a1a'), c('#5a3e28'), c('#76583a')];
 const roofLayer = (n, seed, extra = () => {}, cols = ROOF) => ({ rate: 0.15, period: 960, fixed: (r, ox) => { extra(r, ox); ceiling(r, ox, cols, seed, 960); threads(r, ox, WORMS[n], 960, LUMEN[0]); }, parts: [glowworms(WORMS[n], 960, WORM_COLS, seed + 3)] });
 const ROCK = {
   id: 'granite', type: 'Rock',
-  // The owner, 6 Nov 2026: material B, with material A's arched doors; the backdrop is still to pick,
-  // from the six variants of the glowworm grotto below.
-  pick: { material: 'B', doors: 'A' },
+  // The owner, 6 Nov 2026: material B, with material A's arched doors; and of the six variants of the
+  // glowworm grotto below, "2 and 4" (how the two go together is still to settle).
+  pick: { material: 'B', doors: 'A', backdrops: [2, 4] },
   materials: [
     ['A', 'GRANITE BLOCKS', 'Rough-cut granite blocks under a pale stone lip, stone shards and an arch of fitted stones.',
       material('bricks', { deep: '#1e1814', dark: '#3a302a', base: '#5c5048', alt: '#544840', light: '#786a60', hi: '#c8c0b4', cap0: '#d8d0c4', cap1: '#a8a096', thi: '#e8e4dc', tlight: '#a8a296', tdark: '#5a544c' }, { spikes: 'shards', door: 'arch' })],

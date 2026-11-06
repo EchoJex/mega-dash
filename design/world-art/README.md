@@ -129,7 +129,7 @@ brick, at 2.06 against a floor of 2.
 
 | slice | backdrops | materials | status |
 |---|---|---|---|
-| Rock | 1 blue grotto · 2 star vault · 3 tall grass · 4 glowing blooms · 5 mushroom hollow · 6 lantern walk, all moving (six variants of the glowworm grotto the owner picked; before that crystal cavern, geode cavern, underground lake, cave mouth, glowworm grotto and giant crystals, and first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed, with A's arched doors**; the glowworm grotto picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
+| Rock | 1 blue grotto · 2 star vault · 3 tall grass · 4 glowing blooms · 5 mushroom hollow · 6 lantern walk, all moving (six variants of the glowworm grotto the owner picked; before that crystal cavern, geode cavern, underground lake, cave mouth, glowworm grotto and giant crystals, and first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed, with A's arched doors; backdrops 2 star vault and 4 glowing blooms** (owner, 6 Nov 2026: "2 and 4"), how the two go together still to settle |
 | Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
 | Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | **PICKED: 1 total eclipse, with A on C's ground** (owner, 6 Nov 2026), in their words below |
@@ -155,6 +155,9 @@ mushrooms with spores drifting up; and an old boardwalk with crystal lanterns an
 They take that game's mood (the blue dark, glowing plants, a roof like a starry sky) and copy none of
 its pictures, and there is no water in any of them, as asked. The board shows the grotto they picked
 first, with B and A's doors.
+Their pick of those six, the same day: "2 and 4", the star vault and the glowing blooms. Whether that
+means one backdrop joining the two, or the two one after the other through the area, is asked on the
+board.
 
 **Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider
 interpretation of 'Ghost' using what other video games have established as precedent". The six new
