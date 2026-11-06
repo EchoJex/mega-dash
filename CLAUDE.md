@@ -688,6 +688,8 @@ the owner**, in their words: "I'll need to pause on Flying, psychic, bug and poi
 settles each one's direction.
 **Batch 3 (Rock, Ghost, Dragon, Dark, Steel) is on the canvas for picking**, 6 Nov 2026; Dragon keeps its
 first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
+**Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
+neither is in the game yet.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -912,6 +914,12 @@ where it started every `loop` steps**, so a moving picture never jumps; the test
 The ground is painted in 256-pixel slices of the world as they come into view, with **touching
 ground spans joined into one run** so a pit edge shows only at a real pit; platforms, spike beds and
 doors are painted when they first appear. Everything is let go once it has scrolled away.
+
+**A backdrop that tells a story in order is shown by progress, not repeated**, in the owner's words
+(6 Nov 2026): "note that levels with sequential backdrops art will be based on the progress
+percentage, split evenly, with a yet to be determined progress metric e.g. kill count, score count,
+step count, elapsed time". Steel's assembly line is the first. The measure is not chosen yet, so ask
+the owner before building it.
 
 **The game still draws a door's gold pulse; the art draws the door in front of it.** An unarmed door
 is the same picture, greyed and see-through. Nothing here changes a size, a position or a hit.

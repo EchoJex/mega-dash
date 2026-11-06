@@ -132,8 +132,8 @@ brick, at 2.06 against a floor of 2.
 | Rock | 1 crystal cavern (moving) · 2 geode cavern · 3 underground lake · 4 cave mouth · 5 glowworm grotto (moving) · 6 giant crystals (all six redrawn; first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed**; backdrop not picked yet (owner, 6 Nov 2026), in their words below |
 | Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
 | Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
-| Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | not picked yet |
-| Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | not picked yet |
+| Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | **PICKED: 1 total eclipse, with A on C's ground** (owner, 6 Nov 2026), in their words below |
+| Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving; redrawn as the owner's story from 1, 2 and the first 5, robot arms along a conveyor) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | **PICKED: 5 assembly line, with B blast doors** (owner, 6 Nov 2026), in their words below |
 
 **Rock's pick, in the owner's words (6 Nov 2026):** "B, but redo Rock backdrops using caves and
 crystals as the focus, and make the spikes glisteny violet crystals". Redrawn to match: material B,
@@ -160,6 +160,29 @@ between windows, a grand stair past one huge window of a crimson dragon, the thr
 chandeliers swinging (moving), and a cloister whose arches are glazed and lit by the moon. The
 banners and shields carry the dragon's crest, a gold lozenge round one slit eye. The board shows the
 throne hall first, for comparison; one of the six is still to pick.
+
+**Dark's pick, in the owner's words (6 Nov 2026):** "1a but with the cracked glowing stone from c".
+So: backdrop 1, the total eclipse, with material A's glass tile platform, black glass shards and
+energy doors on material C's cracked stone ground, red light glowing in its cracks, mixed the way
+Grass is. Nothing was redrawn. Material A's words on the board had promised "a door of red void
+light", but its door was always the energy door it shows, cyan for a boss and gold for the way out;
+the words were corrected, not the picture.
+
+**Steel's pick, in the owner's words (6 Nov 2026):** "1, 2, 5 and material B. I want the backdrop to
+tell an assembly line story of low poly, mildly variable steel copies of the player, progressing from
+the ladle to the billets, to a stamp, to welding arms, to the the end of the conveyor belt where they
+are dropped into a black pit that extends below the visible area, implying that they are getting
+dumped into a pit". So backdrops 1, 2 and 5 became one new backdrop 5, the assembly line, read left
+to right: the ladle pours, billets cool on the rollers, a press stamps each into a flat cut-out of the
+player, two welding arms raise it into a steel copy (four slightly different copies, in turn), and at
+the end of the belt the copies topple into a black pit that carries on below the screen. It goes with
+the steel plates and door pair B, the blast doors. Backdrops 1 and 2 stay on the board as they were.
+
+**Backdrops that tell a story in order, in the owner's words (6 Nov 2026):** "note that levels with
+sequential backdrops art will be based on the progress percentage, split evenly, with a yet to be
+determined progress metric e.g. kill count, score count, step count, elapsed time". So in the game a
+backdrop like Steel's line does not simply repeat: each stage of its story takes an even share of the
+area's progress, measured by something still to be chosen. Nothing is built for it yet.
 
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn.

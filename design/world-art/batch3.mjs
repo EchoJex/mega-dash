@@ -667,8 +667,11 @@ function oneEye(r, x, y, glow = true) {
 }
 const DARK = {
   id: 'eclipse', type: 'Dark',
+  // The owner, 6 Nov 2026: "1a but with the cracked glowing stone from c" — material A's platform,
+  // spikes and doors on C's cracked stone ground.
+  pick: { backdrop: 1, material: 'A', ground: 'C' },
   materials: [
-    ['A', 'OBSIDIAN TILES', 'Glossy black glass tiles with a violet sheen, red-glinting black glass shards and a door of red void light.',
+    ['A', 'OBSIDIAN TILES', 'Dark violet glass tiles, red-glinting black glass shards and energy doors: cyan light for a boss, gold for the way out.',
       material('tiles', { deep: '#141020', dark: '#2a2440', base: '#4a4466', light: '#625c84', hi: '#e8e0ff', cap0: '#d8d0f0', cap1: '#9a90c0', void: '#08060e', thi: '#ffffff', tlight: '#ff6a6a', tdark: '#8a1a1a', obs0: '#0a0810', obs1: '#2a1a2a', obs2: '#dc2626', obs3: '#ffd0d0' }, { size: 10, spikes: 'glass', door: 'energy' })],
     ['B', 'SHADOW BRICK', 'Dark indigo bricks under a pale lip, blood-red crystal shards and an iron gate.',
       material('bricks', { deep: '#100e18', dark: '#28243a', base: '#48425e', alt: '#403a56', light: '#605a7a', hi: '#a8a0c8', cap0: '#c0b8e0', cap1: '#8a82ac', void: '#08060e', thi: '#ffd0d0', tlight: '#dc2626', tdark: '#6a1010' }, { spikes: 'shards', door: 'gate' })],
@@ -808,32 +811,121 @@ function bulkhead(kind) {
   return d;
 }
 const steelDoors = (paint) => ({ door: (r, x, kind) => paintDoor(r, paint(kind), x, FLOOR - 28, kind), doorPicture: paint });
-/** The conveyor's crates, every 80 pixels, each moving one gap along per loop. */
-const CRATES = {
-  pieces: () => pics([['box', 14, 10, (p) => { for (let j = 0; j < 10; j++) for (let i = 0; i < 14; i++) p.set(i, j, i === 0 || j === 0 ? Al(0.8) : i === 13 || j === 9 ? As(0.4) : (i === j || i === 13 - j) ? As(0.6) : Al(0.6)); }]]),
+/*
+ * THE LINE, Steel's pick (the owner, 6 Nov 2026, on the Steel board): "1, 2, 5 and material B. I want
+ * the backdrop to tell an assembly line story of low poly, mildly variable steel copies of the
+ * player, progressing from the ladle to the billets, to a stamp, to welding arms, to the the end of
+ * the conveyor belt where they are dropped into a black pit that extends below the visible area,
+ * implying that they are getting dumped into a pit". So the rolling mill's hall (1), the foundry's
+ * ladle (2) and the assembly line's arms and belt (5) are one line, left to right: the ladle pours,
+ * billets cool along the rollers, a press stamps each into a flat cut-out of the player, two welding
+ * arms raise it into a standing steel copy, and at the end of the belt each copy topples into a
+ * black pit that runs on down past the bottom of the screen.
+ *
+ * Everything on the belt is one moving part. Items sit a slot apart and move one slot every 120
+ * steps; what each looks like depends only on where it is along the line, and the copies come in
+ * four slight variations by item, so the whole picture comes back to where it started every 480
+ * steps (four slots).
+ */
+const LINE_LOOP = 480, SLOT = 40, BELT_Y = 152, PRESS_X = 190, WELD_X = [258, 300], BELT_END = 402;
+const lineShift = (t) => Math.floor(mod(t, LINE_LOOP) / 3);   // a third of a pixel a step: one slot every 120 steps
+const STEEL_C = [c('#dfe5ea'), c('#aab4bd'), c('#77818c'), c('#4a535d'), c('#2a3038')];   // lit, light, mid, dark, deep
+const HOTS = [[c('#fffbe0'), c('#ffd060'), c('#ff9a30')], [c('#ffd060'), c('#ff8a20'), c('#c84a10')], [c('#ff7a30'), c('#c03a10'), c('#7a2a18')], [c('#8a4a3a'), c('#5a3a34'), c('#3e3438')]];
+/** A copy of the player in low-poly steel: helmet and fin, a dark visor, the body in flat facets. */
+const COPY_ROWS = ['......##......', '.....####.....', '....######....', '...########...', '...#vvvvvv#...', '...########...', '....######....', '..##########..', '.############.', '##.########.##', '##.########.##', '##.########.##', '#..########..#', '...########...', '...###..###...', '...###..###...', '...###..###...', '..####..####..', '..####..####..'];
+function paintCopy(p, v, dim = 0) {
+  const tint = (col) => mix(v === 2 ? lit(col, 0.06) : col, BLACK, dim);
+  COPY_ROWS.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch === '.') return;
+    if (v === 3 && j >= 9 && j <= 12 && (i <= 1 || i >= 12)) { if (j === 9) return; }   // one arm hanging a little lower
+    let col;
+    if (ch === 'v') col = j === 4 && i === 4 ? c('#5a7080') : c('#1a2026');   // the visor, dark: nobody home
+    else if (j <= 6) col = i < 5 ? STEEL_C[0] : i < 9 ? STEEL_C[1] : STEEL_C[3];   // the helmet's three facets
+    else if (j <= 13) col = i <= 1 || i >= 12 ? (i <= 1 ? STEEL_C[1] : STEEL_C[3]) : Math.abs(i - 6.5) < (13 - j) * 0.6 ? STEEL_C[1] : i < 7 ? STEEL_C[2] : STEEL_C[3];   // a V of chest plate between flat sides
+    else col = i < 7 ? STEEL_C[2] : STEEL_C[3];   // legs
+    p.set(i, j + (v === 2 ? 0 : 1), tint(col));
+  }));
+  if (v === 1) { p.set(6, 11, tint(STEEL_C[4])); p.set(7, 12, tint(STEEL_C[4])); p.set(7, 0, BLACK, 0); p.set(8, 1, tint(STEEL_C[1])); }   // a dent, and a bent fin
+  if (v === 3) p.set(9, 15, tint(c('#7a4a30')));   // a fleck of rust
+}
+const LINE = {
+  pieces: () => pics([
+    ...HOTS.map((h, k) => [`billet${k}`, 18, 5, (p) => { for (let j = 0; j < 5; j++) for (let i = 0; i < 18; i++) p.set(i, j, j === 0 ? h[0] : i === 0 || i === 17 || j === 4 ? h[2] : h[1]); }]),
+    ['blank', 20, 4, (p) => { const prof = [1, 2, 3, 3, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 2, 3, 3]; prof.forEach((h, i) => { for (let j = 4 - h; j < 4; j++) p.set(i, j, j === 4 - h ? STEEL_C[0] : STEEL_C[2]); }); }],   // the player, cut out flat and lying down
+    ...[0, 1, 2, 3].flatMap((v) => [[`copy${v}`, 14, 20, (p) => paintCopy(p, v)], [`fall${v}`, 14, 20, (p) => paintCopy(p, v, 0.55)], [`deep${v}`, 14, 20, (p) => paintCopy(p, v, 0.85)]]),
+    ['spark', 5, 5, (p) => { for (const [x, y] of [[2, 0], [2, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [2, 3], [2, 4]]) p.set(x, y, x === 2 && y === 2 ? WHITE : c('#a8e8ff')); }],
+    ['fleck', 1, 1, (p) => p.set(0, 0, c('#ffd060'))],
+  ]),
   at(ox, t) {
-    const out = [], shift = Math.floor((t / 240) * 80);
-    for (let x = mod(shift - ox, 80) - 80; x < W; x += 80) out.push(['box', x, 152]);
-    return out;
-  },
-};
-/** Welding sparks flaring at each robot arm's tip, on and off. */
-const WELD = {
-  pieces: () => pics([['s', 5, 5, (p) => { for (const [x, y] of [[2, 0], [2, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [2, 3], [2, 4]]) p.set(x, y, x === 2 && y === 2 ? WHITE : c('#a8e8ff')); }], ['f', 1, 1, (p) => p.set(0, 0, c('#ffd060'))]]),
-  at(ox, t) {
-    const out = [];
-    for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) {
-      const k = mod(wx, 960) / 160, on = mod(Math.floor(t / 4) + k * 5, 12) < 4;
-      if (!on) continue;
-      const x = wx - ox + 76, y = 140;
-      out.push(['s', x - 2, y - 2]);
-      for (let i = 0; i < 5; i++) out.push(['f', x + Math.round(Math.cos(i * 1.3 + (TAU * mod(t, 24)) / 24) * (3 + i)), y + 2 + i]);
+    const out = [], shift = lineShift(t), base = -mod(ox, 480);
+    for (let n = 0; n < 480 / SLOT; n++) {
+      const x = mod(n * SLOT + shift, 480), v = n % 4;
+      let piece = null, px = x, py = BELT_Y;
+      if (x >= 40 && x < 188) { piece = `billet${Math.min(3, Math.floor((x - 40) / 37))}`; px = x - 9; py = BELT_Y - 5; }
+      else if (x >= 188 && x < 296) { piece = 'blank'; px = x - 10; py = BELT_Y - 4; }
+      else if (x >= 296 && x < BELT_END + 4) { piece = `copy${v}`; px = x - 7; py = BELT_Y - 20; }
+      else if (x >= BELT_END + 4 && x < 446) { const f = (x - BELT_END - 4) / 40; piece = f < 0.35 ? `fall${v}` : `deep${v}`; px = x - 7 + Math.round(f * 6); py = BELT_Y - 20 + Math.round(f * f * 90); if (py > 184) piece = null; }
+      if (piece) for (const k of [0, 1]) { const sx = base + px + 480 * k; if (sx > -24 && sx < W) out.push([piece, sx, py]); }
+    }
+    for (const [i, wx] of WELD_X.entries()) {   // the welding arms spark while a blank is under them
+      const ph = mod(shift - wx, SLOT);
+      if (ph > 8 && ph < 34) continue;
+      for (const k of [0, 1]) {
+        const sx = base + wx + 480 * k;
+        if (sx < -8 || sx > W + 8) continue;
+        out.push(['spark', sx - 2, BELT_Y - 10 - (Math.floor(t / 3) + i) % 2]);
+        for (let q = 0; q < 4; q++) out.push(['fleck', sx + Math.round(Math.cos(q * 1.6 + (TAU * mod(t, 24)) / 24) * (3 + q)), BELT_Y - 6 + q]);
+      }
     }
     return out;
   },
 };
+/** The press's ram: it slams down as each billet arrives under it, then rises again. */
+const PRESS = {
+  pieces: () => pics([['ram', 26, 12, (p) => { for (let j = 0; j < 12; j++) for (let i = 0; i < 26; i++) p.set(i, j, j === 11 ? STEEL_C[4] : j === 0 || i === 0 ? STEEL_C[1] : i === 25 ? STEEL_C[4] : (i + j) % 6 === 0 ? STEEL_C[3] : STEEL_C[2]); }]]),
+  at(ox, t) {
+    const ph = mod(lineShift(t) - PRESS_X + 4, SLOT), drop = ph < 7 ? 31 : ph < 22 ? Math.round(31 * (1 - (ph - 7) / 15)) : ph > 36 ? Math.round(31 * ((ph - 36) / 4)) : 0, out = [];   // drops as a billet arrives, holds, rises
+    for (const k of [0, 1]) { const sx = -mod(ox, 480) + PRESS_X - 13 + 480 * k; if (sx > -26 && sx < W) out.push(['ram', sx, 104 + drop]); }
+    return out;
+  },
+};
+/** The line itself, painted once: the ladle pouring, the rollers, the press frame, the arms, the belt and the pit. */
+function steelLine(r, ox) {
+  const at = (x) => x - mod(ox, 480);   // strip x to screen x for the strip starting at this screen
+  for (const k of [0, 480]) {
+    const X = (x) => at(x) + k;
+    // the ladle, hung from the crane, tipped and pouring into the mould at the head of the belt
+    for (const cx of [44, 74]) for (let y = 0; y < 36; y++) if (y % 4 < 3) { r.set(X(cx), y, STEEL_C[3]); r.set(X(cx) + 1, y, STEEL_C[4]); }
+    for (let j = 0; j < 30; j++) for (let i = 0; i < 46; i++) { const dx = i - 23; if ((dx * dx) / (23 * 23) + ((j - 2) * (j - 2)) / (30 * 30) > 1) continue; r.set(X(36) + i + Math.floor(j * 0.5), 36 + j, i < 4 ? STEEL_C[1] : i > 40 ? STEEL_C[4] : STEEL_C[3]); }
+    glow(r, X(70), 120, 46, c('#ff8a30'), 0.35);
+    for (let y = 60; y < BELT_Y - 4; y++) { const x = X(80) - Math.floor((y - 60) * 0.32), w = 2 + Math.floor((y - 60) / 40); for (let i = -w; i <= w; i++) r.set(x + i, y, Math.abs(i) < w ? HOTS[0][0] : HOTS[0][1]); }
+    fillRect(r, X(34), BELT_Y - 7, 34, 7, STEEL_C[4]); fillRect(r, X(37), BELT_Y - 5, 28, 3, HOTS[0][1]);   // the mould
+    // the belt, from the mould to the pit, on its rollers and legs
+    for (let x = X(30); x < X(BELT_END); x++) { r.set(x, BELT_Y, STEEL_C[1]); for (let y = BELT_Y + 1; y < BELT_Y + 6; y++) r.set(x, y, y === BELT_Y + 5 ? STEEL_C[4] : STEEL_C[3]); if (mod(x - X(30), 10) < 6) r.set(x, BELT_Y + 6, STEEL_C[2]); }
+    for (let x = 40; x < BELT_END; x += 60) { fillRect(r, X(x), BELT_Y + 7, 4, 178 - BELT_Y - 7, STEEL_C[4]); fillRect(r, X(x), BELT_Y + 7, 1, 178 - BELT_Y - 7, STEEL_C[2]); }
+    // the press: two columns and a crown over the belt
+    for (const px of [PRESS_X - 22, PRESS_X + 16]) { fillRect(r, X(px), 74, 7, BELT_Y - 74, STEEL_C[3]); fillRect(r, X(px), 74, 2, BELT_Y - 74, STEEL_C[1]); }
+    fillRect(r, X(PRESS_X - 26), 66, 52, 14, STEEL_C[3]); fillRect(r, X(PRESS_X - 26), 66, 52, 2, STEEL_C[1]); for (let i = 0; i < 52; i += 8) fillRect(r, X(PRESS_X - 26) + i, 70, 4, 4, c('#e8c020'));
+    vert(r, X(PRESS_X), 80, 104, STEEL_C[1]); vert(r, X(PRESS_X) + 1, 80, 104, STEEL_C[3]);   // the ram's piston
+    // the welding arms, reaching down to the belt from overhead
+    for (const wx of WELD_X) {
+      fillRect(r, X(wx) - 6, 40, 12, 10, STEEL_C[4]); for (let s = 0; s < 40; s++) { const x = X(wx) - 4 + Math.round(s * 0.25), y = 50 + s; for (let q = 0; q < 5; q++) r.set(x + q, y, q === 0 ? STEEL_C[1] : STEEL_C[3]); }
+      ellipse(r, X(wx) + 6, 90, 4, 4, c('#e8a020')); for (let s = 0; s < 40; s++) { const x = X(wx) + 6 - Math.round(s * 0.15), y = 90 + Math.round(s * 1.1) - 0; if (y < BELT_Y - 12) for (let q = 0; q < 4; q++) r.set(x + q, y, q === 0 ? STEEL_C[1] : STEEL_C[3]); }
+    }
+    // the pit: black, running on down below the floor, a hazard stripe round its lip and a red lamp
+    fillRect(r, X(BELT_END + 2), BELT_Y - 2, 70, H - BELT_Y + 2, c('#020204'));
+    for (let x = X(BELT_END); x < X(BELT_END + 74); x++) r.set(x, BELT_Y - 3, mod(x, 8) < 4 ? c('#e8c020') : c('#1e1a14'));
+    for (let y = BELT_Y - 3; y < 178; y++) r.set(X(BELT_END + 1), y, mod(y, 8) < 4 ? c('#e8c020') : c('#1e1a14'));
+    vert(r, X(BELT_END + 72), 120, BELT_Y - 3, STEEL_C[3]); glow(r, X(BELT_END + 72), 118, 10, c('#ff3a2a'), 0.5); fillRect(r, X(BELT_END + 71), 116, 3, 3, c('#ff3a2a'));
+  }
+  // the floor in front of the line; the pit's dark carries on down through it
+  for (let x = 0; x < W; x++) for (let y = 178; y < H; y++) r.set(x, y, mod(x + mod(ox, 480), 480) >= BELT_END + 2 && mod(x + mod(ox, 480), 480) < BELT_END + 72 ? c('#020204') : As(0.1));
+}
 const STEEL = {
   id: 'alloy', type: 'Steel',
+  // The owner, 6 Nov 2026: "1, 2, 5 and material B" — backdrops 1, 2 and 5 merged into one line, its story
+  // in their words above THE LINE; it takes backdrop 5's place.
+  pick: { backdrop: 5, material: 'B' },
   materials: [
     ['A', 'STEEL PLATES · VAULT DOORS', 'The steel plates picked in the first round, with round vault doors: bolted and wheeled for a boss, swung open on gold light for the way out.', { ...STYLES.A, ...steelDoors(vaultDoor) }],
     ['B', 'STEEL PLATES · BLAST DOORS', 'The steel plates picked in the first round, with blast doors: two thick halves under a hazard stripe, parted on gold light for the way out.', { ...STYLES.A, ...steelDoors(blastDoor) }],
@@ -882,19 +974,13 @@ const STEEL = {
       for (let x = 90; x < 430; x += 4) r.set(x, 140, As(0.35));
       dark(r, 176, As(0.12));
     }),
-    scrolling('ASSEMBLY LINE', 'Robot arms along a conveyor, steel crates riding past, welding sparks flaring at the arms. Scrolls in three layers.', 240,
-      { rate: 0.08, period: 480, fixed: (r, ox) => { panels(r, ox, { y0: 0, y1: 178, pw: 60, ph: 44, base: As(0.36), light: As(0.5), dark: As(0.24) }); for (let x = 0; x < W; x++) for (let y = 100; y < 108; y++) r.set(x, y, mod(x + ox + y, 12) < 6 ? c('#e8c020') : c('#1e1a14')); } },
-      { rate: 0.25, period: 960, fixed: (r, ox) => {
-        for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) {
-          const x = wx - ox + 40;
-          fillRect(r, x, 150, 16, 12, As(0.18)); for (let i = 0; i < 16; i++) r.set(x + i, 150, Al(0.7));
-          fillRect(r, x + 4, 118, 8, 32, As(0.16)); vert(r, x + 4, 118, 150, Al(0.6));
-          for (let i = 0; i < 30; i++) for (let w = 0; w < 6; w++) r.set(x + 8 + i, 118 + Math.floor(i * 0.6) + w - 3, w === 0 ? Al(0.85) : w === 5 ? As(0.1) : As(0.2));   // the arm
-          ellipse(r, x + 8, 118, 6, 6, As(0.16)); ellipse(r, x + 8, 118, 3, 3, c('#e8a020')); ellipse(r, x + 38, 136, 3, 3, c('#e8a020'));
-          line(r, x + 38, 136, x + 37, 140, As(0.12)); line(r, x + 39, 136, x + 40, 140, As(0.12));
-        }
-      }, parts: [WELD] },
-      { rate: 0.4, period: 960, fixed: (r, ox) => { for (let x = 0; x < W; x++) { for (let y = 162; y < 170; y++) r.set(x, y, y === 162 ? Al(0.6) : As(0.25)); if (mod(x + ox, 10) < 6) r.set(x, 170, As(0.15)); } dark(r, 178, As(0.1)); }, parts: [CRATES] }),
+    scrolling('ASSEMBLY LINE', 'The line, built from 1, 2 and 5: the ladle pours, billets cool on the rollers, a press stamps each into a flat cut-out of the player, welding arms raise it into a steel copy, and at the end of the belt the copies topple into a black pit. Scrolls in two layers.', LINE_LOOP,
+      { rate: 0.06, period: 480, fixed: (r, ox) => {
+        panels(r, ox, { y0: 0, y1: 178, pw: 48, ph: 40, base: As(0.4), light: As(0.54), dark: As(0.26) });
+        for (let x = 0; x < W; x++) { if (mod(x + ox, 48) > 6 && mod(x + ox, 48) < 42) for (let y = 8; y < 22; y++) r.set(x, y, y < 10 ? Al(0.9) : mix(Al(0.7), c('#c8d8e0'), 0.3)); r.set(x, 28, Al(0.3)); r.set(x, 29, Al(0.3)); const z = mod(x + ox, 16); r.set(x, 30 + Math.min(z, 16 - z), Al(0.3)); r.set(x, 38, Al(0.3)); }   // high windows and the crane gantry
+        for (let x = 0; x < W; x++) for (let y = 120; y < 126; y++) r.set(x, y, mod(x + ox + y, 12) < 6 ? mix(c('#e8c020'), As(0.4), 0.4) : As(0.2));   // a hazard band along the far wall
+      } },
+      { rate: 0.2, period: 480, fixed: steelLine, parts: [PRESS, LINE] }),
     still('STEEL BRIDGE', 'A steel truss bridge across a dark river at night, its lamps reflected in the water, the city beyond.', (r) => {
       grad(r, 0, 120, [[0, c('#06080e')], [1, As(0.4)]]);
       stars(r, 705, 60, 80, As(0.6), Al(0.9));
