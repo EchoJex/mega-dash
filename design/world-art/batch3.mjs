@@ -1112,6 +1112,13 @@ function workOn(mode, x, x0, t) {
 }
 /** A line of one kind of unit, repeating; or a sequence, its first unit repeating to the left and no line past its end. */
 const repeatOf = (kind) => (x) => [kind, Math.floor(x / UNIT[kind]) * UNIT[kind]];
+/** A whole line of units, in order, repeating: each repeat is a new belt, starting again after the last one's pit. */
+const cycleOf = (seq) => (x) => {
+  const len = seq.reduce((n, kind) => n + UNIT[kind], 0), base = Math.floor(x / len) * len;
+  let s = base;
+  for (const kind of seq) { if (x < s + UNIT[kind]) return [kind, s]; s += UNIT[kind]; }
+  return null;
+};
 const sequenceOf = (seq) => (x) => {
   if (x < 0) return repeatOf(seq[0])(x);
   let s = 0;
@@ -1242,6 +1249,11 @@ function furnace(r, sx) {   // feeds the press: what goes in one side comes out 
   fillRect(r, sx + 14, BELT_Y - 48, 12, 12, STEEL_C[3]); fillRect(r, sx + 14, BELT_Y - 48, 12, 1, STEEL_C[1]);   // the flue
   glow(r, sx + 20, BELT_Y - 2, 26, c('#ff8a30'), 0.25);
 }
+function feeder(r, sx) {   // a new belt starting after the last one's pit: a hopper stacked with empty moulds feeds it
+  fillRect(r, sx - 4, BELT_Y - 34, 32, 40, STEEL_C[4]); fillRect(r, sx - 4, BELT_Y - 34, 32, 2, STEEL_C[2]); fillRect(r, sx - 4, BELT_Y - 34, 2, 40, STEEL_C[3]);
+  for (let j = 0; j < 4; j++) { fillRect(r, sx, BELT_Y - 29 + j * 6, 22, 5, STEEL_C[3]); fillRect(r, sx, BELT_Y - 29 + j * 6, 22, 1, STEEL_C[1]); }
+  ellipse(r, sx + 2, BELT_Y + 3, 3, 3, STEEL_C[2]); r.set(sx + 2, BELT_Y + 3, STEEL_C[0]);   // the new belt's first roller
+}
 function gate(r, sx) {   // the gate into phase 3's arms
   fillRect(r, sx - 2, BELT_Y - 40, 44, 6, STEEL_C[3]); fillRect(r, sx - 2, BELT_Y - 40, 44, 1, STEEL_C[1]);
   for (const px of [sx - 2, sx + 36]) { fillRect(r, px, BELT_Y - 40, 6, 46, STEEL_C[3]); fillRect(r, px, BELT_Y - 40, 1, 46, STEEL_C[1]); }
@@ -1306,31 +1318,60 @@ function paintPhases(r, mode, unitOf, L, t) {
     const look = lookOf(mode, unitOf, X, v, t);
     if (look) stamp(r, look[0], Math.round(look[1] - L), Math.round(look[2]));
   }
-  for (const [kind, s] of units) { if (kind === 'p2') furnace(r, s - L); if (kind === 'p3') gate(r, s - L); }
+  for (const [kind, s] of units) { if (kind === 'p2') furnace(r, s - L); if (kind === 'p3') gate(r, s - L); if (kind === 'p1' && unitOf(s - 1)?.[0] === 'end') feeder(r, s - L); }
   for (const [kind, s] of units) {
     if (kind === 'p1') { const [px, w] = stationAt(mode, s + 60, t); ladle(r, Math.round(px - L), w); }
     if (kind === 'p2') { const [px, w] = stationAt(mode, s + 60, t); press(r, Math.round(px - L), w); }
     if (kind === 'p3') ARM_AT.forEach((x0, job) => { const [px, w] = stationAt(mode, s + x0, t); armPair(r, Math.round(px - L), w, job, t); });
   }
 }
-const WALK = { hold: 20, pan: 4.5, from: -240, length: 880 };   // the walk: still inside phase 1, then the line pans 4.5 pixels a frame (the camera 9, about walking pace), then still at the end
-const walkAt = (f) => WALK.from + Math.max(0, Math.min(WALK.length, (f - WALK.hold) * WALK.pan));
+/** A walk: still for 20 frames at `from`, then the line pans 4.5 pixels a frame (the camera 9, about walking pace) for `length`, then still. */
+const walker = ({ from, length }) => (f) => from + Math.max(0, Math.min(length, (f - 20) * 4.5));
+const walkPicture = (name, mode, unitOf, w, mute = 0) => {
+  const at = walker(w);
+  return { name, frames: 40 + Math.ceil(w.length / 4.5) + 1, fps: 10, walk: (f) => (at(f) - w.from) * 2,
+    paint: (r, f) => { const L = at(f); lineWall(r, mod(Math.round(L * 0.2), 480)); paintPhases(r, mode, unitOf, Math.round(L), f * 6); if (mute) muted(r, mute); } };
+};
+/** The backdrop pushed back behind the floor: its colours greyed a third of the way and darkened towards the hall's haze. */
+const HAZE = c('#161a22');
+function muted(r, k) {
+  for (let i = 0; i < r.d.length; i += 4) {
+    if (!r.d[i + 3]) continue;
+    const g = 0.3 * r.d[i] + 0.59 * r.d[i + 1] + 0.11 * r.d[i + 2];
+    for (let q = 0; q < 3; q++) { const v = r.d[i + q] + (g - r.d[i + q]) * 0.35; r.d[i + q] = Math.round(v + (HAZE[q] - v) * k); }
+  }
+}
 /** The pictures for the canvas: each phase on its own and the walk through all of them, in both ways of moving. 6 steps a frame, 10 frames a second. */
 const PHASE_PICTURES = ['step', 'flow'].flatMap((mode) => [
   ...[['1', repeatOf('p1'), 0], ['2', repeatOf('p2'), 0], ['3', repeatOf('p3'), 0], ['end', sequenceOf(['p3', 'end']), 200]].map(([k, unitOf, L]) => ({
     name: `line-${mode}-${k}`, frames: 80, fps: 10,
     paint: (r, f) => { lineWall(r, 0); paintPhases(r, mode, unitOf, L, f * 6); },
   })),
-  { name: `line-${mode}-walk`, frames: WALK.hold * 2 + Math.ceil(WALK.length / WALK.pan) + 1, fps: 10, walk: (f) => (walkAt(f) - WALK.from) * 2,
-    paint: (r, f) => { const L = walkAt(f); lineWall(r, mod(Math.round(L * 0.2), 480)); paintPhases(r, mode, sequenceOf(['p1', 'p1', 'p2', 'p2', 'p3', 'end']), Math.round(L), f * 6); } },
+  walkPicture(`line-${mode}-walk`, mode, sequenceOf(['p1', 'p1', 'p2', 'p2', 'p3', 'end']), { from: -240, length: 880 }),
 ]);
+/*
+ * The owner, 7 Nov 2026, on B: "i for sure like the end result of the B column, only the entire
+ * backdrop art needs to be more muted to distinguish it from the forground. now i need to think of
+ * how to loop each section so that from a factory workflow perspective each phase looped makes sense.
+ * Draw out 2 variants, one like what you just drew, where the player walks, with each phase looping
+ * until some progress trigger makes phase 2 start being drawn and then eventually phase 3, and one
+ * where all phases play in order with the entire assembly line loops with a new conveyor belt (this
+ * would remove the progress based phase transitions)". So both are B, always moving, and muted: 1 is
+ * the walk through the phases as before; 2 is the whole line, a ladle, a press and the four pairs of
+ * arms once each, ending at its pit, then a new belt fed with empty moulds, and the whole line again.
+ */
+const MUTE = 0.42;
+const LOOP_PICTURES = [
+  walkPicture('line-loop-1', 'flow', sequenceOf(['p1', 'p1', 'p2', 'p2', 'p3', 'end']), { from: -240, length: 880 }, MUTE),
+  walkPicture('line-loop-2', 'flow', cycleOf(['p1', 'p2', 'p3', 'end']), { from: -240, length: 840 }, MUTE),
+];
 const STEEL = {
   id: 'alloy', type: 'Steel',
   // The owner, 6 Nov 2026: "1, 2, 5 and material B" — backdrops 1, 2 and 5 merged into one line, its story
   // in their words above THE LINE; it takes backdrop 5's place.
   pick: { backdrop: 5, material: 'B' },
   // The line in three phases, both ways of moving, for the owner to compare (above).
-  extras: PHASE_PICTURES,
+  extras: [...PHASE_PICTURES, ...LOOP_PICTURES],
   materials: [
     ['A', 'STEEL PLATES · VAULT DOORS', 'The steel plates picked in the first round, with round vault doors: bolted and wheeled for a boss, swung open on gold light for the way out.', { ...STYLES.A, ...steelDoors(vaultDoor) }],
     ['B', 'STEEL PLATES · BLAST DOORS', 'The steel plates picked in the first round, with blast doors: two thick halves under a hazard stripe, parted on gold light for the way out.', { ...STYLES.A, ...steelDoors(blastDoor) }],

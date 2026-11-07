@@ -228,6 +228,20 @@ moves a slot, then stands while everything works, all on one beat of 2 seconds) 
 three phases, the end, and a short walk through all of them. Not picked yet, and not in the game; the
 code is `PHASE_PICTURES` in `batch3.mjs`.
 
+**Steel's B, in the owner's words (7 Nov 2026):** "i for sure like the end result of the B column, only
+the entire backdrop art needs to be more muted to distinguish it from the forground. now i need to
+think of how to loop each section so that from a factory workflow perspective each phase looped makes
+sense. Draw out 2 variants, one like what you just drew, where the player walks, with each phase
+looping until some progress trigger makes phase 2 start being drawn and then eventually phase 3, and
+one where all phases play in order with the entire assembly line loops with a new conveyor belt (this
+would remove the progress based phase transitions)". So B, always moving, is picked, and the whole
+backdrop is muted (`muted` in `batch3.mjs`: its colours greyed a third of the way and darkened towards
+the hall's haze), so the floor, the player and what they fight stand out in front. Two walks are on the
+board, both muted: 1, the phases by progress, as before, with the pit once at the very end; and 2, the
+whole line repeating, each phase once in order and ending at its pit, then a new belt fed by a hopper of
+empty moulds (`cycleOf`). In 2 the pit comes at the end of every line, which is the point of it. Which
+loop is still to pick (`LOOP_PICTURES`).
+
 A pick can mix materials: Grass's `pick` names B for the platform, spikes and doors and A for the
 ground (`ground: 'A'`), and nothing was redrawn. Rock's takes its doors from a second material
 instead (`doors: 'A'`). `render.mjs` paints both kinds; the game's `pickedMaterial` in
