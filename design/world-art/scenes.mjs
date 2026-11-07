@@ -79,11 +79,12 @@ export function pickFrame(bd, M, b, player, step) {
   return finish(r, player);
 }
 
-/** One frame of anything `paint` draws, behind a material's floor: flat, or scrolled to `cam` with a pit every 232 pixels; the player standing, or on running frame `run`. */
+/** One frame of anything `paint` draws, behind a material's floor (none if `M` is null): flat, or scrolled to `cam` with a pit every 232 pixels; the player standing, or on running frame `run` (none if `player` is null). */
 export function sceneFrame(paint, M, player, { cam = null, run = 0 } = {}) {
   const r = new Raster(W, H);
   paint(r);
-  if (cam === null) M.ground(r, 0, W);
+  if (!M) { /* the picture paints its own floors */ }
+  else if (cam === null) M.ground(r, 0, W);
   else for (let x0 = -(Math.round(cam) % 232); x0 < W; x0 += 232) M.ground(r, Math.max(0, x0), Math.min(W, x0 + 200));
   return finish(r, player, run);
 }

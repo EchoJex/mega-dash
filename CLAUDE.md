@@ -690,7 +690,10 @@ settles each one's direction.
 first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
 **Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
 neither is in the game yet. Rock (material B with A's arched doors) and Dragon each have six variants
-of a backdrop they liked to pick from, and Ghost six redrawn backdrops.
+of a backdrop they liked to pick from. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
+three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
+over the play. It is the first area not to run left to right; how it plays is still being settled, so
+nothing of it is built in the game.
 
 ### AI-made sprites and music: only when the owner asks for that one
 

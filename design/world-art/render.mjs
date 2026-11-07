@@ -101,28 +101,30 @@ try {
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.backdropFrame(slice, bd, b, player, f * 4, f)));
         A[`bd-${slice.id}-${i + 1}`] = { h: 268, frames };
       }
-      if (slice.pick?.backdrop) {
-        const { pickedMaterial } = await import(`${base}/src/systems/area-art/slices.js`);
-        const of = (k) => slice.materials.find(([key]) => key === k)[3];
-        const bd = slice.backdrops[slice.pick.backdrop - 1];
-        // What the game draws, mixes included; a slice not in the game yet is mixed here the same way:
-        // its ground (`ground`) or its doors (`doors`) taken from a second material.
-        const p = slice.pick, mixed = { ...of(p.material), ...(p.ground && { ground: of(p.ground).ground, check: of(p.ground).check }), ...(p.doors && { door: of(p.doors).door, doorPicture: of(p.doors).doorPicture }) };
-        const M = pickedMaterial(slice.id) || mixed;
+      const { pickedMaterial } = await import(`${base}/src/systems/area-art/slices.js`);
+      const of = (k) => slice.materials.find(([key]) => key === k)[3];
+      // What the game draws, mixes included; a slice not in the game yet is mixed here the same way:
+      // its ground (`ground`) or its doors (`doors`) taken from a second material.
+      const p = slice.pick || {}, M = p.material ? pickedMaterial(slice.id) || { ...of(p.material), ...(p.ground && { ground: of(p.ground).ground, check: of(p.ground).check }), ...(p.doors && { door: of(p.doors).door, doorPicture: of(p.doors).doorPicture }) } : null;
+      if (p.backdrop) {
+        const bd = slice.backdrops[p.backdrop - 1];
         P[`pick-${slice.id}`] = png(S.pickFrame(bd, M, b, player, 0));
         const frames = [];
         for (let f = 0; f < (bd.loop || 240) / 4; f++) frames.push(await S.deflated(S.pickFrame(bd, M, b, player, f)));
         if (new Set(frames).size > 1) A[`pick-${slice.id}`] = { h: 224, frames };   // only if something in it moves by itself
-        // A slice's extra pictures (Steel's line in phases): each painted frame by frame in front of the picked floor.
-        for (const ex of slice.extras || []) {
-          const frames = [];
-          for (let f = 0; f < ex.frames; f++) {
-            const cam = ex.walk ? ex.walk(f) : null, moving = ex.walk && ex.walk(f) !== ex.walk(f + 1);
-            frames.push(await S.deflated(S.sceneFrame((r) => ex.paint(r, f), M, player, { cam, run: moving ? 6 + (f % 8) : 0 })));
-          }
-          P[ex.name] = png(S.sceneFrame((r) => ex.paint(r, 0), M, player));
-          A[ex.name] = { h: 224, frames, fps: ex.fps };
-        }
+      }
+      // A slice's extra pictures (Steel's line in phases, Ghost's tower), painted frame by frame: in front of the
+      // picked floor with the player running on the spot, or (`own`) with their own floors and player; or one
+      // picture of any size (`picture`). `sprite(k)` is frame k of the player's sheet, for pictures that place him.
+      const sheet = document.createElement('canvas'); sheet.width = player.width; sheet.height = player.height;
+      sheet.getContext('2d').drawImage(player, 0, 0);
+      const sprite = (k) => ({ d: sheet.getContext('2d').getImageData(k * 24, 0, 24, 24).data });
+      for (const ex of slice.extras || []) {
+        if (ex.picture) { P[ex.name] = png(ex.picture(sprite)); continue; }
+        const frames = [], frame = (f, run) => S.sceneFrame((r) => ex.paint(r, f, sprite), ex.own ? null : M, ex.own ? null : player, { cam: ex.walk ? ex.walk(f) : null, run });
+        for (let f = 0; f < ex.frames; f++) frames.push(await S.deflated(frame(f, ex.walk && ex.walk(f) !== ex.walk(f + 1) ? 6 + (f % 8) : 0)));
+        P[ex.name] = png(frame(0, 0));
+        A[ex.name] = { h: 224, frames, fps: ex.fps };
       }
       const brightest = slice.backdrops.map((bd) => S.pitSample(bd, b).reduce((m, p) => (lum(p) > lum(m) ? p : m), [0, 0, 0]));
       for (const [k, name, , M] of slice.materials) {

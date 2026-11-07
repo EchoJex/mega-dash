@@ -460,11 +460,210 @@ const FERRY = {
     return x > -50 && x < W ? [['boat', x, 134 + Math.round(Math.sin((TAU * mod(t, 120)) / 120))]] : [];
   },
 };
+// ── THE GRAVE TOWER, AS A CLIMB ──────────────────────────────────────
+/*
+ * The owner, 7 Nov 2026, on the Ghost board's grave tower: "3a but This level will only be 3 full
+ * screen widths wide. beyond this 3 screen wide scrolling, all other platforming and scrolling will
+ * be done in the vertical as the player ascends this grave tower. add animated blue flame spirits,
+ * significantly increase the unique styles of graves, have a thin fog with clear patches ebb and
+ * flow, shifting with player movement like the layered parallax but over the foreground, mildly
+ * obscuring the player, platforms, enemies etc but not the flame spirits. periodically there will be
+ * a staircase that, at the top, is a one way passable platform that spans the whole level width as
+ * checkpoints. all other platforms should have randomized widths no narrower than the current
+ * standard platform".
+ *
+ * So: the grave tower with material A, the rotten floorboards, drawn as a climb. The tower is three
+ * screens (1440 pixels) wide. Its far wall of graves moves at half the camera's speed, stone pillars
+ * nearer at three quarters, then the climb itself: platforms 44 to 88 pixels wide (44 is today's
+ * standard), and every few tiers a staircase up to a walkway the whole width of the tower, the
+ * checkpoint. Over all of it a thin fog drifts faster than the camera, its clear patches opening and
+ * closing; the blue flame spirits are drawn over the fog. Painted afresh each frame for the canvas;
+ * how the climb plays (falling, the door at the top) is still to be talked through. Not in the game.
+ */
+const ROTTEN_P = { deep: '#140e1c', dark: '#2e2640', base: '#5e5072', light: '#726486', hi: '#9a8cb4', cap0: '#c4b8dc', cap1: '#9486b4', rope: '#6a5a80', iron: '#2a2430', ironLight: '#5a5068', thi: '#d8d0e8', tlight: '#8a80a0', tdark: '#4a4058' };
+const ROTTEN = material('planks', ROTTEN_P, { spikes: 'spears', door: 'wood' });
+const RP = Object.fromEntries(Object.entries(ROTTEN_P).map(([k, v]) => [k, c(v)]));
+const TW = 1440, GRAVE_C = [Wd(0.22), mix(Wd(1), Wv(0.45), 0.5), Wv(0.62), Wv(0.82)];   // edge, body, lit, highlight
+const GRAVE_W = [9, 9, 7, 9, 11, 20, 13, 9, 9, 9, 9, 22, 10, 5, 7];
+/** A grave standing on a ledge at (x, base): one of fifteen kinds. */
+function grave(r, x, base, kind, C = GRAVE_C) {
+  const [E, B, L, Hh] = C, F = (i, j, w, h, col) => fillRect(r, x + i, base - j - h, w, h, col);   // j counts up from the ledge
+  const body = (i, j, w, h) => { F(i, j, w, h, B); F(i, j, 1, h, L); F(i + w - 1, j, 1, h, E); };
+  const WOOD = [c('#2a1c14'), c('#5a4030'), c('#7a5a40')];
+  switch (kind) {
+    case 0: body(0, 0, 9, 9); for (let i = 1; i < 8; i++) for (let j = 9; j < 13; j++) if (((i - 4) / 3.6) ** 2 + ((j - 9) / 3.4) ** 2 <= 1) r.set(x + i, base - 1 - j, i < 3 ? L : B); F(2, 4, 5, 1, E); F(2, 6, 5, 1, E); break;   // a rounded headstone
+    case 1: body(3, 0, 3, 16); body(0, 10, 9, 3); break;   // a cross
+    case 2: body(0, 0, 7, 3); body(1, 3, 5, 14); F(2, 17, 3, 2, B); F(3, 19, 1, 2, Hh); break;   // an obelisk
+    case 3: body(3, 0, 3, 18); body(0, 11, 9, 3); for (let a = 0; a < 28; a++) { const t = (a / 28) * TAU; r.set(Math.round(x + 4 + Math.cos(t) * 4), Math.round(base - 13 + Math.sin(t) * 4), a < 14 ? E : L); } break;   // a cross in a ring
+    case 4: body(0, 0, 11, 9); F(3, 3, 5, 4, L); r.set(x + 4, base - 6, E); r.set(x + 6, base - 6, E); F(4, 3, 3, 1, E); break;   // a slab with a skull carved in it
+    case 5: body(0, 0, 20, 5); F(0, 5, 20, 2, L); F(1, 7, 18, 1, Hh); for (let i = 3; i < 18; i += 5) F(i, 1, 2, 3, E); break;   // a tomb chest under its lid
+    case 6: body(4, 0, 5, 3); body(5, 3, 3, 9); F(2, 7, 2, 8, L); F(9, 7, 2, 8, E); F(1, 10, 1, 5, L); F(11, 10, 1, 5, E); ellipse(r, x + 6, base - 15, 2, 2, Hh); break;   // an angel, wings half raised
+    case 7: body(0, 0, 9, 6); F(0, 6, 3, 3, B); F(3, 6, 2, 1, B); F(5, 6, 4, 2, B); F(7, 8, 2, 1, E); r.set(x + 1, base - 9, L); break;   // a broken headstone
+    case 8: for (let j = 0; j < 14; j++) { const dx = Math.round(j * 0.25); r.set(x + 3 + dx, base - 1 - j, WOOD[1]); r.set(x + 4 + dx, base - 1 - j, WOOD[0]); } for (let i = 0; i < 9; i++) r.set(x + i + 2, base - 11 + Math.round(i * 0.1), i < 4 ? WOOD[2] : WOOD[1]); break;   // a wooden cross, leaning
+    case 9: body(1, 0, 7, 4); body(3, 4, 3, 2); ellipse(r, x + 4, base - 9, 3, 3, B); r.set(x + 2, base - 10, L); F(3, 12, 3, 1, L); F(2, 13, 5, 1, B); break;   // an urn on a plinth
+    case 10: body(0, 0, 9, 10); for (let j = 10; j < 15; j++) { const half = Math.round((15 - j) * 0.9); for (let i = 4 - half; i <= 4 + half; i++) r.set(x + i, base - 1 - j, i <= 4 - half + 1 ? L : B); } F(4, 6, 1, 5, E); F(2, 8, 5, 1, E); break;   // a pointed headstone with a cross cut in it
+    case 11: body(0, 0, 22, 2); body(2, 2, 2, 11); body(18, 2, 2, 11); F(4, 2, 14, 11, Wd(0.12)); F(8, 2, 6, 8, Wd(0.05)); body(0, 13, 22, 2); for (let j = 15; j < 20; j++) { const half = Math.round((20 - j) * 2.2); F(11 - half, j, half * 2, 1, j === 15 ? L : B); } break;   // a little mausoleum, its door dark
+    case 12: for (let j = 0; j < 12; j++) { const dx = Math.round(j * 0.35); for (let i = 0; i < 8; i++) { if (j > 8 && ((i - 3.5) / 3.6) ** 2 + ((j - 8) / 3.4) ** 2 > 1) continue; r.set(x + i + dx, base - 1 - j, i === 0 ? L : i === 7 ? E : B); } } break;   // a headstone sunk and leaning
+    case 13: F(2, 0, 1, 10, Wd(0.15)); F(0, 10, 5, 6, Wd(0.15)); F(1, 11, 3, 4, SPIRIT[1]); r.set(x + 2, base - 13, SPIRIT[0]); glow(r, x + 2, base - 13, 6, SPIRIT[1], 0.35); break;   // an iron lantern on a post, a spirit flame inside
+    case 14: body(1, 0, 5, 2); body(2, 2, 3, 12); ellipse(r, x + 3, base - 16, 2, 2, B); r.set(x + 2, base - 17, Hh); break;   // a pillar with a stone ball on top
+  }
+}
+/** The tower's far wall, at `rate` of the camera: stone blocks, tall moonlit windows, and ledge on ledge of graves. */
+function towerWall(r, camX, camH, rate) {
+  const ox = Math.round(camX * rate), oh = Math.round(camH * rate);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const wx = x + ox, wy = y - oh, row = Math.floor(wy / 12), bx = mod(wx + mod(row, 2) * 16, 32);
+    r.set(x, y, mod(wy, 12) === 0 || bx === 0 ? Wd(0.35) : pick([Wd(0.6), mix(Wd(1), Wv(0.25), 0.3)], noise2(wx * 0.08, wy * 0.08, 430), x, y));
+  }
+  for (let k = Math.floor((-oh - 120) / 112); k * 112 - 40 + oh < H; k++) {
+    const ly = k * 112 + 96 + oh;   // this ledge's top, on screen
+    if (mod(k, 2) === 0) for (let n = Math.floor((ox - 60) / 240); n * 240 + 100 - ox < W; n++) {   // a tall arched window between this ledge and the one above
+      const wx = n * 240 + 120 - ox, top = ly - 76;
+      for (let j = 0; j < 62; j++) for (let i = 0; i < 22; i++) { const dx = i - 11; if (j < 11 && dx * dx + (j - 11) ** 2 > 121) continue; r.set(wx + i, top + j, i === 11 || j === 30 ? Wd(0.3) : mix(Wd(0.25), Wv(0.6), 0.35 - j * 0.004)); }
+      beam(r, wx + 11, top + 30, Math.PI / 2 + 0.35, 0.1, 70, Wv(0.85), 0.07);
+    }
+    if (ly < -30 || ly > H + 30) continue;
+    for (let x = 0; x < W; x++) { r.set(x, ly, Wv(0.45)); r.set(x, ly + 1, Wd(0.25)); for (let j = 2; j < 6; j++) r.set(x, ly + j, Wd(0.3)); }
+    let gx = 4 + Math.floor(hash(k, 0, 940) * 10);
+    for (let n = 0; gx < ox + W + 30; n++) {   // the graves along it: fifteen kinds, never two alike in a row
+      const kind = Math.floor(hash(k, n, 941) * 15), w = GRAVE_W[kind];
+      if (gx + w > ox - 30) grave(r, gx - ox, ly, kind);
+      gx += w + 3 + Math.floor(hash(k, n, 942) * 9);
+    }
+  }
+}
+/** Stone pillars nearer than the wall, at `rate` of the camera. */
+function towerPillars(r, camX, rate) {
+  const ox = Math.round(camX * rate);
+  for (let n = Math.floor((ox - 40) / 300); n * 300 + 120 - ox < W; n++) {
+    const px = n * 300 + 140 - ox;
+    for (let y = 0; y < H; y++) for (let i = 0; i < 26; i++) r.set(px + i, y, i < 3 ? Wv(0.42) : i > 22 ? Wd(0.1) : mod(y + (i > 12 ? 8 : 0), 16) === 0 ? Wd(0.14) : Wd(0.24));
+  }
+}
+// The climb shown on the canvas: its platforms, stairs and walkways, and the route the player takes.
+const CLIMB = (() => {
+  const plats = [], stairs = [], walks = [360, 720], route = [[70, 0, 'stand']], tiers = [];
+  let x = 70, dir = 1;
+  const next = (i) => { let nx = x + dir * (56 + Math.floor(hash(i, 0, 950) * 30)); if (nx > TW - 100 || nx < 100) { dir = -dir; nx = x + dir * (56 + Math.floor(hash(i, 0, 950) * 30)); } return nx; };
+  for (let h = 40, i = 0; h <= 800; h += 40, i++) {
+    if (walks.includes(h) || walks.includes(h + 40)) continue;   // the stair climbs through these tiers
+    const nx = next(i);
+    if (walks.includes(h + 80)) {   // the platform at the stair's foot
+      const foot = nx + dir * 32;
+      plats.push([nx, h, 64]); stairs.push([foot, h, dir]);
+      route.push([nx, h, 'hop'], [foot, h, 'walk'], [foot + dir * 80, h + 80, 'climb']);
+      x = foot + dir * 80;
+    } else {
+      plats.push([nx, h, 44 + 4 * Math.floor(hash(i, 1, 950) * 12)]);
+      route.push([nx, h, 'hop']); x = nx; tiers.push([h, nx]);
+    }
+  }
+  for (const [h, px] of tiers) for (let q = 0; q < 2; q++) {   // more platforms on each tier, of random widths, off the route
+    const fx = 60 + Math.floor(hash(h, q, 951) * (TW - 120)), w = 44 + 4 * Math.floor(hash(h, q, 952) * 12);
+    if (Math.abs(fx - px) > 150 && hash(h, q, 953) > 0.25) plats.push([fx, h, w]);
+  }
+  let t = 30;
+  const legs = route.slice(1).map(([x1, h1, how], k) => {
+    const [x0, h0] = route[k], len = how === 'hop' ? 30 : Math.max(20, Math.round(Math.hypot(x1 - x0, h1 - h0) / (how === 'climb' ? 1.1 : 1.375)));
+    const leg = { x0, h0, x1, h1, how, t0: t, t1: t + len }; t += len + (how === 'hop' ? 14 : 0); return leg;
+  });
+  return { plats, stairs, walks, legs, end: t + 40 };
+})();
+/** Where the player is at step t, how he stands (a frame of his sheet) and which way he faces. */
+function climberAt(t) {
+  let last = CLIMB.legs[0], prev = { x1: 70, h1: 0 };
+  for (const leg of CLIMB.legs) {
+    if (t < leg.t0) return [prev.x1, prev.h1, 0, Math.sign(leg.x1 - leg.x0) || 1];
+    if (t < leg.t1) {
+      const u = (t - leg.t0) / (leg.t1 - leg.t0), x = leg.x0 + (leg.x1 - leg.x0) * u, face = Math.sign(leg.x1 - leg.x0) || 1;
+      if (leg.how === 'hop') return [x, leg.h0 + (leg.h1 - leg.h0) * u + 26 * Math.sin(Math.PI * u), u < 0.4 ? 14 : u < 0.6 ? 15 : 16, face];
+      return [x, leg.h0 + (leg.h1 - leg.h0) * u, 6 + (Math.floor(t / 4) % 8), face];
+    }
+    prev = last = leg;
+  }
+  return [last.x1, last.h1, 0, 1];
+}
+/** The camera at step t: following the player, a little behind, inside the tower's three screens. */
+function climbCam(t) {
+  let cx = 0, ch = 0;
+  for (let k = 0; k < 8; k++) { const [x, h] = climberAt(Math.max(0, t - k * 6)); cx += Math.max(0, Math.min(TW - W, x - 200)); ch += Math.max(0, h - 60); }
+  return [cx / 8, ch / 8];
+}
+const FOG = c('#b8b4d8');
+/** A thin fog over everything, drifting faster than the camera; its clear patches open and close as it ebbs and flows. */
+function towerFog(r, camX, camH, t, rate = 1.35) {
+  const ox = camX * rate, oy = -camH * rate, thr = 0.5 + 0.1 * Math.sin((TAU * t) / 600);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const fx = x + ox + t * 0.12, fy = y + oy;
+    const n = 0.65 * noise2(fx * 0.012, fy * 0.02, 911) + 0.35 * noise2(fx * 0.04 + 50, fy * 0.05 - t * 0.003, 912);
+    const d = Math.min(1, Math.max(0, (n - thr) / 0.25));   // 0 in a clear patch, 1 at its thickest
+    if (d > 0 && BAYER4[mod(y, 4)][mod(x, 4)] < d * 8) r.set(x, y, FOG, Math.round(50 + d * 50));
+  }
+}
+const SPIRITS = Array.from({ length: 40 }, (_, i) => [20 + Math.floor(hash(i, 0, 960) * (TW - 40)), 20 + Math.floor(hash(i, 1, 960) * 860), 3 + Math.floor(hash(i, 2, 960) * 2)]);
+/** The blue flame spirits, bobbing and drifting over the fog, each flickering on its own beat. */
+function towerSpirits(r, camX, camH, t) {
+  for (const [i, [sx, sh, s]] of SPIRITS.entries()) {
+    const x = Math.round(sx - camX + 8 * Math.sin((TAU * t) / 400 + i)), y = Math.round(FLOOR - (sh - camH) + 4 * Math.sin((TAU * t) / 90 + i * 1.3));
+    if (x < -12 || x > W + 12 || y < -12 || y > H + 12) continue;
+    spiritFlame(r, x, y, mod(Math.floor(t / 5) + i, 3) === 0 ? s + 1 : s);
+  }
+}
+/** Copy one frame of the player's sheet into r, his feet at (x, y), mirrored to face left. */
+function stampPlayer(r, sprite, frame, x, y, face) {
+  const p = sprite(frame);
+  for (let j = 0; j < 24; j++) for (let i = 0; i < 24; i++) { const k = (j * 24 + (face < 0 ? 23 - i : i)) * 4; if (p.d[k + 3] > 128) r.set(x + i - 12, y + j - 24, [p.d[k], p.d[k + 1], p.d[k + 2]]); }
+}
+let GROUND_ROWS = null;   // the floorboards' ground, painted once, to lay at the foot of the tower
+/** The tower at a moment: wall, pillars, the climb's woodwork, the player, the fog and, over it all, the spirits. */
+function paintTower(r, camX, camH, t, sprite, flat = false) {
+  towerWall(r, camX, camH, flat ? 1 : 0.5);
+  towerPillars(r, camX, flat ? 1 : 0.75);
+  const Y = (h) => Math.round(FLOOR - (h - camH)), X = (x) => Math.round(x - camX);
+  if (Y(0) < H) {   // the tower's floor, at the bottom of the climb
+    if (!GROUND_ROWS) { GROUND_ROWS = new Raster(W, H); ROTTEN.ground(GROUND_ROWS, 0, W); }
+    for (let y = Y(0); y < H; y++) for (let x = 0; x < W; x++) { const k = ((FLOOR + y - Y(0)) * W + mod(x + Math.round(camX), W)) * 4, d = GROUND_ROWS.d; if (FLOOR + y - Y(0) < H && d[k + 3]) r.set(x, y, [d[k], d[k + 1], d[k + 2]]); }
+  }
+  for (const h of CLIMB.walks) {   // the checkpoints: a walkway the whole width of the tower, on brackets
+    const y = Y(h);
+    if (y < -8 || y > H) continue;
+    ROTTEN.platform(r, X(12), y, TW - 24);
+    for (let bx = 12; bx < TW - 12; bx += 120) { const x = X(bx); line(r, x, y + 5, x + 10, y + 15, RP.iron); line(r, x + 1, y + 5, x + 11, y + 15, RP.ironLight); }
+  }
+  for (const [fx, h, d] of CLIMB.stairs) for (let k = 0; k < 10; k++) {   // stairs: ten steps of eight, a stringer under them, an iron rail
+    const x = X(fx + d * 8 * k) - (d < 0 ? 8 : 0), y = Y(h + 8 * (k + 1));
+    for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) r.set(x + i, y + j, j === 0 ? RP.cap0 : j === 1 ? RP.light : i === (d > 0 ? 7 : 0) ? RP.deep : j > 5 ? RP.dark : RP.base);
+    for (let j = 8; j < 12; j++) r.set(x + (d > 0 ? 0 : 7), y + j, RP.deep);
+    if (k % 3 === 1) { vert(r, x + 4, y - 12, y, RP.iron); }
+    line(r, X(fx) + (d > 0 ? 0 : -1), Y(h) - 12, X(fx + d * 80), Y(h + 80) - 12, RP.ironLight);
+  }
+  for (const [px, h, w] of CLIMB.plats) { const x = X(px - w / 2), y = Y(h); if (x < W && x + w > 0 && y > -6 && y < H) ROTTEN.platform(r, x, y, w); }
+  for (const wx of [0, TW - 14]) { const x = X(wx); for (let y = 0; y < H; y++) for (let i = 0; i < 14; i++) r.set(x + i, y, i === (wx ? 0 : 13) ? Wv(0.45) : mod(y + i * 3, 12) === 0 ? Wd(0.12) : Wd(0.2)); }   // the tower's own walls
+  if (sprite) { const [px, ph, frame, face] = climberAt(t); stampPlayer(r, sprite, frame, X(px), Y(ph), face); }
+  towerFog(r, camX, camH, t, flat ? 1 : 1.35);
+  towerSpirits(r, camX, camH, t);
+}
+/** The canvas pictures: the climb, the camera following the player up the tower, and a map of the tower three screens wide. */
+const TOWER_PICTURES = [
+  { name: 'tower-climb', frames: Math.ceil(CLIMB.end / 6), fps: 10, own: true,
+    paint: (r, f, sprite) => { const t = f * 6, [cx, ch] = climbCam(t); paintTower(r, Math.round(cx), Math.round(ch), t, sprite); } },
+  { name: 'tower-map', picture: (sprite) => {
+    const big = new Raster(TW, 4 * H);
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 3; col++) {
+      const r = new Raster(W, H);
+      paintTower(r, col * W, (3 - row) * H, 0, null, true);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const k = (y * W + x) * 4; if (r.d[k + 3]) big.set(col * W + x, row * H + y, [r.d[k], r.d[k + 1], r.d[k + 2]]); }
+    }
+    return big.flush();
+  } },
+];
 const GHOST = {
   id: 'wraith', type: 'Ghost',
+  // The owner, 7 Nov 2026: "3a", the grave tower with the rotten floorboards, as a climb (above).
+  pick: { material: 'A', backdrops: [3] },
+  extras: TOWER_PICTURES,
   materials: [
-    ['A', 'ROTTEN FLOORBOARDS', 'Warped grey-violet boards with iron nails, an iron railing for spikes and a heavy door bound in iron.',
-      material('planks', { deep: '#140e1c', dark: '#2e2640', base: '#5e5072', light: '#726486', hi: '#9a8cb4', cap0: '#c4b8dc', cap1: '#9486b4', rope: '#6a5a80', iron: '#2a2430', ironLight: '#5a5068', thi: '#d8d0e8', tlight: '#8a80a0', tdark: '#4a4058' }, { spikes: 'spears', door: 'wood' })],
+    ['A', 'ROTTEN FLOORBOARDS', 'Warped grey-violet boards with iron nails, an iron railing for spikes and a heavy door bound in iron.', ROTTEN],
     ['B', 'CRYPT STONE', 'Lavender-grey crypt bricks with ghostly green moss over the top, iron railings and a crypt gate.',
       material('bricks', { deep: '#16121e', dark: '#2e2a3a', base: '#565070', alt: '#4e4866', light: '#6e6888', hi: '#b8b0d0', cap0: '#c8c0e0', cap1: '#9a92b8', moss: '#7ad0a8', mossDark: '#3a7a60', void: '#0a0810', thi: '#d8d4e8', tlight: '#8a86a0', tdark: '#4a4660' }, { moss: true, spikes: 'spears', door: 'gate' })],
     ['C', 'CHAPEL TILES', 'Worn violet chapel tiles, shards of broken stained glass for spikes and an old chapel door.',

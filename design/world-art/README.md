@@ -130,7 +130,7 @@ brick, at 2.06 against a floor of 2.
 | slice | backdrops | materials | status |
 |---|---|---|---|
 | Rock | 1 blue grotto · 2 star vault · 3 tall grass · 4 glowing blooms · 5 mushroom hollow · 6 lantern walk, all moving (six variants of the glowworm grotto the owner picked; before that crystal cavern, geode cavern, underground lake, cave mouth, glowworm grotto and giant crystals, and first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: material B, changed, with A's arched doors; backdrops 2 star vault and 4 glowing blooms** (owner, 6 Nov 2026: "2 and 4"), how the two go together still to settle |
-| Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | backdrops redone (owner, 6 Nov 2026), in their words below; not picked yet |
+| Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | **PICKED: 3 grave tower, with A rotten floorboards, as a climb up a tower three screens wide** (owner, 7 Nov 2026), in their words below; how the climb plays still to settle |
 | Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | **PICKED: 1 total eclipse, with A on C's ground** (owner, 6 Nov 2026), in their words below |
 | Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving; redrawn as the owner's story from 1, 2 and the first 5, robot arms along a conveyor) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | **PICKED: 5 assembly line, with B blast doors** (owner, 6 Nov 2026), in their words below |
@@ -166,6 +166,23 @@ one game: a manor hall where the furniture floats and the portraits' eyes follow
 shrine path of gates, paper lanterns and blue spirit flames, a tower given over to graves, a shut-down
 fairground whose ghost train has one great staring eye, a river of souls with its ferryman (moving),
 and a western ghost town with a see-through cowboy in the street. The materials are as offered.
+
+**Ghost's pick, in the owner's words (7 Nov 2026):** "3a but This level will only be 3 full screen
+widths wide. beyond this 3 screen wide scrolling, all other platforming and scrolling will be done in
+the vertical as the player ascends this grave tower. add animated blue flame spirits, significantly
+increase the unique styles of graves, have a thin fog with clear patches ebb and flow, shifting with
+player movement like the layered parallax but over the foreground, mildly obscuring the player,
+platforms, enemies etc but not the flame spirits. periodically there will be a staircase that, at the
+top, is a one way passable platform that spans the whole level width as checkpoints. all other
+platforms should have randomized widths no narrower than the current standard platform". So the grave
+tower with the rotten floorboards is drawn as a climb (`TOWER_PICTURES` in `batch3.mjs`): a tower 1440
+pixels wide, its far wall at half the camera's speed with graves in fifteen kinds (`grave`), stone
+pillars nearer at three quarters, platforms 44 to 88 wide, and every few tiers a staircase up to a
+walkway the whole width of the tower, the checkpoint. A thin fog (`towerFog`) drifts over everything
+at 1.35 times the camera's speed, its clear patches opening and closing; the blue flame spirits are
+drawn over it. The board shows the camera following the player up past two checkpoints, and a map of
+the tower. How the climb plays (falling, where the boss door is) is asked on the board. It is the
+first area that does not run left to right, so it needs its own build in the game.
 
 **Dragon's pick, in the owner's words (6 Nov 2026):** "6c but do another 6 variants based on 6c, i
 like the interior halls of a castle, and i like some stained glass windows". So the throne hall with
