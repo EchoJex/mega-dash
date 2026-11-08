@@ -283,8 +283,8 @@ const roofLayer = (n, seed, extra = () => {}, cols = ROOF) => ({ rate: 0.15, per
 const ROCK = {
   id: 'granite', type: 'Rock',
   // The owner, 6 Nov 2026: material B, with material A's arched doors; and of the six variants of the
-  // glowworm grotto below, "2 and 4" (how the two go together is still to settle).
-  pick: { material: 'B', doors: 'A', backdrops: [2, 4] },
+  // glowworm grotto below, "2 and 4", then (8 Nov 2026) "A": one backdrop joining them, number 7.
+  pick: { backdrop: 7, material: 'B', doors: 'A' },
   materials: [
     ['A', 'GRANITE BLOCKS', 'Rough-cut granite blocks under a pale stone lip, stone shards and an arch of fitted stones.',
       material('bricks', { deep: '#1e1814', dark: '#3a302a', base: '#5c5048', alt: '#544840', light: '#786a60', hi: '#c8c0b4', cap0: '#d8d0c4', cap1: '#a8a096', thi: '#e8e4dc', tlight: '#a8a296', tdark: '#5a544c' }, { spikes: 'shards', door: 'arch' })],
@@ -370,6 +370,31 @@ const ROCK = {
         }
         dark(r, 178, R(0.04));
       }, parts: [ROWS[4].glints, LANTERNS, MIST] }),
+    // The owner, 8 Nov 2026, on "2 and 4": "A", one backdrop joining them: the blooms under the star vault.
+    scrolling('STAR MEADOW', 'Backdrops 2 and 4 joined: the star vault\'s glittering roof, its band of crystal light and hanging crystals over far spires, and the meadow of glowing bell flowers in front, their light rippling across them, pollen drifting up. Scrolls in three layers.', 240,
+      { rate: 0.03, period: 960, fixed: (r, ox) => {
+        grad(r, 0, H, [[0, NIGHT[0]], [0.42, NIGHT[1]], [0.66, NIGHT[3]], [0.78, NIGHT[2]], [1, NIGHT[1]]]);
+        for (let y = 0; y < 140; y++) for (let x = 0; x < W; x++) {   // a band of faint crystal light across the vault, like a galaxy
+          const wx = mod(x + ox, 960), d = Math.abs(y - (30 + 60 * Math.sin((TAU * wx) / 960))) / 26;
+          if (d < 1 && BAYER4[mod(y, 4)][mod(wx, 4)] < (1 - d) ** 2 * 7 * (0.6 + 0.4 * seamless((w) => noise1(w * 0.04, 416), wx, 960))) r.set(x, y, d < 0.35 ? LUMEN[0] : NIGHT[3]);
+        }
+        for (const [wx, sz, sd] of [[60, 34, 1], [300, 44, 2], [540, 30, 3], [770, 40, 4]]) { const x = mod(wx - ox, 960) - 20; if (x < -60 || x > W + 60) continue; glow(r, x, 14, 50, VIOLET_GLOW, 0.3); cluster(r, x, -2, sz, sd, AMETHYST, Math.PI); }
+      }, parts: [glowworms(VAULT.filter((_, i) => hash(i, 2, 410) > 0.25), 960, [NIGHT[4], LUMEN[2], LUMEN[1]], 411), glowworms(VAULT.filter((_, i) => hash(i, 2, 410) <= 0.25), 960, [AMETHYST[0], AMETHYST[2], AMETHYST[1]], 412)] },
+      { rate: 0.12, period: 960, fixed: (r, ox) => {
+        ridge(r, ox, { y: 146, amp: 30, f: 0.02, seed: 413, col: NIGHT[1], top: LUMEN[0], period: 960, sharp: 0.7 });
+        ridge(r, ox, { y: 164, amp: 14, f: 0.035, seed: 414, col: NIGHT[0], top: NIGHT[3], period: 960, sharp: 0.4 });
+      } },
+      { rate: 0.35, period: 960, fixed: (r, ox) => {
+        ROWS[3].paint(r, ox);
+        for (const [wx, h, lean] of BLOOMS) {   // each flower's glow and its stem; the bell is a moving part
+          const x = mod(wx - ox, 960) - 20;
+          if (x < -30 || x > W + 30) continue;
+          const [bx, by] = bellAt(x, h, lean);
+          glow(r, bx + 3, by + 4, 14, CYAN_GLOW, 0.3);
+          stem(r, x, h, lean, NIGHT[4]);
+        }
+        dark(r, 178, NIGHT[0]);
+      }, parts: [ROWS[3].glints, BLOOM_CUPS, motes(437, 30, [LUMEN[2], LUMEN[3]])] }),
   ],
 };
 
