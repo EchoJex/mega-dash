@@ -14,6 +14,7 @@ import { material, BEDROCK } from './materials.js';
 import { grad, fillRect, halo, ridge, beam, panels, tn, mix, c, scrolling, drift, seamless, vert, pylon, wire, mod, stars, trees, disc } from './paint.js';
 import { Raster, hash, noise1, noise2, pick } from '../arena-art/pixels.js';
 import { W, H, FLOOR } from './kit.js';
+import { ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE } from './batch3.js';
 
 const B = (id) => BOSSES.find((b) => b.id === id);
 
@@ -674,14 +675,28 @@ export const PICKED = {
     materials: { B: QUAKE_B },
     backdrop: DESERT_DUNES,
   },
+  granite: {
+    // The owner, 6 Nov 2026: "B, but redo Rock backdrops using caves and crystals as the focus, and make
+    // the spikes glisteny violet crystals"; then "i like 5b but with the arched doorways from a. improve
+    // backdrop 5 with 6 new variants ..."; then "2 and 4"; and asked whether that meant one backdrop
+    // joining them, on 8 Nov 2026: "A".
+    pick: { backdrop: 7, material: 'B', doors: 'A' },
+    materials: { A: ROCK_MATERIALS[0], B: ROCK_MATERIALS[1] },
+    backdrop: STAR_MEADOW,
+  },
+  eclipse: {
+    // The owner, 6 Nov 2026: "1a but with the cracked glowing stone from c"
+    pick: { backdrop: 1, material: 'A', ground: 'C' },
+    materials: { A: DARK_MATERIALS[0], C: DARK_MATERIALS[2] },
+    backdrop: TOTAL_ECLIPSE,
+  },
 };
 
-/** The pieces an area is drawn with: the picked material, on another's ground where the owner mixed them. */
+/** The pieces an area is drawn with: the picked material, on another's ground or with another's doors where the owner mixed them. */
 export function pickedMaterial(id) {
   const P = PICKED[id];
   if (!P) return null;
-  const M = P.materials[P.pick.material][3];
-  if (!P.pick.ground) return M;
-  const G = P.materials[P.pick.ground][3];
-  return { ...M, ground: G.ground, check: G.check };
+  const M = P.materials[P.pick.material][3], G = P.pick.ground && P.materials[P.pick.ground][3], D = P.pick.doors && P.materials[P.pick.doors][3];
+  if (!G && !D) return M;
+  return { ...M, ...(G && { ground: G.ground, check: G.check }), ...(D && { door: D.door, doorPicture: D.doorPicture }) };
 }

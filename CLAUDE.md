@@ -689,8 +689,9 @@ settles each one's direction.
 **Batch 3 (Rock, Ghost, Dragon, Dark, Steel) is on the canvas for picking**, 6 Nov 2026; Dragon keeps its
 first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
 **Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
-neither is in the game yet. **Rock was picked too** (8 Nov 2026): two of its variants joined into one,
-with material B and A's arched doors. Dragon has six variants of the backdrop it liked to pick from. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
+**Rock was picked too** (8 Nov 2026): two of its variants joined into one, with material B and A's arched
+doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); Steel waits
+on which way its line loops and on the progress measure. Dragon has six variants of the backdrop it liked to pick from. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
 three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
 over the play. It is the first area not to run left to right; how it plays is still being settled, so
 nothing of it is built in the game.
@@ -740,6 +741,7 @@ Claude or a generator made:
 | World pieces in the game, batch 1 — each slice's picked backdrop and material, redrawn where the owner asked (Fire's embers, obsidian spikes and arch; Water's subsea lab; Electric's batteries and their sparks; Fighting's animated crowd; Grass's grove scrolling) | room art, drawn in code | Claude | 2026-11-05 | `src/systems/area-art/slices.js` |
 | World pieces for each slice, batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug), variants for review — six backdrops per slice and three materials (floor, platform, spikes, boss door, exit door), Ground on its first-round bedrock | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch2.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | World pieces in the game, batch 2 — Ice's and Ground's picked backdrop and material, redrawn where the owner asked (Ice's aurora; Ground's desert with heat waves, a mirage, blowing sand and vultures), and the first round's bedrock under Ground | room art, drawn in code | Claude | 2026-11-06 | `src/systems/area-art/slices.js`, bedrock in `src/systems/area-art/materials.js` (`BEDROCK`) |
+| World pieces in the game, batch 3 — Rock's star meadow (the star vault and the glowing blooms joined) on quarry strata with violet crystal spikes and A's arched doors, and Dark's total eclipse with A's tiles, shards and doors on C's cracked glowing stone | room art, drawn in code | Claude | 2026-11-08 | `src/systems/area-art/batch3.js`, picked in `src/systems/area-art/slices.js` |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -906,7 +908,8 @@ and screenshots held against the design by eye.
 ground and pits, platforms, spike beds and boss door, and in that boss's room the exit door (the
 owner's answer, 5 Nov 2026). A slice with nothing picked keeps the plain shapes `GameScene.draw`
 always drew. **`slices.js` holds each pick in the owner's own words**, with the materials and the
-backdrop it uses; a pick can take its ground from a second material (Grass: B on A's ground).
+backdrop it uses; a pick can take its ground (Grass: B on A's ground) or its doors (Rock: B with A's doors) from a second material.
+Batch 3's picked painters live in `batch3.js`, which `design/world-art/batch3.mjs` imports.
 `design/world-art/batch1.mjs` and `batch2.mjs` show the same code beside the variants that were not
 picked, so the canvas and the game paint from one copy.
 

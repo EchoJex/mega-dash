@@ -161,6 +161,12 @@ board.
 Their answer, 8 Nov 2026: "A", one backdrop joining them. So backdrop 7, the star meadow, is the star
 vault's roof, crystal band and far spires over the glowing blooms' meadow, and it is Rock's pick.
 
+**Rock and Dark are in the game**, 8 Nov 2026, on the owner's word: "Push everything that's decided".
+Their painters moved into `src/systems/area-art/batch3.js`, which `batch3.mjs` imports, so the canvas
+and the game paint from one copy; the game's `pickedMaterial` now takes doors from a second material
+too. Steel is not in yet (which way its line loops, and the progress measure, are still open), nor
+Ghost (its tower is a new kind of area), nor Dragon (no backdrop picked).
+
 **Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider
 interpretation of 'Ghost' using what other video games have established as precedent". The six new
 ones each take a kind of haunting games keep coming back to, drawn fresh rather than copied from any

@@ -84,7 +84,7 @@ function world(x) {
 
 test('the slices the owner has picked have pieces, and every other slice is left alone', () => {
   // Batch 1 (5 Nov 2026), then Ice and Ground from batch 2 (6 Nov 2026).
-  assert.deepEqual(PICKS.sort(), ['blaze', 'frost', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt']);
+  assert.deepEqual(PICKS.sort(), ['blaze', 'eclipse', 'frost', 'granite', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt']);
   for (const b of BOSSES) assert.equal(hasAreaArt(b.id), PICKS.includes(b.id), b.id);
 });
 
@@ -93,12 +93,13 @@ test('ground that touches or overlaps is one run, so a pit edge shows only at a 
   assert.deepEqual(runs([]), []);
 });
 
-test('a mixed pick draws one material on another\'s ground', () => {
+test('a mixed pick draws one material on another\'s ground, or with another\'s doors', () => {
   for (const id of PICKS) {
     const { pick, materials } = PICKED[id], M = pickedMaterial(id);
     assert.equal(M.ground, materials[pick.ground || pick.material][3].ground, id);
     assert.equal(M.platform, materials[pick.material][3].platform, id);
     assert.equal(typeof M.doorPicture, 'function', `${id} has no door picture`);
+    assert.equal(M.doorPicture, materials[pick.doors || pick.material][3].doorPicture, `${id}'s doors come from the wrong material`);
   }
 });
 
