@@ -185,6 +185,10 @@ at 1.35 times the camera's speed, its clear patches opening and closing; the blu
 drawn over it. The board shows the camera following the player up past two checkpoints, and a map of
 the tower. How the climb plays (falling, where the boss door is) is asked on the board. It is the
 first area that does not run left to right, so it needs its own build in the game.
+Their answers, 8 Nov 2026: "1a and b. The idea is that these checkpoint-like contiguous platforms will
+prevent extreme fall heights. 2 the ghost boss will be in the upper right". So a missed jump drops the
+player onto whatever is below, and the full-width walkways catch him, so no fall is longer than one
+stretch between checkpoints; Ghost's boss door is in the tower's upper right.
 
 **Dragon's pick, in the owner's words (6 Nov 2026):** "6c but do another 6 variants based on 6c, i
 like the interior halls of a castle, and i like some stained glass windows". So the throne hall with
