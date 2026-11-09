@@ -518,24 +518,26 @@ const GLASS = {   // the colours of each window's panes
   sea: [c('#2a8a8a'), c('#3a6ab0'), c('#6a3a9a'), c('#1a4a6a'), c('#8ad0c8')],
   moon: [c('#3a4aa0'), c('#6a7ad0'), c('#2a2a6a'), c('#9a8ae0'), c('#c8d0f0')],
 };
-// THE GREAT HALL'S FIVE WINDOWS. The owner, 9 Nov 2026: "I love the colors of the left window. Use
-// these colors and their compliments and generate 5 unique windows that randomly loop". The left
-// window was GLASS.sea; each window mixes its colours with their opposites on the colour wheel
-// (teal with coral, blue with orange, violet with gold, mint with rose) and has its own heart.
+// THE GREAT HALL'S SIX WINDOWS. The owner, 9 Nov 2026, with a sheet of six colour sets (a coat and
+// one or two accents each): "Make each stained glass window based on each of these color sets". Each
+// window is its set's colours exactly, plus a darker and a lighter shade of its coat for depth.
+const hallShade = (hex, k) => mix(c(hex), k < 0 ? c('#120a12') : WHITE, Math.abs(k));
+const hallSet = (coat, a1, a2 = a1) => [c(coat), c(a1), c(a2), hallShade(coat, -0.45), hallShade(a1, 0.35)];
 const HALL_WINDOWS = [
-  { cols: GLASS.sea, motif: null },   // the one the owner liked, as it was
-  { cols: [c('#2a8a8a'), c('#e8704a'), c('#3a6ab0'), c('#1a4a6a'), c('#8ad0c8')], motif: 'rose' },   // teal and coral
-  { cols: [c('#6a3a9a'), c('#e8b030'), c('#2a8a8a'), c('#3a2a6a'), c('#f5d878')], motif: 'eye' },   // violet and gold
-  { cols: [c('#3a6ab0'), c('#e88a3a'), c('#8ad0c8'), c('#1a4a6a'), c('#f0b070')], motif: 'dragon' },   // blue and orange
-  { cols: [c('#8ad0c8'), c('#d05a8a'), c('#6a3a9a'), c('#1a4a6a'), c('#f0a0c0')], motif: 'star' },   // mint and rose
+  { cols: hallSet('#CC9CDF', '#652D87', '#EA428B'), motif: null },
+  { cols: hallSet('#FABA62', '#FAF5AB'), motif: 'rose' },
+  { cols: hallSet('#9BDBF5', '#1B98D1', '#2A78C8'), motif: 'eye' },
+  { cols: hallSet('#EAEEF0', '#5E50A0'), motif: 'dragon' },
+  { cols: hallSet('#FAF5AB', '#F3B5CF'), motif: 'star' },
+  { cols: hallSet('#F5B7D0', '#EB458B'), motif: 'rose' },
 ];
 // The order down the hall: shuffled once, never the same window twice in a row, first and last
-// differing too so the strip repeats without a seam. 20 windows before it comes round again.
+// differing too so the strip repeats without a seam. 24 windows before it comes round again.
 const HALL_ORDER = (() => {
   for (let seed = 0; ; seed++) {
     const o = [];
-    for (let n = 0; n < 20; n++) o.push(n ? (o[n - 1] + 1 + Math.floor(hash(n, seed, 590) * 4)) % 5 : Math.floor(hash(0, seed, 590) * 5));
-    if (o[19] !== o[0] && new Set(o).size === 5) return o;
+    for (let n = 0; n < 24; n++) o.push(n ? (o[n - 1] + 1 + Math.floor(hash(n, seed, 590) * (HALL_WINDOWS.length - 1))) % HALL_WINDOWS.length : Math.floor(hash(0, seed, 590) * HALL_WINDOWS.length));
+    if (o[23] !== o[0] && new Set(o).size === HALL_WINDOWS.length) return o;
   }
 })();
 const STONE = [c('#2e2a36'), c('#3e3a48'), c('#4e4a58'), c('#6e6a76')];   // the castle bricks' stone, indoors
