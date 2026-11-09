@@ -731,6 +731,79 @@ export const BEDROCK = {
   doorPicture: (kind) => bedrockDoor(kind),
 };
 
+// ── The castle bricks, picked for Dragon in the first round (5 Nov 2026): "i really like the castle one for dragon"
+export const CASTLE_COLOURS = {
+  mortar: hex('#34303a'), edge: hex('#4e4a56'), base: hex('#6e6a76'), alt: hex('#66626e'), light: hex('#8a8692'),
+  cap0: hex('#e8e2d8'), cap1: hex('#b0a898'), iron: [hex('#ffffff'), hex('#e3ded6'), hex('#8a8692'), hex('#4e4a56')],
+};
+export const CASTLE = {
+  name: 'C',
+  check: { ground: '#6e6a76', cap: '#b0a898' },
+  ground(r, x1, x2) {
+    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
+      let col;
+      if (y === FLOOR) col = CASTLE_COLOURS.cap0;
+      else if (y === FLOOR + 1) col = ((x % 16) + 16) % 16 === 0 ? CASTLE_COLOURS.mortar : CASTLE_COLOURS.cap1;
+      else if (y === FLOOR + 2) col = CASTLE_COLOURS.mortar;
+      else {
+        const row = Math.floor((y - FLOOR - 3) / 8), by = (y - FLOOR - 3) % 8;
+        const bx = (((x + (row % 2) * 8) % 16) + 16) % 16, brick = Math.floor((x + (row % 2) * 8) / 16);
+        if (bx === 0 || by === 7) col = CASTLE_COLOURS.mortar;
+        else if (by === 0) col = CASTLE_COLOURS.light;
+        else if (by === 6) col = CASTLE_COLOURS.edge;
+        else col = hash(brick, row, 51) < 0.4 ? CASTLE_COLOURS.alt : CASTLE_COLOURS.base;
+      }
+      if (x === x1 && y > FLOOR + 2) col = CASTLE_COLOURS.light;
+      if (x === x2 - 1 && y > FLOOR + 2) col = CASTLE_COLOURS.mortar;
+      r.set(x, y, col);
+    }
+  },
+  platform(r, x, y, w) {
+    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
+      let col = [CASTLE_COLOURS.cap0, CASTLE_COLOURS.light, CASTLE_COLOURS.base, CASTLE_COLOURS.base, CASTLE_COLOURS.edge][j];
+      if (j >= 1 && j <= 3 && (i % 8 === 0)) col = CASTLE_COLOURS.mortar;
+      if (i === 0 || i === w - 1) col = j === 0 ? CASTLE_COLOURS.cap1 : CASTLE_COLOURS.mortar;
+      r.set(x + i, y + j, col);
+    }
+  },
+  spikes(r, x, w) {
+    // Iron spears: thin, with gaps, on a bar.
+    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 4));
+    const tw = w / n;
+    for (let i = 0; i < n; i++) {
+      const cx = Math.floor(i * tw + tw / 2);
+      for (let py = 0; py < 6; py++) {
+        const half = py < 2 ? 0 : 1;
+        for (let px = cx - half; px <= cx + half; px++) t.set(px + 1, py + 1, py === 0 ? CASTLE_COLOURS.iron[0] : px < cx ? CASTLE_COLOURS.iron[1] : px === cx ? CASTLE_COLOURS.iron[1] : CASTLE_COLOURS.iron[2]);
+      }
+    }
+    for (let px = 0; px < Math.ceil(w); px++) t.set(px + 1, 7, CASTLE_COLOURS.iron[3]);
+    t.outline(ol);
+    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
+  },
+  door: (r, x, kind) => paintDoor(r, castleDoor(kind), x, FLOOR - 28, kind),
+  doorPicture: (kind) => castleDoor(kind),
+};
+function castleDoor(kind) {
+  const d = new Raster(16, 28), gold = kind === 'exit';
+    const bar = gold ? [hex('#fff3b0'), hex('#f5d328'), hex('#8a6d10')] : [CASTLE_COLOURS.light, CASTLE_COLOURS.base, CASTLE_COLOURS.mortar];
+    for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
+      let col;
+      if (i < 2 || i > 13 || j < 3) {                          // the stone frame and lintel
+        col = j === 0 || i === 0 ? CASTLE_COLOURS.light : (j === 2 || i === 1) ? CASTLE_COLOURS.edge : CASTLE_COLOURS.base;
+        if (j < 3 && i % 5 === 4) col = CASTLE_COLOURS.mortar;
+      } else {
+        const gx = (i - 2) % 3, gy = (j - 3) % 6;
+        col = gx === 0 ? bar[1] : gy === 0 ? bar[2] : hex('#0a0a12');
+        if (gx === 0 && (j & 1)) col = bar[0];
+      }
+      d.set(i, j, col);
+    }
+    if (!gold) { rect(d, 6, 5, 4, 5, CASTLE_COLOURS.mortar); rect(d, 7, 6, 2, 3, hex('#5cadd5')); d.set(7, 6, hex('#d8f6ff')); }
+    else { rect(d, 6, 5, 4, 5, hex('#8a6d10')); rect(d, 7, 6, 2, 3, hex('#ffffff')); }
+  return d;
+}
+
 export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, tiles, comb };
 
 /** A material: its kind, its palette, its options; `check` names the two colours the contrast rule reads. */

@@ -20,7 +20,7 @@ import { Raster, hex, pick, hash, noise1, noise2, OL } from '../../src/systems/a
 import { BOSSES } from '../../src/data/bosses.js';
 import { themeFor } from '../../src/systems/arena.js';
 import { W, H, FLOOR, rect, blit, inTooth, paintDoor } from '../../src/systems/area-art/kit.js';
-import { BEDROCK as B, BEDROCK_COLOURS as B_ } from '../../src/systems/area-art/materials.js';
+import { BEDROCK as B, BEDROCK_COLOURS as B_, CASTLE, CASTLE_COLOURS } from '../../src/systems/area-art/materials.js';
 
 export { W, H, FLOOR };
 export const PADS = 199;
@@ -130,76 +130,7 @@ const A = {
 
 // ── C: castle bricks — staggered blocks under a stone lip ─────────────
 
-const C_ = {
-  mortar: c('#34303a'), edge: c('#4e4a56'), base: c('#6e6a76'), alt: c('#66626e'), light: c('#8a8692'),
-  cap0: c('#e8e2d8'), cap1: c('#b0a898'), iron: [c('#ffffff'), c('#e3ded6'), c('#8a8692'), c('#4e4a56')],
-};
-const Cc = {
-  name: 'C',
-  check: { ground: '#6e6a76', cap: '#b0a898' },
-  ground(r, x1, x2) {
-    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
-      let col;
-      if (y === FLOOR) col = C_.cap0;
-      else if (y === FLOOR + 1) col = ((x % 16) + 16) % 16 === 0 ? C_.mortar : C_.cap1;
-      else if (y === FLOOR + 2) col = C_.mortar;
-      else {
-        const row = Math.floor((y - FLOOR - 3) / 8), by = (y - FLOOR - 3) % 8;
-        const bx = (((x + (row % 2) * 8) % 16) + 16) % 16, brick = Math.floor((x + (row % 2) * 8) / 16);
-        if (bx === 0 || by === 7) col = C_.mortar;
-        else if (by === 0) col = C_.light;
-        else if (by === 6) col = C_.edge;
-        else col = hash(brick, row, 51) < 0.4 ? C_.alt : C_.base;
-      }
-      if (x === x1 && y > FLOOR + 2) col = C_.light;
-      if (x === x2 - 1 && y > FLOOR + 2) col = C_.mortar;
-      r.set(x, y, col);
-    }
-  },
-  platform(r, x, y, w) {
-    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
-      let col = [C_.cap0, C_.light, C_.base, C_.base, C_.edge][j];
-      if (j >= 1 && j <= 3 && (i % 8 === 0)) col = C_.mortar;
-      if (i === 0 || i === w - 1) col = j === 0 ? C_.cap1 : C_.mortar;
-      r.set(x + i, y + j, col);
-    }
-  },
-  spikes(r, x, w) {
-    // Iron spears: thin, with gaps, on a bar.
-    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 4));
-    const tw = w / n;
-    for (let i = 0; i < n; i++) {
-      const cx = Math.floor(i * tw + tw / 2);
-      for (let py = 0; py < 6; py++) {
-        const half = py < 2 ? 0 : 1;
-        for (let px = cx - half; px <= cx + half; px++) t.set(px + 1, py + 1, py === 0 ? C_.iron[0] : px < cx ? C_.iron[1] : px === cx ? C_.iron[1] : C_.iron[2]);
-      }
-    }
-    for (let px = 0; px < Math.ceil(w); px++) t.set(px + 1, 7, C_.iron[3]);
-    t.outline(ol);
-    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
-  },
-  door(r, x, kind) {
-    const y = FLOOR - 28, d = new Raster(16, 28), gold = kind === 'exit';
-    const bar = gold ? [c('#fff3b0'), c('#f5d328'), c('#8a6d10')] : [C_.light, C_.base, C_.mortar];
-    for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
-      let col;
-      if (i < 2 || i > 13 || j < 3) {                          // the stone frame and lintel
-        col = j === 0 || i === 0 ? C_.light : (j === 2 || i === 1) ? C_.edge : C_.base;
-        if (j < 3 && i % 5 === 4) col = C_.mortar;
-      } else {
-        const gx = (i - 2) % 3, gy = (j - 3) % 6;
-        col = gx === 0 ? bar[1] : gy === 0 ? bar[2] : c('#0a0a12');
-        if (gx === 0 && (j & 1)) col = bar[0];
-      }
-      d.set(i, j, col);
-    }
-    if (!gold) { rect(d, 6, 5, 4, 5, C_.mortar); rect(d, 7, 6, 2, 3, c('#5cadd5')); d.set(7, 6, c('#d8f6ff')); }
-    else { rect(d, 6, 5, 4, 5, c('#8a6d10')); rect(d, 7, 6, 2, 3, c('#ffffff')); }
-    paintDoor(r, d, x, y, kind);
-  },
-};
-
+const Cc = CASTLE;   // picked for Dragon, so it lives in the game: src/systems/area-art/materials.js
 
 export const STYLES = { TODAY, A, B, C: Cc };
 
@@ -350,4 +281,4 @@ export function contrast(style) {
 }
 
 // Shared with the per-slice kits (materials.mjs, backdrops.mjs).
-export { c, rect, blit, inTooth, paintDoor, tone, A_, B_, C_ };
+export { c, rect, blit, inTooth, paintDoor, tone, A_, B_, CASTLE_COLOURS as C_ };

@@ -355,3 +355,165 @@ function bareTree(r, x, base, h, col, seed) {
 }
 
 export { AMETHYST, AMETHYST_FAR, B, BAYER4, BLACK, BLOOD, BLOOMS, BLOOM_CUPS, BLUE, CAP_CYAN, CAP_VIOLET, CYAN_GLOW, DEBRIS, K, KR, LANTERNS, LUMEN, MIST, NIGHT, R, ROOF, ROWS, RS, TAU, VAULT, VIOLET_GLOW, WARM, WHITE, WOOD, WORMS, WORM_COLS, bareTree, bellAt, caveWall, ceiling, cluster, crystal, crystalRow, dark, dripstones, eclipse, ellipse, flame, glints, glow, glowworms, granite, grass, lit, motes, mushroom, oneEye, pale, pics, roofLayer, shade, stem, threads, wormSpots };
+
+// ── DRAGON: Drake Man's castle, the great hall (picked 9 Nov 2026) ──────────
+// The owner's words for each step are in design/world-art/batch3.mjs, beside the halls not picked.
+
+export const drake = B('drake');
+export const Dr = (k) => tn(drake, k), Dd = (k) => tn(drake, k, 'secondary'), INDIGO = c('#3a2a6a'), VIOLET = c('#6a3a9a'), TEAL = c('#2a8a8a');
+export const GILT = [c('#8a6d10'), c('#c9a21e'), c('#f5d328')];
+export const GLASS = {   // the colours of each window's panes
+  ember: [c('#c3225d'), c('#e8503a'), c('#f5b030'), c('#7a1a3a'), c('#ff8a60')],
+  dusk: [c('#6a3a9a'), c('#c3225d'), c('#2a8a8a'), c('#3a2a6a'), c('#e8a020')],
+  sea: [c('#2a8a8a'), c('#3a6ab0'), c('#6a3a9a'), c('#1a4a6a'), c('#8ad0c8')],
+  moon: [c('#3a4aa0'), c('#6a7ad0'), c('#2a2a6a'), c('#9a8ae0'), c('#c8d0f0')],
+};
+// THE GREAT HALL'S SIX WINDOWS. The owner, 9 Nov 2026, with a sheet of six colour sets (a coat and
+// one or two accents each): "Make each stained glass window based on each of these color sets". Each
+// window is its set's colours exactly, plus a darker and a lighter shade of its coat for depth.
+// Then: "Remove the picture in the middle, ensure the stained glass tile patterns are randomized" —
+// each window in the hall takes its leading at random from PANES, and its panes' colours at random.
+export const hallShade = (hex, k) => mix(c(hex), k < 0 ? c('#120a12') : WHITE, Math.abs(k));
+export const hallSet = (coat, a1, a2 = a1) => [c(coat), c(a1), c(a2), hallShade(coat, -0.45), hallShade(a1, 0.35)];
+export const HALL_WINDOWS = [
+  { cols: hallSet('#CC9CDF', '#652D87', '#EA428B') },
+  { cols: hallSet('#FABA62', '#FAF5AB') },
+  { cols: hallSet('#9BDBF5', '#1B98D1', '#2A78C8') },
+  { cols: hallSet('#EAEEF0', '#5E50A0') },
+  { cols: hallSet('#FAF5AB', '#F3B5CF') },
+  { cols: hallSet('#F5B7D0', '#EB458B') },
+];
+// The order down the hall: shuffled once, never the same window twice in a row, first and last
+// differing too so the strip repeats without a seam. 24 windows before it comes round again.
+export const HALL_ORDER = (() => {
+  for (let seed = 0; ; seed++) {
+    const o = [];
+    for (let n = 0; n < 24; n++) o.push(n ? (o[n - 1] + 1 + Math.floor(hash(n, seed, 590) * (HALL_WINDOWS.length - 1))) % HALL_WINDOWS.length : Math.floor(hash(0, seed, 590) * HALL_WINDOWS.length));
+    if (o[23] !== o[0] && new Set(o).size === HALL_WINDOWS.length) return o;
+  }
+})();
+export const STONE = [c('#2e2a36'), c('#3e3a48'), c('#4e4a58'), c('#6e6a76')];   // the castle bricks' stone, indoors
+/** The castle's inside wall: stone blocks, lit a little where `lit` says. */
+export function stoneWall(r, ox, y0, y1, light = 0) {
+  for (let y = y0; y < y1; y++) for (let x = 0; x < W; x++) {
+    const wx = x + ox, row = Math.floor(y / 10), bx = mod(wx + (row % 2) * 12, 24);
+    r.set(x, y, y % 10 === 0 || bx === 0 ? STONE[0] : hash(Math.floor((wx + (row % 2) * 12) / 24), row, 520) > 0.8 - light * 0.2 ? STONE[2] : STONE[1]);
+  }
+}
+/** The dragon rampant, for the windows: a pixel mask, # filled. */
+export const DRAGON_MASK = ['......##........', '.....####.......', '....##.###......', '....#...###.....', '........####....', '.##....######...', '####..#######...', '#####.########..', '.#############..', '..####.#######..', '...##..##..###..', '......##....##..', '.....##......#..', '....##..........', '...##...........', '..#.............'];
+/**
+ * The ways a window's panes can be leaded: each says, for a pixel, whether it is lead and which pane it
+ * belongs to. 0 is the first round's diamonds; the great hall picks one at random for each window.
+ */
+export const PANES = [
+  (i, j) => [mod(i + j, 7) === 0 || mod(i - j, 7) === 0, Math.floor((i + j) / 7) * 31 + Math.floor((i - j + 99) / 7)],   // diamonds
+  (i, j) => [mod(i + j, 5) === 0 || mod(i - j, 5) === 0, Math.floor((i + j) / 5) * 31 + Math.floor((i - j + 99) / 5)],   // small diamonds
+  (i, j) => [i % 6 === 0 || j % 6 === 0, Math.floor(i / 6) * 31 + Math.floor(j / 6)],   // squares
+  (i, j) => { const row = Math.floor(j / 6), k = i + (row % 2) * 4; return [j % 6 === 0 || mod(k, 8) === 0, Math.floor(k / 8) * 31 + row]; },   // staggered oblongs, like bricks
+  (i, j) => [mod(i + j, 10) === 0 || mod(i - j, 10) === 0 || j % 10 === 5 && mod(i, 2) === 0, Math.floor((i + j) / 10) * 31 + Math.floor((i - j + 99) / 10) + (mod(j, 10) < 5 ? 0 : 500)],   // large diamonds split across
+];
+/**
+ * A stained-glass window `w` wide and `h` tall: a pointed or a round top, diamond panes of `cols`
+ * brighter towards the middle, leaded in black, in a stone surround; with `motif`, a red dragon or a
+ * rose of panes at its heart.
+ */
+export function stainedGlass(r, x0, y0, w, h, { cols, pointed = true, motif = null, seed = 1, pattern = 0 }) {
+  const ys = y0 + (pointed ? Math.round(w * 0.86) : Math.round(w / 2));
+  const inside = (px, py) => {
+    if (py >= ys) return px >= x0 && px < x0 + w && py < y0 + h;
+    if (pointed) return Math.hypot(px + 0.5 - x0, py + 0.5 - ys) < w && Math.hypot(px + 0.5 - x0 - w, py + 0.5 - ys) < w && px >= x0 && px < x0 + w && py >= y0;
+    return Math.hypot(px + 0.5 - x0 - w / 2, py + 0.5 - ys) < w / 2;
+  };
+  for (let py = y0 - 3; py < y0 + h + 3; py++) for (let px = x0 - 3; px < x0 + w + 3; px++) {
+    if (inside(px, py)) {
+      const i = px - x0, j = py - y0, [lead0, cell] = PANES[pattern](i, j), lead = lead0 || i === Math.floor(w / 2) && j > w;
+      const mid = 1 - Math.abs(i - w / 2) / (w / 2);
+      const col = cols[Math.floor(hash(cell, 0, seed) * cols.length)];
+      r.set(px, py, lead ? c('#120a12') : mix(col, WHITE, 0.08 + 0.22 * mid * (1 - j / h)));
+    } else if (inside(px - 2, py) || inside(px + 2, py) || inside(px, py - 2) || inside(px, py + 2)) r.set(px, py, STONE[3]);   // the stone surround
+  }
+  if (motif === 'dragon') {
+    const s = Math.max(1, Math.floor(w / 20)), mx = x0 + Math.floor((w - 16 * s) / 2), my = y0 + Math.floor(h * 0.3);
+    DRAGON_MASK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') fillRect(r, mx + i * s, my + j * s, s, s, (i + j) % 5 === 0 ? c('#ff8a60') : c('#c3225d')); }));
+  } else if (motif === 'eye') {
+    const cx = x0 + Math.floor(w / 2), cy = y0 + Math.floor(h * 0.45);
+    for (let j = -9; j <= 9; j++) for (let i = -9; i <= 9; i++) if (Math.abs(i) + Math.abs(j) <= 9) r.set(cx + i, cy + j, Math.abs(i) + Math.abs(j) >= 8 ? c('#120a12') : Math.abs(i) <= 1 && Math.abs(j) <= 5 ? c('#120a12') : cols[1]);
+  } else if (motif === 'star') {
+    const cx = x0 + w / 2, cy = y0 + h * 0.42;
+    for (let a = 0; a < TAU; a += 0.005) { const rr = (w * 0.3) * (0.45 + 0.55 * Math.abs(Math.cos(a * 4))); for (let d = 0; d < rr; d += 0.5) r.set(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), d > rr - 1 ? c('#120a12') : d < rr * 0.35 ? cols[4] : cols[1]); }
+  } else if (motif === 'rose') {
+    const cx = x0 + w / 2, cy = y0 + w * 0.55, rr = w * 0.3;
+    for (let a = 0; a < TAU; a += 0.01) for (let d = 0; d < rr; d += 0.5) { const petal = Math.floor((a / TAU) * 8); r.set(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), Math.abs(((a / TAU) * 8) % 1 - 0.5) > 0.44 || Math.abs(d - rr * 0.5) < 0.6 ? c('#120a12') : [cols[0], cols[2], cols[4] || WHITE][petal % 3]); }
+  }
+}
+/** Coloured light falling from a window to the floor, dithered so it stays pixel-crisp. */
+export function lightShaft(r, x0, x1, y0, y1, drift, col, a) {
+  for (let y = y0; y < y1; y++) {
+    const t = (y - y0) / (y1 - y0), l = Math.round(x0 + drift * t), rr = Math.round(x1 + drift * t + t * 10);
+    for (let x = l; x < rr; x++) if (BAYER4[mod(y, 4)][mod(x, 4)] / 16 < 0.6) r.set(x, y, col, Math.round(a * (1 - t * 0.5)));
+  }
+}
+/** A stone pillar from the top of the hall to its floor, lit down the left, with a capital and a base. */
+export function pillar(r, x, w, top = 0, base = 178) {
+  for (let y = top; y < base; y++) for (let i = 0; i < w; i++) r.set(x + i, y, i < 2 ? STONE[3] : i > w - 3 ? STONE[0] : (i % 5 === 2 ? STONE[1] : STONE[2]));
+  for (const y of [top + 18, base - 10]) fillRect(r, x - 3, y, w + 6, 5, STONE[2]), fillRect(r, x - 3, y, w + 6, 1, STONE[3]);
+}
+/** The dragon's crest: a gold lozenge round one slit eye, the way his banners and shields carry it. */
+export function dragonEye(r, cx, cy, s) {
+  for (let j = -s; j <= s; j++) for (let i = -s; i <= s; i++) {
+    const d = Math.abs(i) + Math.abs(j);
+    if (d > s) continue;
+    r.set(cx + i, cy + j, d >= s - 1 ? GILT[1] : Math.abs(i) <= Math.max(0, Math.floor((s - Math.abs(j)) / 3)) ? c('#120a12') : d < s / 2 ? c('#f5b030') : GILT[2]);
+  }
+  r.set(cx - 1, cy - Math.floor(s / 3), WHITE);
+}
+/** A long crimson banner with the gold dragon's crest on it, hanging from a rod. */
+export function banner(r, x, y, w, h) {
+  fillRect(r, x - 2, y, w + 4, 2, GILT[1]);
+  for (let j = 2; j < h; j++) for (let i = 0; i < w; i++) { const notch = j > h - w / 2 && Math.abs(i - w / 2 + 0.5) < j - (h - w / 2); if (!notch) r.set(x + i, y + j, i === 0 ? Dr(0.95) : i === w - 1 ? Dr(0.45) : Dr(0.7)); }
+  dragonEye(r, x + Math.floor(w / 2), y + 24, Math.max(4, Math.floor(w / 2) - 2));
+}
+/** Torches flickering in their sconces: the flame swaps between three shapes, never in step. */
+export const torches = (spots, period) => ({
+  pieces: () => pics([0, 1, 2].map((k) => [`f${k}`, 5, 8, (p) => { const h = [7, 6, 8][k]; for (let j = 0; j < h; j++) { const half = Math.round((1 - j / h) * 2); for (let i = -half; i <= half; i++) p.set(2 + i + (k === 2 && j > 4 ? 1 : 0), 7 - j, j < h * 0.4 && i === 0 ? WHITE : Math.abs(i) === half && half ? c('#e85a1a') : c('#ffc040')); } }])),
+  at(ox, t) {
+    const out = [];
+    for (let wx = Math.floor(ox / period) * period; wx < ox + W + period; wx += period) for (const [sx, sy] of spots) {
+      const x = wx + sx - ox;
+      if (x < -6 || x > W) continue;
+      out.push([`f${mod(Math.floor(t / 4) + sx, 3)}`, x - 2, sy - 8]);
+    }
+    return out;
+  },
+});
+/** Chandeliers swinging gently over the throne room, candles lit. */
+export const CHANDELIERS = {
+  pieces: () => pics([['ch', 31, 40, (p) => {
+    vert(p, 15, 0, 26, GILT[0]);
+    for (let i = 0; i < 31; i++) { const y = 30 + Math.round(4 * Math.sin((i / 30) * Math.PI)); p.set(i, y, GILT[1]); p.set(i, y + 1, GILT[0]); }
+    for (const i of [1, 8, 15, 22, 29]) { const y = 28 + Math.round(4 * Math.sin((i / 30) * Math.PI)); fillRect(p, i, y - 4, 1, 4, c('#f0e8d8')); p.set(i, y - 6, c('#ffd070')); p.set(i, y - 5, WHITE); }
+  }]]),
+  at(ox, t) {
+    const out = [];
+    for (let wx = Math.floor(ox / 240) * 240; wx < ox + W + 240; wx += 240) {
+      const k = mod(wx, 960) / 240, x = wx + 120 - ox + Math.round(3 * Math.sin((TAU * mod(t, 240)) / 240 + k));
+      if (x > -32 && x < W) out.push(['ch', x - 15, 8]);
+    }
+    return out;
+  },
+};
+export const GREAT_HALL = scrolling('GREAT HALL', 'A long great hall: tall stained-glass windows down the far wall throwing coloured light across it, pillars and dragon banners close by, torches flickering. Scrolls in two layers.', 240,
+      { rate: 0.1, period: 120 * HALL_ORDER.length, fixed: (r, ox) => {
+        stoneWall(r, ox, 0, 178);
+        for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) {
+          const n = mod(wx, 120 * HALL_ORDER.length) / 120, win = HALL_WINDOWS[HALL_ORDER[n]], x = wx - ox + 38;
+          stainedGlass(r, x, 22, 44, 96, { cols: win.cols, seed: 500 + n, pattern: Math.floor(hash(n, 3, 591) * PANES.length) });
+          lightShaft(r, x + 6, x + 38, 118, 178, 18, win.cols[0], 70);
+        }
+        for (let x = 0; x < W; x++) { r.set(x, 132, STONE[3]); r.set(x, 133, STONE[0]); }   // the gallery ledge
+      } },
+      { rate: 0.3, period: 960, fixed: (r, ox) => {
+        for (let wx = Math.floor(ox / 160) * 160; wx < ox + W + 160; wx += 160) { const x = wx - ox; pillar(r, x, 22); banner(r, x + 50, 30, 16, 70); vert(r, x + 30, 92, 104, c('#3a2a1a')); glow(r, x + 30, 88, 14, c('#ffa040'), 0.4); }
+        dark(r, 178, Dd(0.08));
+      }, parts: [torches([[30, 92]], 160)] });

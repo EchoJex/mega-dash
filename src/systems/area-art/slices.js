@@ -10,11 +10,11 @@
  * take its ground from a second material (`ground`).
  */
 import { BOSSES } from '../../data/bosses.js';
-import { material, BEDROCK } from './materials.js';
+import { material, BEDROCK, CASTLE } from './materials.js';
 import { grad, fillRect, halo, ridge, beam, panels, tn, mix, c, scrolling, drift, seamless, vert, pylon, wire, mod, stars, trees, disc } from './paint.js';
 import { Raster, hash, noise1, noise2, pick } from '../arena-art/pixels.js';
 import { W, H, FLOOR } from './kit.js';
-import { ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE } from './batch3.js';
+import { ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE, GREAT_HALL } from './batch3.js';
 
 const B = (id) => BOSSES.find((b) => b.id === id);
 
@@ -683,6 +683,15 @@ export const PICKED = {
     pick: { backdrop: 7, material: 'B', doors: 'A' },
     materials: { A: ROCK_MATERIALS[0], B: ROCK_MATERIALS[1] },
     backdrop: STAR_MEADOW,
+  },
+  drake: {
+    // The owner picked the castle bricks in the first round, 5 Nov 2026: "i really like the castle one
+    // for dragon"; and on 9 Nov 2026 the great hall, with windows from their six colour sets: "Remove
+    // the picture in the middle, ensure the stained glass tile patterns are randomized, then put it
+    // into the game and the Dragon world pieces art".
+    pick: { backdrop: 1, material: 'C' },
+    materials: { C: ['C', 'CASTLE BRICKS', '', CASTLE] },
+    backdrop: GREAT_HALL,
   },
   eclipse: {
     // The owner, 6 Nov 2026: "1a but with the cracked glowing stone from c"

@@ -691,7 +691,7 @@ first-round castle bricks and Steel its steel plates, with three new pairs of do
 **Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
 **Rock was picked too** (8 Nov 2026): two of its variants joined into one, with material B and A's arched
 doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); Steel waits
-on which way its line loops and on the progress measure. Dragon has six variants of the backdrop it liked to pick from. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
+on which way its line loops and on the progress measure. **Dragon is in the game** (9 Nov 2026): the great hall on the castle bricks, its windows in the owner's six colour sets with the leading picked at random for each window. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
 three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
 over the play. It is the first area not to run left to right; how it plays is still being settled, so
 nothing of it is built in the game.
@@ -742,6 +742,7 @@ Claude or a generator made:
 | World pieces for each slice, batch 2 (Ice, Poison, Ground, Flying, Psychic, Bug), variants for review — six backdrops per slice and three materials (floor, platform, spikes, boss door, exit door), Ground on its first-round bedrock | room art, drawn in code | Claude | 2026-11-05 | `design/world-art/batch2.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | World pieces in the game, batch 2 — Ice's and Ground's picked backdrop and material, redrawn where the owner asked (Ice's aurora; Ground's desert with heat waves, a mirage, blowing sand and vultures), and the first round's bedrock under Ground | room art, drawn in code | Claude | 2026-11-06 | `src/systems/area-art/slices.js`, bedrock in `src/systems/area-art/materials.js` (`BEDROCK`) |
 | World pieces in the game, batch 3 — Rock's star meadow (the star vault and the glowing blooms joined) on quarry strata with violet crystal spikes and A's arched doors, and Dark's total eclipse with A's tiles, shards and doors on C's cracked glowing stone | room art, drawn in code | Claude | 2026-11-08 | `src/systems/area-art/batch3.js`, picked in `src/systems/area-art/slices.js` |
+| World pieces in the game, Dragon — the great hall: stained-glass windows in the owner's six colour sets, each leaded at random, pillars, banners and torches, on the castle bricks picked in the first round | room art, drawn in code | Claude | 2026-11-09 | `src/systems/area-art/batch3.js` (`GREAT_HALL`), castle bricks in `src/systems/area-art/materials.js` (`CASTLE`) |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title

@@ -13,14 +13,14 @@ board (one default look for now). The first-round boards below stay as a record.
 
 | slice | world pieces |
 |---|---|
-| Dragon | **PICKED: C, castle bricks** |
+| Dragon | **PICKED: C, castle bricks, backdrop 1 great hall — in the game** |
 | Ground | **PICKED: B, bedrock** |
 | Steel | **PICKED: A, steel plates**; three pairs of doors on the canvas in batch 3, not picked yet |
 | Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
 | Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026) |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
 | Rock, Ghost, Dark | batch 3: three variants each, **on the canvas, not picked yet** |
-| Dragon, Steel | batch 3: six backdrops each on the canvas (and Steel's doors), not picked yet |
+| Steel | batch 3: six backdrops on the canvas (and Steel's doors), not picked yet |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
 everything. 6 wildly different backdrop variants per slice since the player has to look at it
@@ -131,7 +131,7 @@ brick, at 2.06 against a floor of 2.
 |---|---|---|---|
 | Rock | 1 blue grotto · 2 star vault · 3 tall grass · 4 glowing blooms · 5 mushroom hollow · 6 lantern walk, all moving (six variants of the glowworm grotto the owner picked; before that crystal cavern, geode cavern, underground lake, cave mouth, glowworm grotto and giant crystals, and first offered as crag peaks, stone circle, hoodoo valley, geode cavern, rockslide and stone guardian) | A granite blocks · B quarry strata · C cut slabs | **PICKED: 7 star meadow (2 and 4 joined), with B, changed, and A's arched doors** (owner, 6 and 8 Nov 2026) |
 | Ghost | 1 haunted hall (moving) · 2 lantern shrine · 3 grave tower · 4 haunted carnival · 5 soul river (moving) · 6 ghost town (all six redrawn; first offered as graveyard fog, haunted mansion, candlelit crypt, ghost ship, spirit forest and chapel ruins) | A rotten floorboards · B crypt stone · C chapel tiles | **PICKED: 3 grave tower, with A rotten floorboards, as a climb up a tower three screens wide** (owner, 7 Nov 2026), in their words below; how the climb plays still to settle |
-| Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | throne hall picked, six variants on it to pick from (owner, 6 Nov 2026), in their words below |
+| Dragon | 1 great hall (moving) · 2 rose window chapel · 3 armoury gallery · 4 dragon window stair · 5 throne room (moving) · 6 moonlit cloister (six castle halls built on the throne hall the owner picked; first offered as dragon's keep, castle ramparts, hoard cave, dragon bones, volcanic ridge and throne hall) | C castle bricks (picked in the first round) | 1 great hall picked and in the game (9 Nov 2026), in their words below |
 | Dark | 1 total eclipse (moving) · 2 moonlit ruin · 3 blackout city · 4 single eyes · 5 void rift (moving) · 6 obsidian cathedral | A obsidian tiles · B shadow brick · C cracked stone | **PICKED: 1 total eclipse, with A on C's ground** (owner, 6 Nov 2026), in their words below |
 | Steel | 1 rolling mill (moving) · 2 foundry · 3 skyscraper frame · 4 shipyard · 5 assembly line (moving; redrawn as the owner's story from 1, 2 and the first 5, robot arms along a conveyor) · 6 steel bridge | the steel plates (picked in the first round) with A vault doors · B blast doors · C bulkheads | **PICKED: 5 assembly line, with B blast doors** (owner, 6 Nov 2026), in their words below |
 
@@ -165,7 +165,7 @@ vault's roof, crystal band and far spires over the glowing blooms' meadow, and i
 Their painters moved into `src/systems/area-art/batch3.js`, which `batch3.mjs` imports, so the canvas
 and the game paint from one copy; the game's `pickedMaterial` now takes doors from a second material
 too. Steel is not in yet (which way its line loops, and the progress measure, are still open), nor
-Ghost (its tower is a new kind of area), nor Dragon (no backdrop picked).
+Ghost (its tower is a new kind of area).
 
 **Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider
 interpretation of 'Ghost' using what other video games have established as precedent". The six new
@@ -195,6 +195,15 @@ Their answers, 8 Nov 2026: "1a and b. The idea is that these checkpoint-like con
 prevent extreme fall heights. 2 the ghost boss will be in the upper right". So a missed jump drops the
 player onto whatever is below, and the full-width walkways catch him, so no fall is longer than one
 stretch between checkpoints; Ghost's boss door is in the tower's upper right.
+
+**Dragon's great hall, in the owner's words (9 Nov 2026):** "Dragon great Hall is good. I love the
+colors of the left window. Use these colors and their compliments and generate 5 unique windows that
+randomly loop"; then, with a sheet of six colour sets: "I changed my mind about the colors. Make each
+stained glass window based on each of these color sets"; then "Remove the picture in the middle,
+ensure the stained glass tile patterns are randomized, then put it into the game and the Dragon world
+pieces art". Six windows, one per colour set, come down the hall in a shuffled order of 24 that never
+repeats a window back to back; each window's leading (diamonds, small diamonds, squares, staggered
+oblongs, large split diamonds) and its panes' colours are picked at random.
 
 **Dragon's pick, in the owner's words (6 Nov 2026):** "6c but do another 6 variants based on 6c, i
 like the interior halls of a castle, and i like some stained glass windows". So the throne hall with
