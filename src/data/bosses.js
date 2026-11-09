@@ -178,7 +178,7 @@ export const BOSSES = [
     id: 'eclipse', name: 'ECLIPSE MAN', element: 'Dark',
     primary: '#2A273F', secondary: '#DC2626', outline: '#0A0A12',
     scale: 1.75, baseHp: 68,
-    attackName: 'Shadow Bind', dropWeapon: 'astral_cloak',
+    attackName: 'Shadow Bind', dropWeapon: 'sinister_stare',
     silhouette: null,
   },
   {

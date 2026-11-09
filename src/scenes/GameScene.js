@@ -1045,7 +1045,7 @@ export default class GameScene extends Phaser.Scene {
     // IT. Otherwise benching the Strike Gauntlet mid-swing would leave its
     // damage reduction switched on for the rest of the run, and the same is
     // true of the Gale Vortex's glide, Simon's Whip's root, the Quake Hammer's
-    // slowdown and the Astral Cloak's aggro tax. A weapon that is not running
+    // slowdown and the Sinister Stare's aggro tax. A weapon that is not running
     // grants nothing, and this is the one line that guarantees it.
     r.meleeArmor = 0;
     r.meleeBoxes = [];   // this step's melee swings, for the Grass boss's cover
@@ -2040,7 +2040,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Attribute damage (Burn, Poison) routes through the same kill path as a
-    // THE ASTRAL CLOAK'S PURSUIT PAUSES. "When pursuing the player they will
+    // THE SINISTER STARE'S PURSUIT PAUSES. "When pursuing the player they will
     // pause very briefly at random times" — rolled per minion per frame, so a
     // crowd stutters raggedly rather than all freezing on the same beat, which
     // is what makes it read as losing track of you rather than as lag.
@@ -2319,7 +2319,7 @@ export default class GameScene extends Phaser.Scene {
 
   /** A projectile owned by a boss or hazard. Enemy shots use the stingy pad. */
   spawnEnemyShot(spec) {
-    // THE ASTRAL CLOAK'S AGGRO TAX, applied at the one choke point every enemy
+    // THE SINISTER STARE'S AGGRO TAX, applied at the one choke point every enemy
     // projectile in the game passes through. "Enemies will fire projectiles
     // slightly less frequently" is a dropped shot rather than a longer
     // cooldown: a cooldown change would desync a boss's telegraph from what

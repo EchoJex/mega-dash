@@ -272,7 +272,7 @@ export class ActorLayer {
      * Sprites are added to the container after `g`, so within one layer every
      * sprite draws on top of every shape. That was invisible while nothing had
      * art and became a real problem the moment the player did: the status
-     * flash, the Astral Cloak's shroud and every piece of worn hardware are
+     * flash, the Sinister Stare's shroud and every piece of worn hardware are
      * shapes drawn on the player's own layer, and all of them silently went
      * behind him.
      *

@@ -227,3 +227,31 @@ test('a boss with a second weakness on the chart has one in the tracker', () => 
     }
   }
 });
+
+/**
+ * THE OWNER'S WEAKNESS RULE (9 Nov 2026, the SYSTEMS field `weakness rule`): weaknesses A and B
+ * together give the player at least one offensive weapon, unless the chart offers this boss none
+ * at all; and a boss has at most one secret weakness, whose weapon is defensive. A type's weapon
+ * is the one its own boss drops. Reads the tracker, like the check above.
+ */
+test('every boss\'s weaknesses follow the owner\'s weakness rule', async () => {
+  const { WEAPONS } = await import('../src/data/weapons.js');
+  const clsOf = (type) => WEAPONS.find((w) => w.id === BOSSES.find((b) => b.element === type)?.dropWeapon)?.cls;
+  const md = readFileSync(new URL('../design/TRACKER.md', import.meta.url), 'utf8');
+  for (const sl of md.split(/^## /m).slice(1)) {
+    const id = /^`id` (\w+)/m.exec(sl)?.[1];
+    const boss = BOSSES.find((b) => b.id === id);
+    if (!boss || !/boss weakness A/.test(sl)) continue;
+    const typeIn = (slot) => new RegExp(`^- \\*\\*boss weakness ${slot}\\*\\* \`\\[\\w+\\]\` (.*)$`, 'm').exec(sl)?.[1].trim();
+    const picks = ['A', 'B'].map(typeIn).filter((t) => t && !/^(None|Typeless)\b/.test(t));
+    if (!picks.length) continue;
+    const chartHasOffence = weaknessesOf(boss.element).some((t) => clsOf(t) === 'offensive');
+    if (chartHasOffence) assert.ok(picks.some((t) => clsOf(t) === 'offensive'), `${id}: weaknesses ${picks.join(' + ')} give no offensive weapon`);
+    const secrets = [...sl.matchAll(/^- \*\*boss weakness secret\*\* `\[\w+\]` (.*)$/gm)].map((m) => m[1].trim()).filter((t) => !/^None\b/.test(t));
+    assert.ok(secrets.length <= 1, `${id} has more than one secret weakness`);
+    for (const t of secrets) {
+      assert.ok(weaknessesOf(boss.element).includes(t), `${id}'s secret weakness ${t} is not a real weakness`);
+      assert.equal(clsOf(t), 'defensive', `${id}'s secret weakness ${t} gives an offensive weapon`);
+    }
+  }
+});

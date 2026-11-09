@@ -55,7 +55,7 @@ export const ATTR = {
   constrict: { form: 'character', tint: 0x2AAB1C, label: 'BOUND', stacks: true },
   freeze:    { form: 'character', tint: 0xA0EFE7, label: 'FROZEN', stacks: true },
   // NOT AN ELEMENTAL ATTRIBUTE, and deliberately not in the tracker's list.
-  // The Astral Cloak's aggro pause is "loses track of you for a beat", which is
+  // The Sinister Stare's aggro pause is "loses track of you for a beat", which is
   // mechanically a hold and nothing else — it reuses the hold machinery so every
   // consumer already honours it.
   //

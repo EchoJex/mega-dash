@@ -482,7 +482,7 @@ Both hands are drawn from one point for now, so a hand never moves where a move 
 
 **Equipping a weapon never recolours him** — that was scrubbed and does not come back. What
 he carries is shown as weapon hardware drawn on him (so far the Nullfire Drone, the Torrent
-Cannon's tank, Frost Guard and the Evil Energy's shroud; each other weapon gains its own as
+Cannon's tank, Frost Guard and the Sinister Stare's shroud; each other weapon gains its own as
 it goes through the art loop).
 
 `NULL_WEAPON` is what an unresolvable weapon id falls back to: no primary and no
@@ -1133,7 +1133,7 @@ the elemental attributes, the SYSTEMS section, a BUGS log and a BRAINSTORM area.
 
 **When working code and a `[draft]` field disagree, the field wins** and the code changes.
 Tempest Man's water cannon went because his attack fields describe a Queen B flight pattern
-with no projectile; the Astral Cloak changed class outright when its field did.
+with no projectile; the Sinister Stare changed class outright when its field did.
 
 The owner edits the tracker directly or through the **tracker web app** (`docs/index.html`,
 the root of the GitHub Pages site served from `main`). A later tool joins that site as one
@@ -1493,6 +1493,13 @@ tested with a faked Poison hit. Bug was dropped by the owner; that code is dorma
 `arena.js`, not deleted. Strike Man (Fighting) is weak to **Psychic**: a psychic hit lifts a
 training bag and drops it on him.
 
+**THE OWNER'S WEAKNESS RULE** (9 Nov 2026, the SYSTEMS field `weakness rule`): weaknesses A and B
+together give the player at least one offensive weapon (a type's weapon is the one its boss drops),
+except where the chart offers no offensive one at all (Fighting, Psychic, Ghost); and a boss may have
+one **secret** weakness (`boss weakness secret`), whose weapon must be defensive. Fire is Ground,
+Water and secret Rock (the Granite Form); Ground is Water and Grass. `tests/typechart.test.js` holds
+every boss to it.
+
 **`src/data/typechart.js` is the chart, and the GENERATION is load-bearing.** Gen 2 through
 Gen 5 share one table; Gen 1 and Gen 6 do not. `tests/typechart.test.js` asserts the rows a
 reconstruction gets wrong — **Steel resists Ghost and Dark**, **no Fairy**, **Poison beats
@@ -1522,9 +1529,9 @@ seconds with no moving or firing (`ctx.hold`, a per-step grant read through `run
 nothing can leave him stuck), reels him in and throws him into the far wall. The constrict
 tint shows while it lasts.
 
-`cloakHold` is in the ATTR table but is **not** an elemental attribute — it was the Astral
-Cloak's aggro pause. That weapon is being redesigned as the **Evil Energy** (its tracker
-field is `[wip]`), so treat `cloakHold` as the old behaviour until the new ladder lands. `psiLock` is the same kind of plain hold, in purple: the Psi Orb's lock.
+`cloakHold` is in the ATTR table but is **not** an elemental attribute — it is the old cloak's
+aggro pause. That weapon has been redesigned and renamed the **Sinister Stare** (owner, 9 Nov 2026;
+its tracker field is `[wip]`), so treat `cloakHold` as the old behaviour until the new ladder lands. `psiLock` is the same kind of plain hold, in purple: the Psi Orb's lock.
 
 ---
 
@@ -1551,7 +1558,7 @@ is called from the scene, never added to it.
 - **Check anything visual by looking at it** — a screenshot, at both 320 and 480 wide for a
   menu or the wheel — never by arithmetic. The font's advance is ~7px, not the 5px the glyph
   suggests.
-- Boss/weapon ids are lowercase snake (`astral_cloak`); display names UPPERCASE.
+- Boss/weapon ids are lowercase snake (`sinister_stare`); display names UPPERCASE.
 - Colours are `#RRGGBB` strings in data, converted with `hexNum()` at draw time.
 - Run `npm test` before committing, and `npm run smoke` after changing a fight, a weapon or
   the drawing loop.

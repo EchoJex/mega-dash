@@ -2842,7 +2842,7 @@ const granite = {
   },
 };
 
-// ── ASTRAL CLOAK — Dark, defensive ───────────────────────────────────
+// ── SINISTER STARE — Dark, defensive ───────────────────────────────────
 /**
  * "Reduces aggro and become immune to status effects."
  *  Lv1  "while active enemies will fire projectiles slightly less frequently
@@ -2852,9 +2852,9 @@ const granite = {
  *
  * Lv10's "Dark Mode" is still `[wip]`, so the ladder stops at Lv6.
  *
- * THE WEAPON WAS AN OFFENSIVE BOOMERANG CALLED THE ASTRAL CLOAK. The tracker
+ * THE WEAPON WAS AN OFFENSIVE BOOMERANG CALLED THE SINISTER STARE. The tracker
  * field now describes a defensive cloak, and the field wins, so it is a cloak
- * and it is named like one. Only the ID is unchanged — `astral_cloak` is the
+ * and it is named like one. Only the ID is unchanged — `sinister_stare` is the
  * join key for the boss drop and for every save's unlock set, and a rename must
  * never cost anyone their save.
  *
@@ -2868,7 +2868,7 @@ const eclipse = {
   init(st) { st.trail = 0; },
 
   step(st, lv, ctx) {
-    const L = ladderAt('astral_cloak', lv);
+    const L = ladderAt('sinister_stare', lv);
     const p = ctx.player;
 
     // Read by systems/minions.js and by the boss fire path. Re-asserted every
@@ -2886,10 +2886,10 @@ const eclipse = {
     if (Math.abs(p.vx) < 0.4 || --st.trail > 0) return;
     st.trail = L.trailGap;
     ctx.allies.push({
-      owner: 'astral_cloak', role: 'trail',
+      owner: 'sinister_stare', role: 'trail',
       x: p.x + 12, y: p.y + 12, w: 6, h: 6, vx: 0, vy: 0,
       life: L.trailLife, maxLife: L.trailLife,
-      damage: dmgOf('astral_cloak', lv, ctx) * L.trailDmgMult,
+      damage: dmgOf('sinister_stare', lv, ctx) * L.trailDmgMult,
       lifesteal: L.lifesteal,
       hitGap: 0, hitEvery: L.trailHitGap,
       regroup: 0, regroupFor: 0, orbit: 0,
@@ -2957,7 +2957,7 @@ export const RUNTIME = {
   simons_whip: thorn,
   gale_vortex: gale,
   granite_form: granite,
-  astral_cloak: eclipse,
+  sinister_stare: eclipse,
   alloy_blade: alloy,
   draco_blaster: drake,
   psi_orb: psiOrb,
@@ -3615,12 +3615,12 @@ export function drawWeaponry(g, sx, ctx) {
     g.fillRect(sx(b.x), b.y, b.w, 1);
   }
 
-  // ASTRAL CLOAK — a dark shroud over the player's own outline, and the only
+  // SINISTER STARE — a dark shroud over the player's own outline, and the only
   // way to know the thing is on. Every other effect it has is a change to what
   // the ENEMIES do, which is unreadable as feedback: fewer shots and the odd
   // pause look exactly like a quiet moment. Drawn OVER the suit rather than
   // instead of it, because the player is a fixed blue and must stay findable.
-  if (ctx.equipped.includes('astral_cloak')) {
+  if (ctx.equipped.includes('sinister_stare')) {
     const bob = Math.sin(run.frame * 0.06) * 1.5;
     g.fillStyle(0x2A273F, 0.5);
     g.fillRect(sx(p.x) + 1, p.y + 2 + bob, 22, 22);
@@ -3628,7 +3628,7 @@ export function drawWeaponry(g, sx, ctx) {
     g.strokeRect(sx(p.x) + 0.5, p.y + 1.5 + bob, 23, 23);
   }
 
-  // ALLIES. The Swarm Caller's bugs, and the Astral Cloak's shadow trails —
+  // ALLIES. The Swarm Caller's bugs, and the Sinister Stare's shadow trails —
   // which are also allies but are emphatically NOT bugs, and were being painted
   // lime green because this loop did not look at the owner.
   for (const a of run.allies) {

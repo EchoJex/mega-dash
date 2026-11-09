@@ -137,7 +137,7 @@ test('every ladder weapon runs a long stretch at every level without throwing', 
       // is a freeze and a blocked shot — neither spawns anything, and scoring
       // it as idle would be measuring the wrong thing.
       const statused = h.enemies.filter((e) => Object.keys(e.status).length > 0).length;
-      // So does asserting a per-frame grant. The Astral Cloak at Lv1 spawns
+      // So does asserting a per-frame grant. The Sinister Stare at Lv1 spawns
       // nothing at all: its whole effect is the aggro tax it publishes onto the
       // run for GameScene to apply, which is exactly what "reduces aggro" means.
       const granted = (h.run.aggroFire < 1 ? 1 : 0) + (h.run.aggroPause ? 1 : 0)
@@ -285,8 +285,8 @@ test('every ladder moves in the direction its tracker field describes', () => {
   grows('swarm_caller', 'count', [1, 3, 6, 10]);
   grows('swarm_caller', 'lifeFrames', [1, 3, 10]);
   // "Slight increase in pause duration and frequency."
-  grows('astral_cloak', 'pauseFrames', [1, 3]);
-  grows('astral_cloak', 'pauseChance', [1, 3]);
+  grows('sinister_stare', 'pauseFrames', [1, 3]);
+  grows('sinister_stare', 'pauseChance', [1, 3]);
   // Hot lingers longer as the Blaze Wheel levels: 3s then 5s.
   grows('blaze_wheel', 'hotFrames', [1, 3]);
 });
@@ -320,10 +320,10 @@ test("the Quake Hammer's charge is its own, and the runtime reads it from the la
 });
 
 test('a status-immune weapon clears whatever has been applied', () => {
-  const h = harness('astral_cloak', 1);
+  const h = harness('sinister_stare', 1);
   Attr.applyStatus(h.statusBag, 'burn', 120);
   assert.ok(Attr.hasStatus(h.statusBag, 'burn'));
-  Wpn.stepWeapons(h.ctx, ['astral_cloak']);
+  Wpn.stepWeapons(h.ctx, ['sinister_stare']);
   assert.ok(!Attr.hasStatus(h.statusBag, 'burn'), 'the cloak must clear it the same frame');
   assert.ok(h.run.aggroFire < 1, 'and publish the aggro tax');
 });

@@ -562,7 +562,7 @@ test('stun, constrict and freeze are one behaviour with three tints', () => {
   }
   assert.equal(tints.size, 3, 'but each must read as a different element');
 
-  // The Astral Cloak's aggro pause is NOT elemental and is still a real hold —
+  // The Sinister Stare's aggro pause is NOT elemental and is still a real hold —
   // it is the only thing left that stops an actor outright.
   assert.equal(Attr.ATTR.cloakHold.held, true);
 });

@@ -684,7 +684,7 @@ export const WEAPON_LADDERS = {
     3: { puffs: 3 },
   },
 
-  // ── ASTRAL CLOAK — defensive, Dark ────────────────────────────────
+  // ── SINISTER STARE — defensive, Dark ────────────────────────────────
   // "Reduces aggro and become immune to status effects."
   //  Lv1  enemies fire slightly less often and pause briefly at random while
   //       pursuing.
@@ -697,7 +697,7 @@ export const WEAPON_LADDERS = {
   // only version of "stealth" that stays legible in a game where every threat is
   // already telegraphed. The status immunity is flat from Lv1 because a partial
   // immunity would be indistinguishable from luck.
-  astral_cloak: {
+  sinister_stare: {
     1: {
       fireChance: 0.85, pauseChance: 0.012, pauseFrames: 18,
       immune: true, trail: false,
@@ -914,8 +914,8 @@ const DEFS = [
   { id: 'swarm_caller', name: 'SWARM CALLER', short: 'SWARM', cls: DEFENSIVE, boss: 'swarm',
     cooldown: 24, projectiles: 3, shape: 'swarm', speed: 2.6,
     desc: 'Summons temporary bug allies that fight for you.' },
-  // RENAMED AND RECLASSIFIED, confirmed by the owner, exactly as the Astral
-  // Cloak was. Thrown boulders overlapped the Quake Hammer's swing and the Alloy
+  // RENAMED AND RECLASSIFIED, confirmed by the owner, exactly as the Sinister
+  // Stare was. Thrown boulders overlapped the Quake Hammer's swing and the Alloy
   // Blade's throw; stone ARMOUR is the thing neither of them does. "Buster" also
   // sat one row from SIDE ARM in the wheel and read as a variant of it.
   //
@@ -943,16 +943,12 @@ const DEFS = [
     damageBonus: 0.30,
     cooldown: 6, projectiles: 1, shape: 'breath', speed: 2.4,
     desc: 'Sustained draconic flame breath.' },
-  // RENAMED AND RECLASSIFIED. This was an offensive boomerang called the Astral
-  // Cloak while its tracker field was `[wip]`; the field now reads "Defensive;
-  // reduces aggro and become immune to status effects", so it is a cloak and it
-  // is named like one.
-  //
-  // THE ID STAYS `astral_cloak` because it is the join key for
-  // `BOSSES[].dropWeapon` — a code-to-code join, which is the only kind that
-  // makes an id load-bearing. It is NOT a save key: unlocks and weapon levels
-  // are run-scoped and never persisted.
-  { id: 'astral_cloak', name: 'EVIL ENERGY', short: 'EVIL', cls: DEFENSIVE, boss: 'eclipse',
+  // RENAMED AND RECLASSIFIED. It began as an offensive boomerang while its tracker field was
+  // `[wip]`; the field then made it a defensive cloak that reduces aggro and gives immunity to
+  // status effects, and on 9 Nov 2026 the owner renamed it the Sinister Stare everywhere, id
+  // included. The id is only a code-to-code join (`BOSSES[].dropWeapon`), never a save key:
+  // unlocks and weapon levels are run-scoped and never persisted.
+  { id: 'sinister_stare', name: 'SINISTER STARE', short: 'STARE', cls: DEFENSIVE, boss: 'eclipse',
     cooldown: 24, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Cloak that dulls enemy aggro and blocks status effects.' },
   { id: 'alloy_blade', name: 'ALLOY BLADE', short: 'ALLOY', cls: OFFENSIVE, boss: 'alloy',

@@ -280,7 +280,7 @@ const wheel = await page.evaluate(() => {
   const out = {};
   for (const id of ['blaze_wheel', 'volt_spark', 'nullfire_drone', 'torrent_cannon',
     'frost_guard', 'strike_gauntlet', 'quake_hammer', 'swarm_caller',
-    'simons_whip', 'gale_vortex', 'astral_cloak', 'alloy_blade']) {
+    'simons_whip', 'gale_vortex', 'sinister_stare', 'alloy_blade']) {
     gs.run.unlocked.add(id);
     gs.run.wpLevels[id] = 10;              // the top rung of every ladder
   }
@@ -350,7 +350,7 @@ const PAIRS = [
   ['strike_gauntlet', 'frost_guard'],
   ['quake_hammer', 'swarm_caller'],
   ['simons_whip', 'gale_vortex'],
-  ['alloy_blade', 'astral_cloak'],
+  ['alloy_blade', 'sinister_stare'],
   ['blaze_wheel', 'granite_form'],
   ['draco_blaster', 'swarm_caller'],
   ['volt_spark', 'psi_orb'],

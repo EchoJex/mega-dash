@@ -128,8 +128,9 @@ where each one stands.
 - **attack name** `[ready]` Inferno Wheel
 - **weapon name** `[ready]` Blaze Wheel
 - **palette notes** `[deferred]`
-- **boss weakness A** `[wip]` Water
-- **boss weakness B** `[ready]` Rock
+- **boss weakness A** `[wip]` Ground
+- **boss weakness B** `[wip]` Water
+- **boss weakness secret** `[wip]` Rock
 - **arena** `[wip]` Silhouette of a faintly glowing active volcano as the background. A few short platforms phase in and out in random places throughout the entire fight as shelter. Never shall all airborne platforms simultaneously have Hot. Wet cancels out Hot, sand from the quake hammer cancels out Hot. Dealing damage to the boss with the granite form or the granite form stones applies flinch
 - **arena furniture** `[ready]` Three phasing platforms at alternating heights, and a floodable floor that the layer-3 lava rises into. AT LAYER 3 ONLY the boss gains his own lift — a fourth platform riding a slow sine that never phases out, so he stops taking one of the player's three with him when the floor disappears.
 - **hazard L1** `[ready]` Brief screen shake → occasional player-width hot flaming rocks slowly fall from top of screen, crumbling on contact with the floor or platforms, leaving Hot there for a few seconds. Moderate damage and applies Burn on player contact. Cycle repeats every 20 seconds or so.
@@ -379,7 +380,7 @@ where each one stands.
 - **attack name** `[ready]` Seismic Stomp
 - **weapon name** `[ready]` Quake Hammer
 - **boss weakness A** `[wip]` Water
-- **boss weakness B** `[ready]` Ice
+- **boss weakness B** `[wip]` Grass
 - **arena** `[wip]` Deep excavation site: layered rock strata walls, timber shoring, and a background of stalled drilling rigs.
 - **arena furniture** `[deferred]` Nothing built. The room's props, platforms and moving parts — anything a hazard or an attack needs to exist in order to work.
 - **hazard L1** `[wip]` The ground fissures at telegraphed points and a rock pillar rises, dealing damage on the way up and remaining as a solid obstacle until it sinks again.
@@ -622,7 +623,7 @@ where each one stands.
 - **palette outline** `[ready]` #0A0A12
 - **scale** `[ready]` 1.75x player height (average build)
 - **attack name** `[ready]` Shadow Bind
-- **weapon name** `[wip]` Evil Energy
+- **weapon name** `[wip]` Sinister Stare
 - **boss weakness A** `[wip]` Fighting
 - **boss weakness B** `[wip]` Bug
 - **arena** `[wip]` Moonlit ruin: toppled columns, a cracked floor mosaic, and a background of overgrown arches with light entering from a single high gap.
@@ -634,7 +635,7 @@ where each one stands.
 - **attack L2** `[wip]` Shadow clones now mimic the boss's previous attack on a short delay, so the pattern arrives twice from two places.
 - **attack L3** `[wip]` The boss merges into the darkness and is untargetable while the room is dark, surfacing only to attack.
 - **weapon class** `[ready]` Defensive
-- **weapon** `[wip]` Defensive; Evil Energy acts like the bug swarm, only it is a light black, semi-transparent, sparkly cloud. Instead of damaging the target it touches, it makes that target move confused, like Pac-Man's Clyde, with its scatter corner being the spot it spawned in from.
+- **weapon** `[wip]` Defensive; Sinister Stare acts like the bug swarm, only it is a light black, semi-transparent, sparkly cloud. Instead of damaging the target it touches, it makes that target move confused, like Pac-Man's Clyde, with its scatter corner being the spot it spawned in from.
 - **weapon Lv1** `[wip]` While active enemies will fire projectiles slightly less frequently and when pursuing the player will pause very briefly at random times
 - **weapon Lv3** `[ready]` Slight increase in pause duration and frequency
 - **weapon Lv6** `[ready]`  creates shadow trails that damage enemies and lifesteal.
@@ -937,6 +938,7 @@ other field, and it becomes a thing to build rather than a thing to read.
 - **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away.
 - **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live.
 - **class split** `[wip]` Aiming for 9 offensive and 9 defensive
+- **weakness rule** `[wip]` granite form will be a sort of secret weakness. Weakness rules should be as follows: Elemental weakness can be up to 2 offensive weapons, or at least 1 offensive, plus 1 defensive, and up to 1 secret (defensive only). This rule will balance player access to damage dealing moves. Where the chart offers a boss no offensive weapon at all (Fighting, Psychic, Ghost), two defensive weaknesses are allowed (owner, 9 Nov 2026: "option 2 for the rest").
 - **re-quip window** `[ready]` Slots may only be rearranged after the boss defeat animation resolved, and remains freely open to adjustments until contact with boss exit door, which generated a pop-up confirming the current loadout. Switching a slotted weapon on or off is NOT gated by this — toggling which slot is active or inactive can be done at any time
 
 ## The re-quip wheel

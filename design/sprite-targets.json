@@ -651,10 +651,10 @@
         "fly3"
       ]
     },
-    "shot-astral_cloak": {
-      "label": "EVIL ENERGY",
+    "shot-sinister_stare": {
+      "label": "SINISTER STARE",
       "cls": "shot",
-      "key": "shot:astral_cloak",
+      "key": "shot:sinister_stare",
       "boss": "eclipse",
       "palette": null,
       "grid": {
