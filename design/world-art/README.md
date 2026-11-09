@@ -17,7 +17,7 @@ board (one default look for now). The first-round boards below stay as a record.
 | Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026); Ground on the first round's bedrock |
 | Rock, Dark | batch 3: **picked, and in the game** (8 Nov 2026) |
 | Dragon | batch 3: **picked, and in the game** (9 Nov 2026): the great hall on the first round's castle bricks |
-| Steel | batch 3: **picked** (backdrops 1, 2 and 5 joined into the assembly line, material B), **not in the game**: waits on which way the line loops (1 or 2), the progress measure, and its doors (three pairs on the canvas, none picked) |
+| Steel | batch 3: **picked** (backdrops 1, 2 and 5 joined into the assembly line, material B), **not in the game**: loops by way 1, phases by progress (owner, 9 Nov 2026: "i hate 2, where the whole process repeats. lock in 1"); waits on the progress measure and its doors (three pairs on the canvas, none picked) |
 | Ghost | batch 3: **picked** (the grave tower as a climb, material A), **not in the game**: the owner's answers of 8 Nov settled how it plays; it waits on being built, the first area that scrolls up instead of along |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
 
@@ -163,7 +163,7 @@ vault's roof, crystal band and far spires over the glowing blooms' meadow, and i
 **Rock and Dark are in the game**, 8 Nov 2026, on the owner's word: "Push everything that's decided".
 Their painters moved into `src/systems/area-art/batch3.js`, which `batch3.mjs` imports, so the canvas
 and the game paint from one copy; the game's `pickedMaterial` now takes doors from a second material
-too. Steel is not in yet (which way its line loops, and the progress measure, are still open), nor
+too. Steel is not in yet (its line loops by way 1; the progress measure is still open), nor
 Ghost (its tower is a new kind of area).
 
 **Ghost's backdrops, redone at the owner's ask (6 Nov 2026):** "redo the 6 backdrops, with a wider

@@ -1141,6 +1141,7 @@ const PHASE_PICTURES = ['step', 'flow'].flatMap((mode) => [
  * would remove the progress based phase transitions)". So both are B, always moving, and muted: 1 is
  * the walk through the phases as before; 2 is the whole line, a ladle, a press and the four pairs of
  * arms once each, ending at its pit, then a new belt fed with empty moulds, and the whole line again.
+ * The owner picked 1, 9 Nov 2026: "i hate 2, where the whole process repeats. lock in 1".
  */
 const MUTE = 0.42;
 const LOOP_PICTURES = [
