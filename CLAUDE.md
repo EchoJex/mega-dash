@@ -693,8 +693,8 @@ first-round castle bricks and Steel its steel plates, with three new pairs of do
 doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); Steel waits
 on which way its line loops and on the progress measure. **Dragon is in the game** (9 Nov 2026): the great hall on the castle bricks, five windows (yellow, red, green, blue and the Draco-Blaster's 'dragon' colours) on one diamond grid. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
 three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
-over the play. It is the first area not to run left to right; how it plays is still being settled, so
-nothing of it is built in the game.
+over the play. It is the first area not to run left to right. The owner's answers (8 Nov 2026) settled the falls
+and the boss door's place; it waits on being built, which needs its own kind of area in the game.
 
 ### AI-made sprites and music: only when the owner asks for that one
 

@@ -18,7 +18,7 @@ board (one default look for now). The first-round boards below stay as a record.
 | Rock, Dark | batch 3: **picked, and in the game** (8 Nov 2026) |
 | Dragon | batch 3: **picked, and in the game** (9 Nov 2026): the great hall on the first round's castle bricks |
 | Steel | batch 3: **picked** (backdrops 1, 2 and 5 joined into the assembly line, material B), **not in the game**: waits on which way the line loops (1 or 2), the progress measure, and its doors (three pairs on the canvas, none picked) |
-| Ghost | batch 3: **picked** (the grave tower as a climb, material A), **not in the game**: how the climb plays is still being settled |
+| Ghost | batch 3: **picked** (the grave tower as a climb, material A), **not in the game**: the owner's answers of 8 Nov settled how it plays; it waits on being built, the first area that scrolls up instead of along |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
