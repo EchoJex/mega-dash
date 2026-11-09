@@ -13,14 +13,13 @@ board (one default look for now). The first-round boards below stay as a record.
 
 | slice | world pieces |
 |---|---|
-| Dragon | **PICKED: C, castle bricks, backdrop 1 great hall — in the game** |
-| Ground | **PICKED: B, bedrock** |
-| Steel | **PICKED: A, steel plates**; three pairs of doors on the canvas in batch 3, not picked yet |
-| Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** |
-| Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026) |
+| Typeless, Fire, Water, Electric, Grass, Fighting | batch 1: **picked, and in the game** (5 Nov 2026) |
+| Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026); Ground on the first round's bedrock |
+| Rock, Dark | batch 3: **picked, and in the game** (8 Nov 2026) |
+| Dragon | batch 3: **picked, and in the game** (9 Nov 2026): the great hall on the first round's castle bricks |
+| Steel | batch 3: **picked** (backdrops 1, 2 and 5 joined into the assembly line, material B), **not in the game**: waits on which way the line loops (1 or 2), the progress measure, and its doors (three pairs on the canvas, none picked) |
+| Ghost | batch 3: **picked** (the grave tower as a climb, material A), **not in the game**: how the climb plays is still being settled |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
-| Rock, Ghost, Dark | batch 3: three variants each, **on the canvas, not picked yet** |
-| Steel | batch 3: six backdrops on the canvas (and Steel's doors), not picked yet |
 
 The owner's answers, the same day: every slice also gets its own boss door and backdrop, "yes,
 everything. 6 wildly different backdrop variants per slice since the player has to look at it
