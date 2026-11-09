@@ -112,7 +112,7 @@ const glints = (seed, n, spot, period = 960) => ({
 /** Where each glowworm hangs in a layer `period` wide: [world x, y, thread length]. */
 const wormSpots = (seed, n, period, y0, dy) => Array.from({ length: n }, (_, i) => [Math.floor(hash(i, 0, seed) * period), y0 + Math.floor(hash(i, 1, seed) * dy), 6 + Math.floor(hash(i, 3, seed) * 24)]);
 /** Lights twinkling, each on its own beat of 120 steps: dim, lit, and now and then a flare. `cols` are dim, lit and the flare's arms. */
-function glowworms(spots, period, cols, seed = 380) {
+function glowworms(spots, period, cols, seed = 380, cycle = 120) {   // cycle: steps between one spot's twinkles
   return {
     pieces: () => pics([['d', 1, 1, (p) => p.set(0, 0, cols[0])], ['b', 1, 1, (p) => p.set(0, 0, cols[1])], ['s', 3, 3, (p) => { p.set(1, 0, cols[2]); p.set(0, 1, cols[2]); p.set(1, 1, WHITE); p.set(2, 1, cols[2]); p.set(1, 2, cols[2]); }]]),
     at(ox, t) {
@@ -120,8 +120,8 @@ function glowworms(spots, period, cols, seed = 380) {
       spots.forEach(([wx, y], i) => {
         const x = mod(wx - ox, period) - 20;
         if (x < -3 || x > W + 3) return;
-        const ph = mod(t + Math.floor(hash(i, 2, seed) * 120), 120);
-        out.push(ph < 8 ? ['s', x - 1, y - 1] : ph < 70 ? ['b', x, y] : ['d', x, y]);
+        const ph = mod(t + Math.floor(hash(i, 2, seed) * cycle), cycle), k = cycle / 120;
+        out.push(ph < 8 * k ? ['s', x - 1, y - 1] : ph < 70 * k ? ['b', x, y] : ['d', x, y]);
       });
       return out;
     },
@@ -190,19 +190,24 @@ function stem(r, x, h, lean, col) {
   const tx = x + lean * 2, ty = 184 - h;
   for (const [dx, dy] of [[1, -1], [2, -1], [3, 0], [3, 1]]) r.set(tx + lean * dx, ty + dy, col);
 }
-/** The flowers' bells, their light rippling across the meadow in slow waves: dim, waking, full. */
+/**
+ * The flowers' bells: dim, waking, full. They glow as the player comes near (owner, 9 Nov 2026: "have
+ * the glowing flowers ebb into glowing based on the players proximity to them"), full within 24 pixels
+ * of him, waking within 56; with no player given (a still picture), he is where the canvas stands him.
+ */
 const BLOOM_CUPS = {
-  pieces: () => pics([0, 1, 2].map((lv) => [`c${lv}`, 7, 6, (p) => {
+  pieces: () => pics([...[1, 2].map((lv) => [`g${lv}`, 29, 29, (p) => glow(p, 14, 14, 14, CYAN_GLOW, [0, 0.2, 0.45][lv])]), ...[0, 1, 2].map((lv) => [`c${lv}`, 7, 6, (p) => {
     const dim = [NIGHT[4], LUMEN[0], LUMEN[1]][lv], body = [LUMEN[0], LUMEN[1], LUMEN[2]][lv], heart = [LUMEN[1], LUMEN[2], LUMEN[3]][lv];
     ['..ddd..', '.dbbbd.', '.bbhbb.', 'bbhhhbb', 'b.b.b.b', '...h...'].forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') p.set(x, y, ch === 'd' ? dim : ch === 'b' ? body : heart); }));
-  }])),
-  at(ox, t) {
+  }])]),
+  at(ox, t, px = 64) {
     const out = [];
     for (const [wx, h, lean] of BLOOMS) {
       const x = mod(wx - ox, 960) - 20;
       if (x < -12 || x > W + 6) continue;
-      const k = mod(t + Math.floor(wx / 4), 240), [bx, by] = bellAt(x, h, lean);
-      out.push([`c${k < 40 ? 2 : k < 90 ? 1 : 0}`, bx, by]);
+      const [bx, by] = bellAt(x, h, lean), d = Math.abs(bx + 3 - px), lv = d < 24 ? 2 : d < 56 ? 1 : 0;
+      if (lv) out.push([`g${lv}`, bx + 3 - 14, by + 4 - 14]);   // its light on the meadow, only when it glows
+      out.push([`c${lv}`, bx, by]);
     }
     return out;
   },
@@ -285,7 +290,7 @@ export const STAR_MEADOW = scrolling('STAR MEADOW', 'Backdrops 2 and 4 joined: t
       if (d < 1 && BAYER4[mod(y, 4)][mod(wx, 4)] < (1 - d) ** 2 * 7 * (0.6 + 0.4 * seamless((w) => noise1(w * 0.04, 416), wx, 960))) r.set(x, y, d < 0.35 ? LUMEN[0] : NIGHT[3]);
     }
     for (const [wx, sz, sd] of [[60, 34, 1], [300, 44, 2], [540, 30, 3], [770, 40, 4]]) { const x = mod(wx - ox, 960) - 20; if (x < -60 || x > W + 60) continue; glow(r, x, 14, 50, VIOLET_GLOW, 0.3); cluster(r, x, -2, sz, sd, AMETHYST, Math.PI); }
-  }, parts: [glowworms(VAULT.filter((_, i) => hash(i, 2, 410) > 0.25), 960, [NIGHT[4], LUMEN[2], LUMEN[1]], 411), glowworms(VAULT.filter((_, i) => hash(i, 2, 410) <= 0.25), 960, [AMETHYST[0], AMETHYST[2], AMETHYST[1]], 412)] },
+  }, parts: [glowworms(VAULT.filter((_, i) => hash(i, 2, 410) > 0.25), 960, [NIGHT[4], LUMEN[2], LUMEN[1]], 411, 240), glowworms(VAULT.filter((_, i) => hash(i, 2, 410) <= 0.25), 960, [AMETHYST[0], AMETHYST[2], AMETHYST[1]], 412, 240)] },
   { rate: 0.12, period: 960, fixed: (r, ox) => {
     ridge(r, ox, { y: 146, amp: 30, f: 0.02, seed: 413, col: NIGHT[1], top: LUMEN[0], period: 960, sharp: 0.7 });
     ridge(r, ox, { y: 164, amp: 14, f: 0.035, seed: 414, col: NIGHT[0], top: NIGHT[3], period: 960, sharp: 0.4 });
@@ -296,7 +301,6 @@ export const STAR_MEADOW = scrolling('STAR MEADOW', 'Backdrops 2 and 4 joined: t
       const x = mod(wx - ox, 960) - 20;
       if (x < -30 || x > W + 30) continue;
       const [bx, by] = bellAt(x, h, lean);
-      glow(r, bx + 3, by + 4, 14, CYAN_GLOW, 0.3);
       stem(r, x, h, lean, NIGHT[4]);
     }
     dark(r, 178, NIGHT[0]);

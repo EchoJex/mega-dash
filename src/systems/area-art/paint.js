@@ -187,9 +187,9 @@ export function embers(r, seed, n, cols, yMax = FLOOR, ox = 0, t = 0, speed = 0)
 }
 
 /** Paint a moving part at one moment: each of its small pictures where `at` puts it. */
-export function drawPart(r, part, ox, t) {
+export function drawPart(r, part, ox, t, px) {
   const atlas = part.atlas ??= new Map(part.pieces());
-  for (const [name, x, y] of part.at(ox, t)) blit(r, atlas.get(name), x, y);
+  for (const [name, x, y] of part.at(ox, t, px)) blit(r, atlas.get(name), x, y);
 }
 
 /** A lightning bolt from the sky down to a point, a frozen moment of it. */
@@ -227,7 +227,7 @@ export const scrolling = (name, desc, loop, ...layers) => ({
   layers: layers.map((L) => ({
     ...L,
     parts: L.parts || [],
-    paint: (r, b, ox, t = 0) => { L.fixed?.(r, ox); for (const part of L.parts || []) drawPart(r, part, ox, t); },
+    paint: (r, b, ox, t = 0, px) => { L.fixed?.(r, ox); for (const part of L.parts || []) drawPart(r, part, ox, t, px); },
   })),
 });
 export const moving = (name, desc, ...layers) => ({ name, desc, moving: true, layers: layers.map(([rate, paint]) => ({ rate, paint })) });

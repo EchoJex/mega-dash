@@ -98,14 +98,14 @@ export function buildArea(S, id, viewW, room = false) {
   const doors = new Map();
 
   return {
-    place(cam, t, world) {
+    place(cam, t, world, px) {   // px: where the player is on screen, for parts that answer to him
       const c = Math.round(cam);   // for what is in view; pictures go exactly where GameScene puts everything else
       for (const { L, pic, pools } of layers) {
         const ox = Math.round(cam * L.rate);
         if (pic && L.rate) pic.tilePositionX = ox;
         for (const [part, pool] of pools) {
           pool.begin();
-          for (const [n, x, y] of part.at(ox, t)) pool.put(x, y, n);
+          for (const [n, x, y] of part.at(ox, t, px)) pool.put(x, y, n);
           pool.end();
         }
       }
@@ -184,9 +184,9 @@ export function makeAreaArt(scene, id, viewW, room = false) {
   const S = stage(scene, `area-art:${id}:${++builds}`, viewW);
   const area = buildArea(S, id, viewW, room);
   return {
-    update(cam, sh, t, world) {
+    update(cam, sh, t, world, px) {
       S.place(sh, 1);
-      area.place(cam, t, world);
+      area.place(cam, t, world, px);
     },
     destroy() { S.destroy(); },
   };

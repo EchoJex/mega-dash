@@ -196,6 +196,10 @@ prevent extreme fall heights. 2 the ghost boss will be in the upper right". So a
 player onto whatever is below, and the full-width walkways catch him, so no fall is longer than one
 stretch between checkpoints; Ghost's boss door is in the tower's upper right.
 
+**Rock's star meadow, later (9 Nov 2026):** "i love the Your Pick, but slow down the twinkling, and
+have the glowing flowers ebb into glowing based on the players proximity to them". The stars twinkle
+half as often, and each bell flower is dim, waking or fully lit by how near the player is to it.
+
 **Dragon's great hall, in the owner's words (9 Nov 2026):** "Dragon great Hall is good. I love the
 colors of the left window. Use these colors and their compliments and generate 5 unique windows that
 randomly loop"; then, with a sheet of six colour sets: "I changed my mind about the colors. Make each
