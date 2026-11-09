@@ -164,7 +164,7 @@ export const BOSSES = [
     id: 'wraith', name: 'WRAITH MAN', element: 'Ghost',
     primary: '#A68DD8', secondary: '#2A1F4A', outline: '#0A0A12',
     scale: 1.6, baseHp: 56,
-    attackName: 'Spectral Shift', dropWeapon: 'wraith_cloak',
+    attackName: 'Spectral Shift', dropWeapon: 'vampiric_touch',
     silhouette: null,
   },
   {

@@ -128,7 +128,7 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 | **damage words** | How a rung states damage until the numbers are tuned: low, low-medium, medium, medium-heavy, heavy. Each word is a multiple of that weapon's own base hit, set in one table (`DAMAGE_WORDS`). |
 | **mastery** | The meta upgrade that decides how many slots you own at all, and how many run at once. Rank 0 to 3, bought separately for each class. |
 | **re-quip** | Changing which weapons are in your slots. Coined here; it just means re-equip. |
-| **the wheel** | The screen where you do it. Two modes: the **Active wheel** (during a fight: slow motion, aim a slot or switch one on or off) and the **Post Boss wheel** (after a boss falls: hard pause, actually swap weapons). The code still calls them `midFight` and `betweenFights`. |
+| **the wheel** | The screen where you do it. Two modes: the **Active wheel** (during a fight: slow motion, aim a slot or switch one on or off) and the **Post Boss wheel** (after a boss falls: hard pause, actually swap weapons). The code calls them `active` and `postBoss`. |
 | **in-situ / mid-fight** | RETIRED names for the Active wheel. You will still meet them in old commits. |
 | **between-fights** | RETIRED name for the Post Boss wheel. |
 

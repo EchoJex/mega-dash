@@ -615,10 +615,10 @@
         "fly3"
       ]
     },
-    "shot-wraith_cloak": {
+    "shot-vampiric_touch": {
       "label": "VAMPIRIC TOUCH",
       "cls": "shot",
-      "key": "shot:wraith_cloak",
+      "key": "shot:vampiric_touch",
       "boss": "wraith",
       "palette": null,
       "grid": {

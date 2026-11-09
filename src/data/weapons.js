@@ -925,7 +925,7 @@ const DEFS = [
     cooldown: 20, projectiles: 1, shape: 'rock', speed: 2.8,
     desc: 'Hardens the player into stone while no input is given.' },
   // Provisional class — its tracker field is still `[wip]`.
-  { id: 'wraith_cloak', name: 'VAMPIRIC TOUCH', short: 'VAMPIRE', cls: DEFENSIVE, boss: 'wraith',
+  { id: 'vampiric_touch', name: 'VAMPIRIC TOUCH', short: 'VAMPIRE', cls: DEFENSIVE, boss: 'wraith',
     cooldown: 30, projectiles: 1, shape: 'wisp', speed: 3.0,
     desc: 'Brief invulnerability and invisibility.' },
   // Provisional class — its tracker field is still `[wip]`.

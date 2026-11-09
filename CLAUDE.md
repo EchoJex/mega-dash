@@ -1037,7 +1037,7 @@ leave with. Switching a weapon on or off is allowed at any time.
 ### The re-quip wheel — Active and Post Boss
 
 **Two names, by the owner's call (17 Oct 2026): the ACTIVE wheel (during a fight) and the
-POST BOSS wheel (after one).** Older code calls them `midFight` and `betweenFights`; the
+POST BOSS wheel (after one).** The code calls them `active` and `postBoss` too; the
 words on screen and in documents are Active and Post Boss.
 
 | | **ACTIVE** | **POST BOSS** |
@@ -1529,9 +1529,9 @@ seconds with no moving or firing (`ctx.hold`, a per-step grant read through `run
 nothing can leave him stuck), reels him in and throws him into the far wall. The constrict
 tint shows while it lasts.
 
-`cloakHold` is in the ATTR table but is **not** an elemental attribute — it is the old cloak's
+`stareHold` is in the ATTR table but is **not** an elemental attribute — it is the old cloak's
 aggro pause. That weapon has been redesigned and renamed the **Sinister Stare** (owner, 9 Nov 2026;
-its tracker field is `[wip]`), so treat `cloakHold` as the old behaviour until the new ladder lands. `psiLock` is the same kind of plain hold, in purple: the Psi Orb's lock.
+its tracker field is `[wip]`), so treat `stareHold` as the old behaviour until the new ladder lands. `psiLock` is the same kind of plain hold, in purple: the Psi Orb's lock.
 
 ---
 

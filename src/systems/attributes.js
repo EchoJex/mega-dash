@@ -64,7 +64,7 @@ export const ATTR = {
   // which made the cloak's best effect invisible. `flash` keeps it well under
   // every elemental tint, so a paused enemy reads as shadowed rather than as
   // afflicted with something.
-  cloakHold: { form: 'character', tint: 0x2A273F, label: '', held: true, flash: 0.4 },
+  stareHold: { form: 'character', tint: 0x2A273F, label: '', held: true, flash: 0.4 },
   // NOT ELEMENTAL EITHER: the Psi Orb's lock, a plain hold in its purple.
   psiLock: { form: 'character', tint: 0x9B4DFF, label: '', held: true, flash: 0.6 },
 };

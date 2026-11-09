@@ -151,7 +151,7 @@ if (!running) fail('still paused after Esc — did the start-of-run wheel close?
  * The two wheels are told apart by a string on `UIScene.mode`, and a string
  * comparison is the one thing that fails SILENTLY when it is wrong: a stale
  * value on either side just means a branch never runs, no error, no crash.
- * That very nearly shipped during the `in-situ` -> `midFight` rename, and the
+ * That very nearly shipped during the `in-situ` -> `active` rename, and the
  * 0.1s suite cannot see it because it has no scenes.
  *
  * Q opens it, Q again puts it away. Slow motion rather than a hard pause is
@@ -163,7 +163,7 @@ const mid = await page.evaluate(() => ({
   mode: globalThis.__game.scene.getScene('UI')?.mode ?? null,
   paused: !!globalThis.__game.scene.getScene('Game').paused,
 }));
-if (mid.mode !== 'midFight') fail(`Q did not open the Active wheel (mode: ${mid.mode})`);
+if (mid.mode !== 'active') fail(`Q did not open the Active wheel (mode: ${mid.mode})`);
 if (mid.paused) fail('the Active wheel hard-paused the game; it should only slow it');
 await page.keyboard.press('KeyQ');
 await page.waitForTimeout(350);

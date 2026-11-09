@@ -221,7 +221,7 @@ export default class GameScene extends Phaser.Scene {
       // checked before the jump so leaving the menu never also launches the
       // player.
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'betweenFights') { ui.closeWheel(); return; }
+      if (ui?.mode === 'postBoss') { ui.closeWheel(); return; }
       if (ui?.pausePanel || ui?.cards) return;
       if (!this.intent.jumpHeld) this.doJump();
     });
@@ -232,7 +232,7 @@ export default class GameScene extends Phaser.Scene {
       // both run; without this, confirming a swap also queued a shot for the
       // frame the game resumed on.
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'betweenFights' || ui?.pausePanel || ui?.cards) return;
+      if (ui?.mode === 'postBoss' || ui?.pausePanel || ui?.cards) return;
       if (!this.intent.fireHeld) this.beginFire();
     });
     /**
@@ -262,13 +262,13 @@ export default class GameScene extends Phaser.Scene {
      * the right — so the mapping is spatial rather than memorised, exactly like
      * the four diagonals on a touchscreen.
      */
-    const MID_FIGHT_KEYS = { Q: ['offensive', 0], E: ['offensive', 1],
+    const ACTIVE_KEYS = { Q: ['offensive', 0], E: ['offensive', 1],
       Z: ['defensive', 0], C: ['defensive', 1] };
-    for (const [key, [cls, index]] of Object.entries(MID_FIGHT_KEYS)) {
+    for (const [key, [cls, index]] of Object.entries(ACTIVE_KEYS)) {
       this.input.keyboard.on(`keydown-${key}`, () => {
         const ui = this.scene.get('UI');
         if (!ui) return;
-        if (ui.mode === 'midFight') ui.midFightKey(cls, index);
+        if (ui.mode === 'active') ui.activeKey(cls, index);
         // Only Q and E open it. Z and C would be a surprise to anyone who
         // pressed them with the wheel down and no way to know what they meant.
         else if (!ui.mode && (key === 'Q' || key === 'E')) ui.beginRequipKey();
@@ -285,7 +285,7 @@ export default class GameScene extends Phaser.Scene {
     for (const [key, d] of [['LEFT', -1], ['RIGHT', 1], ['A', -1], ['D', 1]]) {
       this.input.keyboard.on(`keydown-${key}`, () => {
         const ui = this.scene.get('UI');
-        if (ui?.mode === 'betweenFights') ui.cursorStep(d);
+        if (ui?.mode === 'postBoss') ui.cursorStep(d);
         else if (ui?.pausePanel) ui.pauseStep(d);
       });
     }
@@ -299,7 +299,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.input.keyboard.on('keydown-SHIFT', () => {
       const ui = this.scene.get('UI');
-      if (ui?.mode === 'betweenFights') ui.cursorPick();
+      if (ui?.mode === 'postBoss') ui.cursorPick();
     });
 
     /**
@@ -417,6 +417,12 @@ export default class GameScene extends Phaser.Scene {
       devRequipPending: false,
     };
     applyUpgrades(save, run);
+    // A PLAYTESTER STARTS AT RANK 1 in both classes (owner's bug, 9 Nov 2026), so the
+    // first weapon a boss drops has a slot to go into. Dev mode keeps the true 0.
+    if (!DEV.enabled) {
+      run.offRank = Math.max(1, run.offRank ?? 0);
+      run.defRank = Math.max(1, run.defRank ?? 0);
+    }
     if (dev('maxMastery')) run.offRank = run.defRank = Loadout.MAX_RANK;
     // The dev panel's ranks are LAST, so setting one there overrides both the
     // purchased rank and maxMastery's blanket 3. That is the whole point of the
@@ -2048,8 +2054,8 @@ export default class GameScene extends Phaser.Scene {
     const ag = r.aggroPause;
     if (ag) {
       for (const e of this.minions) {
-        if (e.hp <= 0 || Attr.hasStatus(e.status, 'cloakHold')) continue;
-        if (Math.random() < ag.chance) Attr.applyStatus(e.status, 'cloakHold', ag.frames);
+        if (e.hp <= 0 || Attr.hasStatus(e.status, 'stareHold')) continue;
+        if (Math.random() < ag.chance) Attr.applyStatus(e.status, 'stareHold', ag.frames);
       }
     }
     // bullet, so a minion that burns to death still drops its EXP.

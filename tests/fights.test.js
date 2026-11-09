@@ -564,7 +564,7 @@ test('stun, constrict and freeze are one behaviour with three tints', () => {
 
   // The Sinister Stare's aggro pause is NOT elemental and is still a real hold —
   // it is the only thing left that stops an actor outright.
-  assert.equal(Attr.ATTR.cloakHold.held, true);
+  assert.equal(Attr.ATTR.stareHold.held, true);
 });
 
 /**
