@@ -518,6 +518,26 @@ const GLASS = {   // the colours of each window's panes
   sea: [c('#2a8a8a'), c('#3a6ab0'), c('#6a3a9a'), c('#1a4a6a'), c('#8ad0c8')],
   moon: [c('#3a4aa0'), c('#6a7ad0'), c('#2a2a6a'), c('#9a8ae0'), c('#c8d0f0')],
 };
+// THE GREAT HALL'S FIVE WINDOWS. The owner, 9 Nov 2026: "I love the colors of the left window. Use
+// these colors and their compliments and generate 5 unique windows that randomly loop". The left
+// window was GLASS.sea; each window mixes its colours with their opposites on the colour wheel
+// (teal with coral, blue with orange, violet with gold, mint with rose) and has its own heart.
+const HALL_WINDOWS = [
+  { cols: GLASS.sea, motif: null },   // the one the owner liked, as it was
+  { cols: [c('#2a8a8a'), c('#e8704a'), c('#3a6ab0'), c('#1a4a6a'), c('#8ad0c8')], motif: 'rose' },   // teal and coral
+  { cols: [c('#6a3a9a'), c('#e8b030'), c('#2a8a8a'), c('#3a2a6a'), c('#f5d878')], motif: 'eye' },   // violet and gold
+  { cols: [c('#3a6ab0'), c('#e88a3a'), c('#8ad0c8'), c('#1a4a6a'), c('#f0b070')], motif: 'dragon' },   // blue and orange
+  { cols: [c('#8ad0c8'), c('#d05a8a'), c('#6a3a9a'), c('#1a4a6a'), c('#f0a0c0')], motif: 'star' },   // mint and rose
+];
+// The order down the hall: shuffled once, never the same window twice in a row, first and last
+// differing too so the strip repeats without a seam. 20 windows before it comes round again.
+const HALL_ORDER = (() => {
+  for (let seed = 0; ; seed++) {
+    const o = [];
+    for (let n = 0; n < 20; n++) o.push(n ? (o[n - 1] + 1 + Math.floor(hash(n, seed, 590) * 4)) % 5 : Math.floor(hash(0, seed, 590) * 5));
+    if (o[19] !== o[0] && new Set(o).size === 5) return o;
+  }
+})();
 const STONE = [c('#2e2a36'), c('#3e3a48'), c('#4e4a58'), c('#6e6a76')];   // the castle bricks' stone, indoors
 /** The castle's inside wall: stone blocks, lit a little where `lit` says. */
 function stoneWall(r, ox, y0, y1, light = 0) {
@@ -551,6 +571,12 @@ function stainedGlass(r, x0, y0, w, h, { cols, pointed = true, motif = null, see
   if (motif === 'dragon') {
     const s = Math.max(1, Math.floor(w / 20)), mx = x0 + Math.floor((w - 16 * s) / 2), my = y0 + Math.floor(h * 0.3);
     DRAGON_MASK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') fillRect(r, mx + i * s, my + j * s, s, s, (i + j) % 5 === 0 ? c('#ff8a60') : c('#c3225d')); }));
+  } else if (motif === 'eye') {
+    const cx = x0 + Math.floor(w / 2), cy = y0 + Math.floor(h * 0.45);
+    for (let j = -9; j <= 9; j++) for (let i = -9; i <= 9; i++) if (Math.abs(i) + Math.abs(j) <= 9) r.set(cx + i, cy + j, Math.abs(i) + Math.abs(j) >= 8 ? c('#120a12') : Math.abs(i) <= 1 && Math.abs(j) <= 5 ? c('#120a12') : cols[1]);
+  } else if (motif === 'star') {
+    const cx = x0 + w / 2, cy = y0 + h * 0.42;
+    for (let a = 0; a < TAU; a += 0.005) { const rr = (w * 0.3) * (0.45 + 0.55 * Math.abs(Math.cos(a * 4))); for (let d = 0; d < rr; d += 0.5) r.set(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), d > rr - 1 ? c('#120a12') : d < rr * 0.35 ? cols[4] : cols[1]); }
   } else if (motif === 'rose') {
     const cx = x0 + w / 2, cy = y0 + w * 0.55, rr = w * 0.3;
     for (let a = 0; a < TAU; a += 0.01) for (let d = 0; d < rr; d += 0.5) { const petal = Math.floor((a / TAU) * 8); r.set(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), Math.abs(((a / TAU) * 8) % 1 - 0.5) > 0.44 || Math.abs(d - rr * 0.5) < 0.6 ? c('#120a12') : [cols[0], cols[2], cols[4] || WHITE][petal % 3]); }
@@ -622,12 +648,12 @@ const DRAGON_SLICE = {
   materials: [CASTLE_C],
   backdrops: [
     scrolling('GREAT HALL', 'A long great hall: tall stained-glass windows down the far wall throwing coloured light across it, pillars and dragon banners close by, torches flickering. Scrolls in two layers.', 240,
-      { rate: 0.1, period: 480, fixed: (r, ox) => {
+      { rate: 0.1, period: 120 * HALL_ORDER.length, fixed: (r, ox) => {
         stoneWall(r, ox, 0, 178);
         for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) {
-          const k = mod(wx, 480) / 120, x = wx - ox + 38, cols = [GLASS.ember, GLASS.dusk, GLASS.sea, GLASS.dusk][k];
-          stainedGlass(r, x, 22, 44, 96, { cols, seed: 500 + k });
-          lightShaft(r, x + 6, x + 38, 118, 178, 18, cols[k % cols.length], 70);
+          const k = HALL_ORDER[mod(wx, 120 * HALL_ORDER.length) / 120], win = HALL_WINDOWS[k], x = wx - ox + 38;
+          stainedGlass(r, x, 22, 44, 96, { cols: win.cols, motif: win.motif, seed: 500 + k });
+          lightShaft(r, x + 6, x + 38, 118, 178, 18, win.cols[0], 70);
         }
         for (let x = 0; x < W; x++) { r.set(x, 132, STONE[3]); r.set(x, 133, STONE[0]); }   // the gallery ledge
       } },
