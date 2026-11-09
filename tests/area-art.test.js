@@ -161,3 +161,15 @@ test('every picked area\'s ground and lit edge stand out from what its pits show
   }
   assert.deepEqual(bad, [], `picked areas whose pits do not read:\n  ${bad.join('\n  ')}`);
 });
+
+test("each slice's world pieces tick box in the tracker says whether its picked pieces are in the game", async () => {
+  const { readFileSync } = await import('node:fs');
+  const md = readFileSync(new URL('../design/TRACKER.md', import.meta.url), 'utf8');
+  const slices = md.slice(md.indexOf('# SLICES'), md.indexOf('# BESTIARY')).split(/^## /m).slice(1);
+  assert.equal(slices.length, 17);
+  for (const sl of slices) {
+    const id = sl.match(/^`id` (\w+)/m)[1], box = sl.match(/^- \*\*world pieces\*\* `\[\w+\]` \[([ x])\] in game/m);
+    assert.ok(box, `${id} has a world pieces line`);
+    assert.equal(box[1] === 'x', id in PICKED, `${id}: the box is ${box[1] === 'x' ? 'ticked' : 'empty'} but the game ${id in PICKED ? 'draws' : 'does not draw'} its picked pieces`);
+  }
+});
