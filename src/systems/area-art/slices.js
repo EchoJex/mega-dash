@@ -688,7 +688,8 @@ export const PICKED = {
     // The owner picked the castle bricks in the first round, 5 Nov 2026: "i really like the castle one
     // for dragon"; and on 9 Nov 2026 the great hall, with windows from their six colour sets: "Remove
     // the picture in the middle, ensure the stained glass tile patterns are randomized, then put it
-    // into the game and the Dragon world pieces art".
+    // into the game and the Dragon world pieces art"; and later the same day, for the windows: "in total
+    // one Red, one Blue, one Green, One Yellow, and one 'dragon'".
     pick: { backdrop: 1, material: 'C' },
     materials: { C: ['C', 'CASTLE BRICKS', '', CASTLE] },
     backdrop: GREAT_HALL,

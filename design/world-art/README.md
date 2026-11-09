@@ -201,9 +201,13 @@ colors of the left window. Use these colors and their compliments and generate 5
 randomly loop"; then, with a sheet of six colour sets: "I changed my mind about the colors. Make each
 stained glass window based on each of these color sets"; then "Remove the picture in the middle,
 ensure the stained glass tile patterns are randomized, then put it into the game and the Dragon world
-pieces art". Six windows, one per colour set, come down the hall in a shuffled order of 24 that never
-repeats a window back to back; each window's leading (diamonds, small diamonds, squares, staggered
-oblongs, large split diamonds) and its panes' colours are picked at random.
+pieces art". Then: "commit to main the great-hall-windows.png version without anything special in
+the middle ... use the yellow one for reference and color swap light yellow for light red, and yellow
+for red, then generate a Green one and blue one (avoid colors associated with the draco-blaster
+weapon). in total one Red, one Blue, one Green, One Yellow, and one 'dragon' (which currently uses
+colors from draco-blaster)". Earlier the same day they asked for every window to share the reference
+window's grid. So five windows, all on the first round's diamonds, come down the hall in a shuffled
+order of 20 that never repeats a window back to back.
 
 **Dragon's pick, in the owner's words (6 Nov 2026):** "6c but do another 6 variants based on 6c, i
 like the interior halls of a castle, and i like some stained glass windows". So the throne hall with

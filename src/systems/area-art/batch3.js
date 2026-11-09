@@ -368,20 +368,18 @@ export const GLASS = {   // the colours of each window's panes
   sea: [c('#2a8a8a'), c('#3a6ab0'), c('#6a3a9a'), c('#1a4a6a'), c('#8ad0c8')],
   moon: [c('#3a4aa0'), c('#6a7ad0'), c('#2a2a6a'), c('#9a8ae0'), c('#c8d0f0')],
 };
-// THE GREAT HALL'S SIX WINDOWS. The owner, 9 Nov 2026, with a sheet of six colour sets (a coat and
-// one or two accents each): "Make each stained glass window based on each of these color sets". Each
-// window is its set's colours exactly, plus a darker and a lighter shade of its coat for depth.
-// Then: "Remove the picture in the middle, ensure the stained glass tile patterns are randomized" —
-// each window in the hall takes its leading at random from PANES, and its panes' colours at random.
-export const hallShade = (hex, k) => mix(c(hex), k < 0 ? c('#120a12') : WHITE, Math.abs(k));
-export const hallSet = (coat, a1, a2 = a1) => [c(coat), c(a1), c(a2), hallShade(coat, -0.45), hallShade(a1, 0.35)];
+// THE GREAT HALL'S FIVE WINDOWS. The owner, 9 Nov 2026, after trying their six colour sets, went back
+// to the first five-window hall with nothing in the middle and asked for: "use the yellow one for
+// reference and color swap light yellow for light red, and yellow for red, then generate a Green one
+// and blue one (avoid colors associated with the draco-blaster weapon). in total one Red, one Blue,
+// one Green, One Yellow, and one 'dragon' (which currently uses colors from draco-blaster)".
+// Each list is [the second glass, the main glass, the third glass, the darkest, the lightest].
 export const HALL_WINDOWS = [
-  { cols: hallSet('#CC9CDF', '#652D87', '#EA428B') },
-  { cols: hallSet('#FABA62', '#FAF5AB') },
-  { cols: hallSet('#9BDBF5', '#1B98D1', '#2A78C8') },
-  { cols: hallSet('#EAEEF0', '#5E50A0') },
-  { cols: hallSet('#FAF5AB', '#F3B5CF') },
-  { cols: hallSet('#F5B7D0', '#EB458B') },
+  { name: 'yellow', cols: [c('#6a3a9a'), c('#e8b030'), c('#2a8a8a'), c('#3a2a6a'), c('#f5d878')] },   // the reference
+  { name: 'red', cols: [c('#6a3a9a'), c('#d0383a'), c('#2a8a8a'), c('#3a2a6a'), c('#f08a8a')] },   // the yellow one, yellows swapped for reds
+  { name: 'green', cols: [c('#2e6a3a'), c('#4ab84a'), c('#c8b060'), c('#1a3a22'), c('#a8e890')] },   // no teal, violet or indigo
+  { name: 'blue', cols: [c('#2a4a8a'), c('#3a7ae0'), c('#d0d8e8'), c('#1a2a50'), c('#9ac0f8')] },   // no teal, violet or indigo
+  { name: 'dragon', cols: GLASS.sea },   // the Draco-Blaster's teal, blue and violet
 ];
 // The order down the hall: shuffled once, never the same window twice in a row, first and last
 // differing too so the strip repeats without a seam. 24 windows before it comes round again.
@@ -404,14 +402,13 @@ export function stoneWall(r, ox, y0, y1, light = 0) {
 export const DRAGON_MASK = ['......##........', '.....####.......', '....##.###......', '....#...###.....', '........####....', '.##....######...', '####..#######...', '#####.########..', '.#############..', '..####.#######..', '...##..##..###..', '......##....##..', '.....##......#..', '....##..........', '...##...........', '..#.............'];
 /**
  * The ways a window's panes can be leaded: each says, for a pixel, whether it is lead and which pane it
- * belongs to. 0 is the first round's diamonds; the great hall picks one at random for each window.
+ * belongs to. 0 is the first round's diamonds, which every great hall window uses (owner, 9 Nov 2026).
  */
 export const PANES = [
   (i, j) => [mod(i + j, 7) === 0 || mod(i - j, 7) === 0, Math.floor((i + j) / 7) * 31 + Math.floor((i - j + 99) / 7)],   // diamonds
   (i, j) => [mod(i + j, 5) === 0 || mod(i - j, 5) === 0, Math.floor((i + j) / 5) * 31 + Math.floor((i - j + 99) / 5)],   // small diamonds
   (i, j) => [i % 6 === 0 || j % 6 === 0, Math.floor(i / 6) * 31 + Math.floor(j / 6)],   // squares
   (i, j) => { const row = Math.floor(j / 6), k = i + (row % 2) * 4; return [j % 6 === 0 || mod(k, 8) === 0, Math.floor(k / 8) * 31 + row]; },   // staggered oblongs, like bricks
-  (i, j) => [mod(i + j, 10) === 0 || mod(i - j, 10) === 0 || j % 10 === 5 && mod(i, 2) === 0, Math.floor((i + j) / 10) * 31 + Math.floor((i - j + 99) / 10) + (mod(j, 10) < 5 ? 0 : 500)],   // large diamonds split across
 ];
 /**
  * A stained-glass window `w` wide and `h` tall: a pointed or a round top, diamond panes of `cols`
@@ -508,7 +505,7 @@ export const GREAT_HALL = scrolling('GREAT HALL', 'A long great hall: tall stain
         stoneWall(r, ox, 0, 178);
         for (let wx = Math.floor(ox / 120) * 120; wx < ox + W + 120; wx += 120) {
           const n = mod(wx, 120 * HALL_ORDER.length) / 120, win = HALL_WINDOWS[HALL_ORDER[n]], x = wx - ox + 38;
-          stainedGlass(r, x, 22, 44, 96, { cols: win.cols, seed: 500 + n, pattern: Math.floor(hash(n, 3, 591) * PANES.length) });
+          stainedGlass(r, x, 22, 44, 96, { cols: win.cols, seed: 500 + n });   // one grid for every window: the first round's diamonds
           lightShaft(r, x + 6, x + 38, 118, 178, 18, win.cols[0], 70);
         }
         for (let x = 0; x < W; x++) { r.set(x, 132, STONE[3]); r.set(x, 133, STONE[0]); }   // the gallery ledge
