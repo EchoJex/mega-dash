@@ -998,7 +998,7 @@ definitions; they live there once, never repeated in each boss's slice.
 `src/data/minions.js` — three today: **SPIGLET** (ground, walks its span and turns at pit
 edges), **PIXIE** (air, drifts left while tracking your altitude; DRIFTER until the owner renamed
 it, 10 Nov 2026) and **GUNNER** (air, owner 10 Nov 2026: "average
-horizontal, slow vertical, moving for 3s then stopping briefly", `move: 'stopGo'`). A spawn
+horizontal, slow vertical, moving for 3s then stopping briefly", `move: 'stopGo'`). **No enemy stops inside the player or turns on the spot after passing through him** (owner, bug of build 1242): the Gunner keeps its heading `turnWide` pixels past him, peeling away from his height, before it comes about. A spawn
 picks evenly among the minions of its plane (`pickOf`). The roster will grow. Bosses are events; minions are weather.
 
 The minion palette is **unrelated to the boss palette** and carries no spacing constraint

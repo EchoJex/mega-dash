@@ -57,6 +57,7 @@ export const MINIONS = [
     climb: 0.3,           // up or down, toward the player's height
     moveFrames: 180,      // "moving for 3s"
     stopFrames: 30,       // "then stopping briefly"
+    turnWide: 48,         // how far past the player it flies before coming about: the wide U-turn
   },
 ];
 

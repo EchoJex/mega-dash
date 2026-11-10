@@ -323,3 +323,27 @@ test('the Gunner moves for 3 seconds toward the player, then stops briefly', asy
   steps(5);
   assert.ok(e.x < stop.x, 'and then move again');
 });
+
+// The owner's bug of build 1242: no stopping inside the player, and a wide U-turn after passing through.
+test('the Gunner passes through the player, never stops inside him, and turns wide', async () => {
+  const { stepMinions } = await import('../src/systems/minions.js');
+  const def = MINIONS.find((m) => m.id === 'gunner');
+  const player = { x: 100, y: 100 };
+  const inside = (e) => e.x < player.x + 24 && e.x + e.w > player.x && e.y < player.y + 24 && e.y + e.h > player.y;
+  // Try every moment of its move-and-stop cycle, so a stop is due at every point of the pass.
+  for (let phase = 0; phase < def.moveFrames + def.stopFrames; phase += 7) {
+    const e = { def, id: def.id, x: 160, y: 106, w: def.w, h: def.h, vx: 0, vy: 0, hp: 3, anim: phase, status: {}, kbVx: 0 };
+    let farthest = 0, turned = false, minY = e.y, maxY = e.y;
+    for (let i = 0; i < 900 && !turned; i++) {
+      const was = e.x;
+      stepMinions([e], { spans: [] }, player, 200);
+      if (inside(e)) assert.notEqual(e.x, was, `phase ${phase}: it stopped inside the player`);
+      const past = (player.x + 12) - (e.x + e.w / 2);
+      if (past > 0) { farthest = Math.max(farthest, past); minY = Math.min(minY, e.y); maxY = Math.max(maxY, e.y); }
+      if (past > 0 && e.vx > 0) turned = true;
+    }
+    assert.ok(turned, `phase ${phase}: it never came back`);
+    assert.ok(farthest >= def.turnWide, `phase ${phase}: it turned ${farthest} past him, not a wide turn`);
+    assert.ok(maxY - minY > 0, `phase ${phase}: it turned on the spot instead of peeling away`);
+  }
+});

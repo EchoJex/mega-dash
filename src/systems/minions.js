@@ -191,16 +191,28 @@ function stepAir(e, player, groundY, held, slow) {
 
 /**
  * THE GUNNER: heads for the player for `moveFrames`, then hangs still for `stopFrames`, and
- * again. Along at its own `speed`, up or down at the slower `climb`, never past where he is,
- * so it settles level with him rather than shaking about his height.
+ * again. Along at its own `speed`, up or down at the slower `climb`.
+ *
+ * IT NEVER STOPS INSIDE HIM, AND NEVER TURNS ON THE SPOT (owner, bug of build 1242: "Enemies
+ * that make contact with the player can not stop inside the player. Pursuit is allowed, but
+ * after passing through the player the enemy must make a wide U-turn instead of instantly
+ * turning around"). It keeps its heading through him and `turnWide` pixels past, peeling away
+ * from his height as it goes, and only then comes about, so the way back is a loop and a
+ * player who was touched once is not sat on. A stop that would land on him waits until it is clear.
  */
 function stepStopGo(e, player, groundY, slow) {
-  const { moveFrames, stopFrames } = e.def;
-  if (e.anim % (moveFrames + stopFrames) >= moveFrames) return;
+  const { moveFrames, stopFrames, speed, climb, turnWide } = e.def;
+  const touching = e.x < player.x + 24 && e.x + e.w > player.x && e.y < player.y + 24 && e.y + e.h > player.y;
+  if (e.anim % (moveFrames + stopFrames) >= moveFrames && !touching) return;
   const dx = player.x + 12 - (e.x + e.w / 2), dy = player.y + 12 - (e.y + e.h / 2);
-  e.vx = Math.sign(dx) * e.def.speed;
-  e.x += Math.sign(dx) * Math.min(Math.abs(dx), e.def.speed * slow);
-  e.y += Math.sign(dy) * Math.min(Math.abs(dy), e.def.climb * slow);
+  if (!e.dir) e.dir = Math.sign(dx) || -1;
+  const behind = dx !== 0 && Math.sign(dx) !== e.dir;      // he is behind it: it has gone through
+  if (behind && Math.abs(dx) >= turnWide) e.dir = -e.dir;   // far enough past: come about
+  e.vx = e.dir * speed;
+  e.x += e.dir * speed * slow;
+  // Ahead of it, it closes on his height. Past him, it peels away from it, which is the U.
+  if (behind && Math.abs(dx) < turnWide) e.y += (Math.sign(-dy) || -1) * climb * slow;
+  else e.y += Math.sign(dy) * Math.min(Math.abs(dy), climb * slow);
   if (e.y < 8) e.y = 8;
   if (e.y + e.h > groundY - 2) e.y = groundY - 2 - e.h;
 }
