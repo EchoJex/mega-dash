@@ -182,7 +182,7 @@ export const SPRITE_CLASS = {
    * spin or a trail, none of which the collision ever sees.
    */
   shot:     { w: 16, h: 16 },
-  pickup:   { w: 20, h: 20 },   // the owner's 18x18 heart and the 20x20 big EXP orb (10 Nov 2026)
+  pickup:   { w: 18, h: 18 },   // the recommended most for a pickup (owner, 10 Nov 2026): the heart and the big EXP orb fill it
 };
 
 /**

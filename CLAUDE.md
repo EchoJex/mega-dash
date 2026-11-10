@@ -455,7 +455,7 @@ it. That is the sprite-box/collision-box split from rule 4, enforced.
 
 **Sprite grid per class** — `SPRITE_CLASS` in `config/display.js`:
 `minion 16×16` · `player 24×24` (the classic Mega Man size) · `miniboss 32×32` (reserved) ·
-`boss 48×48` · `shot 16×16` · `pickup 20×20` (the owner's 18×18 heart and the big EXP orb, 10 Nov 2026). Elites share the minion grid. These are
+`boss 48×48` · `shot 16×16` · `pickup 18×18` (the recommended most for a pickup, owner 10 Nov 2026; the heart and the big EXP orb fill it). Elites share the minion grid. These are
 ceilings, not collision boxes. The largest projectile the engine draws is an 8px ball and a
 pickup's collision is a flat 7×7 — the rest is room for a glow or a trail.
 

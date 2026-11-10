@@ -347,8 +347,8 @@
   },
   "pickup:etank": {
     "file": "pickup-etank.png",
-    "frameW": 20,
-    "frameH": 20,
+    "frameW": 18,
+    "frameH": 18,
     "anchor": "center",
     "tintable": false,
     "anims": {
@@ -364,8 +364,8 @@
   },
   "pickup:exp": {
     "file": "pickup-exp.png",
-    "frameW": 20,
-    "frameH": 20,
+    "frameW": 18,
+    "frameH": 18,
     "anchor": "center",
     "tintable": false,
     "anims": {
@@ -383,8 +383,8 @@
   },
   "pickup:expBig": {
     "file": "pickup-expBig.png",
-    "frameW": 20,
-    "frameH": 20,
+    "frameW": 18,
+    "frameH": 18,
     "anchor": "center",
     "tintable": false,
     "anims": {
