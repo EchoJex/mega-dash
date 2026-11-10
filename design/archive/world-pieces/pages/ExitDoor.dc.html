@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exit door variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 3100px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">EXIT DOOR</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1100px;">The way out of a boss room, which appears when he dies: 16 by 28, gold to read as an exit, never a threat. Shown at the right wall of a plain room, the Fighting boss's colour; the floor is today's.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #c8ceda; color: #c8ceda;">NOT PICKED YET</span></div>
+</header>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; color: #c8ceda;">TODAY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A gold block in a gold edge.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/7d2b293f3fe6e34b29f016815c711af9.png" alt="Today: a gold block exit door by the right wall of a plain room" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">A</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">GOLD SHUTTER</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">The steel shutter's frame with gold slats and a white lamp.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/d805cd5a0325170d169f9e0972870710.png" alt="Variant A: a gold slatted shutter exit door with a white lamp" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">B</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">ARCH OF LIGHT</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">The stone arch filled with gold light that brightens toward the floor.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/088cd0a5621c5fd62d24df20325e0f52.png" alt="Variant B: a stone arch exit door filled with gold light" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">C</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">GOLD PORTCULLIS</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">The castle gate's stone frame over gold bars, with a white crest.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/890b1567423acc1b59b66a388a198380.png" alt="Variant C: a gold portcullis exit door in a stone frame" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Should the exit match the boss door you pick, in gold, or look like something else entirely (a beam of light, a portal), so it can never be mistaken for another fight?</li>
+<li>Should it hint at where it leads, with the next boss's colour?</li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">To pick: comment on this board, tag Claude, and give a letter, or say "keep today".</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { types: ['TYP', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG', 'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO', 'DRA', 'DAR', 'STE'] };
+  }
+}
+</script>
+</body>
+</html>

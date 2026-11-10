@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Backdrop variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 3100px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">BACKDROP</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1100px;">The far picture behind an area. Today it is one flat colour: the coming boss's primary, heavily darkened, so you can tell who is next. Every variant keeps that colour and is never brighter than today near the ground, so the ground and pit edges stand out at least as well as they do now. Shown on the way to the Electric boss.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #c8ceda; color: #c8ceda;">NOT PICKED YET</span></div>
+</header>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; color: #c8ceda;">TODAY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">One flat colour.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/1379a3d805a557ee4ce4c931cc19289b.png" alt="Today: a flat dark olive backdrop behind the plain ground" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">1</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">FAR SKYLINE</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Distant towers with a few lit windows, darker than the sky. One layer, drawn once.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/e7d9d8cd75637724d1ace013b804a7b3.png" alt="Variant 1: a skyline of dark towers with small lit windows behind the ground" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">2</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">HILLS UNDER A DEEP SKY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">The sky darkens toward the top, row by row, the way SNES backdrops did, over two ridges of hills with a lit crest.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/8d5bbc3f9704af348e212eac348ae9d5.png" alt="Variant 2: a sky darkening upward over two ridges of dark hills" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">3</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STARS AND A FAR MOON</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A night sky: stars above the haze, and a moon in the boss's own colour, high and out of the way.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/8b0928b8182670d65d987c654faa54a2.png" alt="Variant 3: a starry sky with a dim moon in the upper right" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Should each boss's approach get its own skyline (volcanoes before the Fire boss, clouds before the Flying boss), or one shared picture in his colour, as shown here?</li>
+<li>Should the far picture scroll slower than the ground as you run (parallax, the SNES way of showing depth), or stay still?</li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">To pick: comment on this board, tag Claude, and give a number, or say "keep today".</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { types: ['TYP', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG', 'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO', 'DRA', 'DAR', 'STE'] };
+  }
+}
+</script>
+</body>
+</html>

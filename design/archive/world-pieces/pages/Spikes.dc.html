@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spike variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 3100px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">SPIKES</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1100px;">Spike beds: 7 pixels tall, 12 to 24 wide, standing on the floor. They hurt, so they should read first: every variant gives them a near-black outline and a bright lit side. Only the spikes change in these pictures. Shown on the way to the Fire boss, whose dark red backdrop is a hard one for a dark outline.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #c8ceda; color: #c8ceda;">NOT PICKED YET</span></div>
+</header>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; color: #c8ceda;">TODAY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Flat grey teeth, about 5 pixels each.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/7ad90ab20182c2047be4273bce0301b3.png" alt="Today: a bed of flat grey triangular spikes on the ground" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">A</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STEEL CONES</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Polished cones, lit from the left, with a dark base and an outline.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/5e859707f0effdb27ca05f08e41dde36.png" alt="Variant A: polished steel cone spikes with an outline" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">B</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STONE SHARDS</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Shards of uneven height, 5 to 7 pixels, pale on the lit side.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/993b61d7f8b84855b8611663cf2c3111.png" alt="Variant B: uneven pale stone shard spikes" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">C</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">IRON SPEARS</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Thin spears with white tips and gaps between them, on an iron bar.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/0f6bb878e7499b5fab373d5af71740d8.png" alt="Variant C: thin iron spear spikes with white tips on a bar" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Should spikes stay one look everywhere, so danger always looks the same, or take on each boss's colours?</li>
+<li>Should they glint now and then (a few frames drawn ahead), or stay still?</li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">To pick: comment on this board, tag Claude, and give a letter, or say "keep today".</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { types: ['TYP', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG', 'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO', 'DRA', 'DAR', 'STE'] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-05T10:20:00Z"
+ },
+ "title": "MEGA DASH World Pieces",
+ "launch": {
+  "view": "canvas",
+  "page": "batch3"
+ },
+ "pages": [
+  {
+   "id": "round1",
+   "name": "First round"
+  },
+  {
+   "id": "batch1",
+   "name": "Batch 1"
+  },
+  {
+   "id": "batch2",
+   "name": "Batch 2"
+  },
+  {
+   "id": "batch3",
+   "name": "Batch 3"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1400,
+   "h": 2400,
+   "title": "How to pick, and the three materials"
+  },
+  "Backdrop.dc.html": {
+   "x": 1480,
+   "y": 0,
+   "w": 1400,
+   "h": 3100,
+   "title": "Backdrop"
+  },
+  "Ground.dc.html": {
+   "x": 2960,
+   "y": 0,
+   "w": 1400,
+   "h": 3100,
+   "title": "Ground"
+  },
+  "Platforms.dc.html": {
+   "x": 0,
+   "y": 3220,
+   "w": 1400,
+   "h": 3100,
+   "title": "Platforms"
+  },
+  "Spikes.dc.html": {
+   "x": 1480,
+   "y": 3220,
+   "w": 1400,
+   "h": 3100,
+   "title": "Spikes"
+  },
+  "BossDoor.dc.html": {
+   "x": 2960,
+   "y": 3220,
+   "w": 1400,
+   "h": 3100,
+   "title": "Boss door"
+  },
+  "ExitDoor.dc.html": {
+   "x": 4440,
+   "y": 3220,
+   "w": 1400,
+   "h": 3100,
+   "title": "Exit door"
+  },
+  "Typeless.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Typeless",
+   "page": "batch1"
+  },
+  "Fire.dc.html": {
+   "x": 2160,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Fire",
+   "page": "batch1"
+  },
+  "Water.dc.html": {
+   "x": 4320,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Water",
+   "page": "batch1"
+  },
+  "Electric.dc.html": {
+   "x": 0,
+   "y": 4820,
+   "w": 2080,
+   "h": 4700,
+   "title": "Electric",
+   "page": "batch1"
+  },
+  "Grass.dc.html": {
+   "x": 2160,
+   "y": 4820,
+   "w": 2080,
+   "h": 4700,
+   "title": "Grass",
+   "page": "batch1"
+  },
+  "Fighting.dc.html": {
+   "x": 4320,
+   "y": 4820,
+   "w": 2080,
+   "h": 4700,
+   "title": "Fighting",
+   "page": "batch1"
+  },
+  "Ice.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Ice",
+   "page": "batch2"
+  },
+  "Poison.dc.html": {
+   "x": 2160,
+   "y": 0,
+   "w": 2080,
+   "h": 4000,
+   "title": "Poison",
+   "page": "batch2"
+  },
+  "GroundSlice.dc.html": {
+   "x": 4320,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Ground",
+   "page": "batch2"
+  },
+  "Flying.dc.html": {
+   "x": 0,
+   "y": 4820,
+   "w": 2080,
+   "h": 4000,
+   "title": "Flying",
+   "page": "batch2"
+  },
+  "Psychic.dc.html": {
+   "x": 2160,
+   "y": 4820,
+   "w": 2080,
+   "h": 4000,
+   "title": "Psychic",
+   "page": "batch2"
+  },
+  "Bug.dc.html": {
+   "x": 4320,
+   "y": 4820,
+   "w": 2080,
+   "h": 4000,
+   "title": "Bug",
+   "page": "batch2"
+  },
+  "Rock.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 5400,
+   "title": "Rock",
+   "page": "batch3"
+  },
+  "Ghost.dc.html": {
+   "x": 2160,
+   "y": 0,
+   "w": 2080,
+   "h": 5800,
+   "title": "Ghost",
+   "page": "batch3"
+  },
+  "Dragon.dc.html": {
+   "x": 4320,
+   "y": 0,
+   "w": 2080,
+   "h": 4700,
+   "title": "Dragon",
+   "page": "batch3"
+  },
+  "Dark.dc.html": {
+   "x": 0,
+   "y": 5920,
+   "w": 2080,
+   "h": 4700,
+   "title": "Dark",
+   "page": "batch3"
+  },
+  "Steel.dc.html": {
+   "x": 2160,
+   "y": 5920,
+   "w": 2080,
+   "h": 8700,
+   "title": "Steel",
+   "page": "batch3"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Backdrop.dc.html",
+  "Ground.dc.html",
+  "Platforms.dc.html",
+  "Spikes.dc.html",
+  "BossDoor.dc.html",
+  "ExitDoor.dc.html",
+  "Typeless.dc.html",
+  "Fire.dc.html",
+  "Water.dc.html",
+  "Electric.dc.html",
+  "Grass.dc.html",
+  "Fighting.dc.html",
+  "Ice.dc.html",
+  "Poison.dc.html",
+  "GroundSlice.dc.html",
+  "Flying.dc.html",
+  "Psychic.dc.html",
+  "Bug.dc.html",
+  "Rock.dc.html",
+  "Ghost.dc.html",
+  "Dragon.dc.html",
+  "Dark.dc.html",
+  "Steel.dc.html"
+ ],
+ "notes": {
+  "title": {
+   "x": 0,
+   "y": -300,
+   "text": "WORLD PIECES · GROUP 1 OF 3",
+   "kind": "title1",
+   "maxW": 4360
+  },
+  "batch1": {
+   "x": 0,
+   "y": -300,
+   "text": "BATCH 1 · TYPELESS, FIRE, WATER, ELECTRIC, GRASS, FIGHTING · PICKED, AND IN THE GAME",
+   "kind": "title1",
+   "maxW": 6400,
+   "page": "batch1"
+  },
+  "batch2": {
+   "x": 0,
+   "y": -300,
+   "text": "BATCH 2 · ICE AND GROUND PICKED, AND IN THE GAME · POISON, FLYING, PSYCHIC AND BUG PAUSED",
+   "kind": "title1",
+   "maxW": 6400,
+   "page": "batch2"
+  },
+  "batch3": {
+   "x": 0,
+   "y": -300,
+   "text": "BATCH 3 · ROCK, GHOST, DRAGON, DARK, STEEL",
+   "kind": "title1",
+   "maxW": 6400,
+   "page": "batch3"
+  }
+ },
+ "designSystems": [
+  {
+   "title": "MEGA DASH",
+   "namespace": "megadash",
+   "artifact": "https://claude.ai/artifact/HhsA3oC7MAiDw647SUYzsw",
+   "version": "1793841208-81d3",
+   "copiedAt": "2026-11-05T10:20:00Z"
+  }
+ ]
+}

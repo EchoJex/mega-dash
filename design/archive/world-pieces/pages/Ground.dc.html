@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ground variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 3100px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">GROUND</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1100px;">The solid strip you stand on between rooms, 40 pixels deep below the floor line. A pit is only the gap in it, so its lit 2-pixel top edge is what shows where every pit starts; the thumb pads cover its lower part. The strip under each picture is the pit's edge in front of every boss's backdrop. Shown on the way to the Water boss, the hardest case for a dark ground.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #5cadd5; background: #5cadd5; color: #060614;">PICKED · A STEEL PLATES · 5 NOV 2026</span></div>
+</header>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; color: #c8ceda;">TODAY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Flat blue-grey under a pale edge.</p>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: #c8ceda;">Worst contrast against the 17 backdrops: ground 2.20, edge 6.85, the player on it 6.56. The game asks at least 2, 4.5 and 4.5.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/72b7d0f4c5490cf90b1804845efdf399.png" alt="Today: flat blue-grey ground with a pale top edge, and a pit" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">A</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STEEL PLATES</div>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 6px 10px; background: #5cadd5; color: #060614;">PICKED</span></div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">16-pixel riveted panels under a bright steel lip. The plates line up across pits, so the ground reads as one built thing.</p>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: #c8ceda;">Worst contrast: ground 2.22, edge 6.84, the player on it 6.48.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/125d877ad793992630ef3007afc7503e.png" alt="Variant A: riveted steel plate ground under a bright steel lip" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">B</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">BEDROCK</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A sunlit stone lip over dithered strata with pebbles, and a soft shadow hanging under the lip.</p>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: #c8ceda;">Worst contrast: ground 2.25, edge 6.28, the player on it 6.40.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/c3869f7c96e3e5336eacc6af9b36be7d.png" alt="Variant B: sandy stone ground with layered strata and pebbles" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">C</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">CASTLE BRICKS</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">Staggered 16-by-8 bricks under a pale stone lip, each brick a slightly different shade.</p>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: #c8ceda;">Worst contrast: ground 2.74, edge 6.11, the player on it 5.27.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/a040249ae16e9ad94f56cf4480e90e60.png" alt="Variant C: grey castle brick ground under a pale stone lip" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS · ANSWERED</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Should the ground take on the coming boss's colours, or stay one look everywhere, so a pit edge always looks the same?<br><span style="color: #5cadd5;">The owner: "eventually i might have elementally themed terrain, but for now i just want a default that is less ugly than the geometry placeholders."</span></li>
+<li>How busy may the ground be? Plain reads fastest; more detail looks richer but sits right under the player's feet.<br><span style="color: #5cadd5;">The owner: "agree that it shouldnt been too busy. eventually i might better balance touch UI needs vs low ground level height that doesnt compromise on player satisfaction."</span></li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">Picked by the owner on 5 Nov 2026: A, steel plates, one look everywhere for now, no busier than drawn. Both questions answered the same day. It goes into the game together with the rest of the world pieces, once they are all picked. Later that day the owner's new plan gave every slice its own world pieces, and steel plates became the Steel slice's.</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { types: ['TYP', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG', 'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO', 'DRA', 'DAR', 'STE'] };
+  }
+}
+</script>
+</body>
+</html>

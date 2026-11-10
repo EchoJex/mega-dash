@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boss door variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 3100px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">BOSS DOOR</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1100px;">The door into a boss room, 16 by 28, standing on the floor. When it will open it has the game's pulsing gold edge, kept in every variant. When it will not answer yet (it appeared under you, and you have to step off first) it is a grey ghost: the left door in each picture. Shown on the way to the Typeless boss.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #c8ceda; color: #c8ceda;">NOT PICKED YET</span></div>
+</header>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; color: #c8ceda;">TODAY</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A cyan block in a gold edge; a grey block when it will not open yet.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/8a272284eed5054bc0f499bc861c2d92.png" alt="Today: a grey block door that will not open yet beside a cyan block door with a gold edge" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">A</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STEEL SHUTTER</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A slatted shutter in a steel frame, with a cyan lamp above it.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/8e309227a674e73ad52fcb414a1bf68e.png" alt="Variant A: a steel shutter door with a cyan lamp, beside its grey ghost" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">B</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">STONE ARCH</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A round-topped arch over a dark doorway, with a glowing cyan rune inside.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/050f09305e1788943851c458a151c26f.png" alt="Variant B: a stone arch door with a glowing cyan rune, beside its grey ghost" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: grid; grid-template-columns: 300px 960px; gap: 32px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 56px; line-height: 64px; color: #5cadd5;">C</div>
+<div style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px;">CASTLE GATE</div>
+<p style="margin: 0; font-size: 17px; line-height: 26px; color: #c8ceda;">A stone frame and lintel over an iron portcullis, with a cyan crest above it.</p>
+</div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;">
+<img src="../assets/268a99a6f35cbb99626b6a0712f9e4a9.png" alt="Variant C: a castle gate door with an iron portcullis and a cyan crest, beside its grey ghost" style="width: 960px; height: 536px; image-rendering: pixelated; display: block;">
+<div style="display: grid; grid-template-columns: repeat(17, 56px); padding-left: 4px; font-size: 11px; line-height: 14px; color: #c8ceda;"><sc-for list="{{types}}" as="t" hint-placeholder-count="17"><span>{{t}}</span></sc-for></div>
+</figure>
+</section>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Should the door show whose room it is before you walk in (his colours, or a mark of his), or look the same for every boss?</li>
+<li>Keep the gold pulsing edge as the "this will open" sign, or let the door's own light pulse instead?</li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">To pick: comment on this board, tag Claude, and give a letter, or say "keep today".</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { types: ['TYP', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG', 'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO', 'DRA', 'DAR', 'STE'] };
+  }
+}
+</script>
+</body>
+</html>
