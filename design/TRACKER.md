@@ -1039,6 +1039,7 @@ struck through, tells you what it fixed, then strikes them through
 | build | status | bug |
 |---|---|---|
 | — | `[ready]` | ~~In playtest mode I am unable to equip the newly unlocked weapon.~~ |
+| 1240 (main) | `[wip]` |  |
 
 ## Archived bugs
 
