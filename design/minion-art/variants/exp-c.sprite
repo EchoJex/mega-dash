@@ -5,7 +5,7 @@ palette   1 #F5D328 gold
 palette   2 #B08A10 gold shade
 palette   3 #FFF4A8 gold light
 palette   4 #7A5E08 glow
-note      Variant C, GLOW ORB: a round gold orb in a soft pulsing halo. Drawn by Claude at the owner's request, 2026-11-10.
+note      Variant C, GLOW ORB, PICKED (owner, 10 Nov 2026): a round gold orb in a soft pulsing halo. Drawn by Claude at the owner's request, 2026-11-10.
 
 [idle 1] status=draft hold=15
 ................
