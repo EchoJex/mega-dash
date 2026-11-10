@@ -494,7 +494,7 @@ export default class GameScene extends Phaser.Scene {
     this.areaIndex = 0;
     setCrashContext({ seed: this.seed });
     this.world = Terrain.makeWorld(80, GROUND_Y, null, areaRng(this.seed, 0));
-    this.cam = { x: 0 };
+    this.cam = { x: 0, y: 0 };
     this.player = {
       x: 80, y: GROUND_Y - 24, vx: 0, vy: 0, facing: 1,
       onGround: true, sliding: false, slideTimer: 0,
@@ -561,7 +561,7 @@ export default class GameScene extends Phaser.Scene {
     this.world = Terrain.makeWorld(
       80, GROUND_Y, this.upcoming?.id, areaRng(this.seed, this.areaIndex),
     );
-    this.cam = { x: 0 };
+    this.cam = { x: 0, y: 0 };
     this.player.x = 80;
     this.player.y = GROUND_Y - 24;
     this.player.vx = 0; this.player.vy = 0;
@@ -578,7 +578,7 @@ export default class GameScene extends Phaser.Scene {
     this.areaFrame = 0;
     this.music(TRACK.stage(this.upcoming.id));
     Terrain.generate(this.world, 0, this.viewW);
-    if (forceBoss) this.placeDoorAhead();
+    if (forceBoss && !this.world.climb) this.placeDoorAhead();   // a tower's door is already at its top
   }
 
   /**
@@ -692,7 +692,7 @@ export default class GameScene extends Phaser.Scene {
       this.run.pendingLoadout = null;
       this.run.freshWeapon = null;
       this.arena = Arena.makeArena(def, layer, this.viewW, GROUND_Y);
-      this.cam = { x: 0 };
+      this.cam = { x: 0, y: 0 };
       this.minions = [];   // nothing follows you in
       this.bullets = [];
       this.pickups = [];
@@ -890,7 +890,9 @@ export default class GameScene extends Phaser.Scene {
         fallCap: r.glideFall,
         airControl: r.airControl,
       }, GROUND_Y);
-      if (!this.arena) {
+      if (this.world.climb && !this.arena) {
+        Phys.stepClimbCamera(this.cam, p, this.viewW, this.world, VIEW_H);   // a tower: both ways, and up and down
+      } else if (!this.arena) {
         this.cam.x = Phys.stepCamera(this.cam, p, this.viewW);
         if (p.x < this.cam.x) p.x = this.cam.x; // never walk off the left edge
       }
@@ -1124,6 +1126,7 @@ export default class GameScene extends Phaser.Scene {
       // The player's own status bag, for a weapon that clears it (Eclipse).
       statusBag: this.status,
       floorY: GROUND_Y,
+      camY: this.cam.y,   // how far a climb has raised the view; 0 everywhere else
       landVy: this.landVy || 0,
       equipped,
       fx: this.fx,
@@ -2016,7 +2019,7 @@ export default class GameScene extends Phaser.Scene {
     this.bullets = this.bullets.filter(
       (b) => b.life > 0
         && b.x > this.cam.x - 40 && b.x < this.cam.x + this.viewW + 40
-        && b.y > -200 && b.y < VIEW_H + 120,
+        && b.y > this.cam.y - 200 && b.y < this.cam.y + VIEW_H + 120,
     );
   }
 
@@ -2040,7 +2043,7 @@ export default class GameScene extends Phaser.Scene {
       // elapsed time — camping does not slow this down.
       this.spawnTimer = Minions.spawnIntervalFrames(Minions.difficultyStep(r.frame));
       if (this.minions.length < FEEL.maxMinions) {
-        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y, this.upcoming);
+        const m = Minions.trySpawn(this.world, this.cam.x, this.viewW, r.frame, GROUND_Y, this.upcoming, this.cam.y || 0);
         if (m) this.minions.push(m);
       }
     }
@@ -2082,7 +2085,7 @@ export default class GameScene extends Phaser.Scene {
         this.hurt(e.x + e.w / 2);
       }
     }
-    this.minions = Minions.pruneMinions(this.minions, this.arena ? -1e9 : this.cam.x);
+    this.minions = Minions.pruneMinions(this.minions, this.arena ? -1e9 : this.cam.x, !this.arena && this.world.climb ? this.cam.y : null);
   }
 
   killMinion(e) {
@@ -2922,6 +2925,16 @@ export default class GameScene extends Phaser.Scene {
   draw() {
     const cam = this.cam.x, r = this.run;
     const L = this.layers;
+    /**
+     * A CLIMB RAISES THE WHOLE VIEW. The game's own camera scrolls up by `cam.y`, so everything drawn at
+     * its height in the world moves with it and nothing else has to know; what belongs to the screen
+     * rather than the world (the background, an area's backdrop) is raised by the same amount, so it
+     * stays put. (A scroll factor of 0 would be the usual way, but under the render-density zoom it
+     * pins to the wrong corner.) Whole pixels, like the shake. Everywhere but a climb `cam.y` is 0.
+     */
+    const camY = Math.round(this.cam.y || 0);
+    this.cameras.main.centerOn(this.viewW / 2, VIEW_H / 2 + camY);   // as fitCamera centres it, raised
+    L.bg.root.y = camY;
     for (const l of Object.values(L)) l.begin();
 
     // Screen shake offsets the WORLD, never the HUD. Whole pixels only — the

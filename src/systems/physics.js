@@ -73,6 +73,18 @@ export function stepPlayer(p, world, input, groundY) {
     if (dir !== 0) p.facing = input.moveDir;
   }
 
+  // ── Stairs: walking into a step a few pixels up climbs it ─────────
+  // Only platforms marked `step` (a climb's staircases), so nothing that was
+  // already in the game changes. A step up to 9 pixels above the feet is walked
+  // onto, the way stairs work in any platformer; anything taller still needs a jump.
+  if (p.onGround && p.vy >= 0) {
+    const b = hitboxOf(p), feet = b.y + b.h;
+    for (const pl of world.platforms) {
+      if (!pl.step || b.x + b.w <= pl.x || b.x >= pl.x + pl.w) continue;
+      if (pl.y < feet && pl.y >= feet - 9) { p.y -= feet - pl.y; break; }
+    }
+  }
+
   // ── Slide timer ────────────────────────────────────────────────────
   if (p.sliding && --p.slideTimer <= 0) p.sliding = false;
 
@@ -227,7 +239,14 @@ export function stepPlayer(p, world, input, groundY) {
     resolvePitWalls(p, world, groundY, input.cliffGrab ?? FEEL.cliffGrabDepth[0]);
   }
 
-  if (p.y < 0) { p.y = 0; p.vy = 0; }
+  // The top of the screen is a ceiling; a climb's ceiling is above its top walkway, and its sides are walls.
+  const ceil = world.climb ? world.climb.top : 0;
+  if (p.y < ceil) { p.y = ceil; p.vy = 0; }
+  if (world.climb) {
+    const b = hitboxOf(p), lo = 14, hi = world.climb.width - 14;
+    if (b.x < lo) { p.x += lo - b.x; p.vx = 0; }
+    else if (b.x + b.w > hi) { p.x -= b.x + b.w - hi; p.vx = 0; }
+  }
 }
 
 /**
@@ -326,6 +345,24 @@ export function cancelSlide(p) {
  * Camera: follows once the player passes the deadzone, and never scrolls back
  * left. Walking backwards is allowed but does not rewind the world.
  */
+/**
+ * A climb's camera follows both ways along the tower's width and up and down, but never back below the
+ * highest walkway the player has stood on (the owner, 9 Nov 2026: it "follows him down"), so after a fall
+ * he always sees where he lands. `cam.y` is how far the view is raised; 0 is the ordinary screen.
+ */
+export function stepClimbCamera(cam, p, viewW, world, viewH) {
+  const c = world.climb;
+  if (p.onGround) for (const y of c.walks) {
+    const b = hitboxOf(p);
+    if (Math.abs(b.y + b.h - y) < 2 && y < c.reached) c.reached = y;
+  }
+  const tx = Math.max(0, Math.min(c.width - viewW, p.x + 12 - viewW / 2));
+  const ty = Math.max(c.top - world.groundY, Math.min(c.reached - world.groundY, p.y + 12 - viewH * 0.55));
+  cam.x += (tx - cam.x) * FEEL.camLerp;
+  cam.y = (cam.y || 0) + (ty - (cam.y || 0)) * FEEL.camLerp;
+  return cam;
+}
+
 export function stepCamera(cam, p, viewW) {
   const target = p.x - viewW * FEEL.camDeadzone;
   if (target > cam.x) cam.x += (target - cam.x) * FEEL.camLerp;

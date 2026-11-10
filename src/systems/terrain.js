@@ -161,7 +161,84 @@ const NEUTRAL = THEMES.proto;
  */
 const terrainShape = (bossId) => THEMES[bossId] || NEUTRAL;
 
+/**
+ * AREAS THAT CLIMB — the first is Ghost's grave tower, and the owner means to add verticality to
+ * several levels (9 Nov 2026: "i will soon be adding verticality to several levels, so develop the
+ * code to support it now"). A boss listed here gets a tower instead of the endless stream.
+ *
+ * Ghost's, in the owner's words (7 Nov 2026): "This level will only be 3 full screen widths wide.
+ * beyond this 3 screen wide scrolling, all other platforming and scrolling will be done in the
+ * vertical as the player ascends this grave tower ... periodically there will be a staircase that, at
+ * the top, is a one way passable platform that spans the whole level width as checkpoints. all other
+ * platforms should have randomized widths no narrower than the current standard platform"; then
+ * (8 Nov 2026) "1a and b. The idea is that these checkpoint-like contiguous platforms will prevent
+ * extreme fall heights. 2 the ghost boss will be in the upper right"; and (9 Nov 2026) five walkways,
+ * the camera following a fall back down.
+ *
+ * `width` is fixed in world pixels, never the screen's: three of the widest screens (480), so the
+ * tower is the same level on every phone.
+ */
+export const CLIMBS = {
+  wraith: { width: 1440, walkways: 5 },
+};
+export const CLIMB_TIER = 40, CLIMB_TIERS = 7, CLIMB_WALL = 14, STAIR_STEPS = 10, STAIR_STEP = 8, PLATFORM_MIN = 44;
+
+/**
+ * A tower: a floor the whole width, walls at each side, tier on tier of one-way platforms climbing in a
+ * zigzag, and every seven tiers a staircase up to a walkway the whole width (a checkpoint). Every
+ * platform is one-way, so a missed jump drops onto whatever is below and a walkway catches any fall.
+ * The boss door stands at the right end of the top walkway. Heights are counted up from the floor.
+ */
+export function makeClimb(spec, groundY, bossId, rng = Math.random) {
+  const W = spec.width, platforms = [], route = [];
+  const at = (h) => groundY - h;
+  let x = 80, dir = 1;
+  const step = () => {
+    let nx = x + dir * rand(rng, 56, 86);
+    if (nx > W - 100 || nx < 100) { dir = -dir; nx = x + dir * rand(rng, 56, 86); }
+    return nx;
+  };
+  const top = spec.walkways * CLIMB_TIERS * CLIMB_TIER;
+  for (let base = 0; base < top; base += CLIMB_TIERS * CLIMB_TIER) {
+    for (let k = 1; k < CLIMB_TIERS - 1; k++) {   // tiers 1 to 5; tier 5's platform is the stair's foot
+      const h = base + k * CLIMB_TIER, nx = step();
+      const w = k === CLIMB_TIERS - 2 ? 64 : Math.round(rand(rng, PLATFORM_MIN, 88));
+      platforms.push({ x: nx - w / 2, y: at(h), w, h: 5 });
+      route.push([nx, h]);
+      x = nx;
+      if (k === CLIMB_TIERS - 2) {   // the staircase: ten steps of eight, up from the platform's far end to the walkway
+        const run = STAIR_STEP * STAIR_STEPS, room = (d) => (d > 0 ? nx + 32 + run < W - CLIMB_WALL - 8 : nx - 32 - run > CLIMB_WALL + 8);
+        if (!room(dir)) dir = -dir;   // no room ahead: the stair turns back over the platform's other end
+        for (let s = 0; s < STAIR_STEPS; s++) {
+          const sx = dir > 0 ? nx + 32 + STAIR_STEP * s : nx - 32 - STAIR_STEP * (s + 1);
+          platforms.push({ x: sx, y: at(h + (s + 1) * STAIR_STEP), w: STAIR_STEP + 2, h: 5, step: true });
+        }
+        x = nx + dir * (32 + run);
+      }
+    }
+    const wh = base + CLIMB_TIERS * CLIMB_TIER;
+    platforms.push({ x: CLIMB_WALL, y: at(wh), w: W - 2 * CLIMB_WALL, h: 5, walk: true });
+    route.push([x, wh]);
+  }
+  return {
+    groundSpans: [{ x1: 0, x2: W }],
+    spikes: [],
+    platforms,
+    doors: [{ x: W - CLIMB_WALL - 40, y: at(top), w: 16, h: 28, alive: true }],
+    genX: Infinity,
+    groundY,
+    lastWasPit: false,
+    theme: terrainShape(bossId),
+    themeId: bossId,
+    rng,
+    // What only a climb has: its width, its walkways' heights (as screen y), the highest the
+    // player has stood on (the camera never goes back below it), and the route the tests walk.
+    climb: { width: W, walks: platforms.filter((p) => p.walk).map((p) => p.y), reached: groundY, top: at(top) - 200, route },
+  };
+}
+
 export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
+  if (CLIMBS[bossId]) return makeClimb(CLIMBS[bossId], groundY, bossId, rng);
   return {
     groundSpans: [{ x1: startX - 240, x2: startX + 180 }],
     spikes: [],
@@ -179,6 +256,7 @@ export function makeWorld(startX, groundY, bossId = null, rng = Math.random) {
 }
 
 export function generate(world, camX, viewW) {
+  if (world.climb) return;   // a tower is built whole
   const target = camX + viewW + LOOKAHEAD;
   const pitMax = maxPitWidth();
   const platMax = maxPlatformHeight();
@@ -236,6 +314,7 @@ export function generate(world, camX, viewW) {
 }
 
 export function prune(world, camX) {
+  if (world.climb) return;
   const behind = camX - 120;
   world.groundSpans = world.groundSpans.filter((s) => s.x2 > behind);
   world.spikes = world.spikes.filter((s) => s.x + s.w > behind);
@@ -258,7 +337,7 @@ export function doorProgress(world, elapsedFrames, doorMult = 1) {
 
 export function maybeSpawnDoor(world, camX, viewW, elapsedFrames, doorMult = 1) {
   const every = Math.max(1, Math.round(FEEL.doorIntervalSeconds * 60 * doorMult));
-  if (world.doors.length || elapsedFrames === 0 || elapsedFrames % every !== 0) return;
+  if (world.climb || world.doors.length || elapsedFrames === 0 || elapsedFrames % every !== 0) return;
   const x = camX + viewW + 40;
   world.groundSpans.push({ x1: x - 30, x2: x + 46 });
   world.doors.push({ x, y: world.groundY, w: 16, h: 28, alive: true });

@@ -42,16 +42,18 @@ const hpFor = (base, step) => Math.max(1, Math.round(base * (1 + step * FEEL.ram
  * a ground spawn needs actual ground, and refusing to spawn is better than
  * dropping a walker into a pit for the player to never see.
  */
-export function trySpawn(world, camX, viewW, frames, groundY, boss = null) {
+export function trySpawn(world, camX, viewW, frames, groundY, boss = null, camY = 0) {
   const step = difficultyStep(frames);
-  const ground = Math.random() < 0.6;
+  // A climb has no ground to walk along but its floor, so only fliers come, from either side of the
+  // view at the height the player is climbing (ponytail: walkers on platforms when a level needs them).
+  const ground = !world.climb && Math.random() < 0.6;
   const def = minionFor(MINIONS.find((m) => (ground ? m.kind === 'ground' : m.kind === 'air')), boss);
   // An elite is the same silhouette at the same size, wearing a gold rim — not
   // a bigger minion. It shares one piece of art with its base form.
   const elite = Math.random() < eliteChance(step);
   const w = def.w, h = def.h;
 
-  let x = camX + viewW + 16;
+  let x = world.climb && Math.random() < 0.5 ? camX - 16 - w : camX + viewW + 16;
   let y;
   if (def.kind === 'ground') {
     // walk right looking for footing; give up rather than spawn over a pit
@@ -63,7 +65,7 @@ export function trySpawn(world, camX, viewW, frames, groundY, boss = null) {
     if (!found) return null;
     y = groundY - h;
   } else {
-    y = 40 + Math.random() * (groundY - 80);
+    y = camY + 40 + Math.random() * (groundY - 80);
   }
 
   return makeMinion(def, x, y, step, elite);
@@ -181,6 +183,8 @@ function stepAir(e, player, groundY, held, slow) {
 }
 
 /** Drop anything well behind the camera or already dead. */
-export function pruneMinions(list, camX) {
+export function pruneMinions(list, camX, camY = null) {
+  // A climb's view moves both ways, so there a minion goes once it is well off any side of it.
+  if (camY !== null) return list.filter((e) => e.hp > 0 && Math.abs(e.x - camX) < 900 && Math.abs(e.y - camY) < 500);
   return list.filter((e) => e.hp > 0 && e.x + e.w > camX - 80);
 }

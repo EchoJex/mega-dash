@@ -2702,7 +2702,7 @@ function stepStones(st, L, lv, ctx) {
     if (s.y + n >= fl && s.vy > 0) { s.y = fl - n; s.vy = -s.vy; bounced = true; }
     if (a && s.x < a.x0) { s.x = a.x0; s.vx = Math.abs(s.vx); bounced = true; }
     if (a && s.x + n > a.x1) { s.x = a.x1 - n; s.vx = -Math.abs(s.vx); bounced = true; }
-    if (s.y < (a ? a.ceilY : -40) && s.vy < 0) { s.vy = -s.vy; bounced = true; }
+    if (s.y < (a ? a.ceilY : (ctx.camY || 0) - 40) && s.vy < 0) { s.vy = -s.vy; bounced = true; }
     if (bounced) {
       s.vx *= L.stoneBounce * 1.6; s.vy *= L.stoneBounce * 1.6;
       if (++s.bounces > 4 || Math.hypot(s.vx, s.vy) < 0.8) s.life = 0;

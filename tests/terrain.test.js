@@ -15,6 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   makeWorld, generate, jumpReach, maxPitWidth, jumpRise, maxPlatformHeight, THEMES,
+  CLIMBS, CLIMB_TIER, CLIMB_TIERS, PLATFORM_MIN,
 } from '../src/systems/terrain.js';
 import { makeRng, areaRng, seedFromLocation } from '../src/systems/rng.js';
 import { BOSSES } from '../src/data/bosses.js';
@@ -80,7 +81,7 @@ test('no generated platform is higher than a jump can reach', () => {
 
   // Every theme, because `high` multiplies the band and the cap is what stops
   // an airy theme from pushing a shelf out of reach.
-  for (const id of Object.keys(THEMES)) {
+  for (const id of Object.keys(THEMES).filter((k) => !CLIMBS[k])) {   // a tower is checked below
     const { world } = survey(30000, id, 7);
     assert.ok(world.platforms.length > 20,
       `${id}: expected plenty of platforms to test, got ${world.platforms.length}`);
@@ -127,7 +128,7 @@ test('the generator keeps producing ground and never stalls', () => {
  */
 test('EVERY boss theme still produces a crossable world, across many seeds', () => {
   const SEEDS = 25;
-  for (const id of Object.keys(THEMES)) {
+  for (const id of Object.keys(THEMES).filter((k) => !CLIMBS[k])) {
     let total = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
       const { gaps } = survey(20000, id, seed);
@@ -229,4 +230,37 @@ test('a wider jump immediately permits wider pits', () => {
     FEEL.jumpVelocity = jv;
   }
   assert.equal(maxPitWidth(), base, 'cap must return to its original value');
+});
+
+/**
+ * A TOWER CAN BE CLIMBED. Every step of its route is a jump the player can make (no higher than a
+ * platform cap, no wider gap than a pit cap), every stair step can be walked up, every walkway spans
+ * the tower, and the boss door stands at the right end of the top one: the owner's words are in
+ * terrain.js above CLIMBS.
+ */
+test('every climb is climbable, with its walkways and its door where the owner put them', () => {
+  for (const [id, spec] of Object.entries(CLIMBS)) for (let seed = 1; seed <= 20; seed++) {
+    let st = seed; const rng = () => ((st = (st * 16807) % 2147483647) / 2147483647);
+    const w = makeWorld(80, GROUND_Y, id, rng), c = w.climb;
+    assert.equal(c.walks.length, spec.walkways, `${id}: walkways`);
+    for (const p of w.platforms) {
+      assert.ok(p.x >= 14 && p.x + p.w <= spec.width - 14, `${id} seed ${seed}: a platform pokes through a wall`);
+      if (!p.walk && !p.step) assert.ok(p.w >= PLATFORM_MIN, `${id}: a platform narrower than the standard`);
+      if (p.walk) assert.ok(p.w >= spec.width - 28, `${id}: a walkway does not span the tower`);
+    }
+    const plats = w.platforms.filter((p) => !p.walk && !p.step).sort((a, b) => b.y - a.y);
+    let from = { x1: 0, x2: spec.width, y: GROUND_Y };   // the floor
+    for (const p of plats) {
+      const rise = from.y - p.y, gap = Math.max(0, p.x - from.x2, from.x1 - (p.x + p.w));
+      assert.ok(rise <= maxPlatformHeight() + 0.01, `${id} seed ${seed}: a ${rise}px rise`);
+      assert.ok(gap <= maxPitWidth() + 0.01, `${id} seed ${seed}: a ${gap.toFixed(1)}px gap`);
+      const walk = c.walks.find((y) => y < p.y && y >= p.y - 2 * CLIMB_TIER - 1);   // its stair's walkway
+      from = walk !== undefined && plats.indexOf(p) % (CLIMB_TIERS - 2) === CLIMB_TIERS - 3 ? { x1: 14, x2: spec.width - 14, y: walk } : { x1: p.x, x2: p.x + p.w, y: p.y };
+    }
+    const steps = w.platforms.filter((p) => p.step).sort((a, b) => b.y - a.y);
+    for (let i = 1; i < steps.length; i++) if (steps[i - 1].y - steps[i].y < 2 * CLIMB_TIER) assert.ok(steps[i - 1].y - steps[i].y <= 9, `${id}: a stair step too tall to walk up`);
+    const d = w.doors[0], top = Math.min(...c.walks);
+    assert.equal(d.y, top, `${id}: the door is not on the top walkway`);
+    assert.ok(d.x > spec.width - 100, `${id}: the door is not at the right end`);
+  }
 });

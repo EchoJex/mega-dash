@@ -109,6 +109,12 @@ export function stepPickups(list, player, playerBox, groundY, world, magnetMult 
         p.vy = 0;
         slideOffSpikes(p, world);
       }
+      // In a climb a drop rests on the platform it falls onto, or a kill high up would drop its EXP
+      // all the way to the floor. Only there, so the stream's drops behave as they always have.
+      if (world.climb && p.vy > 0) for (const pl of world.platforms) {
+        if (cx < pl.x || cx > pl.x + pl.w) continue;
+        if (p.y + p.h >= pl.y && p.y + p.h - p.vy <= pl.y + 1) { p.y = pl.y - p.h; p.vy = 0; break; }
+      }
     }
 
     if (overlaps(playerBox, { x: p.x, y: p.y, w: p.w, h: p.h })) {
