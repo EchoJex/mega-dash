@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Simon's Whip at game speed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+img{image-rendering:pixelated}
+</style>
+</helmet>
+<div style="width: 960px; height: 2160px; box-sizing: border-box; padding: 32px 38px; display: flex; flex-direction: column; gap: 16px; background: #0A0A12; color: #E8ECF4; font-family: system-ui, sans-serif">
+<h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; color: #FFFFFF">SIMON'S WHIP · every clip at game speed</h1>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #C3CAD7; max-width: 860px">60 steps a second, each picture for its hold (5 · 5 · 10), then 40 steps at rest (standing rows: his idle with the whip coiled at his hip; sliding rows: his own slide picture). Left column facing right, right column facing left (mirrored about his hand). <span style="color: #FFB028">Orange box</span>: the overhead swing's light hit. <span style="color: #FF5A4A">Red box</span>: the tip, the main hit. <span style="color: #78C8BE">Teal box</span>: a minion standing against his front. <span style="color: #F5D328">Yellow dot</span>: his hand, the pivot.</p>
+<img src="../assets/48ad17bad64eac35932978b054c6ee08.png" alt="Every Simon's Whip clip playing at 60 steps a second, both facings, with hit areas" style="width: 884px; height: 2000px; display: block">
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":2160}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

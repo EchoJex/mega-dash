@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Thorn Man moves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("ds/mega-dash/fonts/MegaDash5x7.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 960px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">THORN MAN · EVERY MOVE · LOOK 04, SPRING ARM 05</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">EACH CLIP PLAYS AT GAME SPEED, EVERY FRAME FOR ITS HOLD IN STEPS, BESIDE THE PLAYER AT TRUE SIZE. THE BLUE BOXES ARE THE HIT BOXES. THE RED CROSS IS A SPAWN POINT, SHOWN ON THE FRAME IT FIRES: WHERE THE VINES LEAVE IN AIM, WHERE THE KUNAI LEAVE IN THROW. CLIPS THAT PLAY ONCE IN THE GAME LOOP HERE SO YOU CAN WATCH THEM.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ togglePause }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ pauseLabel }}</button>
+<button type="button" onClick="{{ toggleBox }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ boxLabel }}</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="9">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="276" height="192" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 276px; height: 192px;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #f5d328;">{{ c.title }}</p>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":960}}'>
+// ── the same pixel painter as the idle board ──
+function grid(w, h, maxY) { return { w: w, h: h, maxY: maxY == null ? h - 1 : maxY, c: new Array(w * h).fill(null) }; }
+function get(G, x, y) { return x < 0 || y < 0 || x >= G.w || y >= G.h ? null : G.c[y * G.w + x]; }
+function put(G, x, y, m, g, ov, l) {
+  if (x < 0 || y < 0 || x >= G.w || y > G.maxY) return;
+  var p = G.c[y * G.w + x];
+  if (ov) { if (p) G.c[y * G.w + x] = { m: m, g: p.g, l: p.l }; return; }
+  G.c[y * G.w + x] = { m: m, g: g, l: l || 0 };
+}
+function lit(ox, oy) { return -(0.55 * ox + 0.85 * oy); }
+function box(x0, y0, x1, y1, fn) { for (var y = Math.floor(y0); y <= Math.ceil(y1); y++) for (var x = Math.floor(x0); x <= Math.ceil(x1); x++) fn(x, y, x + 0.5, y + 0.5); }
+function rect(G, x, y, w, h, m, g, ov) { for (var j = y; j < y + h; j++) for (var i = x; i < x + w; i++) put(G, i, j, m, g, ov); }
+function ell(G, cx, cy, rx, ry, m, g, ov) {
+  box(cx - rx, cy - ry, cx + rx, cy + ry, function (x, y, px, py) { var a = (px - cx) / rx, b = (py - cy) / ry; if (a * a + b * b <= 1) put(G, x, y, m, g, ov, lit(a, b)); });
+}
+function cap(G, x0, y0, x1, y1, r0, r1, m, g, ov) {
+  var dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, R = Math.max(r0, r1);
+  box(Math.min(x0, x1) - R, Math.min(y0, y1) - R, Math.max(x0, x1) + R, Math.max(y0, y1) + R, function (x, y, px, py) {
+    var t = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / L2)), ox = px - x0 - dx * t, oy = py - y0 - dy * t, r = r0 + (r1 - r0) * t;
+    if (Math.hypot(ox, oy) <= r) put(G, x, y, m, g, ov, lit(ox / r, oy / r));
+  });
+}
+function leaf(G, x0, y0, ang, len, wid, m, g, rib) {
+  var c = Math.cos(ang), s = Math.sin(ang);
+  box(x0 - len, y0 - len, x0 + len, y0 + len, function (x, y, px, py) {
+    var dx = px - x0, dy = py - y0, u = dx * c + dy * s, v = -dx * s + dy * c;
+    if (u < 0 || u > len) return;
+    var w = wid * Math.sin(Math.PI * Math.pow(u / len, 0.8));
+    if (Math.abs(v) > w + 0.25) return;
+    put(G, x, y, rib && Math.abs(v) < 0.55 && u > 1 && u < len - 1.5 ? rib : m, g, false, v < 0 ? 0.5 : -0.4);
+  });
+}
+function star(G, cx, cy, R, rot, g) {
+  box(cx - R, cy - R, cx + R, cy + R, function (x, y, px, py) {
+    var dx = px - cx, dy = py - cy, d = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
+    var q = ((th - rot) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2) / (Math.PI / 2);
+    var f = 0.34 + 0.66 * Math.pow(1 - q, 1.5);
+    if (d > R * f + 0.4 || d <= 1.5) return;
+    var side = q < 0.3 ? 0.7 : -0.5;
+    put(G, x, y, d > 2.2 && d < 3.1 ? 'C' : 'S', g, false, side + lit(dx / R, dy / R) * 0.5);
+  });
+}
+function tail(G, x0, y0, len, drop, ph, m, g) {
+  for (var i = 0; i <= len * 3; i++) {
+    var t = i / (len * 3), r = 1.5 - 0.8 * t;
+    ell(G, x0 - t * len, y0 + t * drop + 1.4 * t * Math.sin(t * 6 - ph), r, r, m, g);
+  }
+}
+var N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function shade(G, R, F) {
+  var out = [];
+  for (var y = 0; y < G.h; y++) {
+    var row = '';
+    for (var x = 0; x < G.w; x++) {
+      var p = get(G, x, y);
+      if (!p) { row += N4.some(function (d) { return get(G, x + d[0], y + d[1]); }) ? '0' : '.'; continue; }
+      if (N4.some(function (d) { var q = get(G, x + d[0], y + d[1]); return q && q.g > p.g; })) { row += '0'; continue; }
+      if (F[p.m]) { row += F[p.m]; continue; }
+      var same = function (a, b) { var q = get(G, x + a, y + b); return q && q.m === p.m && q.g === p.g; };
+      var l = 2 - p.l * 1.7;
+      if (!same(1, 0) || !same(0, 1)) l += 0.6;
+      if (!same(-1, 0) || !same(0, -1)) l -= 0.4;
+      if (p.g < 2) l += 0.9;
+      row += R[p.m][Math.max(0, Math.min(4, Math.round(l)))];
+    }
+    out.push(row);
+  }
+  return out;
+}
+var PAL = { '0': '#0A0A12', '1': '#B6F27A', '2': '#5ED04A', '3': '#2AAB1C', '4': '#1C7A16', '5': '#0F4A12',
+  '6': '#8A6448', '7': '#5C4033', '8': '#3A281F', '9': '#EEF0F4', 'a': '#A8ACB4', 'b': '#6E7480', 'c': '#3E4452',
+  'd': '#FFF27A', 'e': '#1A1418' };
+var RAMP = { D: '23455', V: '12234', L: '11223', G: '12345', B: '66788', S: '99abc' };
+var FIX = { K: 'e', E: 'd', C: 'c' };
+
+function leg(G, hip, knee, foot, pants, wrap, g) {
+  cap(G, hip[0], hip[1], knee[0], knee[1], 3, 2.4, pants, g);
+  cap(G, knee[0], knee[1], foot[0], foot[1] - 2, 2.3, 1.5, pants, g);
+  var wx = knee[0] + (foot[0] - knee[0]) * 0.4, wy = knee[1] + (foot[1] - 2 - knee[1]) * 0.4;
+  cap(G, wx, wy, foot[0], foot[1] - 2, 2.4, 1.7, wrap, g, 1);
+  ell(G, foot[0] + 1, foot[1] - 0.5, 2.9, 1.6, 'K', g);
+  put(G, foot[0] + 2, foot[1] - 1, 'D', g, 1);
+}
+function pouch(G, hip, knee, g, side) {
+  var mx = Math.round(hip[0] + (knee[0] - hip[0]) * 0.5), my = Math.round(hip[1] + (knee[1] - hip[1]) * 0.5);
+  rect(G, mx - 3, my + 1, 6, 1, 'K', 0, 1);
+  var x = mx + (side > 0 ? 1 : -3), y = my - 1;
+  rect(G, x, y, 3, 4, 'B', g);
+  rect(G, x, y + 1, 3, 1, 'K', 0, 1);
+  put(G, x + 1, y + 1, 'S', 0, 1);
+}
+// spring arm 05: a thick vine spring. Its loop count is fixed (3 near, 5 far), so it stretches when he reaches
+var ARM = { m: 'V', R: 2.9, w: 1.1 };
+function spring(G, a, b, front, N) {
+  var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  var gF = front ? 4.2 : 1.6, gB = front ? 3.5 : 1.3, steps = N * 48;
+  var at = function (s, off) { var t = s / N * L; return [a[0] + ux * t + nx * off, a[1] + uy * t + ny * off]; };
+  for (var i = 0; i <= steps; i++) {
+    var s = i / steps * N, th = 2 * Math.PI * s, q = at(s, ARM.R * Math.cos(th));
+    ell(G, q[0], q[1], ARM.w, ARM.w, ARM.m, Math.sin(th) > 0 ? gF : gB);
+  }
+  [0.04, 0.84].forEach(function (f) { var c1 = at(N * f, -(ARM.R + 0.8)), c2 = at(N * f, ARM.R + 0.8); cap(G, c1[0], c1[1], c2[0], c2[1], 1.2, 1.2, 'B', gF + 0.1); });
+}
+// one frame of him in a pose: every joint is a pixel position, facing right, pivot (32, 60)
+function frame(P, rot, ph) {
+  var G = grid(64, 64, 58), hd = P.hd, ch = P.ch, hip = P.hip, drop = P.drop == null ? 5 : P.drop;
+  star(G, P.bs[0], P.bs[1], 8.5, -rot, 1);
+  spring(G, P.bsh, P.bs, false, 5);
+  tail(G, hd[0] - 3, hd[1] + 3, P.tl || 15, drop, ph, 'B', 1.7);
+  tail(G, hd[0] - 3, hd[1] + 4, (P.tl || 15) - 3, drop + 3, ph + 1.3, 'B', 1.7);
+  leg(G, hip, P.bk, P.bf, 'B', 'D', 1.9);
+  pouch(G, hip, P.bk, 1.95, -1);
+  leaf(G, P.bsh[0], P.bsh[1], Math.PI - 0.7, 7, 2.4, 'G', 1.95, 'L');
+  leg(G, hip, P.fk, P.ff, 'B', 'D', 2);
+  pouch(G, hip, P.fk, 2.05, 1);
+  cap(G, hip[0], hip[1], ch[0], ch[1], 3, 4.6, 'D', 2.1);
+  ell(G, ch[0], ch[1] + 1, 5.2, 4.2, 'D', 2.1);
+  cap(G, ch[0] - 3, ch[1] - 3, ch[0] + 1, ch[1] + 2, 0.6, 0.6, 'G', 2.1, 1);
+  cap(G, ch[0] + 4, ch[1] - 3, ch[0] + 1, ch[1] + 2, 0.6, 0.6, 'G', 2.1, 1);
+  cap(G, P.bsh[0], P.bsh[1], hip[0] + 3, hip[1] - 1, 0.8, 0.8, 'B', 2.1, 1);
+  ell(G, hip[0], hip[1], 4.3, 1.7, 'B', 2.1);
+  cap(G, ch[0] + 1, ch[1] - 3, hd[0] - 1, hd[1] + 3, 1.7, 1.7, 'D', 2.1);
+  ell(G, hd[0], hd[1], 4, 4.4, 'D', 2.2);
+  leaf(G, hd[0] - 1, hd[1] - 3, -2.65, 8, 1.5, 'G', 2.2, 'V');
+  leaf(G, hd[0] + 1, hd[1] - 3.5, -2.2, 8.5, 1.6, 'G', 2.2, 'V');
+  rect(G, hd[0] - 2, hd[1] - 2, 7, 2, 'K', 2.2, 1);
+  put(G, hd[0] + 2, hd[1] - 1, 'E', 2.2, 1); put(G, hd[0] + 3, hd[1] - 1, 'E', 2.2, 1);
+  leaf(G, P.fsh[0], P.fsh[1], 0.7, 7, 2.4, 'G', 2.3, 'L');
+  star(G, P.fs[0], P.fs[1], 8.5, rot, 3);
+  spring(G, P.fsh, P.fs, true, 3);
+  return shade(G, RAMP, FIX);
+}
+function pose(base, o) { var p = {}; for (var k in base) p[k] = base[k]; for (var j in o) p[j] = o[j]; return p; }
+function bob(P, b) { return pose(P, { ch: [P.ch[0], P.ch[1] + b], hd: [P.hd[0], P.hd[1] + b], fsh: [P.fsh[0], P.fsh[1] + b], bsh: [P.bsh[0], P.bsh[1] + b] }); }
+var PI = Math.PI;
+var READY = { hip: [31, 40], bk: [25, 50], bf: [21, 58], fk: [38, 49], ff: [41, 58], ch: [33, 30], hd: [35, 21], fs: [49, 35], bs: [15, 44], fsh: [37, 28], bsh: [29, 29] };
+var AIM1 = { hip: [30, 41], bk: [24, 51], bf: [20, 58], fk: [37, 50], ff: [40, 58], ch: [31, 31], hd: [32, 22], fsh: [35, 29], fs: [21, 30], bsh: [27, 30], bs: [14, 50], drop: 6 };
+var AIM2 = { hip: [33, 41], bk: [25, 51], bf: [18, 58], fk: [41, 49], ff: [45, 58], ch: [36, 31], hd: [39, 23], fsh: [40, 29], fs: [54, 29], bsh: [32, 31], bs: [14, 40], drop: 4 };
+var ZIP = { hip: [25, 41], bk: [17, 42], bf: [9, 45], fk: [21, 47], ff: [14, 52], ch: [35, 35], hd: [43, 31], fsh: [39, 33], fs: [54, 30], bsh: [33, 35], bs: [49, 42], drop: 0, tl: 17 };
+var CLING = { hip: [30, 47], bk: [25, 50], bf: [23, 58], fk: [36, 46], ff: [39, 57], ch: [31, 37], hd: [33, 28], fsh: [35, 34], fs: [46, 22], bsh: [27, 35], bs: [18, 48], drop: 9 };
+var HOLD1 = { hip: [29, 40], bk: [22, 50], bf: [18, 58], fk: [37, 49], ff: [43, 58], ch: [29, 30], hd: [30, 21], fsh: [33, 28], fs: [53, 32], bsh: [25, 29], bs: [16, 42], drop: 4 };
+var HOLD2 = pose(HOLD1, { ch: [28, 30], hd: [29, 21], fsh: [32, 28], fs: [50, 32] });
+var TOSS = { hip: [31, 40], bk: [25, 50], bf: [20, 58], fk: [38, 49], ff: [42, 58], ch: [32, 29], hd: [33, 20], fsh: [35, 27], fs: [44, 11], bsh: [28, 28], bs: [16, 40], drop: 7 };
+var THROW1 = { hip: [30, 43], bk: [25, 48], bf: [21, 55], fk: [36, 46], ff: [40, 54], ch: [31, 33], hd: [33, 24], fsh: [35, 31], fs: [22, 28], bsh: [27, 32], bs: [17, 46], drop: 6 };
+var THROW2 = { hip: [31, 43], bk: [25, 48], bf: [20, 55], fk: [37, 46], ff: [41, 54], ch: [34, 33], hd: [37, 25], fsh: [38, 31], fs: [52, 27], bsh: [30, 33], bs: [15, 40], drop: 4 };
+var FALL = { hip: [31, 42], bk: [27, 51], bf: [25, 58], fk: [36, 51], ff: [38, 58], ch: [32, 32], hd: [33, 23], fsh: [36, 30], fs: [46, 19], bsh: [28, 30], bs: [18, 20], drop: -5 };
+
+// every clip the game plays, with its kind, each frame's hold in steps and its spawn point (sheet pixels)
+var CLIPS = [
+  { n: 'idle', kind: 'loop', what: 'between attacks, and as he beams in', fr: [[bob(READY, 0), 15, 0, 0], [bob(READY, 0), 15, PI / 8, PI / 2], [bob(READY, 1), 15, PI / 4, PI], [bob(READY, 1), 15, 3 * PI / 8, 1.5 * PI]] },
+  { n: 'aim', kind: 'once', what: 'the grab warning: arm drawn back, then thrust out', fr: [[AIM1, 18, 0, 0], [AIM2, 12, PI / 8, PI, [54, 29]]] },
+  { n: 'shoot', kind: 'loop', what: 'arm out while the pair of vines flies', fr: [[AIM2, 6, 0, 0], [AIM2, 6, PI / 8, PI]] },
+  { n: 'zip', kind: 'loop', what: 'pulled along his own vine', fr: [[ZIP, 4, 0, 0]] },
+  { n: 'cling', kind: 'once', what: 'clinging to a wall or the ceiling', fr: [[CLING, 30, 0, 0]] },
+  { n: 'hold', kind: 'loop', what: 'holding the player on the vine, reeling him in', fr: [[HOLD1, 8, 0, 0], [HOLD2, 8, PI / 8, PI]] },
+  { n: 'toss', kind: 'loop', what: 'throwing the player into the far wall', fr: [[TOSS, 6, 0, 0]] },
+  { n: 'throw', kind: 'once', what: 'the leaf kunai throw from a tile', fr: [[THROW1, 12, 0, 0], [THROW2, 8, PI / 8, PI, [52, 27]]] },
+  { n: 'fall', kind: 'loop', what: 'dropping back to the floor', fr: [[FALL, 6, 0, PI]] },
+];
+var CACHE = null;
+function built() {
+  if (CACHE) return CACHE;
+  CACHE = CLIPS.map(function (c) { return { c: c, rows: c.fr.map(function (f) { return frame(f[0], f[2], f[3]); }), total: c.fr.reduce(function (s, f) { return s + f[1]; }, 0) }; });
+  return CACHE;
+}
+function frameAt(b, step) { var t = step % b.total; for (var i = 0; i < b.c.fr.length; i++) { t -= b.c.fr[i][1]; if (t < 0) return i; } return 0; }
+
+var PLAYER = ["........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......042202330........", ".......042302310........", ".......042202330........", ".......042202330........", ".......0542042330.......", ".......0654054220.......", ".......0000000000......."];
+var PPAL = { '0': '#0A0A12', '1': '#FFFFFF', '2': '#C3CAD7', '3': '#EDF1F7', '4': '#8990A9', '5': '#565E78', '6': '#363D52', '7': '#23283A', '8': '#B4ECFF', '9': '#3CBCFC', 'a': '#1C74C8', 'b': '#103C70' };
+var S = 3, Y0 = 0;
+function drawCell(cv, rows, spawn, showBox) {
+  var g = cv.getContext('2d'), px = 68;
+  var dot = function (x, y, hex) { g.fillStyle = hex; g.fillRect(x * S, (y - Y0) * S, S, S); };
+  g.fillStyle = '#0B1A12'; g.fillRect(0, 0, cv.width, cv.height);
+  g.fillStyle = '#1F3A1C'; g.fillRect(0, (60 - Y0) * S, cv.width, cv.height);
+  g.fillStyle = '#3E6B2E'; g.fillRect(0, (60 - Y0) * S, cv.width, S);
+  PLAYER.forEach(function (r, y) { for (var x = 0; x < 24; x++) if (r[x] !== '.') dot(px + 23 - x, 36 + y, PPAL[r[x]]); });
+  rows.forEach(function (r, y) { for (var x = 0; x < 64; x++) if (r[x] !== '.') dot(x, y, PAL[r[x]]); });
+  if (spawn) { g.fillStyle = '#FF4A32'; for (var d = -2; d <= 2; d++) { dot(spawn[0] + d, spawn[1], '#FF4A32'); dot(spawn[0], spawn[1] + d, '#FF4A32'); } }
+  if (!showBox) return;
+  g.strokeStyle = '#3CBCFC'; g.lineWidth = 1;
+  g.strokeRect(16 * S + 0.5, (17 - Y0) * S + 0.5, 32 * S - 1, 43 * S - 1);
+  g.strokeRect((px + 6) * S + 0.5, (38 - Y0) * S + 0.5, 12 * S - 1, 22 * S - 1);
+  dot(32, 60, '#F5D328');
+}
+
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this;
+    this.step = 0; this.last = {};
+    this.timer = setInterval(function () { if (self.state && self.state.paused) return; self.step++; self.draw(false); }, 1000 / 60);
+    this.draw(true);
+  }
+  componentDidUpdate() { this.draw(true); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  draw(force) {
+    var all = built(), self = this, st = this.state || {};
+    document.querySelectorAll('canvas[data-cell]').forEach(function (cv) {
+      var id = +cv.getAttribute('data-cell'), b = all[id]; if (!b) return;
+      var i = frameAt(b, self.step);
+      if (!force && self.last[id] === i) return;
+      self.last[id] = i;
+      drawCell(cv, b.rows[i], b.c.fr[i][4], st.box !== false);
+    });
+  }
+  renderVals() {
+    var self = this, st = this.state || {};
+    return {
+      cells: built().map(function (b, i) {
+        var sp = b.c.fr.map(function (f, k) { return f[4] ? ' · SPAWN ' + f[4][0] + ',' + f[4][1] + ' ON FRAME ' + (k + 1) : ''; }).join('');
+        return { id: i, title: b.c.n.toUpperCase(), name: b.c.kind.toUpperCase() + ' · ' + b.c.fr.map(function (f) { return f[1]; }).join(' · ') + ' STEPS' + sp + ' · ' + b.c.what.toUpperCase() };
+      }),
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE',
+      boxLabel: st.box === false ? 'SHOW HIT BOXES' : 'HIDE HIT BOXES',
+      togglePause: function () { self.setState({ paused: !st.paused }); },
+      toggleBox: function () { self.setState({ box: st.box === false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cannon at rest editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("../assets/05fc159376af5e23da19af613e16f537.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1220px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;" onPointerUp="{{ stop }}" onPointerLeave="{{ stop }}">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">THE CANNON AT IDLE · EDIT IT PIXEL BY PIXEL</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">PICK A COLOUR, THEN TAP OR DRAG INSIDE THE BOX. THE FAINT FIGURE IS HIS STANDING PICTURE, FOR PLACEMENT ONLY. THE YELLOW SQUARE IS HIS HAND, THE POINT THE GAME HOLDS THE CANNON BY. EVERY OTHER CANNON FRAME IS BUILT FROM THIS DRAWING, SHOWN LIVE BELOW. YOUR DRAWING IS {{ saveNote }}</p>
+<div style="display: flex; gap: 32px; align-items: flex-start;">
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<div style="display: grid; grid-template-columns: repeat(36, 18px); grid-auto-rows: 18px; gap: 0; touch-action: none; cursor: crosshair; background: #0b0f1c; outline: 1px solid #2a323c;" onPointerDown="{{ down }}" onPointerMove="{{ move }}">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="864"><div style="{{ c.style }}"></div></sc-for>
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ toggleUnder }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ underLabel }}</button>
+<button type="button" onClick="{{ undo }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">UNDO</button>
+<button type="button" onClick="{{ reset }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">BACK TO THE HANDED-OFF DRAWING</button>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 360px;">
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #f5d328;">COLOURS</p>
+<sc-for list="{{ pal }}" as="p"><button type="button" onClick="{{ p.pick }}" style="{{ p.style }}"><span style="{{ p.swatch }}"></span><span>{{ p.name }}</span></button></sc-for>
+<p style="margin: 8px 0 0 0; font-size: 7px; line-height: 10px; color: #c8ceda;">HOW THE OTHER FRAMES READ YOUR DRAWING: MINT AND WHITE ABOVE THE MOUTH LINE ARE THE EYE, AND GLOW IN THE WIND-UP AND THE CHARGE. ROW 11 FROM THE TOP OF THE BOX IS THE MOUTH LINE; EVERYTHING BELOW IT IS THE LOWER JAW, WHICH SWINGS OPEN FROM 10 PIXELS IN FOR THE BREATH AND PARTS A PIXEL FOR THE CHARGE.</p>
+</div>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #f5d328;">EVERY CANNON FRAME, BUILT FROM YOUR DRAWING</p>
+<div style="display: flex; flex-wrap: wrap; gap: 16px;">
+<sc-for list="{{ frames }}" as="f" hint-placeholder-count="10">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<canvas width="144" height="96" data-cell="{{ f.id }}" ref="{{ f.ref }}" role="img" aria-label="{{ f.name }}" style="border: 2px solid #2a323c;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 8px; color: #ffffff;">{{ f.name }}</p>
+</div>
+</sc-for>
+</div>
+<label for="cannon-rows" style="font-size: 7px; line-height: 8px; color: #c8ceda;">YOUR DRAWING AS TEXT · CLAUDE READS IT FROM THE PAGE, OR COPY IT AND PASTE IT IN CHAT</label>
+<div style="display: flex; gap: 12px; align-items: flex-start;">
+<textarea id="cannon-rows" readonly="" value="{{ text }}" style="width: 420px; height: 230px; background: #0d1420; color: #c8ceda; border: 1px solid #2a323c; font: 12px/14px monospace; padding: 8px; resize: none;"></textarea>
+<button type="button" onClick="{{ copy }}" style="min-height: 44px; padding: 0 16px; background: #5cadd5; color: #060614; border: 0; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ copyLabel }}</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1220}}'>
+var DATA = {
+  rest: ["........................", "........................", ".....00.................", ".....0660...............", "......0650000...........", ".......05555500....0....", "......045554422000060...", "....0004444419a555550...", "....08044444444444140...", "....07033333333333330...", "....0703221111111110....", "....070333333333330.....", ".....0022222222200......", ".......00000000.........", "........................", "........................"],
+  pal: [{ k: '0', hex: '#0A0A12', name: 'outline' }, { k: '1', hex: '#170F3A', name: 'mouth deep' }, { k: '2', hex: '#2A1F6E', name: 'indigo shade' },
+        { k: '3', hex: '#3B2A8C', name: 'indigo' }, { k: '4', hex: '#5A43C2', name: 'indigo light' }, { k: '5', hex: '#8B5CF6', name: 'violet' },
+        { k: '6', hex: '#C9B3FF', name: 'lavender' }, { k: '7', hex: '#0E7C7A', name: 'teal deep' }, { k: '8', hex: '#2DD4BF', name: 'teal' },
+        { k: '9', hex: '#A0F5E6', name: 'mint' }, { k: 'a', hex: '#F2EEFF', name: 'white core' }, { k: 'b', hex: '#6E2BD9', name: 'violet glow' },
+        { k: 'c', hex: '#FFFFFF', name: 'white hot' }],
+  player: ["........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......042202330........", ".......042302310........", ".......042202330........", ".......042202330........", ".......0542042330.......", ".......0654054220.......", ".......0000000000......."],
+  // his proposed wide, slightly crouched stance, for every clip but idle (hand 1 px lower)
+  stance: ["........................", "........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......0422002330.......", "......04220..02330......", ".....04220...02330......", ".....05420...042330.....", ".....06540...054220.....", ".....00000...000000....."],
+  ppal: { '0': '#0A0A12', '1': '#FFFFFF', '2': '#C3CAD7', '3': '#EDF1F7', '4': '#8990A9', '5': '#565E78', '6': '#363D52', '7': '#23283A', '8': '#B4ECFF', '9': '#3CBCFC', 'a': '#1C74C8', 'b': '#103C70' }
+};
+var W = 24, H = 16, OX = 12, OY = 2, GW = 36, GH = 24, MOUTH = 10, HINGE = 9, HAND = { x: 4, y: 9 };
+
+// ── THE OTHER NINE FRAMES, BUILT FROM THE REST DRAWING ──
+function grid(rows) { return rows.map(function (r) { return r.split(''); }); }
+function shift(G, dx, dy) {
+  var out = grid(DATA.rest.map(function () { return '........................'; }));
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+    if (G[y][x] !== '.' && x + dx >= 0 && x + dx < W && y + dy >= 0 && y + dy < H) out[y + dy][x + dx] = G[y][x];
+  }
+  return out;
+}
+// the eye: mint and white above the mouth line, recoloured
+function eye(G, mint, white) {
+  for (var y = 0; y < MOUTH; y++) for (var x = 0; x < W; x++) {
+    if (G[y][x] === '9') G[y][x] = mint; else if (G[y][x] === 'a') G[y][x] = white;
+  }
+  return G;
+}
+// light leaking between the teeth: the dark of the mouth line, front half
+function leak(G) {
+  var front = lastX(G[MOUTH]);
+  for (var x = HINGE + 4; x < front; x++) if (G[MOUTH][x] === '1') G[MOUTH][x] = (front - x) % 2 ? '9' : '8';
+  return G;
+}
+function lastX(row) { for (var x = W - 1; x >= 0; x--) if (row[x] !== '.') return x; return 0; }
+// the lower jaw swings down from the hinge: drop(x) pixels at column x, the gap glowing
+function jaw(G0, drop, ramp, flare) {
+  var G = G0.map(function (r, y) { return y <= MOUTH ? r.slice() : r.map(function () { return '.'; }); });
+  for (var y = MOUTH + 1; y < H; y++) for (var x = 0; x < W; x++) {
+    var k = G0[y][x];
+    if (k !== '.' && y + drop(x) < H) G[y + drop(x)][x] = k;
+  }
+  var front = lastX(G0[MOUTH + 1]);
+  for (var x2 = 0; x2 < W; x2++) {
+    if (G0[MOUTH + 1][x2] === '.') continue;
+    for (var d = 0; d < drop(x2); d++) G[MOUTH + 1 + d][x2] = ramp((x2 - HINGE) / Math.max(1, front - HINGE));
+  }
+  if (flare) for (var i = 0; i < flare.length; i++) { var f = flare[i]; if (G[f[1]][f[0]] === '.') G[f[1]][f[0]] = f[2]; }
+  return G;
+}
+function rampOf(keys, cuts) { return function (t) { for (var i = 0; i < cuts.length; i++) if (t < cuts[i]) return keys[i]; return keys[keys.length - 1]; }; }
+var HOT = rampOf('1789ac', [0.15, 0.3, 0.5, 0.7, 0.9]);
+var WARM = rampOf('17899a', [0.15, 0.3, 0.5, 0.7, 0.9]);
+function parted(G) { return jaw(leak(G), function (x) { return x >= HINGE ? 1 : 0; }, WARM); }
+function orb(G, cx, cy, ramp, r) {
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+    var d = Math.hypot(x - cx, y - cy);
+    for (var i = 0; i < ramp.length; i++) if (d <= ramp[i][0] * r) { G[y][x] = ramp[i][1]; break; }
+  }
+  return G;
+}
+function put(G, pts) { pts.forEach(function (p) { if (p[0] >= 0 && p[0] < W && p[1] >= 0 && p[1] < H) G[p[1]][p[0]] = p[2]; }); return G; }
+var VIOLET = [[0.45, 'a'], [0.75, '6'], [1.0, '5'], [1.2, 'b']], WHITE = [[0.5, 'c'], [0.8, 'a'], [1.0, '6'], [1.2, '5']];
+var MX = 17, MY = 10;   // the mouth the code fires from
+function derive(rows) {
+  var R = function () { return grid(rows); };
+  var wide = function (x) { return x < HINGE ? 0 : x < 14 ? 1 : 2; };
+  var open = function (x) { return x < HINGE ? 0 : x < 16 ? 1 : 2; };
+  var fr = lastX(grid(rows)[MOUTH + 1]);
+  return [
+    ['rest', 1, 5, R()],
+    ['rear', 1, 4, shift(eye(R(), 'a', 'a'), -1, -1)],
+    ['rear', 2, 4, shift(leak(eye(R(), 'a', 'a')), -2, -2)],
+    ['rear', 3, 4, shift(parted(eye(R(), 'a', 'a')), -3, -2)],
+    ['breathe', 1, 4, jaw(R(), wide, HOT, [[fr + 1, MOUTH + 1, '9'], [fr + 2, MOUTH + 1, '8'], [fr + 1, MOUTH + 2, '9'], [fr + 2, MOUTH + 2, '9'], [fr + 3, MOUTH + 2, '8']])],
+    ['breathe', 2, 4, jaw(R(), open, HOT, [[fr + 1, MOUTH + 1, '9'], [fr + 2, MOUTH + 1, '8'], [fr + 2, MOUTH + 2, '8']])],
+    ['charge', 1, 6, orb(parted(eye(R(), '5', '6')), MX, MY, VIOLET, 2.6)],
+    ['charge', 2, 6, orb(parted(eye(R(), '6', '5')), MX, MY, VIOLET, 2.0)],
+    ['chargeFull', 1, 4, put(orb(parted(eye(R(), 'a', 'c')), MX, MY, WHITE, 3.0), [[21, 7, '9'], [13, 13, '8'], [21, 13, '8']])],
+    ['chargeFull', 2, 4, put(orb(parted(eye(R(), 'c', 'a')), MX, MY, WHITE, 2.4), [[20, 5, '8'], [22, 10, '9'], [14, 14, '9']])],
+  ];
+}
+// the whole sheet, in the game's .sprite format
+function sheetText(rows) {
+  var fr = derive(rows), used = {};
+  fr.forEach(function (f) { f[3].forEach(function (r) { r.forEach(function (k) { if (k !== '.') used[k] = 1; }); }); });
+  var out = ['# weapon-drake_breath-held', 'grid      24x16', 'fudge     0.70 x 1.00', 'pivot     4 9'];
+  DATA.pal.forEach(function (p) { if (used[p.k]) out.push('palette   ' + p.k + ' ' + p.hex + ' ' + p.name); });
+  fr.forEach(function (f) { out.push('', '[' + f[0] + ' ' + f[1] + '] status=draft hold=' + f[2]); f[3].forEach(function (r) { out.push(r.join('')); }); });
+  return out.join('\n') + '\n';
+}
+function hexOf(k) { for (var i = 0; i < DATA.pal.length; i++) if (DATA.pal[i].k === k) return DATA.pal[i].hex; return null; }
+
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this;
+    this.history = []; this.painting = false; this.db = null; this.cv = this.cv || {};
+    if (!(this.state && this.state.rows)) this.setState({ rows: DATA.rest.slice(), color: '4', under: true, saved: 'KEPT ONLY IN THIS PAGE UNTIL YOU COPY IT.' });
+    try {
+      if (window.claude && window.claude.use) window.claude.use('db').then(function (db) {
+        if (!db) return;
+        self.db = db;
+        db.doc('cannon/rest').get().then(function (s) {
+          var d = s.exists ? s.data() : null;
+          if (d && Array.isArray(d.rows) && d.rows.length === H && d.rows.every(function (r) { return typeof r === 'string' && r.length === W; })) self.setState({ rows: d.rows.slice() });
+          self.setState({ saved: 'SAVED AFTER EACH STROKE, SO CLAUDE AND THE PREVIEW BOARD READ IT.' });
+        }).catch(function () {});
+      }).catch(function () {});
+    } catch (e) {}
+    this.drawFrames();
+  }
+  componentDidUpdate() { this.drawFrames(); }
+  rows() { return (this.state && this.state.rows) || DATA.rest; }
+  canvas(id) {
+    var el = this.cv[id];
+    if (!el || !el.isConnected) el = this.cv[id] = document.querySelector('canvas[data-cell="' + id + '"]');
+    return el;
+  }
+  drawFrames() {
+    var self = this, s = 4;
+    derive(this.rows()).forEach(function (f, i) {
+      var cv = self.canvas('f' + i);
+      if (!cv) return;
+      var g = cv.getContext('2d');
+      g.fillStyle = '#0B0F1C'; g.fillRect(0, 0, cv.width, cv.height);
+      var px = function (x, y, hex) { g.fillStyle = hex; g.fillRect(x * s, y * s, s, s); };
+      var body = i ? DATA.stance : DATA.player, dy = i ? 1 : 0;
+      body.forEach(function (r, y) { for (var x = 0; x < 24; x++) if (r[x] !== '.') px(x, y, DATA.ppal[r[x]]); });
+      f[3].forEach(function (r, y) { r.forEach(function (k, x) { if (k !== '.') px(x + OX, y + OY + dy, hexOf(k) || '#FF00FF'); }); });
+    });
+  }
+  cellAt(e) {
+    var r = e.currentTarget.getBoundingClientRect();
+    var x = Math.floor((e.clientX - r.left) / r.width * GW) - OX, y = Math.floor((e.clientY - r.top) / r.height * GH) - OY;
+    return (x < 0 || y < 0 || x >= W || y >= H) ? null : [x, y];
+  }
+  paint(e) {
+    var c = this.cellAt(e); if (!c) return;
+    var rows = this.rows(), row = rows[c[1]], col = this.state.color;
+    if (row[c[0]] === col) return;
+    var next = rows.slice(); next[c[1]] = row.slice(0, c[0]) + col + row.slice(c[0] + 1);
+    this.setState({ rows: next });
+  }
+  save() {
+    if (!this.db) return;
+    var self = this, rows = this.rows();
+    this.db.doc('cannon/rest').set({ rows: rows, heldSprite: sheetText(rows), at: new Date().toISOString() })
+      .catch(function () { self.setState({ saved: 'NOT SAVED (NO PERMISSION): COPY THE TEXT INSTEAD.' }); });
+  }
+  renderVals() {
+    var self = this, st = this.state || {}, rows = this.rows(), cells = [];
+    this.cv = this.cv || {}; this.refs = this.refs || {};
+    for (var gy = 0; gy < GH; gy++) for (var gx = 0; gx < GW; gx++) {
+      var x = gx - OX, y = gy - OY, inside = x >= 0 && y >= 0 && x < W && y < H;
+      var k = inside ? rows[y][x] : '.', hex = k === '.' ? null : hexOf(k);
+      var pk = DATA.player[gy] && DATA.player[gy][gx], under = st.under !== false && pk && pk !== '.' ? DATA.ppal[pk] : null;
+      var style = 'background:' + (hex || under || 'transparent') + ';' + (!hex && under ? 'opacity:0.28;' : '')
+        + (inside ? 'outline:1px solid rgba(255,255,255,0.06);' : '')
+        + (x === HAND.x && y === HAND.y ? 'box-shadow:inset 0 0 0 2px #F5D328;' : '')
+        + (x === MX && y === MY ? 'box-shadow:inset 0 0 0 2px #FF4A32;' : '');
+      cells.push({ style: style });
+    }
+    var pal = [{ k: '.', hex: null, name: 'ERASER (SEE-THROUGH)' }].concat(DATA.pal).map(function (p) {
+      var on = (st.color || '4') === p.k;
+      return { name: p.name.toUpperCase(), pick: function () { self.setState({ color: p.k }); },
+        style: 'display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 10px;background:' + (on ? '#0d1420' : 'transparent') + ';color:#ffffff;border:' + (on ? '2px solid #5cadd5' : '1px solid #2a323c') + ';cursor:pointer;text-align:left;font-family:inherit;font-size:14px',
+        swatch: 'width:24px;height:24px;flex:none;border:1px solid #565E78;background:' + (p.hex || 'repeating-conic-gradient(#565E78 0 25%, #23283A 0 50%) 0 0/8px 8px') };
+    });
+    var names = ['IDLE 1', 'REAR 1', 'REAR 2', 'REAR 3', 'BREATHE 1', 'BREATHE 2', 'CHARGE 1', 'CHARGE 2', 'CHARGEFULL 1', 'CHARGEFULL 2'];
+    var frames = names.map(function (n, i) {
+      var id = 'f' + i;
+      return { id: id, name: n, ref: self.refs[id] || (self.refs[id] = function (el) { self.cv[id] = el; }) };
+    });
+    var text = '# idle (still the clip rest 1 in the code), weapon-drake_breath-held (24 x 16)\n' + rows.join('\n');
+    return {
+      cells: cells, pal: pal, frames: frames, text: text, saveNote: st.saved || 'KEPT ONLY IN THIS PAGE UNTIL YOU COPY IT.',
+      underLabel: st.under === false ? 'SHOW HIS BODY' : 'HIDE HIS BODY',
+      copyLabel: st.copied ? 'COPIED' : 'COPY TEXT',
+      down: function (e) { self.history.push(self.rows()); self.painting = true; self.paint(e); },
+      move: function (e) { if (self.painting) self.paint(e); },
+      stop: function () { if (self.painting) { self.painting = false; self.save(); } },
+      toggleUnder: function () { self.setState({ under: st.under === false }); },
+      undo: function () { var h = self.history.pop(); if (h) self.setState({ rows: h }, function () { self.save(); }); },
+      reset: function () { self.history.push(self.rows()); self.setState({ rows: DATA.rest.slice() }, function () { self.save(); }); },
+      copy: function () { try { navigator.clipboard.writeText(text).then(function () { self.setState({ copied: true }); }); } catch (e) {} },
+    };
+  }
+}
+</script>
+</body>
+</html>

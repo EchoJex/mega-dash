@@ -1,0 +1,54 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 1540,
+      "is_interactive": true,
+      "title": "Thorn Man idle \u2014 24 looks",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Props.dc.html": {
+      "h": 1400,
+      "is_interactive": true,
+      "title": "Tile, leaf kunai, seed pod \u2014 6 looks each",
+      "w": 1280,
+      "x": 1360,
+      "y": 0
+    },
+    "Clips.dc.html": {
+      "x": 2720,
+      "y": 0,
+      "w": 1280,
+      "h": 960,
+      "title": "Thorn Man \u2014 every move",
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-04T06:26:21Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/code/artifact/8746e10c-6456-4ff3-b5e1-347f4ce3aeb6",
+      "copiedAt": "2026-11-04T06:26:21Z",
+      "namespace": "mega-dash",
+      "title": "MEGA DASH",
+      "version": "1792811043-dd65"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {},
+  "order": [
+    "Main.dc.html",
+    "Props.dc.html",
+    "Clips.dc.html"
+  ],
+  "pages": [],
+  "title": "Thorn Man Art"
+}

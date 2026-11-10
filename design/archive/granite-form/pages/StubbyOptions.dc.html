@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stubby walker options</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face { font-family: 'Mega Dash 5x7'; src: url(../assets/c67e6eda409234028dd4804365cc05f7.woff) format('woff'); font-display: block; }
+body { margin: 0; }
+a { color: #5cadd5; } a:hover { color: #ffffff; }
+.spr { position: absolute; background-repeat: no-repeat; image-rendering: pixelated; }
+.s-player { background-image: url(../assets/a0ca5be035c4007e2f05f010a7822851.png); }
+.s-stubby { background-image: url(../assets/b21c7351384d5020f6465d3c3ce47a80.png); }
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 780px; box-sizing: border-box; padding: 48px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; -webkit-font-smoothing: none; display: flex; flex-direction: column; gap: 28px">
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400">STUBBY WALKERS - #7 LEGS, THE CURRENT BOULDER</h1>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">12 STANDING WALKERS: THE CUT-STONE BOULDER YOU PICKED (ITS FACES AND TONES) ON WALKER 7'S STUBBY, KNEELESS LEGS.</p>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">ALL EYELESS, ALL ON THREE LEGS, BESIDE THE PLAYER AT 3×. PICK A NUMBER AND I'LL DRAW ITS WALK.</p>
+  </div>
+
+  <div style="position: relative; width: 1344px; height: 508px">
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="12">
+      <div style="position: absolute; left: {{c.x}}px; top: {{c.y}}px; width: 324px; height: 156px; background: #0d1420; overflow: hidden">
+        <div style="position: absolute; left: 0px; top: 132px; width: 324px; height: 24px; background: #2a323c; border-top: 3px solid #3a3f4a; box-sizing: border-box"></div>
+        <div class="spr s-stubby" style="left: 54px; top: 18px; width: 120px; height: 120px; background-size: 1440px 120px; background-position: {{c.bx}}px 0px"></div>
+        <div class="spr s-player" style="left: 214px; top: 60px; width: 72px; height: 72px; background-size: 432px 72px; background-position: 0px 0px"></div>
+        <div style="position: absolute; left: 8px; top: 6px; font-size: 14px; line-height: 16px; color: #ffffff; white-space: nowrap">{{c.label}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":780}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ['#7 IN BOULDER COLOURS', 'FULL-SIZE BOULDER', 'FULL-SIZE, SHORT LEGS', 'TAUPE LEGS',
+      'GREY LEGS', 'CUT-STONE LEGS', 'WIDE STANCE', 'TUCKED UNDER',
+      'SPLAYED', 'THICK LEGS', 'BIG FLAT FEET', 'FULL-SIZE, CUT LEGS'];
+    const cells = names.map((name, n) => ({
+      label: (n + 1) + '  ' + name, x: (n % 4) * 340, y: Math.floor(n / 4) * 176, bx: -n * 120,
+    }));
+    return { cells: cells };
+  }
+}
+</script>
+</body>
+</html>

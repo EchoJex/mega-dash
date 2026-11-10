@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Granite Form animation check</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face { font-family: 'Mega Dash 5x7'; src: url(../assets/c67e6eda409234028dd4804365cc05f7.woff) format('woff'); font-display: block; }
+body { margin: 0; }
+a { color: #5cadd5; } a:hover { color: #ffffff; }
+.spr { position: absolute; background-repeat: no-repeat; image-rendering: pixelated; }
+.s-statue { background-image: url(../assets/1becf7fd93741fcf206a735ff73c2b51.png); }
+.s-boulder { background-image: url(../assets/5a28275a656a1167397cb534b05eb4df.png); }
+.s-rocky { background-image: url(../assets/7bc2b73a96c371220668216e387f291d.png); }
+.s-stone { background-image: url(../assets/58b665bfbf6272f89b52cd351b2973e8.png); }
+.s-player { background-image: url(../assets/a0ca5be035c4007e2f05f010a7822851.png); }
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 1480px; box-sizing: border-box; padding: 48px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; -webkit-font-smoothing: none; display: flex; flex-direction: column; gap: 28px">
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400">GRANITE FORM - ANIMATION CHECK</h1>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">EVERY CLIP AT GAME SPEED: 60 STEPS A SECOND, EACH FRAME FOR ITS HOLD. DRAWN AT 3× BESIDE THE PLAYER, FACING BOTH WAYS.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px">
+    <button type="button" onClick="{{togglePause}}" aria-pressed="{{pausedAria}}" style="min-height: 44px; padding: 0px 18px; background: #2a323c; color: #ffffff; border: 2px solid {{pauseRing}}; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer">{{pauseLabel}}</button>
+    <button type="button" onClick="{{stepBack}}" aria-label="One step back" style="min-height: 44px; padding: 0px 18px; background: #2a323c; color: #ffffff; border: 2px solid #3a3f4a; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer">-1 STEP</button>
+    <button type="button" onClick="{{stepOn}}" aria-label="One step forward" style="min-height: 44px; padding: 0px 18px; background: #2a323c; color: #ffffff; border: 2px solid #3a3f4a; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer">+1 STEP</button>
+    <button type="button" onClick="{{toggleSlow}}" aria-pressed="{{slowAria}}" style="min-height: 44px; padding: 0px 18px; background: #2a323c; color: #ffffff; border: 2px solid {{slowRing}}; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer">1/4 SPEED</button>
+    <span style="font-size: 14px; line-height: 16px; color: #5cadd5; min-width: 260px">{{stepLabel}}</span>
+    <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #c8ceda">
+      <span style="position: relative; width: 18px; height: 18px; display: inline-block"><span style="position: absolute; left: 0px; top: 8px; width: 18px; height: 2px; background: #5cadd5"></span><span style="position: absolute; left: 8px; top: 0px; width: 2px; height: 18px; background: #5cadd5"></span></span>
+      PIVOT: THE FLOOR UNDER HIS MIDDLE
+    </span>
+    <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #c8ceda">
+      <span style="width: 18px; height: 18px; box-sizing: border-box; border: 2px dashed #ff4a32; display: inline-block"></span>
+      THE CODE'S BODY BOX: WHAT THE FORM HITS
+    </span>
+  </div>
+  <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">NO FRAME ON THESE SHEETS CARRIES A HIT AREA: THE GAME WORKS OUT WHAT THE STATUE LANDS ON AND WHAT THE BOULDER CRUSHES FROM THESE BOXES.</p>
+
+  <section style="display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-size: 21px; line-height: 24px; font-weight: 400">1  STATUES · ONE PICKED AT RANDOM EACH TIME HE HARDENS</h2>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">MEGAMAN IS STILL THE PLACEHOLDER, LEFT FOR THE OWNER TO DRAW. EACH STATUE STANDS WHERE HIS FEET WERE.</p>
+    <div style="position: relative; width: 1344px; height: 168px; background: #0d1420; overflow: hidden">
+      <div style="position: absolute; left: 0px; top: 132px; width: 1344px; height: 36px; background: #2a323c; border-top: 3px solid #3a3f4a; box-sizing: border-box"></div>
+      <sc-for list="{{s1.sprites}}" as="s" hint-placeholder-count="12">
+        <div class="spr {{s.cls}}" style="left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; background-size: {{s.bw}}px {{s.h}}px; background-position: {{s.bx}}px 0px; transform: scaleX({{s.fx}})"></div>
+      </sc-for>
+      <sc-for list="{{s1.boxes}}" as="b" hint-placeholder-count="6">
+        <div style="position: absolute; left: {{b.x}}px; top: {{b.y}}px; width: {{b.w}}px; height: {{b.h}}px; box-sizing: border-box; border: 2px dashed #ff4a32"></div>
+      </sc-for>
+      <sc-for list="{{s1.marks}}" as="m" hint-placeholder-count="6">
+        <div style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 0px; height: 0px"><div style="position: absolute; left: -9px; top: -1px; width: 18px; height: 2px; background: #5cadd5"></div><div style="position: absolute; left: -1px; top: -9px; width: 2px; height: 18px; background: #5cadd5"></div></div>
+      </sc-for>
+      <div style="position: absolute; left: 84px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">CHEST ▶</div>
+      <div style="position: absolute; left: 216px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ CHEST</div>
+      <div style="position: absolute; left: 540px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">MEGAMAN ▶</div>
+      <div style="position: absolute; left: 672px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ MEGAMAN</div>
+      <div style="position: absolute; left: 996px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">MONOLITH ▶</div>
+      <div style="position: absolute; left: 1128px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ MONOLITH</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-size: 21px; line-height: 24px; font-weight: 400">2  BOULDER (LV3) · FACETED · ROLL: 12 FRAMES × 3 STEPS, ONE TURN EVERY 36 STEPS</h2>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">OPTION 3: A CUT ROCK, EACH FLAT FACE A GREY, TAUPE OR BROWN STONE, WITH FLECKS. RIGHT: ROLLING AT ITS FULL SPEED, 2.4 PX A STEP, SO THE TURN KEEPS UP WITH THE GROUND. THE GAME SPINS IT FASTER OR SLOWER WITH ITS SPEED.</p>
+    <div style="position: relative; width: 1344px; height: 168px; background: #0d1420; overflow: hidden">
+      <div style="position: absolute; left: 0px; top: 132px; width: 1344px; height: 36px; background: #2a323c; border-top: 3px solid #3a3f4a; box-sizing: border-box"></div>
+      <div style="position: absolute; left: 450px; top: 0px; width: 0px; height: 132px; border-left: 3px dashed #2a323c"></div>
+      <sc-for list="{{s2.sprites}}" as="s" hint-placeholder-count="5">
+        <div class="spr {{s.cls}}" style="left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; background-size: {{s.bw}}px {{s.h}}px; background-position: {{s.bx}}px 0px; transform: scaleX({{s.fx}})"></div>
+      </sc-for>
+      <sc-for list="{{s2.boxes}}" as="b" hint-placeholder-count="3">
+        <div style="position: absolute; left: {{b.x}}px; top: {{b.y}}px; width: {{b.w}}px; height: {{b.h}}px; box-sizing: border-box; border: 2px dashed #ff4a32"></div>
+      </sc-for>
+      <sc-for list="{{s2.marks}}" as="m" hint-placeholder-count="3">
+        <div style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 0px; height: 0px"><div style="position: absolute; left: -9px; top: -1px; width: 18px; height: 2px; background: #5cadd5"></div><div style="position: absolute; left: -1px; top: -9px; width: 2px; height: 18px; background: #5cadd5"></div></div>
+      </sc-for>
+      <div style="position: absolute; left: 84px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">ROLL ▶</div>
+      <div style="position: absolute; left: 216px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ ROLL</div>
+      <div style="position: absolute; left: 720px; top: 144px; width: 360px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ ROLLING AT FULL SPEED ▶</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-size: 21px; line-height: 24px; font-weight: 400">3  WALKER (LV10) · STAND, AND WALK: 6 FRAMES × 2 STEPS</h2>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">STUBBY 7: THE CUT-STONE BOULDER ON THREE STUBBY, KNEELESS STONE LEGS, WIDE STANCE. RIGHT: WALKING AT HALF HIS SPEED, 0.69 PX A STEP.</p>
+    <div style="position: relative; width: 1344px; height: 168px; background: #0d1420; overflow: hidden">
+      <div style="position: absolute; left: 0px; top: 132px; width: 1344px; height: 36px; background: #2a323c; border-top: 3px solid #3a3f4a; box-sizing: border-box"></div>
+      <div style="position: absolute; left: 684px; top: 0px; width: 0px; height: 132px; border-left: 3px dashed #2a323c"></div>
+      <sc-for list="{{s3.sprites}}" as="s" hint-placeholder-count="7">
+        <div class="spr {{s.cls}}" style="left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; background-size: {{s.bw}}px {{s.h}}px; background-position: {{s.bx}}px 0px; transform: scaleX({{s.fx}})"></div>
+      </sc-for>
+      <sc-for list="{{s3.boxes}}" as="b" hint-placeholder-count="5">
+        <div style="position: absolute; left: {{b.x}}px; top: {{b.y}}px; width: {{b.w}}px; height: {{b.h}}px; box-sizing: border-box; border: 2px dashed #ff4a32"></div>
+      </sc-for>
+      <sc-for list="{{s3.marks}}" as="m" hint-placeholder-count="5">
+        <div style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 0px; height: 0px"><div style="position: absolute; left: -9px; top: -1px; width: 18px; height: 2px; background: #5cadd5"></div><div style="position: absolute; left: -1px; top: -9px; width: 2px; height: 18px; background: #5cadd5"></div></div>
+      </sc-for>
+      <div style="position: absolute; left: 84px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">STAND ▶</div>
+      <div style="position: absolute; left: 204px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ STAND</div>
+      <div style="position: absolute; left: 324px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">WALK ▶</div>
+      <div style="position: absolute; left: 444px; top: 144px; width: 132px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ WALK</div>
+      <div style="position: absolute; left: 855px; top: 144px; width: 360px; text-align: center; font-size: 14px; color: #c8ceda; white-space: nowrap">◀ WALKING AT HALF SPEED ▶</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-size: 21px; line-height: 24px; font-weight: 400">4  LOOSE STONE · KNOCKED OFF BY A HIT, DRAWN BEHIND HIM</h2>
+    <p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda">ITS BOX IS 8 × 8, SITTING ON THE FLOOR.</p>
+    <div style="position: relative; width: 1344px; height: 168px; background: #0d1420; overflow: hidden">
+      <div style="position: absolute; left: 0px; top: 132px; width: 1344px; height: 36px; background: #2a323c; border-top: 3px solid #3a3f4a; box-sizing: border-box"></div>
+      <sc-for list="{{s4.sprites}}" as="s" hint-placeholder-count="4">
+        <div class="spr {{s.cls}}" style="left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; background-size: {{s.bw}}px {{s.h}}px; background-position: {{s.bx}}px 0px; transform: scaleX({{s.fx}})"></div>
+      </sc-for>
+      <sc-for list="{{s4.boxes}}" as="b" hint-placeholder-count="2">
+        <div style="position: absolute; left: {{b.x}}px; top: {{b.y}}px; width: {{b.w}}px; height: {{b.h}}px; box-sizing: border-box; border: 2px dashed #ff4a32"></div>
+      </sc-for>
+      <sc-for list="{{s4.marks}}" as="m" hint-placeholder-count="2">
+        <div style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 0px; height: 0px"><div style="position: absolute; left: -9px; top: -1px; width: 18px; height: 2px; background: #5cadd5"></div><div style="position: absolute; left: -1px; top: -9px; width: 2px; height: 18px; background: #5cadd5"></div></div>
+      </sc-for>
+      <div style="position: absolute; left: 114px; top: 144px; width: 12px; text-align: center; font-size: 14px; color: #c8ceda">▶</div>
+      <div style="position: absolute; left: 168px; top: 144px; width: 12px; text-align: center; font-size: 14px; color: #c8ceda">◀</div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1480}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.acc = 0;
+    this.last = performance.now();
+    const tick = (now) => {
+      const st = this.state || {};
+      const dt = Math.min(100, now - this.last);
+      this.last = now;
+      if (!st.paused) this.acc += dt * (st.slow ? 0.25 : 1);
+      const step = Math.floor(this.acc * 0.06);
+      if (step !== st.step) this.setState({ step: step });
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+  }
+
+  renderVals() {
+    const st = this.state || {};
+    const step = st.step || 0;
+    const S = 3;
+    const F = 44;
+    // Each sheet as a strip of its frames; px, py: its pivot.
+    const STRIP = {
+      statue: { cls: 's-statue', w: 40, h: 40, n: 3, px: 20, py: 38 },
+      boulder: { cls: 's-boulder', w: 40, h: 40, n: 12, px: 20, py: 38 },
+      rocky: { cls: 's-rocky', w: 40, h: 40, n: 7, px: 20, py: 38 },
+      stone: { cls: 's-stone', w: 10, h: 10, n: 1, px: 5, py: 9 },
+      player: { cls: 's-player', w: 24, h: 24, n: 6, px: 12, py: 24 },
+    };
+    // Every clip: where it starts in its strip, each frame's hold in steps, and whether it loops.
+    const CLIP = {
+      idle: { strip: 'player', first: 0, holds: [40, 6, 40, 6, 30, 5], loop: true },
+      chest: { strip: 'statue', first: 0, holds: [5] },
+      megaman: { strip: 'statue', first: 1, holds: [5] },
+      monolith: { strip: 'statue', first: 2, holds: [5] },
+      roll: { strip: 'boulder', first: 0, holds: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], loop: true },
+      stand: { strip: 'rocky', first: 0, holds: [5] },
+      walk: { strip: 'rocky', first: 1, holds: [2, 2, 2, 2, 2, 2], loop: true },
+      loose: { strip: 'stone', first: 0, holds: [5] },
+    };
+    // The boxes the code hits with, from the pivot: his body (12 x 22), the boulder (29 x 29), a stone (8 x 8).
+    const BOX = { body: [-6, -22, 12, 22], boulder: [-14.5, -29, 29, 29], stone: [-4, -8, 8, 8] };
+    const frameOf = (c, t) => {
+      const total = c.holds.reduce((a, b) => a + b, 0);
+      let k = c.loop ? t % total : Math.min(t, total - 1);
+      for (let i = 0; i < c.holds.length; i++) {
+        if (k < c.holds[i]) return i;
+        k -= c.holds[i];
+      }
+      return c.holds.length - 1;
+    };
+    const stage = () => ({ sprites: [], boxes: [], marks: [] });
+    const put = (o, clip, cx, facing, box, t) => {
+      const c = CLIP[clip];
+      const s = STRIP[c.strip];
+      const i = c.first + frameOf(c, t);
+      o.sprites.push({
+        cls: s.cls, x: (cx - s.px) * S, y: (F - s.py) * S, w: s.w * S, h: s.h * S,
+        bw: s.w * s.n * S, bx: -i * s.w * S, fx: facing,
+      });
+      if (box) {
+        const b = BOX[box];
+        o.boxes.push({ x: Math.round((cx + b[0]) * S), y: (F + b[1]) * S, w: b[2] * S, h: b[3] * S });
+      }
+      if (clip !== 'idle') o.marks.push({ x: cx * S, y: F * S });
+    };
+    // Back and forth along a lane at v game pixels a step, turning at the ends.
+    const lane = (a, b, v) => {
+      const len = b - a;
+      const d = (step * v) % (2 * len);
+      return d < len ? { cx: Math.round(a + d), facing: 1 } : { cx: Math.round(b - (d - len)), facing: -1 };
+    };
+
+    const s1 = stage();
+    [['chest', 8], ['megaman', 160], ['monolith', 312]].forEach(([name, g]) => {
+      put(s1, 'idle', g + 12, 1, null, step);
+      put(s1, name, g + 42, 1, 'body', step);
+      put(s1, name, g + 86, -1, 'body', step);
+      put(s1, 'idle', g + 116, -1, null, step);
+    });
+
+    const s2 = stage();
+    put(s2, 'idle', 20, 1, null, step);
+    put(s2, 'roll', 50, 1, 'boulder', step);
+    put(s2, 'roll', 94, -1, 'boulder', step);
+    put(s2, 'idle', 124, -1, null, step);
+    const rl = lane(170, 430, 2.4);
+    put(s2, 'roll', rl.cx, rl.facing, 'boulder', step);   // at full speed the picture turns one step a step
+
+    const s3 = stage();
+    put(s3, 'idle', 16, 1, null, step);
+    put(s3, 'stand', 50, 1, 'body', step);
+    put(s3, 'stand', 90, -1, 'body', step);
+    put(s3, 'walk', 130, 1, 'body', step);
+    put(s3, 'walk', 170, -1, 'body', step);
+    put(s3, 'idle', 204, -1, null, step);
+    const wk = lane(264, 426, 0.6875);
+    put(s3, 'walk', wk.cx, wk.facing, 'body', step);
+
+    const s4 = stage();
+    put(s4, 'idle', 16, 1, null, step);
+    put(s4, 'loose', 40, 1, 'stone', step);
+    put(s4, 'loose', 58, -1, 'stone', step);
+    put(s4, 'idle', 82, -1, null, step);
+
+    const seek = (n) => { this.acc = Math.max(0, n) / 0.06 + 0.5; this.setState({ step: Math.max(0, n), paused: true }); };
+    return {
+      s1, s2, s3, s4,
+      stepLabel: 'STEP ' + String(step).padStart(6, '0') + ' · ' + (step / 60).toFixed(2) + ' S',
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE',
+      pausedAria: st.paused ? 'true' : 'false',
+      pauseRing: st.paused ? '#5cadd5' : '#3a3f4a',
+      slowAria: st.slow ? 'true' : 'false',
+      slowRing: st.slow ? '#5cadd5' : '#3a3f4a',
+      togglePause: () => this.setState({ paused: !st.paused }),
+      toggleSlow: () => this.setState({ slow: !st.slow }),
+      stepOn: () => seek(step + 1),
+      stepBack: () => seek(step - 1),
+    };
+  }
+}
+</script>
+</body>
+</html>

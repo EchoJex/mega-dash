@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Thorn Man props</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("ds/mega-dash/fonts/MegaDash5x7.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1400px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">THORN MAN'S ROOM PIECES · 6 LOOKS EACH</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">PICK ONE OF EACH BY NUMBER. THE TILES ARE SHOWN TWICE: FAINT IN THE BACKGROUND, THEN COME FORWARD FOR HIM TO GRAPPLE. THE KUNAI FLY POINT FIRST, SO THEY ARE DRAWN POINTING RIGHT. THE PODS STAND IN THE FLOOR CORNERS, SHOWN FULL GROWN BESIDE THE PLAYER.</p>
+<h2 style="margin: 8px 0 0 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">PHILLIPS HEAD TILE · 16 × 16</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ tiles }}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="160" height="72" data-kind="tile" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 160px; height: 72px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+<h2 style="margin: 8px 0 0 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">LEAF KUNAI · 16 × 16</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ kunai }}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="96" height="96" data-kind="kunai" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 96px; height: 96px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+<h2 style="margin: 8px 0 0 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">SEED POD · 32 × 32</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ pods }}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="180" height="102" data-kind="pod" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 180px; height: 102px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+<h2 style="margin: 8px 0 0 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">SEED POD · A OR B, SIDE BY SIDE, BREATHING AT GAME SPEED</h2>
+<div style="display: flex; gap: 24px; flex-wrap: wrap;">
+<sc-for list="{{ ab }}" as="c" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="240" height="136" data-kind="ab" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 240px; height: 136px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+<h2 style="margin: 8px 0 0 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">SEED POD · ROUND 2 · 6 UPSIDE-DOWN STRAWBERRIES, BREATHING AT GAME SPEED (THE LEAF CUP STAYS STILL)</h2>
+<div style="display: flex; gap: 24px; flex-wrap: wrap;">
+<sc-for list="{{ podanim }}" as="c" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="240" height="136" data-kind="podanim" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 240px; height: 136px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1400}}'>
+// ── the same tiny pixel painter as the idle board ──
+function grid(w, h, maxY) { return { w: w, h: h, maxY: maxY == null ? h - 1 : maxY, c: new Array(w * h).fill(null) }; }
+function get(G, x, y) { return x < 0 || y < 0 || x >= G.w || y >= G.h ? null : G.c[y * G.w + x]; }
+function put(G, x, y, m, g, ov) {
+  if (x < 0 || y < 0 || x >= G.w || y > G.maxY) return;
+  var p = G.c[y * G.w + x];
+  if (ov) { if (p) G.c[y * G.w + x] = { m: m, g: p.g }; return; }
+  G.c[y * G.w + x] = { m: m, g: g };
+}
+function box(x0, y0, x1, y1, fn) { for (var y = Math.floor(y0); y <= Math.ceil(y1); y++) for (var x = Math.floor(x0); x <= Math.ceil(x1); x++) fn(x, y, x + 0.5, y + 0.5); }
+function rect(G, x, y, w, h, m, g, ov) { for (var j = y; j < y + h; j++) for (var i = x; i < x + w; i++) put(G, i, j, m, g, ov); }
+function ell(G, cx, cy, rx, ry, m, g, ov) {
+  box(cx - rx, cy - ry, cx + rx, cy + ry, function (x, y, px, py) { var a = (px - cx) / rx, b = (py - cy) / ry; if (a * a + b * b <= 1) put(G, x, y, m, g, ov); });
+}
+function cap(G, x0, y0, x1, y1, r0, r1, m, g, ov) {
+  var dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, R = Math.max(r0, r1);
+  box(Math.min(x0, x1) - R, Math.min(y0, y1) - R, Math.max(x0, x1) + R, Math.max(y0, y1) + R, function (x, y, px, py) {
+    var t = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / L2));
+    if (Math.hypot(px - x0 - dx * t, py - y0 - dy * t) <= r0 + (r1 - r0) * t) put(G, x, y, m, g, ov);
+  });
+}
+function leaf(G, x0, y0, ang, len, wid, m, g, rib, jag) {
+  var c = Math.cos(ang), s = Math.sin(ang);
+  box(x0 - len, y0 - len, x0 + len, y0 + len, function (x, y, px, py) {
+    var dx = px - x0, dy = py - y0, u = dx * c + dy * s, v = -dx * s + dy * c;
+    if (u < 0 || u > len) return;
+    var w = wid * Math.sin(Math.PI * u / len);
+    if (jag && Math.floor(u / 1.5) % 2) w *= 1 - jag;
+    if (Math.abs(v) > w + 0.25) return;
+    put(G, x, y, rib && Math.abs(v) < 0.55 && u > 1 && u < len - 1.5 ? rib : m, g);
+  });
+}
+// a curved seam down a round shape: k = -1 left, 0 middle, 1 right
+function seam(G, cx, cy, rx, ry, k, m) {
+  for (var y = Math.floor(cy - ry); y <= cy + ry; y++) {
+    var t = (y + 0.5 - cy) / ry; if (Math.abs(t) > 1) continue;
+    put(G, Math.floor(cx + k * rx * Math.sqrt(1 - t * t)), y, m, 0, 1);
+  }
+}
+function egg(G, cx, cy, rx, ry, m, g) {
+  box(cx - rx, cy - ry, cx + rx, cy + ry, function (x, y, px, py) {
+    var b = (py - cy) / ry, a = (px - cx) / (rx * (b < 0 ? 1 + 0.16 * b : 1 - 0.06 * b));
+    if (a * a + b * b <= 1) put(G, x, y, m, g, false, -(0.55 * a + 0.85 * b) * 0.6);
+  });
+}
+var N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function shade(G, R, F) {
+  var out = [];
+  for (var y = 0; y < G.h; y++) {
+    var row = '';
+    for (var x = 0; x < G.w; x++) {
+      var p = get(G, x, y);
+      if (!p) { row += N4.some(function (d) { return get(G, x + d[0], y + d[1]); }) ? '0' : '.'; continue; }
+      if (N4.some(function (d) { var q = get(G, x + d[0], y + d[1]); return q && q.g > p.g; })) { row += '0'; continue; }
+      if (F[p.m]) { row += F[p.m]; continue; }
+      var same = function (a, b) { var q = get(G, x + a, y + b); return q && q.m === p.m && q.g === p.g; };
+      var l = 2;
+      if (!same(0, -1)) l--; if (!same(-1, 0)) l--; if (!same(0, 1)) l++; if (!same(1, 0)) l++;
+      if (!same(-1, -1)) l -= 0.5; if (!same(1, 1)) l += 0.5;
+      if (p.g < 2) l += 1;
+      row += R[p.m][Math.max(0, Math.min(4, Math.round(l)))];
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+var PAL = { '0': '#0A0A12', '1': '#B6F27A', '2': '#5ED04A', '3': '#2AAB1C', '4': '#1C7A16', '5': '#0F4A12',
+  '6': '#8A6448', '7': '#5C4033', '8': '#3A281F', '9': '#EEF0F4', 'a': '#A8ACB4', 'b': '#6E7480', 'c': '#3E4452',
+  'd': '#FFF27A', 'e': '#1A1418', 'f': '#F2D36B', 'g': '#C9A23A', 'h': '#8A6A1E', 'i': '#9A9486', 'j': '#6E695E',
+  'k': '#46423A', 'l': '#C0703F', 'm': '#7A3E22', 'n': '#CFF6F4', 'o': '#6FC3C9' };
+var RAMP = { G: '12345', L: '11234', V: '23455', B: '66788', S: '99abc', Y: 'ffggh', R: 'iijkk', U: 'llm88', W: 'nnoob' };
+var FIX = { K: 'e', E: 'd', N: 'n' };
+
+function cross(G, a, b) { rect(G, 7, a, 2, b - a, 'K', 2, 1); rect(G, a, 7, b - a, 2, 'K', 2, 1); }
+var TILES = [
+  ['STEEL PLATE', function (G) { rect(G, 1, 1, 14, 14, 'S', 2); cross(G, 3, 13); [[2, 2], [13, 2], [2, 13], [13, 13]].forEach(function (p) { put(G, p[0], p[1], 'K', 2, 1); }); }],
+  ['BRASS PLATE', function (G) { rect(G, 2, 1, 12, 14, 'Y', 2); rect(G, 1, 2, 14, 12, 'Y', 2); cross(G, 3, 13); }],
+  ['MOSSY STONE', function (G) { rect(G, 1, 1, 14, 14, 'R', 2); for (var x = 1; x < 15; x++) rect(G, x, 1, 1, 2 + (x * 7) % 3, 'L', 2, 1); cross(G, 4, 13); }],
+  ['RUSTED, VINE-WRAPPED', function (G) { rect(G, 1, 1, 14, 14, 'U', 2); cross(G, 3, 13); cap(G, 0.5, 12, 15, 3, 0.9, 0.9, 'V', 3); leaf(G, 5, 9, -2.2, 4, 1.3, 'L', 3); leaf(G, 11, 5, 0.6, 4, 1.3, 'L', 3); }],
+  ['SCREW HEAD ON A PLATE', function (G) { rect(G, 1, 1, 14, 14, 'S', 1.5); ell(G, 8, 8, 5.6, 5.6, 'Y', 2); cross(G, 4, 12); }],
+  ['GREENHOUSE PANE', function (G) { rect(G, 1, 1, 14, 14, 'S', 2); rect(G, 3, 3, 10, 10, 'W', 2, 1); rect(G, 7, 3, 2, 10, 'S', 2, 1); rect(G, 3, 7, 10, 2, 'S', 2, 1); cap(G, 3.5, 11.5, 6, 9.5, 0.4, 0.4, 'N', 2, 1); cap(G, 10, 4, 12.5, 5.5, 0.4, 0.4, 'N', 2, 1); }],
+];
+function handle(G, wrap) { rect(G, 3, 7, 4, 2, 'B', 2); put(G, 4, 7, wrap, 2, 1); put(G, 5, 8, wrap, 2, 1); ell(G, 1.6, 8, 1.6, 1.6, 'S', 2); put(G, 1, 7, 'K', 2, 1); }
+var KUNAI = [
+  ['WILLOW LEAF', function (G) { handle(G, 'G'); leaf(G, 6, 8, 0, 8.5, 2.6, 'L', 2, 'V'); }],
+  ['SAW-EDGED LEAF', function (G) { handle(G, 'G'); leaf(G, 6, 8, 0, 8.5, 3, 'G', 2, 'V', 0.45); }],
+  ['STEEL LEAF BLADE', function (G) { handle(G, 'L'); leaf(G, 6, 8, 0, 8.5, 2.4, 'S', 2, 'K'); }],
+  ['BAMBOO LEAF', function (G) { handle(G, 'G'); leaf(G, 5, 8, 0, 9.5, 1.6, 'G', 2, 'L'); }],
+  ['THORN WITH LEAF FLIGHTS', function (G) { cap(G, 3, 8, 14.5, 8, 1.4, 0.2, 'B', 2); leaf(G, 6, 7, Math.PI + 0.45, 5, 1.2, 'L', 2.5, 'V'); leaf(G, 6, 9, Math.PI - 0.45, 5, 1.2, 'L', 2.5, 'V'); }],
+  ['GLINTING LEAF', function (G) { handle(G, 'G'); leaf(G, 6, 8, 0, 8.5, 2.6, 'L', 2, 'V'); put(G, 12, 7, 'E', 2, 1); put(G, 8, 6, 'E', 2, 1); }],
+];
+function baseLeaves(G, len, wid, sw) { sw = sw || 0; leaf(G, 16, 30, Math.PI + 0.35 + sw, len, wid, 'V', 3, 'L'); leaf(G, 16, 30, -0.35 - sw, len, wid, 'V', 3, 'L'); }
+// the idle: rest, breathe in, rest, breathe out. Its base stays planted on the floor
+var BREATH = [0, 1, 0, -1];
+var PODS = [
+  ['BULB', function (G, f, still) {
+    // an egg: narrower at the top, sitting in a cup of leaves
+    var s = BREATH[f || 0], cy = 21 - s * 0.5, rx = 7 + s * 0.3, ry = 9 + s * 0.5, sw = still ? 0 : s * 0.08;
+    egg(G, 16, cy, rx, ry, 'G', 2);
+    [[14, cy - 4], [18, cy - 1], [15, cy + 2]].forEach(function (p) { put(G, Math.floor(p[0]), Math.floor(p[1]), 'L', 2, 1); });
+    cap(G, 16, cy - ry + 0.5, 17.5 + s * 0.5, cy - ry - 3.5, 1.1, 0.4, 'L', 2);
+    leaf(G, 16, 30, Math.PI + 0.25 + sw, 9, 2.6, 'V', 3, 'L'); leaf(G, 16, 30, -0.25 - sw, 9, 2.6, 'V', 3, 'L');
+    leaf(G, 16, 30, Math.PI + 0.8 + sw, 6.5, 2, 'L', 3, 'V'); leaf(G, 16, 30, -0.8 - sw, 6.5, 2, 'L', 3, 'V');
+  }],
+  ['BURR', function (G) { for (var k = 0; k < 14; k++) { var a = k / 14 * 2 * Math.PI; cap(G, 16 + Math.cos(a) * 5, 18 + Math.sin(a) * 5, 16 + Math.cos(a) * 14, 18 + Math.sin(a) * 14, 1.8, 0.3, 'L', 1.5); } ell(G, 16, 18, 8, 8, 'G', 2); }],
+  ['PEA POD', function (G) { ell(G, 16, 17, 6.5, 13, 'G', 2); for (var k = 0; k < 4; k++) ell(G, 18.5, 8 + k * 6, 3, 2.8, 'L', 3); cap(G, 16, 4, 14, 1, 0.8, 0.5, 'V', 2); baseLeaves(G, 8, 2.4); }],
+  ['SNAP TRAP', function (G) { ell(G, 16, 25, 9, 5.5, 'G', 2); leaf(G, 15, 26, -1.9, 20, 5.5, 'L', 2.5, 'V'); leaf(G, 17, 26, -1.25, 20, 5.5, 'G', 2.6, 'V'); cap(G, 16, 9, 16, 22, 0.4, 0.4, 'E', 2.7); }],
+  ['PINE CONE', function (G) { ell(G, 16, 18, 8.5, 12, 'B', 2); for (var r = 0; r < 7; r++) for (var c = 0; c < 5; c++) ell(G, 8 + c * 4 + (r % 2) * 2, 8 + r * 3.4, 1.8, 1.4, (r + c) % 3 === 0 ? 'L' : 'G', 2, 1); leaf(G, 16, 7, -1.57, 6, 2, 'L', 2.5, 'V'); }],
+  ['GLOWING DOME', function (G, f) { var s = BREATH[f || 0], cy = 21 - s * 0.5, r = 9.5 + s * 0.45, glow = s > 0 ? 'E' : s < 0 ? 'V' : 'L'; ell(G, 16, cy, r, 9.5 + s * 0.5, 'G', 2); cap(G, 16, 12 - s, 16 + s * 0.4, 3 - s, 2.2, 0.3, 'G', 2); [-0.6, 0, 0.6].forEach(function (k) { seam(G, 16, cy, r, 9.5 + s * 0.5, k, f == null ? 'E' : glow); }); leaf(G, 16, 30, Math.PI + 0.9 + s * 0.06, 7, 2, 'V', 3); leaf(G, 16, 30, -0.9 - s * 0.06, 7, 2, 'V', 3); baseLeaves(G, 9, 2.5, s * 0.08); }],
+];
+// ── seed pods, round 2: the egg grown into an upside-down strawberry. Its own 15 colours ──
+var POD_HOLD = 15;
+var PAL2 = { '0': '#0A0A12', '1': '#E8FFB0', '2': '#B6F27A', '3': '#5ED04A', '4': '#2AAB1C', '5': '#1C7A16', '6': '#0F4A12', '7': '#08300C',
+  '8': '#F4ECC2', '9': '#C9B26A', 'a': '#FFF27A', 'b': '#E8A23A', 'c': '#8A6448', 'd': '#5C4033', 'e': '#3A281F' };
+// P body, D dark body, S the leaf cup, B amber blush, W bark
+var RAMP2 = { P: '1234567', D: '34567', S: '234567', B: 'abbcd', W: 'cddee' };
+var FIX2 = { X: '8', Y: '9', Z: '7', A: 'a' };
+function pput(G, x, y, m, g, l, t) { if (x < 0 || y < 0 || x >= G.w || y > G.maxY) return; G.c[y * G.w + x] = { m: m, g: g, l: l || 0, t: t }; }
+function bw(W, t) { return t < 0.68 ? W * Math.pow(Math.sin(Math.PI / 2 * t / 0.68), 0.75) : W * (1 - 0.28 * Math.pow((t - 0.68) / 0.32, 2)); }
+// t runs 0 at the tip to 1 at the base; light from the upper left, bias lightens towards the tip
+function berry(G, cx, base, W, H, m, g, bias) {
+  var top = base - H;
+  for (var y = Math.floor(top); y <= base; y++) {
+    var t = (y + 0.5 - top) / H; if (t < 0 || t > 1) continue;
+    var w = bw(W, t);
+    for (var x = Math.floor(cx - w); x <= cx + w; x++) {
+      var a = (x + 0.5 - cx) / Math.max(w, 0.5); if (Math.abs(a) > 1) continue;
+      pput(G, x, y, m, g, -(0.6 * a + 0.7 * (t * 2 - 1)) * 0.9 + (bias || 0) * (1 - t) * 1.2, t);
+    }
+  }
+}
+function pleaf(G, x0, y0, ang, len, wid, m, g) {
+  var c = Math.cos(ang), s = Math.sin(ang);
+  box(x0 - len, y0 - len, x0 + len, y0 + len, function (x, y, px, py) {
+    var dx = px - x0, dy = py - y0, u = dx * c + dy * s, v = -dx * s + dy * c;
+    if (u < 0 || u > len || Math.abs(v) > wid * Math.sin(Math.PI * Math.pow(u / len, 0.7)) + 0.25) return;
+    pput(G, x, y, m, g, (v < 0 ? 0.6 : -0.5) + (Math.abs(v) < 0.5 && u > 1 ? 0.5 : 0));
+  });
+}
+function body(G, fn) { for (var y = 0; y < G.h; y++) for (var x = 0; x < G.w; x++) { var p = get(G, x, y); if (p && p.t != null) fn(p, x, y); } }
+// seeds sit in a diamond lattice, each with a dark dimple under it, never on the outline
+function seeds(G, mat, dimple) {
+  body(G, function (p, x, y) {
+    if (p.t < 0.12 || p.t > 0.9 || y % 3 || (x + (Math.floor(y / 3) % 2) * 2) % 4) return;
+    if (p.m !== 'P' && p.m !== 'D') return;
+    if (!N4.every(function (d) { var q = get(G, x + d[0], y + d[1]); return q && q.g === p.g; })) return;
+    p.m = mat; var q = get(G, x, y + 1); if (dimple && q) q.m = dimple;
+  });
+}
+// the cup of leaves the pod sits in. It does not move
+function cup(G) {
+  [[0.12, 10, 2.4], [0.55, 8, 2.2], [1.05, 6, 2]].forEach(function (a) { pleaf(G, 16, 30, Math.PI + a[0], a[1], a[2], 'S', 3); pleaf(G, 16, 30, -a[0], a[1], a[2], 'S', 3); });
+  pleaf(G, 16, 30, -1.57, 4.5, 1.8, 'S', 3.1);
+}
+var POD2 = [
+  ['SEEDED', function (G, s) { berry(G, 16, 28, 7.2 + s * 0.35, 20 + s * 0.6, 'P', 2); seeds(G, 'X', 'Z'); cup(G); }],
+  ['RIPENING', function (G, s) { berry(G, 16, 28, 7.2 + s * 0.35, 20 + s * 0.6, 'P', 2, 1); seeds(G, 'Y', 'Z'); cup(G); }],
+  ['AMBER BLUSH', function (G, s) { berry(G, 16, 28, 7.2 + s * 0.35, 20 + s * 0.6, 'P', 2); body(G, function (p, x, y) { if (p.t < 0.2 || (p.t < 0.32 && (x + y) % 2 === 0) || (p.t < 0.42 && x % 2 === 0 && y % 2 === 0)) p.m = 'B'; }); seeds(G, 'X', 'Z'); cup(G); }],
+  ['NETTED', function (G, s) { berry(G, 16, 28, 7.2 + s * 0.35, 20 + s * 0.6, 'P', 2); body(G, function (p, x, y) { if ((x + y) % 4 === 0 || (x - y + 64) % 4 === 0) p.l += 0.9; }); cup(G); }],
+  ['GLOWING SEEDS', function (G, s) { berry(G, 16, 28, 7.2 + s * 0.35, 20 + s * 0.6, 'D', 2); seeds(G, s > 0 ? 'A' : 'Y', null); body(G, function (p, x, y) { if (p.m !== 'A') return; N4.forEach(function (d) { var q = get(G, x + d[0], y + d[1]); if (q && q.m === 'D') q.l += 1.2; }); }); cup(G); }],
+  ['BARK TIP', function (G, s) { var W = 7.2 + s * 0.35, H = 20 + s * 0.6; berry(G, 16, 28, W, H, 'P', 2); body(G, function (p) { if (p.t < 0.3) p.m = 'W'; }); [[0.38, -1], [0.58, -1], [0.48, 1], [0.7, 1]].forEach(function (k) { var y = Math.floor(28 - H + k[0] * H), x = Math.floor(16 + k[1] * bw(W, k[0])); pput(G, x + k[1], y, 'W', 1.9, 0.3); pput(G, x + 2 * k[1], y - 1, 'W', 1.9, 0.3); }); seeds(G, 'Y', 'Z'); cup(G); }],
+];
+function shade2(G, R, F) {
+  var out = [];
+  for (var y = 0; y < G.h; y++) {
+    var row = '';
+    for (var x = 0; x < G.w; x++) {
+      var p = get(G, x, y);
+      if (!p) { row += N4.some(function (d) { return get(G, x + d[0], y + d[1]); }) ? '0' : '.'; continue; }
+      if (N4.some(function (d) { var q = get(G, x + d[0], y + d[1]); return q && q.g > p.g; })) { row += '0'; continue; }
+      if (F[p.m]) { row += F[p.m]; continue; }
+      var same = function (a, b) { var q = get(G, x + a, y + b); return q && q.m === p.m && q.g === p.g; };
+      var l = 2 - p.l * 1.6;
+      if (!same(1, 0) || !same(0, 1)) l += 0.5;
+      if (!same(-1, 0) || !same(0, -1)) l -= 0.3;
+      if (p.g < 2) l += 0.9;
+      var r = R[p.m];
+      row += r[Math.max(0, Math.min(r.length - 1, Math.round(l / 4 * (r.length - 1))))];
+    }
+    out.push(row);
+  }
+  return out;
+}
+// A and B side by side, both with the leaf cup held still: A the first ribbed bulb, B the egg
+function abAnim() {
+  var A = function (G, f) { var s = BREATH[f], cy = 20 - s * 0.5, rx = 10 + s * 0.4, ry = 10.5 + s * 0.5; ell(G, 16, cy, rx, ry, 'G', 2); [-0.5, 0, 0.5].forEach(function (k) { seam(G, 16, cy, rx, ry, k, 'V'); }); cap(G, 16, 10 - s, 18 + s * 0.6, 5 - s, 1.3, 0.4, 'L', 2); baseLeaves(G, 11, 3, 0); };
+  var B = function (G, f) { PODS[0][1](G, f, true); };
+  return [['A  THE FIRST BULB, RIBBED', A], ['B  THE EGG · PICKED', B]].map(function (v) { return { name: v[0] + ' · LEAF CUP STILL', frames: [0, 1, 2, 3].map(function (f) { var G = grid(32, 32, 30); v[1](G, f); return shade(G, RAMP, FIX); }) }; });
+}
+function podAnim() { return POD2.map(function (v, i) { return { name: (i + 1) + '  ' + v[0] + ' · IDLE, 4 FRAMES × ' + POD_HOLD + ' STEPS', frames: [0, 1, 2, 3].map(function (f) { var G = grid(32, 32, 30); v[1](G, BREATH[f]); return shade2(G, RAMP2, FIX2); }) }; }); }
+var PICKED = { tile: 2, kunai: 3, pod: 0 };
+function make(list, w, h, maxY) { return list.map(function (t, i) { var G = grid(w, h, maxY); t[1](G); return { name: (i + 1) + '  ' + t[0], rows: shade(G, RAMP, FIX) }; }); }
+var CACHE = null;
+function all() { return CACHE || (CACHE = { tile: make(TILES, 16, 16), kunai: make(KUNAI, 16, 16), pod: make(PODS, 32, 32, 30), podanim: podAnim(), ab: abAnim() }); }
+
+var PLAYER = ["........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......042202330........", ".......042302310........", ".......042202330........", ".......042202330........", ".......0542042330.......", ".......0654054220.......", ".......0000000000......."];
+var PPAL = { '0': '#0A0A12', '1': '#FFFFFF', '2': '#C3CAD7', '3': '#EDF1F7', '4': '#8990A9', '5': '#565E78', '6': '#363D52', '7': '#23283A', '8': '#B4ECFF', '9': '#3CBCFC', 'a': '#1C74C8', 'b': '#103C70' };
+
+function paint(g, rows, pal, ox, oy, S) { rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (r[x] !== '.') { g.fillStyle = pal[r[x]]; g.fillRect((ox + x) * S, (oy + y) * S, S, S); } }); }
+function drawCell(cv, kind, rows) {
+  var g = cv.getContext('2d');
+  g.fillStyle = '#0B1A12'; g.fillRect(0, 0, cv.width, cv.height);
+  if (kind === 'tile') {
+    g.globalAlpha = 0.4; paint(g, rows, PAL, 1, 1, 4); g.globalAlpha = 1;
+    g.fillStyle = '#c8ceda'; g.fillRect(19 * 4, 8 * 4, 3 * 4, 4); g.fillRect(21 * 4, 7 * 4, 4, 12);
+    paint(g, rows, PAL, 23, 1, 4);
+  } else if (kind === 'kunai') {
+    paint(g, rows, PAL, 0, 0, 6);
+  } else {
+    var S = kind === 'podanim' || kind === 'ab' ? 4 : 3;
+    g.fillStyle = '#1F3A1C'; g.fillRect(0, 32 * S, cv.width, cv.height);
+    g.fillStyle = '#3E6B2E'; g.fillRect(0, 32 * S, cv.width, S);
+    paint(g, PLAYER, PPAL, 2, 8, S);
+    paint(g, rows, kind === 'podanim' ? PAL2 : PAL, 27, 0, S);
+  }
+}
+
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this;
+    this.step = 0; this.fr = 0;
+    this.timer = setInterval(function () {
+      self.step++;
+      var fr = Math.floor(self.step / POD_HOLD) % 4;
+      if (fr !== self.fr) { self.fr = fr; self.draw(true); }
+    }, 1000 / 60);
+    this.draw();
+  }
+  componentDidUpdate() { this.draw(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  draw(animOnly) {
+    var A = all(), fr = this.fr || 0;
+    document.querySelectorAll('canvas[data-kind]').forEach(function (cv) {
+      var kind = cv.getAttribute('data-kind'), v = A[kind][+cv.getAttribute('data-cell')];
+      var anim = kind === 'podanim' || kind === 'ab';
+      if (!v || (animOnly && !anim)) return;
+      drawCell(cv, kind, anim ? v.frames[fr] : v.rows);
+    });
+  }
+  renderVals() {
+    var A = all(), list = function (k) { return A[k].map(function (v, i) { return { id: i, name: v.name + (PICKED[k] === i ? ' · PICKED' : '') }; }); };
+    return { tiles: list('tile'), kunai: list('kunai'), pods: list('pod'), podanim: list('podanim'), ab: list('ab') };
+  }
+}
+</script>
+</body>
+</html>

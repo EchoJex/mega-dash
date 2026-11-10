@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Thorn Man idle looks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("ds/mega-dash/fonts/MegaDash5x7.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1540px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">THORN MAN · IDLE · LOOK 04 · 24 SPRING ARMS</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #f5d328; max-width: 1180px;">EACH ARM IS A STIFF COIL RUNNING STRAIGHT FROM SHOULDER TO SHURIKEN: 4 MATERIALS × THIN OR THICK × TIGHT, EVEN OR LOOSE WINDING. THE POUCHES ARE NOW SQUARE AND STRAPPED TO HIS THIGHS.</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">GROWN FROM ROUND 1'S 17 AND 19: LEAF HORNS, THE 4-POINT STAR, THE GREEN GI OR THE LEAF ARMOUR. EACH LOOK IS A STANCE, A HEADDRESS AND AN OUTFIT. THE IDLE IS NOW 4 FRAMES OF 15 STEPS (STILL ONE SECOND): HE BREATHES, HIS SCARF FLUTTERS AND THE SHURIKEN SPIN WITHOUT A JUMP. BLUE BOXES ARE THE HIT BOXES, UNCHANGED. THE GOLD PIXEL IS WHERE THE GAME HOLDS HIM.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ toggleMode }}" style="min-height: 44px; padding: 0 16px; background: #5cadd5; color: #060614; border: 0; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ modeLabel }}</button>
+<button type="button" onClick="{{ toggleFlip }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ flipLabel }}</button>
+<button type="button" onClick="{{ toggleBox }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ boxLabel }}</button>
+<button type="button" onClick="{{ togglePause }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ pauseLabel }}</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="24">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="276" height="168" data-cell="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 276px; height: 168px;"></canvas>
+<p style="margin: 0; font-size: 7px; line-height: 10px; color: #ffffff;">{{ c.name }}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1540}}'>
+// ── a tiny pixel painter. Shapes are painted as MATERIALS with a light value (l, lit from the
+// upper left), then shaded from each material's colour ramp and outlined ──
+function grid(w, h, maxY) { return { w: w, h: h, maxY: maxY == null ? h - 1 : maxY, c: new Array(w * h).fill(null) }; }
+function get(G, x, y) { return x < 0 || y < 0 || x >= G.w || y >= G.h ? null : G.c[y * G.w + x]; }
+function put(G, x, y, m, g, ov, l) {
+  if (x < 0 || y < 0 || x >= G.w || y > G.maxY) return;
+  var p = G.c[y * G.w + x];
+  if (ov) { if (p) G.c[y * G.w + x] = { m: m, g: p.g, l: p.l }; return; }
+  G.c[y * G.w + x] = { m: m, g: g, l: l || 0 };
+}
+function lit(ox, oy) { return -(0.55 * ox + 0.85 * oy); }
+function box(x0, y0, x1, y1, fn) { for (var y = Math.floor(y0); y <= Math.ceil(y1); y++) for (var x = Math.floor(x0); x <= Math.ceil(x1); x++) fn(x, y, x + 0.5, y + 0.5); }
+function rect(G, x, y, w, h, m, g, ov) { for (var j = y; j < y + h; j++) for (var i = x; i < x + w; i++) put(G, i, j, m, g, ov); }
+function ell(G, cx, cy, rx, ry, m, g, ov) {
+  box(cx - rx, cy - ry, cx + rx, cy + ry, function (x, y, px, py) { var a = (px - cx) / rx, b = (py - cy) / ry; if (a * a + b * b <= 1) put(G, x, y, m, g, ov, lit(a, b)); });
+}
+function cap(G, x0, y0, x1, y1, r0, r1, m, g, ov) {
+  var dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, R = Math.max(r0, r1);
+  box(Math.min(x0, x1) - R, Math.min(y0, y1) - R, Math.max(x0, x1) + R, Math.max(y0, y1) + R, function (x, y, px, py) {
+    var t = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / L2)), ox = px - x0 - dx * t, oy = py - y0 - dy * t, r = r0 + (r1 - r0) * t;
+    if (Math.hypot(ox, oy) <= r) put(G, x, y, m, g, ov, lit(ox / r, oy / r));
+  });
+}
+function leaf(G, x0, y0, ang, len, wid, m, g, rib) {
+  var c = Math.cos(ang), s = Math.sin(ang);
+  box(x0 - len, y0 - len, x0 + len, y0 + len, function (x, y, px, py) {
+    var dx = px - x0, dy = py - y0, u = dx * c + dy * s, v = -dx * s + dy * c;
+    if (u < 0 || u > len) return;
+    var w = wid * Math.sin(Math.PI * Math.pow(u / len, 0.8));
+    if (Math.abs(v) > w + 0.25) return;
+    put(G, x, y, rib && Math.abs(v) < 0.55 && u > 1 && u < len - 1.5 ? rib : m, g, false, v < 0 ? 0.5 : -0.4);
+  });
+}
+function star(G, cx, cy, R, rot, g) {
+  box(cx - R, cy - R, cx + R, cy + R, function (x, y, px, py) {
+    var dx = px - cx, dy = py - cy, d = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
+    // four hooked pinwheel blades: each is longest at its leading edge and sweeps back
+    var q = ((th - rot) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2) / (Math.PI / 2);
+    var f = 0.34 + 0.66 * Math.pow(1 - q, 1.5);
+    if (d > R * f + 0.4 || d <= 1.5) return;
+    // each blade is bevelled: its leading half catches the light, its trailing half is dark
+    var side = q < 0.3 ? 0.7 : -0.5;
+    put(G, x, y, d > 2.2 && d < 3.1 ? 'C' : 'S', g, false, side + lit(dx / R, dy / R) * 0.5);
+  });
+}
+function coil(G, a, b, amp, turns, ph, g) {
+  var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+  for (var i = 0; i <= 90; i++) {
+    var t = i / 90, o = amp * Math.sin(Math.PI * t) * Math.sin(2 * Math.PI * turns * t + ph);
+    ell(G, a[0] + dx * t + nx * o, a[1] + dy * t + ny * o, 1.2, 1.2, 'V', g);
+  }
+  [0.3, 0.62].forEach(function (t) {
+    var o = amp * Math.sin(Math.PI * t) * Math.sin(2 * Math.PI * turns * t + ph), side = o >= 0 ? 1 : -1;
+    leaf(G, a[0] + dx * t + nx * o, a[1] + dy * t + ny * o, Math.atan2(ny * side, nx * side) - 0.7, 4, 1.3, 'L', g);
+  });
+}
+// a cloth tail streaming back in the wind; ph moves the ripple along it
+function tail(G, x0, y0, len, drop, ph, m, g) {
+  for (var i = 0; i <= len * 3; i++) {
+    var t = i / (len * 3), r = 1.5 - 0.8 * t;
+    ell(G, x0 - t * len, y0 + t * drop + 1.4 * t * Math.sin(t * 6 - ph), r, r, m, g);
+  }
+}
+var N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function shade(G, R, F) {
+  var out = [];
+  for (var y = 0; y < G.h; y++) {
+    var row = '';
+    for (var x = 0; x < G.w; x++) {
+      var p = get(G, x, y);
+      if (!p) { row += N4.some(function (d) { return get(G, x + d[0], y + d[1]); }) ? '0' : '.'; continue; }
+      if (N4.some(function (d) { var q = get(G, x + d[0], y + d[1]); return q && q.g > p.g; })) { row += '0'; continue; }
+      if (F[p.m]) { row += F[p.m]; continue; }
+      var same = function (a, b) { var q = get(G, x + a, y + b); return q && q.m === p.m && q.g === p.g; };
+      var l = 2 - p.l * 1.7;
+      if (!same(1, 0) || !same(0, 1)) l += 0.6;
+      if (!same(-1, 0) || !same(0, -1)) l -= 0.4;
+      if (p.g < 2) l += 0.9;
+      row += R[p.m][Math.max(0, Math.min(4, Math.round(l)))];
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+// ── his colours: 15 in all ──
+var PAL = { '0': '#0A0A12', '1': '#B6F27A', '2': '#5ED04A', '3': '#2AAB1C', '4': '#1C7A16', '5': '#0F4A12',
+  '6': '#8A6448', '7': '#5C4033', '8': '#3A281F', '9': '#EEF0F4', 'a': '#A8ACB4', 'b': '#6E7480', 'c': '#3E4452',
+  'd': '#FFF27A', 'e': '#1A1418' };
+// D = his gi (deep green), V = the vine arms (bright), L = leaves, G = leaf armour, B = brown wraps and scarf, S = steel
+var RAMP = { D: '23455', V: '12234', L: '11223', G: '12345', B: '66788', S: '99abc' };
+var FIX = { K: 'e', E: 'd', C: 'c' };
+
+var STANCES = [
+  { n: 'READY', hip: [31, 40], bk: [25, 50], bf: [21, 58], fk: [38, 49], ff: [41, 58], ch: [33, 30], hd: [35, 21], fs: [49, 35], bs: [15, 44], fsh: [37, 28], bsh: [29, 29] },
+  { n: 'GUARD', hip: [32, 38], bk: [27, 48], bf: [24, 58], fk: [37, 48], ff: [39, 58], ch: [32, 28], hd: [33, 19], fs: [45, 22], bs: [17, 46], fsh: [36, 26], bsh: [28, 27] },
+  { n: 'LOW', hip: [30, 43], bk: [23, 51], bf: [18, 58], fk: [40, 50], ff: [44, 58], ch: [35, 33], hd: [38, 25], fs: [51, 45], bs: [13, 38], fsh: [39, 31], bsh: [31, 32] },
+];
+var HEADS = ['HORNS, SHORT SCARF', 'HORNS, LONG SCARF', 'LEAF CREST, LONG SCARF', 'HOOD AND HORNS'];
+var OUTFITS = ['GREEN GI', 'LEAF ARMOUR'];
+
+function leg(G, hip, knee, foot, pants, wrap, g) {
+  cap(G, hip[0], hip[1], knee[0], knee[1], 3, 2.4, pants, g);
+  cap(G, knee[0], knee[1], foot[0], foot[1] - 2, 2.3, 1.5, pants, g);
+  var wx = knee[0] + (foot[0] - knee[0]) * 0.4, wy = knee[1] + (foot[1] - 2 - knee[1]) * 0.4;
+  cap(G, wx, wy, foot[0], foot[1] - 2, 2.4, 1.7, wrap, g, 1);
+  ell(G, foot[0] + 1, foot[1] - 0.5, 2.9, 1.6, 'K', g);
+  put(G, foot[0] + 2, foot[1] - 1, 'D', g, 1);   // the split toe of his tabi
+}
+// a small square tool pouch strapped to the outside of the thigh: a flap with a steel clasp, and a dark strap round the leg
+function pouch(G, hip, knee, g, side) {
+  var mx = Math.round(hip[0] + (knee[0] - hip[0]) * 0.5), my = Math.round(hip[1] + (knee[1] - hip[1]) * 0.5);
+  rect(G, mx - 3, my + 1, 6, 1, 'K', 0, 1);
+  var x = mx + (side > 0 ? 1 : -3), y = my - 1;
+  rect(G, x, y, 3, 4, 'B', g);
+  rect(G, x, y + 1, 3, 1, 'K', 0, 1);
+  put(G, x + 1, y + 1, 'S', 0, 1);
+}
+// ── SPRING ARMS: a stiff coil running straight from the shoulder to the shuriken. Its front half
+// passes in front (a higher layer, so it gets its own outline), its back half behind ──
+var ARM_MATS = [{ n: 'VINE SPRING', m: 'V' }, { n: 'STEEL SPRING', m: 'S', leaves: 1 }, { n: 'BAMBOO SPRING', m: 'G', nodes: 1 }, { n: 'THORN SPRING', m: 'V', thorns: 1 }];
+var ARM_GAUGE = [{ n: 'THIN', R: 2.2, w: 0.75 }, { n: 'THICK', R: 2.9, w: 1.1 }];
+var ARM_WIND = [{ n: 'TIGHT', p: 2.2 }, { n: 'EVEN', p: 3.1 }, { n: 'LOOSE', p: 4.4 }];
+function spring(G, a, b, A, front) {
+  var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  var N = Math.max(2, Math.round(L / A.p * (A.k || 1))), gF = front ? 4.2 : 1.6, gB = front ? 3.5 : 1.3, steps = N * 48;
+  var at = function (s, off) { var t = s / N * L; return [a[0] + ux * t + nx * off, a[1] + uy * t + ny * off]; };
+  for (var i = 0; i <= steps; i++) {
+    var s = i / steps * N, th = 2 * Math.PI * s, q = at(s, A.R * Math.cos(th)), fr = Math.sin(th) > 0;
+    var m = A.nodes && (s * 2) % 1 < 0.14 ? 'L' : A.m;
+    ell(G, q[0], q[1], A.w, A.w, m, fr ? gF : gB);
+  }
+  if (A.thorns) for (var k = 1; k < N; k++) { var t1 = at(k + 0.25, A.R + A.w + 0.6), t2 = at(k + 0.25, A.R + A.w + 1.6); put(G, Math.floor(t1[0]), Math.floor(t1[1]), 'B', gF + 0.1); put(G, Math.floor(t2[0]), Math.floor(t2[1]), 'B', gF + 0.1); }
+  if (A.leaves) [0.35, 0.7].forEach(function (f) { var q = at(N * f, A.R); leaf(G, q[0], q[1], Math.atan2(ny, nx) - 0.6, 4, 1.3, 'L', gF + 0.2); });
+  // a brown cuff at the shoulder and at the wrist, like a fighter's wraps
+  [0.04, 0.84].forEach(function (f) { var c1 = at(N * f, -(A.R + 0.8)), c2 = at(N * f, A.R + 0.8); cap(G, c1[0], c1[1], c2[0], c2[1], 1.2, 1.2, 'B', gF + 0.1); });
+}
+function horns(G, hx, hy, g) {
+  leaf(G, hx - 1, hy - 3, -2.65, 8, 1.5, 'G', g, 'V');
+  leaf(G, hx + 1, hy - 3.5, -2.2, 8.5, 1.6, 'G', g, 'V');
+}
+// one frame of him, 64 × 64, facing right, standing on the pivot (32, 60). f = 0..3: the four idle frames
+function thorn(si, h, o, f, arm) {
+  var G = grid(64, 64, 58), P = STANCES[si], b = [0, 0, 1, 1][f], ph = f * Math.PI / 2, rot = f * Math.PI / 8;
+  var up = function (p) { return [p[0], p[1] + b]; };
+  var ch = up(P.ch), hd = up(P.hd), fsh = up(P.fsh), bsh = up(P.bsh), hip = P.hip;
+  var top = 'D', pants = o ? 'B' : 'D', wrap = o ? 'D' : 'B';
+  // furthest back first
+  star(G, P.bs[0], P.bs[1], 8.5, -rot, 1);
+  if (arm) spring(G, bsh, P.bs, arm, false); else coil(G, bsh, P.bs, 1.7, 2.5, ph * 0.5, 1.5);
+  if (h > 0) { tail(G, hd[0] - 3, hd[1] + 3, 15, 5, ph, 'B', 1.7); tail(G, hd[0] - 3, hd[1] + 4, 12, 8, ph + 1.3, 'B', 1.7); }
+  else tail(G, hd[0] - 3, hd[1] + 3, 7, 3, ph, 'B', 1.7);
+  if (h === 3) cap(G, hd[0] - 3, hd[1], hd[0] - 6, hd[1] + 8, 2.2, 1.2, 'D', 1.75);
+  leg(G, hip, P.bk, P.bf, pants, wrap, 1.9);
+  pouch(G, hip, P.bk, 1.95, -1);
+  if (o) leaf(G, bsh[0], bsh[1], Math.PI - 0.7, 7, 2.4, 'G', 1.95, 'L');
+  leg(G, hip, P.fk, P.ff, pants, wrap, 2);
+  pouch(G, hip, P.fk, 2.05, 1);
+  // the body: a narrow waist up to broad shoulders
+  cap(G, hip[0], hip[1], ch[0], ch[1], 3, 4.6, top, 2.1);
+  ell(G, ch[0], ch[1] + 1, 5.2, 4.2, top, 2.1);
+  cap(G, ch[0] - 3, ch[1] - 3, ch[0] + 1, ch[1] + 2, 0.6, 0.6, o ? 'G' : 'L', 2.1, 1);
+  cap(G, ch[0] + 4, ch[1] - 3, ch[0] + 1, ch[1] + 2, 0.6, 0.6, o ? 'G' : 'L', 2.1, 1);
+  if (o) cap(G, bsh[0], bsh[1], hip[0] + 3, hip[1] - 1, 0.8, 0.8, 'B', 2.1, 1);
+  ell(G, hip[0], hip[1], 4.3, 1.7, 'B', 2.1);
+  cap(G, ch[0] + 1, ch[1] - 3, hd[0] - 1, hd[1] + 3, 1.7, 1.7, top, 2.1);
+  // the head: a dark hood with a glowing slit
+  var g = 2.2;
+  if (h === 3) ell(G, hd[0] - 0.6, hd[1] - 0.4, 4.9, 5.2, 'D', g);
+  ell(G, hd[0], hd[1], 4, 4.4, 'D', g);
+  if (h === 2) { leaf(G, hd[0], hd[1] - 3, -2.7, 11, 2.1, 'G', g, 'V'); leaf(G, hd[0] + 1, hd[1] - 3, -2.1, 5, 1.3, 'G', g, 'V'); }
+  else horns(G, hd[0], hd[1], g);
+  if (h === 3) ell(G, hd[0] + 1.6, hd[1] + 0.2, 2.7, 2.3, 'K', g, 1);
+  else rect(G, hd[0] - 2, hd[1] - 2, 7, 2, 'K', g, 1);
+  put(G, hd[0] + 2, hd[1] - 1, 'E', g, 1); put(G, hd[0] + 3, hd[1] - 1, 'E', g, 1);
+  // front arm, in front of everything
+  if (o) leaf(G, fsh[0], fsh[1], 0.7, 7, 2.4, 'G', 2.3, 'L');
+  star(G, P.fs[0], P.fs[1], 8.5, rot, 3);
+  if (arm) spring(G, fsh, P.fs, arm, true); else coil(G, fsh, P.fs, 1.7, 2.5, 1 + ph * 0.5, 4);
+  return shade(G, RAMP, FIX);
+}
+
+var CACHE = null;
+function looks() {
+  if (CACHE) return CACHE;
+  CACHE = [];
+  for (var s = 0; s < 3; s++) for (var h = 0; h < 4; h++) for (var o = 0; o < 2; o++) {
+    var n = CACHE.length + 1;
+    CACHE.push({ name: (n < 10 ? '0' : '') + n + '  ' + STANCES[s].n + ' · ' + HEADS[h] + ' · ' + OUTFITS[o], f: [0, 1, 2, 3].map(function (f) { return thorn(s, h, o, f); }) });
+  }
+  return CACHE;
+}
+// the 24 spring arms, all on the picked look: 04, READY · HORNS, LONG SCARF · LEAF ARMOUR
+var ARMS_CACHE = null;
+function armLooks() {
+  if (ARMS_CACHE) return ARMS_CACHE;
+  ARMS_CACHE = [];
+  ARM_MATS.forEach(function (m) { ARM_GAUGE.forEach(function (g) { ARM_WIND.forEach(function (w) {
+    var n = ARMS_CACHE.length + 1, picked = n === 5;
+    // 05 is the owner's pick, with a quarter fewer turns so the coil reads at idle length
+    var A = { n: m.n, m: m.m, nodes: m.nodes, thorns: m.thorns, leaves: m.leaves, R: g.R, w: g.w, p: w.p, k: picked ? 0.75 : 1 };
+    ARMS_CACHE.push({ name: (n < 10 ? '0' : '') + n + '  ' + m.n + ' · ' + g.n + ' · ' + w.n + (picked ? ' · PICKED, FEWER TURNS' : ''), f: [0, 1, 2, 3].map(function (f) { return thorn(0, 1, 1, f, A); }) });
+  }); }); });
+  return ARMS_CACHE;
+}
+var HOLD = 15;
+
+// the 16-bit player, idle 1, for scale
+var PLAYER = ["........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......042202330........", ".......042302310........", ".......042202330........", ".......042202330........", ".......0542042330.......", ".......0654054220.......", ".......0000000000......."];
+var PPAL = { '0': '#0A0A12', '1': '#FFFFFF', '2': '#C3CAD7', '3': '#EDF1F7', '4': '#8990A9', '5': '#565E78', '6': '#363D52', '7': '#23283A', '8': '#B4ECFF', '9': '#3CBCFC', 'a': '#1C74C8', 'b': '#103C70' };
+
+var S = 3, Y0 = 8;
+function drawCell(cv, rows, flip, showBox) {
+  var g = cv.getContext('2d'), bx = flip ? 28 : 0, px = flip ? 0 : 68;
+  var dot = function (x, y, hex) { g.fillStyle = hex; g.fillRect(x * S, (y - Y0) * S, S, S); };
+  g.fillStyle = '#0B1A12'; g.fillRect(0, 0, cv.width, cv.height);
+  g.fillStyle = '#1F3A1C'; g.fillRect(0, (60 - Y0) * S, cv.width, cv.height);
+  g.fillStyle = '#3E6B2E'; g.fillRect(0, (60 - Y0) * S, cv.width, S);
+  PLAYER.forEach(function (r, y) { for (var x = 0; x < 24; x++) if (r[x] !== '.') dot(px + (flip ? x : 23 - x), 36 + y, PPAL[r[x]]); });
+  rows.forEach(function (r, y) { for (var x = 0; x < 64; x++) if (r[x] !== '.') dot(bx + (flip ? 63 - x : x), y, PAL[r[x]]); });
+  if (!showBox) return;
+  g.strokeStyle = '#3CBCFC'; g.lineWidth = 1;
+  g.strokeRect((bx + 16) * S + 0.5, (17 - Y0) * S + 0.5, 32 * S - 1, 43 * S - 1);
+  g.strokeRect((px + 6) * S + 0.5, (38 - Y0) * S + 0.5, 12 * S - 1, 22 * S - 1);
+  dot(bx + (flip ? 31 : 32), 60, '#F5D328');
+}
+
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this;
+    this.step = 0; this.fr = 0;
+    this.timer = setInterval(function () {
+      if (self.state && self.state.paused) return;
+      self.step++;
+      var fr = Math.floor(self.step / HOLD) % 4;
+      if (fr !== self.fr) { self.fr = fr; self.draw(); }
+    }, 1000 / 60);
+    this.draw();
+  }
+  componentDidUpdate() { this.draw(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  draw() {
+    var st = this.state || {}, all = st.bodies ? looks() : armLooks(), fr = this.fr || 0;
+    document.querySelectorAll('canvas[data-cell]').forEach(function (cv) {
+      var v = all[+cv.getAttribute('data-cell')];
+      if (v) drawCell(cv, v.f[fr], !!st.flip, st.box !== false);
+    });
+  }
+  renderVals() {
+    var self = this, st = this.state || {};
+    return {
+      cells: st.bodies ? looks().map(function (v, i) { return { id: i, name: v.name + (i === 3 ? ' · PICKED' : '') }; }) : armLooks().map(function (v, i) { return { id: i, name: v.name }; }),
+      modeLabel: st.bodies ? 'SHOWING THE 24 BODY LOOKS · TAP FOR THE 24 SPRING ARMS' : 'SHOWING THE 24 SPRING ARMS ON 04 · TAP FOR THE 24 BODY LOOKS',
+      toggleMode: function () { self.setState({ bodies: !st.bodies }); },
+      flipLabel: st.flip ? 'FACING LEFT · TAP TO FACE RIGHT' : 'FACING RIGHT · TAP TO FACE LEFT',
+      boxLabel: st.box === false ? 'SHOW HIT BOXES' : 'HIDE HIT BOXES',
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE',
+      toggleFlip: function () { self.setState({ flip: !st.flip }); },
+      toggleBox: function () { self.setState({ box: st.box === false }); },
+      togglePause: function () { self.setState({ paused: !st.paused }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

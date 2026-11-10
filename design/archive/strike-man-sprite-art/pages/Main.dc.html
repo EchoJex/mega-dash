@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Strike Man — every clip at game speed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(./ds/mega-dash/fonts/MegaDash5x7.woff) format("woff");font-display:block}
+body{margin:0;background:#060614}
+a{color:#5cadd5}a:hover{color:#b4ecff}
+canvas{image-rendering:pixelated;display:block}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1344px; min-height: 3560px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; display: flex; flex-direction: column; gap: 28px">
+<header style="display: flex; flex-direction: column; gap: 16px">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; font-weight: 400; color: #ea6a34">STRIKE MAN</h1>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #c8ceda; max-width: 1180px">The tank version: 34’s rusty mono-eye robot, 30’s round gloves, 25’s large eye, no blink. boss-strike-body.sprite · 96×64 · pivot 48, 60 (the floor under his middle) · collision box 38×44, unchanged. Every clip plays at game speed: 60 steps a second, each frame for its hold. Left panel: facing right. Right panel: facing left, mirrored about the pivot, as the game does it. The player stands against his front at true scale, in front of him as in the game. Clips that play once rest 30 steps on their last frame, then repeat.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center; font-size: 14px; line-height: 20px; color: #c8ceda">
+<span style="display: flex; gap: 8px; align-items: center"><span style="width: 18px; height: 14px; border: 2px solid #5cadd5; box-sizing: border-box"></span>his collision box (38×44) and pivot</span>
+<span style="display: flex; gap: 8px; align-items: center"><span style="width: 18px; height: 14px; border: 2px solid #ff4a32; background: rgba(255,74,50,0.2); box-sizing: border-box"></span>hit area, while it can hurt · red dot: spawn point</span>
+<span style="display: flex; gap: 8px; align-items: center"><span style="width: 18px; height: 14px; border: 2px dashed #8990a9; box-sizing: border-box"></span>the player's box (12×22)</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<span style="font-size: 14px; color: #c8ceda; margin-right: 8px">{{paletteLabel}}</span>
+<sc-for list="{{palette}}" as="p" hint-placeholder-count="14">
+<span title="{{p.label}}" style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<span style="width: 28px; height: 28px; border: 1px solid #2a323c; background: {{p.hex}}"></span>
+<span style="font-size: 12px; color: #c8ceda">{{p.key}}</span>
+</span>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" onClick="{{togglePlay}}" aria-pressed="{{pausedStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{playLabel}}</button>
+<button type="button" onClick="{{stepOne}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">STEP +1</button>
+<button type="button" onClick="{{toggleSlow}}" aria-pressed="{{slowStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{slowLabel}}</button>
+<button type="button" onClick="{{toggleMarks}}" aria-pressed="{{marksStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{marksLabel}}</button>
+</div>
+</header>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<sc-for list="{{clips}}" as="c" hint-placeholder-count="16">
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #0d1420; border: 1px solid #2a323c">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+<h2 style="margin: 0; font-size: 18px; line-height: 22px; font-weight: 700; color: #ffffff">{{c.name}}</h2>
+<span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; color: #5cadd5">{{c.kindLabel}}</span>
+</div>
+<canvas ref="{{c.ref}}" width="588" height="198" role="img" aria-label="{{c.aria}}" style="width: 588px; height: 198px; background: #14141f"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda">{{c.when}}</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #ffffff">{{c.timing}}</p>
+<sc-if value="{{c.hasWas}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 13px; line-height: 20px; color: #8990a9">{{c.was}}</p>
+</sc-if>
+</section>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1344,"height":3560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { playing: true, slow: false, marks: true, ready: false };
+    this.cvs = {};
+    this.refCbs = {};
+    this.acc = 0;
+  }
+
+  info() {
+    return [
+      ['idle', 'loop', 'Before the fight, as he beams in: engine rumble and exhaust puffs. No blink.', 'in the game now: 30 · 30'],
+      ['walk', 'loop', 'Driving at the player (and his layer-3 dash): treads roll, top and bottom runs opposite ways.', 'in the game now: 8 · 8 · 8 · 8'],
+      ['guard', 'loop', 'Layers 2 and 3: driving with both gloves up over his eye; it bounces the next shot back.', 'in the game now: 10 (one frame)'],
+      ['jabReady', 'once', 'The short wind-up before a string of jabs: glove drawn back, the lid drops over his eye.', 'in the game now: 12 (one frame)'],
+      ['jab', 'hit', 'One short straight jab at the player’s head height; a string plays it 3 or 4 times.', 'in the game now: 4 · 6, hit 67,36 22×12'],
+      ['back', 'once', 'The back-dash: treads thrown into reverse, his top tips forward, dust kicked up in front.', 'in the game now: 7 · 7'],
+      ['lean', 'once', 'The lunge’s warning: he rears up on the treads, glove cocked far behind, revving; the glove glints.', 'in the game now: 15 · 15'],
+      ['lunge', 'travel', 'The thrust: treads spinning, dust and speed lines behind; loops while he travels most of the room.', 'in the game now: hit 67,36 12×12'],
+      ['recover', 'once', 'Skids to a stop and brings the glove home.', 'in the game now: 18 (one frame)'],
+      ['down', 'once', 'The bag hits: jolted, eye flashes, then he goes limp, leaning back 45° on planted treads, away from the bag.', 'in the game now: 10 · 40'],
+      ['dizzy', 'loop', 'STAGE 1 of the stagger: the same limp lean, eye flickering on and off at random, yellow stars circling (drawn in the art).', 'in the game now: 20 · 20'],
+      ['riseReady', 'once', 'Layers 2 and 3: sinks into his turret, glove dropped low, revving.', 'in the game now: 20 (one frame)'],
+      ['rise', 'travel', 'The uppercut: glove straight up, jets firing under the treads; loops while he is in the air (shown in place).', 'in the game now: hit 36,10 24×50'],
+      ['blast', 'once', 'Layer 3: the glove heats red, orange, gold, white-hot at his hip, then he throws the blast.', 'in the game now: 20 · 8, spawn 72,36'],
+      ['spinReady', 'once', 'Layer 3: winds his turret round, arms out, eye turned away.', 'in the game now: 22 (one frame)'],
+      ['spin', 'travel', 'Layer 3: a spinning lariat, gloves swung low at the player’s head height; jets under him, since the game lifts him 6 px.', 'in the game now: hit 26,16 44×44'],
+      ['dizzyHard', 'loop', 'STAGE 2 of the stagger: the same lean, little yellow birdies orbiting his head, brief smoke at random spots, sparks from the eye. NOT IN THE GAME YET: needs the clip added in code (see the handoff).', 'new clip'],
+    ];
+  }
+
+  componentDidMount() {
+    fetch('../assets/42b20e34a3fc22ba5176bcb3ba5691b0.json')
+      .then((r) => r.json())
+      .then((D) => { this.prep(D); this.setState({ ready: true }); });
+    this.last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(100, now - this.last);
+      this.last = now;
+      if (this.state.playing) this.acc += dt * 0.06 * (this.state.slow ? 0.25 : 1);
+      if (this.D) this.drawAll(Math.floor(this.acc));
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+
+  prep(D) {
+    const KEYS = '0123456789abcdef.';
+    const dec = (s) => s.replace(/([A-Q])(\d*)/g, (m, c, n) => KEYS[c.charCodeAt(0) - 65].repeat(n ? +n : 1));
+    const bake = (pix, w, h, pal) => {
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const g = cv.getContext('2d');
+      const img = g.createImageData(w, h);
+      for (let i = 0; i < w * h; i++) {
+        const k = pix[i];
+        if (k === '.' || k === undefined) continue;
+        const hex = pal[k] || '#FF00FF';
+        img.data[i * 4] = parseInt(hex.slice(1, 3), 16);
+        img.data[i * 4 + 1] = parseInt(hex.slice(3, 5), 16);
+        img.data[i * 4 + 2] = parseInt(hex.slice(5, 7), 16);
+        img.data[i * 4 + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      return cv;
+    };
+    for (const c of D.clips) {
+      c.total = 0;
+      for (const f of c.frames) {
+        f.start = c.total;
+        c.total += f.hold;
+        f.img = bake(dec(f.px), D.w, D.h, D.pal);
+      }
+      c.hitFrame = c.frames.find((f) => f.hit) || null;
+      c.spawnFrame = c.frames.find((f) => f.spawn) || null;
+    }
+    D.player.img = bake(dec(D.player.px), 24, 24, D.player.pal);
+    D.byName = {};
+    for (const c of D.clips) D.byName[c.name] = c;
+    this.D = D;
+  }
+
+  drawAll(step) {
+    const D = this.D, S = 3, PW = 96 * S, GAP = 12;
+    for (const c of D.clips) {
+      const cv = this.cvs[c.name];
+      if (!cv) continue;
+      const g = cv.getContext('2d');
+      g.imageSmoothingEnabled = false;
+      g.clearRect(0, 0, cv.width, cv.height);
+      const cyc = (c.kind === 'loop' || c.kind === 'travel') ? c.total : c.total + 30;
+      const t = step % cyc;
+      let f = c.frames[c.frames.length - 1];
+      for (const fr of c.frames) if (t >= fr.start && t < fr.start + fr.hold) { f = fr; break; }
+      let rect = null;
+      if (c.kind === 'travel' && c.hitFrame) rect = c.hitFrame.hit;
+      else if (f.hit && t < c.total) rect = f.hit;
+      const spawn = f.spawn && t < c.total ? f.spawn : null;
+      const dy = c.name === 'spin' ? -6 : 0;
+      this.panel(g, 0, S, 1, f, rect, spawn, dy);
+      this.panel(g, PW + GAP, S, -1, f, rect, spawn, dy);
+    }
+  }
+
+  panel(g, ox, S, facing, f, rect, spawn, dy) {
+    const D = this.D, W = 96, H = 66;
+    const mx = (x, w) => (facing > 0 ? x : W - x - w);
+    g.save();
+    g.beginPath(); g.rect(ox, 0, W * S, H * S); g.clip();
+    g.fillStyle = '#14141f'; g.fillRect(ox, 0, W * S, H * S);
+    g.fillStyle = '#2a323c'; g.fillRect(ox, 60 * S, W * S, (H - 60) * S);
+    g.save();
+    if (facing < 0) { g.translate(ox + W * S, dy * S); g.scale(-1, 1); } else g.translate(ox, dy * S);
+    g.drawImage(f.img, 0, 0, W * S, 64 * S);
+    g.restore();
+    const px = facing > 0 ? 61 : 11;
+    g.save();
+    if (facing > 0) { g.translate(ox + (px + 24) * S, 36 * S); g.scale(-1, 1); } else g.translate(ox + px * S, 36 * S);
+    g.drawImage(D.player.img, 0, 0, 24 * S, 24 * S);
+    g.restore();
+    if (this.state.marks) {
+      g.lineWidth = 2;
+      g.setLineDash([5, 4]);
+      g.strokeStyle = '#8990a9';
+      g.strokeRect(ox + mx(67, 12) * S + 1, 38 * S + 1, 12 * S - 2, 22 * S - 2);
+      g.setLineDash([]);
+      g.strokeStyle = '#5cadd5';
+      g.strokeRect(ox + 29 * S + 1, (16 + dy) * S + 1, 38 * S - 2, 44 * S - 2);
+      g.fillStyle = '#5cadd5';
+      g.fillRect(ox + 45 * S, (60 + dy) * S - 1, 6 * S, 2);
+      g.fillRect(ox + 48 * S - 1, (57 + dy) * S, 2, 6 * S);
+      if (rect) {
+        const x = ox + mx(rect[0], rect[2]) * S, y = (rect[1] + dy) * S;
+        g.fillStyle = 'rgba(255,74,50,0.2)';
+        g.fillRect(x, y, rect[2] * S, rect[3] * S);
+        g.strokeStyle = '#ff4a32';
+        g.strokeRect(x + 1, y + 1, rect[2] * S - 2, rect[3] * S - 2);
+      }
+      if (spawn) {
+        const sx = facing > 0 ? spawn[0] : W - spawn[0];
+        g.fillStyle = '#ff4a32';
+        g.fillRect(ox + (sx - 1) * S, (spawn[1] + dy - 1) * S, 2 * S, 2 * S);
+      }
+    }
+    g.restore();
+  }
+
+  refFor(name) {
+    if (!this.refCbs[name]) this.refCbs[name] = (el) => { this.cvs[name] = el; };
+    return this.refCbs[name];
+  }
+
+  renderVals() {
+    const D = this.D;
+    const clips = this.info().map(([name, kind, when, was]) => {
+      let timing = 'loading the sheet…';
+      const c = D && D.byName[name];
+      if (c) {
+        const parts = [`frames ${c.frames.map((f) => f.hold).join(' · ')} = ${c.total} steps`];
+        if (c.hitFrame) {
+          const h = c.hitFrame.hit;
+          parts.push(kind === 'travel' ? `hurts from step ${c.hitFrame.start} until the move ends` : `lands on step ${c.hitFrame.start}`);
+          parts.push(`hit ${h[0]},${h[1]} ${h[2]}×${h[3]}`);
+        }
+        if (c.spawnFrame) parts.push(`shot leaves on step ${c.spawnFrame.start} from ${c.spawnFrame.spawn[0]},${c.spawnFrame.spawn[1]}`);
+        timing = parts.join(' · ');
+      }
+      return {
+        name, when, timing, was, hasWas: !!was,
+        kindLabel: kind.toUpperCase(),
+        aria: `${name}: playing facing right and facing left beside the player`,
+        ref: this.refFor(name),
+      };
+    });
+    const palette = D ? Object.keys(D.pal).map((k) => ({ key: k, hex: D.pal[k], label: `${k} ${D.pal[k]}` })) : [];
+    const s = this.state;
+    return {
+      clips,
+      palette,
+      paletteLabel: D ? `${palette.length} colours` : 'colours',
+      playLabel: s.playing ? 'PAUSE' : 'PLAY',
+      pausedStr: s.playing ? 'false' : 'true',
+      slowLabel: s.slow ? 'SLOW 1/4: ON' : 'SLOW 1/4: OFF',
+      slowStr: s.slow ? 'true' : 'false',
+      marksLabel: s.marks ? 'MARKS: ON' : 'MARKS: OFF',
+      marksStr: s.marks ? 'true' : 'false',
+      togglePlay: () => this.setState({ playing: !s.playing }),
+      toggleSlow: () => this.setState({ slow: !s.slow }),
+      toggleMarks: () => this.setState({ marks: !s.marks }),
+      stepOne: () => { this.acc = Math.floor(this.acc) + 1; this.setState({ playing: false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

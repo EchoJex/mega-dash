@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drake Breath art review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("../assets/05fc159376af5e23da19af613e16f537.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1360px; min-height: 1760px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400; color: #ffffff;">DRAKE BREATH</h1>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #5cadd5;">EVERY CLIP AT 60 STEPS A SECOND, EACH FRAME FOR ITS HOLD · FACING RIGHT, THEN MIRRORED LEFT · BESIDE THE PLAYER AT TRUE SCALE</p>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda;">CYAN CROSS = PIVOT · RED DOT = THE MOUTH THE CODE FIRES FROM · RED BOX = WHAT THE CODE HURTS WITH (NO FRAME CARRIES A HIT)</p>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda;">PROPOSED, FOR THE CODE TO BUILD: THE CANNON RIDES HIS IDLE BOB, AND EVERY CLIP BUT IDLE PUTS HIM IN A WIDE, SLIGHTLY CROUCHED STANCE.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ togglePause }}" style="min-height: 44px; padding: 0 20px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ pauseLabel }}</button>
+<button type="button" onClick="{{ toggleSlow }}" style="min-height: 44px; padding: 0 20px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ slowLabel }}</button>
+<button type="button" onClick="{{ toggleMarks }}" style="min-height: 44px; padding: 0 20px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ marksLabel }}</button>
+</div>
+<sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #ff4a32;">{{ error }}</p>
+</sc-if>
+</div>
+
+<section style="display: flex; flex-direction: column; gap: 12px;">
+<h2 style="margin: 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">IN PLAY · THE GAME'S OWN RULES, 480 X 224 AT 2X</h2>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #ffffff; min-height: 16px;">{{ caption }}</p>
+<canvas width="960" height="448" data-cell="play" ref="{{ playRef }}" aria-label="The Drake Breath played on a game screen: breath, wave, blast and beam, both facings" role="img" style="border: 2px solid #2a323c; width: 960px; height: 448px;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #c8ceda;">THE RED BALLS ARE STAND-IN ENEMY SHOTS, NOT TO BE BUILT: THEY SHOW THE BEAM ERASING SHOTS INTO STREAKS.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px;">
+<h2 style="margin: 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">THE CANNON · WEAPON-DRAKE_BREATH-HELD · IN HIS NEAR HAND, IN FRONT OF HIM</h2>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #5cadd5;">{{ cannonNote }}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 24px;">
+<sc-for list="{{ heldCells }}" as="c" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="{{ c.w }}" height="{{ c.h }}" data-cell="{{ c.id }}" ref="{{ c.ref }}" role="img" aria-label="{{ c.title }}" style="border: 2px solid #2a323c;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #ffffff;">{{ c.title }}</p>
+<p style="margin: 0; font-size: 7px; line-height: 8px; color: #c8ceda; max-width: 340px;">{{ c.timing }}</p>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px;">
+<h2 style="margin: 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">THE BREATH, THE WAVE, THE BLAST · BEHIND HIM</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 24px;">
+<sc-for list="{{ fxCells }}" as="c" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="{{ c.w }}" height="{{ c.h }}" data-cell="{{ c.id }}" ref="{{ c.ref }}" role="img" aria-label="{{ c.title }}" style="border: 2px solid #2a323c;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #ffffff;">{{ c.title }}</p>
+<p style="margin: 0; font-size: 7px; line-height: 8px; color: #c8ceda; max-width: 340px;">{{ c.timing }}</p>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px;">
+<h2 style="margin: 0; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328;">THE BEAM AND ITS STREAKS · BEHIND HIM · TILES 32 WIDE FROM THE MOUTH</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 24px;">
+<sc-for list="{{ beamCells }}" as="c" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="{{ c.w }}" height="{{ c.h }}" data-cell="{{ c.id }}" ref="{{ c.ref }}" role="img" aria-label="{{ c.title }}" style="border: 2px solid #2a323c;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 16px; color: #ffffff;">{{ c.title }}</p>
+<p style="margin: 0; font-size: 7px; line-height: 8px; color: #c8ceda; max-width: 540px;">{{ c.timing }}</p>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":1760}}'>
+var SHEETS = ['held', 'puff', 'wave', 'blast', 'beam', 'streak'];
+var RED = '#ff4a32', CYAN = '#5CCDD5';
+
+// The ladder, as src/data/weapons.js has it (Lv1, 3, 6, 10).
+var BASE = { windup: 12, fuel: 150, refill: 2, minK: 0.25, every: 4, deg: 30, speed: 3.2, life: 30, roll: 0.94, r: 4 };
+function ladder(lv) {
+  var L = Object.assign({}, BASE);
+  if (lv >= 3) L.wave = { below: 3, above: 16, speed: 3.5, range: 60 };
+  if (lv >= 6) L.blast = { charge: 60, speed: 4, r: 7, life: 80 };
+  if (lv >= 10) L.beam = { charge: 120, tele: 16, life: 120, fade: 24, len: 288 };
+  return L;
+}
+
+// The same reading of a .sprite file the game's build does, for what a preview needs.
+function parseSprite(text) {
+  var doc = { id: '', w: 0, h: 0, pivot: { x: 0, y: 0 }, pal: {}, frames: [], clips: {} }, cur = null;
+  text.replace(/\r/g, '').split('\n').forEach(function (line) {
+    var m = /^\[(\w+) (\d+)\](.*)$/.exec(line);
+    if (m) {
+      var hold = /hold=(\d+)/.exec(m[3]);
+      cur = { clip: m[1], hold: hold ? +hold[1] : 5, rows: [] };
+      doc.frames.push(cur);
+      (doc.clips[m[1]] = doc.clips[m[1]] || { frames: [], total: 0 }).frames.push(cur);
+      doc.clips[m[1]].total += cur.hold;
+      return;
+    }
+    if (!cur) {
+      if ((m = /^# (\S+)/.exec(line))) doc.id = m[1];
+      else if ((m = /^grid\s+(\d+)x(\d+)/.exec(line))) { doc.w = +m[1]; doc.h = +m[2]; }
+      else if ((m = /^pivot\s+(-?\d+)\s+(-?\d+)/.exec(line))) doc.pivot = { x: +m[1], y: +m[2] };
+      else if ((m = /^palette\s+(\S)\s+(#[0-9A-Fa-f]{6})/.exec(line))) doc.pal[m[1]] = m[2];
+    } else if (line.length) cur.rows.push(line);
+  });
+  doc.frames.forEach(function (f) { bake(doc, f); });
+  return doc;
+}
+
+// Each frame painted once, facing right and mirrored, so drawing is one copy per frame.
+function bake(doc, f) {
+  var a = document.createElement('canvas'), b = document.createElement('canvas');
+  a.width = b.width = doc.w; a.height = b.height = doc.h;
+  var A = a.getContext('2d').createImageData(doc.w, doc.h), B = b.getContext('2d').createImageData(doc.w, doc.h);
+  for (var y = 0; y < doc.h; y++) {
+    var row = f.rows[y] || '';
+    for (var x = 0; x < doc.w; x++) {
+      var k = row[x];
+      if (!k || k === '.') continue;
+      var hex = doc.pal[k] || '#FF00FF';
+      var rgb = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16), 255];
+      A.data.set(rgb, (y * doc.w + x) * 4);
+      B.data.set(rgb, (y * doc.w + (doc.w - 1 - x)) * 4);
+    }
+  }
+  a.getContext('2d').putImageData(A, 0, 0); b.getContext('2d').putImageData(B, 0, 0);
+  f.img = a; f.mir = b;
+}
+
+// The frame showing `t` steps into a clip; `loop` wraps it.
+function frameAt(doc, clip, t, loop) {
+  var c = doc.clips[clip];
+  if (!c) return null;
+  t = Math.max(0, Math.floor(t));
+  if (loop) t %= c.total;
+  for (var i = 0; i < c.frames.length; i++) { if (t < c.frames[i].hold) return c.frames[i]; t -= c.frames[i].hold; }
+  return c.frames[c.frames.length - 1];
+}
+// A clip spread over a time the game sets: `frac` 0..1 of the way through it.
+function frameByFrac(doc, clip, frac) {
+  var c = doc.clips[clip];
+  return frameAt(doc, clip, Math.min(c.total - 1, Math.floor(Math.max(0, frac) * c.total)));
+}
+// Pivot at (x, y), mirrored about it when facing left — how the game places a sheet.
+function put(g, doc, f, x, y, facing, alpha) {
+  if (!f) return;
+  x = Math.round(x); y = Math.round(y);
+  g.globalAlpha = alpha == null ? 1 : Math.max(0, Math.min(1, alpha));
+  g.drawImage(facing > 0 ? f.img : f.mir, facing > 0 ? x - doc.pivot.x : x + doc.pivot.x - doc.w, y - doc.pivot.y);
+  g.globalAlpha = 1;
+}
+
+class Component extends DCLogic {
+  componentDidMount() {
+    this.cv = this.cv || {};
+    this.acc = 0; this.step = 0; this.last = null;
+    var self = this;
+    // The six sheets and the player, bundled into one uploaded file: the canvas hands the page
+    // its uploads, not its project files.
+    fetch('../assets/2ad8c220d7e781da7b45f972d2d7132d.json')
+      .then(function (r) { if (!r.ok) throw new Error('THE SHEETS FILE (' + r.status + ')'); return r.json(); })
+      .then(function (all) {
+        self.docs = {};
+        SHEETS.forEach(function (n) { self.docs[n] = parseSprite(all[n]); });
+        self.player = parseSprite(all.player);
+        self.body = all.body ? parseSprite(all.body) : null;
+        // how far his front hand sits below where it is in idle 1, per idle frame (the bob a held thing rides)
+        var handRow = function (f) { for (var y = 10; y < 18; y++) if ((f.rows[y] || '').indexOf('9') >= 0) return y; return 0; };
+        var idle = self.player.clips.idle.frames;
+        idle.forEach(function (f) { f.bob = handRow(f) - handRow(idle[0]); });
+        self.watchCannon();
+        self.resetSim();
+        self.forceUpdate();
+        self.raf = requestAnimationFrame(function (t) { self.loop(t); });
+      })
+      .catch(function (e) { self.setState({ error: 'COULD NOT LOAD THE SHEETS: ' + String(e && e.message || e).toUpperCase() }); });
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); if (this.unsub) this.unsub(); }
+
+  // His picture for a cannon clip, and how far it moves his hand: idle rides his idle bob;
+  // every other clip puts him in the proposed wide, slightly crouched stance, hand 1 px lower.
+  bodyFor(clip, step) {
+    if (clip !== 'rest' && this.body && this.body.clips[clip]) return { doc: this.body, frame: this.body.clips[clip].frames[0], dy: 1 };
+    var f = frameAt(this.player, 'idle', step, true);
+    return { doc: this.player, frame: f, dy: f.bob || 0 };
+  }
+
+  // The cannon follows the rest editor: every frame it builds from the owner's drawing, live.
+  watchCannon() {
+    var self = this;
+    try {
+      if (window.claude && window.claude.use) window.claude.use('db').then(function (db) {
+        if (!db) return;
+        self.unsub = db.doc('cannon/rest').onSnapshot(function (s) {
+          var d = s.exists ? s.data() : null;
+          if (d && typeof d.heldSprite === 'string' && d.heldSprite.indexOf('# weapon-drake_breath-held') === 0) {
+            self.docs.held = parseSprite(d.heldSprite);
+            self.setState({ cannonNote: 'BUILT FROM THE REST EDITOR\'S DRAWING, SAVED ' + String(d.at || '').slice(0, 16).replace('T', ' ') + ' UTC' });
+          }
+        }, function () {});
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // the canvas for a cell: its ref, or found by its data-cell tag if the ref never arrived
+  canvas(id) {
+    var el = this.cv[id];
+    if (!el || !el.isConnected) el = this.cv[id] = document.querySelector('canvas[data-cell="' + id + '"]');
+    return el;
+  }
+
+  loop(now) {
+    var self = this, s = this.state || {};
+    this.raf = requestAnimationFrame(function (t) { self.loop(t); });
+    if (this.last == null) this.last = now;
+    var dt = Math.min(100, now - this.last); this.last = now;
+    if (!s.paused) this.acc += dt * (s.slow ? 0.25 : 1);
+    while (this.acc >= 1000 / 60) { this.acc -= 1000 / 60; this.step++; this.simStep(); }
+    this.drawPlay();
+    this.drawCells();
+  }
+
+  // ── IN PLAY: a scripted thumb on the fire button, and the weapon's own step rules ──
+  resetSim() {
+    this.sim = { phase: 0, t: 0, facing: 1, st: { fuel: BASE.fuel, down: false, heldF: 0, holdSeen: false, fx: [] }, shots: [], shake: 0 };
+    this.setPhaseCaption();
+  }
+  phases() {
+    return [
+      { lv: 1, hold: 110, wait: 90, say: 'LV 1 · HOLD FIRE: THE CANNON REARS BACK (12 STEPS), THEN BREATHES PUFFS THAT ROLL ALONG THE FLOOR AND WEAKEN THE LONGER IT IS HELD' },
+      { lv: 3, hold: 24, wait: 60, say: 'LV 3 · LET GO: THE WAVE, FROM 3 PX BELOW THE FLOOR TO 16 PX OVER HIS HEAD, 60 PX FORWARD' },
+      { lv: 6, hold: 100, wait: 110, say: 'LV 6 · HOLD PAST 1 S: GLOWS VIOLET WHILE IT STILL BREATHES (THE CODE CHANGE ASKED FOR); LET GO: WAVE AND BLAST' },
+      { lv: 10, hold: 160, wait: 210, say: 'LV 10 · HOLD PAST 2 S: GLOWS WHITE WHILE IT STILL BREATHES; LET GO: THE HAIRLINE, THEN THE BEAM FOR 2 S, ERASING SHOTS' },
+    ];
+  }
+  setPhaseCaption() {
+    var P = this.phases()[this.sim.phase];
+    this.setState({ caption: P.say + (this.sim.facing > 0 ? ' · FACING RIGHT' : ' · FACING LEFT') });
+  }
+  playerBox() { return { x: this.sim.facing > 0 ? 40 : 480 - 40 - 24, y: 184 - 24, facing: this.sim.facing }; }
+  mouth(p) { return { x: p.x + 12 + 17 * p.facing, y: p.y + 12 }; }
+
+  simStep() {
+    var S = this.sim, P = this.phases()[S.phase], L = ladder(P.lv), st = S.st, p = this.playerBox();
+    S.t++;
+    var down = S.t <= P.hold, release = S.t === P.hold + 1;
+    if (down) { st.holdSeen = true; if (!st.down) { st.down = true; st.heldF = 0; } st.heldF++; }
+    if (release) this.fire(L, p);
+    // the weapon's step
+    if (!st.holdSeen) { st.down = false; st.heldF = 0; }
+    st.holdSeen = false;
+    st.breathing = st.down && st.heldF > L.windup && st.fuel > 0;
+    if (st.breathing) {
+      st.fuel--;
+      if (st.heldF % L.every === 0) {
+        var m = this.mouth(p), k = L.minK + (1 - L.minK) * (st.fuel / L.fuel), a = L.deg * Math.PI / 180;
+        st.fx.push({ kind: 'puff', x: m.x, y: m.y, dir: p.facing, t: 0, life: Math.round(L.life * k), vx: L.speed * k * Math.cos(a), vy: L.speed * k * Math.sin(a), ground: p.y + 24, r: L.r, roll: L.roll });
+      }
+    } else if (!st.down) st.fuel = Math.min(L.fuel, st.fuel + L.refill);
+    st.L = L;
+    var self = this;
+    st.fx.forEach(function (f) { self.stepFx(f); });
+    st.fx = st.fx.filter(function (f) { return !f.done; });
+    // stand-in enemy shots, only while a beam is up, flying at him from the far side
+    var beam = st.fx.find(function (f) { return f.kind === 'beam'; });
+    if (beam && beam.t > 20 && beam.t < 120 && beam.t % 9 === 0) {
+      S.shots.push({ x: p.facing > 0 ? 470 : 10, y: p.y - 12 + ((beam.t * 7) % 40), vx: -2 * p.facing });
+    }
+    S.shots.forEach(function (b) { b.x += b.vx; });
+    if (beam) {
+      var bx = this.beamBox(beam);
+      S.shots.forEach(function (b) {
+        if (beam.t > beam.tele && beam.t <= beam.tele + beam.life && b.x >= bx.x && b.x <= bx.x + bx.w && b.y >= bx.y && b.y <= bx.y + bx.h) {
+          b.dead = true;
+          for (var i = 0; i < 4; i++) beam.streaks.push({ x: b.x, y: b.y + (i - 1.5) * 2, t: 0, life: 14 + i * 3 });
+        }
+      });
+    }
+    S.shots = beam ? S.shots.filter(function (b) { return !b.dead && b.x > -10 && b.x < 490; }) : [];
+    if (S.shake > 0) S.shake--;
+    if (S.t >= P.hold + P.wait) {
+      S.t = 0; S.phase++; S.shots = [];
+      if (S.phase >= this.phases().length) { S.phase = 0; S.facing = -S.facing; }
+      this.setPhaseCaption();
+    }
+  }
+  fire(L, p) {
+    var st = this.sim.st, heldF = st.heldF;
+    st.down = false; st.heldF = 0;
+    if (!L.wave) return;
+    var m = this.mouth(p), top = p.y - L.wave.above, bot = p.y + 24 + L.wave.below;
+    st.fx.push({ kind: 'wave', x: m.x, x0: m.x, dir: p.facing, t: 0, top: top, bot: bot, speed: L.wave.speed, range: L.wave.range });
+    if (L.beam && heldF >= L.beam.charge) {
+      st.fx.push({ kind: 'beam', x: m.x, dir: p.facing, t: 0, top: top, bot: bot, tele: L.beam.tele, life: L.beam.life, fade: L.beam.fade, len: L.beam.len, streaks: [] });
+      this.sim.shake = 20;
+    } else if (L.blast && heldF >= L.blast.charge) {
+      st.fx.push({ kind: 'blast', x: m.x, y: p.y + 10, dir: p.facing, t: 0, speed: L.blast.speed, r: L.blast.r, life: L.blast.life });
+    }
+  }
+  stepFx(f) {
+    f.t++;
+    if (f.kind === 'puff') {
+      f.x += f.vx * f.dir;
+      if (f.y + f.r < f.ground) f.y = Math.min(f.ground - f.r, f.y + f.vy);
+      else { f.vx *= f.roll; f.r = Math.min(f.r + 0.15, 8); f.y = f.ground - f.r; }
+      if (f.t >= f.life) f.done = true;
+    } else if (f.kind === 'wave') {
+      f.x += f.speed * f.dir;
+      if (Math.abs(f.x - f.x0) >= f.range) f.done = true;
+    } else if (f.kind === 'blast') {
+      f.x += f.speed * f.dir;
+      if (f.t >= f.life) f.done = true;
+    } else if (f.kind === 'beam') {
+      f.streaks.forEach(function (k) { k.t++; k.x += f.dir * 2.5; });
+      f.streaks = f.streaks.filter(function (k) { return k.t < k.life; });
+      if (f.t > f.tele + f.life) f.done = true;
+    }
+  }
+  beamBox(f) {
+    var left = f.tele + f.life - f.t, k = left < f.fade ? Math.max(0, left / f.fade) : 1;
+    var h = (f.bot - f.top) * k, mid = (f.top + f.bot) / 2;
+    return { x: f.dir > 0 ? f.x : f.x - f.len, y: mid - h / 2, w: f.len, h: h };
+  }
+  pose(st, L) {
+    if (st.down && st.heldF <= L.windup) return { clip: 'rear', frac: st.heldF / L.windup };
+    // as requested of the code (owner, 24 Oct 2026): once charged, the glow shows even while it breathes
+    if (st.down && L.beam && st.heldF >= L.beam.charge) return { clip: 'chargeFull' };
+    if (st.down && L.blast && st.heldF >= L.blast.charge) return { clip: 'charge' };
+    if (st.breathing) return { clip: 'breathe' };
+    return { clip: 'rest' };
+  }
+
+  drawPlay() {
+    var cv = this.canvas('play'), D = this.docs;
+    if (!cv || !D) return;
+    var g = cv.getContext('2d'), S = this.sim, st = S.st, p = this.playerBox(), marks = !(this.state || {}).noMarks;
+    var sc = 2, step = this.step;
+    var shx = S.shake > 0 ? ((S.shake >> 1) % 2 ? 2 : -2) : 0;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    g.fillStyle = '#0B0F1C'; g.fillRect(0, 0, cv.width, cv.height);
+    g.setTransform(sc, 0, 0, sc, shx * sc, 0);
+    g.fillStyle = '#141A2C'; g.fillRect(0, 0, 480, 33);
+    g.fillStyle = '#1A2033'; g.fillRect(0, 184, 480, 40);
+    g.fillStyle = '#2A323C'; g.fillRect(0, 184, 480, 1);
+    // stand-in enemy shots (bullets sit behind the weapon's effects)
+    S.shots.forEach(function (b) {
+      g.fillStyle = '#0A0A12'; g.fillRect(Math.round(b.x) - 4, Math.round(b.y) - 3, 8, 6); g.fillRect(Math.round(b.x) - 3, Math.round(b.y) - 4, 6, 8);
+      g.fillStyle = RED; g.fillRect(Math.round(b.x) - 3, Math.round(b.y) - 2, 6, 4); g.fillRect(Math.round(b.x) - 2, Math.round(b.y) - 3, 4, 6);
+    });
+    var boxes = [];
+    st.fx.forEach(function (e) {
+      if (e.kind === 'puff') {
+        var fr = e.t / Math.max(1, e.life);
+        put(g, D.puff, frameByFrac(D.puff, 'burn', fr), e.x, e.y, e.dir, 1 - fr * 0.5);
+        boxes.push([e.x - e.r, e.y - e.r, e.r * 2, e.r * 2]);
+      } else if (e.kind === 'wave') {
+        var a = 1 - Math.max(0, Math.abs(e.x - e.x0) / e.range - 0.7) / 0.3;
+        put(g, D.wave, frameAt(D.wave, 'travel', e.t, true), e.x, e.bot, e.dir, a);
+        boxes.push([e.x - 4, e.top, 8, e.bot - e.top]);
+      } else if (e.kind === 'blast') {
+        put(g, D.blast, frameAt(D.blast, 'fly', e.t, true), e.x, e.y, e.dir);
+        boxes.push([e.x - e.r, e.y - e.r, e.r * 2, e.r * 2]);
+      }
+    });
+    var self = this;
+    st.fx.forEach(function (e) {
+      if (e.kind !== 'beam') return;
+      var left = e.tele + e.life - e.t, tele = e.t <= e.tele, fading = !tele && left < e.fade, k = fading ? Math.max(0, left / e.fade) : 1;
+      for (var i = 0; i * 32 < e.len; i++) {
+        var tx = e.x + e.dir * i * 32, part = tele ? 'tele' : fading ? 'fade' : i === 0 ? 'start' : 'body';
+        var f = part === 'fade' ? frameByFrac(D.beam, 'fade', 1 - k) : frameAt(D.beam, part, e.t, true);
+        put(g, D.beam, f, tx, e.bot, e.dir);
+      }
+      e.streaks.forEach(function (q) { var fr = q.t / q.life; put(g, D.streak, frameByFrac(D.streak, 'blow', fr), q.x, q.y, e.dir, 1 - fr); });
+      if (!tele) { var b = self.beamBox(e); boxes.push([b.x, b.y, b.w, b.h]); }
+    });
+    // the player, then the cannon in his near hand
+    var pz = this.pose(st, st.L || ladder(1)), bd = this.bodyFor(pz.clip, step);
+    put(g, bd.doc, bd.frame, p.facing > 0 ? p.x : p.x + 24, p.y, p.facing);
+    var hx = p.x + 12 + 4 * p.facing, hy = p.y + 11 + bd.dy;
+    put(g, D.held, pz.frac !== undefined ? frameByFrac(D.held, pz.clip, pz.frac) : frameAt(D.held, pz.clip, step, true), hx, hy, p.facing);
+    if (marks) {
+      g.setTransform(1, 0, 0, 1, shx * sc, 0);
+      g.strokeStyle = RED; g.lineWidth = 1;
+      boxes.forEach(function (b) { g.strokeRect(Math.round(b[0] * sc) + 0.5, Math.round(b[1] * sc) + 0.5, Math.max(1, Math.round(b[2] * sc) - 1), Math.max(1, Math.round(b[3] * sc) - 1)); });
+      var m = this.mouth(p);
+      g.fillStyle = RED; g.fillRect(m.x * sc - 2, m.y * sc - 2, 4, 4);
+      cross(g, hx * sc, hy * sc);
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  // ── EVERY CLIP, beside the player, both facings ──
+  cells() {
+    return [
+      { id: 'rest', group: 'held', clip: 'rest', kind: 'still', sw: 56, sh: 32, s: 3, title: 'IDLE', how: 'STILL · BETWEEN MOVES, RIDING HIS IDLE BOB (THE CODE STILL CALLS THIS CLIP REST UNTIL IT IS RENAMED)' },
+      { id: 'rear', group: 'held', clip: 'rear', kind: 'once', sw: 56, sh: 32, s: 3, title: 'REAR', how: 'ONCE · THE WIND-UP: SPREAD OVER THE LADDER\'S 12 STEPS' },
+      { id: 'breathe', group: 'held', clip: 'breathe', kind: 'loop', sw: 56, sh: 32, s: 3, title: 'BREATHE', how: 'LOOP · JAW OPEN WHILE THE PUFFS POUR OUT' },
+      { id: 'charge', group: 'held', clip: 'charge', kind: 'loop', sw: 56, sh: 32, s: 3, title: 'CHARGE', how: 'LOOP · VIOLET: THE LV 6 BLAST IS READY' },
+      { id: 'chargeFull', group: 'held', clip: 'chargeFull', kind: 'loop', sw: 56, sh: 32, s: 3, title: 'CHARGEFULL', how: 'LOOP · WHITE: THE LV 10 BEAM IS READY' },
+      { id: 'burn', group: 'fx', sheet: 'puff', clip: 'burn', kind: 'once', sw: 56, sh: 32, s: 3, title: 'PUFF · BURN', how: 'ONCE · SPREAD OVER THE PUFF\'S LIFE (30 STEPS FULL, SHORTER AS THE BREATH WEAKENS); BOX GROWS 4 TO 8 PX AS IT ROLLS' },
+      { id: 'travel', group: 'fx', sheet: 'wave', clip: 'travel', kind: 'loop', sw: 48, sh: 52, s: 3, title: 'WAVE · TRAVEL', how: 'LOOP · 43 PX TALL, PIVOT AT ITS FOOT 3 PX UNDER THE FLOOR' },
+      { id: 'fly', group: 'fx', sheet: 'blast', clip: 'fly', kind: 'loop', sw: 56, sh: 32, s: 3, title: 'BLAST · FLY', how: 'LOOP · BOX 14 X 14' },
+      { id: 'tele', group: 'beam', sheet: 'beam', clip: 'tele', kind: 'loop', sw: 136, sh: 52, s: 2, title: 'BEAM · TELE', how: 'LOOP · THE HAIRLINE, 16 STEPS BEFORE IT FIRES' },
+      { id: 'startbody', group: 'beam', sheet: 'beam', clip: 'start', kind: 'loop', sw: 136, sh: 52, s: 2, title: 'BEAM · START + BODY', how: 'LOOP · START IS THE FIRST TILE AT THE MOUTH, BODY EVERY TILE AFTER; THEY PLAY IN STEP' },
+      { id: 'fade', group: 'beam', sheet: 'beam', clip: 'fade', kind: 'once', sw: 136, sh: 52, s: 2, title: 'BEAM · FADE', how: 'ONCE · SPREAD OVER THE LAST 24 STEPS OF ITS 2 S' },
+      { id: 'blow', group: 'beam', sheet: 'streak', clip: 'blow', kind: 'once', sw: 136, sh: 52, s: 2, title: 'STREAK · BLOW', how: 'ONCE · FOUR PER ERASED SHOT, EACH SPREAD OVER ITS OWN LIFE (14 TO 23 STEPS)' },
+    ];
+  }
+  drawCells() {
+    var D = this.docs, self = this, marks = !(this.state || {}).noMarks;
+    if (!D) return;
+    this.cells().forEach(function (c) {
+      var cv = self.canvas(c.id);
+      if (!cv) return;
+      var g = cv.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+      g.fillStyle = '#0B0F1C'; g.fillRect(0, 0, cv.width, cv.height);
+      [1, -1].forEach(function (facing, side) {
+        var ox = side * c.sw;
+        g.setTransform(c.s, 0, 0, c.s, ox * c.s, 0);
+        var p = { x: facing > 0 ? 4 : c.sw - 28, y: c.sh - 28, facing: facing };
+        g.fillStyle = '#1A2033'; g.fillRect(0, p.y + 24, c.sw, c.sh);
+        var out = self.drawClip(g, c, p, self.step);
+        g.setTransform(1, 0, 0, 1, ox * c.s, 0);
+        if (marks && out) {
+          g.strokeStyle = RED; g.lineWidth = 1;
+          (out.boxes || []).forEach(function (b) { g.strokeRect(Math.round(b[0] * c.s) + 0.5, Math.round(b[1] * c.s) + 0.5, Math.round(b[2] * c.s) - 1, Math.round(b[3] * c.s) - 1); });
+          (out.dots || []).forEach(function (d) { g.fillStyle = RED; g.fillRect(d[0] * c.s - 2, d[1] * c.s - 2, 4, 4); });
+          (out.pivots || []).forEach(function (d) { cross(g, d[0] * c.s, d[1] * c.s); });
+        }
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        if (side) { g.fillStyle = '#2a323c'; g.fillRect(ox * c.s, 0, 1, cv.height); }
+      });
+    });
+  }
+  drawClip(g, c, p, step) {
+    var D = this.docs, f = p.facing, doc = D[c.sheet || 'held'];
+    var total = doc.clips[c.clip].total, period = c.kind === 'once' ? total + 24 : total;
+    var t = step % period, showing = !(c.kind === 'once' && t >= total);
+    var fr = c.kind === 'still' ? doc.clips[c.clip].frames[0] : frameAt(doc, c.clip, t, c.kind === 'loop');
+    var out = { boxes: [], dots: [], pivots: [] };
+    if (c.group === 'held') {
+      var bh = this.bodyFor(showing ? c.clip : 'rest', step);
+      put(g, bh.doc, bh.frame, f > 0 ? p.x : p.x + 24, p.y, f);
+      var hx = p.x + 12 + 4 * f, hy = p.y + 11 + bh.dy;
+      put(g, doc, showing ? fr : doc.clips.rest.frames[0], hx, hy, f);
+      out.pivots.push([hx, hy]); out.dots.push([p.x + 12 + 17 * f, p.y + 12]);
+      return out;
+    }
+    if (c.sheet === 'puff') {
+      var px = p.x + 12 + 28 * f, py = p.y + 24 - 7;
+      if (showing) { put(g, doc, fr, px, py, f, 1 - (t / total) * 0.5); var r = 4 + 4 * Math.min(1, t / total) * 0.8; out.boxes.push([px - r, py - r, 2 * r, 2 * r]); }
+      out.pivots.push([px, py]);
+    } else if (c.sheet === 'wave') {
+      var wx = p.x + 12 + 22 * f, wy = p.y + 27;
+      put(g, doc, fr, wx, wy, f); out.boxes.push([wx - 4, p.y - 16, 8, 43]); out.pivots.push([wx, wy]);
+    } else if (c.sheet === 'blast') {
+      var bx = p.x + 12 + 31 * f, by = p.y + 10;
+      put(g, doc, fr, bx, by, f); out.boxes.push([bx - 7, by - 7, 14, 14]); out.pivots.push([bx, by]);
+    } else if (c.sheet === 'beam') {
+      var mx = p.x + 12 + 17 * f, bot = p.y + 27;
+      for (var i = 0; i < 3; i++) {
+        var tx = mx + f * 32 * i, part = c.id === 'startbody' ? (i === 0 ? 'start' : 'body') : c.clip;
+        var bf = part === c.clip ? fr : frameAt(doc, part, t, true);
+        if (showing) put(g, doc, bf, tx, bot, f);
+        out.pivots.push([tx, bot]);
+      }
+      if (c.id !== 'tele' && showing) {
+        var k = c.id === 'fade' ? 1 - t / total : 1, h = 43 * k, mid = bot - 21.5;
+        out.boxes.push([f > 0 ? mx : mx - 96, mid - h / 2, 96, h]);
+      }
+      out.dots.push([mx, p.y + 12]);
+    } else if (c.sheet === 'streak') {
+      var sx0 = p.x + 12 + 17 * f, sb = p.y + 27, tt = step % 44;
+      for (var j = 0; j < 3; j++) put(g, D.beam, frameAt(D.beam, j === 0 ? 'start' : 'body', step, true), sx0 + f * 32 * j, sb, f);
+      for (var n = 0; n < 4; n++) {
+        var life = 14 + n * 3;
+        if (tt >= life) continue;
+        var q = { x: sx0 + f * 18 + f * 2.5 * tt, y: p.y + 8 + (n - 1.5) * 2 };
+        put(g, doc, frameByFrac(doc, 'blow', tt / life), q.x, q.y, f, 1 - tt / life);
+        if (n === 0) out.pivots.push([q.x, q.y]);
+      }
+    }
+    var bi = this.bodyFor('rest', step);
+    put(g, bi.doc, bi.frame, f > 0 ? p.x : p.x + 24, p.y, f);
+    put(g, D.held, D.held.clips.rest.frames[0], p.x + 12 + 4 * f, p.y + 11 + bi.dy, f);
+    return out;
+  }
+
+  renderVals() {
+    var s = this.state || {}, self = this;
+    this.cv = this.cv || {};
+    this.refs = this.refs || {};
+    var ref = function (id) { return self.refs[id] || (self.refs[id] = function (el) { self.cv[id] = el; }); };
+    var timing = function (c) {
+      var D = self.docs, doc = D && D[c.sheet || 'held'], clip = doc && doc.clips[c.clip];
+      if (!clip) return c.how;
+      var hs = clip.frames.map(function (f) { return f.hold; }), extra = '';
+      if (c.id === 'startbody') { var b = doc.clips.body; extra = ' · BODY ' + b.frames.map(function (f) { return f.hold; }).join('+') + ' = ' + b.total; }
+      return (c.id === 'startbody' ? 'START ' : '') + hs.join('+') + ' = ' + clip.total + ' STEPS' + extra + ' · ' + c.how;
+    };
+    var cells = this.cells().map(function (c) { return { title: c.title, timing: timing(c), w: c.sw * c.s * 2, h: c.sh * c.s, ref: ref(c.id), id: c.id, group: c.group }; });
+    return {
+      playRef: ref('play'),
+      heldCells: cells.filter(function (c) { return c.group === 'held'; }),
+      fxCells: cells.filter(function (c) { return c.group === 'fx'; }),
+      beamCells: cells.filter(function (c) { return c.group === 'beam'; }),
+      caption: s.caption || 'LOADING THE SHEETS',
+      cannonNote: s.cannonNote || 'EDIT ITS REST FRAME ON THE BOARD TO THE RIGHT; EVERY FRAME HERE FOLLOWS IT',
+      error: s.error || '',
+      pauseLabel: s.paused ? 'PLAY' : 'PAUSE',
+      slowLabel: s.slow ? 'SPEED: 1/4' : 'SPEED: FULL',
+      marksLabel: s.noMarks ? 'MARKS: OFF' : 'MARKS: ON',
+      togglePause: function () { self.setState({ paused: !s.paused }); },
+      toggleSlow: function () { self.setState({ slow: !s.slow }); },
+      toggleMarks: function () { self.setState({ noMarks: !s.noMarks }); },
+    };
+  }
+}
+
+function cross(g, x, y) {
+  g.fillStyle = CYAN;
+  g.fillRect(Math.round(x) - 6, Math.round(y), 13, 1);
+  g.fillRect(Math.round(x), Math.round(y) - 6, 1, 13);
+}
+</script>
+</body>
+</html>

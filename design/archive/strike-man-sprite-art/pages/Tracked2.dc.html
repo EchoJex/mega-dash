@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Strike Man — 24 more, from 9 and 14</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(./ds/mega-dash/fonts/MegaDash5x7.woff) format("woff");font-display:block}
+body{margin:0;background:#060614}
+a{color:#5cadd5}a:hover{color:#b4ecff}
+canvas{image-rendering:pixelated;display:block}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 2950px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; display: flex; flex-direction: column; gap: 32px">
+<header style="display: flex; flex-direction: column; gap: 16px">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-size: 28px; line-height: 32px; font-weight: 400; color: #ea6a34">STRIKE MAN — 24 MORE, FROM 9 AND 14</h1>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #c8ceda; max-width: 1220px">25 to 36 grow from 9 (Mono-Eye Mk1), 37 to 48 from 14 (Dither Droid); each parent is shown first, framed in orange. Every loop plays at game speed, 8 frames of 6 steps, on his 96×64 sheet in 15 colours, beside the player at true scale. The cyan box is his current collision box (38×44).</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" onClick="{{togglePlay}}" aria-pressed="{{pausedStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{playLabel}}</button>
+<button type="button" onClick="{{stepOne}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">STEP +1</button>
+<button type="button" onClick="{{toggleSlow}}" aria-pressed="{{slowStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{slowLabel}}</button>
+<button type="button" onClick="{{toggleBox}}" aria-pressed="{{boxStr}}" style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 13px 18px; min-height: 44px; background: #05070c; color: #ffffff; border: 1px solid #5cadd5; cursor: pointer">{{boxLabel}}</button>
+</div>
+</header>
+<sc-for list="{{sections}}" as="sec" hint-placeholder-count="2">
+<section style="display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; font-weight: 400; color: #f5d328">{{sec.title}}</h2>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #0d1420; border: 2px solid #ea6a34">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<h3 style="margin: 0; font-size: 16px; line-height: 20px; font-weight: 700; color: #ffffff">{{sec.parent.title}}</h3>
+<span style="font-size: 12px; line-height: 16px; color: #ea6a34">PARENT</span>
+</div>
+<canvas ref="{{sec.parent.ref}}" width="288" height="198" role="img" aria-label="{{sec.parent.aria}}" style="width: 288px; height: 198px; background: #14141f"></canvas>
+<p style="margin: 0; font-size: 12px; line-height: 17px; color: #c8ceda">{{sec.parent.look}}</p>
+<p style="margin: 0; font-size: 12px; line-height: 17px; color: #ffffff">{{sec.parent.idle}}</p>
+</article>
+<sc-for list="{{sec.items}}" as="v" hint-placeholder-count="12">
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #0d1420; border: 1px solid #2a323c">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<h3 style="margin: 0; font-size: 16px; line-height: 20px; font-weight: 700; color: #ffffff">{{v.title}}</h3>
+<span style="font-size: 12px; line-height: 16px; color: #8990a9">{{v.colours}}</span>
+</div>
+<canvas ref="{{v.ref}}" width="288" height="198" role="img" aria-label="{{v.aria}}" style="width: 288px; height: 198px; background: #14141f"></canvas>
+<p style="margin: 0; font-size: 12px; line-height: 17px; color: #c8ceda">{{v.look}}</p>
+<p style="margin: 0; font-size: 12px; line-height: 17px; color: #ffffff">{{v.idle}}</p>
+</article>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":2950}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { playing: true, slow: false, box: true, ready: false };
+    this.cvs = {};
+    this.refCbs = {};
+    this.acc = 0;
+  }
+
+  names() {
+    return {
+      9: 'Mono-Eye Mk1', 14: 'Dither Droid',
+      25: 'Mk1 Refit', 26: 'Mk1 Amber', 27: 'Mk1 Heavy', 28: 'Mk1 Periscope', 29: 'Mk1 Twin Stacks', 30: 'Mk1 Gloved',
+      31: 'Mk1 Jawbreaker', 32: 'Mk1 Tracked Legs', 33: 'Mk1 Dozer', 34: 'Mk1 Rust Bucket', 35: 'Mk1 Gunmetal', 36: 'Mk1 Patrol',
+      37: 'Droid Refit', 38: 'Droid Amber', 39: 'Droid Big Mitts', 40: 'Droid Hover', 41: 'Droid Tall', 42: 'Droid Two-Tone',
+      43: 'Droid Outlined', 44: 'Droid Cool', 45: 'Droid Steam', 46: 'Droid Low Rider', 47: 'Droid Scanner', 48: 'Droid Pugilist',
+    };
+  }
+
+  componentDidMount() {
+    fetch('../assets/3c92cac83ac67f0c18a40a277901a6c2.json').then((r) => r.json()).then((D) => { this.prep(D); this.setState({ ready: true }); });
+    fetch('../assets/f6dcddb5d8fc37f8f63968ec7df5b499.json').then((r) => r.json()).then((P) => { this.player = this.bakePlayer(P.player); });
+    this.last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(100, now - this.last);
+      this.last = now;
+      if (this.state.playing) this.acc += dt * 0.06 * (this.state.slow ? 0.25 : 1);
+      if (this.D) this.drawAll(Math.floor(this.acc));
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+
+  bake(pix, w, h, colourOf) {
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    const g = cv.getContext('2d');
+    const img = g.createImageData(w, h);
+    for (let i = 0; i < w * h; i++) {
+      const hex = colourOf(pix[i]);
+      if (!hex) continue;
+      img.data[i * 4] = parseInt(hex.slice(1, 3), 16);
+      img.data[i * 4 + 1] = parseInt(hex.slice(3, 5), 16);
+      img.data[i * 4 + 2] = parseInt(hex.slice(5, 7), 16);
+      img.data[i * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    return cv;
+  }
+
+  dec(s) {
+    return s.replace(/([A-Q])(\d*)/g, (m, c, n) => c.repeat(n ? +n : 1));
+  }
+
+  bakePlayer(p) {
+    const KEYS = '0123456789abcdef.';
+    const pix = this.dec(p.px).split('').map((c) => KEYS[c.charCodeAt(0) - 65]);
+    return this.bake(pix, 24, 24, (k) => (k === '.' ? null : p.pal[k]));
+  }
+
+  prep(D) {
+    D.byN = {};
+    for (const v of D.variants) {
+      v.imgs = v.frames.map((s) => this.bake(this.dec(s), D.w, D.h, (c) => (c === 'Q' ? null : v.pal[c.charCodeAt(0) - 65])));
+      D.byN[v.n] = v;
+    }
+    this.D = D;
+  }
+
+  drawAll(step) {
+    const S = 3, W = 96, H = 66;
+    for (const v of this.D.variants) {
+      const cv = this.cvs[v.n];
+      if (!cv) continue;
+      const g = cv.getContext('2d');
+      g.imageSmoothingEnabled = false;
+      const i = Math.floor(step / v.hold) % v.imgs.length;
+      g.fillStyle = '#14141f'; g.fillRect(0, 0, W * S, H * S);
+      g.fillStyle = '#2a323c'; g.fillRect(0, 60 * S, W * S, (H - 60) * S);
+      g.drawImage(v.imgs[i], 0, 0, W * S, 64 * S);
+      if (this.player) {
+        g.save();
+        g.translate(85 * S, 36 * S); g.scale(-1, 1);
+        g.drawImage(this.player, 0, 0, 24 * S, 24 * S);
+        g.restore();
+      }
+      if (this.state.box) {
+        g.lineWidth = 2;
+        g.strokeStyle = 'rgba(92,173,213,0.7)';
+        g.strokeRect(29 * S + 1, 16 * S + 1, 38 * S - 2, 44 * S - 2);
+      }
+    }
+  }
+
+  refFor(n) {
+    if (!this.refCbs[n]) this.refCbs[n] = (el) => { this.cvs[n] = el; };
+    return this.refCbs[n];
+  }
+
+  item(n) {
+    const name = this.names()[n];
+    const v = this.D && this.D.byN[n];
+    return {
+      title: `${n}  ${name}`,
+      colours: v ? `${v.pal.length} colours` : '',
+      look: v ? v.look : 'loading…',
+      idle: v ? v.idle : '',
+      aria: `Variant ${n}, ${name}: idle loop on treads beside the player`,
+      ref: this.refFor(n),
+    };
+  }
+
+  renderVals() {
+    const range = (a) => Array.from({ length: 12 }, (_, i) => this.item(a + i));
+    const sections = [
+      { title: 'BASED ON 9 — MONO-EYE MK1', parent: this.item(9), items: range(25) },
+      { title: 'BASED ON 14 — DITHER DROID', parent: this.item(14), items: range(37) },
+    ];
+    const s = this.state;
+    return {
+      sections,
+      playLabel: s.playing ? 'PAUSE' : 'PLAY',
+      pausedStr: s.playing ? 'false' : 'true',
+      slowLabel: s.slow ? 'SLOW 1/4: ON' : 'SLOW 1/4: OFF',
+      slowStr: s.slow ? 'true' : 'false',
+      boxLabel: s.box ? 'BOX: ON' : 'BOX: OFF',
+      boxStr: s.box ? 'true' : 'false',
+      togglePlay: () => this.setState({ playing: !s.playing }),
+      toggleSlow: () => this.setState({ slow: !s.slow }),
+      toggleBox: () => this.setState({ box: !s.box }),
+      stepOne: () => { this.acc = Math.floor(this.acc) + 1; this.setState({ playing: false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>
