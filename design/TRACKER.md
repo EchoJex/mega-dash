@@ -1040,6 +1040,7 @@ struck through, tells you what it fixed, then strikes them through
 |---|---|---|
 | — | `[ready]` | ~~In playtest mode I am unable to equip the newly unlocked weapon.~~ |
 | 1240 (main) | `[wip]` | Maybe the psi sand bags missed the boss, but it seemed like the first of each set of sand bags getting tossed at strike man didn't do anything |
+| 1240 (main) | `[wip]` |  |
 
 ## Archived bugs
 
