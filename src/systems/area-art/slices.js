@@ -16,6 +16,7 @@ import { Raster, hash, noise1, noise2, pick } from '../arena-art/pixels.js';
 import { W, H, FLOOR } from './kit.js';
 import { ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE, GREAT_HALL } from './batch3.js';
 import { STEEL_LINE, STEEL_PICK } from './steel.js';
+import { ROTTEN } from './tower.js';
 
 const B = (id) => BOSSES.find((b) => b.id === id);
 
@@ -694,6 +695,15 @@ export const PICKED = {
     pick: { backdrop: 1, material: 'C' },
     materials: { C: ['C', 'CASTLE BRICKS', '', CASTLE] },
     backdrop: GREAT_HALL,
+  },
+  wraith: {
+    // The owner, 7 Nov 2026: "3a" — the grave tower with material A, the rotten floorboards, as a climb
+    // (their words in systems/terrain.js above CLIMBS). Its pieces are built from the tower itself
+    // (`buildTower` in tower.js), so its backdrop has no scrolling layers of its own.
+    pick: { backdrop: 3, material: 'A' },
+    materials: { A: ['A', 'ROTTEN FLOORBOARDS', '', ROTTEN] },
+    backdrop: { name: 'GRAVE TOWER', moving: true, loop: 240, layers: [] },
+    climb: true,
   },
   alloy: {
     // The owner, 6 Nov 2026: "1, 2, 5 and material B" (the assembly line; material B, the first round's

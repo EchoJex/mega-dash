@@ -33,6 +33,7 @@ globalThis.document ??= {
 
 const { buildArea, hasAreaArt, pickedMaterial, runs } = await import('../src/systems/area-art/index.js');
 const { PICKED } = await import('../src/systems/area-art/slices.js');
+const { makeWorld } = await import('../src/systems/terrain.js');
 const { BOSSES } = await import('../src/data/bosses.js');
 
 const finite = (...v) => v.every(Number.isFinite);
@@ -84,7 +85,7 @@ function world(x) {
 
 test('the slices the owner has picked have pieces, and every other slice is left alone', () => {
   // Batch 1 (5 Nov 2026), then Ice and Ground from batch 2 (6 Nov 2026).
-  assert.deepEqual(PICKS.sort(), ['alloy', 'blaze', 'drake', 'eclipse', 'frost', 'granite', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt']);
+  assert.deepEqual(PICKS.sort(), ['alloy', 'blaze', 'drake', 'eclipse', 'frost', 'granite', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt', 'wraith']);
   for (const b of BOSSES) assert.equal(hasAreaArt(b.id), PICKS.includes(b.id), b.id);
 });
 
@@ -120,9 +121,11 @@ for (const id of PICKS) {
     for (const room of [false, true]) {
       const S = fakeStage(), area = buildArea(S, id, 432, room);
       const settled = [];
+      const tower = PICKED[id].climb ? makeWorld(80, 184, id, () => 0.5) : null;   // a climb is played in its own tower
       for (let step = 0; step < 900; step += 3) {
         const cam = step * 1.37 + 0.4;   // a run's worth of scrolling, in fractions of a pixel
-        area.place(cam, step, world(Math.floor(cam / 700) * 700 + 40));
+        if (tower) area.place(cam % 960, step, tower, 64, 0, -((step * 2.1) % 1600));   // along and up the tower
+        else area.place(cam, step, world(Math.floor(cam / 700) * 700 + 40));
         if (step >= 600) settled.push(S.live.size);
       }
       // Pictures that scrolled away were let go: the number alive stays level rather than climbing.

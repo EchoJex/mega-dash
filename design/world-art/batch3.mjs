@@ -25,6 +25,7 @@ import { W, H, FLOOR, paintDoor } from '../../src/systems/area-art/kit.js';
 import { STYLES } from './variants.mjs';
 import { CASTLE, STEEL_PLATES } from '../../src/systems/area-art/materials.js';
 import { STEEL_LINE } from '../../src/systems/area-art/steel.js';
+import { Wv, Wd, SPIRIT, GRAVE_C, spiritFlame, ROTTEN_P, ROTTEN, RP, GRAVE_W, grave, towerWall, towerPillars, FOG } from '../../src/systems/area-art/tower.js';
 import { ARM_AT, Al, As, BEAT, BELT_Y, COPY_ROWS, CYAN, GOLD, HAZE, HOT, HOTS, ITEMS, MOVE, RIDE, SLAB, SLOT, SP, STEEL_C, UNIT, alloy, armPair, beltAt, blastDoor, bulkhead, copyAt, cycleOf, ease, feeder, frame, furnace, gate, hingedTable, item, ladle, lineWall, lookOf, mould, muted, paintCopy, paintPhases, press, rawBillet, repeatOf, rising, sequenceOf, slab, stamp, stationAt, steelDoors, thick, tipping, vaultDoor, walkPicture, walker, workOn } from '../../src/systems/area-art/steel.js';
 import { GREAT_HALL, CHANDELIERS, Dd, INDIGO, VIOLET, TEAL, DRAGON_MASK, Dr, GILT, GLASS, HALL_ORDER, HALL_WINDOWS, STONE, banner, dragonEye, drake, lightShaft, pillar, stainedGlass, stoneWall, torches, ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE, AMETHYST, AMETHYST_FAR, B, BAYER4, BLACK, BLOOD, BLOOMS, BLOOM_CUPS, BLUE, CAP_CYAN, CAP_VIOLET, CYAN_GLOW, DEBRIS, K, KR, LANTERNS, LUMEN, MIST, NIGHT, R, ROOF, ROWS, RS, TAU, VAULT, VIOLET_GLOW, WARM, WHITE, WOOD, WORMS, WORM_COLS, bareTree, bellAt, caveWall, ceiling, cluster, crystal, crystalRow, dark, dripstones, eclipse, ellipse, flame, glints, glow, glowworms, granite, grass, lit, motes, mushroom, oneEye, pale, pics, roofLayer, shade, stem, threads, wormSpots } from '../../src/systems/area-art/batch3.js';
 
@@ -125,23 +126,13 @@ const ROCK = {
 // river of souls with its ferryman, and the ghost town of the old west. The materials are as before.
 
 const wraith = B('wraith');
-const Wv = (k) => tn(wraith, k), Wd = (k) => tn(wraith, k, 'secondary'), WISP = [c('#e4fff6'), c('#8af0d0')];
+const WISP = [c('#e4fff6'), c('#8af0d0')];
 const MOONPALE = [c('#fbf8ff'), c('#e4dcf8'), c('#b8a8e0')];
-const SPIRIT = [c('#e0f8ff'), c('#7ad8ff'), c('#3a7ac8')];   // blue spirit flame: heart, body, edge
 const night = (r, k = 1) => grad(r, 0, H, [[0, Wd(0.3)], [0.65, mix(Wd(1), Wv(0.45), 0.4 * k)], [1, Wd(0.4)]]);
 function headstone(r, x, base, kind, col, edge) {
   if (kind === 0) { for (let j = 0; j < 16; j++) for (let i = 0; i < 9; i++) { if (j < 3 && ((i - 4) / 4.5) ** 2 + ((j - 3) / 3) ** 2 > 1) continue; r.set(x + i, base - 16 + j, i === 0 ? edge : col); } }
   else if (kind === 1) { fillRect(r, x + 3, base - 20, 3, 20, col); fillRect(r, x, base - 15, 9, 3, col); vert(r, x + 3, base - 20, base, edge); }
   else { for (let j = 0; j < 24; j++) { const half = j < 4 ? Math.floor(j / 2) : 2; for (let i = -half; i <= half; i++) r.set(x + 4 + i, base - 24 + j, i === -half ? edge : col); } }
-}
-/** A blue spirit flame: a teardrop, its tip flicking up. */
-function spiritFlame(r, x, y, s) {
-  glow(r, x, y, s * 3, SPIRIT[1], 0.35);
-  for (let j = -s * 2; j <= s; j++) for (let i = -s; i <= s; i++) {
-    const t = j < 0 ? 1 + j / (s * 2) : 1 - (j / s) ** 2, half = s * Math.sqrt(Math.max(0, t)) * (j < 0 ? 0.8 : 1);
-    if (Math.abs(i) > half) continue;
-    r.set(x + i, y + j, Math.abs(i) < half * 0.4 && j > -s ? SPIRIT[0] : Math.abs(i) < half * 0.8 ? SPIRIT[1] : SPIRIT[2]);
-  }
 }
 /** Portraits' eyes in the haunted hall: they look left, then ahead, then right, then ahead, following you. */
 const PORTRAIT_X = [36, 196, 356];
@@ -203,86 +194,8 @@ const FERRY = {
   },
 };
 // ── THE GRAVE TOWER, AS A CLIMB ──────────────────────────────────────
-/*
- * The owner, 7 Nov 2026, on the Ghost board's grave tower: "3a but This level will only be 3 full
- * screen widths wide. beyond this 3 screen wide scrolling, all other platforming and scrolling will
- * be done in the vertical as the player ascends this grave tower. add animated blue flame spirits,
- * significantly increase the unique styles of graves, have a thin fog with clear patches ebb and
- * flow, shifting with player movement like the layered parallax but over the foreground, mildly
- * obscuring the player, platforms, enemies etc but not the flame spirits. periodically there will be
- * a staircase that, at the top, is a one way passable platform that spans the whole level width as
- * checkpoints. all other platforms should have randomized widths no narrower than the current
- * standard platform".
- *
- * So: the grave tower with material A, the rotten floorboards, drawn as a climb. The tower is three
- * screens (1440 pixels) wide. Its far wall of graves moves at half the camera's speed, stone pillars
- * nearer at three quarters, then the climb itself: platforms 44 to 88 pixels wide (44 is today's
- * standard), and every few tiers a staircase up to a walkway the whole width of the tower, the
- * checkpoint. Over all of it a thin fog drifts faster than the camera, its clear patches opening and
- * closing; the blue flame spirits are drawn over the fog. Painted afresh each frame for the canvas;
- * how the climb plays (falling, the door at the top) is still to be talked through. Not in the game.
- */
-const ROTTEN_P = { deep: '#140e1c', dark: '#2e2640', base: '#5e5072', light: '#726486', hi: '#9a8cb4', cap0: '#c4b8dc', cap1: '#9486b4', rope: '#6a5a80', iron: '#2a2430', ironLight: '#5a5068', thi: '#d8d0e8', tlight: '#8a80a0', tdark: '#4a4058' };
-const ROTTEN = material('planks', ROTTEN_P, { spikes: 'spears', door: 'wood' });
-const RP = Object.fromEntries(Object.entries(ROTTEN_P).map(([k, v]) => [k, c(v)]));
-const TW = 1440, GRAVE_C = [Wd(0.22), mix(Wd(1), Wv(0.45), 0.5), Wv(0.62), Wv(0.82)];   // edge, body, lit, highlight
-const GRAVE_W = [9, 9, 7, 9, 11, 20, 13, 9, 9, 9, 9, 22, 10, 5, 7];
-/** A grave standing on a ledge at (x, base): one of fifteen kinds. */
-function grave(r, x, base, kind, C = GRAVE_C) {
-  const [E, B, L, Hh] = C, F = (i, j, w, h, col) => fillRect(r, x + i, base - j - h, w, h, col);   // j counts up from the ledge
-  const body = (i, j, w, h) => { F(i, j, w, h, B); F(i, j, 1, h, L); F(i + w - 1, j, 1, h, E); };
-  const WOOD = [c('#2a1c14'), c('#5a4030'), c('#7a5a40')];
-  switch (kind) {
-    case 0: body(0, 0, 9, 9); for (let i = 1; i < 8; i++) for (let j = 9; j < 13; j++) if (((i - 4) / 3.6) ** 2 + ((j - 9) / 3.4) ** 2 <= 1) r.set(x + i, base - 1 - j, i < 3 ? L : B); F(2, 4, 5, 1, E); F(2, 6, 5, 1, E); break;   // a rounded headstone
-    case 1: body(3, 0, 3, 16); body(0, 10, 9, 3); break;   // a cross
-    case 2: body(0, 0, 7, 3); body(1, 3, 5, 14); F(2, 17, 3, 2, B); F(3, 19, 1, 2, Hh); break;   // an obelisk
-    case 3: body(3, 0, 3, 18); body(0, 11, 9, 3); for (let a = 0; a < 28; a++) { const t = (a / 28) * TAU; r.set(Math.round(x + 4 + Math.cos(t) * 4), Math.round(base - 13 + Math.sin(t) * 4), a < 14 ? E : L); } break;   // a cross in a ring
-    case 4: body(0, 0, 11, 9); F(3, 3, 5, 4, L); r.set(x + 4, base - 6, E); r.set(x + 6, base - 6, E); F(4, 3, 3, 1, E); break;   // a slab with a skull carved in it
-    case 5: body(0, 0, 20, 5); F(0, 5, 20, 2, L); F(1, 7, 18, 1, Hh); for (let i = 3; i < 18; i += 5) F(i, 1, 2, 3, E); break;   // a tomb chest under its lid
-    case 6: body(4, 0, 5, 3); body(5, 3, 3, 9); F(2, 7, 2, 8, L); F(9, 7, 2, 8, E); F(1, 10, 1, 5, L); F(11, 10, 1, 5, E); ellipse(r, x + 6, base - 15, 2, 2, Hh); break;   // an angel, wings half raised
-    case 7: body(0, 0, 9, 6); F(0, 6, 3, 3, B); F(3, 6, 2, 1, B); F(5, 6, 4, 2, B); F(7, 8, 2, 1, E); r.set(x + 1, base - 9, L); break;   // a broken headstone
-    case 8: for (let j = 0; j < 14; j++) { const dx = Math.round(j * 0.25); r.set(x + 3 + dx, base - 1 - j, WOOD[1]); r.set(x + 4 + dx, base - 1 - j, WOOD[0]); } for (let i = 0; i < 9; i++) r.set(x + i + 2, base - 11 + Math.round(i * 0.1), i < 4 ? WOOD[2] : WOOD[1]); break;   // a wooden cross, leaning
-    case 9: body(1, 0, 7, 4); body(3, 4, 3, 2); ellipse(r, x + 4, base - 9, 3, 3, B); r.set(x + 2, base - 10, L); F(3, 12, 3, 1, L); F(2, 13, 5, 1, B); break;   // an urn on a plinth
-    case 10: body(0, 0, 9, 10); for (let j = 10; j < 15; j++) { const half = Math.round((15 - j) * 0.9); for (let i = 4 - half; i <= 4 + half; i++) r.set(x + i, base - 1 - j, i <= 4 - half + 1 ? L : B); } F(4, 6, 1, 5, E); F(2, 8, 5, 1, E); break;   // a pointed headstone with a cross cut in it
-    case 11: body(0, 0, 22, 2); body(2, 2, 2, 11); body(18, 2, 2, 11); F(4, 2, 14, 11, Wd(0.12)); F(8, 2, 6, 8, Wd(0.05)); body(0, 13, 22, 2); for (let j = 15; j < 20; j++) { const half = Math.round((20 - j) * 2.2); F(11 - half, j, half * 2, 1, j === 15 ? L : B); } break;   // a little mausoleum, its door dark
-    case 12: for (let j = 0; j < 12; j++) { const dx = Math.round(j * 0.35); for (let i = 0; i < 8; i++) { if (j > 8 && ((i - 3.5) / 3.6) ** 2 + ((j - 8) / 3.4) ** 2 > 1) continue; r.set(x + i + dx, base - 1 - j, i === 0 ? L : i === 7 ? E : B); } } break;   // a headstone sunk and leaning
-    case 13: F(2, 0, 1, 10, Wd(0.15)); F(0, 10, 5, 6, Wd(0.15)); F(1, 11, 3, 4, SPIRIT[1]); r.set(x + 2, base - 13, SPIRIT[0]); glow(r, x + 2, base - 13, 6, SPIRIT[1], 0.35); break;   // an iron lantern on a post, a spirit flame inside
-    case 14: body(1, 0, 5, 2); body(2, 2, 3, 12); ellipse(r, x + 3, base - 16, 2, 2, B); r.set(x + 2, base - 17, Hh); break;   // a pillar with a stone ball on top
-  }
-}
-/** The tower's far wall, at `rate` of the camera: stone blocks, tall moonlit windows, and ledge on ledge of graves. */
-function towerWall(r, camX, camH, rate) {
-  const ox = Math.round(camX * rate), oh = Math.round(camH * rate);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const wx = x + ox, wy = y - oh, row = Math.floor(wy / 12), bx = mod(wx + mod(row, 2) * 16, 32);
-    r.set(x, y, mod(wy, 12) === 0 || bx === 0 ? Wd(0.35) : pick([Wd(0.6), mix(Wd(1), Wv(0.25), 0.3)], noise2(wx * 0.08, wy * 0.08, 430), x, y));
-  }
-  for (let k = Math.floor((-oh - 120) / 112); k * 112 - 40 + oh < H; k++) {
-    const ly = k * 112 + 96 + oh;   // this ledge's top, on screen
-    if (mod(k, 2) === 0) for (let n = Math.floor((ox - 60) / 240); n * 240 + 100 - ox < W; n++) {   // a tall arched window between this ledge and the one above
-      const wx = n * 240 + 120 - ox, top = ly - 76;
-      for (let j = 0; j < 62; j++) for (let i = 0; i < 22; i++) { const dx = i - 11; if (j < 11 && dx * dx + (j - 11) ** 2 > 121) continue; r.set(wx + i, top + j, i === 11 || j === 30 ? Wd(0.3) : mix(Wd(0.25), Wv(0.6), 0.35 - j * 0.004)); }
-      beam(r, wx + 11, top + 30, Math.PI / 2 + 0.35, 0.1, 70, Wv(0.85), 0.07);
-    }
-    if (ly < -30 || ly > H + 30) continue;
-    for (let x = 0; x < W; x++) { r.set(x, ly, Wv(0.45)); r.set(x, ly + 1, Wd(0.25)); for (let j = 2; j < 6; j++) r.set(x, ly + j, Wd(0.3)); }
-    let gx = 4 + Math.floor(hash(k, 0, 940) * 10);
-    for (let n = 0; gx < ox + W + 30; n++) {   // the graves along it: fifteen kinds, never two alike in a row
-      const kind = Math.floor(hash(k, n, 941) * 15), w = GRAVE_W[kind];
-      if (gx + w > ox - 30) grave(r, gx - ox, ly, kind);
-      gx += w + 3 + Math.floor(hash(k, n, 942) * 9);
-    }
-  }
-}
-/** Stone pillars nearer than the wall, at `rate` of the camera. */
-function towerPillars(r, camX, rate) {
-  const ox = Math.round(camX * rate);
-  for (let n = Math.floor((ox - 40) / 300); n * 300 + 120 - ox < W; n++) {
-    const px = n * 300 + 140 - ox;
-    for (let y = 0; y < H; y++) for (let i = 0; i < 26; i++) r.set(px + i, y, i < 3 ? Wv(0.42) : i > 22 ? Wd(0.1) : mod(y + (i > 12 ? 8 : 0), 16) === 0 ? Wd(0.14) : Wd(0.24));
-  }
-}
-// The climb shown on the canvas: its platforms, stairs and walkways, and the route the player takes.
+// The owner's words, and the tower's painters, are in src/systems/area-art/tower.js.
+const TW = 1440;
 const CLIMB = (() => {
   const plats = [], stairs = [], walks = [360, 720], route = [[70, 0, 'stand']], tiers = [];
   let x = 70, dir = 1;
@@ -331,7 +244,6 @@ function climbCam(t) {
   for (let k = 0; k < 8; k++) { const [x, h] = climberAt(Math.max(0, t - k * 6)); cx += Math.max(0, Math.min(TW - W, x - 200)); ch += Math.max(0, h - 60); }
   return [cx / 8, ch / 8];
 }
-const FOG = c('#b8b4d8');
 /** A thin fog over everything, drifting faster than the camera; its clear patches open and close as it ebbs and flows. */
 function towerFog(r, camX, camH, t, rate = 1.35) {
   const ox = camX * rate, oy = -camH * rate, thr = 0.5 + 0.1 * Math.sin((TAU * t) / 600);

@@ -22,6 +22,7 @@ import { stage } from '../arena-art/index.js';
 import { Raster, pieces } from '../arena-art/pixels.js';
 import { W, H, FLOOR, paintDoor } from './kit.js';
 import { PICKED, pickedMaterial } from './slices.js';
+import { buildTower } from './tower.js';
 
 /** Does this boss's area have picked world pieces? */
 export const hasAreaArt = (id) => Object.prototype.hasOwnProperty.call(PICKED, id);
@@ -59,6 +60,8 @@ const MARGIN = 16;           // painted a little before it scrolls into view
 export function buildArea(S, id, viewW, room = false) {
   const slice = PICKED[id], M = pickedMaterial(id), layers = [];
 
+  // A climb (Ghost's tower) builds its own pieces from the world it is given, on the first place.
+  let tower = null;
   if (!room) {
     for (const L of slice.backdrop.layers) {
       S.layer({ far: true });
@@ -99,7 +102,7 @@ export function buildArea(S, id, viewW, room = false) {
   const doors = new Map();
 
   return {
-    place(cam, t, world, px, prog) {   // px: where the player is on screen, for parts that answer to him
+    place(cam, t, world, px, prog, camY = 0) {   // px: where the player is on screen, for parts that answer to him
       const c = Math.round(cam);   // for what is in view; pictures go exactly where GameScene puts everything else
       for (const { L, pic, pools } of layers) {
         const ox = Math.round(cam * L.rate);
@@ -111,7 +114,10 @@ export function buildArea(S, id, viewW, room = false) {
         }
       }
 
-      if (!room) {
+      if (!room && slice.climb && world.climb) {
+        tower ??= buildTower(S, viewW, M, world, DEPTH);
+        tower.place(cam, camY, t);
+      } else if (!room) {
         // THE GROUND, a slice of the world at a time. A slice is painted again only if the
         // ground in it changes (a door's footing added after it was first seen), which shows
         // in `sig`: the runs that reach into it, cut to just beyond its edges.
@@ -185,9 +191,9 @@ export function makeAreaArt(scene, id, viewW, room = false) {
   const S = stage(scene, `area-art:${id}:${++builds}`, viewW);
   const area = buildArea(S, id, viewW, room);
   return {
-    update(cam, sh, t, world, px, prog) {
+    update(cam, sh, t, world, px, prog, camY) {
       S.place(sh, 1);
-      area.place(cam, t, world, px, prog);
+      area.place(cam, t, world, px, prog, camY);
     },
     destroy() { S.destroy(); },
   };

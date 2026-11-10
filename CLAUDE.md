@@ -693,8 +693,8 @@ first-round castle bricks and Steel its steel plates, with three new pairs of do
 doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); **Steel is in the game** (10 Nov 2026): the line by phases ("lock in 1"), moved on by the door
 timer, on the steel plates with the blast doors ("B"). **Dragon is in the game** (9 Nov 2026): the great hall on the castle bricks, five windows (yellow, red, green, blue and the Draco-Blaster's 'dragon' colours) on one diamond grid. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
 three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
-over the play. It is the first area not to run left to right. The owner's answers (8 Nov 2026) settled the falls
-and the boss door's place; it waits on being built, which needs its own kind of area in the game.
+over the play. It is the first area not to run left to right, and **it is in the game** (10 Nov 2026), with
+five walkways and the camera following a fall back down; see *Areas that climb* below.
 
 ### AI-made sprites and music: only when the owner asks for that one
 
@@ -744,6 +744,7 @@ Claude or a generator made:
 | World pieces in the game, batch 3 — Rock's star meadow (the star vault and the glowing blooms joined) on quarry strata with violet crystal spikes and A's arched doors, and Dark's total eclipse with A's tiles, shards and doors on C's cracked glowing stone | room art, drawn in code | Claude | 2026-11-08 | `src/systems/area-art/batch3.js`, picked in `src/systems/area-art/slices.js` |
 | World pieces in the game, Dragon — the great hall: five stained-glass windows (yellow, red, green, blue, 'dragon') on one diamond grid, pillars, banners and torches, on the castle bricks picked in the first round | room art, drawn in code | Claude | 2026-11-09 | `src/systems/area-art/batch3.js` (`GREAT_HALL`), castle bricks in `src/systems/area-art/materials.js` (`CASTLE`) |
 | World pieces in the game, Steel — the assembly line by phases (ladles, presses, arms, the belt's end over the pit), muted, on the first round's steel plates with blast doors | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/steel.js`, steel plates in `src/systems/area-art/materials.js` (`STEEL_PLATES`) |
+| World pieces in the game, Ghost — the grave tower as a climb: its far wall of graves, pillars, the rotten floorboards, walkways and stairs, the tower's walls, a drifting fog over the play and blue spirit flames over the fog | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/tower.js` |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -911,7 +912,7 @@ ground and pits, platforms, spike beds and boss door, and in that boss's room th
 owner's answer, 5 Nov 2026). A slice with nothing picked keeps the plain shapes `GameScene.draw`
 always drew. **`slices.js` holds each pick in the owner's own words**, with the materials and the
 backdrop it uses; a pick can take its ground (Grass: B on A's ground) or its doors (Rock: B with A's doors) from a second material.
-Batch 3's picked painters live in `batch3.js` and Steel's in `steel.js`, which `design/world-art/batch3.mjs` imports.
+Batch 3's picked painters live in `batch3.js`, Steel's in `steel.js` and Ghost's tower in `tower.js`, which `design/world-art/batch3.mjs` imports.
 `design/world-art/batch1.mjs` and `batch2.mjs` show the same code beside the variants that were not
 picked, so the canvas and the game paint from one copy.
 
@@ -933,6 +934,26 @@ known fraction of the way (`doorProgress` in `systems/terrain.js`). The game pas
 player stands on screen, to every moving part (`at(ox, t, px, prog)`); each stretch of Steel's belt
 takes its phase from it as it comes in at the right edge and keeps it (`LINE_PHASES` in
 `src/systems/area-art/steel.js`, which remembers its stretches and forgets them through `fresh()`).
+
+### Areas that climb — `CLIMBS` in `systems/terrain.js`
+
+**The owner means to add verticality to several levels** (9 Nov 2026: "i will soon be adding verticality
+to several levels, so develop the code to support it now"). A boss listed in `CLIMBS` gets a tower
+instead of the endless stream; Ghost's grave tower is the first. `makeClimb` builds it whole: a floor,
+walls at each side, one-way platforms no narrower than the standard climbing in a zigzag, and every
+seven tiers a staircase up to a **walkway** the whole width (a checkpoint), five of them, the boss door
+at the right end of the top one. Its width is fixed in world pixels, never the screen's.
+
+- **The camera has a height, `cam.y`**, 0 everywhere but a climb. `stepClimbCamera` follows the player
+  along and up and down, but never below the highest walkway he has stood on. The game raises its own
+  Phaser camera by it (`centerOn` in `GameScene.draw`), so everything drawn at its world height moves
+  with it; what belongs to the screen (the plain background, a tower's far layers) is raised by the
+  same amount instead. **A scroll factor of 0 does not work here**: under the render-density zoom it
+  pins to the wrong corner.
+- Stairs are platforms marked `step`, walked up rather than jumped. Only fliers spawn in a climb, from
+  either side at the climb's height; drops rest on the platform they fall onto. Streams are unchanged.
+- `tests/terrain.test.js` builds twenty towers and walks every jump of the route against the jump
+  limits; `tests/area-art.test.js` plays the tower's art up and along it.
 
 **The game still draws a door's gold pulse; the art draws the door in front of it.** An unarmed door
 is the same picture, greyed and see-through. Nothing here changes a size, a position or a hit.
