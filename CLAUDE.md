@@ -696,6 +696,11 @@ three screens wide that scrolls up, not along, with stair checkpoints the width 
 over the play. It is the first area not to run left to right, and **it is in the game** (10 Nov 2026), with
 five walkways and the camera following a fall back down; see *Areas that climb* below.
 
+**A canvas is archived once its art is in the game** (owner, 10 Nov 2026), into `design/archive/`,
+one folder each with its pages, its pictures and the owner's words from its threads, and then removed
+from Claude, asking before each removal. The archive keeps the unpicked variants and ideas "for
+posterity"; `design/archive/README.md` is the rule.
+
 ### AI-made sprites and music: only when the owner asks for that one
 
 **The owner decides, one asset at a time, whether Claude may make it.** **Claude may make a
