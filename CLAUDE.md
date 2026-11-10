@@ -671,6 +671,8 @@ the EXP orb), and **the HUD** (energy pips with the EXP outline, the sword and s
 wheel ring, the level-up cards, the pause and RE-QUIP buttons; the thumb pads stay as the owner set
 them). Burn smoke was offered as a fourth group and not picked.
 
+**Group 2 (DRIFTER, the E-Tank, the EXP orb) is on its own canvas** (10 Nov 2026): `design/minion-art/README.md`.
+
 **Later the same day the owner changed the world pieces to one set per slice**, in their words:
 "new plan. draw up all 17 slices world pieces just like you did here(floor, platform, exit door,
 spikes). i really like the castle one for dragon, and the bedrock one for Ground , and the Steel
@@ -751,6 +753,7 @@ Claude or a generator made:
 | World pieces in the game, Steel — the assembly line by phases (ladles, presses, arms, the belt's end over the pit), muted, on the first round's steel plates with blast doors | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/steel.js`, steel plates in `src/systems/area-art/materials.js` (`STEEL_PLATES`) |
 | World pieces in the game, Ghost — the grave tower as a climb: its far wall of graves, pillars, the rotten floorboards, walkways and stairs, the tower's walls, a drifting fog over the play and blue spirit flames over the fog | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/tower.js` |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
+| DRIFTER, the E-Tank and the EXP orb, variants for review and not in the game (group 2 of the owner's ask of 5 Nov 2026) — four DRIFTERs, three E-Tanks, three EXP orbs | sprite | Claude | 2026-11-10 | `design/minion-art/variants/*.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
