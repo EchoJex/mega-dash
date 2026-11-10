@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E-Tank variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url(ds/megadash/fonts/MegaDash5x7.woff) format("woff")}
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; min-height: 1500px; box-sizing: border-box; padding: 56px; background: #060614; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 40px;">
+<header style="display: flex; flex-direction: column; gap: 14px;">
+<h1 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 56px; line-height: 64px;">E-TANK</h1>
+<p style="margin: 0; font-size: 20px; line-height: 30px; color: #c8ceda; max-width: 1180px;">The energy pickup, dropped now and then by an enemy. Today it is a red square with a white cross. You pick it up by touching a 7 by 7 box; the picture may be up to 16 by 16, so the rest is room for a glint. It is the same in every area, so it can use its own colours, up to 15. Blown up eight times, at game speed.</p>
+<div style="display: flex;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 16px; padding: 8px 12px; border: 2px solid #5cadd5; background: #5cadd5; color: #060614;">PICKED · B, YOUR OWN HEART, STILL</span></div>
+<p style="margin: 0; font-size: 18px; line-height: 28px; max-width: 1180px;">Picked by the owner on 10 Nov 2026, with their own drawing attached, in their words: &quot;no animation frames. just a still heart, scaled as needed to match the current e-tank size&quot;. Then: &quot;scaling only in exact incriments until it is equal to or slightly larger that the current placeholder e-tank&quot;. Your heart is drawn at 18 by 18, each pixel its own, and today's E-Tank is 9 by 9 (its 7 by 7 box and its outline), so the only exact size at or above it is 1 times: your heart exactly as drawn, 18 by 18, the white around it see-through. Below, today's E-Tank and your heart side by side at true size against each other. Not in the game yet.</p>
+<img src="../assets/heart-vs-placeholder.png" alt="Today's 9 by 9 E-Tank on the left and the owner's 18 by 18 heart on the right, at the same scale" style="width: 320px; height: 176px; image-rendering: pixelated; display: block;">
+</header>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px;">
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 12px;">
+<figcaption style="display: flex; flex-direction: column; gap: 6px;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 32px;"><span style="color: #5cadd5; font-size: 28px;">A</span> ENERGY CAN</span><span style="font-size: 16px; line-height: 24px; color: #c8ceda;">A small red can with a steel lid and a white E, which glints now and then.</span></figcaption>
+<img src="../assets/etank-a-anim.png" alt="Variant A, energy can, moving" style="width: 144px; height: 144px; image-rendering: pixelated; display: block;">
+</figure>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 12px;">
+<figcaption style="display: flex; flex-direction: column; gap: 6px;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 32px;"><span style="color: #5cadd5; font-size: 28px;">B</span> HEART <span style="background: #5cadd5; color: #060614; padding: 4px 8px;">PICKED</span></span><span style="font-size: 16px; line-height: 24px; color: #c8ceda;">Your own heart, exactly as you drew it, still.</span></figcaption>
+<img src="../assets/heart-1x.png" alt="Variant B, the owner's heart" style="width: 160px; height: 160px; image-rendering: pixelated; display: block;">
+</figure>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 12px;">
+<figcaption style="display: flex; flex-direction: column; gap: 6px;"><span style="font-family: 'Mega Dash 5x7', monospace; font-size: 14px; line-height: 32px;"><span style="color: #5cadd5; font-size: 28px;">C</span> GLASS VIAL</span><span style="font-size: 16px; line-height: 24px; color: #c8ceda;">A capped glass tube of red energy that sloshes.</span></figcaption>
+<img src="../assets/etank-c-anim.png" alt="Variant C, glass vial, moving" style="width: 144px; height: 144px; image-rendering: pixelated; display: block;">
+</figure>
+</div>
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 32px; border: 2px solid #2a323c;">
+<h2 style="margin: 0; font-family: 'Mega Dash 5x7', monospace; font-weight: 400; font-size: 28px; line-height: 32px;">TWO QUESTIONS</h2>
+<ol style="margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 12px; font-size: 18px; line-height: 28px; max-width: 1180px;">
+<li>Today the E-Tank and the EXP orb are told apart by shape as well as colour (a cross against a bar), so a colour-blind player can still tell them apart. Keep that rule for whichever pair you pick?</li>
+<li>Should it keep its gentle bob up and down, or sit still and let its own animation do the work?</li>
+</ol>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #c8ceda;">To pick: comment on this board, tag Claude, and give a letter.</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

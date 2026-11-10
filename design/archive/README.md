@@ -32,6 +32,7 @@ Nothing here is loaded by the game or the tests. AI-made pictures keep the label
 |---|---|---|
 | `thorn-man-art/` | the Grass boss's body, his tile, leaf kunai and seed pod — still in Claude too, until the seed pod is picked | 10 Nov 2026 |
 | `strike-man-sprite-art/` | the Fighting boss's body — still in Claude too | 10 Nov 2026 |
+| `air-minion-and-pickups/` | page 1 of the air minion and pickups canvas: the Pixie, the E-Tank, the EXP orb; page 2 (the Gunner) is still in Claude | 10 Nov 2026 |
 | `world-pieces/` | every area's world pieces; in Claude only the paused four (Poison, Flying, Psychic, Bug) are left on it | 10 Nov 2026 |
 
 **No weapon art is archived yet** (owner, 10 Nov 2026: "All weapon art will need a bit more refining,

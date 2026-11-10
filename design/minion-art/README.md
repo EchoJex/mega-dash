@@ -46,3 +46,5 @@ shapes, shaded from the top left. Palette keys named `body ...` are turned into 
 boss's primary, keeping how much lighter or darker each is than the plain `body` key; the rest
 stays as drawn. `render.mjs` does it for the canvas; `npm run sprites:build` will need the same
 when a Gunner goes in (today it makes copies only of three-colour drawings).
+
+**Page 1 is archived** (10 Nov 2026) in `design/archive/air-minion-and-pickups/`, with its unpicked drawings. The canvas keeps page 2, the Gunner.
