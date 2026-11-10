@@ -30,10 +30,9 @@ Nothing here is loaded by the game or the tests. AI-made pictures keep the label
 
 | folder | what it was | archived |
 |---|---|---|
-| `thorn-man-art/` | the Grass boss's body, his tile, leaf kunai and seed pod | 10 Nov 2026 |
-| `strike-man-sprite-art/` | the Fighting boss's body | 10 Nov 2026 |
-| `drake-breath-art/` | the Draco-Blaster (the Dragon weapon) | 10 Nov 2026 |
-| `granite-form/` | the Granite Form (the Rock weapon) | 10 Nov 2026 |
-| `simons-whip-art/` | Simon's Whip (the Grass weapon) | 10 Nov 2026 |
+| `thorn-man-art/` | the Grass boss's body, his tile, leaf kunai and seed pod — still in Claude too, until the seed pod is picked | 10 Nov 2026 |
+| `strike-man-sprite-art/` | the Fighting boss's body — still in Claude too | 10 Nov 2026 |
 
-The Quake Hammer's canvas stays in Claude: the owner's word (10 Nov 2026), "it still doesn't feel right".
+**No weapon art is archived yet** (owner, 10 Nov 2026: "All weapon art will need a bit more refining,
+do not archive it just yet"). The Quake Hammer, Draco-Blaster, Granite Form and Simon's Whip canvases
+stay in Claude.
