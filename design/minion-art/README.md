@@ -32,5 +32,10 @@ one board per thing. The owner picks in each board's comment thread.
 | thing | variants | picked |
 |---|---|---|
 | DRIFTER, **now the PIXIE** | A jelly · B rotor drone · C manta · D bat-wing eye | **D**, with white wings in every area, always facing the screen, and kept in this simple style (owner, 10 Nov 2026: "D, but with white wings for all slices, always facing the screen. other sprites will need 16-bit shading, but not Drifter [now called Pixie]"). Not in the game yet |
-| E-Tank | A energy can · B heart cell · C glass vial | **B, as the owner's own still heart** (owner, 10 Nov 2026, with their 18×18 drawing attached: "no animation frames. just a still heart, scaled as needed to match the current e-tank size"). Redrawn by Claude at 9×9, today's E-Tank size, in the owner's red and black; halving it pixel by pixel came out lopsided. Not in the game yet |
+| E-Tank | A energy can · B heart cell · C glass vial | **B, as the owner's own still heart**, imported pixel for pixel at 1×, 18×18 (owner, 10 Nov 2026: "scaling only in exact incriments until it is equal to or slightly larger that the current placeholder e-tank"; today's E-Tank is 9×9 and the heart is drawn at 18×18, so 1× is the only exact size). Not in the game yet |
 | EXP orb | A gem · B coin · C glow orb | **C, the glow orb** (owner, 10 Nov 2026: "C"), with a big one: "big exp should be 2.5 the size. boss should burst into a spray of small and big". The big orb is `variants/exp-c-big.sprite`, 20×20. Not in the game yet |
+
+**Importing a picture the owner sends:** take it pixel for pixel, and scale only by whole numbers
+(2×, 3×), never by halves or by redrawing. Check first whether it is already blown up (every 2×2
+block one colour); only then is a smaller whole-number size exact. On 10 Nov 2026 the heart was
+redrawn by hand at 9×9 instead, and the owner sent it back.
