@@ -3850,6 +3850,34 @@
         "throw",
         "fall"
       ]
+    },
+    "boss-tempest-body": {
+      "label": "TEMPEST MAN · BODY",
+      "cls": "weapon",
+      "key": "boss:tempest:body",
+      "weapon": "tempest",
+      "sheet": "body",
+      "boss": "tempest",
+      "layer": "boss",
+      "grid": {
+        "w": 64,
+        "h": 64
+      },
+      "box": null,
+      "clips": {
+        "idle": "loop",
+        "fly": "loop",
+        "tell": "once",
+        "dive": "loop",
+        "climb": "loop"
+      },
+      "frames": [
+        "idle",
+        "fly",
+        "tell",
+        "dive",
+        "climb"
+      ]
     }
   },
   "avgBoss": {

@@ -186,7 +186,7 @@ where each one stands.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
-- **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
+- **boss art** `[wip]` [x] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.

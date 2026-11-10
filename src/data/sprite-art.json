@@ -262,6 +262,61 @@
       ]
     }
   },
+  "boss:tempest:body": {
+    "file": "boss-tempest-body.png",
+    "frameW": 64,
+    "frameH": 64,
+    "anchor": "pivot",
+    "pivot": [
+      32,
+      56
+    ],
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0,
+        1
+      ],
+      "fly": [
+        2,
+        3
+      ],
+      "tell": [
+        4,
+        5
+      ],
+      "dive": [
+        6,
+        7
+      ],
+      "climb": [
+        8,
+        9
+      ]
+    },
+    "holds": {
+      "idle": [
+        30,
+        30
+      ],
+      "fly": [
+        12,
+        12
+      ],
+      "tell": [
+        18,
+        12
+      ],
+      "dive": [
+        4,
+        4
+      ],
+      "climb": [
+        8,
+        8
+      ]
+    }
+  },
   "boss:thorn:body": {
     "file": "boss-thorn-body.png",
     "frameW": 64,

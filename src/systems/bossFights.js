@@ -605,7 +605,7 @@ const TEMPEST = {
   rest: { 1: [140, 210], 2: [100, 160], 3: [65, 110] },
   dives: { 1: 1, 2: 2, 3: 3 },
   diveSpeed: { 1: 2.1, 2: 2.8, 3: 3.5 },
-  tell: 30,
+  tellAgain: 0.6,    // a second or third dive's warning, as a share of the first's
   contact: 2,        // "moderate damage from contact with boss"
   jetLen: 30,
   jetPush: 0.9,
@@ -645,8 +645,19 @@ function tempestJet(ctx, b, fs) {
   }
 }
 
+/**
+ * HIS DRAWING SETS HIS TIMING. How long the warning before a dive lasts is the
+ * length of the `tell` clip in `design/sprites/boss-tempest-body.sprite`, the
+ * same contract as Strike Man's and Thorn Man's sheets. What stays above is
+ * not animation: speeds, heights, damage and the plume.
+ */
+const TEMPEST_SHEET = 'boss:tempest:body';
+/** The fight's mode, as the clip that shows it. */
+const TEMPEST_CLIP = { cruise: 'fly', tell: 'tell', dive: 'dive', climb: 'climb' };
+
 function tempestAttack(layer) {
   return (ctx) => {
+    const tell = clipOf(TEMPEST_SHEET, 'tell').total;
     const b = ctx.boss, p = ctx.player;
     let fs = b.fs;
     if (!fs) {
@@ -665,7 +676,7 @@ function tempestAttack(layer) {
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
         if (--fs.t <= 0) {
           fs.mode = 'tell';
-          fs.t = TEMPEST.tell;
+          fs.t = tell;
           fs.left = TEMPEST.dives[layer];
         }
         break;
@@ -676,6 +687,7 @@ function tempestAttack(layer) {
         // telegraph — with no projectile to watch for, the only warning the
         // player gets is that he has stopped drifting.
         b.y += 0.35;
+        b.facing = p.x + 12 > b.x + b.w / 2 ? 1 : -1;      // he looks at whoever he is about to dive on
         if (--fs.t > 0) break;
         fs.mode = 'dive';
         // Committed at launch: he goes for the height the player was at, and
@@ -694,7 +706,7 @@ function tempestAttack(layer) {
           : b.x + b.w >= ctx.bounds.x1;
         if (atEdge) {
           b.x = fs.dir < 0 ? ctx.bounds.x0 : ctx.bounds.x1 - b.w;
-          if (--fs.left > 0) { fs.mode = 'tell'; fs.t = Math.round(TEMPEST.tell * 0.6); }
+          if (--fs.left > 0) { fs.mode = 'tell'; fs.t = Math.round(tell * TEMPEST.tellAgain); }
           else { fs.mode = 'climb'; }
         }
         break;
@@ -712,6 +724,9 @@ function tempestAttack(layer) {
     }
 
     tempestJet(ctx, b, fs);
+    if (fs.mode !== 'tell') b.facing = fs.dir;
+    playClip(b, TEMPEST_CLIP[fs.mode]);
+    b.clipT++;
   };
 }
 

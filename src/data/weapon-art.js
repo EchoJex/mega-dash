@@ -261,6 +261,28 @@ export const WEAPON_ART = {
       },
     },
   },
+
+  /**
+   * TEMPEST MAN, the Water boss — "Blue yellow guy with a large grey hydro jet
+   * pack" (his palette notes). One sheet, his whole body, held by the point
+   * under the middle of his collision box (he flies, so it is under his feet,
+   * not on the floor), drawn facing right and mirrored to face the way he flies.
+   *
+   * `tell` is the warning before a dive and its length is how long the warning
+   * lasts; a second or third dive in a row plays only its first part. The rest
+   * loop while that part of the flight lasts. THE JETPACK IS NOT ON THIS SHEET
+   * YET: its nozzles swing to wherever the water is really going, so the game
+   * still draws it, in plain shapes, on top of him (`drawBossRig`).
+   */
+  tempest: {
+    boss: true,
+    sheets: {
+      body: {
+        grid: { w: 64, h: 64 }, layer: 'boss', heldBy: 'the point under the middle of him (under his feet as he flies)',
+        clips: { idle: 'loop', fly: 'loop', tell: 'once', dive: 'loop', climb: 'loop' },
+      },
+    },
+  },
 };
 
 const kindOf = (owner) => (WEAPON_ART[owner]?.boss ? 'boss' : 'weapon');

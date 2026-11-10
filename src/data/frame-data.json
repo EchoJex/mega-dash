@@ -516,6 +516,103 @@
       }
     }
   },
+  "boss:tempest:body": {
+    "grid": {
+      "w": 64,
+      "h": 64
+    },
+    "pivot": {
+      "x": 32,
+      "y": 56
+    },
+    "clips": {
+      "idle": {
+        "holds": [
+          30,
+          30
+        ],
+        "cells": [
+          0,
+          1
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 60,
+        "hits": [],
+        "spawns": []
+      },
+      "fly": {
+        "holds": [
+          12,
+          12
+        ],
+        "cells": [
+          2,
+          3
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 24,
+        "hits": [],
+        "spawns": []
+      },
+      "tell": {
+        "holds": [
+          18,
+          12
+        ],
+        "cells": [
+          4,
+          5
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 30,
+        "hits": [],
+        "spawns": []
+      },
+      "dive": {
+        "holds": [
+          4,
+          4
+        ],
+        "cells": [
+          6,
+          7
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 8,
+        "hits": [],
+        "spawns": []
+      },
+      "climb": {
+        "holds": [
+          8,
+          8
+        ],
+        "cells": [
+          8,
+          9
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 16,
+        "hits": [],
+        "spawns": []
+      }
+    }
+  },
   "boss:thorn:body": {
     "grid": {
       "w": 64,

@@ -3176,7 +3176,9 @@ export default class GameScene extends Phaser.Scene {
         });
         // Hardware whose orientation is game state — see drawBossRig. Not a
         // silhouette: the rectangle underneath is still the honest footprint.
-        drawBossRig(L.boss.g, b, sx(b.x), sy(b.y));
+        // Over a drawn body, under a rectangle's own layer: sprites sit above `g`,
+        // and a pack hidden behind him is no warning of where the water goes.
+        drawBossRig(drawn ? L.boss.gAboveSprites : L.boss.g, b, sx(b.x), sy(b.y));
         shadeBody(L.boss, body, sx(b.x), sy(b.y), b.w, b.h, shadeA);
       }
       const bf = Attr.statusFlash(b.status);

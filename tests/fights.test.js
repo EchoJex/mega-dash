@@ -354,6 +354,33 @@ test('Tempest Man attacks with his jetpack, never with a projectile', () => {
   }
 });
 
+/**
+ * THE WATER BOSS'S DRAWING SETS HIS WARNING (tools/art/tempest.mjs says the
+ * rules in words for the brief). Read from frame data, so a redraw passes.
+ */
+test("Water boss: his warning lasts as long as his drawn `tell`, and every move names a drawn clip", async () => {
+  const { clipOf } = await import('../src/systems/frame-data.js');
+  const K = 'boss:tempest:body', tell = clipOf(K, 'tell').total;
+  assert.ok(tell >= 20, `a ${tell}-step warning is too short to read`);
+  for (const name of ['idle', 'fly', 'tell', 'dive', 'climb']) {
+    const c = clipOf(K, name);
+    assert.equal(c.hits.length + c.spawns.length, 0, `${name}: nothing on his sheet hits or spawns`);
+  }
+  const h = harness('tempest', 1), seen = new Set();
+  let first = 0, was = null;
+  for (let i = 0; i < 2000; i++) {
+    FIGHTS.tempest.attack[1].step(h.ctx);
+    const m = h.boss.fs.mode;
+    seen.add(h.boss.clip);
+    assert.ok(clipOf(K, h.boss.clip), 'he named a clip his sheet lacks');
+    assert.ok(h.boss.facing === 1 || h.boss.facing === -1, 'he must face one way or the other');
+    if (m === 'tell' && was !== 'tell' && !first) first = i;
+    if (m === 'dive' && was === 'tell' && first > 0) { assert.equal(i - first, tell, 'the first warning is the whole clip'); first = -1; }
+    was = m;
+  }
+  assert.deepEqual([...seen].sort(), ['climb', 'dive', 'fly', 'tell']);
+});
+
 test('phasing platforms never all vanish at once', () => {
   const a = Arena.makeArena(BOSS_BY_ID.blaze, 1, VIEW_W, FLOOR);
   for (let i = 0; i < 5000; i++) {
