@@ -311,6 +311,8 @@ rain), `src/systems/area-art/slices.js` (the picks), `batch1.mjs`, `batch2.mjs` 
 batch 1's) and prints each material's contrast against its slice's backdrops.
 
 **The review canvas:** [MEGA DASH World Pieces](https://claude.ai/artifact/FKEuvSabVmDeimP3387SVG).
+Since 10 Nov 2026 it holds only the four paused boards (Poison, Flying, Psychic, Bug); everything
+else it showed, every picture and every comment thread, is in `design/archive/world-pieces/`.
 One board per thing; each shows the game today and three variants, with two questions. The owner
 picks in each board's comment thread; Claude then labels the board PICKED, here and on the canvas.
 
