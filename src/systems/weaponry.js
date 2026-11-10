@@ -1248,7 +1248,7 @@ function distToSegment(px, py, ax, ay, bx, by) {
  * Over the height of the minion's box the spike covers a band of x; the
  * minion is moved just clear of that band, forward if its middle is in front
  * of the spike and back if it is behind. A walker turns round, as it does at
- * the lip of a pit; a drifter has nowhere else to go and simply presses
+ * the lip of a pit; a pixie has nowhere else to go and simply presses
  * against it. Knockback into the spike is cancelled for the same reason.
  */
 function blockBody(e, s, rad) {

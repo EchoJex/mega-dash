@@ -85,7 +85,7 @@ const CLIPS = {
   player: new Set(PLAYER_STATES.map(playerClip)),
   // GameScene picks these inline from the minion's plane of movement.
   spiglet: new Set(['walk']),
-  drifter: new Set(['fly']),
+  pixie: new Set(['fly']),
   // WEAPON ART names its clips in the registry, and the build refuses a sheet
   // whose clips are not exactly those — so the registry IS the list the weapon
   // code plays from (systems/weaponry.js asks for each by name).

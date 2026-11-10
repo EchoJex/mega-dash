@@ -72,7 +72,7 @@ page: when this page changes, update it too (link at the bottom).
 | ECLIPSE MAN | Dark | `#2A273F` | `#DC2626` | 32×42 |
 | ALLOY MAN | Steel | `#B2BABD` | `#4B5563` | 35×46 |
 
-Minions: **SPIGLET** (ground) `#788850` / `#2E3520`, 14×14 · **DRIFTER** (air) `#309888` /
+Minions: **SPIGLET** (ground) `#788850` / `#2E3520`, 14×14 · **PIXIE** (air) `#309888` /
 `#10332E`, 12×12. These tables are copies of `src/data/bosses.js` and `src/data/minions.js`;
 the code wins if they ever differ.
 

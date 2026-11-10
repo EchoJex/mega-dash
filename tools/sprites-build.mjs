@@ -121,6 +121,9 @@ function paletteOf(id) {
 }
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+// A three-colour drawing may also use key 3, white in every copy: the Pixie's wings, white in
+// every area by the owner's pick (10 Nov 2026).
+const WHITE = [255, 255, 255];
 
 /** The grid and frame list this id is supposed to have. */
 function targetOf(id) {
@@ -246,9 +249,9 @@ for (const file of files) {
     colour = Object.fromEntries(declared.map((p) => [p.key, rgb(p.hex)]));
   } else {
     const pal = paletteOf(id);
-    colour = { 0: rgb(pal.outline), 1: rgb(pal.primary), 2: rgb(pal.secondary) };
+    colour = { 0: rgb(pal.outline), 1: rgb(pal.primary), 2: rgb(pal.secondary), 3: WHITE };
   }
-  const allowed = declared ? declared.map((p) => p.key).join(' ') : '0 1 or 2';
+  const allowed = declared ? declared.map((p) => p.key).join(' ') : '0 1 2 or 3';
 
   const { cols, w, h } = sheetLayout(doc);
   const paint = (colour) => {
@@ -321,7 +324,7 @@ for (const file of files) {
     const v = minionFor(base, boss);
     if (v === base) continue;
     writeFileSync(join(OUT, `${v.id}.png`), encodePng(w, h,
-      paint({ 0: rgb(v.outline), 1: rgb(v.primary), 2: rgb(v.secondary) })));
+      paint({ 0: rgb(v.outline), 1: rgb(v.primary), 2: rgb(v.secondary), 3: WHITE })));
     art[v.id] = { ...a, file: `${v.id}.png` };
   }
   console.log(`  ${(t.key || id).padEnd(20)} ${id}.png  ${w}x${h}  `

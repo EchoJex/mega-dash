@@ -345,6 +345,452 @@
       ]
     }
   },
+  "pickup:etank": {
+    "file": "pickup-etank.png",
+    "frameW": 20,
+    "frameH": 20,
+    "anchor": "center",
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0
+      ]
+    },
+    "holds": {
+      "idle": [
+        60
+      ]
+    }
+  },
+  "pickup:exp": {
+    "file": "pickup-exp.png",
+    "frameW": 20,
+    "frameH": 20,
+    "anchor": "center",
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0,
+        1
+      ]
+    },
+    "holds": {
+      "idle": [
+        15,
+        15
+      ]
+    }
+  },
+  "pickup:expBig": {
+    "file": "pickup-expBig.png",
+    "frameW": 20,
+    "frameH": 20,
+    "anchor": "center",
+    "tintable": false,
+    "anims": {
+      "idle": [
+        0,
+        1
+      ]
+    },
+    "holds": {
+      "idle": [
+        15,
+        15
+      ]
+    }
+  },
+  "pixie": {
+    "file": "pixie.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_blaze": {
+    "file": "pixie_blaze.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_tempest": {
+    "file": "pixie_tempest.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_volt": {
+    "file": "pixie_volt.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_thorn": {
+    "file": "pixie_thorn.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_frost": {
+    "file": "pixie_frost.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_strike": {
+    "file": "pixie_strike.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_venom": {
+    "file": "pixie_venom.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_quake": {
+    "file": "pixie_quake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_gale": {
+    "file": "pixie_gale.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_psi": {
+    "file": "pixie_psi.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_swarm": {
+    "file": "pixie_swarm.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_granite": {
+    "file": "pixie_granite.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_wraith": {
+    "file": "pixie_wraith.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_drake": {
+    "file": "pixie_drake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_eclipse": {
+    "file": "pixie_eclipse.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
+  "pixie_alloy": {
+    "file": "pixie_alloy.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  },
   "player": {
     "file": "player.png",
     "frameW": 24,

@@ -47,7 +47,7 @@ export function trySpawn(world, camX, viewW, frames, groundY, boss = null, camY 
   // A climb has no ground to walk along but its floor, so only fliers come, from either side of the
   // view at the height the player is climbing (ponytail: walkers on platforms when a level needs them).
   const ground = !world.climb && Math.random() < 0.6;
-  const def = minionFor(MINIONS.find((m) => (ground ? m.kind === 'ground' : m.kind === 'air')), boss);
+  const def = minionFor(pickOf(ground ? 'ground' : 'air'), boss);
   // An elite is the same silhouette at the same size, wearing a gold rim — not
   // a bigger minion. It shares one piece of art with its base form.
   const elite = Math.random() < eliteChance(step);
@@ -69,6 +69,12 @@ export function trySpawn(world, camX, viewW, frames, groundY, boss = null, camY 
   }
 
   return makeMinion(def, x, y, step, elite);
+}
+
+/** One minion of a plane, picked evenly from every minion that moves in it. */
+function pickOf(kind) {
+  const all = MINIONS.filter((m) => m.kind === kind);
+  return all[Math.floor(Math.random() * all.length)];
 }
 
 /**
@@ -104,8 +110,8 @@ function makeMinion(def, x, y, step = 0, elite = false) {
  * a plane that does not exist degrades to summoning nothing.
  */
 export function spawnAt(kind, x, y, frames = 0, elite = false, boss = null) {
-  const def = MINIONS.find((m) => m.kind === kind);
-  if (!def) return null;
+  if (!MINIONS.some((m) => m.kind === kind)) return null;
+  const def = pickOf(kind);
   return makeMinion(minionFor(def, boss), x, y, difficultyStep(frames), elite);
 }
 
@@ -144,7 +150,7 @@ export function stepMinions(list, world, player, groundY) {
 }
 
 function stepGround(e, world, groundY, held, slow) {
-  // Gravity applies even while held — a frozen Drifter has to fall, or a
+  // Gravity applies even while held — a frozen Pixie has to fall, or a
   // freeze weapon would read as parking enemies in mid-air.
   e.vy = Math.min(e.vy + FEEL.gravity, FEEL.maxFallSpeed);
   e.y += e.vy;
@@ -169,6 +175,7 @@ function stepGround(e, world, groundY, held, slow) {
 
 function stepAir(e, player, groundY, held, slow) {
   if (held) return;
+  if (e.def.move === 'stopGo') return stepStopGo(e, player, groundY, slow);
   e.x += e.vx * slow;
 
   // Gentle altitude tracking: enough to make ignoring one a mistake, capped so
@@ -178,6 +185,22 @@ function stepAir(e, player, groundY, held, slow) {
   const track = Math.max(-e.def.trackMax, Math.min(e.def.trackMax, dy * e.def.trackStrength));
   e.y += (track + Math.sin(e.anim * e.def.bobRate) * e.def.bobAmp) * slow;
 
+  if (e.y < 8) e.y = 8;
+  if (e.y + e.h > groundY - 2) e.y = groundY - 2 - e.h;
+}
+
+/**
+ * THE GUNNER: heads for the player for `moveFrames`, then hangs still for `stopFrames`, and
+ * again. Along at its own `speed`, up or down at the slower `climb`, never past where he is,
+ * so it settles level with him rather than shaking about his height.
+ */
+function stepStopGo(e, player, groundY, slow) {
+  const { moveFrames, stopFrames } = e.def;
+  if (e.anim % (moveFrames + stopFrames) >= moveFrames) return;
+  const dx = player.x + 12 - (e.x + e.w / 2), dy = player.y + 12 - (e.y + e.h / 2);
+  e.vx = Math.sign(dx) * e.def.speed;
+  e.x += Math.sign(dx) * Math.min(Math.abs(dx), e.def.speed * slow);
+  e.y += Math.sign(dy) * Math.min(Math.abs(dy), e.def.climb * slow);
   if (e.y < 8) e.y = 8;
   if (e.y + e.h > groundY - 2) e.y = groundY - 2 - e.h;
 }

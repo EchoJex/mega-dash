@@ -22,7 +22,14 @@ import { isOverGround, overlaps } from './physics.js';
 export const PICKUP_STYLE = {
   etank: { primary: '#E11416', secondary: '#F8FAFC' },
   exp:   { primary: '#F5D328', secondary: '#5C4A0A' },
+  expBig: { primary: '#F5D328', secondary: '#5C4A0A' },
 };
+
+/**
+ * Which picture an EXP orb wears: the big one from `FEEL.expBigAt` up (owner, 10 Nov 2026:
+ * "big exp should be 2.5 the size"). Only the picture: its pick-up box stays 7x7.
+ */
+export const pickupLook = (p) => (p.type === 'exp' && p.amount >= FEEL.expBigAt ? 'expBig' : p.type);
 
 const orb = (type, x, y, extra = {}) => ({
   type, x, y,
@@ -69,8 +76,20 @@ export function dropsFor(tier, x, y, luckMult = 1, expMult = 1) {
     // that made elites drop more often would be a second Luck Chip wearing a
     // different name, and would say nothing about elites being worth hunting.
     const total = Math.round(rollExpAmount(tier) * expMult);
-    const each = Math.max(1, Math.round(total / orbs));
-    for (let i = 0; i < orbs; i++) out.push(orb('exp', x, y, { amount: each }));
+    if (!isBoss) out.push(orb('exp', x, y, { amount: Math.max(1, total) }));
+    else {
+      // "boss should burst into a spray of small and big" (owner, 10 Nov 2026): the total is
+      // split unevenly, so some orbs come out big and some small, and they are flung wide.
+      const shares = Array.from({ length: orbs }, () => 0.3 + Math.random() * 1.4);
+      const sum = shares.reduce((a, b) => a + b, 0);
+      for (const s of shares) {
+        out.push(orb('exp', x, y, {
+          amount: Math.max(1, Math.round((total * s) / sum)),
+          vx: (Math.random() - 0.5) * FEEL.expSprayAcross,
+          vy: -FEEL.expSprayUp * (0.6 + Math.random() * 0.4),
+        }));
+      }
+    }
   }
 
   if (Math.random() < FEEL.pickupChance * luckMult) out.push(orb('etank', x, y));

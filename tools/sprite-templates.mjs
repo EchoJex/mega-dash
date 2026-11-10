@@ -129,7 +129,7 @@ const PLAYER_BOX = { w: +hb[1], h: +hb[2], offX: +hb[3], offY: +hb[4] };
 const sl = /playerHitboxSlide:\s*\{ w: (\d+), h: (\d+), offX: (\d+), offY: (\d+) \}/.exec(feel);
 const SLIDE_BOX = sl ? { w: +sl[1], h: +sl[2], offX: +sl[3], offY: +sl[4] } : null;
 
-// The two minions, in file order: SPIGLET then DRIFTER.
+// The minions, in file order: SPIGLET, PIXIE, GUNNER.
 const minionBoxes = [...minions.matchAll(/w: (\d+), h: (\d+),/g)].map((m) => ({
   w: +m[1], h: +m[2],
 }));
@@ -156,11 +156,12 @@ const weaponRows = [...src('src/data/weapons.js')
   .map((m) => ({ id: m[1], name: m[3], boss: m[4] || null }));
 if (weaponRows.length !== 18) throw new Error(`read ${weaponRows.length} weapons, expected 18`);
 
-// The two pickups, from PICKUP_STYLE — the one place their identity is stated.
+// The pickups, from PICKUP_STYLE — the one place their identity is stated. expBig is the
+// big EXP orb (owner, 10 Nov 2026: "big exp should be 2.5 the size").
 const pickupRows = [...src('src/systems/pickups.js')
-  .matchAll(/^\s*(etank|exp):\s*\{ primary: '(#[0-9A-Fa-f]{6})', secondary: '(#[0-9A-Fa-f]{6})'/gm)]
+  .matchAll(/^\s*(etank|exp|expBig):\s*\{ primary: '(#[0-9A-Fa-f]{6})', secondary: '(#[0-9A-Fa-f]{6})'/gm)]
   .map((m) => ({ id: m[1], palette: { primary: m[2], secondary: m[3], outline: '#0A0A12' } }));
-if (pickupRows.length !== 2) throw new Error(`read ${pickupRows.length} pickups, expected 2`);
+if (pickupRows.length !== 3) throw new Error(`read ${pickupRows.length} pickups, expected 3`);
 
 /**
  * The sidearm's and the pickups' three colours DO travel in here, and that is
@@ -435,7 +436,7 @@ the ground goes there. The violet column is the centre the game aligns to.
 | colour | meaning |
 |---|---|
 | cyan | the collision box — where the game registers a hit |
-| gold | the second box, where there is one: the player's SLIDE box, or the DRIFTER's box on the minion sheet |
+| gold | the second box, where there is one: the player's SLIDE box, or the PIXIE's box on the minion sheet |
 | orange | the baseline. The sprite's bottom edge lands here |
 | violet | the centre column the sprite is aligned on |
 | grey checker | transparent |
@@ -530,8 +531,10 @@ const targets = {
   minions: [
     { id: 'spiglet', label: 'SPIGLET', cls: 'minion',
       grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[0], frames: ['walk0', 'walk1'] },
-    { id: 'drifter', label: 'DRIFTER', cls: 'minion',
-      grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[1], frames: ['drift0', 'drift1'] },
+    { id: 'pixie', label: 'PIXIE', cls: 'minion',
+      grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[1], frames: ['fly0', 'fly1', 'fly2', 'fly3'] },
+    { id: 'gunner', label: 'GUNNER', cls: 'minion',
+      grid: { w: MINION_GRID, h: MINION_GRID }, box: minionBoxes[2], frames: ['fly0', 'fly1', 'fly2', 'fly3'] },
   ],
   bosses: Object.fromEntries(bossRows.map((b) => [b.id, {
     label: b.name, cls: 'boss', scale: b.scale,
@@ -559,7 +562,7 @@ const targets = {
     frames: ['fly0', 'fly1', 'fly2', 'fly3'],
   }])),
   pickups: Object.fromEntries(pickupRows.map((p) => [`pickup-${p.id}`, {
-    label: p.id === 'etank' ? 'E-TANK' : 'EXP ORB', cls: 'pickup', key: `pickup:${p.id}`,
+    label: { etank: 'E-TANK', exp: 'EXP ORB', expBig: 'BIG EXP ORB' }[p.id], cls: 'pickup', key: `pickup:${p.id}`,
     palette: p.palette,
     grid: { w: PICKUP_GRID, h: PICKUP_GRID },
     box: null,

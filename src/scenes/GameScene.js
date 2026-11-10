@@ -3049,7 +3049,7 @@ export default class GameScene extends Phaser.Scene {
     for (const p of this.pickups) {
       const style = Pickups.PICKUP_STYLE[p.type];
       L.pickups.draw(
-        { ...p, id: `pickup:${p.type}`, x: sx(p.x), y: sy(p.y), palette: style },
+        { ...p, id: `pickup:${Pickups.pickupLook(p)}`, x: sx(p.x), y: sy(p.y), palette: style },
         (gg, a) => drawPickup(gg, a, style, r.frame),
       );
     }

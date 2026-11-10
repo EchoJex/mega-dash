@@ -50,8 +50,8 @@
       ]
     },
     {
-      "id": "drifter",
-      "label": "DRIFTER",
+      "id": "pixie",
+      "label": "PIXIE",
       "cls": "minion",
       "grid": {
         "w": 16,
@@ -62,8 +62,29 @@
         "h": 12
       },
       "frames": [
-        "drift0",
-        "drift1"
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
+      ]
+    },
+    {
+      "id": "gunner",
+      "label": "GUNNER",
+      "cls": "minion",
+      "grid": {
+        "w": 16,
+        "h": 16
+      },
+      "box": {
+        "w": 12,
+        "h": 12
+      },
+      "frames": [
+        "fly0",
+        "fly1",
+        "fly2",
+        "fly3"
       ]
     }
   ],
@@ -699,8 +720,8 @@
         "outline": "#0A0A12"
       },
       "grid": {
-        "w": 16,
-        "h": 16
+        "w": 20,
+        "h": 20
       },
       "box": null,
       "frames": [
@@ -718,8 +739,27 @@
         "outline": "#0A0A12"
       },
       "grid": {
-        "w": 16,
-        "h": 16
+        "w": 20,
+        "h": 20
+      },
+      "box": null,
+      "frames": [
+        "idle0",
+        "idle1"
+      ]
+    },
+    "pickup-expBig": {
+      "label": "BIG EXP ORB",
+      "cls": "pickup",
+      "key": "pickup:expBig",
+      "palette": {
+        "primary": "#F5D328",
+        "secondary": "#5C4A0A",
+        "outline": "#0A0A12"
+      },
+      "grid": {
+        "w": 20,
+        "h": 20
       },
       "box": null,
       "frames": [

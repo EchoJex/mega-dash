@@ -440,7 +440,7 @@ maintains by hand. The table is down to one tuning constant (`player.fps`, the a
 `DEFAULT_HOLD` is derived from).
 
 **Manifest keys** — `player` · `<bossId>` · `<minionId>` · `shot:<weaponId>` ·
-`pickup:etank` · `pickup:exp` · `background`.
+`pickup:etank` · `pickup:exp` · `pickup:expBig` · `background`.
 
 Rendering goes through **`ActorLayer`**, one per depth band, constructed back to front in
 `GameScene.create()`. Each layer owns a Graphics for placeholders *and* a pooled set of
@@ -455,9 +455,9 @@ it. That is the sprite-box/collision-box split from rule 4, enforced.
 
 **Sprite grid per class** — `SPRITE_CLASS` in `config/display.js`:
 `minion 16×16` · `player 24×24` (the classic Mega Man size) · `miniboss 32×32` (reserved) ·
-`boss 48×48` · `shot 16×16` · `pickup 16×16`. Elites share the minion grid. These are
+`boss 48×48` · `shot 16×16` · `pickup 20×20` (the owner's 18×18 heart and the big EXP orb, 10 Nov 2026). Elites share the minion grid. These are
 ceilings, not collision boxes. The largest projectile the engine draws is an 8px ball and a
-pickup's collision is a flat 7×7 — the rest of the 16 is room for a glow or a trail.
+pickup's collision is a flat 7×7 — the rest is room for a glow or a trail.
 
 **Draw order** — `DEPTH` in `config/display.js`, applied explicitly rather than by
 construction order. A weapon in his near hand (`held`) draws in front of him, one in his far hand (`heldBack`) behind him, a quarter darker (`BACK_SHADE`) — see *Hands* below; a
@@ -666,12 +666,12 @@ the canvas, and only a picked variant is drawn in full and brought into the game
 
 On 5 Nov 2026 the owner asked, by name, for every non-boss, non-weapon picture still drawn as plain
 shapes to go through this, in three groups: **world pieces** (the area backdrop, ground, platforms,
-spikes, the boss door and the exit door), **the air minion and the pickups** (DRIFTER, the E-Tank,
+spikes, the boss door and the exit door), **the air minion and the pickups** (PIXIE, the E-Tank,
 the EXP orb), and **the HUD** (energy pips with the EXP outline, the sword and shield marks, the
 wheel ring, the level-up cards, the pause and RE-QUIP buttons; the thumb pads stay as the owner set
 them). Burn smoke was offered as a fourth group and not picked.
 
-**Group 2 (DRIFTER, the E-Tank, the EXP orb) is on its own canvas** (10 Nov 2026): `design/minion-art/README.md`.
+**Group 2 (the PIXIE, the E-Tank, the EXP orb) was picked and is in the game** (10 Nov 2026): the Pixie (variant D, white wings in every area), the owner's own heart as the E-Tank, and the glow orb with a big one 2.5 times the size for drops worth `FEEL.expBigAt` or more, a boss's EXP bursting out in a spray of both. Its canvas page 1 is archived in `design/archive/air-minion-and-pickups/`; page 2 holds the GUNNER's variants. `design/minion-art/README.md` keeps the picks.
 
 **Later the same day the owner changed the world pieces to one set per slice**, in their words:
 "new plan. draw up all 17 slices world pieces just like you did here(floor, platform, exit door,
@@ -753,6 +753,7 @@ Claude or a generator made:
 | World pieces in the game, Steel — the assembly line by phases (ladles, presses, arms, the belt's end over the pit), muted, on the first round's steel plates with blast doors | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/steel.js`, steel plates in `src/systems/area-art/materials.js` (`STEEL_PLATES`) |
 | World pieces in the game, Ghost — the grave tower as a climb: its far wall of graves, pillars, the rotten floorboards, walkways and stairs, the tower's walls, a drifting fog over the play and blue spirit flames over the fog | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/tower.js` |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
+| the GUNNER, six variants for review and not in the game — full colour, its body shades turned to each area's boss colour for that area's copy | sprite | Claude | 2026-11-10 | `design/minion-art/variants/gunner-*.sprite`, drawn by `design/minion-art/gunner.py` |
 | DRIFTER, the E-Tank and the EXP orb, variants for review and not in the game (group 2 of the owner's ask of 5 Nov 2026) — four DRIFTERs, three E-Tanks, three EXP orbs and the big glow orb. The picked E-Tank is the owner's own heart drawing, imported pixel for pixel, so it is not AI-made | sprite | Claude | 2026-11-10 | `design/minion-art/variants/*.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -994,13 +995,15 @@ definitions; they live there once, never repeated in each boss's slice.
 
 ## Minions
 
-`src/data/minions.js` — two today, one per plane of movement: **SPIGLET** (ground, walks
-its span and turns at pit edges) and **DRIFTER** (air, drifts left while tracking your
-altitude). The roster will grow. Bosses are events; minions are weather.
+`src/data/minions.js` — three today: **SPIGLET** (ground, walks its span and turns at pit
+edges), **PIXIE** (air, drifts left while tracking your altitude; DRIFTER until the owner renamed
+it, 10 Nov 2026) and **GUNNER** (air, owner 10 Nov 2026: "average
+horizontal, slow vertical, moving for 3s then stopping briefly", `move: 'stopGo'`). A spawn
+picks evenly among the minions of its plane (`pickOf`). The roster will grow. Bosses are events; minions are weather.
 
 The minion palette is **unrelated to the boss palette** and carries no spacing constraint
 against it. **Each slice has its own copy of each minion** (the Fire Spiglet, the Water
-Drifter), by the owner's roster field (26 Oct 2026): `minionFor` in `data/minions.js` turns
+Pixie), by the owner's roster field (26 Oct 2026): `minionFor` in `data/minions.js` turns
 the minion's most common colour (`swap`) into that boss's primary, and Typeless keeps the
 originals. An area spawns the copies of the boss whose door is coming; a boss summons his own.
 `npm run sprites:build` bakes a `<minion>_<boss>.png` per copy from the original's drawing.
@@ -1013,6 +1016,8 @@ shapes draw the outline in gold, and a drawing gets a one-pixel gold rim round i
 
 Spawn cadence and HP scale off `difficultyStep()` in `systems/minions.js`, which reads
 **elapsed sim time**. Slow motion slows the ramp too — that is intended.
+
+**EXP orbs come in two pictures** (`pickupLook`): an orb worth `FEEL.expBigAt` (50) or more wears the big one; its pick-up box stays 7×7. A boss splits its EXP unevenly over `FEEL.expOrbsBoss` orbs and flings them out. **A three-colour drawing may use key `3`, white in every copy** (the Pixie's wings).
 
 Kills drive the combo counter and drop EXP (`systems/pickups.js`), plus a separate
 `FEEL.pickupChance` roll (5%) for an E-Tank.

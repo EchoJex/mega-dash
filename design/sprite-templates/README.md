@@ -40,7 +40,7 @@ the ground goes there. The violet column is the centre the game aligns to.
 | colour | meaning |
 |---|---|
 | cyan | the collision box — where the game registers a hit |
-| gold | the second box, where there is one: the player's SLIDE box, or the DRIFTER's box on the minion sheet |
+| gold | the second box, where there is one: the player's SLIDE box, or the PIXIE's box on the minion sheet |
 | orange | the baseline. The sprite's bottom edge lands here |
 | violet | the centre column the sprite is aligned on |
 | grey checker | transparent |

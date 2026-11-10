@@ -273,6 +273,11 @@ export const FEEL = {
   // A boss splits its drop across several orbs — one orb worth three levels is
   // anticlimactic, and easy to lose down a pit.
   expOrbsBoss: 5,
+  // A boss's orbs burst out in a spray (owner, 10 Nov 2026): how fast they fly sideways (either
+  // way, up to half this) and upward. An orb worth expBigAt or more wears the big picture.
+  expSprayAcross: 5,
+  expSprayUp: 3.5,
+  expBigAt: 50,
 
   // ── Level-up cards ───────────────────────────────────────────────────
   // Every level-up pauses and offers: this many weapon level-ups, plus an

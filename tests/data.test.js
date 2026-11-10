@@ -71,8 +71,9 @@ test('every slice but Typeless has its own copy of each minion, in its boss\'s c
   }
 });
 
-test('there is exactly one ground and one airborne minion', () => {
-  assert.deepEqual(MINIONS.map((m) => m.kind).sort(), ['air', 'ground']);
+test('every minion walks or flies, and there is at least one of each', () => {
+  for (const m of MINIONS) assert.ok(['air', 'ground'].includes(m.kind), `${m.id} must walk or fly`);
+  assert.ok(MINIONS.some((m) => m.kind === 'ground') && MINIONS.some((m) => m.kind === 'air'));
 });
 
 test('the elite rim is not one of the minion palette colours', () => {
@@ -303,4 +304,22 @@ test('MASTERY_CLEARS is the clear count that reaches layer 3', () => {
     seen.push(bossLayer({ bossKills: { blaze: clears } }, 'blaze'));
   }
   assert.deepEqual(seen, [1, 2, 3]);
+});
+
+test('the Gunner moves for 3 seconds toward the player, then stops briefly', async () => {
+  const { stepMinions } = await import('../src/systems/minions.js');
+  const def = MINIONS.find((m) => m.id === 'gunner');
+  const e = { def, id: def.id, x: 300, y: 40, w: def.w, h: def.h, vx: 0, vy: 0, hp: 3, anim: -1, status: {}, kbVx: 0 };
+  const player = { x: 100, y: 150 };
+  const world = { spans: [] };
+  const at = () => ({ x: e.x, y: e.y });
+  const steps = (n) => { for (let i = 0; i < n; i++) stepMinions([e], world, player, 200); };
+  steps(def.moveFrames);
+  assert.ok(e.x < 300 && e.y > 40, 'it must close on the player along and up or down while moving');
+  assert.ok(300 - e.x > e.y - 40, 'it must move along faster than up or down');
+  const stop = at();
+  steps(def.stopFrames);
+  assert.deepEqual(at(), stop, 'it must hang still while it stops');
+  steps(5);
+  assert.ok(e.x < stop.x, 'and then move again');
 });

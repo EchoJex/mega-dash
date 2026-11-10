@@ -31,7 +31,7 @@ export const MINIONS = [
     turnsAtLedge: true,
   },
   {
-    id: 'drifter', name: 'DRIFTER', kind: 'air',
+    id: 'pixie', name: 'PIXIE', kind: 'air',
     primary: '#309888', secondary: '#10332E', outline: '#0A0A12',
     swap: 'primary',      // the placeholder's body fill is most of it
     w: 12, h: 12,
@@ -42,11 +42,27 @@ export const MINIONS = [
     bobAmp: 0.35,
     bobRate: 0.08,
   },
+  {
+    // The owner's ask (10 Nov 2026): "create a new flying minion [Gunner] ... movement will be
+    // average horizontal, slow vertical, moving for 3s then stopping briefly." It heads for
+    // the player along both axes, so it is a flier you have to deal with, not one that passes.
+    // Every number but the 3 s is a placeholder: "average" is between the Pixie and the
+    // player's walk, and "briefly" is half a second.
+    id: 'gunner', name: 'GUNNER', kind: 'air', move: 'stopGo',
+    primary: '#309888', secondary: '#4E5668', outline: '#0A0A12',
+    swap: 'primary',
+    w: 12, h: 12,
+    hp: 3,
+    speed: 1.0,           // along, toward the player
+    climb: 0.3,           // up or down, toward the player's height
+    moveFrames: 180,      // "moving for 3s"
+    stopFrames: 30,       // "then stopping briefly"
+  },
 ];
 
 /**
  * EVERY SLICE HAS ITS OWN COPY OF EACH MINION — the Fire Spiglet, the Water
- * Drifter — by the owner's roster field (26 Oct 2026). A copy is the same
+ * Pixie — by the owner's roster field (26 Oct 2026). A copy is the same
  * creature with its most common colour (`swap`) turned into that boss's
  * primary. Typeless keeps the originals as they are.
  *

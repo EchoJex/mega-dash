@@ -3,7 +3,7 @@
 **Nothing in this folder is in the game.** By the owner's call (5 Nov 2026): "Every type of thing
 should have a couple questions and/or a few variants to review before getting a label as
 'Picked.'" This is group 1 of 3: the area backdrop, ground, platforms, spikes, the boss door and
-the exit door. Groups 2 (DRIFTER, the E-Tank, the EXP orb) and 3 (the HUD) follow these picks.
+the exit door. Groups 2 (PIXIE, the E-Tank, the EXP orb) and 3 (the HUD) follow these picks.
 
 **NEW PLAN, the owner, 5 Nov 2026: world pieces for each slice.** In their words: "new plan. draw
 up all 17 slices world pieces just like you did here(floor, platform, exit door, spikes). i really

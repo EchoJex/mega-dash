@@ -97,7 +97,7 @@ exactly the same speed as a 60Hz one, and that is Claude's job, not yours.
 
 | term | meaning |
 |---|---|
-| **minion** | An ordinary enemy. There are exactly two, and they are weather rather than events: SPIGLET walks the ground, DRIFTER floats. |
+| **minion** | An ordinary enemy. There are exactly two, and they are weather rather than events: SPIGLET walks the ground, PIXIE floats. |
 | **elite** | A tougher version of a minion, same size and shape, told apart by a gold outline. |
 | **boss** | One of the seventeen, one per element. An event, met behind a door. |
 | **hazard** | The room hurting you on its own timer, separately from the boss. Every arena runs both at once. |

@@ -1,13 +1,13 @@
 /**
  * node design/minion-art/render.mjs <out-dir> — paint the review canvas's pictures for
- * DRIFTER, the E-Tank and the EXP orb (group 2 of the owner's ask of 5 Nov 2026).
+ * PIXIE, the E-Tank and the EXP orb (group 2 of the owner's ask of 5 Nov 2026).
  *
  * Reads every variant in design/minion-art/variants/ (the game's own .sprite format, so a
  * picked one is copied into design/sprites/ as it is) and writes, blown up so each game pixel
  * is a square you can see:
  *   <variant>.png    every frame side by side, numbered left to right
  *   <variant>.apng   the animation at game speed (an animated PNG, which every browser plays)
- *   <drifter>-slices.png  a DRIFTER in four areas' colours, the way each area's copy is made,
+ *   <pixie>-slices.png  a PIXIE in four areas' colours, the way each area's copy is made,
  *                    and the same with an elite's gold rim
  * None of it is in the game.
  */
@@ -68,7 +68,22 @@ function apng(w, h, frames) {
   return Buffer.concat(parts);
 }
 
-const drifter = MINIONS.find((m) => m.id === 'drifter');
+/** A colour's hue, saturation and lightness, each 0 to 1, and back. */
+function hsl(hex) {
+  const [r, g, b] = rgb(hex).map((v) => v / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+function rgbOf(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h * 6) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.floor(h * 6) % 6];
+  return [r, g, b].map((v) => Math.round((v + m) * 255)).concat(255);
+}
+
+const pixie = MINIONS.find((m) => m.id === 'pixie');
 /** The three roles, the way the game paints a three-colour sprite and its per-area copies. */
 // Key 3 is white whatever the area: the Pixie's wings (owner, 10 Nov 2026).
 const roles = (def) => ({ 0: rgb(def.outline), 1: rgb(def.primary), 2: rgb(def.secondary), 3: [255, 255, 255, 255] });
@@ -78,7 +93,7 @@ for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
   const doc = parse(readFileSync(join(DIR, f), 'utf8'));
   const colours = doc.palette?.length
     ? Object.fromEntries(doc.palette.map((p) => [p.key, rgb(p.hex)]))
-    : roles(drifter);
+    : roles(pixie);
   const pad = 8, cell = doc.w * S + pad;
 
   const sheet = canvas(doc.frames.length * cell + pad, doc.h * S + pad * 2);
@@ -92,12 +107,33 @@ for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
     return { cv, hold: fr.hold || 5 };
   })));
 
+  // A full-colour drawing whose palette names some keys "body ...": each area's copy turns
+  // those into shades of that boss's primary, keeping how much lighter or darker each one is
+  // than the plain "body" key (the Gunner, 10 Nov 2026). The rest stays as drawn.
+  const bodyKeys = (doc.palette || []).filter((p) => p.name.startsWith('body'));
+  if (bodyKeys.length) {
+    const base = hsl(doc.palette.find((p) => p.name === 'body').hex);
+    const looks = [null, 'blaze', 'tempest', 'thorn'].map((id) => {
+      if (!id) return colours;
+      const b = hsl(BOSSES.find((x) => x.id === id).primary);
+      const c = { ...colours };
+      for (const p of bodyKeys) c[p.key] = rgbOf(b[0], b[1], Math.max(0.04, Math.min(0.94, b[2] + hsl(p.hex)[2] - base[2])));
+      return c;
+    });
+    const cv = canvas(looks.length * cell + pad, 2 * (doc.h * S + pad) + pad);
+    looks.forEach((c, i) => {
+      blit(cv, doc.frames[0].rows, pad + i * cell, pad, c);
+      blit(cv, doc.frames[0].rows, pad + i * cell, pad * 2 + doc.h * S, c, rgb(ELITE_OUTLINE));
+    });
+    writeFileSync(join(out, `${name}-slices.png`), encodePng(cv.w, cv.h, cv.px));
+  }
+
   if (!doc.palette?.length) {
     // The original, then three areas' copies (its most common colour turned into that boss's
     // primary, as minionFor does), each plain and with an elite's gold rim.
-    const looks = [drifter, ...['blaze', 'tempest', 'thorn'].map((id) => {
+    const looks = [pixie, ...['blaze', 'tempest', 'thorn'].map((id) => {
       const b = BOSSES.find((x) => x.id === id);
-      return { ...drifter, [drifter.swap]: b.primary };
+      return { ...pixie, [pixie.swap]: b.primary };
     })];
     const cv = canvas(looks.length * cell + pad, 2 * (doc.h * S + pad) + pad);
     looks.forEach((d, i) => {
