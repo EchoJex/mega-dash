@@ -10,9 +10,12 @@
  *   <pixie>-slices.png  a PIXIE in four areas' colours, the way each area's copy is made,
  *                    and the same with an elite's gold rim
  * None of it is in the game.
+ *
+ * node design/minion-art/render.mjs <out-dir> <file.sprite> — the same pictures for one drawing
+ * anywhere, such as a picked one in design/sprites/ (the Gunner, with its black eye in Fire).
  */
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import { parse } from '../../docs/sprite-fmt.js';
@@ -75,9 +78,10 @@ const pixie = MINIONS.find((m) => m.id === 'pixie');
 // Key 3 is white whatever the area: the Pixie's wings (owner, 10 Nov 2026).
 const roles = (def) => ({ 0: rgb(def.outline), 1: rgb(def.primary), 2: rgb(def.secondary), 3: [255, 255, 255, 255] });
 
-for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
-  const name = f.replace('.sprite', '');
-  const doc = parse(readFileSync(join(DIR, f), 'utf8'));
+const one = process.argv[3];
+for (const f of one ? [one] : readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
+  const name = basename(f, '.sprite');
+  const doc = parse(readFileSync(one || join(DIR, f), 'utf8'));
   const colours = doc.palette?.length
     ? Object.fromEntries(doc.palette.map((p) => [p.key, rgb(p.hex)]))
     : roles(pixie);
@@ -101,7 +105,11 @@ for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
   if (bodyKeys.length) {
     const looks = [null, 'blaze', 'tempest', 'thorn'].map((id) => {
       if (!id) return colours;
-      return { ...colours, ...bodyShades(doc.palette, BOSSES.find((x) => x.id === id).primary) };
+      // `eye` in data/minions.js recolours the lens for one area: black in Fire for the Gunner.
+      const eye = MINIONS.find((m) => m.id === name)?.eye?.[id];
+      const lens = eye && doc.palette.find((p) => p.name === 'lens');
+      return { ...colours, ...bodyShades(doc.palette, BOSSES.find((x) => x.id === id).primary),
+        ...(lens ? { [lens.key]: rgb(eye) } : {}) };
     });
     const cv = canvas(looks.length * cell + pad, 2 * (doc.h * S + pad) + pad);
     looks.forEach((c, i) => {
