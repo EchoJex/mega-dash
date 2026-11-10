@@ -711,7 +711,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Typeless Spiglet** `[ready]` The original Spiglet, unchanged. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Typeless Pixie** `[ready]` The original Pixie, unchanged. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Typeless Gunner** `[ready]` The original Gunner, unchanged. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Typeless Gunner** `[ready]` The original Gunner, unchanged. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -722,7 +722,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Fire Spiglet** `[ready]` The Spiglet with its most common colour turned to Blaze Man's primary, #E11416. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Fire Pixie** `[ready]` The Pixie with its most common colour turned to Blaze Man's primary, #E11416. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Fire Gunner** `[ready]` The Gunner with its most common colour turned to Blaze Man's primary, #E11416. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Fire Gunner** `[ready]` The Gunner with its most common colour turned to Blaze Man's primary, #E11416. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it. Its eye is black.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -733,7 +733,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Water Spiglet** `[ready]` The Spiglet with its most common colour turned to Tempest Man's primary, #145DBD. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Water Pixie** `[ready]` The Pixie with its most common colour turned to Tempest Man's primary, #145DBD. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Water Gunner** `[ready]` The Gunner with its most common colour turned to Tempest Man's primary, #145DBD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Water Gunner** `[ready]` The Gunner with its most common colour turned to Tempest Man's primary, #145DBD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -744,7 +744,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Electric Spiglet** `[ready]` The Spiglet with its most common colour turned to Volt Man's primary, #F5D328. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Electric Pixie** `[ready]` The Pixie with its most common colour turned to Volt Man's primary, #F5D328. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Electric Gunner** `[ready]` The Gunner with its most common colour turned to Volt Man's primary, #F5D328. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Electric Gunner** `[ready]` The Gunner with its most common colour turned to Volt Man's primary, #F5D328. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -755,7 +755,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Grass Spiglet** `[ready]` The Spiglet with its most common colour turned to Thorn Man's primary, #2AAB1C. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Grass Pixie** `[ready]` The Pixie with its most common colour turned to Thorn Man's primary, #2AAB1C. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Grass Gunner** `[ready]` The Gunner with its most common colour turned to Thorn Man's primary, #2AAB1C. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Grass Gunner** `[ready]` The Gunner with its most common colour turned to Thorn Man's primary, #2AAB1C. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -766,7 +766,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Ice Spiglet** `[ready]` The Spiglet with its most common colour turned to Frost Man's primary, #A0EFE7. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Ice Pixie** `[ready]` The Pixie with its most common colour turned to Frost Man's primary, #A0EFE7. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Ice Gunner** `[ready]` The Gunner with its most common colour turned to Frost Man's primary, #A0EFE7. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Ice Gunner** `[ready]` The Gunner with its most common colour turned to Frost Man's primary, #A0EFE7. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -777,7 +777,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Fighting Spiglet** `[ready]` The Spiglet with its most common colour turned to Strike Man's primary, #EA6A34. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Fighting Pixie** `[ready]` The Pixie with its most common colour turned to Strike Man's primary, #EA6A34. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Fighting Gunner** `[ready]` The Gunner with its most common colour turned to Strike Man's primary, #EA6A34. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Fighting Gunner** `[ready]` The Gunner with its most common colour turned to Strike Man's primary, #EA6A34. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -788,7 +788,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Poison Spiglet** `[ready]` The Spiglet with its most common colour turned to Venom Man's primary, #A926D9. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Poison Pixie** `[ready]` The Pixie with its most common colour turned to Venom Man's primary, #A926D9. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Poison Gunner** `[ready]` The Gunner with its most common colour turned to Venom Man's primary, #A926D9. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Poison Gunner** `[ready]` The Gunner with its most common colour turned to Venom Man's primary, #A926D9. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -799,7 +799,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Ground Spiglet** `[ready]` The Spiglet with its most common colour turned to Quake Man's primary, #A76625. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Ground Pixie** `[ready]` The Pixie with its most common colour turned to Quake Man's primary, #A76625. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Ground Gunner** `[ready]` The Gunner with its most common colour turned to Quake Man's primary, #A76625. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Ground Gunner** `[ready]` The Gunner with its most common colour turned to Quake Man's primary, #A76625. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -810,7 +810,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Flying Spiglet** `[ready]` The Spiglet with its most common colour turned to Gale Man's primary, #5CADD5. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Flying Pixie** `[ready]` The Pixie with its most common colour turned to Gale Man's primary, #5CADD5. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Flying Gunner** `[ready]` The Gunner with its most common colour turned to Gale Man's primary, #5CADD5. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Flying Gunner** `[ready]` The Gunner with its most common colour turned to Gale Man's primary, #5CADD5. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -821,7 +821,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Psychic Spiglet** `[ready]` The Spiglet with its most common colour turned to Psi Man's primary, #EA43BD. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Psychic Pixie** `[ready]` The Pixie with its most common colour turned to Psi Man's primary, #EA43BD. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Psychic Gunner** `[ready]` The Gunner with its most common colour turned to Psi Man's primary, #EA43BD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Psychic Gunner** `[ready]` The Gunner with its most common colour turned to Psi Man's primary, #EA43BD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -832,7 +832,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Bug Spiglet** `[ready]` The Spiglet with its most common colour turned to Swarm Man's primary, #B8DC28. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Bug Pixie** `[ready]` The Pixie with its most common colour turned to Swarm Man's primary, #B8DC28. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Bug Gunner** `[ready]` The Gunner with its most common colour turned to Swarm Man's primary, #B8DC28. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Bug Gunner** `[ready]` The Gunner with its most common colour turned to Swarm Man's primary, #B8DC28. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -843,7 +843,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Rock Spiglet** `[ready]` The Spiglet with its most common colour turned to Granite Man's primary, #5F443A. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Rock Pixie** `[ready]` The Pixie with its most common colour turned to Granite Man's primary, #5F443A. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Rock Gunner** `[ready]` The Gunner with its most common colour turned to Granite Man's primary, #5F443A. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Rock Gunner** `[ready]` The Gunner with its most common colour turned to Granite Man's primary, #5F443A. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -854,7 +854,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Ghost Spiglet** `[ready]` The Spiglet with its most common colour turned to Wraith Man's primary, #A68DD8. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Ghost Pixie** `[ready]` The Pixie with its most common colour turned to Wraith Man's primary, #A68DD8. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Ghost Gunner** `[ready]` The Gunner with its most common colour turned to Wraith Man's primary, #A68DD8. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Ghost Gunner** `[ready]` The Gunner with its most common colour turned to Wraith Man's primary, #A68DD8. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -865,7 +865,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Dragon Spiglet** `[ready]` The Spiglet with its most common colour turned to Drake Man's primary, #C3225D. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Dragon Pixie** `[ready]` The Pixie with its most common colour turned to Drake Man's primary, #C3225D. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Dragon Gunner** `[ready]` The Gunner with its most common colour turned to Drake Man's primary, #C3225D. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Dragon Gunner** `[ready]` The Gunner with its most common colour turned to Drake Man's primary, #C3225D. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -876,7 +876,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Dark Spiglet** `[ready]` The Spiglet with its most common colour turned to Eclipse Man's primary, #2A273F. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Dark Pixie** `[ready]` The Pixie with its most common colour turned to Eclipse Man's primary, #2A273F. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Dark Gunner** `[ready]` The Gunner with its most common colour turned to Eclipse Man's primary, #2A273F. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Dark Gunner** `[ready]` The Gunner with its most common colour turned to Eclipse Man's primary, #2A273F. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`
@@ -887,7 +887,7 @@ turned to that boss's primary. Typeless keeps the originals unchanged.
 
 - **bad minion · Steel Spiglet** `[ready]` The Spiglet with its most common colour turned to Alloy Man's primary, #B2BABD. SPIGLET walks its span and turns at pit edges.
 - **bad minion · Steel Pixie** `[ready]` The Pixie with its most common colour turned to Alloy Man's primary, #B2BABD. PIXIE drifts left while tracking the player's altitude.
-- **bad minion · Steel Gunner** `[ready]` The Gunner with its most common colour turned to Alloy Man's primary, #B2BABD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly.
+- **bad minion · Steel Gunner** `[ready]` The Gunner with its most common colour turned to Alloy Man's primary, #B2BABD. GUNNER heads for the player, along at an average speed and up or down slowly, moving for 3 seconds then stopping briefly. On every third stop it fires three small shots at once, fanned ahead of it.
 - **good minion** `[deferred]`
 - **neutral minion** `[deferred]`
 - **mini-boss 1** `[deferred]`

@@ -2066,6 +2066,20 @@ export default class GameScene extends Phaser.Scene {
       e.hp -= dot;
       if (e.hp <= 0) this.killMinion(e);
     }
+    // THE GUNNER'S BURST: three small shots at once, fanned ahead of it the way it faces.
+    for (const e of this.minions) {
+      if (!e.burst) continue;
+      e.burst = false;
+      const d = e.def, dir = Math.sign(e.vx) || -1;
+      for (const lean of [-d.burstFan, 0, d.burstFan]) {
+        this.spawnEnemyShot({
+          x: e.x + e.w / 2 + dir * e.w / 2, y: e.y + e.h * 0.7,
+          vx: dir * d.shotSpeed, vy: lean * d.shotSpeed,
+          radius: d.shotRadius, damage: 1, color: '#FFC640', rim: '#0A0A12', shape: 'bolt',
+        });
+      }
+      sfx('shoot', { pitch: 0.6 });
+    }
 
     // A SEALED ROOM HOLDS ITS MINIONS TOO. Everything a minion knows about the
     // world says "drift left off the edge of the screen", which is right in the

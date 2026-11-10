@@ -58,6 +58,16 @@ export const MINIONS = [
     moveFrames: 180,      // "moving for 3s"
     stopFrames: 30,       // "then stopping briefly"
     turnWide: 48,         // how far past the player it flies before coming about: the wide U-turn
+    // The owner's pick (10 Nov 2026): "gunner should fire a small 3 round burst every 3 pause
+    // cycles", and by their answer the three go "ahead, fanned out": one flat, one a little up,
+    // one a little down, all at once, the way it faces. Every number here is a placeholder.
+    burstEvery: 3,        // it fires on every third stop
+    burstAt: 10,          // steps into that stop, so the stop itself is the warning
+    burstFan: 0.3,        // how far up and down the outer two lean, as a slope
+    shotSpeed: 1.8,
+    shotRadius: 2,
+    // "for fire slice, make the red eye black": the drawing's lens colour, per area.
+    eye: { blaze: '#0A0A12' },
   },
 ];
 

@@ -345,6 +345,397 @@
       ]
     }
   },
+  "gunner": {
+    "file": "gunner.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_blaze": {
+    "file": "gunner_blaze.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_tempest": {
+    "file": "gunner_tempest.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_volt": {
+    "file": "gunner_volt.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_thorn": {
+    "file": "gunner_thorn.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_frost": {
+    "file": "gunner_frost.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_strike": {
+    "file": "gunner_strike.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_venom": {
+    "file": "gunner_venom.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_quake": {
+    "file": "gunner_quake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_gale": {
+    "file": "gunner_gale.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_psi": {
+    "file": "gunner_psi.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_swarm": {
+    "file": "gunner_swarm.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_granite": {
+    "file": "gunner_granite.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_wraith": {
+    "file": "gunner_wraith.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_drake": {
+    "file": "gunner_drake.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_eclipse": {
+    "file": "gunner_eclipse.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
+  "gunner_alloy": {
+    "file": "gunner_alloy.png",
+    "frameW": 16,
+    "frameH": 16,
+    "anchor": "bottom",
+    "tintable": false,
+    "anims": {
+      "fly": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "holds": {
+      "fly": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  },
   "pickup:etank": {
     "file": "pickup-etank.png",
     "frameW": 18,

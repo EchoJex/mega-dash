@@ -347,3 +347,16 @@ test('the Gunner passes through the player, never stops inside him, and turns wi
     assert.ok(maxY - minY > 0, `phase ${phase}: it turned on the spot instead of peeling away`);
   }
 });
+
+// The owner's pick (10 Nov 2026): "gunner should fire a small 3 round burst every 3 pause cycles".
+test('the Gunner asks to fire once on every third stop, and on no other', async () => {
+  const { stepMinions } = await import('../src/systems/minions.js');
+  const def = MINIONS.find((m) => m.id === 'gunner');
+  const e = { def, id: def.id, x: 900, y: 40, w: def.w, h: def.h, vx: 0, vy: 0, hp: 3, anim: -1, status: {}, kbVx: 0 };
+  const fired = [];
+  for (let i = 0; i < (def.moveFrames + def.stopFrames) * def.burstEvery * 2; i++) {
+    stepMinions([e], { spans: [] }, { x: -9000, y: 150 }, 200);   // far off, so it never reaches him
+    if (e.burst) { fired.push(e.stops); e.burst = false; }
+  }
+  assert.deepEqual(fired, [def.burstEvery, def.burstEvery * 2]);
+});

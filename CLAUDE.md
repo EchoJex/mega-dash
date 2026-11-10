@@ -754,6 +754,7 @@ Claude or a generator made:
 | World pieces in the game, Ghost — the grave tower as a climb: its far wall of graves, pillars, the rotten floorboards, walkways and stairs, the tower's walls, a drifting fog over the play and blue spirit flames over the fog | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/tower.js` |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 | the GUNNER, six variants for review and not in the game — full colour, its body shades turned to each area's boss colour for that area's copy | sprite | Claude | 2026-11-10 | `design/minion-art/variants/gunner-*.sprite`, drawn by `design/minion-art/gunner.py` |
+| the GUNNER in the game — the owner's pick, variant B's body and twin guns with variant E's twin rotors, its eye black in the Fire area | sprite | Claude | 2026-11-10 | `design/sprites/gunner.sprite`, drawn by `design/minion-art/gunner.py` |
 | DRIFTER, the E-Tank and the EXP orb, variants for review and not in the game (group 2 of the owner's ask of 5 Nov 2026) — four DRIFTERs, three E-Tanks, three EXP orbs and the big glow orb. The picked E-Tank is the owner's own heart drawing, imported pixel for pixel, so it is not AI-made | sprite | Claude | 2026-11-10 | `design/minion-art/variants/*.sprite` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -998,7 +999,7 @@ definitions; they live there once, never repeated in each boss's slice.
 `src/data/minions.js` — three today: **SPIGLET** (ground, walks its span and turns at pit
 edges), **PIXIE** (air, drifts left while tracking your altitude; DRIFTER until the owner renamed
 it, 10 Nov 2026) and **GUNNER** (air, owner 10 Nov 2026: "average
-horizontal, slow vertical, moving for 3s then stopping briefly", `move: 'stopGo'`). **No enemy stops inside the player or turns on the spot after passing through him** (owner, bug of build 1242): the Gunner keeps its heading `turnWide` pixels past him, peeling away from his height, before it comes about. A spawn
+horizontal, slow vertical, moving for 3s then stopping briefly", `move: 'stopGo'`). **On every third stop the Gunner fires three small shots at once, fanned ahead of it** (owner, 10 Nov 2026: "a small 3 round burst every 3 pause cycles", and "ahead, fanned out"); it is drawn in full colour, and each area's copy shades its body from that boss's colour (`tools/shade.mjs`), with a black eye in the Fire area (`eye` in `data/minions.js`). **No enemy stops inside the player or turns on the spot after passing through him** (owner, bug of build 1242): the Gunner keeps its heading `turnWide` pixels past him, peeling away from his height, before it comes about. A spawn
 picks evenly among the minions of its plane (`pickOf`). The roster will grow. Bosses are events; minions are weather.
 
 The minion palette is **unrelated to the boss palette** and carries no spacing constraint

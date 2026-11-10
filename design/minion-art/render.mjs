@@ -18,6 +18,7 @@ import { deflateSync } from 'node:zlib';
 import { parse } from '../../docs/sprite-fmt.js';
 import { encodePng, chunk } from '../../tools/png.mjs';
 import { BOSSES } from '../../src/data/bosses.js';
+import { bodyShades } from '../../tools/shade.mjs';
 import { MINIONS, ELITE_OUTLINE } from '../../src/data/minions.js';
 
 const DIR = fileURLToPath(new URL('./variants', import.meta.url));
@@ -69,20 +70,6 @@ function apng(w, h, frames) {
 }
 
 /** A colour's hue, saturation and lightness, each 0 to 1, and back. */
-function hsl(hex) {
-  const [r, g, b] = rgb(hex).map((v) => v / 255);
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
-  if (!d) return [0, 0, l];
-  const s = d / (1 - Math.abs(2 * l - 1));
-  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return [h / 6, s, l];
-}
-function rgbOf(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h * 6) % 2 - 1)), m = l - c / 2;
-  const [r, g, b] = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.floor(h * 6) % 6];
-  return [r, g, b].map((v) => Math.round((v + m) * 255)).concat(255);
-}
-
 const pixie = MINIONS.find((m) => m.id === 'pixie');
 /** The three roles, the way the game paints a three-colour sprite and its per-area copies. */
 // Key 3 is white whatever the area: the Pixie's wings (owner, 10 Nov 2026).
@@ -112,13 +99,9 @@ for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
   // than the plain "body" key (the Gunner, 10 Nov 2026). The rest stays as drawn.
   const bodyKeys = (doc.palette || []).filter((p) => p.name.startsWith('body'));
   if (bodyKeys.length) {
-    const base = hsl(doc.palette.find((p) => p.name === 'body').hex);
     const looks = [null, 'blaze', 'tempest', 'thorn'].map((id) => {
       if (!id) return colours;
-      const b = hsl(BOSSES.find((x) => x.id === id).primary);
-      const c = { ...colours };
-      for (const p of bodyKeys) c[p.key] = rgbOf(b[0], b[1], Math.max(0.04, Math.min(0.94, b[2] + hsl(p.hex)[2] - base[2])));
-      return c;
+      return { ...colours, ...bodyShades(doc.palette, BOSSES.find((x) => x.id === id).primary) };
     });
     const cv = canvas(looks.length * cell + pad, 2 * (doc.h * S + pad) + pad);
     looks.forEach((c, i) => {

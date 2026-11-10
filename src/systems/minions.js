@@ -203,7 +203,14 @@ function stepAir(e, player, groundY, held, slow) {
 function stepStopGo(e, player, groundY, slow) {
   const { moveFrames, stopFrames, speed, climb, turnWide } = e.def;
   const touching = e.x < player.x + 24 && e.x + e.w > player.x && e.y < player.y + 24 && e.y + e.h > player.y;
-  if (e.anim % (moveFrames + stopFrames) >= moveFrames && !touching) return;
+  const cycle = moveFrames + stopFrames, at = e.anim % cycle;
+  if (at >= moveFrames && !touching) {
+    // Every `burstEvery`th stop it fires, `burstAt` steps in. It only says so (`e.burst`); the
+    // game makes the shots, because a minion knows nothing about the list of shots.
+    e.stops = (e.stops || 0) + (at === moveFrames ? 1 : 0);
+    if (at === moveFrames + e.def.burstAt && e.stops % e.def.burstEvery === 0) e.burst = true;
+    return;
+  }
   const dx = player.x + 12 - (e.x + e.w / 2), dy = player.y + 12 - (e.y + e.h / 2);
   if (!e.dir) e.dir = Math.sign(dx) || -1;
   const behind = dx !== 0 && Math.sign(dx) !== e.dir;      // he is behind it: it has gone through

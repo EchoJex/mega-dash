@@ -32,6 +32,7 @@ import {
 import { weaponSheets } from '../src/data/weapon-art.js';
 import { MAX_COLOURS } from '../docs/nes-palette.js';
 import { encodePng } from './png.mjs';
+import { bodyKeysOf, bodyShades } from './shade.mjs';
 import { MINIONS, minionFor } from '../src/data/minions.js';
 import { BOSSES } from '../src/data/bosses.js';
 
@@ -319,12 +320,19 @@ for (const file of files) {
 
   // EACH SLICE'S COPY OF A MINION is this drawing with one colour swapped for
   // its boss's primary (minionFor), baked here so the copy follows the original.
-  const base = !declared && MINIONS.find((m) => m.id === id);
-  for (const boss of base ? BOSSES : []) {
+  //
+  // A FULL-COLOUR minion (the Gunner) gets its copies too: its palette keys named "body ..." turn
+  // into shades of the boss's colour (tools/shade.mjs), and `eye` in data/minions.js may recolour
+  // its "lens" key for one area (owner, 10 Nov 2026: "for fire slice, make the red eye black").
+  const base = MINIONS.find((m) => m.id === id);
+  const full = declared && bodyKeysOf(declared).length > 0;
+  for (const boss of base && (!declared || full) ? BOSSES : []) {
     const v = minionFor(base, boss);
     if (v === base) continue;
-    writeFileSync(join(OUT, `${v.id}.png`), encodePng(w, h,
-      paint({ 0: rgb(v.outline), 1: rgb(v.primary), 2: rgb(v.secondary), 3: WHITE })));
+    const lens = full && base.eye?.[boss.id] && declared.find((p) => p.name === 'lens');
+    writeFileSync(join(OUT, `${v.id}.png`), encodePng(w, h, paint(full
+      ? { ...colour, ...bodyShades(declared, boss.primary), ...(lens ? { [lens.key]: rgb(base.eye[boss.id]) } : {}) }
+      : { 0: rgb(v.outline), 1: rgb(v.primary), 2: rgb(v.secondary), 3: WHITE })));
     art[v.id] = { ...a, file: `${v.id}.png` };
   }
   console.log(`  ${(t.key || id).padEnd(20)} ${id}.png  ${w}x${h}  `

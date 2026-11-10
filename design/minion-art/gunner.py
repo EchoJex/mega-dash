@@ -100,6 +100,15 @@ def F(g, f):   # spiked: a round pod bristling with antennae
     g.rect(3, 6, 3, 6, '6'); g.rect(13, 6, 13, 6, '6'); g.rect(3, 11, 3, 11, '6'); g.rect(13, 11, 13, 11, '6')
     lens(g, 5, 7); gun(g, 3, 8, 12)
 
+def PICKED(g, f):
+    """The owner's pick (10 Nov 2026): "everything about B, but the twin rotors of E"."""
+    for cx in (3, 12):
+        w = [2, 1, 0, 1][f]
+        g.rect(cx - w, 1, cx + w, 1, '4'); g.rect(cx, 2, cx, 3, '6')
+    g.rect(3, 4, 12, 4, '5')
+    g.disc(8, 8.5, 6, 4.5); lens(g, 3, 6); gun(g, 0, 4, 9); gun(g, 0, 4, 12)
+
+
 
 NOTES = {
     'a': 'ROTOR GUNNER: the rotor drone redrawn in full colour, its gun slung underneath',
@@ -118,3 +127,15 @@ for key, fn in zip('abcdef', (A, B, C, D, E, F)):
     body = [f'[fly {i + 1}] status=draft hold=4\n{fr}' for i, fr in enumerate(frames)]
     open(os.path.join(here, f'gunner-{key}.sprite'), 'w').write('\n'.join(head) + '\n\n' + '\n\n'.join(body) + '\n')
     print(f'gunner-{key}.sprite')
+
+# THE PICKED GUNNER goes straight to design/sprites/gunner.sprite, mirrored so it faces right:
+# the game draws a thing facing right and mirrors it to face left.
+_, frames = variant('picked', PICKED)
+frames = ['\n'.join(row[::-1] for row in fr.split('\n')) for fr in frames]
+head = ['# gunner', 'grid      16x16', 'fudge     0.70 x 1.00'] + [f'palette   {k} {h} {n}' for k, h, n in PALETTE]
+head.append('note      The GUNNER, PICKED (owner, 10 Nov 2026): "everything about B, but the twin rotors of E". '
+            "Keys named body follow each area's boss colour; the lens is black in the Fire area. "
+            "Drawn by Claude at the owner's request, 2026-11-10.")
+body = [f'[fly {i + 1}] status=draft hold=4\n{fr}' for i, fr in enumerate(frames)]
+open(os.path.join(here, '..', '..', 'sprites', 'gunner.sprite'), 'w', newline='\n').write('\n'.join(head) + '\n\n' + '\n\n'.join(body) + '\n')
+print('design/sprites/gunner.sprite')
