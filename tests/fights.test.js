@@ -981,6 +981,32 @@ test('Strike Man lunges across the room, back-dashes from shots, and is dazed by
 });
 
 /**
+ * A LIFTED BAG LANDS ON HIM WHEREVER HE GOES — the owner's bug of build 1240:
+ * "the first of each set of sand bags getting tossed at strike man didn't do
+ * anything". The bag used to be aimed once, at the top of its rise, and he
+ * walked or dashed out from under it. The field says it "slam[s] the boss".
+ */
+test('a lifted bag lands on Strike Man even while he moves', () => {
+  const FIGHT = FIGHTS.strike;
+  for (const layer of [1, 2, 3]) {
+    for (let trial = 0; trial < 12; trial++) {
+      const h = harness('strike', layer);
+      const step = () => { h.boss.anim++; FIGHT.attack[layer].step(h.ctx); FIGHT.hazard[layer].step(h.ctx); };
+      step();
+      // The player somewhere across the room, so he walks, lunges and dashes.
+      const px = 40 + trial * 25;
+      h.ctx.playerBox = { x: px, y: FLOOR - 22, w: 12, h: 22 };
+      h.player.x = px - 6;
+      const bag = h.arena.hazards.find((z) => z.kind === 'bag' && z.mode === 'swing');
+      bag.mode = 'psi';
+      const hits = h.bossHits.length;
+      for (let i = 0; i < 600 && h.arena.hazards.includes(bag); i++) step();
+      assert.equal(h.bossHits.length, hits + 1, `layer ${layer}, player at ${px}: the bag missed him`);
+    }
+  }
+});
+
+/**
  * STRIKE MAN'S DRAWING SETS HIS TIMING — these are the rules a redrawn sheet
  * must still keep (tools/art/strike.mjs says them in words for the brief).
  * Every number is read from frame data, so a redraw that moves a hit passes.

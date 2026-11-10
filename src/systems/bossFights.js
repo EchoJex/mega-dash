@@ -1709,9 +1709,9 @@ function strikeHazard(layer) {
        * boss" (owner, 31 Oct 2026). It rises in place, then is hurled in a
        * straight line at where he stood when it reached the top.
        *
-       * AIMED ONCE, AT THE TOP. A bag that steered in flight would be a homing
-       * missile the boss could never answer; one that commits is a thing he
-       * can still step away from, which is what makes the quarter-bar fair.
+       * It is aimed at the top and then steered onto him (see psiSlam): the
+       * owner's field says it slams the boss, and a bag he could walk out from
+       * under read as a bag that did nothing (bug of build 1240).
        */
       if (h.mode === 'psi') {
         h.y -= STRIKE_HAZ.psiRise;
@@ -1726,6 +1726,14 @@ function strikeHazard(layer) {
         continue;
       }
       if (h.mode === 'psiSlam') {
+        // STEERED ONTO HIM EVERY STEP. It used to keep the aim it took at the
+        // top, and he walked or dashed out from under it — the owner's bug of
+        // build 1240, "the first of each set of sand bags ... didn't do
+        // anything". The field says the bag slams the boss, so it does.
+        const sx = (b.x + b.w / 2) - (h.x + h.w / 2), sy = (b.y + b.h / 2) - (h.y + h.h / 2);
+        const sd = Math.max(1, Math.hypot(sx, sy));
+        h.vx = (sx / sd) * STRIKE_HAZ.psiThrowSpeed;
+        h.vy = (sy / sd) * STRIKE_HAZ.psiThrowSpeed;
         h.x += h.vx;
         h.y += h.vy;
         const onHim = h.x + h.w > b.x && h.x < b.x + b.w
