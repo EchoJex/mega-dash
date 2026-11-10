@@ -21,7 +21,9 @@ one board per thing. The owner picks in each board's comment thread.
 - **DRIFTER is three colours** (`0` outline, `1` body, `2` detail), like the Spiglet: each area's
   copy is made by turning the body colour into that boss's primary (`minionFor`), and
   `npm run sprites:build` can only do that for a three-colour drawing. The board asks the owner
-  whether to keep that or go to 16-bit shading.
+  whether to keep that or go to 16-bit shading. **The owner's answer:** the Pixie stays simple;
+  other sprites get 16-bit shading. Its wings use a fourth key, `3`, which is white in every
+  area; `render.mjs` paints it, and `npm run sprites:build` will need the same when it goes in.
 - **The pickups declare their own colours**: they are the same in every area.
 - Grid 16×16 for all three. DRIFTER's box is 12×12 and a pickup's is 7×7; the rest is room.
 
@@ -29,6 +31,6 @@ one board per thing. The owner picks in each board's comment thread.
 
 | thing | variants | picked |
 |---|---|---|
-| DRIFTER | A jelly · B rotor drone · C manta · D bat-wing eye | not yet |
+| DRIFTER, **now the PIXIE** | A jelly · B rotor drone · C manta · D bat-wing eye | **D**, with white wings in every area, always facing the screen, and kept in this simple style (owner, 10 Nov 2026: "D, but with white wings for all slices, always facing the screen. other sprites will need 16-bit shading, but not Drifter [now called Pixie]"). Not in the game yet |
 | E-Tank | A energy can · B heart cell · C glass vial | not yet |
 | EXP orb | A gem · B coin · C glow orb | not yet |

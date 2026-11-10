@@ -70,7 +70,8 @@ function apng(w, h, frames) {
 
 const drifter = MINIONS.find((m) => m.id === 'drifter');
 /** The three roles, the way the game paints a three-colour sprite and its per-area copies. */
-const roles = (def) => ({ 0: rgb(def.outline), 1: rgb(def.primary), 2: rgb(def.secondary) });
+// Key 3 is white whatever the area: the Pixie's wings (owner, 10 Nov 2026).
+const roles = (def) => ({ 0: rgb(def.outline), 1: rgb(def.primary), 2: rgb(def.secondary), 3: [255, 255, 255, 255] });
 
 for (const f of readdirSync(DIR).filter((n) => n.endsWith('.sprite')).sort()) {
   const name = f.replace('.sprite', '');
