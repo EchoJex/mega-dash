@@ -250,6 +250,12 @@ export function prune(world, camX) {
  * below is an exact modulo, so a fractional interval would match on no frame at
  * all and the run would never see another door.
  */
+/** How far the area's door timer has run, 0 to 1, and 1 once the door is out: Steel's line reads it. */
+export function doorProgress(world, elapsedFrames, doorMult = 1) {
+  if (world.doors.length) return 1;
+  return Math.min(1, elapsedFrames / Math.max(1, Math.round(FEEL.doorIntervalSeconds * 60 * doorMult)));
+}
+
 export function maybeSpawnDoor(world, camX, viewW, elapsedFrames, doorMult = 1) {
   const every = Math.max(1, Math.round(FEEL.doorIntervalSeconds * 60 * doorMult));
   if (world.doors.length || elapsedFrames === 0 || elapsedFrames % every !== 0) return;

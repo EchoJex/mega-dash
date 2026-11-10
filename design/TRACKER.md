@@ -693,7 +693,7 @@ where each one stands.
 - **weapon Lv10** `[wip]` Temporary steel armor mode that greatly reduces damage taken.
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
-- **world pieces** `[wip]` [ ] in game
+- **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-alloy-stage.ogg` — plays on the overworld approach to Alloy Man's door.
 - **bgm arena** `[wip]`

@@ -20,7 +20,7 @@ import { Raster, hex, pick, hash, noise1, noise2, OL } from '../../src/systems/a
 import { BOSSES } from '../../src/data/bosses.js';
 import { themeFor } from '../../src/systems/arena.js';
 import { W, H, FLOOR, rect, blit, inTooth, paintDoor } from '../../src/systems/area-art/kit.js';
-import { BEDROCK as B, BEDROCK_COLOURS as B_, CASTLE, CASTLE_COLOURS } from '../../src/systems/area-art/materials.js';
+import { BEDROCK as B, BEDROCK_COLOURS as B_, CASTLE, CASTLE_COLOURS, STEEL_PLATES, STEEL_PLATES_COLOURS } from '../../src/systems/area-art/materials.js';
 
 export { W, H, FLOOR };
 export const PADS = 199;
@@ -59,74 +59,7 @@ const TODAY = {
 
 // ── A: steel plates — riveted fortress panels ─────────────────────────
 
-const A_ = {
-  deep: c('#262e37'), dark: c('#36414c'), base: c('#50606e'), light: c('#66788a'), hi: c('#8a9cae'),
-  cap0: c('#dce6ee'), cap1: c('#a3b5c4'), tooth: [c('#f4f8fa'), c('#c9d3db'), c('#8d9aa6'), c('#5d6a76')],
-};
-const A = {
-  name: 'A',
-  check: { ground: '#50606e', cap: '#a3b5c4' },
-  ground(r, x1, x2) {
-    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
-      let col;
-      if (y === FLOOR) col = A_.cap0;
-      else if (y === FLOOR + 1) col = A_.cap1;
-      else if (y === FLOOR + 2) col = A_.deep;
-      else {
-        const tx = ((x % 16) + 16) % 16, ty = (y - FLOOR - 3) % 16;
-        const rivet = (tx === 3 || tx === 12) && (ty === 3 || ty === 12);
-        const shadow = (tx === 4 || tx === 13) && (ty === 4 || ty === 13);
-        if (tx === 0 || ty === 0) col = A_.deep;
-        else if (rivet) col = A_.hi;
-        else if (shadow) col = A_.deep;
-        else if (tx === 1 || ty === 1) col = A_.light;
-        else if (tx === 15 || ty === 15) col = A_.dark;
-        else col = (tx + ty === 10 || tx + ty === 11) && ((x + y) & 1) ? A_.light : A_.base;
-      }
-      if (x === x1 && y > FLOOR + 1) col = A_.light;          // the lit face of a pit edge
-      if (x === x2 - 1 && y > FLOOR + 1) col = A_.dark;
-      r.set(x, y, col);
-    }
-  },
-  platform(r, x, y, w) {
-    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
-      let col = [A_.cap0, A_.light, A_.base, A_.base, A_.dark][j];
-      if (j === 2 && i % 6 === 3) col = A_.deep;               // truss holes
-      if (i === 0 || i === w - 1) col = j === 0 ? A_.cap1 : A_.deep;
-      if ((i === 2 || i === w - 3) && j === 2) col = A_.hi;   // end bolts
-      r.set(x + i, y + j, col);
-    }
-  },
-  spikes(r, x, w) {
-    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 5)), tw = w / n;
-    for (let py = 0; py < 7; py++) for (let px = 0; px < Math.ceil(w); px++) {
-      for (let i = 0; i < n; i++) {
-        const tx = i * tw;
-        if (!inTooth(px, py, tx, tw, 0, 7)) continue;
-        const left = px + 0.5 < tx + tw / 2;
-        t.set(px + 1, py + 1, py === 6 ? A_.tooth[3] : left ? A_.tooth[py < 3 ? 0 : 1] : A_.tooth[2]);
-        break;
-      }
-    }
-    t.outline(ol);
-    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
-  },
-  door(r, x, kind) {
-    const y = FLOOR - 28, d = new Raster(16, 28);
-    const gold = kind === 'exit';
-    const sl = gold ? [c('#5c4a0a'), c('#c9a21e'), c('#f5d328')] : [A_.deep, A_.base, A_.light];
-    for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
-      let col;
-      if (i < 2 || i > 13 || j < 2) col = i === 1 || j === 1 ? A_.light : A_.dark;
-      else { const k = (j - 2) % 4; col = k === 3 ? sl[0] : k === 0 ? sl[2] : sl[1]; }
-      d.set(i, j, col);
-    }
-    // The lamp: cyan for a boss, white for the way out.
-    const lamp = gold ? [c('#fffbe6'), c('#ffffff')] : [c('#5cadd5'), c('#d8f6ff')];
-    rect(d, 6, 4, 4, 4, A_.deep); rect(d, 7, 5, 2, 2, lamp[0]); d.set(7, 5, lamp[1]);
-    paintDoor(r, d, x, y, kind);
-  },
-};
+const A = STEEL_PLATES;   // picked for Steel, so it lives in the game: src/systems/area-art/materials.js
 
 // ── C: castle bricks — staggered blocks under a stone lip ─────────────
 
@@ -281,4 +214,4 @@ export function contrast(style) {
 }
 
 // Shared with the per-slice kits (materials.mjs, backdrops.mjs).
-export { c, rect, blit, inTooth, paintDoor, tone, A_, B_, CASTLE_COLOURS as C_ };
+export { c, rect, blit, inTooth, paintDoor, tone, STEEL_PLATES_COLOURS as A_, B_, CASTLE_COLOURS as C_ };

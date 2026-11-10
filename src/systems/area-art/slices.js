@@ -15,6 +15,7 @@ import { grad, fillRect, halo, ridge, beam, panels, tn, mix, c, scrolling, drift
 import { Raster, hash, noise1, noise2, pick } from '../arena-art/pixels.js';
 import { W, H, FLOOR } from './kit.js';
 import { ROCK_MATERIALS, STAR_MEADOW, DARK_MATERIALS, TOTAL_ECLIPSE, GREAT_HALL } from './batch3.js';
+import { STEEL_LINE, STEEL_PICK } from './steel.js';
 
 const B = (id) => BOSSES.find((b) => b.id === id);
 
@@ -693,6 +694,14 @@ export const PICKED = {
     pick: { backdrop: 1, material: 'C' },
     materials: { C: ['C', 'CASTLE BRICKS', '', CASTLE] },
     backdrop: GREAT_HALL,
+  },
+  alloy: {
+    // The owner, 6 Nov 2026: "1, 2, 5 and material B" (the assembly line; material B, the first round's
+    // steel plates with blast doors); 9 Nov 2026: "lock in 1" (by phases), its progress the time to the
+    // door, and "B" for the doors.
+    pick: { backdrop: 5, material: 'B' },
+    materials: { B: ['B', 'STEEL PLATES · BLAST DOORS', '', STEEL_PICK] },
+    backdrop: STEEL_LINE,
   },
   eclipse: {
     // The owner, 6 Nov 2026: "1a but with the cracked glowing stone from c"

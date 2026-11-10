@@ -2967,7 +2967,7 @@ export default class GameScene extends Phaser.Scene {
       this.areaArt = hasAreaArt(id) ? makeAreaArt(this, id, this.viewW, !!this.arena) : null;
       this.areaArtFor = space;
     }
-    { const pb = Phys.hitboxOf(this.player); this.areaArt?.update(cam, sh, r.frame, this.world, pb.x + pb.w / 2 - cam); }
+    { const pb = Phys.hitboxOf(this.player); this.areaArt?.update(cam, sh, r.frame, this.world, pb.x + pb.w / 2 - cam, Terrain.doorProgress(this.world, this.areaFrame, this.run.doorMult)); }
     /**
      * HOW DARK A SELF-DARKENING ROOM IS, for the bodies standing in it. Volt
      * Man's room puts its own lights out and keeps its glowing parts lit, so a

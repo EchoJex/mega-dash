@@ -84,7 +84,7 @@ function world(x) {
 
 test('the slices the owner has picked have pieces, and every other slice is left alone', () => {
   // Batch 1 (5 Nov 2026), then Ice and Ground from batch 2 (6 Nov 2026).
-  assert.deepEqual(PICKS.sort(), ['blaze', 'drake', 'eclipse', 'frost', 'granite', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt']);
+  assert.deepEqual(PICKS.sort(), ['alloy', 'blaze', 'drake', 'eclipse', 'frost', 'granite', 'proto', 'quake', 'strike', 'tempest', 'thorn', 'volt']);
   for (const b of BOSSES) assert.equal(hasAreaArt(b.id), PICKS.includes(b.id), b.id);
 });
 

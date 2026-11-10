@@ -804,6 +804,76 @@ function castleDoor(kind) {
   return d;
 }
 
+// ── The steel plates, picked for Steel in the first round (5 Nov 2026): "the Steel plates for Steel"
+export const STEEL_PLATES_COLOURS = {
+  deep: hex('#262e37'), dark: hex('#36414c'), base: hex('#50606e'), light: hex('#66788a'), hi: hex('#8a9cae'),
+  cap0: hex('#dce6ee'), cap1: hex('#a3b5c4'), tooth: [hex('#f4f8fa'), hex('#c9d3db'), hex('#8d9aa6'), hex('#5d6a76')],
+};
+export const STEEL_PLATES = {
+  name: 'A',
+  check: { ground: '#50606e', cap: '#a3b5c4' },
+  ground(r, x1, x2) {
+    for (let y = FLOOR; y < H; y++) for (let x = x1; x < x2; x++) {
+      let col;
+      if (y === FLOOR) col = STEEL_PLATES_COLOURS.cap0;
+      else if (y === FLOOR + 1) col = STEEL_PLATES_COLOURS.cap1;
+      else if (y === FLOOR + 2) col = STEEL_PLATES_COLOURS.deep;
+      else {
+        const tx = ((x % 16) + 16) % 16, ty = (y - FLOOR - 3) % 16;
+        const rivet = (tx === 3 || tx === 12) && (ty === 3 || ty === 12);
+        const shadow = (tx === 4 || tx === 13) && (ty === 4 || ty === 13);
+        if (tx === 0 || ty === 0) col = STEEL_PLATES_COLOURS.deep;
+        else if (rivet) col = STEEL_PLATES_COLOURS.hi;
+        else if (shadow) col = STEEL_PLATES_COLOURS.deep;
+        else if (tx === 1 || ty === 1) col = STEEL_PLATES_COLOURS.light;
+        else if (tx === 15 || ty === 15) col = STEEL_PLATES_COLOURS.dark;
+        else col = (tx + ty === 10 || tx + ty === 11) && ((x + y) & 1) ? STEEL_PLATES_COLOURS.light : STEEL_PLATES_COLOURS.base;
+      }
+      if (x === x1 && y > FLOOR + 1) col = STEEL_PLATES_COLOURS.light;          // the lit face of a pit edge
+      if (x === x2 - 1 && y > FLOOR + 1) col = STEEL_PLATES_COLOURS.dark;
+      r.set(x, y, col);
+    }
+  },
+  platform(r, x, y, w) {
+    for (let j = 0; j < 5; j++) for (let i = 0; i < w; i++) {
+      let col = [STEEL_PLATES_COLOURS.cap0, STEEL_PLATES_COLOURS.light, STEEL_PLATES_COLOURS.base, STEEL_PLATES_COLOURS.base, STEEL_PLATES_COLOURS.dark][j];
+      if (j === 2 && i % 6 === 3) col = STEEL_PLATES_COLOURS.deep;               // truss holes
+      if (i === 0 || i === w - 1) col = j === 0 ? STEEL_PLATES_COLOURS.cap1 : STEEL_PLATES_COLOURS.deep;
+      if ((i === 2 || i === w - 3) && j === 2) col = STEEL_PLATES_COLOURS.hi;   // end bolts
+      r.set(x + i, y + j, col);
+    }
+  },
+  spikes(r, x, w) {
+    const t = new Raster(Math.ceil(w) + 2, 9), n = Math.max(1, Math.round(w / 5)), tw = w / n;
+    for (let py = 0; py < 7; py++) for (let px = 0; px < Math.ceil(w); px++) {
+      for (let i = 0; i < n; i++) {
+        const tx = i * tw;
+        if (!inTooth(px, py, tx, tw, 0, 7)) continue;
+        const left = px + 0.5 < tx + tw / 2;
+        t.set(px + 1, py + 1, py === 6 ? STEEL_PLATES_COLOURS.tooth[3] : left ? STEEL_PLATES_COLOURS.tooth[py < 3 ? 0 : 1] : STEEL_PLATES_COLOURS.tooth[2]);
+        break;
+      }
+    }
+    t.outline(ol);
+    blit(r, t, Math.floor(x) - 1, FLOOR - 8);
+  },
+  door(r, x, kind) {
+    const y = FLOOR - 28, d = new Raster(16, 28);
+    const gold = kind === 'exit';
+    const sl = gold ? [hex('#5c4a0a'), hex('#c9a21e'), hex('#f5d328')] : [STEEL_PLATES_COLOURS.deep, STEEL_PLATES_COLOURS.base, STEEL_PLATES_COLOURS.light];
+    for (let j = 0; j < 28; j++) for (let i = 0; i < 16; i++) {
+      let col;
+      if (i < 2 || i > 13 || j < 2) col = i === 1 || j === 1 ? STEEL_PLATES_COLOURS.light : STEEL_PLATES_COLOURS.dark;
+      else { const k = (j - 2) % 4; col = k === 3 ? sl[0] : k === 0 ? sl[2] : sl[1]; }
+      d.set(i, j, col);
+    }
+    // The lamp: cyan for a boss, white for the way out.
+    const lamp = gold ? [hex('#fffbe6'), hex('#ffffff')] : [hex('#5cadd5'), hex('#d8f6ff')];
+    rect(d, 6, 4, 4, 4, STEEL_PLATES_COLOURS.deep); rect(d, 7, 5, 2, 2, lamp[0]); d.set(7, 5, lamp[1]);
+    paintDoor(r, d, x, y, kind);
+  },
+};
+
 export const KINDS = { plates, strata, bricks, planks, turf, concrete, grating, tiles, comb };
 
 /** A material: its kind, its palette, its options; `check` names the two colours the contrast rule reads. */

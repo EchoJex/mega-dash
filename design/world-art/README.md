@@ -17,7 +17,7 @@ board (one default look for now). The first-round boards below stay as a record.
 | Ice, Ground | batch 2: **picked, and in the game** (6 Nov 2026); Ground on the first round's bedrock |
 | Rock, Dark | batch 3: **picked, and in the game** (8 Nov 2026) |
 | Dragon | batch 3: **picked, and in the game** (9 Nov 2026): the great hall on the first round's castle bricks |
-| Steel | batch 3: **picked** (backdrops 1, 2 and 5 joined into the assembly line, material B), **not in the game**: loops by way 1, phases by progress (owner, 9 Nov 2026: "i hate 2, where the whole process repeats. lock in 1"); waits on the progress measure and its doors (three pairs on the canvas, none picked) |
+| Steel | batch 3: **picked, and in the game** (10 Nov 2026): the line by phases, moved on by the door timer, steel plates with blast doors (B) |
 | Ghost | batch 3: **picked** (the grave tower as a climb, material A), **not in the game**: the owner's answers of 8 Nov settled how it plays; it waits on being built, the first area that scrolls up instead of along |
 | Poison, Flying, Psychic, Bug | batch 2: three variants each on the canvas, **paused by the owner** (6 Nov 2026), below |
 
@@ -194,6 +194,12 @@ Their answers, 8 Nov 2026: "1a and b. The idea is that these checkpoint-like con
 prevent extreme fall heights. 2 the ghost boss will be in the upper right". So a missed jump drops the
 player onto whatever is below, and the full-width walkways catch him, so no fall is longer than one
 stretch between checkpoints; Ghost's boss door is in the tower's upper right.
+
+**Steel's last answers (9 Nov 2026):** "lock in 1"; for the progress measure, "percentage distance
+between spawn point and boss door", then, told a door is placed by its timer and not ahead, "Time to
+the door"; and the doors, "B". So each stretch of belt takes its phase from how much of the door
+timer has run when it comes in at the right edge: ladles to 30%, presses to 60%, arms to 85%, then
+the belt's end over the pit, once. In the game since 10 Nov 2026.
 
 **Rock's star meadow, later (9 Nov 2026):** "i love the Your Pick, but slow down the twinkling, and
 have the glowing flowers ebb into glowing based on the players proximity to them". The stars twinkle

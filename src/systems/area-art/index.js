@@ -63,6 +63,7 @@ export function buildArea(S, id, viewW, room = false) {
     for (const L of slice.backdrop.layers) {
       S.layer({ far: true });
       const pic = !L.fixed ? null : L.rate ? S.tile(strip(L), 0, 0, viewW, H) : S.image(strip(L), 0, 0);
+      for (const part of L.parts) part.fresh?.();   // a part that remembers what it chose (Steel's line) starts again
       const pools = L.parts.map((part) => [part, S.pool(pieces(part.pieces().map(([n, r]) => [n, r.flush()])))]);
       layers.push({ L, pic, pools });
     }
@@ -98,14 +99,14 @@ export function buildArea(S, id, viewW, room = false) {
   const doors = new Map();
 
   return {
-    place(cam, t, world, px) {   // px: where the player is on screen, for parts that answer to him
+    place(cam, t, world, px, prog) {   // px: where the player is on screen, for parts that answer to him
       const c = Math.round(cam);   // for what is in view; pictures go exactly where GameScene puts everything else
       for (const { L, pic, pools } of layers) {
         const ox = Math.round(cam * L.rate);
         if (pic && L.rate) pic.tilePositionX = ox;
         for (const [part, pool] of pools) {
           pool.begin();
-          for (const [n, x, y] of part.at(ox, t, px)) pool.put(x, y, n);
+          for (const [n, x, y] of part.at(ox, t, px, prog)) pool.put(x, y, n);
           pool.end();
         }
       }
@@ -184,9 +185,9 @@ export function makeAreaArt(scene, id, viewW, room = false) {
   const S = stage(scene, `area-art:${id}:${++builds}`, viewW);
   const area = buildArea(S, id, viewW, room);
   return {
-    update(cam, sh, t, world, px) {
+    update(cam, sh, t, world, px, prog) {
       S.place(sh, 1);
-      area.place(cam, t, world, px);
+      area.place(cam, t, world, px, prog);
     },
     destroy() { S.destroy(); },
   };

@@ -690,8 +690,8 @@ settles each one's direction.
 first-round castle bricks and Steel its steel plates, with three new pairs of doors to pick from.
 **Dark and Steel were picked the same day** (Steel's backdrop redrawn as an assembly line, as asked);
 **Rock was picked too** (8 Nov 2026): two of its variants joined into one, with material B and A's arched
-doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); Steel's line loops by way 1,
-phases by progress (owner, 9 Nov 2026: "lock in 1"); it waits on the progress measure and its doors. **Dragon is in the game** (9 Nov 2026): the great hall on the castle bricks, five windows (yellow, red, green, blue and the Draco-Blaster's 'dragon' colours) on one diamond grid. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
+doors. **Rock and Dark are in the game** (8 Nov 2026, owner: "Push everything that's decided"); **Steel is in the game** (10 Nov 2026): the line by phases ("lock in 1"), moved on by the door
+timer, on the steel plates with the blast doors ("B"). **Dragon is in the game** (9 Nov 2026): the great hall on the castle bricks, five windows (yellow, red, green, blue and the Draco-Blaster's 'dragon' colours) on one diamond grid. **Ghost picked its grave tower as a climb** (7 Nov 2026): an area
 three screens wide that scrolls up, not along, with stair checkpoints the width of the tower and a fog
 over the play. It is the first area not to run left to right. The owner's answers (8 Nov 2026) settled the falls
 and the boss door's place; it waits on being built, which needs its own kind of area in the game.
@@ -743,6 +743,7 @@ Claude or a generator made:
 | World pieces in the game, batch 2 — Ice's and Ground's picked backdrop and material, redrawn where the owner asked (Ice's aurora; Ground's desert with heat waves, a mirage, blowing sand and vultures), and the first round's bedrock under Ground | room art, drawn in code | Claude | 2026-11-06 | `src/systems/area-art/slices.js`, bedrock in `src/systems/area-art/materials.js` (`BEDROCK`) |
 | World pieces in the game, batch 3 — Rock's star meadow (the star vault and the glowing blooms joined) on quarry strata with violet crystal spikes and A's arched doors, and Dark's total eclipse with A's tiles, shards and doors on C's cracked glowing stone | room art, drawn in code | Claude | 2026-11-08 | `src/systems/area-art/batch3.js`, picked in `src/systems/area-art/slices.js` |
 | World pieces in the game, Dragon — the great hall: five stained-glass windows (yellow, red, green, blue, 'dragon') on one diamond grid, pillars, banners and torches, on the castle bricks picked in the first round | room art, drawn in code | Claude | 2026-11-09 | `src/systems/area-art/batch3.js` (`GREAT_HALL`), castle bricks in `src/systems/area-art/materials.js` (`CASTLE`) |
+| World pieces in the game, Steel — the assembly line by phases (ladles, presses, arms, the belt's end over the pit), muted, on the first round's steel plates with blast doors | room art, drawn in code | Claude | 2026-11-10 | `src/systems/area-art/steel.js`, steel plates in `src/systems/area-art/materials.js` (`STEEL_PLATES`) |
 | World pieces for each slice, batch 3 (Rock, Ghost, Dragon, Dark, Steel), variants for review — six backdrops per slice, three materials for Rock, Ghost and Dark, and three pairs of steel doors (a boss door and an exit door each) for Steel | room art, drawn in code | Claude | 2026-11-06 | `design/world-art/batch3.mjs`, painted with `src/systems/area-art/{materials,paint}.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -910,7 +911,7 @@ ground and pits, platforms, spike beds and boss door, and in that boss's room th
 owner's answer, 5 Nov 2026). A slice with nothing picked keeps the plain shapes `GameScene.draw`
 always drew. **`slices.js` holds each pick in the owner's own words**, with the materials and the
 backdrop it uses; a pick can take its ground (Grass: B on A's ground) or its doors (Rock: B with A's doors) from a second material.
-Batch 3's picked painters live in `batch3.js`, which `design/world-art/batch3.mjs` imports.
+Batch 3's picked painters live in `batch3.js` and Steel's in `steel.js`, which `design/world-art/batch3.mjs` imports.
 `design/world-art/batch1.mjs` and `batch2.mjs` show the same code beside the variants that were not
 picked, so the canvas and the game paint from one copy.
 
@@ -926,10 +927,12 @@ doors are painted when they first appear. Everything is let go once it has scrol
 **A backdrop that tells a story in order is shown by progress, not repeated**, in the owner's words
 (6 Nov 2026): "note that levels with sequential backdrops art will be based on the progress
 percentage, split evenly, with a yet to be determined progress metric e.g. kill count, score count,
-step count, elapsed time". Steel's assembly line is the first. The measure is not chosen yet, so ask
-the owner before building it. On the canvas Steel's line is drawn in units that can follow one another
-in any order (`PHASE_PICTURES` in `design/world-art/batch3.mjs`, the owner's design in their words in
-`design/world-art/README.md`), in two ways of moving for the owner to choose between.
+step count, elapsed time". Steel's assembly line is the first, and the owner chose the time to the door as its measure
+(9 Nov 2026): a door is placed by its timer, not ahead, so how much of the timer has run is the only
+known fraction of the way (`doorProgress` in `systems/terrain.js`). The game passes it, with where the
+player stands on screen, to every moving part (`at(ox, t, px, prog)`); each stretch of Steel's belt
+takes its phase from it as it comes in at the right edge and keeps it (`LINE_PHASES` in
+`src/systems/area-art/steel.js`, which remembers its stretches and forgets them through `fresh()`).
 
 **The game still draws a door's gold pulse; the art draws the door in front of it.** An unarmed door
 is the same picture, greyed and see-through. Nothing here changes a size, a position or a hit.
