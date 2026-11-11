@@ -20,9 +20,52 @@
 import { DEPTH } from '../../config/display.js';
 import { stage } from '../arena-art/index.js';
 import { Raster, pieces } from '../arena-art/pixels.js';
-import { W, H, FLOOR, paintDoor } from './kit.js';
+import { W, H, FLOOR, paintDoor, inTooth } from './kit.js';
 import { PICKED, pickedMaterial } from './slices.js';
 import { buildTower } from './tower.js';
+import { fitRects } from '../fit-rects.js';
+
+// ── THE ART-COLLISION TRIAL (branch test/art-collision; see systems/shapes.js) ──────────
+/**
+ * A spike bed's rectangles, in world pixels: the bed is painted the way the area paints it (or
+ * as the plain grey teeth, with nothing picked), cut into stretches 8 pixels wide, and each
+ * stretch fitted with up to five rectangles lying wholly on painted pixels. A bed is a row of
+ * many teeth, and five rectangles for the whole row would leave most teeth harmless.
+ * Worked out once per bed and kept on it.
+ */
+export function spikeShape(id, s) {
+  if (s.shape) return s.shape;
+  const x0 = Math.floor(s.x) - 2, y0 = FLOOR - 9, w = Math.ceil(s.w) + 5, h = 10;
+  const on = new Uint8Array(w * h);
+  const set = (x, y, col, al = 255) => { if (al && x >= x0 && x < x0 + w && y >= y0 && y < y0 + h) on[(y - y0) * w + (x - x0)] = 1; };
+  if (hasAreaArt(id) && s.y + s.h === FLOOR) pickedMaterial(id).spikes({ set }, s.x, s.w);
+  else {
+    const n = Math.max(1, Math.round(s.w / 5)), tw = s.w / n;
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+      for (let i = 0; i < n; i++) if (inTooth(x - s.x, y, i * tw, tw, s.y, s.h)) set(x, y);
+    }
+  }
+  const out = [];
+  for (let c = 0; c < w; c += 8) {
+    const cw = Math.min(8, w - c);
+    for (const [x, y, rw, rh] of fitRects(cw, h, (px, py) => on[py * w + c + px] === 1)) out.push({ x: x0 + c + x, y: y0 + y, w: rw, h: rh });
+  }
+  return (s.shape = out.length ? out : [{ x: s.x, y: s.y, w: s.w, h: s.h }]);
+}
+
+const doorFits = new Map();
+/** A door's rectangles, in world pixels, fitted to its picture where the area has one. */
+export function doorShape(id, d, kind) {
+  const box = [{ x: d.x, y: d.y - d.h, w: d.w, h: d.h }];
+  if (!hasAreaArt(id)) return box;
+  const key = `${id}:${kind}`;
+  if (!doorFits.has(key)) {
+    const pic = pickedMaterial(id).doorPicture(kind);
+    doorFits.set(key, fitRects(pic.w, pic.h, (x, y) => pic.d[(y * pic.w + x) * 4 + 3] > 0));
+  }
+  const fit = doorFits.get(key);
+  return fit.length ? fit.map(([x, y, w, h]) => ({ x: d.x + x, y: d.y - d.h + y, w, h })) : box;
+}
 
 /** Does this boss's area have picked world pieces? */
 export const hasAreaArt = (id) => Object.prototype.hasOwnProperty.call(PICKED, id);

@@ -86,11 +86,10 @@ export function enemiesByRange(ctx, x, y, seen = null, maxDist = Infinity) {
 const enemiesIn = (ctx, box) => {
   (ctx.run.meleeBoxes || (ctx.run.meleeBoxes = [])).push(
     { x: box.x, y: box.y, w: box.w, h: box.h, element: ctx.weaponId ? elementOf(ctx.weaponId) : null });
-  return ctx.enemies.filter(
-    (e) => e.hp > 0
-      && box.x < e.x + e.w && box.x + box.w > e.x
-      && box.y < e.y + e.h && box.y + box.h > e.y,
-  );
+  // The art-collision trial: where the game hands over each enemy's drawing (`shapeOf`), the
+  // area is tested against that, not the enemy's box. Tests and the sim keep the box.
+  const hits = (q) => box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y;
+  return ctx.enemies.filter((e) => e.hp > 0 && (ctx.shapeOf ? ctx.shapeOf(e).some(hits) : hits(e)));
 };
 
 /** This weapon's damage at its current level, after the run's damage upgrades. */

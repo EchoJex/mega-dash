@@ -46,7 +46,7 @@ import {
   playerClip, hexNum, MANIFEST,
 } from '../systems/assets.js';
 import { makeArenaArt } from '../systems/arena-art/index.js';
-import { makeAreaArt, hasAreaArt } from '../systems/area-art/index.js';
+import { makeAreaArt, hasAreaArt, spikeShape, doorShape } from '../systems/area-art/index.js';
 import { bossSheet } from '../data/weapon-art.js';
 import { clipOf, cellAt } from '../systems/frame-data.js';
 import * as Shapes from '../systems/shapes.js';
@@ -923,8 +923,10 @@ export default class GameScene extends Phaser.Scene {
       this.beamOut();
     } else {
       // The Granite Form's statue is immune to spikes.
+      // The art-collision trial: his drawing against the bed's own teeth, never the bed's box.
+      const hurtShape = this.playerHurt();
       for (const s of r.stoneArmor > 0 ? [] : this.world.spikes) {
-        if (Phys.overlaps(box, s)) {
+        if (Phys.overlaps(box, s) && Shapes.touch(hurtShape, Shapes.scaled(spikeShape(this.upcoming?.id, s), Shapes.KIND))) {
           // Check BEFORE hurt(), which sets the i-frames itself.
           const landed = r.invuln === 0;
           this.hurt(s.x + s.w / 2, this.hazardDamage());
@@ -970,7 +972,7 @@ export default class GameScene extends Phaser.Scene {
       // The wrap door only exists once the boss is down.
       for (const d of this.world.doors) {
         if (!d.alive) continue;
-        const on = Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h });
+        const on = Shapes.touch(Shapes.boxSet(box), doorShape(this.arena.boss?.id, d, 'exit'));
         // A door that spawned under the player arms only once they step off it.
         if (!d.armed) { if (!on) d.armed = true; continue; }
         if (on) {
@@ -1005,7 +1007,7 @@ export default class GameScene extends Phaser.Scene {
 
       // walking into the boss door warps you to its arena
       for (const d of this.world.doors) {
-        if (d.alive && Phys.overlaps(box, { x: d.x, y: d.y - d.h, w: d.w, h: d.h })) {
+        if (d.alive && Shapes.touch(Shapes.boxSet(box), doorShape(this.upcoming?.id, d, 'boss'))) {
           d.alive = false;
           this.warpToArena(this.upcoming);
           return;
@@ -1124,6 +1126,8 @@ export default class GameScene extends Phaser.Scene {
       // Minions and the boss are one list to a weapon: nothing in the ladders
       // distinguishes them except Frost Guard, which checks `isBoss` itself.
       enemies: this.foes(),
+      // The art-collision trial: a drawn hit area is tested against the enemy's drawing, 5% big.
+      shapeOf: (e) => (e.isBoss || e.def ? this.foeShape(e, Shapes.GENEROUS) : Shapes.boxSet(e)),
       arena: this.arena,
       // Live solid platforms — what Simon's Whip's grapple can catch. The
       // same list physics stands the player on, so a vine can never grab a
@@ -2265,6 +2269,7 @@ export default class GameScene extends Phaser.Scene {
       boss: b,
       player: this.player,
       playerBox: Phys.hitboxOf(this.player),
+      playerShape: this.playerHurt(),   // the trial: a boss's drawn hit area against his drawing
       layer: b.layer,
       arena: this.arena,
       floorY: GROUND_Y,
@@ -3369,6 +3374,8 @@ export default class GameScene extends Phaser.Scene {
       show(this.playerHurt(), 0x40FF80);
       for (const e of this.foes()) if (e.hp > 0 && (e.isBoss || e.def)) show(this.foeShape(e, Shapes.KIND), 0xFF4040);
       for (const b of this.bullets) if (b.life > 0) show(this.shotShape(b, b.enemy ? Shapes.KIND : Shapes.GENEROUS), b.enemy ? 0xFF4040 : 0x40FF80);
+      if (!this.arena) for (const s of this.world.spikes) show(Shapes.scaled(spikeShape(this.upcoming?.id, s), Shapes.KIND), 0xFF4040);
+      for (const d of this.world.doors) if (d.alive) show(doorShape(this.arena ? this.arena.boss?.id : this.upcoming?.id, d, this.arena ? 'exit' : 'boss'), 0xFFD040);
       for (const q of this.pickups) {
         const key = `pickup:${Pickups.pickupLook(q)}`;
         show(Shapes.artRects(key, Shapes.frameAt(key, 'idle', q.anim), { box: q }, Shapes.GENEROUS) ?? Shapes.boxSet(q), 0xFFD040);

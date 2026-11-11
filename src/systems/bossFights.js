@@ -1904,8 +1904,9 @@ export function faceAfterRear(b, pb) {
 
 /** Does a box overlap the player's? Local, because a fight sees only its ctx. */
 const boxHitsPlayer = (ctx, r) => {
-  const p = ctx.playerBox;
-  return p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y;
+  // The art-collision trial: against his drawing (`playerShape`) where the game hands it over.
+  return (ctx.playerShape || [ctx.playerBox]).some(
+    (p) => p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y);
 };
 
 /** A player shot closing on him at body height — the thing he back-dashes from. */

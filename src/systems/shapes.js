@@ -43,7 +43,7 @@ export function frameAt(key, clip, t) {
 }
 
 /** Scale a set of rectangles about the middle of the whole shape. */
-function scaled(rects, k) {
+export function scaled(rects, k) {
   if (k === 1 || !rects.length) return rects;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const r of rects) {
