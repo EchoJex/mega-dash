@@ -166,7 +166,7 @@ where each one stands.
 - **scale** `[ready]` 1.5x player height (below average build)
 - **attack name** `[ready]` Aqua Torrent
 - **weapon name** `[ready]` Torrent Cannon
-- **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting.
+- **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting. 11 Nov 2026: the jetpack is drawn into his body pictures (asked "drawn into his body pictures, or stay a separate piece that swivels?", the owner's answer: "Part of his body"); the game draws only the water.
 - **boss weakness A** `[wip]` Electric
 - **boss weakness B** `[wip]` Grass
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
@@ -969,8 +969,8 @@ other field, and it becomes a thing to build rather than a thing to read.
 ## Loadout
 
 - **slot budget** `[ready]` Up to two offensive positions and two defensive ones. The sidearm OCCUPIES an offensive position rather than riding above the loadout, so it is not a free extra.
-- **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away.
-- **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live.
+- **offensive mastery** `[ready]` Rank 0 is the sidearm welded into its position. Rank 1 opens a special slot, but it or the sidearm is live, never both. Rank 2 runs both at once with the second position still the sidearm. Rank 3 frees that position — two specials, and the sidearm can be traded away. The first weapon won of this class opens rank 1 for free, for good (owner, 11 Nov 2026).
+- **defensive mastery** `[ready]` Rank 0 is no defensive row at all. Rank 1 is one slot, rank 2 is two slots with only one live, rank 3 is two slots both live. The first weapon won of this class opens rank 1 for free, for good (owner, 11 Nov 2026).
 - **class split** `[wip]` Aiming for 9 offensive and 9 defensive
 - **weakness rule** `[wip]` granite form will be a sort of secret weakness. Weakness rules should be as follows: Elemental weakness can be up to 2 offensive weapons, or at least 1 offensive, plus 1 defensive, and up to 1 secret (defensive only). This rule will balance player access to damage dealing moves. Where the chart offers a boss no offensive weapon at all (Fighting, Psychic, Ghost), two defensive weaknesses are allowed (owner, 9 Nov 2026: "option 2 for the rest").
 - **re-quip window** `[ready]` Slots may only be rearranged after the boss defeat animation resolved, and remains freely open to adjustments until contact with boss exit door, which generated a pop-up confirming the current loadout. Switching a slotted weapon on or off is NOT gated by this — toggling which slot is active or inactive can be done at any time

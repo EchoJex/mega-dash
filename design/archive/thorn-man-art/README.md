@@ -9,7 +9,8 @@ his hood. This canvas is also where the owner set the rule that every boss has a
 
 **Picked but not in the game yet** (no sheet for them): tile #3 and leaf kunai #4.
 
-**Never settled:** the seed pod. The owner asked for "the original bulb, but with the low movement
+**Picked later: seed pod B, the smaller egg** (owner, 11 Nov 2026: "Seed pod B"). Not in the game
+yet, like the tile and the kunai. How it got there: the seed pod. The owner asked for "the original bulb, but with the low movement
 leafy base", Claude asked which of two bulbs that meant (A, the round ribbed first bulb; B, the
 smaller egg), and the last word is "show me these two side by side". That row is on `pages/Props.dc.html`.
 

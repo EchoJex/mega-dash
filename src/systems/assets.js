@@ -489,8 +489,27 @@ export function drawPlaceholder(g, actor) {
  * attack loop), so the picture and the physics cannot disagree. When real art
  * lands via MANIFEST this goes away with it.
  */
-export function drawBossRig(g, boss, screenX, screenY = boss.y) {
+export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = false) {
   if (boss.rig !== 'jetpack') return;
+  /**
+   * OVER A DRAWN BODY, ONLY THE WATER (owner, 11 Nov 2026: the pack is "part
+   * of his body", so it is in his pictures). The water is drawn along the very
+   * line the fight tests (`tempestJet`): from the middle of him, three quarters
+   * of the way down, the way he is not going.
+   */
+  if (waterOnly) {
+    const j = boss.jet;
+    if (!j || j.len <= 0) return;
+    const ox = screenX + boss.w / 2, oy = screenY + boss.h * 0.75;
+    g.fillStyle(0x5CADD5, 0.6);
+    for (const side of [-3, 3]) {
+      for (let d = 5; d < j.len; d += 4) {
+        const w = d < j.len / 2 ? 3 : 2;
+        g.fillRect(Math.round(ox - j.dy * side + j.dx * d - w / 2), Math.round(oy + j.dx * side + j.dy * d - w / 2), w, w);
+      }
+    }
+    return;
+  }
   /**
    * THE PACK IS ALWAYS ON; THE PLUME IS NOT.
    *

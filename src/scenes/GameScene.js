@@ -2498,6 +2498,8 @@ export default class GameScene extends Phaser.Scene {
       // Loadout Mastery rank 0 means. Then there is no decision to offer and
       // opening a picker onto a padlocked row would only look broken.
       const cls = classOf(b.dropWeapon);
+      // His first weapon of a class opens that class's first slot for free, for good.
+      if (Loadout.giftFirstSlot(this.run.loadout, save.upgrades, cls)) { persist(); this.run.slotGift = true; }
       if (Loadout.autoEquip(this.run.loadout, b.dropWeapon) < 0
           && Loadout.tradeableSlots(this.run.loadout, cls) > 0) {
         this.run.pendingLoadout = b.dropWeapon;
@@ -3245,9 +3247,9 @@ export default class GameScene extends Phaser.Scene {
         });
         // Hardware whose orientation is game state — see drawBossRig. Not a
         // silhouette: the rectangle underneath is still the honest footprint.
-        // Over a drawn body, under a rectangle's own layer: sprites sit above `g`,
-        // and a pack hidden behind him is no warning of where the water goes.
-        drawBossRig(drawn ? L.boss.gAboveSprites : L.boss.g, b, sx(b.x), sy(b.y));
+        // A drawn body carries its own pack, so only the water is drawn, over
+        // him (sprites sit above `g`). A rectangle gets the whole plain pack.
+        drawBossRig(drawn ? L.boss.gAboveSprites : L.boss.g, b, sx(b.x), sy(b.y), !!drawn);
         shadeBody(L.boss, body, sx(b.x), sy(b.y), b.w, b.h, shadeA);
       }
       const bf = Attr.statusFlash(b.status);
