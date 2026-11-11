@@ -725,7 +725,11 @@ function tempestAttack(layer) {
 
     tempestJet(ctx, b, fs);
     if (fs.mode !== 'tell') b.facing = fs.dir;
-    playClip(b, TEMPEST_CLIP[fs.mode]);
+    // His pack is in his pictures, so the picture has to agree with the water:
+    // while a cruise is mostly him rising or settling, the water goes down, and
+    // `climb` is the picture with the nozzles down.
+    const rising = fs.mode === 'cruise' && Math.abs(b.jet.dy) > Math.abs(b.jet.dx);
+    playClip(b, rising ? 'climb' : TEMPEST_CLIP[fs.mode]);
     b.clipT++;
   };
 }

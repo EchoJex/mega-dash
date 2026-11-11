@@ -270,9 +270,9 @@ export const WEAPON_ART = {
    *
    * `tell` is the warning before a dive and its length is how long the warning
    * lasts; a second or third dive in a row plays only its first part. The rest
-   * loop while that part of the flight lasts. THE JETPACK IS NOT ON THIS SHEET
-   * YET: its nozzles swing to wherever the water is really going, so the game
-   * still draws it, in plain shapes, on top of him (`drawBossRig`).
+   * loop while that part of the flight lasts. THE JETPACK IS PART OF HIS BODY
+   * (owner, 11 Nov 2026), drawn in every frame with its nozzles pointing where
+   * the water goes in that move; the game draws only the water (`drawBossRig`).
    */
   tempest: {
     boss: true,

@@ -5,7 +5,7 @@ this game, what you may change and what to hand back. This page is Tempest Man h
 Water boss.
 
 **His sheet is a placeholder.** The plain block he is drawn as today, with one white eye
-added, has been painted into it. The sheet, its size, its pivot, every clip and every hold
+and his grey jetpack added, has been painted into it. The sheet, its size, its pivot, every clip and every hold
 are real: the game plays them exactly as drawn. To see him, play a dev build and pick
 TEMPEST in the dev menu's BOSS PICKER. BOSS LAYER L2 and L3 show two and three dives in a row.
 
@@ -38,20 +38,20 @@ common theme of a single 'eye'. This theme should be interpreted with very wide 
 Strike Man's and Thorn Man's are the examples they liked (Thorn Man's is one glowing slit in
 his hood).
 
-**The game draws the jetpack and its water**, in plain shapes, over this sheet. Its two
-nozzles swing to point where the water is really going: straight down when he hovers, out
-behind him when he flies. Whether the pack gets a drawn sheet of its own, and how it turns, is
-for the owner to settle on the canvas.
+**The jetpack is part of his body**, the owner's answer of 11 Nov 2026 ("Part of his body"):
+draw it into every frame, with its two nozzles pointing where the water goes in that move.
+**The game draws only the water**, in plain shapes for now, over him: about 30 pixels of it,
+going the way he is not.
 
 ## Every move, and the clip that shows it
 
 | clip | when the game plays it |
 |---|---|
 | `idle` | as he beams in, before the fight starts; also the picture his death flashes |
-| `fly` | cruising high up, drifting from wall to wall with a slow bob |
-| `tell` | the warning before a dive: he stops dead, sinks a little and looks at the player |
-| `dive` | crossing the room at the player's height |
-| `climb` | rising back to cruising height after the last dive |
+| `fly` | cruising high up, drifting from wall to wall with a slow bob; the water goes out behind him |
+| `tell` | the warning before a dive: he stops dead, sinks a little and looks at the player; the water goes up |
+| `dive` | crossing the room at the player's height; the water goes out behind him |
+| `climb` | rising back to cruising height after the last dive; the water goes straight down |
 
 ## The look
 
@@ -97,12 +97,13 @@ Clip kinds: **hit** plays once; exactly one frame carries hit=x,y,w,h — the st
 
 Worked out from the weapon's ladder; `npm test` checks every one, and a handoff that breaks one is refused with the reason.
 
-- **he hangs on the pivot**, the point under the middle of him. His collision box (what the player's shots hit, and what hurts to touch) is 27 wide and 36 tall, centred on the pivot and standing on it; draw his body to fill about that. Touching him is the only way his own moves hurt, so what looks solid should be inside that box and what sticks out of it (the pack, spray, a scarf) should look like it would not hurt.
+- **he hangs on the pivot**, the point under the middle of him. His collision box (what the player's shots hit, and what hurts to touch) is 27 wide and 36 tall, centred on the pivot and standing on it; draw his body to fill about that. Touching him is the only way his own moves hurt, so what looks solid should be inside that box and what sticks out of it (spray, a scarf) should look like it would not hurt.
 - **`tell` is the dive's warning, and its length is how long the warning lasts**: he stops dead and sinks a little before he crosses the room at the player's height. He has no shot to watch for, so this clip is all the warning there is; it has to read at a glance. A second or third dive in a row (layers 2 and 3) plays only its first six-tenths, so put the readable part first.
 - **nothing on this sheet hits or spawns**: no `hit=` and no `spawn=` on any frame.
-- **the jetpack is not on this sheet.** The game draws it over him in plain shapes, because its two nozzles swing to point wherever the water is really going (straight down when he hovers, behind him when he dives), and the water pushes the player and stops his shots. Draw his body so a large pack on his back belongs there. Whether the pack gets its own drawn sheet is the owner's to settle.
+- **the jetpack is part of his body** (owner, 11 Nov 2026), drawn in every frame: "a large grey hydro jet pack", grey that is not one of his colours, with two nozzles. In each clip the nozzles point where the water goes in that move: down in `idle` and `climb`, out behind him in `fly` and `dive`, and up in `tell` (he pushes himself down a little before he dives).
+- **the game draws the water, not the pack.** It starts at 32, 47 in the sheet's pixels (the middle of him, three quarters of the way down) and runs about 30 pixels the way he is NOT going. It pushes the player and stops his shots, so it has to look like it comes out of the drawn nozzles: keep them within a few pixels of that point.
 - **he has a single eye** (the owner's rule for every boss, to be interpreted with very wide creativity).
-- **colours**: Tempest Man's blue `#145DBD` and yellow `#F5C518` with shades built from them and the near-black outline. Grey belongs to the jetpack, not to him.
+- **colours**: Tempest Man's blue `#145DBD` and yellow `#F5C518` with shades built from them and the near-black outline. Grey belongs to the jetpack only.
 <!-- /generated:contract -->
 
 ## Handing this boss to Claude Design

@@ -166,7 +166,7 @@ where each one stands.
 - **scale** `[ready]` 1.5x player height (below average build)
 - **attack name** `[ready]` Aqua Torrent
 - **weapon name** `[ready]` Torrent Cannon
-- **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting.
+- **palette notes** `[ready]` Blue yellow guy with a large grey hydro jet pack. The grey is NOT one of his three palette colours — blue, yellow and the shared outline spend all three. The jetpack is a separate object attached to his back, carrying its own greys, drawn whether or not he is thrusting. 11 Nov 2026: the jetpack is drawn into his body pictures (asked "drawn into his body pictures, or stay a separate piece that swivels?", the owner's answer: "Part of his body"); the game draws only the water.
 - **boss weakness A** `[wip]` Electric
 - **boss weakness B** `[wip]` Grass
 - **arena** `[ready]` Background theme dark cloudy skies. Bolts of lightning and screen flashes telegraph the heavy rain direction changes
