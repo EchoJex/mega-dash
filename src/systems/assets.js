@@ -59,6 +59,7 @@
 
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
 import SPRITE_ART from '../data/sprite-art.json' with { type: 'json' };
+import { frameAt as shapeFrameAt } from './shapes.js';
 import { sfxFile } from './sfx.js';
 
 /**
@@ -312,7 +313,13 @@ export class ActorLayer {
     if (def.tintable && actor.palette?.primary) s.setTint(hexNum(actor.palette.primary));
 
     const clip = actor.clip ?? onlyClipOf(actor.id);
-    if (def.anims && clip) {
+    // Handed a clock (`t`, in game steps), the picture is picked from it, so the frame on
+    // screen is the frame the art-collision trial tests (systems/shapes.js).
+    const fixed = actor.t !== undefined && clip ? shapeFrameAt(actor.id, clip, actor.t) : -1;
+    if (fixed >= 0) {
+      s.anims?.stop();
+      s.setFrame(fixed);
+    } else if (def.anims && clip) {
       const key = `${actor.id}:${clip}`;
       if (this.scene.anims.exists(key) && s.anims?.getName() !== key) s.play(key, true);
     }

@@ -35,6 +35,7 @@ import { encodePng } from './png.mjs';
 import { bodyKeysOf, bodyShades } from './shade.mjs';
 import { MINIONS, minionFor } from '../src/data/minions.js';
 import { BOSSES } from '../src/data/bosses.js';
+import { fitRects } from '../src/systems/fit-rects.js';
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
 const SRC = join(REPO, 'design/sprites');
@@ -175,6 +176,7 @@ const warnings = [];
  * override the look fields; the derived anims always win.
  */
 const art = {};
+const shapes = {};   // key -> per frame, up to five rectangles inside the picture
 
 /**
  * A SHOT AND A PICKUP ARE CENTRED; EVERYTHING ELSE STANDS ON THE GROUND.
@@ -313,6 +315,10 @@ for (const file of files) {
   }
   if (!Object.keys(a.sfx).length) delete a.sfx;
   art[t.key || id] = a;
+  // THE ART-COLLISION TRIAL: up to five rectangles fitted inside each picture's visible
+  // pixels, one set per frame (src/systems/fit-rects.js). A blank (wip) frame gets none.
+  shapes[t.key || id] = doc.frames.map((f) => (shippable(f)
+    ? fitRects(doc.w, doc.h, (x, y) => f.rows[y][x] !== '.') : []));
 
   const wip = doc.frames.length - doc.frames.filter(shippable).length;
   writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
@@ -334,6 +340,7 @@ for (const file of files) {
       ? { ...colour, ...bodyShades(declared, boss.primary), ...(lens ? { [lens.key]: rgb(base.eye[boss.id]) } : {}) }
       : { 0: rgb(v.outline), 1: rgb(v.primary), 2: rgb(v.secondary), 3: WHITE })));
     art[v.id] = { ...a, file: `${v.id}.png` };
+    shapes[v.id] = shapes[t.key || id];
   }
   console.log(`  ${(t.key || id).padEnd(20)} ${id}.png  ${w}x${h}  `
     + `${doc.frames.length} frame(s)${wip ? `, ${wip} blank (wip)` : ''}  `
@@ -377,6 +384,7 @@ for (const [key, a] of Object.entries(art)) {
 
 writeFileSync(ART, `${JSON.stringify(art, null, 2)}\n`);
 writeFileSync(join(REPO, 'src/data/frame-data.json'), `${JSON.stringify(frameData, null, 2)}\n`);
+writeFileSync(join(REPO, 'src/data/art-shapes.json'), `${JSON.stringify(shapes)}\n`);
 
 if (warnings.length) {
   console.log('\nANIMATION SHAPE CHANGED:');

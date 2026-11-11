@@ -100,7 +100,7 @@ export function dropsFor(tier, x, y, luckMult = 1, expMult = 1) {
  * Advance pickups and collect any the player touches.
  * Returns the array of collected pickups; survivors stay in `list`.
  */
-export function stepPickups(list, player, playerBox, groundY, world, magnetMult = 1) {
+export function stepPickups(list, player, playerBox, groundY, world, magnetMult = 1, touches = null) {
   const collected = [];
   const range = FEEL.pickupMagnetRange * magnetMult;
   const px = playerBox.x + playerBox.w / 2;
@@ -136,7 +136,8 @@ export function stepPickups(list, player, playerBox, groundY, world, magnetMult 
       }
     }
 
-    if (overlaps(playerBox, { x: p.x, y: p.y, w: p.w, h: p.h })) {
+    // `touches` is the art-collision trial's test (the pickup's drawing); without it, the old box.
+    if (touches ? touches(p) : overlaps(playerBox, { x: p.x, y: p.y, w: p.w, h: p.h })) {
       p.life = -1;
       collected.push(p);
     }

@@ -49,6 +49,7 @@ import { makeArenaArt } from '../systems/arena-art/index.js';
 import { makeAreaArt, hasAreaArt } from '../systems/area-art/index.js';
 import { bossSheet } from '../data/weapon-art.js';
 import { clipOf, cellAt } from '../systems/frame-data.js';
+import * as Shapes from '../systems/shapes.js';
 
 /**
  * How far into the arena track the room's clock starts: the boss door's whole
@@ -798,6 +799,11 @@ export default class GameScene extends Phaser.Scene {
   step() {
     const r = this.run, p = this.player;
     r.frame++;
+    // Which of his pictures is showing, and for how many steps: the art-collision trial tests
+    // hits against the picture on screen, so the picture runs on the game's clock.
+    const nowClip = playerClip(p);
+    if (nowClip !== p.clipName) { p.clipName = nowClip; p.clipT = 0; } else p.clipT++;
+    this.shapeCache = new Map();
     /**
      * REBUILT EVERY FRAME, exactly like `arena.push`. Thorn Man's ground cover
      * writes it while the player is standing in overgrowth and never clears it,
@@ -1177,6 +1183,49 @@ export default class GameScene extends Phaser.Scene {
    * pods in the Grass boss's room. The boss comes before the pods, because a
    * weapon that looks for "the boss" takes the first thing marked as one.
    */
+  // ── THE ART-COLLISION TRIAL (systems/shapes.js) ─────────────────────────
+  /** His body for anything that would hurt him: the picture showing, 5% small. Movement keeps its own box. */
+  playerHurt() {
+    const p = this.player;
+    const box = { x: p.x, y: p.y + (p.sliding ? 12 : 0), w: 24, h: p.sliding ? 12 : 24 };
+    return Shapes.artRects('player', Shapes.frameAt('player', p.clipName, p.clipT || 0), { box, facing: p.facing }, Shapes.KIND)
+      ?? Shapes.boxSet(Phys.hitboxOf(p));
+  }
+
+  /** An enemy's body: its picture this step if it has one, else the box it is drawn as. Kept for the step. */
+  foeShape(e, k) {
+    const key = k > 1 ? 'big' : 'small';
+    let both = this.shapeCache?.get(e);
+    if (!both) { both = {}; this.shapeCache?.set(e, both); }
+    if (both[key]) return both[key];
+    let rects = null;
+    if (e.isBoss) {
+      const sheet = bossSheet(e.id);
+      const cell = sheet ? cellAt(clipOf(sheet, e.clip || 'idle'), e.clip ? Math.max(0, e.clipT - 1) : e.anim, true) : -1;
+      if (cell >= 0) rects = Shapes.artRects(sheet, cell, { pivot: { x: e.x + e.w / 2, y: e.y + e.h }, facing: e.facing ?? -1 }, k);
+    } else if (e.def) {
+      const clip = e.def.kind === 'ground' ? 'walk' : 'fly';
+      rects = Shapes.artRects(e.id, Shapes.frameAt(e.id, clip, e.anim), { box: e, facing: Math.sign(e.vx) || 1 }, k);
+    }
+    return (both[key] = rects ?? Shapes.boxSet(e));
+  }
+
+  /** A shot: its drawing if it has one, else the disc it is drawn as. `k` is the favour. */
+  shotShape(b, k) {
+    const key = `shot:${b.weapon}`;
+    b.born ??= this.run.frame;
+    const f = Shapes.frameAt(key, 'fly', this.run.frame - b.born);
+    const box = { x: b.x - b.radius, y: b.y - b.radius, w: b.radius * 2, h: b.radius * 2 };
+    return (f >= 0 && Shapes.artRects(key, f, { box, facing: Math.sign(b.vx) || 1 }, k)) || Shapes.discRects(b.x, b.y, b.radius, k);
+  }
+
+  /** A pickup's drawing, 5% big, against the box he walks with. */
+  pickupTouch(box, p) {
+    const key = `pickup:${Pickups.pickupLook(p)}`;
+    const rects = Shapes.artRects(key, Shapes.frameAt(key, 'idle', p.anim), { box: p }, Shapes.GENEROUS) ?? Shapes.boxSet(p);
+    return Shapes.touch(Shapes.boxSet(box), rects);
+  }
+
   foes() {
     const list = this.boss ? [...this.minions, this.boss] : [...this.minions];
     for (const pd of this.arena?.pods || []) if (pd.hp > 0 && pd.state === 'grow') list.push(pd);
@@ -1832,9 +1881,10 @@ export default class GameScene extends Phaser.Scene {
     // enemy shots hitting the player — nothing did this before, so a boss
     // could not actually land a hit no matter what it fired
     const pbox = Phys.hitboxOf(this.player);
+    const hurtShape = this.playerHurt();
     for (const b of this.bullets) {
       if (!b.enemy || b.life <= 0) continue;
-      if (!Phys.overlaps(this.bulletBox(b), pbox)) continue;
+      if (!Shapes.touch(this.shotShape(b, Shapes.KIND), hurtShape)) continue;
 
       // A pressure shot PUSHES instead of hurting and does not expire on
       // contact — Tempest Man's water is an obstacle, not a bullet.
@@ -1918,6 +1968,7 @@ export default class GameScene extends Phaser.Scene {
     for (const b of this.bullets) {
       if (b.enemy || b.life <= 0) continue;
       const box = this.bulletBox(b);
+      const shot = this.shotShape(b, Shapes.GENEROUS);
       // Normalised to a NUMBER before the loop below decrements it. Not all
       // spawners set `pierce` (weaponry.js:1497 passes `L.pierce` straight
       // through, which is undefined for most rungs), and `undefined--` is NaN —
@@ -1932,7 +1983,7 @@ export default class GameScene extends Phaser.Scene {
       // The `hp <= 0` guard is what stops a pierce shot hitting a corpse.
       for (const e of targets) {
         if (e.hp <= 0 || b.hitSet?.has(e)) continue;
-        if (!Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) continue;
+        if (!Shapes.touch(shot, e.isBoss || e.def ? this.foeShape(e, Shapes.GENEROUS) : Shapes.boxSet(e))) continue;
 
         // A GUARD STANCE EATS THE FIRST SHOT IT TAKES, then drops. Strike Man's
         // layer-2 stance is the only user so far. Resolved before damage and
@@ -2095,7 +2146,7 @@ export default class GameScene extends Phaser.Scene {
 
     for (const e of this.minions) {
       if (e.hp <= 0) continue;
-      if (r.invuln === 0 && Phys.overlaps(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
+      if (r.invuln === 0 && Shapes.touch(this.playerHurt(), this.foeShape(e, Shapes.KIND))) {
         this.hurt(e.x + e.w / 2);
       }
     }
@@ -2125,6 +2176,7 @@ export default class GameScene extends Phaser.Scene {
     const r = this.run;
     const got = Pickups.stepPickups(
       this.pickups, this.player, box, GROUND_Y, this.world, r.magnetMult,
+      (p) => this.pickupTouch(box, p),
     );
     for (const p of got) {
       if (p.type === 'etank') {
@@ -2195,7 +2247,7 @@ export default class GameScene extends Phaser.Scene {
     // body — Tempest Man flies at you and never fires — cost more to touch
     // than one whose body is incidental.
     const box = Phys.hitboxOf(this.player);
-    if (this.run.invuln === 0 && !this.run.held && Phys.overlaps(box, { x: b.x, y: b.y, w: b.w, h: b.h })) {
+    if (this.run.invuln === 0 && !this.run.held && Shapes.touch(this.playerHurt(), this.foeShape(b, Shapes.KIND))) {
       this.hurt(b.x + b.w / 2, b.contactDamage || 1);
     }
   }
@@ -3063,7 +3115,7 @@ export default class GameScene extends Phaser.Scene {
     for (const p of this.pickups) {
       const style = Pickups.PICKUP_STYLE[p.type];
       L.pickups.draw(
-        { ...p, id: `pickup:${Pickups.pickupLook(p)}`, x: sx(p.x), y: sy(p.y), palette: style },
+        { ...p, clip: 'idle', t: p.anim, id: `pickup:${Pickups.pickupLook(p)}`, x: sx(p.x), y: sy(p.y), palette: style },
         (gg, a) => drawPickup(gg, a, style, r.frame),
       );
     }
@@ -3072,7 +3124,7 @@ export default class GameScene extends Phaser.Scene {
       const body = L.minions.draw({
         id: e.id, x: sx(e.x), y: sy(e.y), w: e.w, h: e.h,
         facing: Math.sign(e.vx) || 1,
-        clip: e.def.kind === 'ground' ? 'walk' : 'fly',
+        clip: e.def.kind === 'ground' ? 'walk' : 'fly', t: e.anim,
         palette: {
           primary: e.def.primary,
           secondary: e.def.secondary,
@@ -3098,7 +3150,7 @@ export default class GameScene extends Phaser.Scene {
       const cx = sx(b.x), cy = sy(b.y);
       L.bullets.draw(
         {
-          ...b, id: `shot:${b.weapon}`,
+          ...b, id: `shot:${b.weapon}`, clip: 'fly', t: r.frame - (b.born ?? r.frame),
           x: cx - b.radius, y: cy - b.radius, w: b.radius * 2, h: b.radius * 2,
           facing: Math.sign(b.vx) || 1,
           palette: { primary: b.color, secondary: b.color },
@@ -3220,7 +3272,7 @@ export default class GameScene extends Phaser.Scene {
         x: sx(p.x), y: sy(p.y + (p.sliding ? 12 : 0)),
         w: 24, h: p.sliding ? 12 : 24,
         facing: p.facing,
-        clip: playerClip(p),
+        clip: p.clipName ?? playerClip(p), t: p.clipT || 0,
         // THE PLAYER IS ALWAYS THIS BLUE. Equipping a weapon used to recolour
         // the suit from the source boss's palette; that is scrubbed. The suit
         // is the player's identity and does not change, and what you are
@@ -3304,6 +3356,23 @@ export default class GameScene extends Phaser.Scene {
       const t = a.flash / (a.flashN || 10);
       L.player.g.fillStyle(0xBFD8FF, Math.min(0.95, a.flashHard * t * t));
       L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
+    }
+
+    // THE ART-COLLISION TRIAL, made visible (dev mode, DEBUG HUD on): every fitted rectangle
+    // as the game tests it. Red would hurt him, green is what his shots hit, gold is a pickup.
+    if (DEV.enabled && DEV.debugHud) {
+      const g = L.held.g;
+      const show = (rects, colour) => {
+        g.lineStyle(1, colour, 0.9);
+        for (const q of rects) g.strokeRect(sx(q.x), sy(q.y), q.w, q.h);
+      };
+      show(this.playerHurt(), 0x40FF80);
+      for (const e of this.foes()) if (e.hp > 0 && (e.isBoss || e.def)) show(this.foeShape(e, Shapes.KIND), 0xFF4040);
+      for (const b of this.bullets) if (b.life > 0) show(this.shotShape(b, b.enemy ? Shapes.KIND : Shapes.GENEROUS), b.enemy ? 0xFF4040 : 0x40FF80);
+      for (const q of this.pickups) {
+        const key = `pickup:${Pickups.pickupLook(q)}`;
+        show(Shapes.artRects(key, Shapes.frameAt(key, 'idle', q.anim), { box: q }, Shapes.GENEROUS) ?? Shapes.boxSet(q), 0xFFD040);
+      }
     }
 
     for (const l of Object.values(L)) l.end();
