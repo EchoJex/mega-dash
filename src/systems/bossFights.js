@@ -1904,6 +1904,7 @@ export function faceAfterRear(b, pb) {
 
 /** Does a box overlap the player's? Local, because a fight sees only its ctx. */
 const boxHitsPlayer = (ctx, r) => {
+  ctx.run?.bossBoxes?.push(r);   // seen by the dev overlay
   // The art-collision trial: against his drawing (`playerShape`) where the game hands it over.
   return (ctx.playerShape || [ctx.playerBox]).some(
     (p) => p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y);

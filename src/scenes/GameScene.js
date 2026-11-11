@@ -12,7 +12,7 @@
 
 import Phaser from 'phaser';
 import {
-  FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH, viewWidthOf, PLAYER_PALETTE,
+  FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_H, DEPTH, viewWidthOf, PLAYER_PALETTE, RENDER_SCALE,
 } from '../config/display.js';
 import { fitCamera } from '../systems/text.js';
 import { FEEL } from '../config/feel.js';
@@ -136,6 +136,9 @@ export default class GameScene extends Phaser.Scene {
     // while paused would leave the NEXT run frozen on its first frame.
     this.paused = false;
     this.timeScale = 1;
+    // The dev overlay's clock (scenes/devTools.js): a speed, a freeze, and steps owed while frozen.
+    this.devTime = { scale: 1, frozen: false, steps: 0 };
+    this.loupe = null; this.loupeCam = null;
     this.tsTarget = 1;
     this.tsStep = 0;
 
@@ -769,7 +772,15 @@ export default class GameScene extends Phaser.Scene {
     if (this.paused) return;
     // A warp freezes the simulation entirely and advances on real time.
     if (this.warp) { this.stepWarp(delta); this.draw(); return; }
-    this.acc += delta * this.timeScale;
+    // THE DEV OVERLAY'S CLOCK. Frozen, the game moves only when STEP asks, one whole step at a
+    // time; the picture is still drawn so the loupe and the outlines stay live.
+    const dt = DEV.enabled && DEV.debugHud ? this.devTime : null;
+    if (dt?.frozen) {
+      if (dt.steps > 0) { dt.steps--; this.step(); }
+      this.draw();
+      return;
+    }
+    this.acc += delta * this.timeScale * (dt?.scale ?? 1);
     let steps = 0;
     while (this.acc >= FIXED_DT && steps < MAX_STEPS_PER_FRAME) {
       this.step();
@@ -926,7 +937,7 @@ export default class GameScene extends Phaser.Scene {
       // The art-collision trial: his drawing against the bed's own teeth, never the bed's box.
       const hurtShape = this.playerHurt();
       for (const s of r.stoneArmor > 0 ? [] : this.world.spikes) {
-        if (Phys.overlaps(box, s) && Shapes.touch(hurtShape, Shapes.scaled(spikeShape(this.upcoming?.id, s), Shapes.KIND))) {
+        if (Phys.overlaps(box, s) && Shapes.touch(hurtShape, spikeShape(this.upcoming?.id, s))) {
           // Check BEFORE hurt(), which sets the i-frames itself.
           const landed = r.invuln === 0;
           this.hurt(s.x + s.w / 2, this.hazardDamage());
@@ -1065,6 +1076,7 @@ export default class GameScene extends Phaser.Scene {
     // grants nothing, and this is the one line that guarantees it.
     r.meleeArmor = 0;
     r.meleeBoxes = [];   // this step's melee swings, for the Grass boss's cover
+    r.bossBoxes = [];    // this step's boss hit areas, for the dev overlay's green outlines
     r.rootFrames = 0;
     r.moveScale = 1;
     r.planted = false;
@@ -3363,25 +3375,48 @@ export default class GameScene extends Phaser.Scene {
       L.player.g.fillRect(0, 0, this.viewW, VIEW_H);
     }
 
-    // THE ART-COLLISION TRIAL, made visible (dev mode, DEBUG HUD on): every fitted rectangle
-    // as the game tests it. Red would hurt him, green is what his shots hit, gold is a pickup.
-    if (DEV.enabled && DEV.debugHud) {
-      const g = L.held.g;
-      const show = (rects, colour) => {
-        g.lineStyle(1, colour, 0.9);
-        for (const q of rects) g.strokeRect(sx(q.x), sy(q.y), q.w, q.h);
-      };
-      show(this.playerHurt(), 0x40FF80);
-      for (const e of this.foes()) if (e.hp > 0 && (e.isBoss || e.def)) show(this.foeShape(e, Shapes.KIND), 0xFF4040);
-      for (const b of this.bullets) if (b.life > 0) show(this.shotShape(b, b.enemy ? Shapes.KIND : Shapes.GENEROUS), b.enemy ? 0xFF4040 : 0x40FF80);
-      if (!this.arena) for (const s of this.world.spikes) show(Shapes.scaled(spikeShape(this.upcoming?.id, s), Shapes.KIND), 0xFF4040);
-      for (const d of this.world.doors) if (d.alive) show(doorShape(this.arena ? this.arena.boss?.id : this.upcoming?.id, d, this.arena ? 'exit' : 'boss'), 0xFFD040);
-      for (const q of this.pickups) {
-        const key = `pickup:${Pickups.pickupLook(q)}`;
-        show(Shapes.artRects(key, Shapes.frameAt(key, 'idle', q.anim), { box: q }, Shapes.GENEROUS) ?? Shapes.boxSet(q), 0xFFD040);
-      }
-    }
-
+    this.drawDevBoxes(L.held.g, sx, sy);
     for (const l of Object.values(L)) l.end();
+  }
+
+  /**
+   * THE DEV OVERLAY'S OUTLINES (dev launch, DEBUG HUD on; owner, 11 Nov 2026), one real screen
+   * pixel thin. RED is a hurtbox: a body that can be hit (his, a minion's, a boss's).
+   * GREEN is a hitbox: something that does the hitting (every shot, a weapon's swing this
+   * step, a boss's drawn strike this step, a spike bed). Gold is neither: a pickup or a door.
+   */
+  drawDevBoxes(g, sx, sy) {
+    const lp = this.loupe;
+    if (this.loupeCam) {
+      // The loupe shows the world under the middle of its box, raised with a climb's camera.
+      this.loupeCam.setVisible(!!lp);
+      if (lp) this.loupeCam.centerOn(lp.x + lp.w / 2, lp.y + lp.h / 2 + Math.round(this.cam.y || 0));
+    }
+    if (!(DEV.enabled && DEV.debugHud)) return;
+    const thin = 1 / RENDER_SCALE;
+    const show = (b, colour) => { g.lineStyle(thin, colour, 1); g.strokeRect(sx(b.x), sy(b.y), b.w, b.h); };
+    const RED = 0xFF2020, GREEN = 0x20FF40, GOLD = 0xFFD040;
+    // On this branch the outlines are the fitted shapes the game really tests (systems/shapes.js).
+    const all = (rects, colour) => { for (const q of rects) show(q, colour); };
+    all(this.playerHurt(), RED);
+    for (const e of this.foes()) if (e.hp > 0) all(e.isBoss || e.def ? this.foeShape(e, Shapes.KIND) : [e], RED);
+    for (const b of this.bullets) if (b.life > 0) all(this.shotShape(b, b.enemy ? Shapes.KIND : Shapes.GENEROUS), GREEN);
+    for (const b of this.run.meleeBoxes || []) show(b, GREEN);
+    for (const b of this.run.bossBoxes || []) show(b, GREEN);
+    if (!this.arena) for (const sp of this.world.spikes) all(spikeShape(this.upcoming?.id, sp), GREEN);
+    for (const q of this.pickups) {
+      const key = `pickup:${Pickups.pickupLook(q)}`;
+      all(Shapes.artRects(key, Shapes.frameAt(key, 'idle', q.anim), { box: q }, Shapes.GENEROUS) ?? [q], GOLD);
+    }
+    for (const d of this.world.doors) if (d.alive) all(doorShape(this.arena ? this.arena.boss?.id : this.upcoming?.id, d, this.arena ? 'exit' : 'boss'), GOLD);
+  }
+
+  /** Open, move or close (null) the dev loupe: a second camera showing the world under `box`, `box.zoom` times bigger. */
+  setLoupe(box) {
+    this.loupe = box;
+    if (!box) { this.loupeCam?.setVisible(false); return; }
+    this.loupeCam ??= this.cameras.add(0, 0, 1, 1);
+    this.loupeCam.setViewport(box.x * RENDER_SCALE, box.y * RENDER_SCALE, box.w * RENDER_SCALE, box.h * RENDER_SCALE)
+      .setZoom(RENDER_SCALE * box.zoom).setBackgroundColor(0x000000).setVisible(true);
   }
 }

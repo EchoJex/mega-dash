@@ -1481,6 +1481,21 @@ it on the second tap.
 | **META rows** | CHIPS +250, WIPE CHIPS, MAX UPGRADE, WIPE UPGRADE, WIPE KILLS — these write to the save |
 | **BOSS PICKER** | any of the 17 — starts a run with his door a short walk ahead |
 
+**THE DEV OVERLAY'S TOOLS** (owner, 11 Nov 2026; `src/scenes/devTools.js`). On a dev launch with
+DEBUG HUD on, a live run also carries these. The manual:
+
+- **Three gold plates left of the pause button.** The first is SPEED: tap it to go through full
+  speed, a half (`/2`), a quarter (`/4`) and a tenth (`/10`). The second is FREEZE: `=` stops the
+  game where it is, `>` lets it go again. The third, `+1`, is STEP: while frozen, each tap moves
+  the game on by exactly one step (1/60 s).
+- **The magnifier.** Press and hold anywhere that is not a button for a third of a second: a gold
+  box opens there, showing the game under it three times bigger. Drag the box to move it; tap
+  outside it to close it. It works while frozen.
+- **The outlines**, one real screen pixel thin. RED is a hurtbox: a body that can be hit (his, a
+  minion's, a boss's). GREEN is a hitbox: what does the hitting (every shot, a weapon's swing, a
+  boss's drawn strike, a spike bed). Gold marks pickups and doors. A boss room's own hazards are
+  not outlined yet.
+
 Settings live in their own `megadash_dev_v1` key; `fullReset` clears it with the save.
 
 **Dev mode always starts a run on the Post Boss wheel** (`requipAtStart`), so the loadout

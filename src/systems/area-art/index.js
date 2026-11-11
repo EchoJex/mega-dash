@@ -27,30 +27,36 @@ import { fitRects } from '../fit-rects.js';
 
 // ── THE ART-COLLISION TRIAL (branch test/art-collision; see systems/shapes.js) ──────────
 /**
- * A spike bed's rectangles, in world pixels: the bed is painted the way the area paints it (or
- * as the plain grey teeth, with nothing picked), cut into stretches 8 pixels wide, and each
- * stretch fitted with up to five rectangles lying wholly on painted pixels. A bed is a row of
- * many teeth, and five rectangles for the whole row would leave most teeth harmless.
+ * A spike bed's one rectangle, in world pixels, by the owner's rule (11 Nov 2026): "Spikes may
+ * come to be of variable widths, so a single rectangle from 5% above the base to 5% below the
+ * tip, and from first tip to last tip". The bed is painted the way the area paints it (or as
+ * the plain grey teeth, with nothing picked) and its tips are found in that picture: a tip is
+ * a column that stands at least as tall as both its neighbours and at least half the tallest.
  * Worked out once per bed and kept on it.
  */
 export function spikeShape(id, s) {
   if (s.shape) return s.shape;
-  const x0 = Math.floor(s.x) - 2, y0 = FLOOR - 9, w = Math.ceil(s.w) + 5, h = 10;
-  const on = new Uint8Array(w * h);
-  const set = (x, y, col, al = 255) => { if (al && x >= x0 && x < x0 + w && y >= y0 && y < y0 + h) on[(y - y0) * w + (x - x0)] = 1; };
-  if (hasAreaArt(id) && s.y + s.h === FLOOR) pickedMaterial(id).spikes({ set }, s.x, s.w);
+  const x0 = Math.floor(s.x) - 2, y0 = FLOOR - 9, w = Math.ceil(s.w) + 5, h = 10, base = s.y + s.h;
+  const top = new Array(w).fill(base);   // the highest painted pixel of each column
+  const set = (x, y, col, al = 255) => {
+    x |= 0; y |= 0;
+    if (al && x >= x0 && x < x0 + w && y >= y0 && y < base && y < top[x - x0]) top[x - x0] = y;
+  };
+  if (hasAreaArt(id) && base === FLOOR) pickedMaterial(id).spikes({ set }, s.x, s.w);
   else {
     const n = Math.max(1, Math.round(s.w / 5)), tw = s.w / n;
-    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    for (let y = y0; y < base; y++) for (let x = x0; x < x0 + w; x++) {
       for (let i = 0; i < n; i++) if (inTooth(x - s.x, y, i * tw, tw, s.y, s.h)) set(x, y);
     }
   }
-  const out = [];
-  for (let c = 0; c < w; c += 8) {
-    const cw = Math.min(8, w - c);
-    for (const [x, y, rw, rh] of fitRects(cw, h, (px, py) => on[py * w + c + px] === 1)) out.push({ x: x0 + c + x, y: y0 + y, w: rw, h: rh });
+  const tall = base - Math.min(...top);
+  const tips = [];
+  for (let c = 0; c < w; c++) {
+    const here = base - top[c];
+    if (here * 2 >= tall && here > 0 && here >= base - (top[c - 1] ?? base) && here >= base - (top[c + 1] ?? base)) tips.push(c);
   }
-  return (s.shape = out.length ? out : [{ x: s.x, y: s.y, w: s.w, h: s.h }]);
+  if (!tips.length) return (s.shape = [{ x: s.x, y: s.y, w: s.w, h: s.h }]);
+  return (s.shape = [{ x: x0 + tips[0], y: base - tall * 0.95, w: tips[tips.length - 1] - tips[0] + 1, h: tall * 0.9 }]);
 }
 
 const doorFits = new Map();
