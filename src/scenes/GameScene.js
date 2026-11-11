@@ -2441,6 +2441,8 @@ export default class GameScene extends Phaser.Scene {
       // Loadout Mastery rank 0 means. Then there is no decision to offer and
       // opening a picker onto a padlocked row would only look broken.
       const cls = classOf(b.dropWeapon);
+      // His first weapon of a class opens that class's first slot for free, for good.
+      if (Loadout.giftFirstSlot(this.run.loadout, save.upgrades, cls)) { persist(); this.run.slotGift = true; }
       if (Loadout.autoEquip(this.run.loadout, b.dropWeapon) < 0
           && Loadout.tradeableSlots(this.run.loadout, cls) > 0) {
         this.run.pendingLoadout = b.dropWeapon;

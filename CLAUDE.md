@@ -1060,6 +1060,11 @@ the table.
 | **2** | both live at once; the second position is still the sidearm | two slots, only one live |
 | **3** | the second position is freed — two specials, and the sidearm can be traded away | two slots, both live |
 
+**The first weapon won of a class opens that class's rank 1 for free, for good** (owner, 11 Nov 2026;
+`giftFirstSlot`): weapons last only for the run, so a first boss win before any purchase used to pay
+out a weapon that could never be used. The banner adds NEW SLOT OPEN. Chips buy ranks 2 and 3, or
+rank 1 early.
+
 At 0/0 only the sidearm's slot shows. Offensive rank 1 moves the sidearm to slot 2 and
 leaves slot 1 empty until a boss falls. Where a rank caps how many may run, the mid-fight
 tap becomes a radio switch. **The offensive row is never left with no live weapon**;

@@ -155,6 +155,23 @@ export function setRanks(lo, rank) {
   return lo;
 }
 
+/**
+ * THE FIRST WEAPON OF A CLASS OPENS ITS FIRST SLOT FOR FREE (owner, 11 Nov 2026).
+ *
+ * Weapons last only for the run, so a player who beat a boss before buying rank 1 used to win
+ * a weapon they could never use. Now, when a boss's weapon arrives and that class's mastery
+ * has never been bought, rank 1 is given: written into `upgrades` (the save's bought ranks) so
+ * it is kept for good, and onto this run's loadout so the weapon can go straight in.
+ * Returns true when it gave one; the caller saves and congratulates.
+ */
+export function giftFirstSlot(lo, upgrades, cls) {
+  const id = `${cls}_mastery`;
+  if (!CLASSES.includes(cls) || (upgrades[id] || 0) > 0) return false;
+  upgrades[id] = 1;
+  if (lo.rank[cls] < 1) setRanks(lo, { [cls]: 1 });
+  return true;
+}
+
 /** The slot array for a class, or an empty array for anything else. */
 export const slotsOf = (lo, cls) => lo[cls] || [];
 

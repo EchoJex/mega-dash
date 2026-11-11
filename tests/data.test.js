@@ -360,3 +360,13 @@ test('the Gunner asks to fire once on every third stop, and on no other', async 
   }
   assert.deepEqual(fired, [def.burstEvery, def.burstEvery * 2]);
 });
+
+test('the first weapon won of a class opens its first slot for free, once', async () => {
+  const Loadout = await import('../src/systems/loadout.js');
+  const lo = Loadout.makeLoadout({ offensive: 0, defensive: 0 }), bought = {};
+  assert.equal(Loadout.giftFirstSlot(lo, bought, 'defensive'), true);
+  assert.equal(bought.defensive_mastery, 1);
+  assert.ok(lo.rank.defensive >= 1 && lo.rank.offensive === 0);
+  assert.equal(Loadout.giftFirstSlot(lo, bought, 'defensive'), false);   // already has it
+  assert.equal(Loadout.giftFirstSlot(lo, { offensive_mastery: 2 }, 'offensive'), false);   // bought ranks are left alone
+});

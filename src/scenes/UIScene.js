@@ -2340,11 +2340,12 @@ export default class UIScene extends Phaser.Scene {
         this.unlockAt = performance.now();
       }
       const wd = weaponOf(r.justUnlocked);
-      this.unlockMsg.setText(`${wd.name} ACQUIRED`);
+      this.unlockMsg.setText(`${wd.name} ACQUIRED` + (r.slotGift ? '\nNEW SLOT OPEN' : ''));
       if (performance.now() - this.unlockAt > 2500) {
         this.unlockMsg.destroy();
         this.unlockMsg = null;
         r.justUnlocked = null;
+        r.slotGift = false;
       }
     } else if (r.pendingLoadout && this.mode !== 'postBoss'
       && !this.cards && !this.pausePanel && !gm.warp) {
