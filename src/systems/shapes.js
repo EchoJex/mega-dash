@@ -94,6 +94,19 @@ export function discRects(x, y, radius, k = 1) {
   return scaled(discs.get(r).map(([rx, ry, w, h]) => ({ x: x - r + rx, y: y - r + ry, w, h })), k);
 }
 
+/**
+ * A DRAWN HIT AREA, FITTED TO ITS PICTURE (owner, 11 Nov 2026: "Yes"). A move's sheet carries one
+ * hand-drawn rectangle `h` saying which part of the picture strikes. Here it is replaced by up to
+ * five rectangles fitted to the visible pixels inside it on the hit frame (worked out by
+ * `npm run sprites:build`), then grown or shrunk by `k` (GENEROUS for his weapons, KIND for a boss's).
+ * (px, py) is where the sheet's pivot is held. With no picture there, the drawn rectangle stands.
+ */
+export function hitRects(key, clip, h, px, py, facing, k = 1) {
+  const fit = SHAPES['#hits']?.[key]?.[`${clip.cells?.[h.frame]}:${h.x},${h.y},${h.w},${h.h}`];
+  const rects = fit || [[h.x, h.y, h.w, h.h]];
+  return scaled(rects.map(([x, y, w, hh]) => ({ x: facing < 0 ? px - x - w : px + x, y: py + y, w, h: hh })), k);
+}
+
 /** Do any two rectangles of the two sets overlap? */
 export function touch(a, b) {
   for (const p of a) for (const q of b) {

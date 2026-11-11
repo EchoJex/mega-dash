@@ -36,6 +36,7 @@ import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS, elementOf } from '../d
 import * as Attr from './attributes.js';
 import { hexNum } from './assets.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
+import { hitRects, GENEROUS } from './shapes.js';
 
 /** Frames of held fire that count as a long press. The tracker says 0.4s. */
 export const LONG_PRESS_FRAMES = 24;
@@ -83,14 +84,24 @@ export function enemiesByRange(ctx, x, y, seen = null, maxDist = Infinity) {
  * nothing. ponytail: a box asked about only to aim (the whip's grapple probe)
  * counts too; split the helper if that ever scares cover it should not.
  */
-const enemiesIn = (ctx, box) => {
-  (ctx.run.meleeBoxes || (ctx.run.meleeBoxes = [])).push(
-    { x: box.x, y: box.y, w: box.w, h: box.h, element: ctx.weaponId ? elementOf(ctx.weaponId) : null });
-  // The art-collision trial: where the game hands over each enemy's drawing (`shapeOf`), the
-  // area is tested against that, not the enemy's box. Tests and the sim keep the box.
-  const hits = (q) => box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y;
+const enemiesIn = (ctx, area) => {
+  // One box, or (the art-collision trial) the rectangles fitted to the weapon's picture.
+  const rects = Array.isArray(area) ? area : [area];
+  const element = ctx.weaponId ? elementOf(ctx.weaponId) : null;
+  for (const b of rects) (ctx.run.meleeBoxes || (ctx.run.meleeBoxes = [])).push({ x: b.x, y: b.y, w: b.w, h: b.h, element });
+  // Where the game hands over each enemy's drawing (`shapeOf`), the area is tested against
+  // that, not the enemy's box. Tests and the sim keep the box.
+  const hits = (q) => rects.some((box) => box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y);
   return ctx.enemies.filter((e) => e.hp > 0 && (ctx.shapeOf ? ctx.shapeOf(e).some(hits) : hits(e)));
 };
+
+/**
+ * A drawn hit area in the world. In the game (the art-collision trial, where `shapeOf` is
+ * handed over) it is fitted to the weapon's own picture, 5% big; in tests and the sim it is the
+ * hand-drawn rectangle, as on main.
+ */
+const hitShape = (ctx, key, clip, h, px, py, facing) => (ctx.shapeOf
+  ? hitRects(key, clip, h, px, py, facing, GENEROUS) : areaAt(h, px, py, facing));
 
 /** This weapon's damage at its current level, after the run's damage upgrades. */
 const dmgOf = (id, lv, ctx) => damageAtLevel(weaponOf(id), lv) * ctx.run.dmgMult;
@@ -1073,7 +1084,7 @@ function swingAct(L, c, full) {
 function jabHit(L, lv, ctx, a) {
   const j = L.jab[a.n], p = ctx.player, g = gripOf(p), clip = clipOf(HAMMER, JAB_CLIPS[a.n]);
   const base = dmgOf('quake_hammer', lv, ctx);
-  const struck = enemiesIn(ctx, areaAt(clip.hits[0], g.x, g.y, p.facing));
+  const struck = enemiesIn(ctx, hitShape(ctx, HAMMER, clip, clip.hits[0], g.x, g.y, p.facing));
   for (const e of struck) {
     ctx.hitEnemy(e, base * words(j.dmg), { knockback: j.knock, launch: j.launch || 0, from: p.x + 12 });
   }
@@ -1125,7 +1136,7 @@ function swingHit(L, lv, ctx, a) {
   const lo = words(L.swingDmg), hi = words(L.swingDmgFull);
   const dmg = base * (a.full ? hi : lo + (hi - lo) * a.c * L.partialShare);
   const clip = clipOf(HAMMER, 'swing'), h = clip.hits[0];
-  const struck = enemiesIn(ctx, areaAt(h, g.x, g.y, f));
+  const struck = enemiesIn(ctx, hitShape(ctx, HAMMER, clip, h, g.x, g.y, f));
   for (const e of struck) {
     ctx.hitEnemy(e, dmg, {
       knockback: L.swingKnock * (0.7 + 0.6 * a.c),
@@ -1156,7 +1167,7 @@ function cloudHit(d, ctx) {
   const h = clipOf(DUST, d.clip).hits[0];
   if (d.t < h.step) return;
   d.done = true;
-  for (const e of enemiesIn(ctx, areaAt(h, d.x, d.y, d.dir))) {
+  for (const e of enemiesIn(ctx, hitShape(ctx, DUST, clipOf(DUST, d.clip), h, d.x, d.y, d.dir))) {
     if (!d.struck.includes(e)) ctx.hitEnemy(e, d.dmg, { knockback: d.knock, from: d.x });
   }
 }
@@ -2275,7 +2286,7 @@ const thorn = {
     la.t++;
     if (!h) return;
     const box = areaAt(h, hand.x, hand.y, p.facing);
-    if (h === c.hits[0]) whipArc(la, lv, ctx, L, box);
+    if (h === c.hits[0]) whipArc(la, lv, ctx, L, hitShape(ctx, WHIP, c, h, hand.x, hand.y, p.facing));
     else thornProbe(st, lv, ctx, L, box);
   },
 

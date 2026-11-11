@@ -41,6 +41,7 @@ import { FEEL } from '../config/feel.js';
  */
 import { BEAT_LEN as BEAT } from './arena.js';
 import { clipOf, areaAt, pointAt } from './frame-data.js';
+import { hitRects, KIND } from './shapes.js';
 /** One second, for durations that are real seconds rather than beats. */
 const SEC = 60;
 
@@ -1907,12 +1908,18 @@ export function faceAfterRear(b, pb) {
 }
 
 /** Does a box overlap the player's? Local, because a fight sees only its ctx. */
-const boxHitsPlayer = (ctx, r) => {
-  ctx.run?.bossBoxes?.push(r);   // seen by the dev overlay
+const boxHitsPlayer = (ctx, area) => {
+  const rects = Array.isArray(area) ? area : [area];
+  for (const r of rects) ctx.run?.bossBoxes?.push(r);   // seen by the dev overlay
   // The art-collision trial: against his drawing (`playerShape`) where the game hands it over.
-  return (ctx.playerShape || [ctx.playerBox]).some(
-    (p) => p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y);
+  return (ctx.playerShape || [ctx.playerBox]).some((p) => rects.some(
+    (r) => p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y));
 };
+
+/** A strike's hit area: in the game (the trial) fitted to his fist's picture, 5% small; otherwise the drawn box. */
+const strikeShape = (ctx, b, name) => (ctx.playerShape
+  ? hitRects(STRIKE_SHEET, strikeClip(name), strikeClip(name).hits[0], b.x + b.w / 2, b.y + b.h, b.facing || 1, KIND)
+  : strikeArea(b, name));
 
 /** A player shot closing on him at body height — the thing he back-dashes from. */
 function shotIncoming(ctx, b) {
@@ -2049,7 +2056,7 @@ function strikeAttack(layer) {
       case 'jab': {
         face = fs.dir;
         b.y = groundY;
-        if (t === c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'jab'))) {
+        if (t === c.hits[0].step && boxHitsPlayer(ctx, strikeShape(ctx, b, 'jab'))) {
           ctx.hurt(bcx, STRIKE_ATK.jabDamage);
         }
         if (!ended) break;
@@ -2078,7 +2085,7 @@ function strikeAttack(layer) {
         b.y = groundY;
         clamp();
         fs.left -= STRIKE_ATK.lungeSpeed;
-        if (!fs.hit && t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'lunge'))) {
+        if (!fs.hit && t >= c.hits[0].step && boxHitsPlayer(ctx, strikeShape(ctx, b, 'lunge'))) {
           fs.hit = true;
           ctx.hurt(bcx, STRIKE_ATK.lungeDamage);
         }
@@ -2111,7 +2118,7 @@ function strikeAttack(layer) {
           fs.chase--;
           fs.vy = STRIKE_ATK.riseVy * 0.8;
         }
-        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'rise'))) {
+        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeShape(ctx, b, 'rise'))) {
           ctx.hurt(bcx, STRIKE_ATK.riseDamage);
         }
         if (b.y >= groundY) {
@@ -2156,7 +2163,7 @@ function strikeAttack(layer) {
         if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
         face = fs.dir;
-        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeArea(b, 'spin'))) {
+        if (t >= c.hits[0].step && boxHitsPlayer(ctx, strikeShape(ctx, b, 'spin'))) {
           ctx.hurt(bcx, STRIKE_ATK.spinDamage);
         }
         if (--fs.t > 0) break;

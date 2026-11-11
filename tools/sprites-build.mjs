@@ -176,7 +176,8 @@ const warnings = [];
  * override the look fields; the derived anims always win.
  */
 const art = {};
-const shapes = {};   // key -> per frame, up to five rectangles inside the picture
+const shapes = {};
+const hitShapes = {};   // the same, for each drawn hit area: sheet -> 'cell:x,y,w,h' -> rectangles from the pivot   // key -> per frame, up to five rectangles inside the picture
 
 /**
  * A SHOT AND A PICKUP ARE CENTRED; EVERYTHING ELSE STANDS ON THE GROUND.
@@ -319,6 +320,18 @@ for (const file of files) {
   // pixels, one set per frame (src/systems/fit-rects.js). A blank (wip) frame gets none.
   shapes[t.key || id] = doc.frames.map((f) => (shippable(f)
     ? fitRects(doc.w, doc.h, (x, y) => f.rows[y][x] !== '.') : []));
+  // ...and each drawn hit area gets its own fit: up to five rectangles on the visible pixels
+  // INSIDE the hand-drawn rectangle, measured from the sheet's pivot like the rectangle itself.
+  // (Cutting the whole picture's fit down to the area loses small parts, such as a boss's fist.)
+  for (const c of Object.values(frameData[t.key || id]?.clips || {})) {
+    for (const h of c.hits) {
+      const f = doc.frames[c.cells[h.frame]];
+      if (h.w == null || !f || !shippable(f)) continue;
+      const ox = doc.pivot.x + h.x, oy = doc.pivot.y + h.y;
+      const fit = fitRects(h.w, h.h, (x, y) => (f.rows[oy + y]?.[ox + x] ?? '.') !== '.');
+      if (fit.length) ((hitShapes[t.key || id] ||= {}))[`${c.cells[h.frame]}:${h.x},${h.y},${h.w},${h.h}`] = fit.map(([x, y, w, hh]) => [h.x + x, h.y + y, w, hh]);
+    }
+  }
 
   const wip = doc.frames.length - doc.frames.filter(shippable).length;
   writeFileSync(join(OUT, `${id}.png`), encodePng(w, h, px));
@@ -384,7 +397,7 @@ for (const [key, a] of Object.entries(art)) {
 
 writeFileSync(ART, `${JSON.stringify(art, null, 2)}\n`);
 writeFileSync(join(REPO, 'src/data/frame-data.json'), `${JSON.stringify(frameData, null, 2)}\n`);
-writeFileSync(join(REPO, 'src/data/art-shapes.json'), `${JSON.stringify(shapes)}\n`);
+writeFileSync(join(REPO, 'src/data/art-shapes.json'), `${JSON.stringify({ ...shapes, '#hits': hitShapes })}\n`);
 
 if (warnings.length) {
   console.log('\nANIMATION SHAPE CHANGED:');
