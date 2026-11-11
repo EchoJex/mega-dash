@@ -132,6 +132,7 @@ import { save, persist } from '../systems/save.js';
 import { hexNum, MANIFEST } from '../systems/assets.js';
 import { clipOf, cellAt } from '../systems/frame-data.js';
 import { sfx, unlockAudio } from '../systems/sfx.js';
+import { installDevTools } from './devTools.js';
 
 const SLIDE_DEADZONE = 14; // virtual px of downward drag before a slide fires
 const SWIPE_DEADZONE = 10; // virtual px of travel before a re-quip tap becomes a swipe
@@ -435,6 +436,7 @@ export default class UIScene extends Phaser.Scene {
 
     // zone 2 — pause
     this.mkTap(w - 20, 2, 18, 12, '||', () => this.togglePause());
+    installDevTools(this, w);   // speed, freeze, step and the loupe: dev launches only
 
     // Mobile browsers refuse to start audio until a real input happens.
     this.input.on('pointerdown', unlockAudio);
@@ -2229,6 +2231,7 @@ export default class UIScene extends Phaser.Scene {
   update() {
     const gm = this.game_;
     if (!gm?.run) return;
+    this.devToolsTick?.();
 
     const cd = gm.fireCooldown(), fb = this.actBtns.find((b) => b.id === 'fire');
     const ch = Math.round((fb.h - 2) * cd);
