@@ -74,6 +74,9 @@ function harness(bossId, layer) {
       playerInvuln: 0,
       // The Grass boss's vine grab: where the player is pinned this step.
       hold: (x, y) => { held.push({ x, y }); },
+      // The Water boss's layer 3: what a spike costs, the beam after it, and
+      // swimming in his tsunami.
+      hazardDamage: 4, beam: () => {}, swim: () => {},
       status: (id, f, o) => Attr.applyStatus(status, id, f, o),
       patch: (id, x, y, w, h, f, o = {}) =>
         Attr.addPatch(arena.patches, Object.assign(Attr.makePatch(id, x, y, w, h, f), o)),
@@ -298,7 +301,7 @@ test('a Volt Man floor panel is never live without having been telegraphed', () 
  * they hand you spikes. Asserted as WHICH KINDS appear, not how many — the
  * cadence is a placeholder.
  */
-test('Tempest Man stops sending barrels by layer 3', () => {
+test('the Water boss\'s pipes send barrels at layers 1 and 2 and nothing at layer 3', () => {
   const kindsAt = (layer) => {
     const h = harness('tempest', layer);
     const hz = FIGHTS.tempest.hazard[layer];
@@ -312,18 +315,19 @@ test('Tempest Man stops sending barrels by layer 3', () => {
     return kinds;
   };
   assert.deepEqual([...kindsAt(1)], ['barrel'], 'layer 1 is barrels only');
-  assert.ok(kindsAt(2).has('spikeball'), 'layer 2 adds spike balls');
-  assert.deepEqual([...kindsAt(3)], ['spikeball'], 'layer 3 is spike balls only');
+  assert.deepEqual([...kindsAt(2)], ['barrel'], 'layer 2 is barrels only');
+  assert.deepEqual([...kindsAt(3)], [], 'layer 3: the pipes send nothing');
 });
 
-test('a Tempest Man barrel is standable and shootable; a spike ball is neither', () => {
+test('a Water boss barrel is standable and shootable; a spike ball he drops is neither', () => {
   const h = harness('tempest', 2);
-  const hz = FIGHTS.tempest.hazard[2];
   const seen = {};
   for (let i = 0; i < 6000 && Object.keys(seen).length < 2; i++) {
-    hz.step(h.ctx);
+    h.boss.anim++;
+    FIGHTS.tempest.attack[2].step(h.ctx);
+    FIGHTS.tempest.hazard[2].step(h.ctx);
     Arena.stepArena(h.arena);
-    for (const o of h.arena.hazards) seen[o.kind] = o;
+    for (const o of h.arena.hazards) seen[o.kind] ??= o;
   }
   assert.equal(seen.barrel.solid, true, 'a barrel is footing');
   assert.ok(seen.barrel.hp > 0, 'and can be shot away');
@@ -355,30 +359,72 @@ test('Tempest Man attacks with his jetpack, never with a projectile', () => {
 });
 
 /**
- * THE WATER BOSS'S DRAWING SETS HIS WARNING (tools/art/tempest.mjs says the
+ * THE WATER BOSS'S DRAWING SETS HIS TIMING (tools/art/tempest.mjs says the
  * rules in words for the brief). Read from frame data, so a redraw passes.
  */
-test("Water boss: his warning lasts as long as his drawn `tell`, and every move names a drawn clip", async () => {
+test("Water boss: his waits last as long as his drawn clips, and every move names a drawn clip", async () => {
   const { clipOf } = await import('../src/systems/frame-data.js');
-  const K = 'boss:tempest:body', tell = clipOf(K, 'tell').total;
-  assert.ok(tell >= 20, `a ${tell}-step warning is too short to read`);
-  for (const name of ['idle', 'fly', 'tell', 'dive', 'climb']) {
+  const K = 'boss:tempest:body';
+  assert.ok(clipOf(K, 'tell').total >= 60, 'the wait before the divebomb is too short to read');
+  for (const name of ['idle', 'fly', 'tell', 'dive', 'climb', 'land', 'refill', 'hop', 'squat', 'dash']) {
     const c = clipOf(K, name);
     assert.equal(c.hits.length + c.spawns.length, 0, `${name}: nothing on his sheet hits or spawns`);
   }
-  const h = harness('tempest', 1), seen = new Set();
-  let first = 0, was = null;
-  for (let i = 0; i < 2000; i++) {
-    FIGHTS.tempest.attack[1].step(h.ctx);
-    const m = h.boss.fs.mode;
-    seen.add(h.boss.clip);
-    assert.ok(clipOf(K, h.boss.clip), 'he named a clip his sheet lacks');
-    assert.ok(h.boss.facing === 1 || h.boss.facing === -1, 'he must face one way or the other');
-    if (m === 'tell' && was !== 'tell' && !first) first = i;
-    if (m === 'dive' && was === 'tell' && first > 0) { assert.equal(i - first, tell, 'the first warning is the whole clip'); first = -1; }
-    was = m;
+  // Every layer: each mode lasts what its clip says, and names a clip he has.
+  const timed = { tell: 'tell', hop: 'hop', squat: 'squat' };
+  for (const layer of [1, 2, 3]) {
+    const h = harness('tempest', layer), seen = new Set(), spans = {};
+    let was = null, since = 0;
+    for (let i = 0; i < 12000; i++) {
+      h.boss.anim++;
+      FIGHTS.tempest.attack[layer].step(h.ctx);
+      const m = h.boss.fs.mode;
+      seen.add(m);
+      assert.ok(clipOf(K, h.boss.clip), 'he named a clip his sheet lacks');
+      assert.ok(h.boss.facing === 1 || h.boss.facing === -1, 'he must face one way or the other');
+      assert.ok(h.boss.tank >= 0 && h.boss.tank <= 1, 'the tank is published from empty to full');
+      if (m !== was) { if (timed[was]) spans[was] = i - since; since = i; was = m; }
+    }
+    for (const [mode, clip] of Object.entries(timed)) {
+      if (spans[mode] !== undefined) assert.equal(spans[mode], clipOf(K, clip).total, `L${layer} ${mode} lasts its drawn clip`);
+    }
+    assert.ok(seen.has('refill') && seen.has('hop') && seen.has('climb'), `L${layer} lands, refills and hops`);
+    assert.equal(seen.has('land'), layer < 3, 'layers 1 and 2 set down gently; layer 3 never does');
+    assert.equal(seen.has('dive'), layer === 3, 'only layer 3 divebombs');
+    assert.equal(seen.has('dash'), layer === 2, 'only layer 2 dashes');
   }
-  assert.deepEqual([...seen].sort(), ['climb', 'dive', 'fly', 'tell']);
+});
+
+/**
+ * THE TSUNAMI (layer 3). The divebomb sends one wave each way; a player deep
+ * in one when it reaches the wall is pinned there and hit; one riding near its
+ * top is let go.
+ */
+test("Water boss: the divebomb's waves pin a player caught deep, and spare one riding the top", () => {
+  for (const riding of [false, true]) {
+    const h = harness('tempest', 3);
+    let waves = [], pinnedHits = 0, heldSteps = 0;
+    for (let i = 0; i < 4000; i++) {
+      h.boss.anim++;
+      FIGHTS.tempest.attack[3].step(h.ctx);
+      waves = h.arena.hazards.filter((o) => o.kind === 'wave');
+      if (waves.length) {
+        // Keep the player in the way of a wave: on the floor, or near its top.
+        const w = waves[0];
+        if (!w.crash) {
+          h.ctx.playerBox.x = w.x + 4;
+          h.ctx.playerBox.y = riding ? w.y - 10 : FLOOR - 22;
+        }
+      }
+      heldSteps = h.held.length; pinnedHits = h.hurts.length;
+      if (!waves.length && heldSteps + pinnedHits > 0) break;
+    }
+    if (riding) assert.equal(h.held.length, 0, 'riding the top, he is not pinned');
+    else {
+      assert.ok(h.held.length > 0, 'caught deep, he is pinned to the wall');
+      assert.ok(h.hurts.some((x) => x.d === 4), 'and takes the spike damage');
+    }
+  }
 });
 
 test('phasing platforms never all vanish at once', () => {

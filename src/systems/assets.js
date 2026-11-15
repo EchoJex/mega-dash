@@ -491,6 +491,20 @@ export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = fals
    * of the way down, the way he is not going.
    */
   if (waterOnly) {
+    /**
+     * THE TANK BAR, in plain shapes until the tank's own art arrives: a small
+     * bar over his head, blue for what is left (`boss.tank`, 1 to 0), and black
+     * with a red X while it is empty (owner, 14 Nov 2026: "Whenever empty").
+     */
+    if (boss.tank !== undefined) {
+      const bx = Math.round(screenX + boss.w / 2 - 6), by = Math.round(screenY - 9);
+      g.fillStyle(0x0A0A12, 1); g.fillRect(bx, by, 13, 7);
+      if (boss.tank > 0) { g.fillStyle(0x3F92EC, 1); g.fillRect(bx + 1, by + 1, Math.max(1, Math.round(11 * boss.tank)), 5); }
+      else if (Math.floor(boss.anim / 8) % 2 === 0) {
+        g.fillStyle(0xD0603A, 1);
+        for (let k = 0; k < 5; k++) { g.fillRect(bx + 4 + k, by + 1 + k, 1, 1); g.fillRect(bx + 8 - k, by + 1 + k, 1, 1); }
+      }
+    }
     const j = boss.jet;
     if (!j || j.len <= 0) return;
     const ox = screenX + boss.w / 2, oy = screenY + boss.h * 0.75;

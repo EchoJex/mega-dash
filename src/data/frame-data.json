@@ -562,8 +562,8 @@
       },
       "tell": {
         "holds": [
-          18,
-          12
+          45,
+          45
         ],
         "cells": [
           4,
@@ -573,7 +573,7 @@
           true,
           true
         ],
-        "total": 30,
+        "total": 90,
         "hits": [],
         "spawns": []
       },
@@ -608,6 +608,94 @@
           true
         ],
         "total": 16,
+        "hits": [],
+        "spawns": []
+      },
+      "land": {
+        "holds": [
+          8,
+          8
+        ],
+        "cells": [
+          10,
+          11
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 16,
+        "hits": [],
+        "spawns": []
+      },
+      "refill": {
+        "holds": [
+          30,
+          30
+        ],
+        "cells": [
+          12,
+          13
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 60,
+        "hits": [],
+        "spawns": []
+      },
+      "hop": {
+        "holds": [
+          10,
+          10,
+          10
+        ],
+        "cells": [
+          14,
+          15,
+          16
+        ],
+        "ship": [
+          true,
+          true,
+          true
+        ],
+        "total": 30,
+        "hits": [],
+        "spawns": []
+      },
+      "squat": {
+        "holds": [
+          12,
+          12
+        ],
+        "cells": [
+          17,
+          18
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 24,
+        "hits": [],
+        "spawns": []
+      },
+      "dash": {
+        "holds": [
+          4,
+          4
+        ],
+        "cells": [
+          19,
+          20
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 8,
         "hits": [],
         "spawns": []
       }

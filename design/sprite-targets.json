@@ -3869,14 +3869,24 @@
         "fly": "loop",
         "tell": "once",
         "dive": "loop",
-        "climb": "loop"
+        "climb": "loop",
+        "land": "loop",
+        "refill": "loop",
+        "hop": "once",
+        "squat": "once",
+        "dash": "loop"
       },
       "frames": [
         "idle",
         "fly",
         "tell",
         "dive",
-        "climb"
+        "climb",
+        "land",
+        "refill",
+        "hop",
+        "squat",
+        "dash"
       ]
     }
   },

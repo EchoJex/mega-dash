@@ -266,6 +266,9 @@ const FURNITURE = {
       grateHurts: layer >= 2,
     };
     a.liquid = { kind: 'water', h: 9, target: 9, rise: 0.1, hold: 0 };
+    // Layer 3: "Both walls are now lined with spike balls." They hurt like a
+    // spike bed (his hazard loop), and the tsunami pins the player to them.
+    a.wallSpikes = layer >= 3;
   },
 
   /**
@@ -833,6 +836,16 @@ export function drawArena(g, arena, viewW, shake, reveal = 1, art = null) {
   }
 
   // Tempest Man's corner pipes, and the cascade pouring out of them.
+  // The Water boss's layer-3 walls, lined with spike balls from under the pipes to the water.
+  if (arena.wallSpikes) {
+    for (const wx of [arena.x0 + 4, arena.x1 - 4]) {
+      for (let y = arena.ceilY + 40; y < arena.floorY - 8; y += 12) {
+        g.fillStyle(0x9AA4B4, rv); g.fillCircle(wx + sx, y + sy, 5);
+        g.fillStyle(0xD8DEE8, rv); g.fillRect(wx - 1 + sx, y - 6 + sy, 2, 2); g.fillRect(wx - 1 + sx, y + 4 + sy, 2, 2);
+      }
+    }
+  }
+
   for (const pipe of arena.pipes || []) {
     g.fillStyle(0x4A5460, (1) * rv);
     g.fillRect(pipe.x + sx, pipe.y + sy, pipe.w, pipe.h);
@@ -1089,6 +1102,11 @@ export function drawHazards(g, arena, shake, skip = null) {
       g.fillStyle(0x8A6244, 1); g.fillRect(x + 1, y + 2, h.w - 2, 2);
       g.fillRect(x + 1, y + h.h - 4, h.w - 2, 2);
       g.fillStyle(0x2E2018, 1); g.fillRect(x, y, h.w, 1);
+    } else if (h.kind === 'wave') {
+      // The Water boss's tsunami, in plain shapes: see-through water with a white crest.
+      g.fillStyle(0x3E88C0, 0.55); g.fillRect(x, y, h.w, h.h);
+      g.fillStyle(0x9AD8F0, 0.7); g.fillRect(h.dir > 0 ? x + h.w - 4 : x, y, 4, h.h);
+      g.fillStyle(0xFFFFFF, 0.9); g.fillRect(x - 2, y - 2, h.w + 4, 3);
     } else if (h.kind === 'spikeball') {
       const r = h.w / 2, cxx = x + r, cyy = y + r;
       g.fillStyle(0x9AA4B4, 1); g.fillCircle(cxx, cyy, r);

@@ -10,9 +10,9 @@
  * THE JETPACK IS PART OF HIS BODY (owner, 11 Nov 2026: "Part of his body"): a
  * grey box on his back with two dark nozzles, pointing where the water goes in
  * that move — down while he hangs or climbs, behind him while he flies or
- * dives, up while he sinks in his warning. The game draws only the water.
- * `tell` is 30 steps, the warning his fight used before it read it from this
- * sheet.
+ * dives or charges, and shut off while he stands refilling. The game draws
+ * only the water. `tell` is 90 steps: the owner's 1.5 seconds in the corner
+ * before the layer-3 divebomb.
  */
 const P = { x: 32, y: 56 };
 const W = 27, H = 36;
@@ -56,15 +56,25 @@ export function rig() {
     sheet: 'body', pivot: P, palette: PALETTE,
     clips: {
       idle: [f(30, (g) => body(g)), f(30, (g) => body(g, 0, 0, 1))],
-      // Cruising high up: a slow bob, the water going out behind him.
+      // Hovering high up: a slow bob, the water going out behind him as he drifts.
       fly: [f(12, (g) => body(g, 0, 0, 0, 0, 'back')), f(12, (g) => body(g, 0, -1, 0, 0, 'back'))],
-      // The warning before a dive: he stops, shrinks back and looks down at the
-      // player; the nozzles turn up, which is what pushes him down.
-      tell: [f(18, (g) => body(g, -2, 0, 3, 3, 'up')), f(12, (g) => body(g, -3, 0, 5, 4, 'up'))],
-      // The dive: pushed forward, shaking.
+      // Layer 3, tank empty: he hangs in the corner for 1.5 seconds, watching
+      // the player, shrinking back before the divebomb.
+      tell: [f(45, (g) => body(g, -2, 0, 3, 3)), f(45, (g) => body(g, -3, 0, 5, 4))],
+      // The divebomb: pushed forward, shaking.
       dive: [f(4, (g) => body(g, 3, 0, 2, 0, 'back')), f(4, (g) => body(g, 4, 0, 2, 0, 'back'))],
-      // Climbing back up: stretched, looking up, the water going straight down.
+      // Rising to cruising height after the hop: stretched, looking up, the water straight down.
       climb: [f(8, (g) => body(g, 0, -2, 0, -3)), f(8, (g) => body(g, 0, -3, 0, -3))],
+      // Tank empty at layers 1 and 2: setting down slowly on his jets, looking at the floor.
+      land: [f(8, (g) => body(g, 0, 0, 0, 3)), f(8, (g) => body(g, 0, 1, 0, 3))],
+      // Standing on the floor while the tank fills: jets off, a slow breath.
+      refill: [f(30, (g) => body(g, 0, 0, 0, 0, 'off')), f(30, (g) => body(g, 0, 0, 2, 0, 'off'))],
+      // The wind-up before he lifts off again: the jets run and he strains upward.
+      hop: [f(10, (g) => body(g, 0, 0, 2, -1)), f(10, (g) => body(g, 0, 0, 0, -2)), f(10, (g) => body(g, 0, -2, 0, -3))],
+      // Layer 2: the squat before the charge across the floor.
+      squat: [f(12, (g) => body(g, -1, 0, 3, 0, 'off')), f(12, (g) => body(g, -2, 0, 5, 0, 'off'))],
+      // The charge: low and leaning forward, the water out behind him.
+      dash: [f(4, (g) => body(g, 3, 0, 4, 0, 'back')), f(4, (g) => body(g, 4, 0, 4, 0, 'back'))],
     },
   }];
 }
@@ -76,15 +86,17 @@ export function constraints() {
       + 'hit, and what hurts to touch) is 27 wide and 36 tall, centred on the pivot and standing on it; draw his '
       + 'body to fill about that. Touching him is the only way his own moves hurt, so what looks solid should be '
       + 'inside that box and what sticks out of it (spray, a scarf) should look like it would not hurt.',
-    '**`tell` is the dive\'s warning, and its length is how long the warning lasts**: he stops dead and sinks a '
-      + 'little before he crosses the room at the player\'s height. He has no shot to watch for, so this clip is '
-      + 'all the warning there is; it has to read at a glance. A second or third dive in a row (layers 2 and 3) '
-      + 'plays only its first six-tenths, so put the readable part first.',
+    '**three clips are waits, and their lengths are how long he waits**: `hop` is the wind-up before he lifts off '
+      + 'the floor, `squat` the crouch before his layer-2 charge, and `tell` the 1.5 seconds he hangs in a corner '
+      + 'before the layer-3 divebomb. `tell` is all the warning the divebomb gets, so it has to read at a glance.',
+    '**what each clip shows**: `fly` hovering and drifting; `land` setting down slowly on his jets; `refill` standing '
+      + 'on the floor while the tank fills; `hop` then `climb` lifting off and rising; `squat` then `dash` the '
+      + 'charge along the floor; `tell` then `dive` the divebomb, which ends on the floor and throws up a wave each way.',
     '**nothing on this sheet hits or spawns**: no `hit=` and no `spawn=` on any frame.',
     '**the jetpack is part of his body** (owner, 11 Nov 2026), drawn in every frame: "a large grey hydro jet '
       + 'pack", grey that is not one of his colours, with two nozzles. In each clip the nozzles point where the '
-      + 'water goes in that move: down in `idle` and `climb`, out behind him in `fly` and `dive`, and up in '
-      + '`tell` (he pushes himself down a little before he dives).',
+      + 'water goes in that move: down in `idle`, `tell`, `land`, `hop` and `climb`, out behind him in `fly`, `dive` '
+      + 'and `dash`, and shut off in `refill` and `squat`.',
     `**the game draws the water, not the pack.** It starts at ${WATER.x}, ${WATER.y} in the sheet's pixels `
       + '(the middle of him, three quarters of the way down) and runs about 30 pixels the way he is NOT going. '
       + 'It pushes the player and stops his shots, so it has to look like it comes out of the drawn nozzles: '

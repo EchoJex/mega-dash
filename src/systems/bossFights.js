@@ -578,34 +578,53 @@ function blazeHazard(layer) {
 
 // ── TEMPEST MAN (id `tempest`) — Water ──────────────────────────────
 /**
- * "Boss flies around the stage just like the attack pattern of Queen B from
- *  DKC at full health / damaged / critical health. Player takes moderate damage
- *  from contact with boss. Jetpack pushes the player in the direction of the
- *  water's travel and blocks player bullets."
+ * L1 "Boss hovers around the stage periodically dropping spike balls that
+ *     splash into the water and drift toward the drain. when hovering the jet
+ *     fuel level slowly decreases. Once the tank hits empty, immediately
+ *     navigate to the nearest wall and perform a controlled propulsive vertical
+ *     landing. Then slowly refill the tank bar. Once full short hop ascend to
+ *     cruising heights again. Player takes moderate damage from contact with
+ *     boss. Jetpack pushes the player in the direction of the water's travel
+ *     and blocks player bullets."
+ * L2 "Layer 2 does layer 1 stuff, plus sometimes instead of a hop and takeoff,
+ *     the boss slightly squats and does a watery dashing charge across the
+ *     level then regular again. Any random combination" (owner, 14 Nov 2026)
+ * L3 "Same as l1 only instead of a controlled vertical landing on empty, go to
+ *     the nearest corner, wait 1.5s then divebomb toward the players horizontal
+ *     location at end of 1.5s ready. Divebomb produces a tsunami 3x the bosses
+ *     height in both directions on contact with the ground. As the wave
+ *     approaches, Player must jump to the waters surface when it gets above
+ *     their head, then basically button mash jump to skip on the waters
+ *     surface. Failure to stay close to the surface as the wave crashes into
+ *     the far wall causes player to be pinned against wall spike balls until
+ *     the wave dissipates"
  *
- * THE QUEEN B PATTERN, as three layers. He is not a shooter — he is a moving
- * obstacle with an exhaust plume, and the fight is about reading where he is
- * going. He cruises at altitude, picks a moment, dives across the room at the
- * player's height, and climbs back. Layer by layer the cruise gets faster, the
- * gap between dives shorter, and the number of dives per pass goes up.
+ * THE TANK IS THE FIGHT'S CLOCK. It drains while he is in the air and he has to
+ * come down when it is empty, which is the one time he stands still. `b.tank`
+ * (1 full, 0 empty) is published for the picture: the bar on his pack, and the
+ * red X whenever it is empty (owner, 14 Nov 2026: "Whenever empty").
  *
- * THE JETPACK IS THE WEAPON. It fires opposite his travel, which means the
- * exhaust always sweeps the ground he just left — so the safe place is behind
- * him, not beside him. It shoves the player along its own direction and eats
- * player fire, so shooting him through the plume does not work and the answer
- * is to get around it.
+ * THE JETPACK IS STILL THE WEAPON. Its water shoves the player along its own
+ * direction and eats player fire. It points down whenever it is holding him up
+ * or setting him down, and behind him when he is travelling.
  *
- * This replaces an earlier water-cannon reading of the field. The tracker's
- * attack layers describe a flight pattern with no projectile at all, and the
- * cannon was a leftover from a previous draft of the same line.
+ * This replaces the Queen B dive pattern all three layers had until the
+ * owner's rewrite of 14 Nov 2026.
  */
 const TEMPEST = {
   cruiseY: { 1: 0.30, 2: 0.30, 3: 0.26 },   // fraction of the floor height
   drift: { 1: 0.55, 2: 0.9, 3: 1.3 },
-  rest: { 1: [140, 210], 2: [100, 160], 3: [65, 110] },
-  dives: { 1: 1, 2: 2, 3: 3 },
-  diveSpeed: { 1: 2.1, 2: 2.8, 3: 3.5 },
-  tellAgain: 0.6,    // a second or third dive's warning, as a share of the first's
+  tank: { 1: 900, 2: 780, 3: 660 },         // steps in the air a full tank lasts
+  refill: { 1: 300, 2: 240, 3: 200 },       // steps on the floor to fill it again
+  drop: { 1: [150, 230], 2: [110, 180], 3: [80, 140] },   // steps between spike balls
+  toWall: 1.6,       // how fast he heads for the wall on an empty tank
+  landSpeed: 0.8,    // "controlled": slower than anything else he does
+  climbSpeed: 1.1,
+  dashChance: 0.5,   // L2: how often the squat-and-dash replaces the hop
+  dashSpeed: 3.2,
+  diveSpeed: 4.5,
+  // The tsunami: "3x the bosses height" is three times his 36-tall box (owner).
+  wave: { h: 108, w: 26, speed: 2.2, linger: 150, surface: 16 },
   contact: 2,        // "moderate damage from contact with boss"
   jetLen: 30,
   jetPush: 0.9,
@@ -613,20 +632,21 @@ const TEMPEST = {
 };
 
 /**
- * The exhaust plume: a short ray out of the boss, pointing opposite his travel.
- *
- * Sampled at a few points rather than modelled as a shape, because the only two
- * questions it ever answers are "is the player in it" and "is a bullet in it",
- * and both are cheap point tests. `b.jet` is left on the boss for the renderer
- * so the nozzles always point where the force actually is.
+ * The water out of his pack: a short ray pointing `jx, jy`, or the way he is
+ * NOT going when no direction is given. `on` false shuts it off (he is on the
+ * floor). Sampled at a few points, because the only questions it answers are
+ * "is the player in it" and "is a bullet in it". `b.jet` is left on the boss for
+ * the renderer so the picture and the push cannot disagree.
  */
-function tempestJet(ctx, b, fs) {
+function tempestJet(ctx, b, fs, on = true, jx = null, jy = null) {
   const vx = b.x - (fs.px ?? b.x), vy = b.y - (fs.py ?? b.y);
   fs.px = b.x; fs.py = b.y;
-  const m = Math.hypot(vx, vy);
-  // Hovering: the nozzles hang straight down, which is also what holds him up.
-  const jx = m < 0.08 ? 0 : -vx / m;
-  const jy = m < 0.08 ? 1 : -vy / m;
+  if (!on) { b.jet = { dx: 0, dy: 1, len: 0 }; return; }
+  if (jx === null) {
+    const m = Math.hypot(vx, vy);
+    jx = m < 0.08 ? 0 : -vx / m;
+    jy = m < 0.08 ? 1 : -vy / m;
+  }
   b.jet = { dx: jx, dy: jy, len: TEMPEST.jetLen };
 
   const ox = b.x + b.w / 2, oy = b.y + b.h * 0.75;
@@ -636,7 +656,7 @@ function tempestJet(ctx, b, fs) {
     ctx.blockAt(px, py, TEMPEST.jetR);
     const near = px > box.x - TEMPEST.jetR && px < box.x + box.w + TEMPEST.jetR
       && py > box.y - TEMPEST.jetR && py < box.y + box.h + TEMPEST.jetR;
-    // Weaker further down the plume, so being clipped by its tip is a nudge
+    // Weaker further down the water, so being clipped by its tip is a nudge
     // and standing in its mouth is a problem.
     if (near) {
       const falloff = 1 - d / (TEMPEST.jetLen + 8);
@@ -646,27 +666,74 @@ function tempestJet(ctx, b, fs) {
 }
 
 /**
- * HIS DRAWING SETS HIS TIMING. How long the warning before a dive lasts is the
- * length of the `tell` clip in `design/sprites/boss-tempest-body.sprite`, the
- * same contract as Strike Man's and Thorn Man's sheets. What stays above is
- * not animation: speeds, heights, damage and the plume.
+ * THE TSUNAMI. Each wave is a tall block of water that crosses the room and
+ * breaks on the wall. A player inside it is carried along and can jump as often
+ * as he likes (`ctx.swim`), which is how he gets up to the surface and skips
+ * along it. When the wave reaches the wall, a player still deeper than
+ * `wave.surface` below the top is pinned to the wall's spike balls and hit
+ * every time his flicker runs out, until the water is gone.
+ */
+function tempestWaves(ctx) {
+  const a = ctx.arena, W = TEMPEST.wave, p = ctx.player, box = ctx.playerBox;
+  if (!a) return;
+  for (let i = a.hazards.length - 1; i >= 0; i--) {
+    const w = a.hazards[i];
+    if (w.kind !== 'wave') continue;
+    const inside = box.x + box.w > w.x && box.x < w.x + w.w && box.y + box.h > w.y;
+    if (w.crash > 0) {
+      // Breaking on the wall: it sinks away over `linger` steps.
+      w.h = W.h * (w.crash / W.linger); w.y = a.floorY - w.h;
+      if (w.pin) {
+        ctx.hold(w.pin.x, w.pin.y);
+        if (ctx.playerInvuln === 0) ctx.hurt(w.dir > 0 ? ctx.bounds.x1 : ctx.bounds.x0, ctx.hazardDamage);
+      }
+      if (--w.crash <= 0) a.hazards.splice(i, 1);
+      continue;
+    }
+    w.x += w.dir * W.speed;
+    if (inside) { ctx.swim(); ctx.shove(w.dir * W.speed, 0); }
+    const atWall = w.dir > 0 ? w.x + w.w >= ctx.bounds.x1 : w.x <= ctx.bounds.x0;
+    if (!atWall) continue;
+    w.crash = W.linger;
+    if (inside && box.y + box.h - w.y > W.surface) {
+      w.pin = { x: w.dir > 0 ? ctx.bounds.x1 - 8 : ctx.bounds.x0 + 8, y: p.y + 12 };
+    }
+  }
+}
+
+/**
+ * HIS DRAWING SETS HIS TIMING, the same contract as Strike Man's and Thorn
+ * Man's sheets: how long he winds up before a hop (`hop`), how long he squats
+ * before a dash (`squat`) and how long he waits in the corner before the
+ * divebomb (`tell`, 1.5 seconds as handed to Design) are the lengths of those
+ * clips in `design/sprites/boss-tempest-body.sprite`.
  */
 const TEMPEST_SHEET = 'boss:tempest:body';
 /** The fight's mode, as the clip that shows it. */
-const TEMPEST_CLIP = { cruise: 'fly', tell: 'tell', dive: 'dive', climb: 'climb' };
+const TEMPEST_CLIP = {
+  cruise: 'fly', toWall: 'fly', land: 'land', refill: 'refill', hop: 'hop',
+  climb: 'climb', squat: 'squat', dash: 'dash', tell: 'tell', dive: 'dive',
+};
 
 function tempestAttack(layer) {
   return (ctx) => {
-    const tell = clipOf(TEMPEST_SHEET, 'tell').total;
-    const b = ctx.boss, p = ctx.player;
+    const b = ctx.boss, p = ctx.player, a = ctx.arena;
+    const full = TEMPEST.tank[layer];
     let fs = b.fs;
     if (!fs) {
-      fs = b.fs = { mode: 'cruise', t: rnd(...TEMPEST.rest[layer]), dir: -1, left: 0 };
+      fs = b.fs = { mode: 'cruise', dir: -1, tank: full, drop: rnd(...TEMPEST.drop[layer]) };
       // He hurts more to touch than the default body-check, because touching
       // him is most of what the fight can do to you.
       b.contactDamage = TEMPEST.contact;
     }
     const cruiseY = ctx.floorY * TEMPEST.cruiseY[layer];
+    const floorTop = ctx.floorY - b.h;
+    const to = (mode) => { fs.mode = mode; fs.t = 0; };
+    const pcx = p.x + 12, bcx = b.x + b.w / 2;
+    // Which wall is nearer: -1 the left, 1 the right.
+    const nearWall = bcx < (ctx.bounds.x0 + ctx.bounds.x1) / 2 ? -1 : 1;
+    let jet = [true, null, null];          // on, and its direction (null: the way he is not going)
+    fs.t = (fs.t || 0) + 1;
 
     switch (fs.mode) {
       case 'cruise': {
@@ -674,62 +741,115 @@ function tempestAttack(layer) {
         b.y += (cruiseY - b.y) * 0.06 + Math.sin(b.anim * 0.05) * 0.35;
         if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
         if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
-        if (--fs.t <= 0) {
-          fs.mode = 'tell';
-          fs.t = tell;
-          fs.left = TEMPEST.dives[layer];
+        // "periodically dropping spike balls that splash into the water and
+        // drift toward the drain" — the room's own floaters carry them from here.
+        if (a && --fs.drop <= 0) {
+          fs.drop = rnd(...TEMPEST.drop[layer]);
+          a.hazards.push({
+            kind: 'spikeball', x: bcx - 6, y: b.y + b.h, w: 12, h: 12,
+            damage: 2, popsOnBall: true, spin: 0,
+          });
         }
+        if (--fs.tank <= 0) { fs.tank = 0; fs.dir = nearWall; to('toWall'); }
         break;
       }
 
-      case 'tell': {
-        // He stops dead and sinks a little. Standing still is the whole
-        // telegraph — with no projectile to watch for, the only warning the
-        // player gets is that he has stopped drifting.
-        b.y += 0.35;
-        b.facing = p.x + 12 > b.x + b.w / 2 ? 1 : -1;      // he looks at whoever he is about to dive on
-        if (--fs.t > 0) break;
-        fs.mode = 'dive';
-        // Committed at launch: he goes for the height the player was at, and
-        // crosses the room. Dodging is a matter of not being on that line by
-        // the time he arrives.
-        fs.targetY = Math.max(16, Math.min(ctx.floorY - b.h - 2, p.y));
-        fs.dir = p.x + 12 > b.x + b.w / 2 ? 1 : -1;
-        break;
-      }
-
-      case 'dive': {
-        b.x += fs.dir * TEMPEST.diveSpeed[layer];
-        b.y += Math.sign(fs.targetY - b.y) * Math.min(2.2, Math.abs(fs.targetY - b.y) * 0.2);
-        const atEdge = fs.dir < 0
-          ? b.x <= ctx.bounds.x0
-          : b.x + b.w >= ctx.bounds.x1;
-        if (atEdge) {
-          b.x = fs.dir < 0 ? ctx.bounds.x0 : ctx.bounds.x1 - b.w;
-          if (--fs.left > 0) { fs.mode = 'tell'; fs.t = Math.round(tell * TEMPEST.tellAgain); }
-          else { fs.mode = 'climb'; }
-        }
-        break;
-      }
-
-      case 'climb': {
+      // Empty: "immediately navigate to the nearest wall" (L3: the nearest corner).
+      case 'toWall': {
+        b.x += fs.dir * TEMPEST.toWall;
         b.y += (cruiseY - b.y) * 0.1;
-        if (Math.abs(b.y - cruiseY) < 2) {
-          fs.mode = 'cruise';
-          fs.t = rnd(...TEMPEST.rest[layer]);
-          fs.dir = -fs.dir;
+        const at = fs.dir < 0 ? b.x <= ctx.bounds.x0 : b.x + b.w >= ctx.bounds.x1;
+        if (at) {
+          b.x = fs.dir < 0 ? ctx.bounds.x0 : ctx.bounds.x1 - b.w;
+          to(layer >= 3 ? 'tell' : 'land');
         }
+        break;
+      }
+
+      // "a controlled propulsive vertical landing": straight down, slowly, on his jets.
+      case 'land': {
+        jet = [true, 0, 1];
+        b.y = Math.min(floorTop, b.y + TEMPEST.landSpeed);
+        if (b.y >= floorTop) to('refill');
+        break;
+      }
+
+      // "Then slowly refill the tank bar." The one time he stands still.
+      case 'refill': {
+        jet = [false];
+        b.y = floorTop;
+        fs.tank = Math.min(full, fs.tank + full / TEMPEST.refill[layer]);
+        if (fs.tank >= full) to(layer === 2 && Math.random() < TEMPEST.dashChance ? 'squat' : 'hop');
+        break;
+      }
+
+      // "Once full short hop ascend to cruising heights again": the wind-up
+      // is his drawn `hop`, then he climbs.
+      case 'hop': {
+        jet = [true, 0, 1];
+        if (fs.t >= clipOf(TEMPEST_SHEET, 'hop').total) to('climb');
+        break;
+      }
+      case 'climb': {
+        jet = [true, 0, 1];
+        b.y = Math.max(cruiseY, b.y - TEMPEST.climbSpeed);
+        if (b.y <= cruiseY) { fs.dir = -nearWall; fs.drop = rnd(...TEMPEST.drop[layer]); to('cruise'); }
+        break;
+      }
+
+      // L2: "the boss slightly squats and does a watery dashing charge across
+      // the level then regular again".
+      case 'squat': {
+        jet = [false];
+        fs.dir = -nearWall;
+        if (fs.t >= clipOf(TEMPEST_SHEET, 'squat').total) to('dash');
+        break;
+      }
+      case 'dash': {
+        b.x += fs.dir * TEMPEST.dashSpeed;
+        const at = fs.dir < 0 ? b.x <= ctx.bounds.x0 : b.x + b.w >= ctx.bounds.x1;
+        if (at) { b.x = fs.dir < 0 ? ctx.bounds.x0 : ctx.bounds.x1 - b.w; to('hop'); }
+        break;
+      }
+
+      // L3: "wait 1.5s then divebomb toward the players horizontal location at
+      // end of 1.5s". The wait is his drawn `tell`; he hangs on his jets and
+      // watches the player.
+      case 'tell': {
+        jet = [true, 0, 1];
+        b.facing = pcx > bcx ? 1 : -1;
+        if (fs.t < clipOf(TEMPEST_SHEET, 'tell').total) break;
+        fs.tx = Math.max(ctx.bounds.x0, Math.min(ctx.bounds.x1 - b.w, pcx - b.w / 2));
+        fs.dir = fs.tx + b.w / 2 >= bcx ? 1 : -1;
+        to('dive');
+        break;
+      }
+      case 'dive': {
+        const dx = fs.tx - b.x, dy = floorTop - b.y, m = Math.hypot(dx, dy);
+        if (m > TEMPEST.diveSpeed) { b.x += (dx / m) * TEMPEST.diveSpeed; b.y += (dy / m) * TEMPEST.diveSpeed; break; }
+        b.x = fs.tx; b.y = floorTop;
+        // "Divebomb produces a tsunami 3x the bosses height in both directions
+        // on contact with the ground."
+        if (a) {
+          for (const dir of [-1, 1]) {
+            a.hazards.push({
+              kind: 'wave', dir, w: TEMPEST.wave.w, h: TEMPEST.wave.h,
+              x: b.x + b.w / 2 - TEMPEST.wave.w / 2, y: ctx.floorY - TEMPEST.wave.h, crash: 0,
+            });
+          }
+        }
+        ctx.shake(3, 24);
+        to('refill');
         break;
       }
     }
 
-    tempestJet(ctx, b, fs);
+    tempestWaves(ctx);
+    tempestJet(ctx, b, fs, ...jet);
     if (fs.mode !== 'tell') b.facing = fs.dir;
-    // His pack is in his pictures, so the picture has to agree with the water:
-    // while a cruise is mostly him rising or settling, the water goes down, and
-    // `climb` is the picture with the nozzles down.
-    const rising = fs.mode === 'cruise' && Math.abs(b.jet.dy) > Math.abs(b.jet.dx);
-    playClip(b, rising ? 'climb' : TEMPEST_CLIP[fs.mode]);
+    // For the picture: how full the tank is, 1 to 0. Empty shows the red X.
+    b.tank = fs.tank / full;
+    playClip(b, TEMPEST_CLIP[fs.mode]);
     b.clipT++;
   };
 }
@@ -748,11 +868,12 @@ function tempestAttack(layer) {
  *       footing and they are shootable, so they are the one thing in the room
  *       that is on your side — until they reach the ball and break open.
  *   L2  rain cycles between three directions on a fixed beat, each change
- *       telegraphed by a lightning bolt and a screen flash; spike balls join
- *       the barrels coming out of the pipes.
+ *       telegraphed by a lightning bolt and a screen flash; barrels still come.
  *   L3  the direction changes hold for a random stretch of at least three
- *       seconds with only a brief die-down between them, and it is spike balls
- *       only — the barrels stop coming, so the floor stops offering shelter.
+ *       seconds with only a brief die-down between them; the pipes send nothing
+ *       and "Both walls are now lined with spike balls", which hurt like spikes
+ *       (owner, 14 Nov 2026). The spike balls in the water are the boss's own,
+ *       dropped by his attack at every layer.
  */
 const TEMPEST_HAZ = {
   rainPush: 0.055,
@@ -767,8 +888,8 @@ const TEMPEST_HAZ = {
   // in one readable line: L2 is mostly barrels with the occasional ball.
   drops: {
     1: ['barrel'],
-    2: ['barrel', 'barrel', 'spikeball'],
-    3: ['spikeball'],
+    2: ['barrel'],
+    3: [],
   },
   floatSpeed: 1.3,
   driftSpeed: 0.5,
@@ -776,6 +897,7 @@ const TEMPEST_HAZ = {
   // recovery — and bright enough that the room is gone while it burns.
   bangFrames: 30,
   bangHard: 0.92,
+  wallReach: 6,               // how close to an L3 wall its spike balls reach
 };
 
 function tempestHazard(layer) {
@@ -831,6 +953,15 @@ function tempestHazard(layer) {
       && box.y + box.h >= a.drain.y - 1
       && box.x + box.w > a.drain.x && box.x < a.drain.x + a.drain.w;
     if (hitBall || onGrate) ctx.hurt(ball.x, 2);
+
+    // L3: the walls' spike balls. Massive damage and a beam back in, like a
+    // spike bed. A player the tsunami has pinned there is the wave's to hurt.
+    if (a.wallSpikes && !ctx.run?.held
+      && (box.x <= ctx.bounds.x0 + TEMPEST_HAZ.wallReach || box.x + box.w >= ctx.bounds.x1 - TEMPEST_HAZ.wallReach)
+      && ctx.playerInvuln === 0) {
+      ctx.hurt(box.x < ball.x ? ctx.bounds.x0 : ctx.bounds.x1, ctx.hazardDamage);
+      ctx.beam();
+    }
   };
 }
 
@@ -867,6 +998,7 @@ function tempestFloaters(ctx, a, hs, layer) {
   hs.pipe++;
 
   const table = TEMPEST_HAZ.drops[layer];
+  if (!table.length) return;
   const kind = table[Math.floor(Math.random() * table.length)];
   const x = pipe.dir > 0 ? pipe.x + pipe.w - 6 : pipe.x - 6;
   if (kind === 'barrel') {

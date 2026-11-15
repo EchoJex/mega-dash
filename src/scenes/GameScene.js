@@ -859,6 +859,10 @@ export default class GameScene extends Phaser.Scene {
     // same read-a-step-late rule as `coverSlow` above.
     r.heldActive = r.held || null;
     r.held = null;
+    // SWIMMING (the Water boss's tsunami): last step's grant lets a jump start
+    // in mid-water, through the same short grace a step off a ledge gets.
+    if (r.swim) p.coyote = FEEL.coyoteFrames;
+    r.swim = false;
     if (r.heldActive && !p.beam) {
       p.x = r.heldActive.x - 12; p.y = r.heldActive.y - 12;
       p.vx = 0; p.vy = 0; p.knockbackVx = 0; p.sliding = false;
@@ -2267,6 +2271,19 @@ export default class GameScene extends Phaser.Scene {
        * asserts it every step it wants him held, so it can never stick.
        */
       hold: (x, y) => { this.run.held = { x, y }; },
+      /**
+       * WHAT A SPIKE COSTS, AND THE BEAM THAT FOLLOWS IT, for a room whose own
+       * furniture is spikes: the spike balls on the Water boss's layer-3 walls.
+       */
+      hazardDamage: this.hazardDamage(),
+      beam: () => this.beamOut(),
+      /**
+       * SWIMMING — the Water boss's tsunami. For one step the player may jump
+       * from where he is, as if he stood on ground, so mashing jump carries him
+       * up through the wave and skips him along its top. Asked for again every
+       * step he is in the water, so it can never stick.
+       */
+      swim: () => { this.run.swim = true; },
       /**
        * THE ROOM HITTING ITS OWN BOSS. Strike Man's training bag is the first
        * thing to need it: the player lifts it with a psychic shot and it comes

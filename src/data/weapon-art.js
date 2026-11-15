@@ -268,18 +268,26 @@ export const WEAPON_ART = {
    * under the middle of his collision box (he flies, so it is under his feet,
    * not on the floor), drawn facing right and mirrored to face the way he flies.
    *
-   * `tell` is the warning before a dive and its length is how long the warning
-   * lasts; a second or third dive in a row plays only its first part. The rest
-   * loop while that part of the flight lasts. THE JETPACK IS PART OF HIS BODY
-   * (owner, 11 Nov 2026), drawn in every frame with its nozzles pointing where
-   * the water goes in that move; the game draws only the water (`drawBossRig`).
+   * His moves since the owner's rewrite of 14 Nov 2026: he hovers (`fly`) until
+   * his tank is empty, sets down by a wall (`land`), stands refilling
+   * (`refill`), winds up (`hop`) and rises again (`climb`). At layer 2 he
+   * sometimes squats (`squat`) and charges across the floor (`dash`) first. At
+   * layer 3 he waits in a corner (`tell`) and divebombs (`dive`) instead of
+   * landing. `tell`, `hop` and `squat` play once and their lengths are how long
+   * each wait lasts; the rest loop while that part lasts. THE JETPACK IS PART
+   * OF HIS BODY (owner, 11 Nov 2026), drawn in every frame with its nozzles
+   * pointing where the water goes in that move; the game draws only the water
+   * and, for now, a plain tank bar (`drawBossRig`).
    */
   tempest: {
     boss: true,
     sheets: {
       body: {
         grid: { w: 64, h: 64 }, layer: 'boss', heldBy: 'the point under the middle of him (under his feet as he flies)',
-        clips: { idle: 'loop', fly: 'loop', tell: 'once', dive: 'loop', climb: 'loop' },
+        clips: {
+          idle: 'loop', fly: 'loop', tell: 'once', dive: 'loop', climb: 'loop',
+          land: 'loop', refill: 'loop', hop: 'once', squat: 'once', dash: 'loop',
+        },
       },
     },
   },

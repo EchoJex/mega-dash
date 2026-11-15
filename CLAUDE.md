@@ -1178,6 +1178,10 @@ the elemental attributes, the SYSTEMS section, a BUGS log and a BRAINSTORM area.
 **When working code and a `[draft]` field disagree, the field wins** and the code changes.
 Tempest Man's water cannon went because his attack fields describe a Queen B flight pattern
 with no projectile; the Sinister Stare changed class outright when its field did.
+**The Water boss was rewritten again on 14 Nov 2026**: a tank that drains while he hovers, a landing
+and refill, a hop back up, a layer-2 charge and a layer-3 divebomb with a tsunami. His fight publishes
+`b.tank` (1 full, 0 empty) for the tank bar; the tank bar, the water jets and the waves are plain
+shapes until their art comes back from Claude Design.
 
 The owner edits the tracker directly or through the **tracker web app** (`docs/index.html`,
 the root of the GitHub Pages site served from `main`). A later tool joins that site as one
