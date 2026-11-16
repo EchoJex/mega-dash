@@ -528,25 +528,50 @@
     "clips": {
       "idle": {
         "holds": [
-          30,
           30
         ],
         "cells": [
-          0,
-          1
+          0
         ],
         "ship": [
-          true,
           true
         ],
-        "total": 60,
+        "total": 30,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          }
+        ]
       },
       "fly": {
         "holds": [
-          12,
           12
+        ],
+        "cells": [
+          1
+        ],
+        "ship": [
+          true
+        ],
+        "total": 12,
+        "hits": [],
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          }
+        ]
+      },
+      "tell": {
+        "holds": [
+          45,
+          45
         ],
         "cells": [
           2,
@@ -556,14 +581,27 @@
           true,
           true
         ],
-        "total": 24,
+        "total": 90,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 1,
+            "step": 45,
+            "x": -25,
+            "y": -31
+          }
+        ]
       },
-      "tell": {
+      "dive": {
         "holds": [
-          45,
-          45
+          4,
+          4
         ],
         "cells": [
           4,
@@ -573,114 +611,199 @@
           true,
           true
         ],
-        "total": 90,
+        "total": 8,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 1,
+            "step": 4,
+            "x": -25,
+            "y": -28
+          }
+        ]
       },
-      "dive": {
+      "climb": {
         "holds": [
-          4,
-          4
+          8
         ],
         "cells": [
-          6,
-          7
+          6
         ],
         "ship": [
-          true,
           true
         ],
         "total": 8,
         "hits": [],
-        "spawns": []
-      },
-      "climb": {
-        "holds": [
-          8,
-          8
-        ],
-        "cells": [
-          8,
-          9
-        ],
-        "ship": [
-          true,
-          true
-        ],
-        "total": 16,
-        "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -28
+          }
+        ]
       },
       "land": {
         "holds": [
-          8,
           8
         ],
         "cells": [
-          10,
-          11
+          7
         ],
         "ship": [
-          true,
           true
         ],
-        "total": 16,
+        "total": 8,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          }
+        ]
       },
       "refill": {
         "holds": [
-          30,
           30
         ],
         "cells": [
-          12,
-          13
+          8
         ],
         "ship": [
-          true,
           true
         ],
-        "total": 60,
+        "total": 30,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          }
+        ]
       },
       "hop": {
         "holds": [
           10,
           10,
+          10,
+          10,
+          10,
           10
         ],
         "cells": [
-          14,
-          15,
-          16
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
         ],
         "ship": [
           true,
           true,
+          true,
+          true,
+          true,
           true
         ],
-        "total": 30,
+        "total": 60,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 1,
+            "step": 10,
+            "x": -25,
+            "y": -32
+          },
+          {
+            "frame": 2,
+            "step": 20,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 3,
+            "step": 30,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 4,
+            "step": 40,
+            "x": -25,
+            "y": -29
+          },
+          {
+            "frame": 5,
+            "step": 50,
+            "x": -25,
+            "y": -28
+          }
+        ]
       },
       "squat": {
         "holds": [
-          12,
+          2,
+          2,
+          8,
           12
         ],
         "cells": [
+          15,
+          16,
           17,
           18
         ],
         "ship": [
           true,
+          true,
+          true,
           true
         ],
         "total": 24,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -27
+          },
+          {
+            "frame": 1,
+            "step": 2,
+            "x": -25,
+            "y": -27
+          },
+          {
+            "frame": 2,
+            "step": 4,
+            "x": -25,
+            "y": -27
+          },
+          {
+            "frame": 3,
+            "step": 12,
+            "x": -25,
+            "y": -26
+          }
+        ]
       },
       "dash": {
         "holds": [
@@ -697,7 +820,50 @@
         ],
         "total": 8,
         "hits": [],
-        "spawns": []
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -27
+          },
+          {
+            "frame": 1,
+            "step": 4,
+            "x": -25,
+            "y": -26
+          }
+        ]
+      },
+      "slam": {
+        "holds": [
+          8,
+          14
+        ],
+        "cells": [
+          21,
+          22
+        ],
+        "ship": [
+          true,
+          true
+        ],
+        "total": 22,
+        "hits": [],
+        "spawns": [
+          {
+            "frame": 0,
+            "step": 0,
+            "x": -25,
+            "y": -23
+          },
+          {
+            "frame": 1,
+            "step": 8,
+            "x": -25,
+            "y": -26
+          }
+        ]
       }
     }
   },

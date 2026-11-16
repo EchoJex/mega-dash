@@ -623,8 +623,14 @@ const TEMPEST = {
   dashChance: 0.5,   // L2: how often the squat-and-dash replaces the hop
   dashSpeed: 3.2,
   diveSpeed: 4.5,
-  // The tsunami: "3x the bosses height" is three times his 36-tall box (owner).
-  wave: { h: 108, w: 26, speed: 2.2, linger: 150, surface: 16 },
+  // The tsunami. Its height was "3x the bosses height" (108, three times his
+  // 36-tall box); the owner lowered it to 2.5x on the art canvas (16 Nov 2026:
+  // "lower the height of the wave ... to 2.5x boss height, significantly slow
+  // down the wave travel speed"), so 90 tall at half the old 2.2 a step. It
+  // grows in over `spawn` steps in `stages` even steps, the pictures the room
+  // has for it (arena-art/tempest.js), so the water you can touch is the water
+  // you can see.
+  wave: { h: 90, w: 26, speed: 1.1, linger: 150, surface: 16, spawn: 36, stages: 18 },
   contact: 2,        // "moderate damage from contact with boss"
   jetLen: 30,
   jetPush: 0.9,
@@ -690,6 +696,10 @@ function tempestWaves(ctx) {
       if (--w.crash <= 0) a.hazards.splice(i, 1);
       continue;
     }
+    w.age = (w.age || 0) + 1;
+    if (w.age < W.spawn) {
+      w.h = (W.h * (Math.floor(w.age / (W.spawn / W.stages)) + 1)) / W.stages; w.y = a.floorY - w.h;
+    } else if (w.h !== W.h) { w.h = W.h; w.y = a.floorY - w.h; }
     w.x += w.dir * W.speed;
     if (inside) { ctx.swim(); ctx.shove(w.dir * W.speed, 0); }
     const atWall = w.dir > 0 ? w.x + w.w >= ctx.bounds.x1 : w.x <= ctx.bounds.x0;
@@ -712,7 +722,7 @@ const TEMPEST_SHEET = 'boss:tempest:body';
 /** The fight's mode, as the clip that shows it. */
 const TEMPEST_CLIP = {
   cruise: 'fly', toWall: 'fly', land: 'land', refill: 'refill', hop: 'hop',
-  climb: 'climb', squat: 'squat', dash: 'dash', tell: 'tell', dive: 'dive',
+  climb: 'climb', squat: 'squat', dash: 'dash', tell: 'tell', dive: 'dive', slam: 'slam',
 };
 
 function tempestAttack(layer) {
@@ -833,13 +843,21 @@ function tempestAttack(layer) {
         if (a) {
           for (const dir of [-1, 1]) {
             a.hazards.push({
-              kind: 'wave', dir, w: TEMPEST.wave.w, h: TEMPEST.wave.h,
-              x: b.x + b.w / 2 - TEMPEST.wave.w / 2, y: ctx.floorY - TEMPEST.wave.h, crash: 0,
+              kind: 'wave', dir, w: TEMPEST.wave.w, h: TEMPEST.wave.h / TEMPEST.wave.stages, age: 0,
+              x: b.x + b.w / 2 - TEMPEST.wave.w / 2, y: ctx.floorY - TEMPEST.wave.h / TEMPEST.wave.stages, crash: 0,
             });
           }
         }
         ctx.shake(3, 24);
-        to('refill');
+        to('slam');
+        break;
+      }
+
+      // The landing: his drawn `slam` (divebomb 01, picked 15 Nov 2026), then he refills.
+      case 'slam': {
+        jet = [false];
+        b.y = floorTop;
+        if (fs.t >= clipOf(TEMPEST_SHEET, 'slam').total) to('refill');
         break;
       }
     }

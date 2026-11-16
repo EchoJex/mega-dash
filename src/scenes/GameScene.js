@@ -3209,7 +3209,7 @@ export default class GameScene extends Phaser.Scene {
         // silhouette: the rectangle underneath is still the honest footprint.
         // A drawn body carries its own pack, so only the water is drawn, over
         // him (sprites sit above `g`). A rectangle gets the whole plain pack.
-        drawBossRig(drawn ? L.boss.gAboveSprites : L.boss.g, b, sx(b.x), sy(b.y), !!drawn);
+        drawBossRig(drawn ? L.boss.gAboveSprites : L.boss.g, b, sx(b.x), sy(b.y), !!drawn, this.arena ? sy(this.arena.floorY) : Infinity);
         shadeBody(L.boss, body, sx(b.x), sy(b.y), b.w, b.h, shadeA);
       }
       const bf = Attr.statusFlash(b.status);

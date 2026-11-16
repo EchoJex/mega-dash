@@ -286,7 +286,7 @@ export const WEAPON_ART = {
         grid: { w: 64, h: 64 }, layer: 'boss', heldBy: 'the point under the middle of him (under his feet as he flies)',
         clips: {
           idle: 'loop', fly: 'loop', tell: 'once', dive: 'loop', climb: 'loop',
-          land: 'loop', refill: 'loop', hop: 'once', squat: 'once', dash: 'loop',
+          land: 'loop', refill: 'loop', hop: 'once', squat: 'once', dash: 'loop', slam: 'once',
         },
       },
     },

@@ -60,6 +60,7 @@
 import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
 import SPRITE_ART from '../data/sprite-art.json' with { type: 'json' };
 import { sfxFile } from './sfx.js';
+import { drawTempestWater } from './tempest-water.js';
 
 /**
  * Real art. Anything not listed here falls through to a placeholder, which is
@@ -482,7 +483,7 @@ export function drawPlaceholder(g, actor) {
  * attack loop), so the picture and the physics cannot disagree. When real art
  * lands via MANIFEST this goes away with it.
  */
-export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = false) {
+export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = false, floorY = Infinity) {
   if (boss.rig !== 'jetpack') return;
   /**
    * OVER A DRAWN BODY, ONLY THE WATER (owner, 11 Nov 2026: the pack is "part
@@ -491,12 +492,15 @@ export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = fals
    * of the way down, the way he is not going.
    */
   if (waterOnly) {
+    // His picked art (15-16 Nov 2026): the bar's level, jet G, the charge's water and the gas.
+    const done = drawTempestWater(g, boss, Math.round(screenX + boss.w / 2), Math.round(screenY + boss.h), floorY);
+    if (done === true) return;
     /**
      * THE TANK BAR, in plain shapes until the tank's own art arrives: a small
      * bar over his head, blue for what is left (`boss.tank`, 1 to 0), and black
      * with a red X while it is empty (owner, 14 Nov 2026: "Whenever empty").
      */
-    if (boss.tank !== undefined) {
+    if (boss.tank !== undefined && !done) {
       const bx = Math.round(screenX + boss.w / 2 - 6), by = Math.round(screenY - 9);
       g.fillStyle(0x0A0A12, 1); g.fillRect(bx, by, 13, 7);
       if (boss.tank > 0) { g.fillStyle(0x3F92EC, 1); g.fillRect(bx + 1, by + 1, Math.max(1, Math.round(11 * boss.tank)), 5); }

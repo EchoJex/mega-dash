@@ -14,6 +14,7 @@ import {
   H, TAU, OLc, hex, ramp, bayer, hash, rng, noise2, canvas, pick, Raster, hdma,
   R, dot, walk, flipX, frames, pieces,
 } from './pixels.js';
+import { WAVE, wavePictures, waveFrame, crestX, waveH } from './tempest-wave.js';
 
 const CASCADE_FRAMES = 32;   // the pouring water repeats exactly every 32 steps
 const SURF_FRAMES = 157;     // the surface and its glints: one per two steps of 314
@@ -291,6 +292,11 @@ export default function tempest(S, a, viewW) {
   const midN = bandTile(midB, midB.n), midL = bandTile(midB, midB.l);
   const topN = bandTile(topB, topB.n), topL = bandTile(topB, topB.l);
 
+  // The tsunami (layer 3), behind the pipes, the walls' spike balls and the floor water.
+  const waveSheet = a.wallSpikes ? pieces(wavePictures()) : null;
+  S.layer();
+  const waveImgs = waveSheet ? S.crops(waveSheet) : null, waveSpray = waveSheet ? S.pool(bits) : null;
+
   S.layer({ furn: true });
   const rain0 = S.pool(bits);
   S.image(pipeL, 0, a.pipes[0].y - 5);
@@ -346,12 +352,30 @@ export default function tempest(S, a, viewW) {
   }
 
   return {
-    hazards: ['barrel', 'spikeball'],
+    hazards: ['barrel', 'spikeball', 'wave'],
 
     update(a) {
       const t = a.t, q = a.liquid, wind0 = a.rainDir || 0, top = a.floorY - q.h;
       const dt = Math.max(0, Math.min(8, t - lastT)); lastT = t;
       oF = (oF + dt * (0.03 + 0.05 * wind0) + W) % W; oM = (oM + dt * (0.07 + 0.12 * wind0) + W) % W; oT = (oT + dt * (0.12 + 0.2 * wind0) + W) % W;
+      if (waveImgs) {
+        // Each wave is placed by its crest (the middle of the fight's box) and cut
+        // off at the walls it drains through; spray flies where it meets one.
+        waveImgs.begin(); waveSpray.begin();
+        for (const w of a.hazards) {
+          if (w.kind !== 'wave') continue;
+          const cx = w.x + w.w / 2, left = Math.round(cx - crestX(w.dir)), wtop = a.floorY - WAVE.H;
+          const c0 = Math.max(0, a.x0 - left), c1 = Math.min(WAVE.W, a.x1 - left);
+          if (c1 > c0) waveImgs.put(left, wtop, waveFrame(w, t), c0, 0, c1 - c0, WAVE.H);
+          const at = w.dir > 0 ? a.x1 : a.x0, hw = waveH((at - cx) * w.dir, w.h / WAVE.HC);
+          if (hw > 3) {
+            for (let j = 0; j < 16; j++) {
+              waveSpray.put(at - w.dir * Math.floor(hash(j, t, 4) * 3), Math.round(a.floorY - WAVE.GW - hash(j, t >> 1, 9) * hw), hash(j, 5, t) < 0.5 ? '#FFFFFF' : '#CFEFFF');
+            }
+          }
+        }
+        waveImgs.end(); waveSpray.end();
+      }
       const lit = a.flash > 0 ? (a.flash / a.flashN > 0.66 ? 1 : a.flash / a.flashN > 0.33 ? 0.66 : 0.33) : 0;
       if (a.flash > lastFlash) strikes++;
       lastFlash = a.flash;

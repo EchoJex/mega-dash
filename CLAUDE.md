@@ -756,6 +756,7 @@ Claude or a generator made:
 | the GUNNER, six variants for review and not in the game — full colour, its body shades turned to each area's boss colour for that area's copy | sprite | Claude | 2026-11-10 | `design/minion-art/variants/gunner-*.sprite`, drawn by `design/minion-art/gunner.py` |
 | the GUNNER in the game — the owner's pick, variant B's body and twin guns with variant E's twin rotors, its eye black in the Fire area | sprite | Claude | 2026-11-10 | `design/sprites/gunner.sprite`, drawn by `design/minion-art/gunner.py` |
 | DRIFTER, the E-Tank and the EXP orb, variants for review and not in the game (group 2 of the owner's ask of 5 Nov 2026) — four DRIFTERs, three E-Tanks, three EXP orbs and the big glow orb. The picked E-Tank is the owner's own heart drawing, imported pixel for pixel, so it is not AI-made | sprite | Claude | 2026-11-10 | `design/minion-art/variants/*.sprite` |
+| Tempest Man's body and water, as picked on the "Tempest Man Art" canvas — body 16 with the tank behind him and its bar, every clip including the new `slam`; jet G and its foam; the charge's rear water and bow wave; thrusters A's gas; the tsunami (wave 6) | sprite, and room art drawn in code | Claude | 2026-11-16 | `design/sprites/boss-tempest-body.sprite`, `src/data/tempest-water.json`, `src/systems/arena-art/tempest-wave.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
 track ("8Bit Title Screen" by Joth, CC0) and the game over and credits tracks ("Hero
@@ -1180,8 +1181,13 @@ Tempest Man's water cannon went because his attack fields describe a Queen B fli
 with no projectile; the Sinister Stare changed class outright when its field did.
 **The Water boss was rewritten again on 14 Nov 2026**: a tank that drains while he hovers, a landing
 and refill, a hop back up, a layer-2 charge and a layer-3 divebomb with a tsunami. His fight publishes
-`b.tank` (1 full, 0 empty) for the tank bar; the tank bar, the water jets and the waves are plain
-shapes until their art comes back from Claude Design.
+`b.tank` (1 full, 0 empty) for the tank bar. **His picked art is in the game** (16 Nov 2026, owner:
+"I want the game up to date with all the picked art for everything"): his body sheet (body 16, the tank
+behind him, hop 6, divebomb 01 with its new `slam` landing, charge 2), and in `systems/tempest-water.js`
+the bar's level, jet G (straight down only; other directions keep the plain water), the charge's rear
+water and bow wave, and thrusters A's gas, all placed from each frame's `spawn` point (the bar's corner).
+The tsunami (wave 6, still being dialled in) is painted once in `arena-art/tempest-wave.js`: 2.5x his
+height, 1.1 a step, growing in over 36 steps in 18 pictures, and the fight's wave grows with it.
 
 The owner edits the tracker directly or through the **tracker web app** (`docs/index.html`,
 the root of the GitHub Pages site served from `main`). A later tool joins that site as one

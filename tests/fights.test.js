@@ -366,9 +366,12 @@ test("Water boss: his waits last as long as his drawn clips, and every move name
   const { clipOf } = await import('../src/systems/frame-data.js');
   const K = 'boss:tempest:body';
   assert.ok(clipOf(K, 'tell').total >= 60, 'the wait before the divebomb is too short to read');
-  for (const name of ['idle', 'fly', 'tell', 'dive', 'climb', 'land', 'refill', 'hop', 'squat', 'dash']) {
+  // Nothing on his sheet hits; every frame's one spawn point is his tank bar's
+  // corner, which the game draws the bar's level and his water from.
+  for (const name of ['idle', 'fly', 'tell', 'dive', 'climb', 'land', 'refill', 'hop', 'squat', 'dash', 'slam']) {
     const c = clipOf(K, name);
-    assert.equal(c.hits.length + c.spawns.length, 0, `${name}: nothing on his sheet hits or spawns`);
+    assert.equal(c.hits.length, 0, `${name}: nothing on his sheet hits`);
+    assert.equal(c.spawns.length, c.holds.length, `${name}: every frame marks the tank bar's corner`);
   }
   // Every layer: each mode lasts what its clip says, and names a clip he has.
   const timed = { tell: 'tell', hop: 'hop', squat: 'squat' };

@@ -3874,7 +3874,8 @@
         "refill": "loop",
         "hop": "once",
         "squat": "once",
-        "dash": "loop"
+        "dash": "loop",
+        "slam": "once"
       },
       "frames": [
         "idle",
@@ -3886,7 +3887,8 @@
         "refill",
         "hop",
         "squat",
-        "dash"
+        "dash",
+        "slam"
       ]
     }
   },
