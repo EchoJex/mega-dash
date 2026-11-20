@@ -756,6 +756,7 @@ Claude or a generator made:
 | the GUNNER, six variants for review and not in the game — full colour, its body shades turned to each area's boss colour for that area's copy | sprite | Claude | 2026-11-10 | `design/minion-art/variants/gunner-*.sprite`, drawn by `design/minion-art/gunner.py` |
 | the GUNNER in the game — the owner's pick, variant B's body and twin guns with variant E's twin rotors, its eye black in the Fire area | sprite | Claude | 2026-11-10 | `design/sprites/gunner.sprite`, drawn by `design/minion-art/gunner.py` |
 | DRIFTER, the E-Tank and the EXP orb, variants for review and not in the game (group 2 of the owner's ask of 5 Nov 2026) — four DRIFTERs, three E-Tanks, three EXP orbs and the big glow orb. The picked E-Tank is the owner's own heart drawing, imported pixel for pixel, so it is not AI-made | sprite | Claude | 2026-11-10 | `design/minion-art/variants/*.sprite` |
+| the tsunami, from scratch — SpriteCook sheet B1 (splash, rise, curl, crash), cut from its backdrop and pre-scaled; the Torrent Cannon's nosedive wave is the same pictures small | sprite, drawn in code from it | SpriteCook | 2026-11-19 | `design/weapon-art/tsunami/`, `src/data/tempest-tsunami.json` |
 | Tempest Man's body and water, as picked on the "Tempest Man Art" canvas — body 16 with the tank behind him and its bar, every clip including the new `slam`; jet G and its foam; the charge's rear water and bow wave; thrusters A's gas; the tsunami (wave 6) | sprite, and room art drawn in code | Claude | 2026-11-16 | `design/sprites/boss-tempest-body.sprite`, `src/data/tempest-water.json`, `src/systems/arena-art/tempest-wave.js` |
 
 **The OpenGameArt tracks are not on the list**, because they are not AI-made. The title
@@ -1186,8 +1187,15 @@ and refill, a hop back up, a layer-2 charge and a layer-3 divebomb with a tsunam
 behind him, hop 6, divebomb 01 with its new `slam` landing, charge 2), and in `systems/tempest-water.js`
 the bar's level, jet G (straight down only; other directions keep the plain water), the charge's rear
 water and bow wave, and thrusters A's gas, all placed from each frame's `spawn` point (the bar's corner).
-The tsunami (wave 6, still being dialled in) is painted once in `arena-art/tempest-wave.js`: 2.5x his
-height, 1.1 a step, growing in over 36 steps in 18 pictures, and the fight's wave grows with it.
+**The tsunami was started from scratch on 19 Nov 2026** (owner: "we've been trying to make a nearly static
+art work for the entire event"): a cannonball splash where he lands, then a wave each way that grows as it
+travels, curls and starts to crash just before the spike wall, pinning a player caught deep. The pictures are
+SpriteCook sheet B1 (`design/weapon-art/tsunami/`, whose `frames.py` writes `src/data/tempest-tsunami.json`);
+`systems/tsunami.js` picks the picture by how far a wave is through its run, and the fight takes the wave's
+height from the same picture. Both waves are timed on the longer run, so they mirror each other; the shorter
+one crashes when it reaches its wall. 90 tall at the curl, 1.1 a step. **The Torrent Cannon's Lv10 nosedive
+draws the same wave in miniature**, its height following the water the tank paid (`drawTidal` in `assets.js`).
+**SpriteCook costs the owner's credits: spend them only when the owner explicitly asks** (19 Nov 2026).
 
 The owner edits the tracker directly or through the **tracker web app** (`docs/index.html`,
 the root of the GitHub Pages site served from `main`). A later tool joins that site as one

@@ -41,6 +41,7 @@ import { FEEL } from '../config/feel.js';
  */
 import { BEAT_LEN as BEAT } from './arena.js';
 import { clipOf, areaAt, pointAt } from './frame-data.js';
+import { TSUNAMI, tsunamiFrame } from './tsunami.js';
 /** One second, for durations that are real seconds rather than beats. */
 const SEC = 60;
 
@@ -626,11 +627,12 @@ const TEMPEST = {
   // The tsunami. Its height was "3x the bosses height" (108, three times his
   // 36-tall box); the owner lowered it to 2.5x on the art canvas (16 Nov 2026:
   // "lower the height of the wave ... to 2.5x boss height, significantly slow
-  // down the wave travel speed"), so 90 tall at half the old 2.2 a step. It
-  // grows in over `spawn` steps in `stages` even steps, the pictures the room
-  // has for it (arena-art/tempest.js), so the water you can touch is the water
-  // you can see.
-  wave: { h: 90, w: 26, speed: 1.1, linger: 150, surface: 16, spawn: 36, stages: 18 },
+  // down the wave travel speed"), so 90 tall at half the old 2.2 a step.
+  // Started from scratch on 19 Nov 2026 (systems/tsunami.js): a splash where he
+  // lands, then each wave grows as it travels, curls and crashes at its wall. How
+  // tall it is comes from the picture showing, so the water you can touch is the
+  // water you can see. `w` is the hit area at its front.
+  wave: { w: 26, speed: 1.1, linger: 150, surface: 16 },
   contact: 2,        // "moderate damage from contact with boss"
   jetLen: 30,
   jetPush: 0.9,
@@ -687,8 +689,8 @@ function tempestWaves(ctx) {
     if (w.kind !== 'wave') continue;
     const inside = box.x + box.w > w.x && box.x < w.x + w.w && box.y + box.h > w.y;
     if (w.crash > 0) {
-      // Breaking on the wall: it sinks away over `linger` steps.
-      w.h = W.h * (w.crash / W.linger); w.y = a.floorY - w.h;
+      // Breaking on the wall: the crash picture sinks away over `linger` steps.
+      w.h = TSUNAMI.boss.crash[0].h * (w.crash / W.linger); w.y = a.floorY - w.h;
       if (w.pin) {
         ctx.hold(w.pin.x, w.pin.y);
         if (ctx.playerInvuln === 0) ctx.hurt(w.dir > 0 ? ctx.bounds.x1 : ctx.bounds.x0, ctx.hazardDamage);
@@ -697,10 +699,11 @@ function tempestWaves(ctx) {
       continue;
     }
     w.age = (w.age || 0) + 1;
-    if (w.age < W.spawn) {
-      w.h = (W.h * (Math.floor(w.age / (W.spawn / W.stages)) + 1)) / W.stages; w.y = a.floorY - w.h;
-    } else if (w.h !== W.h) { w.h = W.h; w.y = a.floorY - w.h; }
     w.x += w.dir * W.speed;
+    // How far through the long run it is: both waves are timed on the longer of
+    // the two runs, so they mirror each other; the shorter one crashes early.
+    w.p = Math.min(1, (w.age * W.speed) / w.full);
+    w.h = tsunamiFrame(TSUNAMI.boss, w.p, false).f.h; w.y = a.floorY - w.h;
     if (inside) { ctx.swim(); ctx.shove(w.dir * W.speed, 0); }
     const atWall = w.dir > 0 ? w.x + w.w >= ctx.bounds.x1 : w.x <= ctx.bounds.x0;
     if (!atWall) continue;
@@ -841,10 +844,11 @@ function tempestAttack(layer) {
         // "Divebomb produces a tsunami 3x the bosses height in both directions
         // on contact with the ground."
         if (a) {
+          const cx = b.x + b.w / 2, full = Math.max(cx - ctx.bounds.x0, ctx.bounds.x1 - cx), h0 = TSUNAMI.boss.rise[0].h;
           for (const dir of [-1, 1]) {
             a.hazards.push({
-              kind: 'wave', dir, w: TEMPEST.wave.w, h: TEMPEST.wave.h / TEMPEST.wave.stages, age: 0,
-              x: b.x + b.w / 2 - TEMPEST.wave.w / 2, y: ctx.floorY - TEMPEST.wave.h / TEMPEST.wave.stages, crash: 0,
+              kind: 'wave', dir, w: TEMPEST.wave.w, h: h0, age: 0, p: 0, full, x0: cx,
+              x: cx - TEMPEST.wave.w / 2, y: ctx.floorY - h0, crash: 0,
             });
           }
         }

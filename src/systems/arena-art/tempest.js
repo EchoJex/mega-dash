@@ -14,7 +14,8 @@ import {
   H, TAU, OLc, hex, ramp, bayer, hash, rng, noise2, canvas, pick, Raster, hdma,
   R, dot, walk, flipX, frames, pieces,
 } from './pixels.js';
-import { WAVE, wavePictures, waveFrame, crestX, waveH } from './tempest-wave.js';
+import { wavePictures, wavePlace, splashPlace } from './tempest-wave.js';
+import { SPLASH_STEPS } from '../tsunami.js';
 
 const CASCADE_FRAMES = 32;   // the pouring water repeats exactly every 32 steps
 const SURF_FRAMES = 157;     // the surface and its glints: one per two steps of 314
@@ -359,18 +360,23 @@ export default function tempest(S, a, viewW) {
       const dt = Math.max(0, Math.min(8, t - lastT)); lastT = t;
       oF = (oF + dt * (0.03 + 0.05 * wind0) + W) % W; oM = (oM + dt * (0.07 + 0.12 * wind0) + W) % W; oT = (oT + dt * (0.12 + 0.2 * wind0) + W) % W;
       if (waveImgs) {
-        // Each wave is placed by its crest (the middle of the fight's box) and cut
-        // off at the walls it drains through; spray flies where it meets one.
+        // Each wave is placed by its front (the leading edge of the fight's box),
+        // never past the walls; it sinks as it drains, and spray flies where it breaks.
         waveImgs.begin(); waveSpray.begin();
+        const put = (pl, h) => {
+          const c0 = Math.max(0, a.x0 - pl.left), c1 = Math.min(pl.f.w, a.x1 - pl.left), hh = Math.max(0, Math.min(pl.f.h, Math.round(h)));
+          if (c1 > c0 && hh > 0) waveImgs.put(pl.left, a.floorY - hh, pl.name, c0, 0, c1 - c0, hh);
+        };
         for (const w of a.hazards) {
           if (w.kind !== 'wave') continue;
-          const cx = w.x + w.w / 2, left = Math.round(cx - crestX(w.dir)), wtop = a.floorY - WAVE.H;
-          const c0 = Math.max(0, a.x0 - left), c1 = Math.min(WAVE.W, a.x1 - left);
-          if (c1 > c0) waveImgs.put(left, wtop, waveFrame(w, t), c0, 0, c1 - c0, WAVE.H);
-          const at = w.dir > 0 ? a.x1 : a.x0, hw = waveH((at - cx) * w.dir, w.h / WAVE.HC);
+          put(wavePlace(w), w.h);
+          // the splash where he landed, drawn once (by the wave going right)
+          const sp = w.dir > 0 ? splashPlace(w, SPLASH_STEPS) : null;
+          if (sp) put(sp, sp.f.h);
+          const at = w.dir > 0 ? a.x1 : a.x0, hw = w.crash > 0 ? w.h : 0;
           if (hw > 3) {
             for (let j = 0; j < 16; j++) {
-              waveSpray.put(at - w.dir * Math.floor(hash(j, t, 4) * 3), Math.round(a.floorY - WAVE.GW - hash(j, t >> 1, 9) * hw), hash(j, 5, t) < 0.5 ? '#FFFFFF' : '#CFEFFF');
+              waveSpray.put(at - w.dir * Math.floor(hash(j, t, 4) * 3), Math.round(a.floorY - q.h - hash(j, t >> 1, 9) * hw), hash(j, 5, t) < 0.5 ? '#FFFFFF' : '#CFEFFF');
             }
           }
         }

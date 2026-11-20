@@ -61,6 +61,7 @@ import { PLAYER_SPRITE_W, PLAYER_SPRITE_H } from '../config/display.js';
 import SPRITE_ART from '../data/sprite-art.json' with { type: 'json' };
 import { sfxFile } from './sfx.js';
 import { drawTempestWater } from './tempest-water.js';
+import { TSUNAMI, tsunamiFrame, splashFrame, tidalSet, SPLASH_STEPS } from './tsunami.js';
 
 /**
  * Real art. Anything not listed here falls through to a placeholder, which is
@@ -606,6 +607,30 @@ export const projectileHalfHeight = (shape, radius) =>
  * Placeholder projectile shapes. 17 distinguishable forms so weapons read
  * differently on screen before any art exists. b.x/b.y are the CENTRE.
  */
+/**
+ * The Torrent Cannon's Lv10 nosedive wave: the Water boss's tsunami in miniature
+ * (owner, 19 Nov 2026), a splash, then rising, curling and crashing through its
+ * life. Its height follows the shot's radius, which is the water the tank paid.
+ * Small enough to draw as runs of pixels each step, like his jets.
+ */
+function drawTidal(g, b) {
+  const t = (b.life0 || 1) - b.life, p = Math.min(1, t / (b.life0 || 1)), dir = b.vx < 0 ? -1 : 1;
+  const set = tidalSet(b.radius + 4), floor = Math.round(b.y + 5);
+  const pl = t < SPLASH_STEPS ? splashFrame(set, t) : tsunamiFrame(set, p, false);
+  const f = pl.f, edge = b.x + dir * b.radius;
+  const left = Math.round(t < SPLASH_STEPS ? b.x - dir * b.radius - f.w / 2 : dir > 0 ? edge - f.fx : edge - (f.w - 1 - f.fx));
+  for (let y = 0; y < f.h; y++) {
+    const r = f.rows[y];
+    for (let x = 0; x < f.w;) {
+      const k = r[x]; if (k === '.') { x++; continue; }
+      let n = 1; while (x + n < f.w && r[x + n] === k) n++;
+      g.fillStyle(hexNum(TSUNAMI.pal[k]), 1);
+      g.fillRect(dir > 0 ? left + x : left + f.w - x - n, floor - f.h + y, n, 1);
+      x += n;
+    }
+  }
+}
+
 export function drawProjectile(g, b, frame) {
   const c = hexNum(b.color);
   const r = b.radius;
@@ -617,6 +642,7 @@ export function drawProjectile(g, b, frame) {
       g.fillRect(b.x - r * 0.3, b.y - r * 0.3, r * 0.6, r * 0.6);
       break;
     case 'stream':
+      if (b.weapon === 'torrent_cannon' && b.hugsFloor) { drawTidal(g, b); break; }
       g.fillRect(b.x - r * 2, b.y - r * 0.5, r * 4, r);
       break;
     case 'spark':

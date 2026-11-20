@@ -469,7 +469,7 @@ function tidalWave(ctx, lv, L, fuel) {
       vx: dir * L.tidalSpeed, vy: 0,
       radius: r, damage: dmgOf('torrent_cannon', lv, ctx) * L.tidalDmgMult,
       color: '#5CADD5', shape: 'stream', weapon: 'torrent_cannon',
-      life: L.tidalLife, pierce: 99, knockback: L.knock * (1 + fuel),
+      life: L.tidalLife, life0: L.tidalLife, pierce: 99, knockback: L.knock * (1 + fuel),
       hugsFloor: true,
     });
   }
