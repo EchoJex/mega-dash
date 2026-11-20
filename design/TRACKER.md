@@ -185,10 +185,10 @@ where each one stands.
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
 - **weapon Lv10** `[draft]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on contact with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
-- **weapon art** `[ready]` [ ] ready for design · [ ] back from design · [ ] in game
+- **weapon art** `[wip]` [ ] ready for design · [ ] back from design · [ ] in game
 - **boss art** `[ready]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
-- **sprite sheet** `[ready]` [x] furniture · [x] arena background · [x] boss · [ ] boss atk
+- **sprite sheet** `[draft]` [x] furniture · [x] arena background · [x] boss · [x] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
 - **bgm arena** `[wip]`
 - **bgm arena file** `[ready]` `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room. AI-made (openmusic.ai, from the water recipe in the openmusic-bgm skill) at the owner's request, 2026-10-19. 50.26 s, looped as handed off.
