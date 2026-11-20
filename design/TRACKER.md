@@ -184,7 +184,7 @@ where each one stands.
 - **weapon Lv1** `[ready]` Large Burst of mild damage large knockback water when landing on the ground
 - **weapon Lv3** `[ready]` Large Burst of mild damage large knockback water when jumping or double jumping and upon landing on the ground.
 - **weapon Lv6** `[ready]` Add the ability to hover at the apex of any jump by holding the jump button which shoots two water jets directly downward with very low damage and large knockback
-- **weapon Lv10** `[ready]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on context with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
+- **weapon Lv10** `[wip]` Add a straight down nosedive that produces a large tidal wave in both horizontal directions on contact with a surface. Activated by tapping jump after a water hover has started. Consumes all remaining water. Size is initially taller than the player, but scaled down based on the amount of water remaining in the tank
 - **weapon art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **boss art** `[wip]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
