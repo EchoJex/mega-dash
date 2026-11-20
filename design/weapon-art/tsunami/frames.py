@@ -72,7 +72,10 @@ def build(heights):
             r=rows_at(st,h); out[name].append({'h':h,'w':len(r[0]),'fx':front(r),'rows':r})
     return out
 def tops(fr):
-    for f in fr: f['tops']=[next((y for y in range(f['h']) if f['rows'][y][x]!='.'),f['h']) for x in range(f['w'])]
+    for f in fr:
+        f['tops']=[next((y for y in range(f['h']) if f['rows'][y][x]!='.'),f['h']) for x in range(f['w'])]
+        # its body's front: the furthest column where water stands in the top half, not the spray ahead of it
+        f['bx']=max(x for x in range(f['w']) if f['tops'][x]<f['h']*0.5)
     return fr
 # The boss's waves: 90 tall at the curl (2.5 times his height, the owner's retune of 16 Nov 2026).
 boss=build({'splash':[20,34,48],'rise':[37,45,53,62,70,78,86],'curl':[90],'crash':[54]})

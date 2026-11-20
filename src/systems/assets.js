@@ -616,7 +616,7 @@ export const projectileHalfHeight = (shape, radius) =>
 function drawTidal(g, b) {
   const t = (b.life0 || 1) - b.life, p = Math.min(1, t / (b.life0 || 1)), dir = b.vx < 0 ? -1 : 1;
   const set = tidalSet(b.radius + 4), floor = Math.round(b.y + 5);
-  const pl = t < SPLASH_STEPS ? splashFrame(set, t) : tsunamiFrame(set, p, false);
+  const pl = t < SPLASH_STEPS ? splashFrame(set, t) : tsunamiFrame(set, p);
   const f = pl.f, edge = b.x + dir * b.radius;
   const left = Math.round(t < SPLASH_STEPS ? b.x - dir * b.radius - f.w / 2 : dir > 0 ? edge - f.fx : edge - (f.w - 1 - f.fx));
   for (let y = 0; y < f.h; y++) {

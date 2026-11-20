@@ -39,7 +39,7 @@ import { FEEL } from '../config/feel.js';
  * here would let his sweep stop landing on the speaker pulses. One-way —
  * arena.js must never import THIS file.
  */
-import { BEAT_LEN as BEAT } from './arena.js';
+import { BEAT_LEN as BEAT, wallSpikeRows, WALL_SPIKE_R } from './arena.js';
 import { clipOf, areaAt, pointAt } from './frame-data.js';
 import { TSUNAMI, tsunamiFrame } from './tsunami.js';
 /** One second, for durations that are real seconds rather than beats. */
@@ -978,8 +978,10 @@ function tempestHazard(layer) {
 
     // L3: the walls' spike balls. Massive damage and a beam back in, like a
     // spike bed. A player the tsunami has pinned there is the wave's to hurt.
+    // Above the top ball is the safe spot along the wall (owner, 20 Nov 2026).
     if (a.wallSpikes && !ctx.run?.held
       && (box.x <= ctx.bounds.x0 + TEMPEST_HAZ.wallReach || box.x + box.w >= ctx.bounds.x1 - TEMPEST_HAZ.wallReach)
+      && box.y + box.h > Math.min(...wallSpikeRows(a)) - WALL_SPIKE_R
       && ctx.playerInvuln === 0) {
       ctx.hurt(box.x < ball.x ? ctx.bounds.x0 : ctx.bounds.x1, ctx.hazardDamage);
       ctx.beam();

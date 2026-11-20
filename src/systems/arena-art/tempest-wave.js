@@ -38,8 +38,10 @@ export function wavePictures() {
  */
 export function wavePlace(w) {
   const { kind, i, f } = tsunamiFrame(TSUNAMI.boss, w.p || 0, w.crash > 0);
-  const edge = w.dir > 0 ? w.x + w.w : w.x;
-  const left = Math.round(w.dir > 0 ? edge - f.fx : edge - (f.w - 1 - f.fx));
+  // Its front sits on the box's leading edge; a breaking wave is held by its
+  // body's front instead, so the body meets the wall and its spray flies past it.
+  const edge = w.dir > 0 ? w.x + w.w : w.x, fx = kind === 'crash' ? f.bx : f.fx;
+  const left = Math.round(w.dir > 0 ? edge - fx : edge - (f.w - 1 - fx));
   return { name: `tsunami:${w.dir}:${kind}:${i}`, f, left };
 }
 

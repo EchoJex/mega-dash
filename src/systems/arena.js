@@ -24,6 +24,21 @@
 import { VIEW_H } from '../config/display.js';
 import { hexNum } from './assets.js';
 import * as Attr from './attributes.js';
+import { TSUNAMI } from './tsunami.js';
+
+/**
+ * The Water boss's layer-3 wall spike balls, as the heights of their middles.
+ * Owner, 20 Nov 2026: "the spike wall should only continue as tall as the waves
+ * max height, minus one spike ball, allowing for a small safe spot along the
+ * wall". So they run from the water up to one ball below the tallest wave, 12
+ * apart. The drawing, the plain shapes and the hurt check all read these.
+ */
+export const WALL_SPIKE_GAP = 12, WALL_SPIKE_R = 5;
+export function wallSpikeRows(a) {
+  const top = a.floorY - TSUNAMI.boss.curl[0].h + WALL_SPIKE_GAP, rows = [];
+  for (let y = a.floorY - 14; y - WALL_SPIKE_R >= top; y -= WALL_SPIKE_GAP) rows.push(y);
+  return rows;
+}
 
 /** Frames for each stage of the warp. Fade out, build, fade in. */
 export const WARP = { out: 16, hold: 6, in: 18 };
@@ -836,10 +851,10 @@ export function drawArena(g, arena, viewW, shake, reveal = 1, art = null) {
   }
 
   // Tempest Man's corner pipes, and the cascade pouring out of them.
-  // The Water boss's layer-3 walls, lined with spike balls from under the pipes to the water.
+  // The Water boss's layer-3 walls, lined with spike balls from the water up to one ball below the tallest wave.
   if (arena.wallSpikes) {
     for (const wx of [arena.x0 + 4, arena.x1 - 4]) {
-      for (let y = arena.ceilY + 40; y < arena.floorY - 8; y += 12) {
+      for (const y of wallSpikeRows(arena)) {
         g.fillStyle(0x9AA4B4, rv); g.fillCircle(wx + sx, y + sy, 5);
         g.fillStyle(0xD8DEE8, rv); g.fillRect(wx - 1 + sx, y - 6 + sy, 2, 2); g.fillRect(wx - 1 + sx, y + 4 + sy, 2, 2);
       }

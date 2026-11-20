@@ -17,7 +17,7 @@
 import TS from '../data/tempest-tsunami.json' with { type: 'json' };
 
 export const TSUNAMI = TS;
-/** How far through its run a wave starts to curl, and to crash. */
+/** How far through its run a wave starts to curl, and (the weapon's, with no wall) to crash. */
 export const CURL_AT = 0.78, CRASH_AT = 0.95;
 /** Steps the splash shows for. */
 export const SPLASH_STEPS = 18;
@@ -28,7 +28,9 @@ export const SPLASH_STEPS = 18;
  * `rows`, `tops`).
  */
 export function tsunamiFrame(set, p, crashed) {
-  if (crashed || p >= CRASH_AT) return { kind: 'crash', i: 0, f: set.crash[0] };
+  // The boss's wave breaks only once it is at its wall (`crashed`), so a player
+  // still in front of it is driven into the spikes; the weapon's breaks by `p`.
+  if (crashed || (crashed === undefined && p >= CRASH_AT)) return { kind: 'crash', i: 0, f: set.crash[0] };
   if (p >= CURL_AT) return { kind: 'curl', i: 0, f: set.curl[0] };
   const i = Math.min(set.rise.length - 1, Math.floor((Math.max(0, p) / CURL_AT) * set.rise.length));
   return { kind: 'rise', i, f: set.rise[i] };

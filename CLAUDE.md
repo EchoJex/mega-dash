@@ -1193,7 +1193,7 @@ travels, curls and starts to crash just before the spike wall, pinning a player 
 SpriteCook sheet B1 (`design/weapon-art/tsunami/`, whose `frames.py` writes `src/data/tempest-tsunami.json`);
 `systems/tsunami.js` picks the picture by how far a wave is through its run, and the fight takes the wave's
 height from the same picture. Both waves are timed on the longer run, so they mirror each other; the shorter
-one crashes when it reaches its wall. 90 tall at the curl, 1.1 a step. **The Torrent Cannon's Lv10 nosedive
+one crashes when it reaches its wall. 90 tall at the curl, 1.1 a step. A wave breaks only once it reaches its wall, its body (not its spray) on the wall, so a player caught in front is driven into the spikes; the layer-3 wall spikes stop one ball below the tallest wave, leaving a safe spot above them (owner, 20 Nov 2026; `wallSpikeRows` in `arena.js`). **The Torrent Cannon's Lv10 nosedive
 draws the same wave in miniature**, its height following the water the tank paid (`drawTidal` in `assets.js`).
 **SpriteCook costs the owner's credits: spend them only when the owner explicitly asks** (19 Nov 2026).
 

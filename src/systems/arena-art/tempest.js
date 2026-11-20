@@ -16,6 +16,7 @@ import {
 } from './pixels.js';
 import { wavePictures, wavePlace, splashPlace } from './tempest-wave.js';
 import { SPLASH_STEPS } from '../tsunami.js';
+import { wallSpikeRows } from '../arena.js';
 
 const CASCADE_FRAMES = 32;   // the pouring water repeats exactly every 32 steps
 const SURF_FRAMES = 157;     // the surface and its glints: one per two steps of 314
@@ -302,11 +303,11 @@ export default function tempest(S, a, viewW) {
   const rain0 = S.pool(bits);
   S.image(pipeL, 0, a.pipes[0].y - 5);
   S.image(pipeR, viewW - 20, a.pipes[1].y - 5);
-  // Layer 3: "Both walls are now lined with spike balls", from under the pipes to the water.
+  // Layer 3: "Both walls are now lined with spike balls", up to one ball below the tallest wave.
   if (a.wallSpikes) {
     const sb = smallBalls[0];
     for (const wx of [a.x0 + 4, a.x1 - 4]) {
-      for (let y = a.ceilY + 40; y < a.floorY - 8; y += 12) S.image(sb, Math.round(wx - sb.width / 2), Math.round(y - sb.height / 2));
+      for (const y of wallSpikeRows(a)) S.image(sb, Math.round(wx - sb.width / 2), Math.round(y - sb.height / 2));
     }
   }
   const pourImgs = pours.map((p) => S.image(p));
