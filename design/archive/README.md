@@ -34,6 +34,7 @@ Nothing here is loaded by the game or the tests. AI-made pictures keep the label
 | `strike-man-sprite-art/` | the Fighting boss's body — still in Claude too | 10 Nov 2026 |
 | `air-minion-and-pickups/` | page 1 of the air minion and pickups canvas: the Pixie, the E-Tank, the EXP orb; page 2 (the Gunner) is still in Claude | 10 Nov 2026 |
 | `world-pieces/` | every area's world pieces; in Claude only the paused four (Poison, Flying, Psychic, Bug) are left on it | 10 Nov 2026 |
+| `tempest-man-art/` | the Water boss's look, every move, his water, and the tsunami from wave 1 to the SpriteCook restart; all picks in the game, removed from Claude | 20 Nov 2026 |
 
 **No weapon art is archived yet** (owner, 10 Nov 2026: "All weapon art will need a bit more refining,
 do not archive it just yet"). The Quake Hammer, Draco-Blaster, Granite Form and Simon's Whip canvases

@@ -1,0 +1,286 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-12T00:54:51Z"
+ },
+ "title": "Tempest Man Art",
+ "launch": {
+  "view": "canvas",
+  "page": "main"
+ },
+ "pages": [
+  {
+   "id": "main",
+   "name": "Tempest Man"
+  },
+  {
+   "id": "archive",
+   "name": "Archive"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 820,
+   "title": "Tempest Man idle \u2014 01 diver and 16 ball joints",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "Round1.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1000,
+   "title": "Archive \u2014 round 1, 6 looks",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Round2.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 1000,
+   "title": "Archive \u2014 round 2, 6 heavy divers",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Round3.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 1040,
+   "title": "Archive \u2014 round 3, 6 hulks from a prose brief",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Jets.dc.html": {
+   "x": 0,
+   "y": 940,
+   "w": 1280,
+   "h": 1400,
+   "title": "Tempest Man \u2014 batch 1, water jets and tank bar",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "JetsRound1.dc.html": {
+   "x": 0,
+   "y": 1160,
+   "w": 1280,
+   "h": 1640,
+   "title": "Archive \u2014 water jets A to F",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Hops.dc.html": {
+   "x": 0,
+   "y": 2460,
+   "w": 1280,
+   "h": 1080,
+   "title": "Tempest Man \u2014 batch 2, the short hop (6, picked)",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "HopsRound1.dc.html": {
+   "x": 1360,
+   "y": 1160,
+   "w": 1280,
+   "h": 1340,
+   "title": "Archive \u2014 short hops 1 to 6",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Slams.dc.html": {
+   "x": 2720,
+   "y": 1160,
+   "w": 1280,
+   "h": 1420,
+   "title": "Archive \u2014 divebombs 1 to 6 (1 was picked)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Thrusters.dc.html": {
+   "x": 0,
+   "y": 3620,
+   "w": 1280,
+   "h": 1340,
+   "title": "Tempest Man \u2014 batch 3, the divebomb (01 with thrusters A, picked)",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "ThrustersRound1.dc.html": {
+   "x": 0,
+   "y": 2860,
+   "w": 1280,
+   "h": 1420,
+   "title": "Archive \u2014 divebomb 01 thrusters A to F",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Dashes.dc.html": {
+   "x": 1360,
+   "y": 2860,
+   "w": 1280,
+   "h": 1200,
+   "title": "Archive \u2014 layer-2 charges 1 to 6 (2 was built on)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Dashes2.dc.html": {
+   "x": 0,
+   "y": 5040,
+   "w": 1280,
+   "h": 1180,
+   "title": "Tempest Man \u2014 batch 4, the layer-2 charge (2 with rear bells B, picked)",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "Dashes2Round1.dc.html": {
+   "x": 2720,
+   "y": 2860,
+   "w": 1280,
+   "h": 1200,
+   "title": "Archive \u2014 charge 2 with rear bells A to F",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Waves.dc.html": {
+   "x": 0,
+   "y": 8400,
+   "w": 1280,
+   "h": 980,
+   "title": "Archive \u2014 the tsunami, wave 07, the whole move",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "WavesRound1.dc.html": {
+   "x": 0,
+   "y": 4420,
+   "w": 1280,
+   "h": 1300,
+   "title": "Archive \u2014 tsunami waves, round 1",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "WavesRound2.dc.html": {
+   "x": 1360,
+   "y": 4420,
+   "w": 1280,
+   "h": 1300,
+   "title": "Archive \u2014 tsunami waves, round 2 (Japanese style)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Wave7.dc.html": {
+   "x": 1360,
+   "y": 8400,
+   "w": 1280,
+   "h": 1400,
+   "title": "Archive \u2014 wave 07 rebuilt from the paint-over",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "WavesRough.dc.html": {
+   "x": 0,
+   "y": 7760,
+   "w": 1280,
+   "h": 1540,
+   "title": "Tempest Man \u2014 the tsunami, 6 rough-water foams A to F",
+   "is_interactive": true,
+   "page": "main"
+  },
+  "Wave7Variants.dc.html": {
+   "x": 2720,
+   "y": 8400,
+   "w": 1280,
+   "h": 3044,
+   "title": "Archive \u2014 wave 07, 12 variants by anatomy (01 to 12)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Wave7Round1.dc.html": {
+   "x": 2720,
+   "y": 4420,
+   "w": 1280,
+   "h": 1560,
+   "title": "Archive \u2014 wave 7, first version",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Wave7VariantsB.dc.html": {
+   "x": 4080,
+   "y": 8400,
+   "w": 1280,
+   "h": 2672,
+   "title": "Archive \u2014 wave 07, 12 more variants from the paint-over (13 to 24)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Wave7Round2.dc.html": {
+   "x": 0,
+   "y": 6060,
+   "w": 1280,
+   "h": 1340,
+   "title": "Archive \u2014 wave 7, second version (blunt break point)",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Wave7VariantsRound1.dc.html": {
+   "x": 1360,
+   "y": 6060,
+   "w": 1280,
+   "h": 2100,
+   "title": "Archive \u2014 wave 7, second version, 12 variants",
+   "is_interactive": true,
+   "page": "archive"
+  },
+  "Tsunami.dc.html": {
+   "x": 0,
+   "y": 6300,
+   "w": 1280,
+   "h": 1340,
+   "title": "Tempest Man \u2014 arena furniture 1, the tsunami from scratch, the whole move (and the Torrent Cannon in miniature)",
+   "is_interactive": true,
+   "page": "main"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Jets.dc.html",
+  "Hops.dc.html",
+  "Thrusters.dc.html",
+  "Dashes2.dc.html",
+  "Tsunami.dc.html",
+  "WavesRough.dc.html",
+  "Round1.dc.html",
+  "Round2.dc.html",
+  "Round3.dc.html",
+  "JetsRound1.dc.html",
+  "HopsRound1.dc.html",
+  "Slams.dc.html",
+  "ThrustersRound1.dc.html",
+  "Dashes.dc.html",
+  "Dashes2Round1.dc.html",
+  "WavesRound1.dc.html",
+  "WavesRound2.dc.html",
+  "Wave7Round1.dc.html",
+  "Wave7Round2.dc.html",
+  "Wave7VariantsRound1.dc.html",
+  "Waves.dc.html",
+  "Wave7.dc.html",
+  "Wave7Variants.dc.html",
+  "Wave7VariantsB.dc.html"
+ ],
+ "notes": {},
+ "designSystems": [
+  {
+   "title": "MEGA DASH",
+   "namespace": "mega-dash",
+   "artifact": "https://claude.ai/code/artifact/8746e10c-6456-4ff3-b5e1-347f4ce3aeb6",
+   "version": "1794437722-679f",
+   "copiedAt": "2026-11-12T00:54:51Z"
+  }
+ ]
+}

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Archive: Tempest Man tsunami, round 2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("ds/mega-dash/fonts/MegaDash5x7.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1300px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">ARCHIVE · TEMPEST MAN · TSUNAMI WAVES, ROUND 2, JAPANESE STYLE (6 WAS BUILT ON)</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #f5d328; max-width: 1180px;">PICK A WAVE, 1 TO 6. LAYER 3: THE DIVEBOMB THROWS UP ONE OF THESE EACH WAY, 108 PIXELS TALL. IT ROLLS ACROSS THE ROOM AND DRAINS STRAIGHT THROUGH THE WALL OF SPIKE BALLS, FOAM BOILING UP BETWEEN THEM, UNTIL THE LAST OF IT HAS GONE. MEASURED FROM THE CREST, THE LEADING EDGE FALLS LIKE Y = -0.5X² AND THE TRAILING EDGE LIKE Y = -X², SO IT IS 36 PIXELS FROM CREST TO FLOOR BEHIND AND 51 IN FRONT. ALL SIX ARE DRAWN IN THE STYLE OF YOUR JAPANESE WAVE PICTURE: DARK OUTLINES ROUND CLUMPED FOAM, FLOWING LINES IN THE WATER.</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">THE PLAYER HAS TO STAY VISIBLE INSIDE IT, SO THE WATER IS SEE-THROUGH BELOW ITS SURFACE (EVERY OTHER PIXEL) AND HE IS DRAWN IN FRONT. THE SPEED BUTTON PLAYS IT AT FULL, HALF OR QUARTER SPEED; STEP +1 PAUSES AND MOVES ON BY ONE STEP (1/60 S) EACH TAP. DRAWN IN PLAIN CODE TO JUDGE THE LOOK. THE BLUE BOX IS WHAT THE GAME COUNTS AS THE WAVE TODAY, ONLY 26 WIDE AT ITS FRONT; THE HANDOFF WILL ASK FOR THE BOX TO FOLLOW THE DRAWING, AND FOR THE WAVE TO PASS THROUGH THE WALL INSTEAD OF BREAKING ON IT. THE PICTURE THESE ARE BASED ON IS &quot;DESIGNED BY MACROVECTOR - MAGNIFIC.COM&quot;, FREE WITH CREDIT. NOTHING HERE IS IN THE GAME YET.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ toggleFlip }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ flipLabel }}</button>
+<button type="button" onClick="{{ toggleBox }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ boxLabel }}</button>
+<button type="button" onClick="{{ togglePause }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ pauseLabel }}</button>
+<button type="button" onClick="{{ cycleSpeed }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ speedLabel }}</button>
+<button type="button" onClick="{{ stepOnce }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">STEP +1</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<canvas width="576" height="450" data-clip="{{ c.id }}" role="img" aria-label="{{ c.name }}" style="border: 2px solid #2a323c; width: 576px; height: 450px;"></canvas>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #ffffff;">{{ c.name }}</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda;">{{ c.desc }}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1300}}'>
+var CLIPS = [{"name": "1 GREAT CURL", "desc": "A BIG CURLING CREST IN THE JAPANESE STYLE: FOAM CLUMPS ALONG THE LIP AND CLAW-LIKE FINGERS OF FOAM HANGING FROM ITS TIP.", "kind": "curl"}, {"name": "2 FOAM CROWN", "desc": "NO CURL: A ROW OF CAULIFLOWER FOAM CLUMPS ALONG THE TOP, FROM THE PEAK DOWN THE FRONT.", "kind": "crown"}, {"name": "3 CLAWS", "desc": "A SMALL CURL, AND THE WHOLE UPPER FRONT EDGE BREAKS INTO HOOKED CLAWS OF FOAM REACHING FORWARD.", "kind": "claws"}, {"name": "4 TWIN CREST", "desc": "THE MAIN WAVE WITH A SMALLER ONE RIDING ON ITS BACK, EACH WITH ITS OWN FOAM CROWN, LIKE THE PAIR IN YOUR PICTURE.", "kind": "twin"}, {"name": "5 FLOWING LINES", "desc": "THE BODY FULL OF FLOWING LINES THAT FOLLOW THE SHAPE AND RUN AS IT MOVES; ONLY A THIN FOAM RIM AND A SMALL CURL.", "kind": "lines"}, {"name": "6 SPRAY", "desc": "THE GREAT CURL, WITH DROPLETS FLUNG AHEAD OF IT AND WHITE FLECKS OF FOAM ACROSS ITS BODY.", "kind": "spray"}], PLAYER = ["........................", "........00000000........", ".....000233111330.......", "....0899233313330.......", "....0a9943333333000.....", "....000023a99988900.....", ".......043a99999a00.....", ".......04222222300......", ".......0442233330.......", "........00000000........", "........007667000.......", ".....0000233311300000...", ".....0540233331333290...", ".....0550423333322490...", ".....05404233332444a0...", ".....0650442222200000...", ".....000076666670.......", ".......042202330........", ".......042302310........", ".......042202330........", ".......042202330........", ".......0542042330.......", ".......0654054220.......", ".......0000000000......."], PPAL = {"0": "#0A0A12", "1": "#FFFFFF", "2": "#C3CAD7", "3": "#EDF1F7", "4": "#8990A9", "5": "#565E78", "6": "#363D52", "7": "#23283A", "8": "#B4ECFF", "9": "#3CBCFC", "a": "#1C74C8", "b": "#103C70"};
+var SPEEDS = [1, 0.5, 0.25], SPEED_NAMES = ['FULL SPEED', 'HALF SPEED', 'QUARTER SPEED'];
+var S = 3, VW = 192, VH = 150, FLOOR = 142, WALL = 182, START = 30, SPEED = 2.2, PX = 112;
+// THE SHAPE (owner, 15 Nov 2026): measured from the crest, the leading edge falls like y = -0.5x^2
+// and the trailing edge like y = -x^2. At the full 108-pixel height that puts the floor 36 pixels
+// behind the crest and 51 in front of it.
+var H = 108, BACK = 36, FRONT = Math.round(36 * Math.SQRT2), KB = H / (BACK * BACK), KF = H / (FRONT * FRONT);
+var COL = { O: '#0A2659', F: '#FFFFFF', f: '#DDF6FF', L: '#145DBD', a: '#5CCBF5', b: '#2F86E0', c: '#1E6FD0', d: '#145DBD', h: '#0E3F8C' };
+function hash(a, b, c) { var h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) % 1000 / 1000; }
+// One frame of one wave, painted into a grid of keys first so the foam can be outlined in the
+// Japanese-print way (dark lines round every clump) before it is put on screen.
+function paintWave(kind, cx, scale, step) {
+  var g = {}, fl = Math.floor(step / 4);
+  var set = function (x, y, k) { x = Math.round(x); y = Math.round(y); if (y < 0 || y >= FLOOR) return; g[y * 1000 + x] = k; };
+  var get = function (x, y) { return g[y * 1000 + x]; };
+  var h = H * scale, top0 = FLOOR - h;
+  var topAt = function (x, c, hh) { var dx = x - c; return FLOOR - hh + (dx < 0 ? KB : KF) * dx * dx * (hh / H) * (H / hh) * (hh / H); };
+  var hump = function (c, hh) {
+    for (var x = Math.floor(c - BACK * Math.sqrt(hh / H)) - 1; x <= Math.ceil(c + FRONT * Math.sqrt(hh / H)) + 1; x++) {
+      var dx = x - c, t = FLOOR - hh + (dx < 0 ? KB : KF) * dx * dx;
+      if (t >= FLOOR) continue;
+      for (var y = Math.ceil(t); y < FLOOR; y++) {
+        var u = (y - t) / (FLOOR - t);               // 0 at the surface, 1 at the floor
+        var k = u < 0.12 ? 'a' : u < 0.35 ? 'b' : u < 0.65 ? 'c' : 'd';
+        // see-through lower down, so the player shows inside it
+        if (u > 0.2 && ((x + y) & 1)) continue;
+        set(x, y, k);
+      }
+      set(x, Math.ceil(t), 'O');
+      // flowing lines that follow the shape
+      var bands = kind === 'lines' ? [0.12, 0.22, 0.34, 0.47, 0.6, 0.74] : [0.2, 0.42, 0.66];
+      bands.forEach(function (b, i) {
+        var yy = Math.round(t + (FLOOR - t) * b + 2 * Math.sin((x + i * 7 - (kind === 'lines' ? step * 0.5 : 0)) * 0.25));
+        if (((x + i + (kind === 'lines' ? Math.floor(step / 3) : 0)) % 5) !== 0) set(x, yy, 'L');
+      });
+    }
+  };
+  var blob = function (x, y, r) { for (var j = -r; j <= r; j++) for (var i = -r; i <= r; i++) if (i * i + j * j <= r * r + 1) set(x + i, y + j, (j < -r / 3 ? 'F' : 'f')); };
+  var curl = function (c, hh, R) {
+    // the lip: it leaves the crest, rolls forward and down over the front, and ends pointing back
+    // at the face; the hollow under it stays dark. Thick where it leaves the crest, thin at its tip.
+    var px = c + 0.87 * R, py = FLOOR - hh + 0.5 * R;
+    for (var yy = Math.round(py - R); yy < py + R; yy++) for (var xx = Math.round(px - R); xx < px + R; xx++) {
+      var d = Math.hypot(xx - px, yy - py); if (d < R * 0.72 && xx > c - 2) set(xx, yy, ((xx + yy) & 1) ? 'h' : 'd');
+    }
+    var a0 = -Math.PI * 5 / 6, a1 = Math.PI * 0.42, n = 40, end = null;
+    for (var i = 0; i <= n; i++) {
+      var a = a0 + (a1 - a0) * i / n, x = px + R * Math.cos(a), y = py + R * Math.sin(a);
+      blob(x, y, Math.max(1, Math.round(R * 0.34 * (1 - i / n) + 1)));
+      end = { x: x, y: y };
+    }
+    // fingers of foam reaching down off the tip, back toward the face
+    for (var f = 0; f < 3; f++) for (var j = 0; j < 4; j++) set(end.x - f * 3 - j * 0.6, end.y + j + f, 'F');
+    return end;
+  };
+  hump(cx, h);
+  if (kind === 'twin') hump(cx - 26 * scale, h * 0.55);
+  if (kind === 'curl' || kind === 'spray') {
+    curl(cx, h, 14 * scale);
+    for (var i = 0; i < 4; i++) blob(cx - 4 - i * 5 * scale, FLOOR - h + 3 + i * 2, 3);     // foam clumps down the back of the crest
+  }
+  if (kind === 'crown' || kind === 'twin') {
+    for (var i = 0; i < 7; i++) { var x = cx - 6 + i * 6, r = 5 - Math.abs(i - 1) * 0.5; if (r < 2) r = 2; blob(x, topAt(x, cx, h) - 1, Math.round(r * scale + 0.5)); }
+    if (kind === 'twin') for (var i = 0; i < 3; i++) { var c2 = cx - 26 * scale; blob(c2 - 3 + i * 5, FLOOR - h * 0.55 + 1, 3); }
+  }
+  if (kind === 'claws') {
+    curl(cx, h, 7 * scale);
+    for (var i = 0; i < 6; i++) { var x = cx + 6 + i * 4.5, y = topAt(x, cx, h); for (var j = 0; j < 5; j++) set(x + j * 0.8 + (j > 2 ? 1 : 0), y + j - (j > 3 ? 1 : 0), 'F'); blob(x, y, 2); }
+  }
+  if (kind === 'lines') curl(cx, h, 6 * scale);
+  if (kind === 'spray') {
+    for (var d = 0; d < 9; d++) set(cx + 20 + hash(d, fl, 1) * 22, FLOOR - h + 6 + hash(fl, d, 2) * 30, 'F');
+    for (var e = 0; e < 18; e++) { var ex = cx - 20 + hash(e, 3, 0) * 50, ey = FLOOR - hash(e, 4, 0) * h * 0.8; if (get(Math.round(ex), Math.round(ey))) set(ex, ey, 'F'); }
+  }
+  // the Japanese-print outline: dark lines round all the foam
+  var out = {};
+  for (var key in g) {
+    if (g[key] !== 'F' && g[key] !== 'f') continue;
+    var y = Math.floor(key / 1000), x = key - y * 1000;
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (o) { var n = g[(y + o[1]) * 1000 + x + o[0]]; if (n !== 'F' && n !== 'f') out[(y + o[1]) * 1000 + x + o[0]] = 'O'; });
+  }
+  for (var k2 in out) if (Math.floor(k2 / 1000) < FLOOR) g[k2] = 'O';
+  return g;
+}
+// The spike balls lining the wall, in front of the water.
+function spikeBall(put, x, y) {
+  for (var j = -4; j <= 4; j++) for (var i = -4; i <= 4; i++) { var d = i * i + j * j; if (d <= 16) put(x + i, y + j, d > 12 ? '#3A424E' : (i + j < -2 ? '#D8DEE8' : '#9AA4B4')); }
+  [[0, -6], [0, 6], [-6, 0], [6, 0], [-4, -4], [4, -4], [-4, 4], [4, 4]].forEach(function (p) { put(x + p[0], y + p[1], '#D8DEE8'); });
+}
+function drawClip(cv, c, step, flip, showBox) {
+  var gx = cv.getContext('2d');
+  for (var y = 0; y < VH; y++) { var t = y / VH; gx.fillStyle = 'rgb(' + Math.round(10 + 8 * t) + ',' + Math.round(18 + 14 * t) + ',' + Math.round(40 + 26 * t) + ')'; gx.fillRect(0, y * S, cv.width, S); }
+  gx.fillStyle = '#2a3a58'; gx.fillRect((flip ? 0 : WALL + 4) * S, 0, (VW - WALL - 4) * S, VH * S);
+  gx.fillStyle = '#1e345c'; gx.fillRect(0, FLOOR * S, cv.width, cv.height); gx.fillStyle = '#78aadc'; gx.fillRect(0, FLOOR * S, cv.width, S);
+  var put = function (x, y, hex) { if (x < 0 || x >= VW || y < 0) return; gx.fillStyle = hex; gx.fillRect((flip ? VW - 1 - x : x) * S, y * S, S, S); };
+  // one play-through: it rises out of the divebomb, rolls to the wall, and drains straight through
+  // the spike balls until the last of it has gone; a pause, again
+  var travel = Math.ceil((WALL + BACK - START) / SPEED), tt = step % (travel + 30);
+  if (tt < travel) {
+    var cx = START + tt * SPEED, scale = Math.min(1, (tt + 1) / 14);
+    var g = paintWave(c.kind, cx, scale, step);
+    for (var key in g) {
+      var yy = Math.floor(key / 1000), xx = key - yy * 1000;
+      if (xx > WALL || g[key] === undefined) continue;          // through the wall: gone
+      put(xx, yy, COL[g[key]]);
+    }
+    // where it passes through, foam boils up between the balls
+    if (cx + FRONT > WALL) for (var j = 0; j < 16; j++) { var by = FLOOR - hash(j, Math.floor(step / 2), 9) * Math.min(H, H - KB * Math.pow(Math.max(0, WALL - cx), 2)); put(WALL - Math.floor(hash(j, step, 4) * 3), Math.round(by), hash(j, 5, step) < 0.5 ? '#FFFFFF' : '#DDF6FF'); }
+  }
+  for (var by2 = 34; by2 < FLOOR - 4; by2 += 12) spikeBall(put, WALL, by2);
+  PLAYER.forEach(function (r, y) { for (var x = 0; x < 24; x++) if (r[x] !== '.') put(PX + x, FLOOR - 24 + y, PPAL[r[x]]); });
+  if (!showBox || tt >= travel) return;
+  gx.strokeStyle = '#3CBCFC'; gx.lineWidth = 1;
+  var bx0 = Math.round(cx) + FRONT * Math.sqrt(scale) - 26; var hh = H * scale;
+  var wx = flip ? VW - (bx0 + 26) : bx0;
+  gx.strokeRect(wx * S + 0.5, (FLOOR - hh) * S + 0.5, 26 * S - 1, hh * S - 1);
+  var pb = flip ? VW - (PX + 18) : PX + 6;
+  gx.strokeRect(pb * S + 0.5, (FLOOR - 22) * S + 0.5, 12 * S - 1, 22 * S - 1);
+}
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this; this.step = 0; this.acc = 0;
+    // Speed: every 1/60 s the clock gains 1, 1/2 or 1/4 of a step, and the picture moves on
+    // only when a whole step has built up.
+    this.timer = setInterval(function () {
+      var st = self.state || {};
+      if (st.paused) return;
+      self.acc += SPEEDS[st.speed || 0];
+      if (self.acc < 1) return;
+      self.acc -= 1; self.step++; self.draw();
+    }, 1000 / 60);
+    this.draw();
+  }
+  componentDidUpdate() { this.draw(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  draw() {
+    var st = this.state || {}, step = this.step || 0;
+    document.querySelectorAll('canvas[data-clip]').forEach(function (cv) { var c = CLIPS[+cv.getAttribute('data-clip')]; if (c) drawClip(cv, c, step, !!st.flip, !!st.box); });
+  }
+  renderVals() {
+    var self = this, st = this.state || {};
+    return {
+      cells: CLIPS.map(function (v, i) { return { id: i, name: v.name, desc: v.desc }; }),
+      flipLabel: st.flip ? 'TRAVELLING LEFT · TAP TO GO RIGHT' : 'TRAVELLING RIGHT · TAP TO GO LEFT',
+      boxLabel: st.box ? 'HIDE HIT BOXES' : 'SHOW HIT BOXES',
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE',
+      toggleFlip: function () { self.setState({ flip: !st.flip }); },
+      toggleBox: function () { self.setState({ box: !st.box }); },
+      togglePause: function () { self.setState({ paused: !st.paused }); },
+      speedLabel: SPEED_NAMES[st.speed || 0] + ' · TAP TO CHANGE',
+      cycleSpeed: function () { self.setState({ speed: ((st.speed || 0) + 1) % SPEEDS.length }); },
+      // One step (1/60 s) on, then hold still. Pauses first if it was playing.
+      stepOnce: function () { self.step = (self.step || 0) + 1; self.acc = 0; self.setState({ paused: true }); self.draw(); },
+    };
+  }
+}
+</script>
+</body>
+</html>

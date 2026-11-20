@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tempest Man tsunami, rough 16-bit foam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Mega Dash 5x7";src:url("ds/mega-dash/fonts/MegaDash5x7.woff") format("woff");}
+body{margin:0;background:#060614}
+canvas{display:block;image-rendering:pixelated}
+button:focus-visible{outline:2px solid #f5d328;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1540px; box-sizing: border-box; padding: 40px; background: #060614; color: #ffffff; font-family: 'Mega Dash 5x7', monospace; display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-size: 28px; line-height: 32px; font-weight: 400;">TEMPEST MAN · THE TSUNAMI · 6 ROUGH-WATER FOAMS</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #f5d328; max-width: 1180px;">WAVE 6&#39;S BODY AND CURL, AT THE NEW SIZE AND SPEED (2.5X HIS HEIGHT, 1.1 PX A STEP, A 36-STEP SPAWN-IN OF 18 PICTURES), WITH THE FOAM DRAWN SIX WAYS. NO FOAM HERE IS A CIRCLE: IT IS TALONS, A RAGGED STRIP, DITHER, STREAKS, BLOCKY CLUMPS OR A LACE NET, AND THE DARK HOLLOW UNDER THE CURL NOW HAS A RAGGED EDGE TOO.</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #c8ceda; max-width: 1180px;">FROM LOOKING AT PIXEL TAKES ON HOKUSAI&#39;S GREAT WAVE: HIS FOAM IS A WHITE STRIP BREAKING INTO CURLED &quot;CLAWS&quot;; PIXEL VERSIONS SHOW IT WITH WHITE AND PALE CYAN PIXELS MIXED ALONG THE CREST, DITHER WHERE IT THINS, AND A DEEP-TO-PALE BLUE BODY. THE BOSS AND THE PLAYER ARE LEFT OUT SO THE WATER CAN BE JUDGED ON ITS OWN. DRAWN IN PLAIN CODE. NOT IN THE GAME: THE GAME HAS THE CURRENT WAVE 6.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<button type="button" onClick="{{ togglePause }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ pauseLabel }}</button>
+<button type="button" onClick="{{ cycleSpeed }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">{{ speedLabel }}</button>
+<button type="button" onClick="{{ stepOnce }}" style="min-height: 44px; padding: 0 16px; background: #0d1420; color: #ffffff; border: 2px solid #5cadd5; font-family: 'Mega Dash 5x7', monospace; font-size: 14px; cursor: pointer;">STEP +1</button>
+</div>
+<div style="display: grid; grid-template-columns: 576px 576px; gap: 32px 48px;">
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v0.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v0.desc }}</p>
+<canvas width="576" height="317" data-rough="0" role="img" aria-label="{{ v0.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v1.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v1.desc }}</p>
+<canvas width="576" height="317" data-rough="1" role="img" aria-label="{{ v1.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v2.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v2.desc }}</p>
+<canvas width="576" height="317" data-rough="2" role="img" aria-label="{{ v2.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v3.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v3.desc }}</p>
+<canvas width="576" height="317" data-rough="3" role="img" aria-label="{{ v3.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v4.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v4.desc }}</p>
+<canvas width="576" height="317" data-rough="4" role="img" aria-label="{{ v4.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 576px;">
+<p style="margin: 0; font-size: 16px; line-height: 20px; color: #ffffff;">{{ v5.name }}</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: #c8ceda; min-height: 48px;">{{ v5.desc }}</p>
+<canvas width="576" height="317" data-rough="5" role="img" aria-label="{{ v5.name }}" style="border: 2px solid #2a323c; width: 576px; height: 317px;"></canvas>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1540}}'>
+// The tsunami with rough 16-bit foam: six ways of drawing the foam, none of them circles.
+// Shared by the review board and the check below. Room: 320 wide, floor at 170.
+var VW = 320, VH = 176, FLOOR = 170, WALL0 = 10, WALL1 = 310, GW = 9;
+var TARGET = 196, HC = 90, WAVE_V = 1.1, SPAWN_T = 36, SPAWN_N = 18, LOOP = 420;
+var BACK = 36, FRONT = 51, KB = HC / (BACK * BACK), KF = HC / (FRONT * FRONT);
+function hash(a, b, c) { var h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) % 1000 / 1000; }
+function waveH(d, scale) {
+  var dome = Math.max(0, HC - (d < 0 ? KB : KF) * d * d);
+  var tail = d >= 0 ? 10 * Math.exp(-d / 12) : 16 * Math.exp(d / 70);
+  var h = Math.pow(Math.pow(dome, 4) + Math.pow(tail, 4), 0.25);
+  if (d > FRONT + 30) h = 0;
+  return h * scale;
+}
+var WC = { O: '#0A2659', F: '#FFFFFF', f: '#DDF6FF', s: '#8FD8F5', L: '#145DBD', a: '#5CCBF5', b: '#2F86E0', c: '#1E6FD0', d: '#145DBD', h: '#0E3F8C' };
+var STYLES = [
+  { id: 'A', name: 'A · TALONS', desc: 'THE LIP BREAKS INTO A ROW OF HOOKED FOAM CLAWS REACHING FORWARD AND DOWN, THE GREAT WAVE’S “GRASPING FINGERS”. JAGGED EDGES, DARK LINE ONLY UNDER THE FOAM.' },
+  { id: 'B', name: 'B · FOAM STRIP', desc: 'A RAGGED WHITE STRIP RIDES THE CREST AND RUNS DOWN THE BACK, WITH SHORT FOAM FINGERS DRIPPING OFF ITS UNDERSIDE, LIKE THE PRINT’S WHITE BAND.' },
+  { id: 'C', name: 'C · DITHERED SPRAY', desc: 'NO OUTLINES: SOLID WHITE AT THE CORE, A CHECKERBOARD OF WHITE AND WATER AROUND IT, THEN LONE SPECKS, SO THE FOAM THINS INTO THE BLUE THE 16-BIT WAY.' },
+  { id: 'D', name: 'D · STREAKS', desc: 'A JAGGED LIP, AND THE FACE AND BACK COVERED IN BROKEN HORIZONTAL DASHES OF FOAM THAT SLIDE BACK OVER THE WATER AS IT ROLLS ON.' },
+  { id: 'E', name: 'E · CHUNKY CLUMPS', desc: 'THE FOAM IN IRREGULAR BLOCKY CLUMPS: TWO ROWS OF WHITE ON TOP, PALE CYAN SHADOW UNDER, A DARK EDGE ON THE UNDERSIDE ONLY. CLUMPS BREAK OFF THE LIP AS SPRAY.' },
+  { id: 'F', name: 'F · LACE', desc: 'A NET OF THIN FOAM LINES WITH HOLES OF WATER IN IT OVER THE CREST AND FACE, THE CELL PATTERN OF HOKUSAI’S FOAM, SHIFTING EVERY FEW STEPS.' },
+];
+// The curl's centre line: where the lip leaves the crest, rolls forward and down.
+function curlOf(cx, dir, sc) {
+  var R = 14 * Math.max(0.3, sc), H0 = FLOOR - GW - waveH(0, sc), px = cx + 0.87 * R * dir, py = H0 + 0.5 * R, pts = [];
+  for (var i = 0; i <= 40; i++) {
+    var a = -Math.PI * 5 / 6 + (Math.PI * 0.42 + Math.PI * 5 / 6) * i / 40;
+    pts.push({ x: px + R * Math.cos(a) * dir, y: py + R * Math.sin(a), r: R * 0.34 * (1 - i / 40) + 1, i: i });
+  }
+  return { R: R, H0: H0, px: px, py: py, pts: pts };
+}
+function paintRough(style, cx, dir, sc, step) {
+  var g = {}, fl = Math.floor(step / 4);
+  var set = function (x, y, k) { x = Math.round(x); y = Math.round(y); if (y < 0 || y >= FLOOR) return; g[y * 4000 + x + 2000] = k; };
+    var isFoam = function (k) { return k === 'F' || k === 'f' || k === 's'; };
+  // the water: the same body as wave 6
+  for (var d = -170; d <= FRONT + 30; d++) {
+    var hh = waveH(d, sc); if (hh < 1) continue;
+    var x = cx + d * dir, t = FLOOR - GW - hh;
+    for (var y = Math.ceil(t); y < FLOOR; y++) {
+      var u = (y - t) / (FLOOR - t);
+      if (u > 0.2 && ((x + y) & 1)) continue;
+      set(x, y, u < 0.12 ? 'a' : u < 0.35 ? 'b' : u < 0.65 ? 'c' : 'd');
+    }
+    set(x, Math.ceil(t), hh > 6 ? 'O' : 'a');
+    [0.25, 0.5, 0.75].forEach(function (b, i) { if (hh > 14 && ((Math.round(x) + i) % 5)) set(x, t + (FLOOR - t) * b + 2 * Math.sin((d + i * 7) * 0.25), 'L'); });
+  }
+  var C = curlOf(cx, dir, sc), R = C.R;
+  for (var yy = Math.round(C.py - R); yy < C.py + R; yy++) for (var xx = -R; xx < R; xx++) {
+    var ang = Math.round((Math.atan2(yy - C.py, xx) + Math.PI) * 4); if (Math.hypot(xx, yy - C.py) < R * 0.72 + (hash(ang, 3, fl) - 0.5) * 2.5 && xx * dir > -0.87 * R - 2) set(C.px + xx, yy, ((Math.round(C.px + xx) + yy) & 1) ? 'h' : 'd');
+  }
+  var top = function (dd) { return FLOOR - GW - waveH(dd, sc); };
+  // A jagged lip: each point's thickness wobbles, drawn as diamonds and squares, never discs.
+  var lip = function (wob, hard) {
+    C.pts.forEach(function (p) {
+      var r = Math.max(1, Math.round(p.r + (hash(p.i, fl, 7) - 0.5) * wob));
+      for (var j = -r; j <= r; j++) for (var i = -r; i <= r; i++) {
+        if (Math.abs(i) + Math.abs(j) * (hard ? 1 : 0.7) > r + 0.5) continue;
+        set(p.x + i * dir, p.y + j, j < -r / 3 ? 'F' : j < r / 2 ? 'f' : 's');
+      }
+    });
+  };
+  var end = C.pts[C.pts.length - 1];
+  if (style === 'A') {
+    lip(2.5, true);
+    // claws: hooks off the outer rim of the lip, each reaching out then curling forward and down
+    for (var k = 3; k < 38; k += 5) {
+      var p = C.pts[k], nx = (p.x - C.px) * dir / R, ny = (p.y - C.py) / R, ang0 = Math.atan2(ny, nx);
+      var len = 6 + Math.floor(hash(k, fl, 3) * 4) + Math.round(4 * sc), cx0 = p.x + nx * p.r * dir, cy0 = p.y + ny * p.r;
+      for (var s = 0; s < len; s++) {
+        var ang = ang0 + s * 0.16, bx = cx0 + Math.cos(ang) * s * 0.9 * dir, by = cy0 + Math.sin(ang) * s * 0.9;
+        set(bx, by, s < len - 2 ? 'f' : 'F'); if (s < len - 2) set(bx - Math.sin(ang) * dir, by + Math.cos(ang), 'f');
+      }
+    }
+    for (var k2 = 0; k2 < 5; k2++) { var bd = -(5 + k2 * 6), tt = top(bd); for (var c = 0; c < 4 - (k2 > 2 ? 2 : 0); c++) set(cx + (bd - c) * dir, tt + 1 + (c & 1), c ? 'f' : 'F'); }
+  } else if (style === 'B') {
+    lip(1.5, false);
+    for (var d2 = 4; d2 > -70; d2--) {
+      var th = Math.round((d2 > -20 ? 4 : d2 > -45 ? 3 : 2) + (hash(d2, fl, 5) - 0.5) * 2), tt2 = top(d2);
+      if (th < 1 || waveH(d2, sc) < 10) continue;
+      for (var y2 = 0; y2 < th; y2++) set(cx + d2 * dir, tt2 + 1 + y2, y2 === 0 ? 'F' : y2 < th - 1 ? 'f' : 's');
+      if (hash(d2, 11, 0) < 0.22) { var drip = 2 + Math.floor(hash(d2, fl, 9) * 4); for (var q = 0; q < drip; q++) set(cx + d2 * dir, tt2 + 1 + th + q, q < drip - 1 ? 'f' : 's'); }
+    }
+  } else if (style === 'C') {
+    C.pts.forEach(function (p) {
+      var r = p.r + 3;
+      for (var j = -Math.ceil(r); j <= r; j++) for (var i = -Math.ceil(r); i <= r; i++) {
+        var m = (Math.abs(i) + Math.abs(j)) / r, X = Math.round(p.x + i * dir), Y = Math.round(p.y + j);
+        if (m < 0.45) set(X, Y, j < 0 ? 'F' : 'f');
+        else if (m < 0.75) { if (((X + Y + fl) & 1) === 0) set(X, Y, 'F'); }
+        else if (m < 1) { if ((X % 3 === 0) && ((Y + fl) % 3 === 0)) set(X, Y, 'f'); }
+      }
+    });
+    for (var d3 = 0; d3 > -60; d3--) { var tt3 = top(d3); for (var y3 = 0; y3 < 5; y3++) { var X3 = Math.round(cx + d3 * dir), Y3 = Math.round(tt3 + 1 + y3); if (y3 < 1 || (y3 < 3 && ((X3 + Y3 + fl) & 1) === 0) || (y3 >= 3 && X3 % 3 === 0 && (Y3 + fl) % 3 === 0)) set(X3, Y3, y3 ? 'f' : 'F'); } }
+  } else if (style === 'D') {
+    lip(2, true);
+    for (var row = 0; row < 9; row++) for (var d4 = -150; d4 < FRONT; d4 += 3) {
+      var dd4 = d4 + ((fl * 2 + row * 5) % 12), hh4 = waveH(dd4, sc); if (hh4 < 14) continue;
+      var yv = top(dd4) + 4 + row * (hh4 / 10); if (yv >= FLOOR - GW - 2) continue;
+      if (hash(d4, row, 13) > 0.32) continue;
+      var ln = 3 + Math.floor(hash(d4, row, 17) * 6);
+      for (var z = 0; z < ln; z++) set(cx + (dd4 - z) * dir, yv, row < 2 ? 'F' : row < 5 ? 'f' : 's');
+    }
+  } else if (style === 'E') {
+    var clump = function (x0, y0, w, h, seed) {
+      for (var r2 = 0; r2 < h; r2++) {
+        var a0 = Math.floor(hash(seed, r2, 1) * 3) - (r2 === 0 ? 0 : 1), wid = Math.max(1, w - Math.abs(r2 - h / 2) * 1.2 + Math.floor(hash(seed, r2, 2) * 3) - 1);
+        for (var c2 = 0; c2 < wid; c2++) set(x0 + (a0 + c2 - w / 2) * dir, y0 + r2, r2 < Math.max(2, h * 0.6) ? (r2 === 0 || hash(c2, r2, seed) < 0.75 ? 'F' : 'f') : 's');
+      }
+    };
+    C.pts.forEach(function (p, i) { if (i % 3 === 0) clump(p.x, p.y - p.r, Math.round(p.r * 2 + 2), Math.round(p.r * 1.6 + 2), i * 7 + fl); });
+    for (var s2 = 0; s2 < 6; s2++) clump(end.x + (5 + hash(s2, fl, 3) * 16) * dir, end.y - 4 + hash(fl, s2, 4) * 14, 2 + Math.floor(hash(s2, 9, fl) * 3), 2 + Math.floor(hash(s2, 8, fl) * 2), s2 + fl * 13);
+    for (var k3 = 0; k3 < 4; k3++) { var bd3 = -(6 + k3 * 7); clump(cx + bd3 * dir, top(bd3) - 1, 5 - k3, 3, k3 * 31 + fl); }
+  } else if (style === 'F') {
+    // cells: points on a coarse grid, jittered; foam on the borders between neighbouring cells
+    var cell = function (X, Y) {
+      var gx = Math.floor(X / 6), gy = Math.floor(Y / 6), best = 1e9, second = 1e9;
+      for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) {
+        var qx = (gx + ox) * 6 + hash(gx + ox, gy + oy, fl) * 6, qy = (gy + oy) * 6 + hash(gy + oy, gx + ox, fl + 50) * 6, dd = (X - qx) * (X - qx) + (Y - qy) * (Y - qy);
+        if (dd < best) { second = best; best = dd; } else if (dd < second) second = dd;
+      }
+      return Math.sqrt(second) - Math.sqrt(best);
+    };
+    C.pts.forEach(function (p) {
+      var r = p.r + 1.5;
+      for (var j = -Math.ceil(r); j <= r; j++) for (var i = -Math.ceil(r); i <= r; i++) {
+        if (Math.abs(i) + Math.abs(j) > r + 0.5) continue;
+        var X = Math.round(p.x + i * dir), Y = Math.round(p.y + j);
+        set(X, Y, cell(X, Y) < 1.1 || j < -r / 2 ? 'F' : 'a');
+      }
+    });
+    for (var d5 = 2; d5 > -55; d5--) { var tt5 = top(d5), depth = d5 > -25 ? 9 : 5; for (var y5 = 0; y5 < depth; y5++) { var X5 = Math.round(cx + d5 * dir), Y5 = Math.round(tt5 + 1 + y5); if (cell(X5, Y5) < 1 - y5 / (depth * 1.4) + 0.3) set(X5, Y5, y5 < 2 ? 'F' : 'f'); } }
+  }
+  if (style !== 'C') for (var sp = 0; sp < 7; sp++) { var sx = end.x + (4 + hash(sp, fl, 1) * 18) * dir, sy = end.y - 6 + hash(fl, sp, 2) * 20; set(sx, sy, 'F'); if (hash(sp, fl, 5) < 0.5) set(sx + dir, sy, 'f'); }
+  // a dark edge, but only under foam (where foam sits over water), never all round it
+  if (style === 'A' || style === 'B' || style === 'E') {
+    var add = [];
+    for (var key in g) { if (!isFoam(g[key])) continue; var y0 = Math.floor(key / 4000), x0 = key - y0 * 4000, below = g[(y0 + 1) * 4000 + x0]; if (below !== undefined && !isFoam(below) && y0 + 1 < FLOOR) add.push((y0 + 1) * 4000 + x0); }
+    add.forEach(function (k4) { g[k4] = 'O'; });
+  }
+  return g;
+}
+function wavesAt(t) {
+  if (t < 0) return [];
+  var sc = t >= SPAWN_T ? 1 : (Math.floor(t / (SPAWN_T / SPAWN_N)) + 1) / SPAWN_N;
+  return [{ cx: TARGET + t * WAVE_V, dir: 1, sc: sc }, { cx: TARGET - t * WAVE_V, dir: -1, sc: sc }];
+}
+
+var SPEEDS = [1, 0.5, 0.25], SPEED_NAMES = ['FULL SPEED', 'HALF SPEED', 'QUARTER SPEED'], S = 1.8, CACHE = {}, CACHE_N = 0;
+function cached(style, dir, sc, step) {
+  var key = style + dir + sc + '|' + Math.floor(step / 4);
+  if (!CACHE[key]) { if (++CACHE_N > 400) { CACHE = {}; CACHE_N = 0; } CACHE[key] = paintRough(style, 0, dir, sc, step); }
+  return CACHE[key];
+}
+function spikeBall(put, x, y) {
+  for (var j = -4; j <= 4; j++) for (var i = -4; i <= 4; i++) { var d = i * i + j * j; if (d <= 16) put(x + i, y + j, d > 12 ? '#3A424E' : (i + j < -2 ? '#D8DEE8' : '#9AA4B4')); }
+}
+function drawRough(cv, style, step) {
+  var gx = cv.getContext('2d'), t = step % LOOP - 20;
+  for (var y = 0; y < VH; y++) { var u = y / VH; gx.fillStyle = 'rgb(' + Math.round(10 + 8 * u) + ',' + Math.round(18 + 14 * u) + ',' + Math.round(40 + 26 * u) + ')'; gx.fillRect(0, y * S, cv.width, Math.ceil(S)); }
+  var put = function (x, y, hex) { if (x < 0 || x >= VW || y < 0) return; gx.fillStyle = hex; gx.fillRect(Math.floor(x * S), Math.floor(y * S), Math.ceil(S), Math.ceil(S)); };
+  gx.fillStyle = '#2a3a58'; gx.fillRect(0, 0, WALL0 * S, cv.height); gx.fillRect((WALL1 + 1) * S, 0, cv.width, cv.height);
+  gx.fillStyle = '#1e345c'; gx.fillRect(0, FLOOR * S, cv.width, cv.height);
+  wavesAt(t).forEach(function (w) {
+    var g = cached(style, w.dir, w.sc, t), ox = Math.round(w.cx);
+    for (var key in g) { var yy = Math.floor(key / 4000), xx = key - yy * 4000 - 2000 + ox; if (xx < WALL0 || xx > WALL1) continue; put(xx, yy, WC[g[key]]); }
+    var at = w.dir > 0 ? WALL1 : WALL0, hw = waveH((at - w.cx) * w.dir, w.sc);
+    if (hw > 3) for (var j = 0; j < 16; j++) { var px = at - w.dir * Math.floor(hash(j, t, 4) * 3), py = Math.round(FLOOR - GW - hash(j, Math.floor(t / 2), 9) * hw); put(px, py, hash(j, 5, t) < 0.5 ? '#FFFFFF' : '#DDF6FF'); if (hash(j, 6, t) < 0.4) put(px - w.dir, py + 1, '#8FD8F5'); }
+  });
+  if (t >= 0 && t < 20) for (var s = 0; s < 14; s++) { var a = hash(s, 1, 0) * Math.PI, r = (t + 2) * (0.6 + hash(s, 2, 0)); put(Math.round(TARGET + Math.cos(a) * r * 1.4), Math.round(FLOOR - GW - Math.sin(a) * r), s & 1 ? '#FFFFFF' : '#BDF3FF'); }
+  for (var x = WALL0; x <= WALL1; x++) {
+    var sy = FLOOR - GW + Math.round(Math.sin((x + step * 0.6) * 0.3));
+    put(x, sy, '#BDF3FF');
+    for (var y2 = sy + 1; y2 < FLOOR; y2++) if (((x + y2) & 1) === 0) put(x, y2, y2 < sy + 3 ? '#5CCBF5' : '#2F86E0');
+  }
+  for (var b2 = 34; b2 < FLOOR - 6; b2 += 12) { spikeBall(put, WALL0, b2); spikeBall(put, WALL1, b2); }
+}
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this; this.step = 0; this.acc = 0;
+    this.timer = setInterval(function () {
+      var st = self.state || {};
+      if (st.paused) return;
+      self.acc += SPEEDS[st.speed || 0];
+      if (self.acc < 1) return;
+      self.acc -= 1; self.step++; self.draw();
+    }, 1000 / 60);
+    this.draw();
+  }
+  componentDidUpdate() { this.draw(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  draw() {
+    var step = this.step || 0;
+    document.querySelectorAll('canvas[data-rough]').forEach(function (cv) { drawRough(cv, STYLES[+cv.getAttribute('data-rough')].id, step); });
+  }
+  renderVals() {
+    var self = this, st = this.state || {}, out = {
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE',
+      togglePause: function () { self.setState({ paused: !st.paused }); },
+      speedLabel: SPEED_NAMES[st.speed || 0] + ' · TAP TO CHANGE',
+      cycleSpeed: function () { self.setState({ speed: ((st.speed || 0) + 1) % SPEEDS.length }); },
+      stepOnce: function () { self.step = (self.step || 0) + 1; self.acc = 0; self.setState({ paused: true }); self.draw(); },
+    };
+    STYLES.forEach(function (s, i) { out['v' + i] = s; });
+    return out;
+  }
+}
+</script>
+</body>
+</html>
