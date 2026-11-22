@@ -648,6 +648,12 @@ its index and its pictures (the room screenshots, the sprite sheets) live only i
   and that line moves to `[ready]`. An AI-made track also gets its label on that line and a row in
   the list under *AI-made sprites and music*. No APK build is involved.
 - **Tracks loop cleanly on the phone** — checked by the owner, 17 Oct 2026.
+- **ONE SONG PER BOSS, FOR STAGE AND ARENA ALIKE, until the owner says otherwise** (22 Nov 2026):
+  "the bgm prompt Creator skill Seems to be very good at making the stage music, but not as good at
+  making arena music ... going forward, just assume that they are the same song." So a song the
+  owner picks for a boss is handed off under BOTH names, `bgm-<id>-stage.ogg` and
+  `bgm-<id>-arena.ogg` (the same file twice), and both tracker lines move to `[ready]` together.
+  Tracks already in the game stay as they are (Grass's arena is its stage song slowed 10%).
 
 **The prompt writer is the `openmusic-bgm` skill, and it lives on the owner's Claude
 account, not in this repo.** The owner put it there (Customize → Skills) so it works in the
