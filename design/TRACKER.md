@@ -112,8 +112,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[wip]` [x] furniture · [x] arena background · [ ] boss · [x] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-proto-stage.ogg` — plays on the overworld approach to Proto Mk0's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-proto-arena.ogg`.
 
 ## Blaze Man — Fire
@@ -150,8 +150,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.42 s) at the bar line, starting on the first sound.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[ready]` `bgm-blaze-stage.ogg` — plays on the overworld approach to Blaze Man's door. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-01. 155 BPM, cut to 52 bars (80.42 s) at the bar line, starting on the first sound.
 - **bgm arena file** `[ready]` `bgm-blaze-arena.ogg` — plays inside Blaze Man's boss room. AI-made (openmusic.ai, from the fire recipe in the openmusic-bgm skill) at the owner's request, 2026-10-21. 54 bars at about 156 beats a minute: 82.95 s, looped as handed off.
 
 ## Tempest Man — Water
@@ -189,8 +189,8 @@ where each one stands.
 - **boss art** `[ready]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[draft]` [x] furniture · [x] arena background · [x] boss · [x] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-tempest-stage.ogg` — plays on the overworld approach to Tempest Man's door.
 - **bgm arena file** `[ready]` `bgm-tempest-arena.ogg` — plays inside Tempest Man's boss room. AI-made (openmusic.ai, from the water recipe in the openmusic-bgm skill) at the owner's request, 2026-10-19. 50.26 s, looped as handed off.
 
 ## Volt Man — Electric
@@ -226,8 +226,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
 - **bgm arena file** `[ready]` `bgm-volt-arena.ogg` — plays inside Volt Man's boss room. AI-made (openmusic.ai, from the electric recipe in the openmusic-bgm skill) at the owner's request, 2026-10-21. 20 bars, stretched from about 122 to exactly 120 beats a minute so each bar is one 2-second beat of his room: 40.00 s, looped as handed off.
 
 ## Thorn Man — Grass
@@ -262,9 +262,9 @@ where each one stands.
 - **boss art** `[draft]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[ready]` `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door. AI-made (openmusic.ai, from the openmusic-bgm skill's prompt for his bgm arena field) at the owner's request, 2026-11-22. 56 bars at about 138 beats a minute: 97.04 s, looped as handed off.
-- **bgm arena** `[ready]` Mix of pastoral folk and ninja/Japanese flavour: a flute-like lead, with koto-like plucks and taiko-like drums mixed in. Steady pace, around 130–150 beats a minute. The signature sound in the first bar is wooden percussion: wood blocks, bamboo knocks, hollow log drums. Mysterious color, neither happy nor sad, like an eerie abandoned greenhouse.
-- **bgm arena file** `[ready]` `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room. AI-made (openmusic.ai, from the openmusic-bgm skill's prompt for his bgm arena field) at the owner's request, 2026-11-22: his stage track's song slowed 10% with the pitch dropping with it, as the owner asked, for today. 54 bars at about 124 beats a minute: 104.44 s, looped as handed off.
+- **bgm stage** `[ready]` Mix of pastoral folk and ninja/Japanese flavour: a flute-like lead, with koto-like plucks and taiko-like drums mixed in. Steady pace, around 130–150 beats a minute. The signature sound in the first bar is wooden percussion: wood blocks, bamboo knocks, hollow log drums. Mysterious color, neither happy nor sad, like an eerie abandoned greenhouse.
+- **bgm stage file** `[ready]` `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door. AI-made (openmusic.ai, from the openmusic-bgm skill's prompt for his bgm stage field) at the owner's request, 2026-11-22. 56 bars at about 138 beats a minute: 97.04 s, looped as handed off.
+- **bgm arena file** `[ready]` `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room. AI-made (openmusic.ai, from the openmusic-bgm skill's prompt for his bgm stage field) at the owner's request, 2026-11-22: his stage track's song slowed 10% with the pitch dropping with it, as the owner asked, for today. 54 bars at about 124 beats a minute: 104.44 s, looped as handed off.
 
 ## Frost Man — Ice
 
@@ -298,8 +298,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-frost-stage.ogg` — plays on the overworld approach to Frost Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-frost-stage.ogg` — plays on the overworld approach to Frost Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-frost-arena.ogg` — plays inside Frost Man's boss room.
 
 ## Strike Man — Fighting
@@ -334,8 +334,8 @@ where each one stands.
 - **boss art** `[wip]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-strike-stage.ogg` — plays on the overworld approach to Strike Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-strike-arena.ogg` — plays inside Strike Man's boss room.
 
 ## Venom Man — Poison
@@ -371,8 +371,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[deferred]` [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-venom-stage.ogg` — plays on the overworld approach to Venom Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-venom-stage.ogg` — plays on the overworld approach to Venom Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-venom-arena.ogg` — plays inside Venom Man's boss room.
 
 ## Quake Man — Ground
@@ -407,8 +407,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-quake-stage.ogg` — plays on the overworld approach to Quake Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-quake-stage.ogg` — plays on the overworld approach to Quake Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-quake-arena.ogg` — plays inside Quake Man's boss room.
 
 ## Gale Man — Flying
@@ -443,8 +443,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[deferred]` [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-gale-stage.ogg` — plays on the overworld approach to Gale Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-gale-stage.ogg` — plays on the overworld approach to Gale Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-gale-arena.ogg` — plays inside Gale Man's boss room.
 
 ## Psi Man — Psychic
@@ -479,8 +479,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[deferred]` [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-psi-stage.ogg` — plays on the overworld approach to Psi Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-psi-stage.ogg` — plays on the overworld approach to Psi Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-psi-arena.ogg` — plays inside Psi Man's boss room.
 
 ## Swarm Man — Bug
@@ -515,8 +515,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[deferred]` [ ] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-swarm-stage.ogg` — plays on the overworld approach to Swarm Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-swarm-stage.ogg` — plays on the overworld approach to Swarm Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-swarm-arena.ogg` — plays inside Swarm Man's boss room.
 
 ## Granite Man — Rock
@@ -551,8 +551,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-granite-stage.ogg` — plays on the overworld approach to Granite Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-granite-stage.ogg` — plays on the overworld approach to Granite Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-granite-arena.ogg` — plays inside Granite Man's boss room.
 
 ## Wraith Man — Ghost
@@ -587,8 +587,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-wraith-stage.ogg` — plays on the overworld approach to Wraith Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-wraith-stage.ogg` — plays on the overworld approach to Wraith Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-wraith-arena.ogg` — plays inside Wraith Man's boss room.
 
 ## Drake Man — Dragon
@@ -623,8 +623,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[ready]` `bgm-drake-stage.ogg` — plays on the overworld approach to Drake Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[ready]` `bgm-drake-stage.ogg` — plays on the overworld approach to Drake Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-drake-arena.ogg` — plays inside Drake Man's boss room.
 
 ## Eclipse Man — Dark
@@ -659,8 +659,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-eclipse-stage.ogg` — plays on the overworld approach to Eclipse Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-eclipse-stage.ogg` — plays on the overworld approach to Eclipse Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-eclipse-arena.ogg` — plays inside Eclipse Man's boss room.
 
 ## Alloy Man — Steel
@@ -695,8 +695,8 @@ where each one stands.
 - **boss art** `[deferred]` [ ] ready for design · [ ] back from design · [ ] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[deferred]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-alloy-stage.ogg` — plays on the overworld approach to Alloy Man's door.
-- **bgm arena** `[wip]`
+- **bgm stage** `[wip]`
+- **bgm stage file** `[wip]` No file yet. Hand off as `bgm-alloy-stage.ogg` — plays on the overworld approach to Alloy Man's door.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-alloy-arena.ogg` — plays inside Alloy Man's boss room.
 
 ---

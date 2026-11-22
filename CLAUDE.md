@@ -625,15 +625,16 @@ its index and its pictures (the room screenshots, the sprite sheets) live only i
 
 **The music is SNES-era chiptune**, by the owner's call, chosen to match the 16-bit art.
 
-- **Each boss's `bgm arena` field is the owner's description of his arena music**, by the
-  owner's call (21 Oct 2026). The skill keeps its fire, water and electric recipes as worked
+- **Each boss's `bgm stage` field is the owner's description of his music**, by the owner's call
+  (21 Oct 2026; it was the `bgm arena` field until 22 Nov 2026, when the owner renamed it because
+  the skill is a stage skill for now). The skill keeps its fire, water and electric recipes as worked
   examples ("it was all good training data"), and **a track already in the game is not remade**
   unless the owner asks for that boss's track again by name.
   The skill makes a track only when that field is **`[draft]`**, reading the boss's `arena` and
   stage details alongside it. It turns the owner's words into what the generator follows; it never
   rewrites the field. After the owner picks a song and it is handed off, the field moves to `[ready]`.
-- **The file lives on its own line, `bgm arena file`**, directly under the description: the file
-  name, the AI-made label, and the loop's length. `tests/tracker.test.js` checks every `[ready]`
+- **The files live on their own lines, `bgm stage file` and `bgm arena file`**, directly under the
+  description: each file's name, the AI-made label, and the loop's length. `tests/tracker.test.js` checks every `[ready]`
   bgm line except the description against `design/music/`, both ways.
 - **Tempo is free** except where it has to be: it helps find a clean loop point, and Volt
   Man's track must land on his room's beat. His track is 120 beats a minute, so each
@@ -644,7 +645,7 @@ its index and its pictures (the room screenshots, the sprite sheets) live only i
   cut, since even a good one-minute loop gets annoying. Start the file on its first sound.
   Do not over-work the join; much of this music may be placeholder.
 - **Handing off a track**: the file goes into `design/music/` under the name its tracker line
-  gives (`bgm stage`, or `bgm arena file` for a boss room), `npm run music` rewrites `pack.json`,
+  gives (`bgm stage file`, or `bgm arena file` for a boss room), `npm run music` rewrites `pack.json`,
   and that line moves to `[ready]`. An AI-made track also gets its label on that line and a row in
   the list under *AI-made sprites and music*. No APK build is involved.
 - **Tracks loop cleanly on the phone** — checked by the owner, 17 Oct 2026.
@@ -727,7 +728,7 @@ Claude or a generator made:
 
 1. **Where it lives.** A sprite gets it in its own `note` line:
    `Drawn by Claude at the owner's request, <date>.` A music file cannot carry readable
-   text, so its tracker line (`bgm stage` or `bgm arena file`) carries it instead:
+   text, so its tracker line (`bgm stage file` or `bgm arena file`) carries it instead:
    `AI-made (<generator>) at the owner's request, <date>.` A room drawn in code carries
    it in the opening comment of its own file in `src/systems/arena-art/`.
 2. **In the list below**, in the same commit that adds the asset.
@@ -889,7 +890,7 @@ ground-contrast rule than the overworld.
 The owner's words (22 Oct 2026): "Boss Arena visual cues will allude to the weapons game
 origin. Boss Arena musical theming will allude to the element itself." So the Rock boss's
 room nods to Kirby, because his weapon is Kirby's Rock form, and the Typeless bunker's field asks for
-Nullfire Drones lying about. The music half is the same rule the `bgm arena` field already
+Nullfire Drones lying about. The music half is the same rule the `bgm stage` field already
 follows.
 
 **One file per room, listed in `ROOMS` in `index.js`.** A room in that list draws its own
