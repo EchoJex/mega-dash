@@ -1655,10 +1655,14 @@ export default class GameScene extends Phaser.Scene {
         b.vx = (b.vx / sp) * next;
         b.vy = (b.vy / sp) * next;
       }
-      // A ground-hugging wave (Torrent's tidal) rides the
-      // floor line instead of falling, so it stays a floor attack whatever the
-      // terrain under it is doing.
-      if (b.hugsFloor) b.y = (this.arena ? this.arena.floorY : GROUND_Y) - 5;
+      // A ground-hugging wave (Torrent's tidal) rides whatever surface is under
+      // it — the floor, a platform — and pours off the end and falls when that
+      // surface runs out (owner, 22 Nov 2026: "Pour off and fall"). Its y sits
+      // 5 above the surface, which is where drawTidal draws its foot.
+      if (b.hugsFloor) {
+        const under = this.supportY(b.x, b.y + 5);
+        if (under != null) { b.y = under - 5; b.vy = 0; } else b.vy = Math.min(6, b.vy + 0.3);
+      }
 
       // Ballistic shots: gravity, a bounce off the floor, and a climb up the
       // sealed walls. Blaze Man's fireballs are the reason all three exist —

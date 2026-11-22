@@ -450,7 +450,6 @@ function jetHit(ctx, lv, x, y, dmgMult, knock) {
   ctx.puff({ x, y: y + 18, w: 6, life: 6, color: 0x9AD8F0 });
 }
 
-/** Lv10: a ground-hugging wave each way, sized by how hard you hit the floor. */
 /**
  * The wave that resolves a nosedive: one each way along the floor.
  *
@@ -465,7 +464,8 @@ function tidalWave(ctx, lv, L, fuel) {
   const r = L.waveMin + (L.waveMax - L.waveMin) * Math.max(0, Math.min(1, fuel));
   for (const dir of [-1, 1]) {
     ctx.spawn({
-      x: p.x + 12, y: (ctx.arena ? ctx.arena.floorY : ctx.floorY) - 6,
+      // Born on the surface he landed on — "on contact with a surface".
+      x: p.x + 12, y: p.y + 24 - 5,
       vx: dir * L.tidalSpeed, vy: 0,
       radius: r, damage: dmgOf('torrent_cannon', lv, ctx) * L.tidalDmgMult,
       color: '#5CADD5', shape: 'stream', weapon: 'torrent_cannon',
