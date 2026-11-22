@@ -262,7 +262,7 @@ where each one stands.
 - **boss art** `[draft]` [x] ready for design · [x] back from design · [x] in game
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
-- **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
+- **bgm stage** `[ready]` `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door. AI-made (openmusic.ai, from the openmusic-bgm skill's prompt for his bgm arena field) at the owner's request, 2026-11-22. 56 bars at about 138 beats a minute: 97.04 s, looped as handed off.
 - **bgm arena** `[draft]` Mix of pastoral folk and ninja/Japanese flavour: a flute-like lead, with koto-like plucks and taiko-like drums mixed in. Steady pace, around 130–150 beats a minute. The signature sound in the first bar is wooden percussion: wood blocks, bamboo knocks, hollow log drums. Mysterious color, neither happy nor sad, like an eerie abandoned greenhouse.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room.
 

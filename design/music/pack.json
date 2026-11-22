@@ -40,6 +40,11 @@
       "bytes": 1064909,
       "sha": "37c1827522da3489"
     },
+    "bgm-thorn-stage": {
+      "file": "bgm-thorn-stage.ogg",
+      "bytes": 2312530,
+      "sha": "03d84aaec965337b"
+    },
     "bgm-volt-arena": {
       "file": "bgm-volt-arena.ogg",
       "bytes": 868711,

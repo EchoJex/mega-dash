@@ -733,6 +733,7 @@ Claude or a generator made:
 | Tempest Man's arena track (his boss room) | music | openmusic.ai, from the skill's water prompt | 2026-10-19 | `design/music/bgm-tempest-arena.ogg` |
 | Blaze Man's arena track (his boss room) | music | openmusic.ai, from the skill's fire prompt | 2026-10-21 | `design/music/bgm-blaze-arena.ogg` |
 | Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
+| Thorn Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's prompt for his arena field; the owner kept it for the stage | 2026-11-22 | `design/music/bgm-thorn-stage.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
 | the Quake Hammer's effects — dust, puff, Lv10 spikes, sand grains | sprite | Claude (Claude Design) | 2026-10-18 | `design/sprites/weapon-quake_hammer-{dust,puff,spike,sand}.sprite` |
 | the Quake Hammer itself — the rope-bound mallet in his gripping fist, every clip it plays | sprite | Claude (Claude Design) | 2026-10-23 | `design/sprites/weapon-quake_hammer-held.sprite` |
