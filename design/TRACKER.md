@@ -263,7 +263,7 @@ where each one stands.
 - **world pieces** `[ready]` [x] in game
 - **sprite sheet** `[wip]` [ ] furniture · [ ] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]` No file yet. Hand off as `bgm-thorn-stage.ogg` — plays on the overworld approach to Thorn Man's door.
-- **bgm arena** `[wip]` Mix of pastoral folk and ninja/Japanese flavour: a flute-like lead and a held drone, with koto-like plucks and taiko-like drums mixed in. Steady pace, around 130–150 beats a minute. The signature sound in the first bar is wooden percussion: wood blocks, bamboo knocks, hollow log drums. Mysterious colour, neither happy nor sad, like an eerie abandoned greenhouse.
+- **bgm arena** `[wip]` Mix of pastoral folk and ninja/Japanese flavour: a flute-like lead, with koto-like plucks and taiko-like drums mixed in. Steady pace, around 130–150 beats a minute. The signature sound in the first bar is wooden percussion: wood blocks, bamboo knocks, hollow log drums. Mysterious colour, neither happy nor sad, like an eerie abandoned greenhouse.
 - **bgm arena file** `[wip]` No file yet. Hand off as `bgm-thorn-arena.ogg` — plays inside Thorn Man's boss room.
 
 ## Frost Man — Ice
