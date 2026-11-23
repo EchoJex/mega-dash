@@ -377,6 +377,17 @@ track by hand against that 3.0s, so moving the start shifts every aligned track.
 `syncMusicTo(beatTrack, ARRIVAL_S + arena.t / 60)`, and the track jumps back into line if it
 has drifted more than 60ms. Every other track simply slows and recovers with the game.
 
+**That resync only keeps the FILE's clock on the room's; it cannot see beats that are off inside
+the file.** Volt Man's first track was stretched to 40.000 s but its bars were 2.012 s long, so the
+speakers slid up to a quarter second off the music each loop with no resync ever firing (found and
+fixed 23 Nov 2026). Check a beat-locked track by measuring its BAR LENGTH, not by beat-tracking: a
+beat tracker locks onto the off-beats of syncopated music and reports nonsense. Line the rhythm up
+with itself one bar later, window by window; every window should read 2.000 s. The fix was
+`rubberband --timemap` (every beat pinned to the grid, pitch kept) run over three copies of the loop
+with the middle one kept, and its first 20 ms blended from the true continuation so the seam is
+clean. His speakers kick 1.0 s into each bar of the file (3.0 s arrival, 2-second beat), which is
+where his track's strongest hit sits.
+
 **Music runs at the game's speed** — `setMusicRate(timeScale)` every frame, pitch falling
 with it, so the re-quip wheel's slow motion and its ramp back slow and speed the track in
 step with the room. **The pause menu plays the main menu track** and PARKS the fight's
@@ -739,7 +750,7 @@ Claude or a generator made:
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
 | Tempest Man's arena track (his boss room) | music | openmusic.ai, from the skill's water prompt | 2026-10-19 | `design/music/bgm-tempest-arena.ogg` |
 | Blaze Man's arena track (his boss room) | music | openmusic.ai, from the skill's fire prompt | 2026-10-21 | `design/music/bgm-blaze-arena.ogg` |
-| Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
+| Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute; re-timed beat by beat on 2026-11-23 so every bar is exactly 2 s | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
 | Thorn Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's prompt for his arena field; the owner kept it for the stage | 2026-11-22 | `design/music/bgm-thorn-stage.ogg` |
 | Thorn Man's arena track (his boss room) | music | openmusic.ai, the same song as his stage track slowed 10% with the pitch dropping, at the owner's request | 2026-11-22 | `design/music/bgm-thorn-arena.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |

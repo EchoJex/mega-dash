@@ -228,7 +228,7 @@ where each one stands.
 - **sprite sheet** `[ready]` [x] furniture · [x] arena background · [ ] boss · [ ] boss atk
 - **bgm stage** `[wip]`
 - **bgm stage file** `[wip]` No file yet. Hand off as `bgm-volt-stage.ogg` — plays on the overworld approach to Volt Man's door.
-- **bgm arena file** `[ready]` `bgm-volt-arena.ogg` — plays inside Volt Man's boss room. AI-made (openmusic.ai, from the electric recipe in the openmusic-bgm skill) at the owner's request, 2026-10-21. 20 bars, stretched from about 122 to exactly 120 beats a minute so each bar is one 2-second beat of his room: 40.00 s, looped as handed off.
+- **bgm arena file** `[ready]` `bgm-volt-arena.ogg` — plays inside Volt Man's boss room. AI-made (openmusic.ai, from the electric recipe in the openmusic-bgm skill) at the owner's request, 2026-10-21. 20 bars at exactly 120 beats a minute so each bar is one 2-second beat of his room: 40.00 s, looped as handed off. Re-timed 2026-11-23: the first stretch left every bar 2.012 s long, so the speakers slid up to a quarter second off the music each loop; every beat is now pinned to the half-second grid, pitch unchanged.
 
 ## Thorn Man — Grass
 
