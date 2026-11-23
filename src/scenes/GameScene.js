@@ -1802,12 +1802,6 @@ export default class GameScene extends Phaser.Scene {
         if (b.y - b.radius <= ceil) { b.y = ceil + b.radius; b.vy = Math.abs(b.vy); bounced++; }
         if (b.y + b.radius >= floor) {
           b.y = floor - b.radius; b.vy = -Math.abs(b.vy); bounced++;
-          // `pn.marked` used to be set here, scanning every panel on every
-          // floor bounce, and nothing ever read it. Its comment claimed layer 3
-          // discharges into "every panel the last bolt touched" — but the slam
-          // in voltAttack energises EVERY panel unconditionally, which is what
-          // the tracker actually asks for ("BRIEFLY energising every panel").
-          // A leftover from a superseded design, not a hook.
         }
         if (bounced) {
           b.damage *= b.bounceDmg ?? 0.75;

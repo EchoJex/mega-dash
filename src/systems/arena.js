@@ -186,15 +186,11 @@ export const BEAT_LEN = 120;
 export const VOLT_LAMP_HOLD = 14;
 
 /**
- * VOLT MAN'S PLATFORM RHYTHM, in BEATS rather than frames — the field states it
- * in seconds when the beat was one second; at two seconds a beat (the owner's
- * call, 17 Oct 2026) every one of them runs half as fast, as asked.
- *
- * `period` is not a free number: two sets three apart, each lasting five, only
- * repeats cleanly on a six-beat cycle. Change `apart` or `on` and this has to
- * move with them or the sets drift out of phase with each other.
+ * VOLT MAN'S PLATFORM RHYTHM, in BEATS: two sets, each solid for 4 beats and
+ * an outline for the next 4 (owner, 23 Nov 2026). `period` is twice `on`, so
+ * exactly one set is solid at every moment.
  */
-const VOLT_PLATFORM = { apart: 3, on: 5, period: 6 };
+const VOLT_PLATFORM = { on: 4, period: 8 };
 
 /**
  * HOW FAST THORN MAN'S GROUND COVER MOVES — and ONLY that.
@@ -318,16 +314,25 @@ const FURNITURE = {
      * `beatSet` is what tells stepArena to drive this platform off the room's
      * beat instead of its own countdown; see the phasing block there.
      */
-    const ys = [floorY - 38, floorY - 66];
-    a.platforms = Array.from({ length: 4 }, (_, i) => ({
-      x: Math.round(viewW * (0.14 + 0.24 * i)) - 20,
-      y: ys[i % 2],
-      w: 40, h: 5,
-      on: true, t: 0, hot: 0,
-      beatSet: { inAt: (i % 2) * VOLT_PLATFORM.apart, on: VOLT_PLATFORM.on,
+    /**
+     * THE OWNER'S PLATFORMS (23 Nov 2026): "A fixed count of 4 platforms, at
+     * all times, with 4 others as outlines, spawning anywhere in the middle 50%
+     * of the horizontal area with 2 states (dashed outline, on) running every 4
+     * beats each". Two sets of four; the set that is an outline is where the
+     * next set will be (the owner's answer), so every 4 beats the outlines turn
+     * solid and the solid set leaves to become new outlines somewhere else.
+     * Three rows, because eight platforms in the middle half of a 320-wide room
+     * do not fit on two; each row is a short jump (28px) above the last.
+     */
+    const ys = [floorY - 38, floorY - 66, floorY - 94];
+    a.platforms = Array.from({ length: 8 }, (_, i) => ({
+      x: 0, y: ys[0], w: 40, h: 5,
+      on: i < 4, t: 0, hot: 0, set: i < 4 ? 0 : 1, low: i % 4 === 0,
+      beatSet: { inAt: (i < 4 ? 0 : 1) * VOLT_PLATFORM.on, on: VOLT_PLATFORM.on,
         every: VOLT_PLATFORM.period },
-      roam: { x0: 12, x1: Math.max(13, viewW - 52), ys },
+      roam: { x0: Math.round(viewW * 0.25), x1: Math.round(viewW * 0.75) - 40, ys, preview: true },
     }));
+    for (const pl of a.platforms) placeAway(a, pl);
 
     /**
      * THE SPEAKERS ARE THE METRONOME MADE VISIBLE — "two industrial speakers
@@ -358,31 +363,17 @@ const FURNITURE = {
       live: 0,      // frames of being energised left
       tell: 0,      // frames of lamp warning left, before it energises
     }));
-    // "Inert between arcs and can be stood under safely" — so they are drawn
-    // whatever the layer, and only layer 2 and up ever fire them.
     /**
-     * "Two LONG overhead cables with exposed conductors at 30% and 70% arena
-     * width. The cables are drawn at every layer but the conductors and the
-     * sparkle are only drawn at layer 2 and layer 3."
-     *
-     * So the CABLE is scenery and the CONDUCTOR is the threat, and they are
-     * separated: a layer-1 room already shows you the wiring that is going to
-     * matter later, without a live thing hanging off it. `live` is what the
-     * renderer reads to decide whether to draw the exposed part at all.
-     *
-     * LONG MEANS THE CABLE SPANS THE ROOM. It used to be a 2x4 nub directly
-     * above the conductor, which read as a bracket rather than as wiring and
-     * said nothing about where the current came from. Each cable now runs wall
-     * to wall at its own height with one exposed spot along it, so the two
-     * never overlap and the room looks wired rather than fitted with two studs.
-     * `cableY` is the run; `y` stays the top of the exposed box that hangs off
-     * it, because that is what the hazard loop and the bolt column measure from.
+     * THE TWO BOLT SPOTS, at 30% and 70% of the room's width. The owner dropped
+     * the power cables (17 Oct 2026); the purple bolts still strike at the old
+     * cable spots (owner's answer, 23 Nov 2026), down from the ceiling, with
+     * nothing drawn there between strikes. `live` stays false: nothing hangs.
      */
     a.conductors = [0.3, 0.7].map((f, i) => ({
       x: Math.round(viewW * f) - 4, y: a.ceilY + 4 + i * 7, w: 8, h: 6,
       cableY: a.ceilY + 3 + i * 7,
       arc: 0, tell: 0, fade: 0,
-      live: layer >= 2,
+      live: false,
     }));
   },
 
@@ -600,9 +591,32 @@ export function stepShake(shake) {
  * from under a standing player would be a trapdoor with no tell.
  */
 function roamPlatform(pl) {
-  if (!pl.roam) return;
+  if (!pl.roam || pl.roam.preview) return;
   pl.x = Math.round(pl.roam.x0 + Math.random() * (pl.roam.x1 - pl.roam.x0));
   pl.y = pl.roam.ys[(Math.random() * pl.roam.ys.length) | 0];
+}
+
+/**
+ * A PREVIEW PLATFORM'S NEW SPOT: random in its band, on a random row (the
+ * first of each set always on the low row, so every set can be reached from
+ * the floor), and not on top of any other platform in the room, solid or
+ * outline, so an outline never hides under the platform you are standing on.
+ * ponytail: random tries; if the band is too crowded it keeps the least-bad try.
+ */
+function placeAway(arena, pl) {
+  const { x0, x1, ys } = pl.roam;
+  let best = null, bestHit = Infinity;
+  for (let k = 0; k < 200 && bestHit > 0; k++) {
+    const x = Math.round(x0 + Math.random() * (x1 - x0));
+    const y = pl.low ? ys[0] : ys[(Math.random() * ys.length) | 0];
+    let hit = 0;
+    for (const o of arena.platforms) {
+      if (o === pl || o.y !== y) continue;
+      hit += Math.max(0, Math.min(x + pl.w, o.x + o.w) - Math.max(x, o.x) + 6);
+    }
+    if (hit < bestHit) { best = { x, y }; bestHit = hit; }
+  }
+  pl.x = best.x; pl.y = best.y;
 }
 
 export function stepArena(arena) {
@@ -637,6 +651,8 @@ export function stepArena(arena) {
       if (on !== pl.on) {
         pl.on = on;
         if (on) { roamPlatform(pl); pl.born = arena.t; }
+        // A preview platform moves as it LEAVES: its outline is the next set.
+        else if (pl.roam?.preview) placeAway(arena, pl);
       }
       /**
        * KEEP `t` MEANING "FRAMES LEFT IN THIS STATE" on a beat platform too.
@@ -707,8 +723,8 @@ export function stepArena(arena) {
   // nowhere at all to stand.
   //
   // A BEAT-DRIVEN SET CANNOT TRIP IT, and that is worth stating rather than
-  // relying on: Volt Man's two sets are three beats apart and last five, so
-  // there is always at least one up by construction. The guard stays because it
+  // relying on: Volt Man's two sets take turns, one solid while the other is an
+  // outline, so there is always one up by construction. The guard stays because it
   // is a backstop against a future set of numbers that do NOT overlap, and
   // because forcing one on is cheaper than the failure it prevents. It writes
   // `on` directly rather than shifting the phase, so the set snaps back onto
@@ -998,20 +1014,8 @@ export function drawArena(g, arena, viewW, shake, reveal = 1, art = null) {
     }
   }
 
-  // ...and the conductors above them. Inert between arcs, per the tracker, so
-  // the bolt is drawn only while `arc` is counting down.
+  // ...and the bolt spots above them: only their sparkle, before a strike.
   for (const c of arena.conductors) {
-    // The CABLE, at every layer — a layer-1 room shows the wiring that is
-    // going to matter later without a live thing hanging off it. A long run
-    // wall to wall, with a lit top edge so it reads as a cable in front of the
-    // backdrop rather than as a crack in it.
-    g.fillStyle(0x39404E, (1) * rv);
-    g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 2);
-    g.fillStyle(0x4B5563, (0.7) * rv);
-    g.fillRect(arena.x0 + sx, c.cableY + sy, arena.x1 - arena.x0, 1);
-    // The drop from the cable down to whatever hangs off it.
-    g.fillStyle(0x39404E, (1) * rv);
-    g.fillRect(c.x + c.w / 2 - 1 + sx, c.cableY + sy, 2, (c.y - c.cableY) + 1);
     if (!c.live) continue;
     // The exposed conductor and everything it does, from layer 2.
     g.fillStyle(0x4B5563, (1) * rv);

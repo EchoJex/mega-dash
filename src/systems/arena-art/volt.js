@@ -227,30 +227,7 @@ export default function volt(S, a, viewW) {
     const bx0 = i === 0 ? 0 : sp.x + sp.w, bw = i === 0 ? sp.x : viewW - sp.x - sp.w;
     for (const yy of [sp.y + 8, sp.y + 45]) { R(fx, bx0, yy, bw, 1, Mc[4]); R(fx, bx0, yy + 1, bw, 1, Mc[1]); }
   }
-  const wires = new Raster(viewW, 20);
-  a.conductors.forEach((c, i) => {
-    for (let x = 0; x < viewW; x++) { wires.set(x, c.cableY, MET[4]); wires.set(x, c.cableY + 1, MET[1]); wires.set(x, c.cableY + 2, hex('#05030A'), 110); }
-    for (let x = 20 + i * 32; x < viewW - 4; x += 64) {
-      for (let y = 0; y < c.cableY; y++) wires.set(x, y, MET[2]);
-      for (let k = -1; k <= 1; k++) wires.set(x + k, c.cableY - 1, MET[5]);
-    }
-    const dx = c.x + c.w / 2 - 1;
-    for (let y = c.cableY; y <= c.y; y++) { wires.set(dx, y, MET[5]); wires.set(dx + 1, y, MET[3]); }
-    wires.set(dx - 1, c.cableY, MET[6]); wires.set(dx + 2, c.cableY, MET[6]);
-  });
-  for (const x0 of [0, viewW - 3]) for (let y = 1; y < 14; y++) for (let x = x0; x < x0 + 3; x++) wires.set(x, y, (x0 === 0 ? x === 2 : x === x0) ? MET[1] : MET[3]);
-  fx.drawImage(wires.flush(), 0, 0);
-  const conSpr = sprite([
-    '0000000000',
-    '0dCCCCCCd0',
-    '0cccccccc0',
-    '000nNNn000',
-    '.0dCCCCd0.',
-    '.0cccccc0.',
-    '...0kK0...',
-    '....00....',
-  ], { 0: OL, C: '#E4DCEC', d: '#B0A6C0', c: '#7A7088', n: '#5A5266', N: '#8A8298', k: '#C06A2A', K: '#FFB060' });
-  for (const c of a.conductors) if (c.live) fx.drawImage(conSpr, c.x - 1, c.y - 1);
+  // No cables: the owner dropped them (17 Oct 2026). The bolts come down from the ceiling.
   for (const pn of a.panels) {
     const w = pn.w - 1, lx = pn.x + Math.floor(pn.w / 2) - 2;
     R(fx, pn.x, pn.y, w, 1, Mc[4]); R(fx, pn.x, pn.y + 1, w, 1, Mc[2]); R(fx, pn.x, pn.y + 2, w, 1, Mc[1]);
@@ -468,12 +445,9 @@ export default function volt(S, a, viewW) {
 
       zaps.begin();
       a.conductors.forEach((c, ci) => {
-        if (!c.live) return;
+        // Sparkle only in the beat before a strike: nothing hangs there otherwise.
         const winding = c.tell > 0, tx = c.x + 3 + ((Math.random() * 2) | 0), ty = c.y + 6;
-        if (Math.random() < (winding ? 0.9 : 0.25)) {
-          if (winding) zaps.put(tx - 6, ty - 1, `spark${(Math.random() * 8) | 0}`);
-          else zaps.put(tx, ty, '#FFF6C0');
-        }
+        if (winding && Math.random() < 0.9) zaps.put(tx - 6, ty - 1, `spark${(Math.random() * 8) | 0}`);
         if (winding) zaps.put(c.x + 3, c.y + 6, `coil${3 + ((Math.random() * 3) | 0)}`, 0.5 + 0.4 * Math.random());
         // A new strike takes the next shape; the fade plays its dither down.
         const on = c.arc > 0 || c.fade > 0;

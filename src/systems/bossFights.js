@@ -1043,71 +1043,32 @@ function tempestFloaters(ctx, a, hs, layer) {
 
 // ── VOLT MAN — Electric ─────────────────────────────────────────────
 /**
- * L1 "Infrequently fires up to 2 sequential zigzag lightning bolts that bounce
- *     and arc on contact with surfaces or the player. Damage and size and stun
- *     duration decrease with TOTAL TRAVEL DISTANCE."
- * L2 "2 sets of bolts with a longer bounce life, fired as a primary volley and
- *     a secondary volley which is shot on a slightly shallower angle causing
- *     the two paths to eventually intersect."
- * L3 "Bolts no longer lose size on bounce, only reduce in damage delt.
- *     Occasionally the boss jumps and slams into the floor, briefly energising
- *     every panel destroying any ground minions that are on those panels."
+ * THE OWNER'S BEAT RULES (23 Nov 2026), the same at every layer. A beat is two
+ * seconds (`BEAT`), 30 beats a minute, and the room's music is a plain
+ * metronome on it for now, so every rule below lands on a click:
  *
- * FALLOFF IS BY DISTANCE, NOT BY BOUNCE, and that is a rewrite rather than a
- * tune. Per-bounce decay meant a bolt crossing an open room stayed lethal
- * forever while one fired into a corner died in a second — backwards, since the
- * dangerous bolt is the one that has just been fired at you. Distance makes
- * RANGE the thing the player reads. Stun now fades with it too, which it never
- * did. See the fadeDist block in GameScene.stepBullets.
- *
- * BOUNCES ARE STILL A BUDGET, and that is what "longer bounce life" buys at L2:
- * how many surfaces a bolt may spend before it expires, independent of how far
- * it has flown.
- *
- * "2 SETS OF BOLTS" IS THE COUNT AT L2, not three. The previous field said
- * "bolts increase to 3"; this one does not, and what it names instead is the
- * second SET. So both layers fire two per volley and L2 fires two volleys, on
- * angles shallow enough that the paths cross rather than run parallel.
+ *  - "Boss should never walk, but rather "speed of light move" from one random
+ *    spot in the arena to another every 4 beats, never affected by gravity."
+ *    He streaks there in a tenth of a second (owner's pick: a blur streak, and
+ *    touching him on the way still hurts), never onto the player.
+ *  - He fires his zigzag bolts on the beat after each move (owner's pick).
+ *    Layer 2 still adds the second, shallower bolt; layer 3's bolts still keep
+ *    their size. The layer-3 jump-slam is gone: he ignores gravity.
  */
 const VOLT = {
-  /**
-   * ONE BOLT AT L1, TWO AT L2 — "up to 1 zigzag lightning bolt" and, at L2, "a
-   * primary bolt and a secondary bolt".
-   *
-   * Both counts came down. L1 fired two in sequence and L2 fired two volleys of
-   * two for four in the air at once, which against a room whose FLOOR is the
-   * other half of the fight left nowhere to read from. The field now describes
-   * a single bolt you track and, one layer up, a second one aimed to cross it —
-   * so the layer adds a geometry to solve rather than more objects to avoid.
-   */
-  bolts: { 1: 1, 2: 1, 3: 1 },
-  bounces: { 1: 3, 2: 6, 3: 6 },
-  gap: 12,                   // frames between bolts in a volley
   speed: 2.3,
-  // Beat-locked like the rest of the room: a beat of wind-up, and a rest that
-  // is a whole number of beats so a volley always lands on one.
-  windup: BEAT,
-  rest: { 1: [180, 300], 2: [120, 240], 3: [120, 180] },
-  /**
-   * THE FALLOFF CURVE. `fadeK` is what a bolt keeps after travelling `fadeDist`
-   * pixels, so 0.55 over 220px means a bolt that has crossed the room twice is
-   * doing about a sixth of its opening damage. Applied to damage, radius and
-   * stun together — the field lists all three.
-   */
+  bounces: { 1: 3, 2: 6, 3: 6 },
+  // The second, shallower bolt from layer 2, fired before the first is done
+  // so the two paths cross rather than arrive one after the other.
+  secondVolley: 34,
   fadeDist: 220,
   fadeK: 0.55,
-  // Layer 3 keeps its SIZE all the way out; only the damage falls.
   fadeSize: { 1: true, 2: true, 3: false },
-  zig: 9,                    // frames between kinks
-  // L2+: the SECOND BOLT, fired before the first has finished so the two paths
-  // are in the air together and cross rather than arriving in sequence.
-  secondVolley: 34,
-  // L3's floor slam: how long every panel stays live afterwards. Brief, per
-  // "briefly energising every panel" — the whole floor at once is the harshest
-  // thing in the fight and the platforms are the only answer to it.
-  slamLive: 44,
-  slamRise: -6.2,
-  slamGravity: 0.55,
+  zig: 9,
+  every: 4,          // beats between moves
+  dash: 6,           // steps the light-speed move takes: a tenth of a second
+  streak: 14,        // steps the streak stays on screen
+  clear: 64,         // never lands with his middle this close to the player's
 };
 
 function voltBolt(ctx, layer, th, shallow) {
@@ -1116,252 +1077,109 @@ function voltBolt(ctx, layer, th, shallow) {
     x: b.x + b.w / 2, y: b.y + b.h * 0.45,
     vx: Math.cos(th) * VOLT.speed, vy: Math.sin(th) * VOLT.speed,
     radius: 3, damage: 2, color: b.primary, shape: 'spark',
-    // `zigT` is the countdown to the next kink and MUST be seeded here. Its
-    // only other mention is the consumer in GameScene, which does
-    // `--b.zigT <= 0` and then resets it — so on an unseeded bolt the first
-    // frame evaluated `--undefined`, got NaN, and `NaN <= 0` is false forever.
-    // Volt Man's signature zigzag bolt flew dead straight at every layer, which
-    // also made the layer-2 design — two shallow paths crossing — impossible.
+    // `zigT` must be seeded: GameScene counts it down with `--b.zigT`, and an
+    // unseeded bolt flies dead straight forever.
     zigzag: VOLT.zig, zigT: VOLT.zig, zigAngle: shallow ? 0.5 : 0.75,
     ricochet: VOLT.bounces[layer],
-    // A corner costs ONE bounce, which is what his reach has always been tuned
-    // against. Only the Alloy Blade's Lv1 rung spends a corner twice.
     cornerSafe: true,
-    // NO per-bounce loss: the falloff is distance now, and letting both run
-    // would decay a cornered bolt twice for the same journey.
+    // Falloff is by distance (fadeDist), never per bounce.
     bounceDmg: 1,
     bounceShrink: 1,
     bouncesOffPlayer: true,
     stun: 45,
-    // The originals the distance falloff reads back from every frame.
     dmg0: 2, rad0: 3, stun0: 45,
     fadeDist: VOLT.fadeDist, fadeK: VOLT.fadeK, fadeSize: VOLT.fadeSize[layer],
     life: 900,
   });
 }
 
+/** Somewhere in the room for him to arrive: anywhere, floor to near the ceiling, not on the player. */
+function voltSpot(ctx) {
+  const b = ctx.boss, a = ctx.arena, p = ctx.player;
+  const pcx = p.x + 12, pcy = p.y + 12;
+  let spot = null;
+  for (let k = 0; k < 30; k++) {
+    const x = ctx.bounds.x0 + Math.random() * Math.max(1, ctx.bounds.x1 - b.w - ctx.bounds.x0);
+    const y = a.ceilY + 16 + Math.random() * Math.max(1, a.floorY - b.h - a.ceilY - 16);
+    spot = { x: Math.round(x), y: Math.round(y) };
+    if (Math.hypot(x + b.w / 2 - pcx, y + b.h / 2 - pcy) >= VOLT.clear) break;
+  }
+  return spot;
+}
+
 function voltAttack(layer) {
   return (ctx) => {
-    const b = ctx.boss, p = ctx.player;
-    const fs = b.fs || (b.fs = { mode: 'patrol', t: rnd(...VOLT.rest[layer]), dir: -1 });
+    const b = ctx.boss, a = ctx.arena;
+    if (!a) return;
+    const fs = b.fs || (b.fs = { moved: -1, fired: -1, second: -1, dash: 0 });
+    const onBeat = a.beat === 0;
 
-    switch (fs.mode) {
-      case 'patrol': {
-        b.x += fs.dir * 0.6;
-        if (b.x <= ctx.bounds.x0) { b.x = ctx.bounds.x0; fs.dir = 1; }
-        if (b.x + b.w >= ctx.bounds.x1) { b.x = ctx.bounds.x1 - b.w; fs.dir = -1; }
-        if (--fs.t <= 0) { fs.mode = 'windup'; fs.t = VOLT.windup; }
-        break;
-      }
-
-      case 'windup': {
-        if (--fs.t > 0) break;
-        fs.mode = 'volley';
-        fs.left = VOLT.bolts[layer];
-        fs.second = layer >= 2 ? VOLT.secondVolley : -1;
-        fs.t = 0;
-        const v = aimAt(b.x + b.w / 2, b.y + b.h * 0.45, p.x + 12, p.y + 12);
-        fs.base = Math.atan2(v.y, v.x);
-        break;
-      }
-
-      case 'volley': {
-        // The second volley starts BEFORE the first has finished, which is what
-        // makes two zigzag paths overlap rather than arrive in sequence.
-        if (fs.second > 0 && --fs.second === 0) {
-          fs.left += VOLT.bolts[layer];
-          fs.shallow = true;
-        }
-        if (--fs.t > 0) break;
-        fs.t = VOLT.gap;
-        voltBolt(ctx, layer, fs.base + (Math.random() - 0.5) * 0.5, fs.shallow);
-        if (--fs.left > 0) break;
-        fs.shallow = false;
-        /**
-         * LAYER 3 SLAMS, and only OCCASIONALLY. It used to earth itself after
-         * every single volley and light only the panels a bolt had touched;
-         * the field now says he "jumps and slams into the floor, briefly
-         * energising EVERY panel". Every panel is the whole floor, so it
-         * cannot be the punctuation on every volley — a third of the time
-         * leaves it a thing that happens to you rather than a metronome.
-         */
-        const slam = layer >= 3 && Math.random() < 0.34;
-        fs.mode = slam ? 'leap' : 'patrol';
-        if (slam) { fs.vy = VOLT.slamRise; fs.y0 = b.y; ctx.sfx('jump', { pitch: 0.6 }); }
-        else fs.t = rnd(...VOLT.rest[layer]);
-        break;
-      }
-
-      /**
-       * THE JUMP IS THE TELEGRAPH. He leaves the floor, which is the one place
-       * the attack is about to cover, and the arc gives the player the better
-       * part of a second to get onto a platform. A floor-wide hazard with no
-       * warning would be unreadable; a floor-wide hazard announced by the boss
-       * physically vacating the floor explains itself.
-       */
-      case 'leap': {
-        fs.vy += VOLT.slamGravity;
-        b.y += fs.vy;
-        const rest = fs.y0;
-        if (b.y < rest) break;
-        b.y = rest;
-
-        const a = ctx.arena;
-        if (a) {
-          // SOMEWHERE TO STAND, guaranteed. The whole floor going live at once
-          // is only survivable because the platforms are not part of the floor,
-          // so at least one has to be up when it lands.
-          const shelter = a.platforms.filter((pl) => !pl.lift);
-          if (shelter.length && !shelter.some((pl) => pl.on)) {
-            shelter[0].on = true; shelter[0].t = 180;
-          }
-          /**
-           * THE SLAM RE-ENERGISES FROM SCRATCH rather than topping a panel up.
-           * `liveMax` and `discharge` are what the two damage tiers and the
-           * renderer both read, so a panel left mid-linger by the sweep has to
-           * be restamped or the slam would land on it as a mild tick — the
-           * whole floor going up would then be the gentlest thing in the fight.
-           * Every panel discharges together and the current it leaves is brief,
-           * per "BRIEFLY energising every panel".
-           */
-          for (const pn of a.panels) {
-            pn.live = VOLT.slamLive;
-            pn.liveMax = VOLT.slamLive;
-            pn.discharge = VOLT_HAZ.discharge;
-            pn.tick = 0;
-          }
-          ctx.flash(10);
-          // "Destroying any ground minions that are on those panels" — every
-          // panel is live, so every grounded minion is on one. Vaporised
-          // rather than damaged: the floor did it, not the player.
-          for (const m of ctx.minions) {
-            if (m.hp <= 0) continue;
-            if (m.y + m.h >= a.floorY - 6) ctx.vaporise(m);
-          }
-        }
-        ctx.shake(3, 34);
-        fs.mode = 'patrol';
-        fs.t = rnd(...VOLT.rest[layer]);
-        break;
-      }
+    // THE MOVE, on the first step of every 4th beat.
+    if (onBeat && a.beatN > 0 && a.beatN % VOLT.every === 0 && fs.moved !== a.beatN) {
+      fs.moved = a.beatN;
+      fs.from = { x: b.x, y: b.y };
+      fs.to = voltSpot(ctx);
+      fs.dash = VOLT.dash;
+      b.streak = { x: b.x, y: b.y, t: VOLT.streak, n: VOLT.streak };
+      ctx.sfx('warp', { pitch: 2.2 });
     }
+    if (fs.dash > 0) {
+      fs.dash--;
+      const k = 1 - fs.dash / VOLT.dash;
+      b.x = Math.round(fs.from.x + (fs.to.x - fs.from.x) * k);
+      b.y = Math.round(fs.from.y + (fs.to.y - fs.from.y) * k);
+    }
+    // Published for the stuck-fight check: he is either holding still or streaking.
+    fs.mode = fs.dash > 0 ? 'dash' : 'hold';
+    if (b.streak && --b.streak.t <= 0) b.streak = null;
+
+    // THE BOLTS, on the beat after each move (the arrival beat counts too).
+    const aim = () => {
+      const v = aimAt(b.x + b.w / 2, b.y + b.h * 0.45, ctx.player.x + 12, ctx.player.y + 12);
+      return Math.atan2(v.y, v.x) + (Math.random() - 0.5) * 0.5;
+    };
+    if (onBeat && a.beatN % VOLT.every === 1 && fs.fired !== a.beatN) {
+      fs.fired = a.beatN;
+      voltBolt(ctx, layer, aim(), false);
+      if (layer >= 2) fs.second = VOLT.secondVolley;
+    }
+    if (fs.second > 0 && --fs.second === 0) voltBolt(ctx, layer, aim(), true);
   };
 }
 
 /**
- * VOLT MAN's hazard — the floor sweep, and the conductors above it.
+ * THE ROOM, ON THE SAME BEAT, the same at every layer (owner, 23 Nov 2026).
  *
- * L1 "Floor panels electrify in a VERY SLOW left-to-right sweep, one panel at a
- *     time, telegraphed by a lamp on the panel a moment before it energises.
- *     Contact deals moderate damage and a short Stun."
- * L2 "SAME SWEEP, plus overhead conductors that drop a vertical St Elmo's fire
- *     looking bolt at fixed positions on a regular beat. The conductors are
- *     inert between arcs and can be stood under safely."
- * L3 "The sweep runs in both directions at once, meeting in the middle. Arcs
- *     now chain through nearby minions and into the player if the player is
- *     close to them, DESTROYING THE MINIONS and damaging the player and
- *     applying stun."
+ *  - "ground floor tiles warn for one beat, then discharge for one beat, then
+ *    the next tiles warns for one beat (these tiles will only have 3 states
+ *    [off, warn, discharge])". One tile at a time, left to right (owner's
+ *    pick), after one empty beat at the start. The discharge hurts (moderate
+ *    damage and the usual flinch); nothing lingers.
+ *  - "Purple stage bolts will strike on every 15th beat, with the 11th beat
+ *    lights off 12th lights on and 13th-14th beat lights off". At the old cable
+ *    spots, 30% and 70% of the room (owner's pick), standing for the whole of
+ *    beat 15. The light comes back on beat 1 as the bolts fade.
  *
- * THE LAMP IS THE WHOLE HAZARD. A panel you cannot avoid is not a hazard, it is
- * a tax; the tell arriving a beat before the current is what turns a floor that
- * kills you into a floor you read. What the layers add is COVERAGE, never speed
- * and never a shorter warning — "same sweep" and "very slow" are both the
- * owner's words, and an earlier build quietly ran L2 and L3 half again as fast.
- *
- * THE LAYER-3 CHAIN NEEDS SOMETHING TO CHAIN THROUGH, so Volt Man summons.
- * A sealed arena has no ambient minions by design, which left the first half of
- * that sentence with nothing to travel along — so he now calls up to one
- * airborne and one ground minion every thirty seconds, on every layer.
- *
- * ON EVERY LAYER, not only layer 3, and that is the owner's call: the summons
- * are how the room gets tested, and having them appear only at the layer that
- * consumes them would mean the other two fights never show what a minion does
- * in a boss room. A chained minion is DESTROYED outright rather than damaged,
- * because the arc is what kills it.
- */
-/**
- * VOLT MAN'S HAZARD, STATED IN BEATS. "All furniture, hazards, and boss layer
- * attacks shall be synched to a common beat", and a beat is two seconds, so
- * every number here is a whole multiple of `BEAT` rather than a tuning value
- * someone landed on.
- *
- * THE SWEEP IS A CHAIN, NOT A METRONOME. "Next panel telegraph starts
- * immediately after discharge duration" — so a panel owns two beats of the
- * sweep's attention, one warning and one firing, and the next panel's lamp
- * lights on the frame this one stops discharging. The three seconds of current
- * it leaves behind run on past that, which is why two panels are hot at once
- * and never more: the sweep hands over at 2s and the linger clears at 4s.
- *
- * The previous numbers were a 28-frame warning and a TEN-frame discharge on a
- * 40-frame step, so the dangerous instant was a sixth of a second and the room
- * had four or five panels lit at any moment. A full second of discharge is a
- * thing you watch happen and step off; a sixth of one is a thing that has
- * already hit you.
+ * Everything is worked out from the room's own beat count every step, never
+ * counted separately, so nothing here can drift off the speakers or the music.
  */
 const VOLT_HAZ = {
-  // One beat of warning, one of discharge — and the next lamp lights as this
-  // discharge ends, which is what `step` is: telegraph + discharge.
-  tell: BEAT,
-  discharge: BEAT,
-  step: { 1: BEAT * 2, 2: BEAT * 2, 3: BEAT * 2 },
-  // "Lingering electrification of the panel lasts 3s."
-  linger: BEAT * 3,
-  live: BEAT * 4,                  // discharge + linger, one window to the renderer
-  // "Moderate damage" for the discharge itself...
   damage: 3,
-  // ...and "mild damage" for the current it leaves behind, on its own tick so
-  // crossing a spent panel is a cost rather than a wall.
-  mildDamage: 1,
-  mildTick: 24,
-  stun: 90,
-  /**
-   * THE END-OF-SWEEP SEQUENCE, layer 2 and up. It replaced a bolt on a fixed
-   * 210-frame beat, which ran independently of everything else in the room and
-   * was therefore the one thing in it NOT on the beat.
-   *
-   * "After final panel has finished discharging, the arena brightness flickers
-   * dark normal dark, staying dark. Then after the last of the electrified
-   * panels have finished being electrified the two power lines sparkle for 1s
-   * then discharge ... bolts that stay still for 1s before fading over a second
-   * period while the arena brightness returns to normal equivalently."
-   *
-   * Read as a sequence of beats: flicker, wait out the last linger, sparkle,
-   * strike, fade. The waiting step is not a duration — it watches the panels,
-   * because the last one to finish is whichever the sweep lit last and the
-   * field ties the sparkle to that event rather than to a clock.
-   */
-  flicker: 30,                     // dark-normal-dark, three parts of ten frames
-  arcTell: BEAT,                   // one beat of sparkle
-  arcLive: BEAT,                   // one beat still
-  arcFade: BEAT,                   // one beat of fade
-  chainRange: 34,                  // L3 only
-  // "Up to 1 airborne and 1 ground minion every 30 seconds." The cap is per
-  // plane and counts what is already alive, so a fight where nothing dies
-  // stays at two rather than accumulating one pair per cycle.
+  stun: 90,                        // the bolt column's stun
+  cycle: 15,                       // beats in the lights-and-bolts cycle
+  fade: 20,                        // steps the bolt takes to fade on beat 1
+  // Up to one airborne and one ground minion every 30 seconds, for the room
+  // to have something in it; the cap counts what is already alive.
   summonEvery: 1800,
   summonCap: 1,
 };
 
-function voltHazard(layer) {
+function voltHazard() {
   return (ctx) => {
     const a = ctx.arena;
     if (!a || !a.panels.length) return;
-    const hs = ctx.boss.hs || (ctx.boss.hs = {
-      // A beat of empty room before the first lamp, so the player sees the
-      // speakers keep time once before anything is asking them to react to it.
-      t: BEAT, i: 0,
-      // The end-of-sweep sequence: null, or one of flicker/wait/sparkle/
-      // strike/fade. `hold` parks the sweep while it runs.
-      seq: null, seqT: 0, hold: 0,
-      // First pair arrives early rather than half a minute in, so the room has
-      // something in it from the start of a playtest.
-      summon: 120,
-    });
-    const n = a.panels.length;
+    const hs = ctx.boss.hs || (ctx.boss.hs = { summon: 120 });
 
-    // THE SUMMONS. Placed inside the room rather than at its edge: an arena has
-    // walls where the stream has open sides, and the ambient spawner's "just off
-    // the right of the screen" is a wall here.
     if (--hs.summon <= 0) {
       hs.summon = VOLT_HAZ.summonEvery;
       const mid = (a.x0 + a.x1) / 2;
@@ -1369,241 +1187,42 @@ function voltHazard(layer) {
       ctx.summon('ground', mid + 60, a.floorY - 16, VOLT_HAZ.summonCap);
     }
 
-    /**
-     * THE SWEEP, LOCKED TO THE ROOM'S BEAT. One panel at a time, and at layer 3
-     * a second head runs the other way so the two meet in the middle.
-     *
-     * `hs.t` is still a countdown rather than a `beatN` modulo, because the
-     * sweep has to be able to PAUSE — the layer-2 sequence at the end of a
-     * sweep takes several beats and the next sweep must not start underneath
-     * it. What keeps it on the beat is that every duration it is built from is
-     * a whole number of beats and it starts on one.
-     *
-     * At layer 3 the two heads meet in the middle, so a sweep is HALF the
-     * panels: the pass ends when the heads cross rather than when one of them
-     * has walked the whole floor.
-     */
-    const perSweep = layer >= 3 ? Math.ceil(n / 2) : n;
-    if (hs.hold > 0) hs.hold--;
-    else if (--hs.t <= 0) {
-      hs.t = VOLT_HAZ.step[layer];
-      const heads = layer >= 3 ? [hs.i, n - 1 - hs.i] : [hs.i];
-      for (const k of heads) {
-        const pn = a.panels[((k % n) + n) % n];
-        pn.tell = VOLT_HAZ.tell;
-        pn.pending = VOLT_HAZ.tell;
-      }
-      hs.i++;
-      // END OF A SWEEP. At layer 1 it simply starts again; from layer 2 the
-      // lights go out and the power lines answer — see stepVoltSequence.
-      if (hs.i >= perSweep) {
-        hs.i = 0;
-        /**
-         * THE SEQUENCE IS ARMED HERE AND STARTS TWO BEATS LATER. "After final
-         * panel has FINISHED DISCHARGING" — and at this moment its lamp has
-         * only just lit, so the room is one beat of telegraph and one of
-         * discharge away from the event the field names. Flickering now would
-         * put the lights out over the top of the sweep's own last panel.
-         */
-        if (layer >= 2) {
-          hs.seq = 'settle';
-          hs.seqT = VOLT_HAZ.tell + VOLT_HAZ.discharge;
-          hs.hold = 1e9;
+    const left = BEAT - a.beat, onBeat = a.beat === 0;
+    const box = ctx.playerBox;
+
+    // THE FLOOR: warn, discharge, next tile. Every tile is restated each step.
+    const n = a.panels.length, i = a.beatN - 1;
+    for (const pn of a.panels) { pn.tell = 0; pn.live = 0; }
+    if (i >= 0) {
+      const pn = a.panels[Math.floor(i / 2) % n];
+      if (i % 2 === 0) pn.tell = left;
+      else {
+        pn.live = left; pn.liveMax = BEAT; pn.discharge = BEAT;
+        if (box.x + box.w > pn.x && box.x < pn.x + pn.w && box.y + box.h >= pn.y - 1) {
+          ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.damage);
         }
       }
     }
 
-    for (const pn of a.panels) {
-      // The lamp burns down, THEN the current arrives. Two counters rather than
-      // one so the warning cannot be shortened by a fast sweep.
-      if (pn.pending > 0 && --pn.pending === 0) {
-        pn.live = VOLT_HAZ.live;
-        // Both stamped ONTO the panel rather than imported by the renderer:
-        // arena.js does not import this file and must not start, so the panel
-        // carries everything anyone needs to know about its own state.
-        pn.liveMax = VOLT_HAZ.live;
-        pn.discharge = VOLT_HAZ.discharge;
-        pn.tick = 0;
-      }
-      if (pn.live <= 0) continue;
-      const box = ctx.playerBox;
-      if (!(box.x + box.w > pn.x && box.x < pn.x + pn.w && box.y + box.h >= pn.y - 1)) continue;
-
-      /**
-       * TWO TIERS, and the difference is the whole point of the rung.
-       *
-       * "Discharge animation causes flinch and moderate damage and but not
-       * stun. Lingering electrified panel deals mild damage and a short Stun."
-       * So the panel firing is the dangerous instant and the current left
-       * behind is a tax — being caught mid-sweep costs you a hit, walking
-       * across a spent panel costs you a little.
-       *
-       * ONLY THE LINGER STUNS, and that reversal matters. Stunning on the
-       * discharge stacked a slow on top of the flinch and the knockback at the
-       * exact moment the sweep was arriving at the next panel, so one mistimed
-       * step could hand you the rest of the row. The linger is the tier you can
-       * choose to cross, so a slow there is a price you agreed to pay.
-       *
-       * `hurt` supplies the flinch and the knockback for free; the mild tier
-       * asks for neither, which is why it goes through `status` and a direct
-       * damage tick rather than through the hit path.
-       */
-      const discharging = pn.live > pn.liveMax - pn.discharge;
-      if (discharging) {
-        ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.damage);
-      } else {
-        if (--pn.tick <= 0) {
-          pn.tick = VOLT_HAZ.mildTick;
-          ctx.hurt(pn.x + pn.w / 2, VOLT_HAZ.mildDamage);
-        }
-        // NAMED SOURCE: a live panel re-applies every single frame you stand
-        // on it. Unnamed, that re-armed the stun's clock sixty times a second,
-        // so it could not begin expiring until you stepped off. One panel is
-        // one stack; a second panel is a second stack, which is the point.
-        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep, src: `panel:${pn.x}` });
-      }
-    }
-
-    // THE END-OF-SWEEP SEQUENCE, layer 2 and up.
-    if (layer >= 2 && a.conductors.length) stepVoltSequence(hs, a, layer, ctx);
-
-    for (const c of a.conductors) {
-      if (c.arc <= 0) continue;
-      const cxp = c.x + c.w / 2;
-      const box = ctx.playerBox;
-      let reach = box.x + box.w > cxp - 3 && box.x < cxp + 3;
-      /**
-       * LAYER 3 CHAINS, ONCE, ON THE STRIKE. The arc travels through any minion
-       * standing under it, destroying it, and carries on into the player if the
-       * player is near that minion — so a minion is not cover, it is a
-       * conductor. Standing clear of the strike is only safe if you are also
-       * clear of whatever the strike is about to earth itself through.
-       *
-       * The chain fires on the opening frame and is remembered, because the
-       * bolt now STANDS for a whole second: vaporising every minion that
-       * wanders under it during that second would make it a broom rather than
-       * a strike, and it would keep re-earthing into the player long after the
-       * moment they failed to read.
-       */
-      if (layer >= 3 && !c.chained) {
-        c.chained = true;
-        const pcx = box.x + box.w / 2;
-        for (const m of ctx.minions) {
-          if (m.hp <= 0) continue;
-          const mcx = m.x + m.w / 2;
-          if (Math.abs(mcx - cxp) > VOLT_HAZ.chainRange) continue;
-          ctx.vaporise(m);
-          if (Math.abs(pcx - mcx) < VOLT_HAZ.chainRange) c.chainHit = true;
-        }
-        // ...and the arc itself reaches a little wider than the bolt it draws.
-        if (Math.abs(pcx - cxp) < VOLT_HAZ.chainRange) c.chainHit = true;
-        if (c.chainHit) ctx.flash(6);
-      }
-      /**
-       * THE COLUMN HURTS FOR AS LONG AS IT STANDS. It used to land on one frame
-       * only, which was right for a 24-frame flicker and wrong for a bolt that
-       * now holds for a full second — a hazard you can walk through unharmed
-       * for fifty-nine of its sixty frames is scenery. `hurt` returns early
-       * during i-frames, so standing in it costs one hit per invulnerability
-       * window rather than sixty.
-       */
-      if (reach || c.chainHit) {
+    // THE LIGHTS AND THE BOLTS. `c` is the beat's place in the cycle, 0 = beat 1.
+    const c = a.beatN % VOLT_HAZ.cycle;
+    a.dim = c === 10 || c >= 12 ? 1 : 0;
+    for (const cd of a.conductors) {
+      cd.tell = c === 13 ? left : 0;
+      cd.arc = c === 14 ? left : 0;
+      cd.fadeN = VOLT_HAZ.fade;
+      cd.fade = c === 0 && a.beatN > 0 && a.beat < VOLT_HAZ.fade ? VOLT_HAZ.fade - a.beat : 0;
+      if (cd.arc <= 0) continue;
+      const cxp = cd.x + cd.w / 2;
+      if (box.x + box.w > cxp - 3 && box.x < cxp + 3) {
         ctx.hurt(cxp, VOLT_HAZ.damage);
-        // Per conductor, for the same reason as the panels above.
-        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep, src: `conductor:${c.x}` });
+        // Per bolt, so two bolts are two stacks and one bolt is never more than one.
+        ctx.status('stun', VOLT_HAZ.stun, { step: FEEL.stunPlayerStep, src: `conductor:${cd.x}` });
       }
     }
+    if (onBeat && c === 13) ctx.sfx('charge', { pitch: 0.7 });
+    if (onBeat && c === 14) { ctx.sfx('shootBig', { pitch: 0.5 }); ctx.flash(6); }
   };
-}
-
-/**
- * THE LIGHTS GO OUT AND THE POWER LINES ANSWER — Volt Man's layer-2 hazard,
- * run once at the end of every sweep.
- *
- * "After final panel has finished discharging, the arena brightness flickers
- * dark normal dark, staying dark. then after the last of the electrified panels
- * have finished being electrified the two power lines sparkle for 1s then
- * discharge luminous, neon purple lightning bolts that stay still for 1s before
- * fading over a second period while the arena brightness returns to normal
- * equivalently."
- *
- * FIVE STEPS, AND ONLY ONE OF THEM IS A TIMER YOU CANNOT SEE. The flicker, the
- * sparkle, the strike and the fade are all a beat each; the WAIT in the middle
- * is not a duration at all — it watches the floor, because "after the last of
- * the electrified panels have finished" names an event and the panel that
- * finishes last is whichever one the sweep lit last. Timing it instead would
- * have been a number that happened to be right until the sweep length changed.
- *
- * The dark is the whole reason the bolts are purple and the reason they stand
- * still: this is the one moment in the fight when the room stops telling you
- * where the floor is, and what it replaces the floor with has to be readable
- * as a single object rather than as flicker.
- */
-function stepVoltSequence(hs, a, layer, ctx) {
-  if (!hs.seq) return;
-  switch (hs.seq) {
-    case 'settle': {
-      // Waiting out the final panel's own telegraph and discharge. Two beats,
-      // stated as the two things it is waiting for rather than as "120".
-      if (--hs.seqT > 0) break;
-      hs.seq = 'flicker';
-      hs.seqT = VOLT_HAZ.flicker;
-      break;
-    }
-    case 'flicker': {
-      // Dark, normal, dark, in three equal parts — then it stays dark.
-      const part = Math.floor((VOLT_HAZ.flicker - hs.seqT) / (VOLT_HAZ.flicker / 3));
-      a.dim = part === 1 ? 0 : 1;
-      if (--hs.seqT > 0) break;
-      a.dim = 1;
-      hs.seq = 'wait';
-      break;
-    }
-    case 'wait': {
-      // The floor has to go quiet first. Nothing here is on a clock.
-      if (a.panels.some((pn) => pn.live > 0)) break;
-      hs.seq = 'sparkle';
-      hs.seqT = VOLT_HAZ.arcTell;
-      for (const c of a.conductors) c.tell = VOLT_HAZ.arcTell;
-      ctx.sfx('charge', { pitch: 0.7 });
-      break;
-    }
-    case 'sparkle': {
-      if (--hs.seqT > 0) break;
-      hs.seq = 'strike';
-      hs.seqT = VOLT_HAZ.arcLive;
-      for (const c of a.conductors) {
-        c.tell = 0; c.arc = VOLT_HAZ.arcLive; c.chained = false; c.chainHit = false;
-      }
-      ctx.sfx('shootBig', { pitch: 0.5 });
-      break;
-    }
-    case 'strike': {
-      if (--hs.seqT > 0) break;
-      hs.seq = 'fade';
-      hs.seqT = VOLT_HAZ.arcFade;
-      // The bolt stops HURTING the moment it stops standing still; what is left
-      // is the picture of it draining away, which must not still be a hitbox.
-      for (const c of a.conductors) {
-        c.arc = 0; c.fade = VOLT_HAZ.arcFade; c.fadeN = VOLT_HAZ.arcFade;
-      }
-      break;
-    }
-    case 'fade': {
-      // "...while the arena brightness returns to normal EQUIVALENTLY" — the
-      // light comes back on exactly the curve the bolt goes out on, so the two
-      // read as one thing ending rather than as two.
-      a.dim = hs.seqT / VOLT_HAZ.arcFade;
-      if (--hs.seqT > 0) break;
-      a.dim = 0;
-      hs.seq = null;
-      // Hand the floor back. The next sweep starts on the next beat.
-      hs.hold = 0;
-      hs.t = VOLT_HAZ.step[layer];
-      break;
-    }
-    default: hs.seq = null;
-  }
 }
 
 // ── STRIKE MAN — Fighting ───────────────────────────────────────────
@@ -2360,7 +1979,7 @@ export const FIGHTS = {
 
   volt: {
     attack: { 1: { step: voltAttack(1) }, 2: { step: voltAttack(2) }, 3: { step: voltAttack(3) } },
-    hazard: { 1: { step: voltHazard(1) }, 2: { step: voltHazard(2) }, 3: { step: voltHazard(3) } },
+    hazard: { 1: { step: voltHazard() }, 2: { step: voltHazard() }, 3: { step: voltHazard() } },
   },
 
   // STRIKE MAN — all three attack layers and all three hazard layers built.

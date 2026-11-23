@@ -385,8 +385,9 @@ beat tracker locks onto the off-beats of syncopated music and reports nonsense. 
 with itself one bar later, window by window; every window should read 2.000 s. The fix was
 `rubberband --timemap` (every beat pinned to the grid, pitch kept) run over three copies of the loop
 with the middle one kept, and its first 20 ms blended from the true continuation so the seam is
-clean. His speakers kick 1.0 s into each bar of the file (3.0 s arrival, 2-second beat), which is
-where his track's strongest hit sits.
+clean. That track is gone now (see below): his room plays a plain 30-beats-a-minute metronome
+whose clicks sit at 1.0, 3.0, 5.0 s... of the file, which is where the room's beats land (3.0 s arrival,
+2-second beat).
 
 **Music runs at the game's speed** — `setMusicRate(timeScale)` every frame, pitch falling
 with it, so the re-quip wheel's slow motion and its ramp back slow and speed the track in
@@ -648,8 +649,9 @@ its index and its pictures (the room screenshots, the sprite sheets) live only i
   description: each file's name, the AI-made label, and the loop's length. `tests/tracker.test.js` checks every `[ready]`
   bgm line except the description against `design/music/`, both ways.
 - **Tempo is free** except where it has to be: it helps find a clean loop point, and Volt
-  Man's track must land on his room's beat. His track is 120 beats a minute, so each
-  2-second beat of his room is one bar of the music.
+  Man's track must land on his room's beat. **For now his track is a plain metronome at exactly
+  30.000 beats a minute** (owner, 23 Nov 2026: "I think I need to have a human make the electric
+  arena music to ensure it works as an audio que"), one click per 2-second beat, a 30 s loop.
 - **A track has no target length.** The owner's call: "80s, 73s, 95s or anything in-between
   that makes for the best possible loop is fine." Cut a whole number of bars, counted from
   the file's first beat, where the end flows back into the start; prefer the longer clean
@@ -750,7 +752,7 @@ Claude or a generator made:
 | Blaze Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's fire prompt | 2026-10-01 | `design/music/bgm-blaze-stage.ogg` |
 | Tempest Man's arena track (his boss room) | music | openmusic.ai, from the skill's water prompt | 2026-10-19 | `design/music/bgm-tempest-arena.ogg` |
 | Blaze Man's arena track (his boss room) | music | openmusic.ai, from the skill's fire prompt | 2026-10-21 | `design/music/bgm-blaze-arena.ogg` |
-| Volt Man's arena track (his boss room) | music | openmusic.ai, from the skill's electric prompt, stretched to exactly 120 beats a minute; re-timed beat by beat on 2026-11-23 so every bar is exactly 2 s | 2026-10-21 | `design/music/bgm-volt-arena.ogg` |
+| Volt Man's arena track (his boss room) — now a plain 30-beats-a-minute metronome; it replaced the openmusic.ai track (made 2026-10-21) the owner asked a human to remake | music | Claude (a click track) | 2026-11-23 | `design/music/bgm-volt-arena.ogg` |
 | Thorn Man's stage track (the walk to his door) | music | openmusic.ai, from the skill's prompt for his arena field; the owner kept it for the stage | 2026-11-22 | `design/music/bgm-thorn-stage.ogg` |
 | Thorn Man's arena track (his boss room) | music | openmusic.ai, the same song as his stage track slowed 10% with the pitch dropping, at the owner's request | 2026-11-22 | `design/music/bgm-thorn-arena.ogg` |
 | six boss rooms in 16-bit — Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike (backdrops and furniture) | room art, drawn in code | Claude (Claude Design) | 2026-10-04 | `src/systems/arena-art/` |
@@ -1563,15 +1565,19 @@ to which layers, is `npm run status`.**
 
 **A ROOM MAY HAVE A BEAT, and Volt Man's does.** `arena.beat` / `arena.beatN` come from the
 room's own clock (`arena.t`), so a second timer can never drift from the first. **His beat
-is 2 seconds** (`BEAT_LEN`, 120 steps) — one bar of his 120-beats-a-minute track, by the
-owner's call (17 Oct 2026) — and his platform sets, panel sweep, speaker membranes and
-attack wind-up are all whole multiples of it. **State a beat-locked duration in beats.** The
+is 2 seconds** (`BEAT_LEN`, 120 steps) — one click of his 30-beats-a-minute metronome, by the
+owner's call (17 Oct 2026, metronome 23 Nov 2026). **His room's rules, the same at every layer
+(owner, 23 Nov 2026):** the floor tiles warn for a beat then discharge for a beat, one at a time left
+to right; 4 solid platforms and 4 dotted outlines in the middle half of the room swap every 4 beats,
+the outlines showing where the next set goes; on a 15-beat cycle the lights go off on beat 11, on for
+12, off for 13-14, and two purple bolts strike on 15 at 30% and 70% of the room; and he never walks:
+every 4 beats he streaks at light speed to a random spot (never onto the player, no gravity) and fires
+his zigzag bolts on the next beat. All of it is worked out from `arena.beatN` every step. **State a beat-locked duration in beats.** The
 speakers are the beat made visible: a room on a rhythm is only fair if you can see the
 rhythm without reading the hazard trying to kill you.
 
-**The owner has dropped the power cables from Volt Man's design (17 Oct 2026).** His layer-2
-and layer-3 lightning still runs along them today; what replaces them is to be talked
-through before it is built.
+**The owner dropped the power cables from Volt Man's design (17 Oct 2026)**, and they are gone from
+his room; the purple bolts strike from the ceiling at the old cable spots (owner, 23 Nov 2026).
 
 **`arena.dim` is the room losing power; `arena.flash` is something in it going off.** They
 are opposite gestures and must stay separate. **Anything that EMITS light draws after the
@@ -1613,7 +1619,7 @@ per boss and per layer. `FURNITURE` in `systems/arena.js` builds it.
 ### Attributes — as built
 
 `systems/attributes.js`. Hot / Burn are live on Blaze Man and the Blaze Wheel; **Stun** on
-Volt Man's panels and conductors and the Volt Spark (every enemy its chain touches); 
+Volt Man's purple bolts and the Volt Spark (every enemy its chain touches); 
 **Freeze** on Frost Guard; **Constrict** on Simon's Whip from Lv3. **Thorn Man holds a burn twice as long** (`BOSS_BURN_SCALE`), and the player's Hot ground burns him; no other boss stands in Hot. Wet and Poisoned are
 defined and tested, but nothing applies them yet.
 

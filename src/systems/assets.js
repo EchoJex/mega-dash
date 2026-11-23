@@ -485,6 +485,21 @@ export function drawPlaceholder(g, actor) {
  * lands via MANIFEST this goes away with it.
  */
 export function drawBossRig(g, boss, screenX, screenY = boss.y, waterOnly = false, floorY = Infinity) {
+  /**
+   * THE LIGHT-SPEED STREAK (the Electric boss, owner 23 Nov 2026: a blur
+   * streak). A glow in his colour and a white core, from where he set off to
+   * where he is now, fading out over `streak.n` steps.
+   */
+  if (boss.streak) {
+    const s = boss.streak, k = s.t / s.n;
+    const ox = screenX - boss.x, oy = screenY - boss.y;
+    const x0 = s.x + ox + boss.w / 2, y0 = s.y + oy + boss.h / 2;
+    const x1 = screenX + boss.w / 2, y1 = screenY + boss.h / 2;
+    g.lineStyle(Math.max(3, Math.round(boss.w * 0.6)), hexNum(boss.primary || '#FFFFFF'), 0.35 * k);
+    g.lineBetween(x0, y0, x1, y1);
+    g.lineStyle(2, 0xFFFFFF, 0.85 * k);
+    g.lineBetween(x0, y0, x1, y1);
+  }
   if (boss.rig !== 'jetpack') return;
   /**
    * OVER A DRAWN BODY, ONLY THE WATER (owner, 11 Nov 2026: the pack is "part
