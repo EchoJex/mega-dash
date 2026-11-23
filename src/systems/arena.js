@@ -472,7 +472,7 @@ const FURNITURE = {
       const S = 16, hp = 40;
       a.pods = [a.x0 + 18, a.x1 - 18 - S].map((x) => ({
         x, y: floorY - S, w: S, h: S, hp, maxHp: hp, lastHp: hp,
-        grow: 0, vine: 0, state: 'grow', wait: 0,
+        grow: 0, pts: null, state: 'grow', wait: 0,
         isPod: true, isBoss: true, status: {},
       }));
     }
@@ -506,11 +506,21 @@ export function drawGrapple(g, arena, boss, sx, sy) {
     g.fillCircle(cx, base - r, r);
     g.fillStyle(pd.state === 'wilted' ? 0xC8A878 : 0x5C4033, 1);
     g.fillRect(cx - Math.round(r / 2), base - r * 2, r, Math.max(1, Math.round(r / 3)));
-    if (pd.vine > 0 && pd.tip) {
-      g.lineStyle(3, 0x0A0A12, 1);
-      g.lineBetween(cx, base - r, sx(pd.tip.x), sy(pd.tip.y));
-      g.lineStyle(1, 0x7FD05A, 1);
-      g.lineBetween(cx, base - r, sx(pd.tip.x), sy(pd.tip.y));
+    // The vine: one zigzag of segments, a leaf on every fourth joint,
+    // alternating sides. Plain shapes until Claude Design draws it.
+    const pts = pd.pts || [];
+    for (const [w, col] of [[3, 0x0A0A12], [1, 0x7FD05A]]) {
+      g.lineStyle(w, col, 1);
+      for (let k = 1; k < pts.length; k++) {
+        g.lineBetween(sx(pts[k - 1].x), sy(pts[k - 1].y), sx(pts[k].x), sy(pts[k].y));
+      }
+    }
+    for (let k = 4; k < pts.length; k += 4) {
+      const lx = Math.round(sx(pts[k].x)) + (k % 8 ? 1 : -4), ly = Math.round(sy(pts[k].y)) - 2;
+      g.fillStyle(0x0A0A12, 1);
+      g.fillRect(lx - 1, ly - 1, 5, 4);
+      g.fillStyle(0x2AAB1C, 1);
+      g.fillRect(lx, ly, 3, 2);
     }
   }
   for (const v of boss?.vines || []) {

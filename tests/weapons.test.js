@@ -68,7 +68,6 @@ function harness(id, level) {
     // whole output is puffs as idle. Every transient effect has to be tallied
     // as it happens.
     puff: (spec) => { effects.push(spec); return Wpn.puff(fx, spec); },
-    arc: (a, b) => Wpn.arcFx(fx, a, b),
     patch: (pid, x, w, y, frames) => patches.push({ pid, x, w, y, frames }),
     sfx: () => {},
   };
@@ -573,22 +572,22 @@ test('re-beating a boss pushes his weapon to the tier for that layer, or one tie
   assert.equal(tierAfterRebeat(9, 1), 10);
 });
 
-test('the Volt Spark chain stuns everything it touches, never twice, and prefers fresh targets', async () => {
-  const { RUNTIME } = Wpn;
-  const mk = (x) => ({ x, y: 100, w: 10, h: 10, hp: 99, status: {} });
-  const hitLog = [];
-  const run = (enemies, st) => {
-    const ctx = {
-      player: { x: 0, y: 96, facing: 1 }, enemies, sfx() {}, puff() {}, arc() {},
-      hitEnemy(e) { hitLog.push(e); }, levelOf: () => 10, run: { dmgMult: 1 },
-    };
-    return RUNTIME.volt_spark.fire(st, 10, ctx);
-  };
-  const a = mk(16), b = mk(40), c = mk(60), d = mk(80);
+test('the Volt Spark bolt grows to its target, hurts on arrival, stuns all it touches, never twice', () => {
+  const h = harness('volt_spark', 10);
+  const mk = (x) => ({ x, y: h.player.y + 8, w: 10, h: 10, hp: 99, status: {} });
+  h.enemies.length = 0;
+  h.enemies.push(mk(h.player.x + 30), mk(h.player.x + 60), mk(h.player.x + 90), mk(h.player.x + 120));
   const st = { cool: 0 };
-  run([a, b, c, d], st);
-  assert.equal(new Set(hitLog).size, hitLog.length, 'one zap never hits an enemy twice');
-  for (const e of hitLog) assert.ok(e.status.stun, 'every enemy the chain touched is stunned');
+  Wpn.RUNTIME.volt_spark.fire(st, 10, h.ctx);
+  assert.equal(h.hits.length, 0, 'nothing is hurt the moment it fires: the bolt has to get there');
+  for (let i = 0; i < 60; i++) Wpn.RUNTIME.volt_spark.step(st, 10, h.ctx);
+  const hit = h.hits.map((r) => r.e);
+  assert.ok(hit.length >= 2, `the chain should have jumped (${hit.length} hit)`);
+  assert.equal(new Set(hit).size, hit.length, 'one zap never hits an enemy twice');
+  for (const e of hit) assert.ok(e.status.stun, 'every enemy the chain touched is stunned');
+  assert.equal(st.bolts.length, 0, 'every bolt finished');
+  assert.ok(h.fx.bolts.length === hit.length, 'one bolt for each enemy reached');
+  assert.ok(h.fx.bolts.every((b) => b.pts.length > 3 && b.pts.some((q) => q.y !== q.sy)), 'every bolt is a zigzag of segments');
 });
 
 test('Granite Form: slow on the ground, instant in the air, boulder by direction from Lv3, billiard stones', () => {

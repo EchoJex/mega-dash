@@ -42,6 +42,7 @@ import { FEEL } from '../config/feel.js';
 import { BEAT_LEN as BEAT, wallSpikeRows, WALL_SPIKE_R } from './arena.js';
 import { clipOf, areaAt, pointAt } from './frame-data.js';
 import { TSUNAMI, tsunamiFrame } from './tsunami.js';
+import { zigStart, zigStep } from './zigzag.js';
 /** One second, for durations that are real seconds rather than beats. */
 const SEC = 60;
 
@@ -2900,9 +2901,11 @@ function thornHazard(layer) {
  */
 const THORN_POD = {
   grow: SEC * 8,           // "slowly grow"
-  creep: 0.5,              // px a step the vine reaches toward the player
+  creep: 0.5,              // px a step the vine reaches toward the player, on average
+  seg: 6, zig: 3,          // each segment's length, and how far it swings to the side
   reach: 320,
-  recede: 40,              // px a Fire hit takes off the vine at once
+  nick: 3,                 // segments ANY hit on the vine or the pod takes off (owner, 23 Nov 2026)
+  recede: 7,               // segments a Fire hit takes off at once: "vines rapidly recede"
   constrict: 90,
   spores: 5, sporeSpeed: 1.6, sporeDamage: 1,
   regrow: SEC * 10,        // "then slowly regrows"
@@ -2913,18 +2916,19 @@ function stepPods(a, ctx) {
   const pb = ctx.playerBox;
   a.pods.forEach((pd, i) => {
     const cx = pd.x + pd.w / 2, cy = pd.y + pd.h / 2;
-    const hitByFire = pd.hp < pd.lastHp && pd.lastHitElement === 'Fire';
-    pd.lastHp = pd.hp;
+    // Hit this step, on the pod or on its vine (GameScene.hitEnemy marks `vineHit`).
+    const hit = pd.hp < pd.lastHp ? (pd.lastHitElement || 'hit') : pd.vineHit;
+    pd.lastHp = pd.hp; pd.vineHit = null;
     if (pd.state === 'gone' || pd.state === 'wilted') return;
 
     if (pd.state === 'dead') {               // waiting to regrow
       if (--pd.wait > 0) return;
-      Object.assign(pd, { state: 'grow', grow: 0, hp: pd.maxHp, lastHp: pd.maxHp, vine: 0, lastHitElement: null });
+      Object.assign(pd, { state: 'grow', grow: 0, hp: pd.maxHp, lastHp: pd.maxHp, pts: null, lastHitElement: null });
       return;
     }
 
     if (pd.hp <= 0) {
-      pd.vine = 0;
+      pd.pts = null;
       const el = pd.lastHitElement;
       if (el === 'Poison') { pd.state = 'wilted'; return; }
       if (el === 'Fire') {
@@ -2950,13 +2954,22 @@ function stepPods(a, ctx) {
 
     if (pd.grow < 1) { pd.grow = Math.min(1, pd.grow + 1 / THORN_POD.grow); return; }
 
-    // Full size: the vine reaches for the player, a little at a time.
-    if (hitByFire) pd.vine = Math.max(0, pd.vine - THORN_POD.recede);
-    else pd.vine = Math.min(THORN_POD.reach, pd.vine + THORN_POD.creep);
-    const tx = pb.x + pb.w / 2, ty = pb.y + pb.h / 2;
-    const d = aimAt(cx, cy, tx, ty), len = Math.min(pd.vine, Math.hypot(tx - cx, ty - cy));
-    pd.tip = { x: cx + d.x * len, y: cy + d.y * len };
-    if (pd.tip.x > pb.x - 2 && pd.tip.x < pb.x + pb.w + 2 && pd.tip.y > pb.y - 2 && pd.tip.y < pb.y + pb.h + 2) {
+    // Full size: the vine grows a segment at a time, each one aimed at where
+    // the player is now, so the vine left behind keeps the path it took. Shot,
+    // it loses its newest segments; Fire takes far more.
+    const pts = pd.pts || (pd.pts = zigStart(cx, cy));
+    if (hit) pts.length = Math.max(1, pts.length - (hit === 'Fire' ? THORN_POD.recede : THORN_POD.nick));
+    const inBox = (q) => q.x > pb.x - 2 && q.x < pb.x + pb.w + 2 && q.y > pb.y - 2 && q.y < pb.y + pb.h + 2;
+    let tip = pts[pts.length - 1];
+    pd.creep = (pd.creep || 0) + THORN_POD.creep;
+    if (pd.creep >= THORN_POD.seg && !inBox(tip) && (pts.length - 1) * THORN_POD.seg < THORN_POD.reach) {
+      pd.creep = 0;
+      zigStep(pts, pb.x + pb.w / 2, pb.y + pb.h / 2, THORN_POD.seg, THORN_POD.zig);
+      tip = pts[pts.length - 1];
+      // Every segment can be shot: a small box GameScene lists with the pods.
+      tip.foe = { x: tip.x - 3, y: tip.y - 3, w: 6, h: 6, hp: 1, vineOf: pd, isPod: true, isBoss: true, status: {} };
+    }
+    if (pts.length > 1 && inBox(tip)) {
       ctx.status('constrict', THORN_POD.constrict, { step: FEEL.stunPlayerStep, src: `pod:${i}` });
     }
   });

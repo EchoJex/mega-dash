@@ -34,6 +34,7 @@ import { FEEL } from '../config/feel.js';
 import { BACK_SHADE } from '../config/display.js';
 import { ladderAt, damageAtLevel, weaponOf, DAMAGE_WORDS, elementOf } from '../data/weapons.js';
 import * as Attr from './attributes.js';
+import { zigStart, zigStep } from './zigzag.js';
 import { hexNum } from './assets.js';
 import { clipOf, cellAt, frameAt, areaAt, pointAt, growStepsOf } from './frame-data.js';
 
@@ -489,8 +490,25 @@ function tidalWave(ctx, lv, L, fuel) {
  * to jump, an enemy the PREVIOUS zap did not hit is preferred, then the nearest,
  * then a coin toss.
  */
+/**
+ * THE BOLT GROWS (owner, 23 Nov 2026): "the player lightning weapon needs to
+ * have the same semi random advancing zigzag bolt ... this is all about a bolt
+ * that grows". A zap is a zigzag (systems/zigzag.js) that grows `perStep`
+ * segments a step: out from his hand to its fixed range, and an enemy is hurt
+ * only when the bolt REACHES it. Each chain jump is a new bolt growing from the
+ * enemy it left to the one it chose, so a Lv10 zap visibly spreads as a tree.
+ *
+ * Targets are chosen, and claimed, when the jump starts; an enemy that dies
+ * before the bolt arrives lets that branch fizzle.
+ */
+const BOLT = { seg: 6, zig: 3, perStep: 2, fade: 8 };
+
 const volt = {
-  step() {},
+  step(st, lv, ctx) {
+    const list = st.bolts || [];
+    for (const b of list) growBolt(b, ctx);   // a jump started this step grows this step too
+    for (let i = list.length - 1; i >= 0; i--) if (list[i].done) list.splice(i, 1);
+  },
 
   fire(st, lv, ctx) {
     if (st.cool > 0) return false;
@@ -499,77 +517,84 @@ const volt = {
     ctx.sfx('shoot', { pitch: 1.8 });
 
     const p = ctx.player;
-    const box = {
-      x: p.facing > 0 ? p.x + 14 : p.x + 10 - L.range,
-      y: p.y + 4, w: L.range, h: 18,
-    };
-    /**
-     * The zap's visual. `weapon` is what lets the Volt Spark's own sprite take
-     * this over: with no art it is the rectangle it has always been, and with
-     * a shippable frame it is the drawing, at the same place for the same time.
-     */
-    ctx.puff({
-      x: box.x + box.w / 2, y: box.y + 9, w: box.w, life: 8,
-      color: 0xF5D328, weapon: 'volt_spark', facing: p.facing,
-    });
-
-    const first = enemiesIn(ctx, box)[0];
-    if (!first) return true;
-
-    const prev = st.lastHits || new Set();
-    const hits = new Set();
-    st.lastHits = hits;
-    const strike = (e, depth) => {
-      if (hits.has(e)) return false;         // one zap never touches an enemy twice
-      hits.add(e);
-      const falloff = L.chainFalloff ** depth;
-      ctx.hitEnemy(e, dmgOf('volt_spark', lv, ctx) * falloff, { from: p.x + 12 });
-      const stunF = depth === 0 ? L.stunFrames : L.chainStunFrames;
-      if (stunF > 0) {
-        Attr.applyStatus(e.status, 'stun', stunF, { step: FEEL.stunEnemyStep });
-      }
-      return true;
-    };
-
-    strike(first, 0);
-    // `fanout` is per depth: Lv1-6 is a flat list, Lv10 is a 3-2-1 tree. Both
-    // fall out of the same walk, which is why the ladder states a shape rather
-    // than a count.
-    //
-    // The budget is PER SOURCE, not per depth. Sharing one pool across the
-    // front would let the first enemy in the list eat the whole layer, so a
-    // tight cluster would chain three deep off one body while the rest of the
-    // fan did nothing.
-    let front = [first];
-    for (let depth = 0; depth < (L.fanout || []).length; depth++) {
-      const width = L.fanout[depth];
-      const next = [];
-      for (const src of front) {
-        const c = centreOf(src);
-        let taken = 0;
-        const near = enemiesByRange(ctx, c.x, c.y, hits, L.chainRange);
-        // Distance to the nearest whole pixel, so near-equal jumps are a real
-        // tie that the coin toss settles.
-        const rank = new Map(near.map((e) => {
-          const ce = centreOf(e);
-          return [e, Math.round(Math.hypot(ce.x - c.x, ce.y - c.y)) + Math.random() * 0.5];
-        }));
-        near.sort((a, b) => (prev.has(a) - prev.has(b)) || (rank.get(a) - rank.get(b)));
-        for (const e of near) {
-          if (taken >= width) break;
-          if (e === src) continue;
-          if (!strike(e, depth + 1)) continue;
-          taken++;
-          next.push(e);
-          ctx.arc(src, e);
-        }
-      }
-      if (!next.length) break;
-      front = next;
-    }
+    const x0 = p.facing > 0 ? p.x + 14 : p.x + 10, y0 = p.y + 13;
+    const zap = { L, lv, prev: st.lastHits || new Set(), hits: new Set(), bolts: st.bolts || (st.bolts = []) };
+    st.lastHits = zap.hits;
+    zap.bolts.push(newBolt(ctx, zap, x0, y0, null, 0, p.facing));
     return true;
   },
 };
+
+/** One growing bolt. `target` null is the first one, out to the fixed range. */
+function newBolt(ctx, zap, x, y, target, depth, facing) {
+  const pts = zigStart(x, y);
+  const pic = { pts, life: BOLT.fade, max: BOLT.fade };
+  ctx.fx.bolts.push(pic);
+  // The spark at the growing tip is the old zap's sprite (`shot:volt_spark`).
+  ctx.puff({ x, y, w: 8, life: 2, color: 0xF5D328, weapon: 'volt_spark', facing });
+  const spark = ctx.fx.puffs[ctx.fx.puffs.length - 1];
+  return { zap, pts, pic, spark, target, depth, x0: x, y0: y, facing, done: false };
+}
+
+function growBolt(b, ctx) {
+  const { zap, pts } = b, L = zap.L;
+  b.pic.life = BOLT.fade;              // stays lit while it grows, then fades
+  for (let n = 0; n < BOLT.perStep && !b.done; n++) {
+    if (b.target) {
+      if (b.target.hp <= 0) { b.done = true; break; }
+      const c = centreOf(b.target);
+      if (zigStep(pts, c.x, c.y, BOLT.seg, BOLT.zig)) { b.done = true; land(b.target, b.depth, zap, ctx); }
+      continue;
+    }
+    // The first bolt: straight out to the fixed range, hurting the first enemy it touches.
+    const reach = zigStep(pts, b.x0 + b.facing * L.range, b.y0, BOLT.seg, BOLT.zig);
+    const tip = pts[pts.length - 1];
+    const box = { x: Math.min(b.x0, tip.sx), y: b.y0 - 9, w: Math.abs(tip.sx - b.x0) + 1, h: 18 };
+    const first = enemiesIn(ctx, box).sort((a, e) => b.facing * (a.x - e.x))[0];
+    if (first) {
+      const c = centreOf(first);
+      pts.push({ x: c.x, y: c.y, sx: c.x, sy: c.y });
+      zap.hits.add(first);
+      b.done = true;
+      land(first, 0, zap, ctx);
+    } else if (reach) b.done = true;
+  }
+  const tip = pts[pts.length - 1];
+  Object.assign(b.spark, { x: tip.x, y: tip.y, life: b.done ? 0 : 2 });
+}
+
+/**
+ * The bolt arrived: hurt and stun, then start the next jumps. `fanout` is per
+ * depth: Lv1-6 is a flat list, Lv10 is a 3-2-1 tree. The budget is PER SOURCE,
+ * not per depth, so a tight cluster cannot let one enemy eat the whole layer.
+ *
+ * THE OWNER'S CHAIN RULES (17 Oct 2026): every enemy the chain touches is
+ * stunned; one zap never touches the same enemy twice; and when choosing where
+ * to jump, an enemy the PREVIOUS zap did not hit is preferred, then the nearest,
+ * then a coin toss.
+ */
+function land(e, depth, zap, ctx) {
+  const { L, lv, hits, prev } = zap;
+  ctx.hitEnemy(e, dmgOf('volt_spark', lv, ctx) * L.chainFalloff ** depth, { from: ctx.player.x + 12 });
+  const stunF = depth === 0 ? L.stunFrames : L.chainStunFrames;
+  if (stunF > 0) Attr.applyStatus(e.status || (e.status = {}), 'stun', stunF, { step: FEEL.stunEnemyStep });
+
+  const width = (L.fanout || [])[depth];
+  if (!width) return;
+  const c = centreOf(e);
+  // Distance to the nearest whole pixel, so near-equal jumps are a real tie
+  // that the coin toss settles.
+  const near = enemiesByRange(ctx, c.x, c.y, hits, L.chainRange);
+  const rank = new Map(near.map((n) => {
+    const cn = centreOf(n);
+    return [n, Math.round(Math.hypot(cn.x - c.x, cn.y - c.y)) + Math.random() * 0.5];
+  }));
+  near.sort((a, b) => (prev.has(a) - prev.has(b)) || (rank.get(a) - rank.get(b)));
+  for (const n of near.slice(0, width)) {
+    hits.add(n);                       // claimed now, so no other branch picks it
+    zap.bolts.push(newBolt(ctx, zap, c.x, c.y, n, depth + 1, Math.sign(centreOf(n).x - c.x) || 1));
+  }
+}
 
 // ── FROST GUARD — Ice, defensive ─────────────────────────────────────
 /**
@@ -3057,7 +3082,7 @@ export function coolWeapons(store) {
  * hitbox you cannot see legible. Real art replaces nothing here; a sprite for
  * a punch would be a different thing entirely.
  */
-export const makeFx = () => ({ puffs: [], arcs: [], dust: [], spikes: [], sand: [] });
+export const makeFx = () => ({ puffs: [], bolts: [], dust: [], spikes: [], sand: [] });
 
 /** A fading rectangle of light where a hitbox was. `life` doubles as its fade. */
 /**
@@ -3075,15 +3100,9 @@ export const makeFx = () => ({ puffs: [], arcs: [], dust: [], spikes: [], sand: 
  */
 export const puff = (fx, spec) => fx.puffs.push({ ...spec, max: spec.life });
 
-/** The visible link between two enemies a chain jumped across. */
-export function arcFx(fx, a, b) {
-  const ca = centreOf(a), cb = centreOf(b);
-  fx.arcs.push({ x0: ca.x, y0: ca.y, x1: cb.x, y1: cb.y, life: 8, max: 8 });
-}
-
 export function stepFx(fx) {
   for (let i = fx.puffs.length - 1; i >= 0; i--) if (--fx.puffs[i].life <= 0) fx.puffs.splice(i, 1);
-  for (let i = fx.arcs.length - 1; i >= 0; i--) if (--fx.arcs[i].life <= 0) fx.arcs.splice(i, 1);
+  for (let i = fx.bolts.length - 1; i >= 0; i--) if (--fx.bolts[i].life <= 0) fx.bolts.splice(i, 1);
   stepQuakeFx(fx);
 }
 
@@ -3657,8 +3676,15 @@ export function drawWeaponry(g, sx, ctx) {
     if (q.weapon) continue;
     drawPuff(g, q, sx(q.x));
   }
-  for (const arc of fx.arcs) {
-    g.lineStyle(1, 0xF5D328, arc.life / arc.max);
-    g.lineBetween(sx(arc.x0), arc.y0, sx(arc.x1), arc.y1);
+  // The Volt Spark's bolts: a yellow glow with a white core, one segment at a
+  // time as they grow. Plain shapes until Claude Design draws them.
+  for (const b of fx.bolts) {
+    const a = b.life / b.max;
+    for (const [w, col, k] of [[3, 0xF5D328, 0.6], [1, 0xFFFFF0, 1]]) {
+      g.lineStyle(w, col, a * k);
+      for (let i = 1; i < b.pts.length; i++) {
+        g.lineBetween(sx(b.pts[i - 1].x), b.pts[i - 1].y, sx(b.pts[i].x), b.pts[i].y);
+      }
+    }
   }
 }

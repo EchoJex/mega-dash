@@ -1163,7 +1163,6 @@ export default class GameScene extends Phaser.Scene {
           && feet >= s.y - 2 && feet <= s.y + s.h + 2),
       shake: (mag, dur) => { this.shake = { mag, dur, t: dur }; },
       puff: (spec) => Wpn.puff(this.fx, spec),
-      arc: (a, b) => Wpn.arcFx(this.fx, a, b),
       patch: (id, x, w, surfaceY, frames) => {
         if (!this.arena) return;
         // `source: 'player'` is what makes you immune to your own Hot — see
@@ -1195,12 +1194,18 @@ export default class GameScene extends Phaser.Scene {
    */
   foes() {
     const list = this.boss ? [...this.minions, this.boss] : [...this.minions];
-    for (const pd of this.arena?.pods || []) if (pd.hp > 0 && pd.state === 'grow') list.push(pd);
+    for (const pd of this.arena?.pods || []) {
+      if (pd.hp <= 0 || pd.state !== 'grow') continue;
+      list.push(pd);
+      for (const q of pd.pts || []) if (q.foe) list.push(q.foe);   // its vine, segment by segment
+    }
     return list;
   }
 
   hitEnemy(e, dmg, opts = {}) {
     if (!e || e.hp <= 0) return;
+    // A seed-pod vine segment is never hurt: the hit makes the vine recede.
+    if (e.vineOf) { e.vineOf.vineHit = opts.element || 'hit'; return; }
     e.hp -= dmg;
     // What the hit was made of, for a weakness death (bossDeath.js). A hit
     // with no element leaves the last one alone.

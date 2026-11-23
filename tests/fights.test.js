@@ -1333,11 +1333,21 @@ test('Grass boss L3: seed pods grow, reach, burst, wilt or burn', () => {
   h = ripe();
   const p = h.arena.pods[1];
   h.ctx.playerBox = { x: 40, y: FLOOR - 22, w: 12, h: 22 };
-  step(h, 120);
-  const before = p.vine;
+  step(h, 240);
+  const segs = () => p.pts.length;
+  // The vine grows in segments, each one closer to the player than the last.
+  const far = (q) => Math.hypot(q.sx - 46, q.sy - (FLOOR - 11));
+  assert.ok(segs() > 10, `the vine should have grown segment by segment (${segs()})`);
+  for (let k = 1; k < segs(); k++) assert.ok(far(p.pts[k]) < far(p.pts[k - 1]), 'every segment advances on the player');
+  assert.ok(p.pts.some((q) => q.x !== q.sx || q.y !== q.sy), 'and the vine zigzags');
+  let before = segs();
+  p.pts[segs() - 1].foe.vineOf.vineHit = 'hit';   // shot on the vine, as GameScene.hitEnemy marks it
+  step(h);
+  assert.ok(segs() <= before - 2, `any hit on the vine pulls it back a little (${before} -> ${segs()})`);
+  before = segs();
   Object.assign(p, { hp: p.hp - 1, lastHitElement: 'Fire' });
   step(h);
-  assert.ok(p.vine < before - 20, `a Fire hit should pull the vine back (${before} -> ${p.vine})`);
+  assert.ok(segs() <= before - 6, `a Fire hit should pull the vine back hard (${before} -> ${segs()})`);
   Object.assign(p, { hp: 0, lastHitElement: 'Fire' });
   step(h, 60 * 12);
   assert.equal(p.state, 'gone', 'a pod burnt to death must not regrow');
