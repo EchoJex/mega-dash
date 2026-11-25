@@ -1059,7 +1059,7 @@ struck through, tells you what it fixed, then strikes them through
 | 1240 (main) | `[ready]` | ~~Maybe the psi sand bags missed the boss, but it seemed like the first of each set of sand bags getting tossed at strike man didn't do anything~~ |
 | 1242 (main) | `[ready]` | ~~Enemies that make contact with the player can not stop inside the player. Pursuit is allowed, but after passing through the player the enemy must make a wide U-turn instead of instantly turning around~~ |
 | 1262 (main) | `[draft]` | Town cabin waves move away too fast and to far. 1/4 the movement speed, and have the entire wave crash animation travel a max of 1/3 a screen width |
-| 1262 (main) | `[wip]` | All hazards regardless of source need to resolve after |
+| 1262 (main) | `[wip]` | All hazards regardless of source need to resolve after a bosses defeat |
 
 ## Archived bugs
 
