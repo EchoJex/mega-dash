@@ -7,4 +7,4 @@ The seventeen bosses as the game draws them until their sprites exist: a rectang
 - **A boss's sprite is made only when the owner asks for that boss by name.** Until then the game draws him like this.
 - When his sprite is drawn, build its 16-bit shades from his primary and secondary and fit it inside `grid-boss` (48 × 48) with his feet on the floor.
 - The sizes are written into this card from the game's code by `npm run design:system`, so they cannot drift.
-- Strike Man (Fighting) and Thorn Man (Grass) are drawn now (the Sprites asset group). The card still shows every boss at his footprint, because that is his hit box whatever his drawing looks like.
+- Strike Man (Fighting), Thorn Man (Grass) and Tempest Man (Water) are drawn now. The card still shows every boss at his footprint, because that is his hit box whatever his drawing looks like.

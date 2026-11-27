@@ -475,7 +475,7 @@ pickup's collision is a flat 7×7 — the rest is room for a glow or a trail.
 construction order. A weapon in his near hand (`held`) draws in front of him, one in his far hand (`heldBack`) behind him, a quarter darker (`BACK_SHADE`) — see *Hands* below; a
 weapon's dust and debris (`effects`) draw behind. **Draw order is not a fixed rule**, by the
 owner's call (17 Oct 2026): it follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
-section 5).
+section 6).
 
 **The player is a fixed white suit with a #3CBCFC accent** on the visor and the
 helmet fin. He has no arm cannon (owner, 18 Oct 2026): his front arm ends in a hand. His 12 colours are declared in `design/sprites/player.sprite`;

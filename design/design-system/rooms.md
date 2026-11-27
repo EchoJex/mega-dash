@@ -30,7 +30,7 @@ The drawn rooms (Proto Mk0, Blaze, Tempest, Volt, Thorn, Strike and Wraith Man's
 
 ## Budgets
 
-Measured on the first six drawn rooms: 0.9 to 2.5 thousandths of a second per frame in a browser slowed to a sixth of its speed (the old plain rooms: 0.7), and about 7KB of download each. A new room should land in that range.
+Measured on the first six drawn rooms (Ghost's chapel is the seventh): 0.9 to 2.5 thousandths of a second per frame in a browser slowed to a sixth of its speed (the old plain rooms: 0.7), and about 7KB of download each. A new room should land in that range.
 
 ## Checks before asking for approval
 

@@ -120,7 +120,7 @@ that breaks one is refused with the reason.
   his right) is drawn in front of him; the FAR hand's is drawn behind him, a quarter
   darker — the game shades it, so draw every weapon at full colour. **Effects** (dust,
   spikes, sand) are **behind him.** Layering follows ordinary 2D practice (`design/DESIGN-BRIEF.md`,
-  section 5) — keep the player readable.
+  section 6) — keep the player readable.
 - **A hit area covers what you drew where the blow lands, plus a pixel.** The player's
   attacks are slightly generous; never smaller than the drawing. For a swing, cover the
   head where it is on the hit frame and where it was the frame before — the sweep the eye

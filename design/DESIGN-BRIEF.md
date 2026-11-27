@@ -2,7 +2,7 @@
 
 **Read this before drawing anything for this game.** It is the game's look and its limits
 on one page, written for Claude Design and for anyone else drawing for MEGA DASH. Every
-number here was read out of the game's own code on 6 Oct 2026, and checked against it again on 5 Nov 2026.
+number here was read out of the game's own code on 6 Oct 2026, and checked against it again on 27 Nov 2026.
 
 If this page and `CLAUDE.md` disagree, `CLAUDE.md` is right and this page is the bug.
 What the game SHOULD contain is `design/TRACKER.md`; the words used here are explained in
@@ -33,8 +33,10 @@ page: when this page changes, update it too (link at the bottom).
 - **Rooms are richer than sprites** and have no colour cap: the approved rooms build their
   own ramps and use ordered dithering and row-by-row gradients, as SNES backgrounds did.
 - **The examples to follow** are the player's sheet (`public/sprites/player.png`, source
-  `design/sprites/player.sprite`) and the drawn rooms (`src/systems/arena-art/`, seven so far). A
-  `.sprite` file with no `palette` lines is the older three-colour kind — not an example.
+  `design/sprites/player.sprite`), the drawn boss rooms (`src/systems/arena-art/`, seven so far:
+  Typeless, Fire, Water, Electric, Grass, Fighting and Ghost) and the picked world pieces of the
+  areas between them (`src/systems/area-art/`, thirteen slices so far). A `.sprite` file with no
+  `palette` lines is the older three-colour kind — not an example.
 - **It is a visual upgrade, not a feel change.** Sizes, collision and movement stay as
   they are.
 
@@ -43,13 +45,18 @@ page: when this page changes, update it too (link at the bottom).
 - **The player** is a white suit with a `#3CBCFC` accent (visor and helmet
   fin), twelve colours in all. He is **never tinted or recoloured**, and must stay visible
   in every room — put him in front of the brightest and busiest part of each room and check.
+  **He has no arm cannon** (owner, 18 Oct 2026): his front arm ends in a hand. What he carries
+  is shown as weapon hardware drawn on him (so far the Nullfire Drone, the Torrent Cannon's
+  tank, Frost Guard and the Sinister Stare's shroud), never by changing his colours.
 - **A boss's primary and secondary are his identity**; his 16-bit shades are built from
   them. His **shots must show against his own room**: Proto Mk0's are warning red `#FF4A32`
   with a one-pixel near-black **rim**, because grey shots vanished into his grey bunker.
 - **Every boss has a single eye** (the owner, 4 Nov 2026): "all bosses will have a common
   theme of a single 'eye'. This theme should be interpreted with very wide creativity."
   Strike Man's and Thorn Man's are the examples the owner liked.
-- **Elite minions** wear a gold outline `#F5D328` instead of the near-black one.
+- **Elite minions** wear a gold outline `#F5D328` instead of the near-black one. A minion
+  drawn as a sheet gets a one-pixel gold rim round its drawing, frame by frame, so one drawing
+  serves both forms: never draw a separate elite.
 - **Red means warning in Proto Mk0's bunker** and is kept for that.
 
 | boss | type | primary | secondary | footprint (w×h) |
@@ -72,9 +79,17 @@ page: when this page changes, update it too (link at the bottom).
 | ECLIPSE MAN | Dark | `#2A273F` | `#DC2626` | 32×42 |
 | ALLOY MAN | Steel | `#B2BABD` | `#4B5563` | 35×46 |
 
-Minions: **SPIGLET** (ground) `#788850` / `#2E3520`, 14×14 · **PIXIE** (air) `#309888` /
-`#10332E`, 12×12. These tables are copies of `src/data/bosses.js` and `src/data/minions.js`;
-the code wins if they ever differ.
+Minions, all three drawn and in the game: **SPIGLET** (ground) `#788850` / `#2E3520`, 14×14 ·
+**PIXIE** (air) `#309888` / `#10332E`, 12×12 · **GUNNER** (air, moves and stops, fires a
+three-shot fan every third stop) `#309888` / `#4E5668`, 12×12. These tables are copies of
+`src/data/bosses.js` and `src/data/minions.js`; the code wins if they ever differ.
+
+- **Each slice has its own copy of each minion.** SPIGLET's and PIXIE's most common colour turns
+  into that boss's primary (Typeless keeps the originals). The GUNNER is drawn in full colour, and
+  each area's copy shades its body from that boss's colour, with a black eye in the Fire area.
+- **Key `3` in a three-colour drawing is white in every copy** (the Pixie's wings).
+- **Pickups:** the E-Tank is the owner's own heart drawing; EXP is a glow orb, and a drop worth 50
+  or more wears the big orb, 2.5 times the size. A boss's EXP bursts out in a spray of both.
 
 ## 4. Sizes
 
@@ -85,7 +100,7 @@ the code wins if they ever differ.
 | boss | 48×48 | his hit box is the footprint above |
 | miniboss | 32×32 | reserved, nothing uses it yet |
 | shot | 16×16 | the biggest shot is an 8-pixel ball; the rest is room for a glow or trail |
-| pickup | 16×16 | its pick-up box is 7×7 |
+| pickup | 18×18 | the most a pickup should fill (owner, 10 Nov 2026); its pick-up box stays 7×7, big orb or small |
 | weapon art | set per sheet | a weapon's own sheets (the hammer in his hand, its dust): sizes, pivots, timing and hit areas are in `design/weapon-art/<weapon>.md` |
 
 - **The drawing is not the hit box.** The hit box stays still while the drawing changes, so
@@ -93,18 +108,40 @@ the code wins if they ever differ.
 - Characters stand with their **feet on the floor line**; bullets are drawn from their
   middle.
 - **Bosses stay plain rectangles at their true footprint** until the owner asks for that
-  boss's sprite by name. Do not invent silhouettes. Strike Man (Fighting) was asked for on
-  31 Oct 2026 (his brief is `design/weapon-art/strike.md`), Thorn Man (Grass) on 4 Nov 2026
-  (`design/weapon-art/thorn.md`).
-- **Every boss has a single eye**, the owner's rule (4 Nov 2026): "all bosses will have a common
-  theme of a single 'eye'. This theme should be interpreted with very wide creativity."
-- **The area between rooms** is plain shapes today, built from fixed sizes: doors 16×28, spike beds
-  7 tall and 12 to 24 wide, platforms 5 thick and 28 to 52 wide, pits 22 to 39 wide. A pit is only
-  the gap in the ground, so the ground must stand apart from every area backdrop by brightness alone
-  (2 : 1), and its lit 2-pixel top edge, which shows every pit edge, by 4.5 : 1, in the top ten rows
-  of the ground band where no thumb pad covers it (`tests/contrast.test.js`).
+  boss's sprite by name. Do not invent silhouettes. Three are drawn and in the game: Strike Man
+  (Fighting, asked for 31 Oct 2026, brief `design/weapon-art/strike.md`), Thorn Man (Grass,
+  4 Nov 2026, `design/weapon-art/thorn.md`) and Tempest Man (Water, picked on his canvas and in
+  the game 16 Nov 2026: body 16 with the tank on his back and its bar, his jets, and the tsunami).
+- **The area between rooms** is built from fixed sizes: doors 16×28, spike beds 7 tall and 12 to 24
+  wide, platforms 5 thick and 28 to 52 wide, pits 22 to 39 wide. A pit is only the gap in the
+  ground, so the ground must stand apart from every area backdrop by brightness alone (2 : 1), and
+  its lit 2-pixel top edge, which shows every pit edge, by 4.5 : 1, in the top ten rows of the ground
+  band where no thumb pad covers it (`tests/contrast.test.js`). Nothing drawn changes a size, a
+  position or a hit box.
 
-## 5. Draw order, back to front
+## 5. The areas between rooms (`src/systems/area-art/`)
+
+- **Each slice has its own world pieces**: a backdrop, ground, platforms, spike bed, boss door, and
+  the exit door in that boss's room. The owner picks them from variants on a canvas, about six
+  slices at a time; `design/world-art/README.md` keeps every pick in the owner's words.
+- **In the game (13):** Typeless, Fire, Water, Electric, Grass, Fighting, Ice, Ground, Rock, Dark,
+  Dragon, Steel and Ghost. **Paused by the owner (4):** Poison, Flying, Psychic and Bug, because
+  "artistically they could go many ways". Draw nothing for those four until the owner settles each.
+- **Painted once, then only placed**, like the rooms. A backdrop is a strip that repeats without a
+  seam (some in layers scrolling at different speeds, for depth), plus small moving pictures
+  named once. **Everything that moves by itself comes back to where it started on a loop**, so a
+  moving picture never jumps.
+- **A backdrop that tells a story in order is shown by progress, not repeated** (owner, 6 Nov
+  2026). Steel's assembly line is the first: each stretch takes its phase from how much of the
+  time to the boss door has run.
+- **Some areas climb instead of running left to right** (owner, 9 Nov 2026: "i will soon be adding
+  verticality to several levels"). Ghost's grave tower is the first: three screens wide, scrolling
+  up, with five walkways the width of the tower as checkpoints and a fog over the play. Draw a
+  climbing area to its own fixed width, never the screen's.
+- **The game still draws a door's gold pulse; the art draws the door in front of it.** A door that
+  is not open yet is the same picture, greyed and see-through.
+
+## 6. Draw order, back to front
 
 background → **room art** → ground, spikes, doors → pickups → minions → bullets → boss →
 a weapon's dust and debris → the weapon in his far hand (a quarter darker) → **player** → the weapon in
@@ -124,7 +161,7 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 - **Effects sit by what made them**: dust behind the feet, sparks over the impact.
 - **The HUD never moves with the world** and sits above it.
 
-## 6. Drawing a boss room so it goes straight into the game
+## 7. Drawing a boss room so it goes straight into the game
 
 - **A room hints at the game its boss's weapon comes from.** The owner's words
   (22 Oct 2026): "Boss Arena visual cues will allude to the weapons game origin. Boss Arena
@@ -158,7 +195,7 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
   in a browser slowed to a sixth of its speed (the old plain rooms: 0.7), and about 7KB of
   download each. A new room should land in that range.
 
-## 7. Text and menus
+## 8. Text and menus
 
 - **One 5×7 pixel font, capitals only.** It has A–Z, 0–9, space and
   `. , : ; - + / \ ( ) [ ] ! ? ' " < > = % * # _ | · × → ◀ ▶ ◸ ◹`. Lower case becomes upper
@@ -168,7 +205,7 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 - Touch targets are for thumbs: the movement and action pads are 25 pixels tall along the
   bottom edge, see-through, each with a thin yellow border.
 
-## 8. Who may make what
+## 9. Who may make what
 
 - **A sprite or a music track is made by Claude only when the owner asks for that one by
   name**, in the conversation. Rooms likewise: the owner asks for a room by name. Each made
@@ -177,11 +214,16 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 - **Art is picked from variants** (owner, 5 Nov 2026): "Every type of thing should have a couple
   questions and/or a few variants to review before getting a label as 'Picked.'" The variants go on
   a canvas; the owner answers and picks in each thing's comment thread; only a picked variant is built.
-  The world pieces are picked one slice at a time; batch 1's six are in the game
-  (`src/systems/area-art/`), and `design/world-art/README.md` keeps what each slice picked.
+  The world pieces (section 5) and the minions and pickups have been picked; the HUD is the group
+  still to come.
+- **A canvas is archived once its art is in the game** (owner, 10 Nov 2026), into
+  `design/archive/`, with its pages, its pictures and the owner's words from its threads, unpicked
+  variants included. It is then removed from Claude, asking the owner first.
+- **SpriteCook costs the owner's credits**: use it only when the owner explicitly asks
+  (19 Nov 2026). The Water boss's tsunami came from it.
 - Music is SNES-era chiptune, matching the art.
 
-## 9. Handing work to Claude Code
+## 10. Handing work to Claude Code
 
 - **A weapon's art has its own page: `design/weapon-art/README.md`.** Its timing and hit
   areas are drawn into its sheets, the handoff is the `.sprite` files plus a `HANDOFF.md`
@@ -199,7 +241,7 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
   - which tracker lines change, and to which marker. `[draft]` is the owner's word: it is
     written only by the owner, or when the owner says so.
 
-## 10. Where things live
+## 11. Where things live
 
 | what | where |
 |---|---|
@@ -213,6 +255,9 @@ fixed rule**: by the owner's call (17 Oct 2026), draw order follows ordinary 2D 
 | the sprite format's reader and writer, and a preview kit | `docs/sprite-fmt.js`, `docs/sprite-kit.js` |
 | past handoffs: what came in and what changed | `design/handoffs/` |
 | the drawn rooms and their drawing kit | `src/systems/arena-art/` |
+| the areas' picked world pieces | `src/systems/area-art/` (picks in `design/world-art/README.md`) |
+| minion and pickup picks | `design/minion-art/README.md` |
+| finished canvases, unpicked variants included | `design/archive/` |
 | the design system's own files (its numbers written from the code) | `design/design-system/` (`npm run design:system`) |
 | room state and furniture | `src/systems/arena.js` |
 | fights and hazards | `src/systems/bossFights.js` |
