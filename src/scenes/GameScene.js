@@ -510,6 +510,7 @@ export default class GameScene extends Phaser.Scene {
     this.pickups = [];
     this.spawnTimer = 0;
     this.boss = null;
+    this.ending = null;     // his room winding down after he falls (stepEnding)
     this.arena = null;
     this.warp = null;
     this.beatTrack = null;   // the arena track the room resyncs, while its boss is up
@@ -1051,6 +1052,22 @@ export default class GameScene extends Phaser.Scene {
     this.stepPickups(box);
     this.stepBullets();
     this.stepBoss();
+    this.stepEnding();
+  }
+
+  /**
+   * AFTER A BOSS FALLS, HIS ROOM WINDS DOWN BY ITSELF (owner, bug of build
+   * 1262): "All hazards regardless of source need to resolve after a bosses
+   * defeat ... spawned things despawn, hazards complete their final cycle,
+   * projectiles time out". His hazard loop keeps running with `ending` set: it
+   * starts nothing new, finishes what is under way, and says true once the room
+   * is quiet. Enemy shots already time out on their own `life`.
+   * ponytail: a 20 s cap in case a hazard never reports quiet.
+   */
+  stepEnding() {
+    const e = this.ending;
+    if (!e) return;
+    if (!this.arena || ++e.t > 1200 || this.stepFight(e.b, 'hazard')) this.ending = null;
   }
 
   /**
@@ -1143,6 +1160,7 @@ export default class GameScene extends Phaser.Scene {
       statusBag: this.status,
       floorY: GROUND_Y,
       camY: this.cam.y,   // how far a climb has raised the view; 0 everywhere else
+      viewW: this.viewW,
       landVy: this.landVy || 0,
       equipped,
       fx: this.fx,
@@ -2227,8 +2245,9 @@ export default class GameScene extends Phaser.Scene {
    */
   stepFight(b, kind) {
     const beh = b.fight?.[kind];
-    if (!beh) return;
-    beh.step({
+    if (!beh) return true;
+    return beh.step({
+      ending: b !== this.boss,   // he is dead and this is his room winding down
       boss: b,
       player: this.player,
       playerBox: Phys.hitboxOf(this.player),
@@ -2324,7 +2343,7 @@ export default class GameScene extends Phaser.Scene {
       summon: (kind, x, y, cap = 99) => {
         if (this.minions.filter((m) => m.hp > 0 && m.def.kind === kind).length >= cap) return null;
         const m = Minions.spawnAt(kind, x, y, this.run.frame, false, this.boss);
-        if (m) this.minions.push(m);
+        if (m) { m.summoned = true; this.minions.push(m); }
         return m;
       },
       // Move the player without going through the hit path. Tempest Man's
@@ -2478,6 +2497,9 @@ export default class GameScene extends Phaser.Scene {
      * it. Anything the fight was mid-way through owning has to be handed back
      * here, because there is no other frame on which to hand it back.
      */
+    // What he summoned goes with him: no score, no EXP, like the room's vaporise.
+    for (const m of this.minions) if (m.summoned && m.hp > 0) m.hp = 0;
+    if (this.arena) this.ending = { b, t: 0 };
     if (this.arena) {
       this.arena.dim = 0;
       for (const c of this.arena.conductors) { c.arc = 0; c.tell = 0; c.fade = 0; }

@@ -187,6 +187,8 @@ function coreHazard(layer) {
       const v = aimAt(t.x + t.w / 2, t.y + t.h, p.x + 12, p.y + 12);
       return snapAngle(Math.atan2(v.y, v.x), CORE_HAZ.snap[layer]);
     };
+    // He is down: a burst under way finishes, and no new one is started.
+    if (ctx.ending && hs.left <= 0) { a.burstIn = Infinity; return true; }
 
     /**
      * "VISIBLY TRACK AND AIM" — stamped onto the turrets for the room's art,
@@ -537,6 +539,13 @@ function blazeHazard(layer) {
      */
     for (const h of a.hazards) if (h.kind === 'rock') h.y += h.vy;
 
+    // He is down: the shower under way finishes and its rocks land, and the
+    // lava drains on its own clock with the footing kept until it has gone.
+    if (ctx.ending) {
+      if (flooding) keepFootingDuringFlood(ctx, a, ctx.boss.fs?.perch);
+      if (hs.left <= 0 && !flooding && !a.hazards.some((h) => h.kind === 'rock')) return true;
+    }
+
     // `cycle` is the WHOLE period, so this runs during the shower too. Ticking
     // it only between showers meant the real interval was cycle + however long
     // the rocks took to clear, which stretched the tracker's "every 20 seconds
@@ -569,7 +578,7 @@ function blazeHazard(layer) {
       return;
     }
 
-    if (hs.t > 0) return;
+    if (hs.t > 0 || ctx.ending) return;
     const [mag, dur] = BLAZE_HAZ.shake[layer];
     ctx.shake(mag, dur);
     hs.left = BLAZE_HAZ.rocks[layer];
@@ -931,6 +940,15 @@ function tempestHazard(layer) {
       t: TEMPEST_HAZ.cycle, dir: 0, lull: 0, spawn: 120, pipe: 0,
     });
 
+    // He is down: nothing new comes out of the pipes, the rain's push eases off,
+    // what is floating drifts on to the drain and pops, and a tsunami runs out.
+    if (ctx.ending) {
+      a.push.x *= 0.95;
+      tempestFloaters(ctx, a, hs, layer);
+      tempestWaves(ctx);
+      return !a.hazards.some((h) => h.kind === 'barrel' || h.kind === 'spikeball' || h.kind === 'wave');
+    }
+
     // L1 rain is straight down and never changes. L2 cycles on a fixed beat;
     // L3 holds each direction for a random stretch with a brief lull between,
     // so the pattern cannot be counted out.
@@ -1015,7 +1033,7 @@ function tempestFloaters(ctx, a, hs, layer) {
     if (h.kind === 'spikeball') h.spin = (h.spin || 0) + 0.09;
   }
 
-  if (--hs.spawn > 0) return;
+  if (ctx.ending || --hs.spawn > 0) return;
   hs.spawn = TEMPEST_HAZ.spawn[layer];
   const pipes = a.pipes || [];
   if (!pipes.length) return;
@@ -1177,7 +1195,8 @@ const VOLT_HAZ = {
 function voltHazard() {
   return (ctx) => {
     const a = ctx.arena;
-    if (!a || !a.panels.length) return;
+    if (!a || !a.panels.length) return true;
+    if (ctx.ending) return true;   // the lights and bolts are handed back in killBoss
     const hs = ctx.boss.hs || (ctx.boss.hs = { summon: 120 });
 
     if (--hs.summon <= 0) {
@@ -1410,7 +1429,7 @@ function makeBag(a, i) {
 function strikeHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
-    if (!a || !a.rails?.length) return;
+    if (!a || !a.rails?.length || ctx.ending) return true;   // the bags go inert in killBoss
     const b = ctx.boss;
     // `respawn` is a QUEUE, not a slot. It used to be one scalar, so throwing
     // or slamming both bags overwrote the first pending return with the second
@@ -2357,7 +2376,21 @@ const THORN_HAZ = {
 function thornHazard(layer) {
   return (ctx) => {
     const a = ctx.arena;
-    if (!a?.cover?.length) return;
+    if (!a?.cover?.length) return true;
+    // He is down: each pod pulls its vine back a segment at a time, then
+    // shrinks away. The cover is the room's own and keeps growing back.
+    if (ctx.ending) {
+      let left = 0;
+      for (const pd of a.pods || []) {
+        if (pd.state === 'gone' || pd.state === 'wilted') continue;
+        left++;
+        if (pd.pts?.length > 1) { if (a.t % 3 === 0) pd.pts.length--; continue; }
+        pd.pts = null;
+        pd.grow -= 1 / SEC;
+        if (pd.grow <= 0 || pd.state === 'dead') pd.state = 'gone';
+      }
+      return left === 0;
+    }
     // Layer 3 is layer 2's cover plus the seed pods.
     if (a.pods) stepPods(a, ctx);
 

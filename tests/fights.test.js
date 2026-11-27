@@ -1438,3 +1438,43 @@ test('Grass boss: a vine passing just beside the player does not grab him', () =
   runThorn(k, 1, 60, () => (k.held.length ? false : undefined));
   assert.ok(k.held.length > 0, 'a vine through his chest never grabbed him');
 });
+
+/**
+ * AFTER HE FALLS, HIS ROOM GOES QUIET BY ITSELF (owner, bug of build 1262):
+ * "hazards complete their final cycle". Killed at several moments in every
+ * built fight, his hazard loop runs on with `ending` set and must report the
+ * room quiet well inside GameScene's 20-second cap.
+ *
+ * `settle` stands in for the two removals GameScene.stepArenaHazards does
+ * that this harness does not: a rock crumbling on the floor, and a floater
+ * popping on the drain's spike ball.
+ */
+test('every built room winds down after its boss dies, whenever he dies', () => {
+  const settle = (a) => {
+    const ball = a.drain?.ball;
+    a.hazards = a.hazards.filter((h) => !(h.crumbles && h.y + h.h >= a.floorY)
+      && !(h.popsOnBall && ball && h.x < ball.x + ball.r && h.x + h.w > ball.x - ball.r));
+  };
+  for (const [id, f] of Object.entries(FIGHTS)) {
+    for (const layer of [1, 2, 3]) {
+      for (const killAt of [400, 1100, 2300]) {
+        const h = harness(id, layer);
+        for (let i = 0; i < killAt; i++) {
+          h.boss.anim++;
+          f.attack[layer]?.step(h.ctx);
+          f.hazard[layer]?.step(h.ctx);
+          Arena.stepArena(h.arena);
+          settle(h.arena);
+        }
+        h.ctx.ending = true;
+        let quiet = false, t = 0;
+        for (; t < 1100 && !quiet; t++) {
+          quiet = f.hazard[layer] ? f.hazard[layer].step(h.ctx) === true : true;
+          Arena.stepArena(h.arena);
+          settle(h.arena);
+        }
+        assert.ok(quiet, `${id} L${layer}, killed at step ${killAt}: still busy after ${t} steps`);
+      }
+    }
+  }
+});

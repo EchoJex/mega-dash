@@ -456,13 +456,16 @@ function jetHit(ctx, lv, x, y, dmgMult, knock) {
  *
  * `fuel` is 0-1, the tank at the moment the dive began. It sets the height and
  * nothing else — speed, life and pierce are the same wave however much water
- * paid for it, so a nearly-empty tank still crosses the room. What you lose by
+ * paid for it, so a nearly-empty tank still reaches as far. What you lose by
  * diving early is REACH in the vertical, which is what decides how much of a
  * boss the wave actually covers.
  */
 function tidalWave(ctx, lv, L, fuel) {
   const p = ctx.player;
   const r = L.waveMin + (L.waveMax - L.waveMin) * Math.max(0, Math.min(1, fuel));
+  // The whole splash-to-crash plays over its life, so the life is what caps how
+  // far it travels: a third of the screen at most (owner, bug of build 1262).
+  const life = Math.floor((ctx.viewW || 320) * L.tidalReach / L.tidalSpeed);
   for (const dir of [-1, 1]) {
     ctx.spawn({
       // Born on the surface he landed on — "on contact with a surface".
@@ -470,7 +473,7 @@ function tidalWave(ctx, lv, L, fuel) {
       vx: dir * L.tidalSpeed, vy: 0,
       radius: r, damage: dmgOf('torrent_cannon', lv, ctx) * L.tidalDmgMult,
       color: '#5CADD5', shape: 'stream', weapon: 'torrent_cannon',
-      life: L.tidalLife, life0: L.tidalLife, pierce: 99, knockback: L.knock * (1 + fuel),
+      life, life0: life, pierce: 99, knockback: L.knock * (1 + fuel),
       hugsFloor: true,
     });
   }

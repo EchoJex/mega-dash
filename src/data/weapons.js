@@ -313,7 +313,9 @@ export const WEAPON_LADDERS = {
      */
     10: {
       tank: 180, refill: 3.2, tidal: true,
-      tidalSpeed: 3.2, tidalDmgMult: 0.8, tidalLife: 120,
+      // A quarter of its old 3.2, and the whole crash covers at most a third of
+      // the screen (owner, bug of build 1262).
+      tidalSpeed: 0.8, tidalReach: 1 / 3, tidalDmgMult: 0.8,
       diveSpeed: 9,          // faster than terminal velocity — it is a dive
       // Wave half-height in pixels at a full tank and at an empty one. The
       // player is 24 tall, so even the floor of it is "taller than the player".
